@@ -1,0 +1,38 @@
+version: '2'
+services:
+
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+    container_name: zookeeper
+    environment:
+      JVMFLAGS: "-Xmx150m -Xms150m"
+    ports:
+      - "2181:2181"
+    mem_limit: 250m
+    volumes:
+      - "./zookeeper:/opt/zookeeper-3.4.6/conf"
+
+  kafka:
+    image: wurstmeister/kafka:0.10.2.1
+    container_name: kafka
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181/kafka
+      KAFKA_BROKER_ID: 1
+      KAFKA_SESSION_TIMEOUT_MS: 5000
+      KAFKA_HEAP_OPTS: "-Xmx150m -Xms150m"
+    ports:
+      - "9092:9092"
+    entrypoint: [ # change the entrypoint of the image; this starts the boker only when its Zookeeper node for the id disappears
+      "bash",
+      "-c",
+      "while [[ $$(echo get /brokers/ids/$$KAFKA_BROKER_ID | opt/kafka_2.12-0.10.2.1/bin/zookeeper-shell.sh zookeeper:2181 2>&1 | grep \"Node does not exist\" | wc -l) -eq 0 ]]; do echo \"Sleeping for $$((KAFKA_SESSION_TIMEOUT_MS/1000)) seconds waiting for the Zookeeper node for this broker (id $$KAFKA_BROKER_ID) to expire...\"; sleep $$((KAFKA_SESSION_TIMEOUT_MS/1000)); done; echo \"No Zookeeper node for this broker (id $$KAFKA_BROKER_ID) found, starting...\"; start-kafka.sh"]
+    mem_limit: 600m
+    depends_on:
+      - zookeeper
+
+networks:
+  default:
+    external:
+      name: wasp-docker
