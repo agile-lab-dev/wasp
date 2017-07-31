@@ -1,0 +1,6 @@
+# SBT target directories
+target
+*/target
+
+# IntelliJ IDEA
+.idea
