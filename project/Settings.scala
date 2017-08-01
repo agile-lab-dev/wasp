@@ -1,5 +1,7 @@
 import sbt._
 import sbt.Keys._
+import sbtbuildinfo.BuildInfoKey
+import sbtbuildinfo.BuildInfoKeys._
 
 /*
  * Common settings for all the modules.
@@ -35,4 +37,12 @@ object Settings {
 	)
 	
 	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings
+	
+	// sbt-buildinfo plugin configuration
+	lazy val sbtBuildInfoSettings = Seq(
+		buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+		//buildInfoOptions += BuildInfoOption.BuildTime,
+		buildInfoPackage := "it.agilelab.bigdata.wasp.core.build",
+		sourceDirectories in Compile += target.value / "/src_managed/main/sbt-buildinfo"
+	)
 }
