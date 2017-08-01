@@ -9,6 +9,7 @@ import Settings.commonSettings
  */
 lazy val core = Project("wasp-core", file("core"))
 	.settings(commonSettings:_*)
+	.settings(libraryDependencies ++= Dependencies.core)
 
 lazy val master = Project("wasp-master", file("master"))
 	.settings(commonSettings:_*)
