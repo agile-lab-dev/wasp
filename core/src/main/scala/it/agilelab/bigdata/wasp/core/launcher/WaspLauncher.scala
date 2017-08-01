@@ -41,8 +41,10 @@ trait WaspLauncher extends ActorSystemInjector /*with LoggerInjector*/ with BSON
 			printUsageAndExit()
 		}
 
-		// print banner if starting anything
-		if (options.startApp || options.startStreamingGuardian|| options.startBatchGuardian) println(banner)
+		// print banner and build info if starting anything
+		if (options.startApp || options.startStreamingGuardian|| options.startBatchGuardian) {
+			printBannerAndBuildInfo()
+		}
 
 		// initialize stuff if starting anything
 		if (options.startApp || options.startStreamingGuardian|| options.startBatchGuardian) {
@@ -70,8 +72,7 @@ trait WaspLauncher extends ActorSystemInjector /*with LoggerInjector*/ with BSON
 		initializeDefaultWorkloads()
 		initializeCustomWorkloads()
 	}
-
-
+	
 	private def printErrorAndExit(message: String): Unit = {
 		println(message)
 		println("Use --help for usage information.")
@@ -79,17 +80,29 @@ trait WaspLauncher extends ActorSystemInjector /*with LoggerInjector*/ with BSON
 	}
 
 	private def printVersionAndExit(): Unit = {
-		println(banner)
-		println("Use --help for more information.")
+		println(s"WASP version $version")
 		System.exit(0)
 	}
 
 	private def printUsageAndExit(): Unit = {
-		println(banner)
 		println(usage)
 		System.exit(0)
 	}
-
+	
+	private def printBannerAndBuildInfo(): Unit = {
+		println(banner)
+		println(
+			s"""Build information:
+				 |  Version         : ${BuildInfo.version}
+				 |  SBT version     : ${BuildInfo.sbtVersion}
+				 |  Scala version   : ${BuildInfo.scalaVersion}
+				 |  JDK version     : ${BuildInfo.jdkVersion}
+				 |  Build time      : ${BuildInfo.builtAtString} (UNIX time)
+				 |  Git commit hash : ${BuildInfo.gitCommitHash}
+				 |  Git work dir    : ${if (BuildInfo.gitWorkDirStatus) "clean" else "dirty"}
+			 """.stripMargin)
+	}
+	
 	private def startApp(args: Array[String]): Unit = {
 		// redirect to play framework entry point
 		//play.core.server.NettyServer.main(Array.empty[String])

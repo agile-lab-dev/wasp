@@ -1,6 +1,6 @@
 import sbt._
 import sbt.Keys._
-import sbtbuildinfo.BuildInfoKey
+import sbtbuildinfo.{BuildInfoKey, BuildInfoOption}
 import sbtbuildinfo.BuildInfoKeys._
 
 /*
@@ -9,6 +9,7 @@ import sbtbuildinfo.BuildInfoKeys._
  * See project/Versions.scala for the versions definitions.
  */
 object Settings {
+	// settings related to project information
 	lazy val projectSettings = Seq(
 		name := "WASP",
 		normalizedName := "wasp",
@@ -18,6 +19,7 @@ object Settings {
 		licenses := Seq(("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 	)
 	
+	// custom resolvers for dependencies
 	lazy val customResolvers = Seq(
 		Resolver.mavenLocal,
 		"gphat" at "https://raw.github.com/gphat/mvn-repo/master/releases/",
@@ -28,6 +30,7 @@ object Settings {
     Resolver.sonatypeRepo("releases")
 	)
 	
+	// base build settings
 	lazy val buildSettings = Seq(
 		resolvers ++= customResolvers,
 		exportJars := true,
@@ -36,13 +39,19 @@ object Settings {
 		scalaVersion := Versions.scala
 	)
 	
+	// common settings for all modules
 	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings
+	
+	// sbt-buildinfo action to get current git commit
+	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") { Process("git rev-parse HEAD").lines.head }
+	
+	// sbt-buildinfo action to get git working directory status
+	val gitWorkDirStatusAction = BuildInfoKey.action[Boolean]("gitWorkDirStatus") { Process("git status --porcelain").lines.isEmpty }
 	
 	// sbt-buildinfo plugin configuration
 	lazy val sbtBuildInfoSettings = Seq(
-		buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-		//buildInfoOptions += BuildInfoOption.BuildTime,
-		buildInfoPackage := "it.agilelab.bigdata.wasp.core.build",
-		sourceDirectories in Compile += target.value / "/src_managed/main/sbt-buildinfo"
+		buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, ("jdkVersion", Versions.jdk), sbtVersion, gitCommitAction, gitWorkDirStatusAction),
+		buildInfoOptions += BuildInfoOption.BuildTime,
+		buildInfoPackage := "it.agilelab.bigdata.wasp.core.build"
 	)
 }
