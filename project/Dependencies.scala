@@ -88,15 +88,14 @@ object Dependencies {
 	// MIT
 	val sparkML = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	// ApacheV2
-	val sparkCatalyst =
-		"org.apache.spark" %% "spark-catalyst" % Versions.spark sparkExclusions
+	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
 	// ApacheV2
 	val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	
 	// TODO verify license
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
-	val solrspark =
-		"it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
+	// TODO misses support for scala 2.11
+	//val solrspark = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	
 	val hbasespark = "org.apache.hbase" % "hbase-spark" % Versions.hbaseSpark
 	val hbasecommond = "org.apache.hbase" % "hbase-common" % Versions.hbaseSpark
@@ -137,9 +136,9 @@ object Dependencies {
 	               akkaSlf4j,
 	               akkaCamel)
 	
-	val spark = Seq(sparkCatalyst)
+	val spark = Seq(sparkSQL)
 	
-	val apachesolr = Seq(solr, solrspark)
+	val apachesolr = Seq(solr/*, solrspark*/)
 	
 	val json = Seq(json4sCore, json4sJackson, json4sNative)
 	
@@ -172,6 +171,7 @@ object Dependencies {
 		    scaldi,
 		    apacheCommonsLang3,
 		    sparkYarn,
+			  sparkSQL,
 		    asynchttpclient,
 		    typesafeConfig)
 	
@@ -184,7 +184,7 @@ object Dependencies {
 		Seq(kafka,
 		    kafkaStreaming,
 		    sparkML,
-		    sparkCatalyst,
+		    spark,
 		    elasticSearchSpark,
 		    camelKafka,
 		    camelWebsocket,
