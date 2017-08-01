@@ -1,29 +1,27 @@
-lazy val commonSettings = Seq(
-	name := "WASP",
-	normalizedName := "wasp",
-	organization := "it.agilelab.bigdata.wasp",
-	organizationHomepage := Some(url("http://www.agilelab.it")),
-	homepage := Some(url("http://www.agilelab.it")),
-	licenses := Seq(("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
-	version := "2.0.0-SNAPSHOT",
-	scalaVersion := "2.11.11"
-)
+import Settings.commonSettings
 
+/*
+ * Main build definition.
+ *
+ * See project/Settings.scala for the settings definitions.
+ * See project/Dependencies.scala for the dependencies definitions.
+ * See project/Versions.scala for the versions definitions.
+ */
 lazy val core = Project("wasp-core", file("core"))
-	.settings(commonSettings)
+	.settings(commonSettings:_*)
 
 lazy val master = Project("wasp-master", file("master"))
-	.settings(commonSettings)
+	.settings(commonSettings:_*)
 
 lazy val producers = Project("wasp-producers", file("producers"))
-	.settings(commonSettings)
+	.settings(commonSettings:_*)
 
 lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark"))
-	.settings(commonSettings)
+	.settings(commonSettings:_*)
 
 lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
-	.settings(commonSettings)
+	.settings(commonSettings:_*)
 
 lazy val wasp = Project("wasp", file("."))
-	.settings(commonSettings)
+	.settings(commonSettings:_*)
 	.aggregate(core, master, producers, consumers_spark, consumers_rt)
