@@ -150,10 +150,10 @@ object Dependencies {
 			typesafeConfig
 		)
 	
+	val producers = akka ++ logging ++ test
+	
 	/*
 	val master = logging ++ time ++ json ++ elastic
-	
-	val wasp_producers = akka ++ logging ++ test
 	
 	val wasp_consumers = json ++ test ++
 		Seq(kafka,
