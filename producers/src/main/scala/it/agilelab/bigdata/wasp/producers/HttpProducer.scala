@@ -1,5 +1,8 @@
 package it.agilelab.bigdata.wasp.producers
 
+// TODO update this for new akka/akka http/akka streams version
+
+/*
 import akka.actor._
 import akka.http.Http
 import akka.http.model.{HttpRequest, HttpResponse}
@@ -89,3 +92,4 @@ abstract class HttpProducer(env: {val producerBL: ProducerBL; val topicBL: Topic
   }
 
 }
+*/
