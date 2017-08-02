@@ -11,8 +11,6 @@ import sbtbuildinfo.BuildInfoKeys._
 object Settings {
 	// settings related to project information
 	lazy val projectSettings = Seq(
-		name := "WASP",
-		normalizedName := "wasp",
 		organization := "it.agilelab.bigdata.wasp",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
