@@ -52,7 +52,7 @@ object Dependencies {
 	val akkaCamel = "com.typesafe.akka" %% "akka-camel" % Versions.akka
 	val akkaCluster = "com.typesafe.akka" %% "akka-cluster" % Versions.akka
 	val akkaContrib = "com.typesafe.akka" %% "akka-contrib" % Versions.akka
-	val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % Versions.akkaHttp
+	val akkaHttp = "com.typesafe.akka" %% "akka-http" % Versions.akkaHttp
 	val akkaRemote = "com.typesafe.akka" %% "akka-remote" % Versions.akka
 	val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Versions.akka
 	val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
@@ -150,7 +150,7 @@ object Dependencies {
 			typesafeConfig
 		)
 	
-	val producers = akka ++ logging ++ test
+	val producers = akka ++ logging ++ test ++ Seq(akkaHttp, akkaStream)
 	
 	/*
 	val master = logging ++ time ++ json ++ elastic
