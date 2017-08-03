@@ -1,18 +1,22 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import java.nio.ByteBuffer
+import java.util
 
 import akka.actor.ActorSystem
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
+import it.agilelab.bigdata.wasp.core.utils.WaspDB._
+import org.bson.codecs.configuration.CodecProvider
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
 import org.mongodb.scala.gridfs.GridFSBucket
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{Document, MongoDatabase}
 
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 trait WaspDB extends MongoDBHelper {
@@ -46,38 +50,6 @@ trait WaspDB extends MongoDBHelper {
 }
 class WaspDBImp(protected val mongoDatabase: MongoDatabase) extends WaspDB   {
 
-
-  val pipegraphsName = "pipegraphs"
-  val producersName = "producers"
-  val topicsName = "topics"
-  val indexesName = "indexes"
-  val rawName = "raw"
-  val keyValueName = "keyvalues"
-  val batchjobName = "batchjobs"
-  val configurationsName = "configurations"
-  val mlModelsName = "mlmodels"
-  val websocketsName = "websockets"
-  val batchSchedulersName = "batchschedulers"
-
-
-  private lazy val lookupTable: Map[Type, String] = Map(
-    typeTag[PipegraphModel].tpe ->  pipegraphsName,
-    typeTag[ProducerModel].tpe -> producersName,
-    typeTag[TopicModel].tpe -> topicsName,
-    typeTag[IndexModel].tpe -> indexesName,
-    typeTag[RawModel].tpe -> rawName,
-    typeTag[KeyValueModel].tpe -> keyValueName,
-    typeTag[BatchJobModel].tpe -> batchjobName,
-    typeTag[MlModelOnlyInfo].tpe -> mlModelsName,
-    typeTag[KafkaConfigModel].tpe -> configurationsName,
-    typeTag[SparkBatchConfigModel].tpe -> configurationsName,
-    typeTag[SparkStreamingConfigModel].tpe -> configurationsName,
-    typeTag[ElasticConfigModel].tpe -> configurationsName,
-    typeTag[SolrConfigModel].tpe -> configurationsName,
-    typeTag[WebsocketModel].tpe -> websocketsName,
-    typeTag[BatchSchedulerModel].tpe -> batchSchedulersName
-  )
-  
 
   def initializeCollections() {
     createCollection(pipegraphsName)
@@ -179,6 +151,60 @@ object WaspDB {
   private var waspDB: WaspDB = _
 
 
+  val pipegraphsName = "pipegraphs"
+  val producersName = "producers"
+  val topicsName = "topics"
+  val indexesName = "indexes"
+  val rawName = "raw"
+  val keyValueName = "keyvalues"
+  val batchjobName = "batchjobs"
+  val configurationsName = "configurations"
+  val mlModelsName = "mlmodels"
+  val websocketsName = "websockets"
+  val batchSchedulersName = "batchschedulers"
+
+
+  val lookupTable: Map[Type, String] = Map(
+    typeTag[PipegraphModel].tpe ->  pipegraphsName,
+    typeTag[ProducerModel].tpe -> producersName,
+    typeTag[TopicModel].tpe -> topicsName,
+    typeTag[IndexModel].tpe -> indexesName,
+    typeTag[RawModel].tpe -> rawName,
+    typeTag[KeyValueModel].tpe -> keyValueName,
+    typeTag[BatchJobModel].tpe -> batchjobName,
+    typeTag[MlModelOnlyInfo].tpe -> mlModelsName,
+    typeTag[KafkaConfigModel].tpe -> configurationsName,
+    typeTag[SparkBatchConfigModel].tpe -> configurationsName,
+    typeTag[SparkStreamingConfigModel].tpe -> configurationsName,
+    typeTag[ElasticConfigModel].tpe -> configurationsName,
+    typeTag[SolrConfigModel].tpe -> configurationsName,
+    typeTag[WebsocketModel].tpe -> websocketsName,
+    typeTag[BatchSchedulerModel].tpe -> batchSchedulersName
+  )
+  import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+  import org.bson.codecs.configuration.CodecRegistries.{ fromRegistries, fromProviders }
+  import scala.collection.JavaConverters._
+  import org.mongodb.scala.bson.codecs.Macros._
+
+  private lazy val codecRegisters: java.util.List[CodecProvider] = List(
+    createCodecProvider(classOf[PipegraphModel]),
+    createCodecProvider(classOf[ProducerModel]),
+    createCodecProvider(classOf[TopicModel]),
+    createCodecProvider(classOf[IndexModel]),
+    createCodecProvider(classOf[RawModel]),
+    createCodecProvider(classOf[KeyValueModel]),
+    createCodecProvider(classOf[BatchJobModel]),
+    createCodecProvider(classOf[MlModelOnlyInfo]),
+    createCodecProvider(classOf[KafkaConfigModel]),
+    createCodecProvider(classOf[SparkBatchConfigModel]),
+    createCodecProvider(classOf[SparkStreamingConfigModel]),
+    createCodecProvider(classOf[ElasticConfigModel]),
+    createCodecProvider(classOf[SolrConfigModel]),
+    createCodecProvider(classOf[WebsocketModel]),
+    createCodecProvider(classOf[BatchSchedulerModel])
+  ).asJava
+
+
   def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel, actorSystem: ActorSystem): MongoDatabase = {
      val mongoDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
     mongoDatabase.listCollectionNames().results()
@@ -200,7 +226,10 @@ object WaspDB {
     val mongoDBConfig = ConfigManager.getMongoDBConfig
     log.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
     assert(actorSystem != null)
-    val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig, actorSystem)
+
+    val codecRegistry = fromRegistries(fromProviders(codecRegisters), DEFAULT_CODEC_REGISTRY)
+
+    val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig, actorSystem).withCodecRegistry(codecRegistry)
     /*val primaryNode = connection.wait()
     val primaryNodeReady = Await.ready(primaryNode, 6.second)
     println(primaryNodeReady.value)

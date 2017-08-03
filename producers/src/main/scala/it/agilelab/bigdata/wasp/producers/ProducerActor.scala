@@ -5,8 +5,8 @@ import it.agilelab.bigdata.wasp.core.SystemPipegraphs._
 import it.agilelab.bigdata.wasp.core.WaspEvent.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, BSONFormats, JsonToByteArrayUtil}
-import reactivemongo.bson.BSONDocument
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, JsonToByteArrayUtil}
+import org.mongodb.scala.bson.BsonDocument
 
 case object StopMainTask
 
@@ -30,9 +30,9 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   //TODO occhio che abbiamo la partition key schianatata, quindi usiamo sempre e solo una partizione
   val partitionKey = "partitionKey"
 
-  val rawTopicSchema = BSONFormats.toString(rawTopic.schema.getOrElse(BSONDocument()))
+  val rawTopicSchema = JsonConverter.toString(rawTopic.schema.getOrElse(BsonDocument()))
   lazy val topicSchemaType = topic.get.topicDataType
-  lazy val topicSchema = BSONFormats.toString(topic.get.schema.getOrElse(BSONDocument()))
+  lazy val topicSchema = JsonConverter.toString(topic.get.schema.getOrElse(BsonDocument()))
 
   override def postStop() {
     log.info(s"Stopping actor ${this.getClass.getName}")

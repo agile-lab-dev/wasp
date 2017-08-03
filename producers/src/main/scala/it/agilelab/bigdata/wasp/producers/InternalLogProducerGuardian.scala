@@ -52,23 +52,20 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
   
   override def initialize(): Unit = {
     
-    val producerFuture = env.producerBL.getByName(name)
+    val producerOption = env.producerBL.getByName(name)
     
     val kafkaConfig = ConfigManager.getKafkaConfig
     
-    producerFuture map {
-      p => {
-        if (p.isDefined) {
-          producer = p.get
+      if (producerOption.isDefined) {
+          producer = producerOption.get
           if (producer.hasOutput) {
-            val topicFuture = env.producerBL.getTopic(topicBL = env.topicBL, producer)
-            topicFuture map {
-              topic => {
-                associatedTopic = topic
-                logger.info(s"Topic found  $topic")
-                if (??[Boolean](WaspSystem.getKafkaAdminActor, CheckOrCreateTopic(topic.get.name, topic.get.partitions, topic.get.replicas))) {
+            val topicOption = env.producerBL.getTopic(topicBL = env.topicBL, producer)
+
+                associatedTopic = topicOption
+                logger.info(s"Topic found  $topicOption")
+                if (??[Boolean](WaspSystem.getKafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))) {
                   logger.info("Before run kafka_router")
-                  router_name = s"kafka-ingestion-router-$name-${producer._id.get.stringify}-${System.currentTimeMillis()}"
+                  router_name = s"kafka-ingestion-router-$name-${producer._id.get.asString()}-${System.currentTimeMillis()}"
                   kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
                   logger.info("After run kafka_router")
                   context become initialized
@@ -76,20 +73,17 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
                   
                   env.producerBL.setIsActive(producer, isActive = true)
                 } else {
-                  logger.error("Error creating topic " + topic.get.name)
+                  logger.error("Error creating topic " + topicOption.get.name)
                 }
                 
-              }
-            }
+
           } else {
             logger.warn("This producer hasn't associated topic")
           }
         } else {
           logger.error("Unable to fecth producer")
         }
-      }
-      
-    }
+
     
   }
 
