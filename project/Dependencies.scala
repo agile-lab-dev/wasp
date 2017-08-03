@@ -82,6 +82,7 @@ object Dependencies {
 	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % "2.8.2" // TODO remove
 	val log4jSl4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.8.2" // TODO remove
 	val metrics = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
+	val mongodbJava = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
 	val playcore = "com.typesafe.play" %% "play" % Versions.play // TODO remove
 	val playws = "com.typesafe.play" %% "play-ws" % Versions.play // TODO remove
 	val playcache = "com.typesafe.play" %% "play-cache" % Versions.play // TODO remove
@@ -135,6 +136,7 @@ object Dependencies {
 	// ===================================================================================================================
 	// Module dependencies
 	// ===================================================================================================================
+<<<<<<< Updated upstream
 	val core = akka ++
 		logging ++
 		time ++
@@ -154,6 +156,25 @@ object Dependencies {
 	
 	/*
 	val master = logging ++ time ++ json ++ elastic
+=======
+	val core = akka ++ logging ++ time ++ test ++ elastic ++ apachesolr ++
+		Seq(avro,
+			mongodbJava,
+		    kafka,
+		    playjson,
+		    playws,
+		    scaldi,
+		    apacheCommonsLang3,
+		    sparkYarn,
+			  sparkSQL,
+		    asynchttpclient,
+		    typesafeConfig)
+	
+	val master = play ++ logging ++ time ++ json ++ elastic
+	
+	val wasp_producers = akka ++ logging ++ test ++
+		Seq(playws)
+>>>>>>> Stashed changes
 	
 	val wasp_consumers = json ++ test ++
 		Seq(kafka,

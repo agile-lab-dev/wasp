@@ -1,36 +1,29 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{BSONConversionHelper, BatchSchedulerModel}
+import it.agilelab.bigdata.wasp.core.models.BatchSchedulerModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import reactivemongo.bson.{BSONBoolean, BSONObjectID}
-import reactivemongo.api.commands.WriteResult
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import org.bson.BsonBoolean
+import org.mongodb.scala.bson.BsonObjectId
 
 trait BatchSchedulersBL {
-  def getActiveSchedulers(isActive: Boolean = true): Future[List[BatchSchedulerModel]]
+  def getActiveSchedulers(isActive: Boolean = true): Seq[BatchSchedulerModel]
 
-  def getById(id: String): Future[Option[BatchSchedulerModel]]
+  def getById(id: String): Option[BatchSchedulerModel]
 
-  def persist(schedulerModel: BatchSchedulerModel): Future[WriteResult]
+  def persist(schedulerModel: BatchSchedulerModel): Unit
 
 }
-class BatchSchedulersBLImp(waspDB: WaspDB) extends BatchSchedulersBL with BSONConversionHelper {
+class BatchSchedulersBLImp(waspDB: WaspDB) extends BatchSchedulersBL  {
   private def factory(t: BatchSchedulerModel) = new BatchSchedulerModel(t.name, t.quartzUri, t.batchJob,
                                                                         t.options, t.isActive, t._id)
 
   def getActiveSchedulers(isActive: Boolean = true) = {
-    waspDB.getAllDocumentsByField[BatchSchedulerModel]("isActive", new BSONBoolean(isActive)).map(scheduler => {
-      scheduler.map(p => factory(p))
-    })
+    waspDB.getAllDocumentsByField[BatchSchedulerModel]("isActive", new BsonBoolean(isActive)).map(factory(_))
   }
 
   def getById(id: String) = {
-    waspDB.getDocumentByID[BatchSchedulerModel](BSONObjectID(id)).map(scheduler => {
-      scheduler.map(p => factory(p))
-    })
+    waspDB.getDocumentByID[BatchSchedulerModel](BsonObjectId(id)).map(factory)
   }
 
-  override def persist(schedulerModel: BatchSchedulerModel): Future[WriteResult] = waspDB.insert[BatchSchedulerModel](schedulerModel)
+  override def persist(schedulerModel: BatchSchedulerModel): Unit = waspDB.insert[BatchSchedulerModel](schedulerModel)
 }

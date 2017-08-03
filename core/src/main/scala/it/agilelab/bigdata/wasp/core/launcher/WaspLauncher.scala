@@ -9,7 +9,7 @@ import it.agilelab.bigdata.wasp.core.logging.LoggerInjector
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ActorSystemInjector, ConfigManager, WaspDB}
 
-trait WaspLauncher extends ActorSystemInjector /*with LoggerInjector*/ with BSONConversionHelper {
+trait WaspLauncher extends ActorSystemInjector  {
 	//override def loggerActorProps : Props = Props.create(classOf[InternalLogProducerGuardian], ConfigBL)
 
 	val version = BuildInfo.version // BuildInfo is generated at compile time by sbt-buildinfo plugin

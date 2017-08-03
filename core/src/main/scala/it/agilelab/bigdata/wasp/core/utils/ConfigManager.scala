@@ -4,22 +4,23 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import it.agilelab.bigdata.wasp.core.models.BSONConversionHelper
-
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.runtime.universe.TypeTag
-import reactivemongo.api.commands._
-import com.typesafe.config.{ConfigObject, ConfigValue, ConfigFactory, Config}
+import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+
 import scala.collection.JavaConverters._
 import java.net.URI
 import java.util.Map.Entry
-import reactivemongo.bson.{BSONDocumentReader, BSONDocumentWriter, BSONString}
-import it.agilelab.bigdata.wasp.core.models.configuration._
 
-object ConfigManager extends BSONConversionHelper {
+import it.agilelab.bigdata.wasp.core.models.configuration._
+import org.bson.BsonString
+
+import scala.reflect.ClassTag
+
+object ConfigManager {
   var conf: Config = ConfigFactory.load
 
   val kafkaConfigName = "Kafka"
@@ -267,23 +268,18 @@ object ConfigManager extends BSONConversionHelper {
     * Read the configuration with the specified name from MongoDB or, if it is not present, initialize
     * it with the provided defaults.
 		*/
-  private def retrieveConf[T](default: T, nameConf: String)(
-      implicit typeTag: TypeTag[T],
-      swriter: BSONDocumentWriter[T],
-      sreader: BSONDocumentReader[T]): Option[T] = {
+  private def retrieveConf[T](default: T, nameConf: String)(implicit ct: ClassTag[T]): Option[T] = {
     val document =
-      WaspDB.getDB.getDocumentByField[T]("name", new BSONString(nameConf))
-    val awaitedDoc = Await.result(document, 5.seconds)
+      WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
 
     //val result = document.flatMap(x => if (x.isEmpty) insert[T](default).map { x => Some(default) } else future { Some(default) })
     // A few more line of code but now is working as intended.
-    if (awaitedDoc.isEmpty) {
+    if (document.isEmpty) {
       WaspDB.getDB
         .insert[T](default)
-        .map(e => println(WriteResult.lastError(e).flatMap(_.errmsg)))
       Some(default)
     } else {
-      awaitedDoc
+      document
     }
   }
 

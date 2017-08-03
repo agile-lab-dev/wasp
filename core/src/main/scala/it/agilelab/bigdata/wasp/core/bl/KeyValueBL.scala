@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{BSONConversionHelper, KeyValueModel, RawModel}
+import it.agilelab.bigdata.wasp.core.models.KeyValueModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import reactivemongo.bson.{BSONObjectID, BSONString}
-import reactivemongo.api.commands.WriteResult
+import org.bson.BsonString
+import org.mongodb.scala.bson.BsonObjectId
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,28 +11,28 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait KeyValueBL {
 
-	def getByName(name: String): Future[Option[KeyValueModel]]
+	def getByName(name: String): Option[KeyValueModel]
 
-	def getById(id: String): Future[Option[KeyValueModel]]
+	def getById(id: String): Option[KeyValueModel]
 
-	def persist(rawModel: KeyValueModel): Future[WriteResult]
+	def persist(rawModel: KeyValueModel): Unit
 }
 
-class KeyValueBLImp(waspDB: WaspDB) extends KeyValueBL with BSONConversionHelper {
+class KeyValueBLImp(waspDB: WaspDB) extends KeyValueBL {
 	
-	private def factory(t: KeyValueModel) = new KeyValueModel(t.name, t.schema, t.dataFrameSchema, t.avroSchemas)
+	private def factory(t: KeyValueModel) = KeyValueModel(t.name, t.schema, t.dataFrameSchema, t.avroSchemas)
 	
 	def getByName(name: String) = {
-		waspDB.getDocumentByField[KeyValueModel]("name", new BSONString(name)).map(index => {
-			index.map(p => factory(p))
+		waspDB.getDocumentByField[KeyValueModel]("name", new BsonString(name)).map(index => {
+			factory(index)
 		})
 	}
 	
 	def getById(id: String) = {
-		waspDB.getDocumentByID[KeyValueModel](BSONObjectID(id)).map(Index => {
-			Index.map(p => factory(p))
+		waspDB.getDocumentByID[KeyValueModel](BsonObjectId(id)).map(index => {
+			factory(index)
 		})
 	}
 	
-	override def persist(rawModel: KeyValueModel): Future[WriteResult] = waspDB.insert[KeyValueModel](rawModel)
+	override def persist(rawModel: KeyValueModel): Unit = waspDB.insert[KeyValueModel](rawModel)
 }

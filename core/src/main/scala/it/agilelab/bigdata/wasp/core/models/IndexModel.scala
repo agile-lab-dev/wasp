@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString}
 
 object IndexModel {
   val readerType = "index"
@@ -36,8 +36,8 @@ object IndexModel {
 
 case class IndexModel(override val name: String,
                       creationTime: Long,
-                      schema: Option[BSONDocument],
-                      _id: Option[BSONObjectID] = None,
+                      schema: Option[BsonDocument],
+                      _id: Option[BsonObjectId] = None,
                       query: Option[String] = None,
                       numShards: Option[Int] = Some(1),
                       replicationFactor: Option[Int] = Some(1))
@@ -47,13 +47,14 @@ case class IndexModel(override val name: String,
 
   def collection = s"${ConfigManager.buildTimedName(name)}"
 
+  //TODO Verify if the code conversion is right
   def dataType =
     schema
       .map(
           bson =>
-            bson.elements.headOption
-              .getOrElse(("undefined", BSONString("undefined")))
-              ._1)
+            bson.values().toArray.headOption
+              .getOrElse(("undefined", BsonString("undefined")))
+      )
       .getOrElse("undefined")
 
 }

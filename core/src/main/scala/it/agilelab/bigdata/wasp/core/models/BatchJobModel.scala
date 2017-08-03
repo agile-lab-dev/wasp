@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import reactivemongo.bson.BSONObjectID
+import org.mongodb.scala.bson.BsonObjectId
 
 object JobStateEnum extends Enumeration {
   type JobState = Value
@@ -20,7 +20,7 @@ case class BatchJobModel(
                           creationTime: Long,
                           etl: ETLModel,
                           var state: String,
-                          _id: Option[BSONObjectID] = None
+                          _id: Option[BsonObjectId] = None
                           ) extends Model {
 
 }

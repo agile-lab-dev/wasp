@@ -1,13 +1,10 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{BSONConversionHelper, MlModelOnlyInfo}
+import it.agilelab.bigdata.wasp.core.models.{MlModelOnlyInfo}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.commons.lang3.SerializationUtils
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString, BsonValue}
 import play.api.libs.iteratee.Enumerator
-import reactivemongo.api.gridfs._
-import reactivemongo.bson._
-import reactivemongo.api.commands._
-import reactivemongo.api.BSONSerializationPack
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -22,7 +19,7 @@ trait MlModelBL {
     * @param id BSON Object Id of the model
    * @return info of the model
    */
-  def getById(id: String): Future[Option[MlModelOnlyInfo]]
+  def getById(id: String): Option[MlModelOnlyInfo]
 
   /**
    * Find the most recent model with this name and version
@@ -31,7 +28,7 @@ trait MlModelBL {
    * @param version model version
    * @return info of the model
    */
-  def getMlModelOnlyInfo(name: String, version: String): Future[Option[MlModelOnlyInfo]]
+  def getMlModelOnlyInfo(name: String, version: String): Option[MlModelOnlyInfo]
 
   /**
    * Find a precise model that is identify by name, version and timestamp
@@ -41,14 +38,14 @@ trait MlModelBL {
    * @param timestamp
    * @return
    */
-  def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Future[Option[MlModelOnlyInfo]]
+  def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Option[MlModelOnlyInfo]
 
   /**
    * Get all model saved
     *
     * @return
    */
-  def getAll: Future[List[MlModelOnlyInfo]]
+  def getAll: Seq[MlModelOnlyInfo]
 
   /**
    * Get an Enumerator with the model already deserialized
@@ -57,7 +54,7 @@ trait MlModelBL {
     * @param mlModelOnlyInfo All the metadata about the model with the modelFileId initialized
    * @return
    */
-  def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Future[Option[Enumerator[Any]]]
+  def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any]
 
   /**
    * Persist only the metadata about the model
@@ -65,7 +62,7 @@ trait MlModelBL {
     * @param mlModelOnlyInfo
    * @return
    */
-  def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Future[WriteResult]
+  def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit
 
   /**
    * Persist the transformer model
@@ -76,7 +73,7 @@ trait MlModelBL {
    * @param timestamp
    * @return the id of the model
    */
-  def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): Future[BSONObjectID]
+  def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId
 
   /**
    * Delete the metadata and the transformer model
@@ -84,7 +81,7 @@ trait MlModelBL {
     * @param id The id of the metadata document content
    * @return
    */
-  def delete(id: String): Future[Option[WriteResult]]
+  def delete(id: String): Unit
 
   /**
    * Delete the metadata and the transformer model in base to name, version, timestamp
@@ -94,7 +91,7 @@ trait MlModelBL {
    * @param timestamp
    * @return
    */
-  def delete(name: String, version: String, timestamp: Long): Future[Option[WriteResult]]
+  def delete(name: String, version: String, timestamp: Long): Unit
 
   /**
    * Update only the metadata about the model
@@ -102,7 +99,7 @@ trait MlModelBL {
     * @param mlModelOnlyInfo
    * @return
    */
-  def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Future[WriteResult]
+  def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit
 
 }
 
@@ -113,92 +110,88 @@ trait MlModelBL {
  * The keys to identify one metadata is _id or name, version, timestamp
  * The key to identify one model is _id that match with modelFileId in metadata object
  */
-class MlModelBLImp(waspDB: WaspDB) extends MlModelBL with BSONConversionHelper {
+class MlModelBLImp(waspDB: WaspDB) extends MlModelBL {
 
 
-  def getMlModelOnlyInfo(name: String, version: String): Future[Option[MlModelOnlyInfo]] = {
+  def getMlModelOnlyInfo(name: String, version: String): Option[MlModelOnlyInfo] = {
 
     getMlModelOnlyInfo(Map(
-      "name" -> new BSONString(name),
-      "version" -> new BSONString(version),
-      "$orderby" -> BSONDocument(Map(
-        "timestamp" -> new BSONLong(-1)
+      "name" -> new BsonString(name),
+      "version" -> new BsonString(version),
+      "$orderby" -> BsonDocument(Map(
+        "timestamp" -> new BsonInt64(-1)
       ))
     ))
   }
 
-  def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Future[Option[MlModelOnlyInfo]] = {
+  def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Option[MlModelOnlyInfo] = {
 
     getMlModelOnlyInfo(Map(
-      "name" -> new BSONString(name),
-      "version" -> new BSONString(version),
-      "timestamp" -> BSONTimestamp(timestamp)
+      "name" -> BsonString(name),
+      "version" -> BsonString(version),
+      "timestamp" -> BsonInt64(timestamp)
     ))
   }
 
-  private def getMlModelOnlyInfo(queryParams: Map[String, BSONValue]): Future[Option[MlModelOnlyInfo]] = {
+  private def getMlModelOnlyInfo(queryParams: Map[String, BsonValue]): Option[MlModelOnlyInfo] = {
     waspDB.getDocumentByQueryParams[MlModelOnlyInfo](queryParams)
   }
 
-  override def getAll: Future[List[MlModelOnlyInfo]] = {
-    waspDB.getAll[MlModelOnlyInfo]
+  override def getAll: Seq[MlModelOnlyInfo] = {
+    waspDB.getAll[MlModelOnlyInfo]()
   }
-  def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Future[Option[Enumerator[Any]]] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
+
+  /**
+    * Pay attention this method could not working
+    * @param mlModelOnlyInfo All the metadata about the model with the modelFileId initialized
+    * @return
+    */
+  def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any] = {
     if (mlModelOnlyInfo.modelFileId.isDefined) {
       val futureGridFsFile = waspDB.getFileByID(mlModelOnlyInfo.modelFileId.get)
-
-      futureGridFsFile.map(fileOpt => {
-        fileOpt.map((file: ReadFile[BSONSerializationPack.type, BSONValue]) => {
-          waspDB.enumerateFile(file).map(enumerateArrayBytes => {
-            SerializationUtils.deserialize[Any](enumerateArrayBytes)
-          })
-        })
-      })
+      Some(SerializationUtils.deserialize[Any](futureGridFsFile))
     } else {
-      Future.apply(None)
+      None
     }
   }
-  def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Future[WriteResult] = {
+  def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
     waspDB.insert(mlModelOnlyInfo)
   }
-  def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): Future[BSONObjectID] = {
+  def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId = {
     val serialized = SerializationUtils.serialize(transformerModel)
     val contentType = "application/octet-stream"
-    val fileToSave = DefaultFileToSave(s"$name-$version-$timestamp", Some(contentType))
-    waspDB.saveFile(serialized, fileToSave).map(fileSaved => fileSaved.id.asInstanceOf[BSONObjectID])
+    val metadata = BsonDocument(Map("contentType" -> BsonString(contentType)))
+    waspDB.saveFile(serialized, s"$name-$version-$timestamp", metadata)
   }
 
-  override def getById(id: String): Future[Option[MlModelOnlyInfo]] = waspDB.getDocumentByID[MlModelOnlyInfo](BSONObjectID(id))
+  override def getById(id: String): Option[MlModelOnlyInfo] = waspDB.getDocumentByID[MlModelOnlyInfo](BsonObjectId(id))
 
-  override def delete(id: String): Future[Option[WriteResult]] = {
-    val infoOptFuture = waspDB.getDocumentByID[MlModelOnlyInfo](BSONObjectID(id))
-      infoOptFuture.flatMap {
-        case Some(info)  =>
-          if(info.modelFileId.isDefined) {
-              waspDB.deleteById[MlModelOnlyInfo](info._id.get)
-              waspDB.deleteFileById(info.modelFileId.get).map(Some(_))
-            }
-          else{
-            waspDB.deleteById[MlModelOnlyInfo](info._id.get).map(Some(_))
-          }
-        case None => Future(None)
-      }
-  }
 
-  override def delete(name: String, version: String, timestamp: Long): Future[Option[WriteResult]] = {
-    val infoOptFuture = getMlModelOnlyInfo(name, version, timestamp)
-    infoOptFuture.flatMap {
-      case Some(info)  =>
+  override def delete(id: String): Unit = {
+    //TODO Enforce the not deleted model logging
+    val infoOptFuture: Option[MlModelOnlyInfo] = waspDB.getDocumentByID[MlModelOnlyInfo](BsonObjectId(id))
+      infoOptFuture.foreach(info => {
         if(info.modelFileId.isDefined) {
           waspDB.deleteById[MlModelOnlyInfo](info._id.get)
-          waspDB.deleteFileById(info.modelFileId.get).map(Some(_))
+          waspDB.deleteFileById(info.modelFileId.get)
         }
-        else {
-          waspDB.deleteById[MlModelOnlyInfo](info._id.get).map(Some(_))
+        else{
+          waspDB.deleteById[MlModelOnlyInfo](info._id.get)
         }
-      case None => Future(None)
-    }
+      })
+  }
+
+  override def delete(name: String, version: String, timestamp: Long): Unit = {
+    val infoOptFuture: Option[MlModelOnlyInfo] = getMlModelOnlyInfo(name, version, timestamp)
+    infoOptFuture.foreach(info => {
+      if(info.modelFileId.isDefined) {
+        waspDB.deleteById[MlModelOnlyInfo](info._id.get)
+        waspDB.deleteFileById(info.modelFileId.get)
+      }
+      else{
+        waspDB.deleteById[MlModelOnlyInfo](info._id.get)
+      }
+    })
   }
 
   def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo) = {
