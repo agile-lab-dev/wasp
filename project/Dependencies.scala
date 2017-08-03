@@ -110,17 +110,20 @@ object Dependencies {
 		akkaSlf4j
 	)
 	
-	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
-	
 	val apachesolr = Seq(solr/*, solrspark*/)
+	
+	val elastic = Seq(elasticSearch)
+	
+	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer, hbaseSpark)
 	
 	val json = Seq(json4sCore, json4sJackson, json4sNative)
 	
 	val logging = Seq(slf4jApi)
 	
+	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
+	
 	val time = Seq(jodaConvert, jodaTime)
 	
-	val elastic = Seq(elasticSearch)
 	
 	// ===================================================================================================================
 	// Test dependencies
@@ -150,7 +153,18 @@ object Dependencies {
 			typesafeConfig
 		)
 	
-	val producers = akka ++ logging ++ test ++ Seq(akkaHttp, akkaStream)
+	val producers = akka ++ logging ++ test ++
+		Seq(
+			akkaHttp,
+			akkaStream
+		)
+	
+	val consumers_spark = json ++ test ++ spark ++ hbase ++
+		Seq(
+			kafka,
+			kafkaStreaming,
+			elasticSearchSpark
+		)
 	
 	/*
 	val master = logging ++ time ++ json ++ elastic
