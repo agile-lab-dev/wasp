@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, BatchSchedulerModel, JobStateEnum}
 import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
-import reactivemongo.bson.BSONObjectID
+import org.mongodb.scala.bson.BsonObjectId
 import org.quartz.Scheduler
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -185,36 +185,30 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     }
   }
 
-  private def loadBatchJobs: List[BatchJobModel] = {
+  private def loadBatchJobs: Seq[BatchJobModel] = {
     logger.info(s"Loading all batch jobs ...")
-    val batchJobs  = env.batchJobBL.getPendingJobs()
-    val batchJobEntries: List[BatchJobModel] = Await.result(batchJobs, timeout.duration)
+    val batchJobEntries  = env.batchJobBL.getPendingJobs()
     logger.info(s"Found ${batchJobEntries.length} pending batch jobs...")
 
     batchJobEntries
-
   }
 
-  private def loadSchedulers: List[BatchSchedulerModel] = {
-    logger.info(s"Loading all batch schedulers ...")
-    val schedulers  = env.batchSchedulerBL.getActiveSchedulers()
-    val schedulersEntries: List[BatchSchedulerModel] = Await.result(schedulers, timeout.duration)
-    logger.info(s"Found ${schedulersEntries.length} active schedulers...")
-
-    schedulersEntries
+  private def loadSchedules: Seq[BatchSchedulerModel] = {
+    logger.info(s"Loading all batch schedules ...")
+    val schedules  = env.batchSchedulerBL.getActiveSchedulers()
+    logger.info(s"Found ${schedules.length} active schedules...")
+  
+    schedules
   }
 
   //TODO: duplicato in BatchJobActor -> Rendere utility? Check esistenza id in BL?
-  private def changeBatchState(id: BSONObjectID, newState: String): Unit =
+  private def changeBatchState(id: BsonObjectId, newState: String): Unit =
   {
-    val jobFut = env.batchJobBL.getById(id.stringify)
-    val job: Option[BatchJobModel] = Await.result(jobFut, timeout.duration)
+    val job = env.batchJobBL.getById(id.getValue.toHexString)
     job match {
       case Some(jobModel) => env.batchJobBL.setJobState(jobModel, newState)
       case None => logger.error("BatchEndedMessage with invalid id found.")
     }
 
   }
-
-
 }
