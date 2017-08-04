@@ -88,6 +88,7 @@ object Dependencies {
 	val playcache = "com.typesafe.play" %% "play-cache" % Versions.play // TODO remove
 	val playjson = "com.typesafe.play" %% "play-json" % Versions.play // TODO remove
 	val playserver = "com.typesafe.play" %% "play-netty-server" % Versions.play // TODO remove
+	val quartz = "org.quartz-scheduler" % "quartz" % Versions.quartz
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
@@ -157,9 +158,10 @@ object Dependencies {
 	
 	val consumers_spark = json ++ test ++ spark ++ hbase ++
 		Seq(
+			elasticSearchSpark,
 			kafka,
 			kafkaStreaming,
-			elasticSearchSpark
+			quartz
 		)
 	/*
 	val master = logging ++ time ++ json ++ elastic

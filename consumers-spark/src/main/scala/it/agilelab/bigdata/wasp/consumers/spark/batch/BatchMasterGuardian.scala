@@ -1,19 +1,20 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
-import akka.actor._
+import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.consumers.spark.{CamelQuartz2Scheduler, SparkHolder}
+import it.agilelab.bigdata.wasp.consumers.spark.SparkHolder
+import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.core.WaspMessage
-import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, BatchSchedulerModel, JobStateEnum}
 import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
 import reactivemongo.bson.BSONObjectID
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.quartz.Scheduler
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -27,12 +28,16 @@ case class StartSchedulersMessage() extends WaspMessage
 
 object BatchMasterGuardian {
   val name = "BatchMasterGuardian"
+  
+  // quartz2 scheduler for batch jobs
+  val scheduler: Scheduler = buildScheduler()
 }
 
 class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL;  val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL; val batchSchedulerBL: BatchSchedulersBL},
                           val classLoader: Option[ClassLoader] = None,
                           sparkWriterFactory: SparkWriterFactory)
   extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration {
+  import BatchMasterGuardian._
 
   val logger = WaspLogger(this.getClass.getName)
 
@@ -145,22 +150,25 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   private def startSchedulerActors(): Unit = {
-    val schedulers = loadSchedulers
-
-    if(schedulers.isEmpty) {
-        logger.info("There are no active batch schedulers")
-      } else {
-      logger.info(s"${schedulers.length}Batch schedulers to be activated")
+    val schedules = loadSchedules
+    
+    if(schedules.isEmpty) {
+      logger.info("There are no active batch schedulers")
+    } else {
+      val batchMasterGuardianActorPath = self.path.toStringWithAddress(self.path.address)
+      logger.info(s"Found ${schedules.length} batch schedules to be activated")
       //TODO salvo una lista degli scheduler per gestioni successive? (e.g. stop scheduling...?)
-      schedulers.foreach(scheduler =>
-        context.actorOf(Props(new CamelQuartz2Scheduler(self,scheduler))))
+      schedules foreach {
+        schedule => {
+          scheduler.scheduleJob(schedule.getQuartzJob(batchMasterGuardianActorPath), schedule.getQuartzTrigger)
+        }
+      }
     }
   }
 
   private def startJob(id: String): Boolean = {
     //TODO: cambiare tutti stati stringa in enum.Value
-    val jobFut: Future[Option[BatchJobModel]] = env.batchJobBL.getById(id)
-    val job : Option[BatchJobModel] = Await.result(jobFut, timeout.duration)
+    val job: Option[BatchJobModel] = env.batchJobBL.getById(id)
     logger.info(s"Job that will be processed, job: $job")
     job match {
       case Some(element) =>

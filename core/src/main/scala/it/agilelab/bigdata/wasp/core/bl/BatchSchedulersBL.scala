@@ -14,7 +14,7 @@ trait BatchSchedulersBL {
 
 }
 class BatchSchedulersBLImp(waspDB: WaspDB) extends BatchSchedulersBL  {
-  private def factory(t: BatchSchedulerModel) = new BatchSchedulerModel(t.name, t.quartzUri, t.batchJob,
+  private def factory(t: BatchSchedulerModel) = new BatchSchedulerModel(t.name, t.cronExpression, t.batchJob,
                                                                         t.options, t.isActive, t._id)
 
   def getActiveSchedulers(isActive: Boolean = true) = {
