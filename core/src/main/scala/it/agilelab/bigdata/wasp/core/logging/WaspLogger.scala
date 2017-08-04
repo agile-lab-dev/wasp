@@ -1,20 +1,9 @@
 package it.agilelab.bigdata.wasp.core.logging
 
-import org.slf4j.Logger
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.slf4j.spi.LocationAwareLogger
-
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.event.Logging.Debug
-import akka.event.Logging.Error
-import akka.event.Logging.Info
-import akka.event.Logging.InitializeLogger
-import akka.event.Logging.LoggerInitialized
-import akka.event.Logging.Warning
-import akka.event.slf4j.Slf4jLogger
+import akka.event.slf4j.Logger
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import org.slf4j.spi.LocationAwareLogger._
+import org.slf4j.{Logger, LoggerFactory}
 
 object WaspLogger {
 
@@ -37,8 +26,6 @@ object WaspLogger {
   }
 
   private def logger(slf4jLogger: Logger): WaspLogger = slf4jLogger match {
-    case locationAwareLogger: LocationAwareLogger =>
-      new WaspDefaultLocationAwareLogger(locationAwareLogger)
     case _ =>
       new WaspDefaultLogger(slf4jLogger)
   }
@@ -50,12 +37,9 @@ object WaspLogger {
  */
 trait WaspLogger extends {
 
-  import LocationAwareLogger.{ERROR_INT, WARN_INT, INFO_INT, DEBUG_INT, TRACE_INT}
 
-
+  protected val slf4jLogger: Logger = LoggerFactory.getLogger(getClass)
   val loggerName = slf4jLogger.getName
-
-  protected val slf4jLogger: Logger
 
 
   def error(msg: => String) {
@@ -150,69 +134,4 @@ trait WaspLogger extends {
 
 final class WaspDefaultLogger(override protected val slf4jLogger: Logger) extends WaspLogger
 
-
-trait WaspLocationAwareLogger extends WaspLogger {
-
-  import LocationAwareLogger.{ERROR_INT, WARN_INT, INFO_INT, DEBUG_INT, TRACE_INT}
-
-  override protected val slf4jLogger: LocationAwareLogger
-
-
-  protected val wrapperClassName: String
-
-  override def error(msg: => String) {
-    if (slf4jLogger.isErrorEnabled) log(ERROR_INT, msg)
-  }
-
-  override def error(msg: => String, t: Throwable) {
-    if (slf4jLogger.isErrorEnabled) log(ERROR_INT, msg, t)
-  }
-
-  override def warn(msg: => String) {
-    if (slf4jLogger.isWarnEnabled) log(WARN_INT, msg)
-  }
-
-  override def warn(msg: => String, t: Throwable) {
-    if (slf4jLogger.isWarnEnabled) log(WARN_INT, msg, t)
-  }
-
-  override def info(msg: => String) {
-    if (slf4jLogger.isInfoEnabled) log(INFO_INT, msg)
-  }
-
-  override def info(msg: => String, t: Throwable) {
-    if (slf4jLogger.isInfoEnabled) log(INFO_INT, msg, t)
-  }
-
-  override def debug(msg: => String) {
-    if (slf4jLogger.isDebugEnabled) log(DEBUG_INT, msg)
-  }
-
-  override def debug(msg: => String, t: Throwable) {
-    if (slf4jLogger.isDebugEnabled) log(DEBUG_INT, msg, t)
-  }
-
-  override def trace(msg: => String) {
-    if (slf4jLogger.isTraceEnabled) log(TRACE_INT, msg)
-  }
-
-  override def trace(msg: => String, t: Throwable) {
-    if (slf4jLogger.isTraceEnabled) log(TRACE_INT, msg, t)
-  }
-
-  private final def log(level: Int, msg: String, throwable: Throwable = null) {
-    slf4jLogger.log(null, wrapperClassName, level, msg, null, throwable)
-
-    remoteLog(level, msg, throwable)
-  }
-}
-
-object WaspDefaultLocationAwareLogger {
-  private val WrapperClassName = classOf[WaspDefaultLocationAwareLogger].getName
-}
-
-final class WaspDefaultLocationAwareLogger(override protected val slf4jLogger: LocationAwareLogger)
-  extends WaspLocationAwareLogger {
-  override protected val wrapperClassName = WaspDefaultLocationAwareLogger.WrapperClassName
-}
 

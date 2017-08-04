@@ -1,11 +1,11 @@
 package it.agilelab.bigdata.wasp.core.launcher
 
 import akka.actor.Props
-import it.agilelab.bigdata.wasp.core.SystemPipegraphs
+import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.core.logging.LoggerInjector
+import it.agilelab.bigdata.wasp.core.logging.{LoggerInjector, WaspLogger}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ActorSystemInjector, ConfigManager, WaspDB}
 
@@ -103,7 +103,7 @@ trait WaspLauncher extends ActorSystemInjector  {
 			 """.stripMargin)
 	}
 	
-	private def startApp(args: Array[String]): Unit = {
+	protected def startApp(args: Array[String]): Unit = {
 		// redirect to play framework entry point
 		//play.core.server.NettyServer.main(Array.empty[String])
 	}

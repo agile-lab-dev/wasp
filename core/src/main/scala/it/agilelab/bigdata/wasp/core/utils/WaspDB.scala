@@ -21,19 +21,19 @@ import scala.reflect.runtime.universe._
 
 trait WaspDB extends MongoDBHelper {
 
-  def getAll[T]()(implicit ct: ClassTag[T]): Seq[T]
+  def getAll[T]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T]
 
-  def getDocumentByID[T](id: BsonObjectId)(implicit ct: ClassTag[T]): Option[T]
+  def getDocumentByID[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
-  def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T]): Option[T]
+  def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
-  def getDocumentByQueryParams[T](query: Map[String, BsonValue])(implicit ct: ClassTag[T]): Option[T]
+  def getDocumentByQueryParams[T](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
-  def getAllDocumentsByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T]): Seq[T]
+  def getAllDocumentsByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T]
 
-  def insert[T](doc: T)(implicit ct: ClassTag[T]): Unit
+  def insert[T](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
-  def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T]): Unit
+  def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
   def deleteById[T](id: BsonObjectId)(implicit ct: ClassTag[T]): Unit
 
@@ -61,32 +61,32 @@ class WaspDBImp(protected val mongoDatabase: MongoDatabase) extends WaspDB   {
   }
 
 
-  def getAll[T]()(implicit ct: ClassTag[T]): Seq[T] = {
+  def getAll[T]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T] = {
     getAllDocuments[T](lookupTable(typeTag.tpe))
   }
 
-  def getDocumentByID[T](id: BsonObjectId)(implicit ct: ClassTag[T]): Option[T] = {
+  def getDocumentByID[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     getDocumentByField[T]("_id", id)
   }
 
 
-  def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T]): Option[T] = {
+  def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     getDocumentByKey[T](field, value, lookupTable(typeTag.tpe))
   }
 
-  def getDocumentByQueryParams[T](query: Map[String, BsonValue])(implicit ct: ClassTag[T]): Option[T] = {
+  def getDocumentByQueryParams[T](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     getDocumentByQueryParams[T](query, lookupTable(typeTag.tpe))
   }
 
-  def getAllDocumentsByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T]): Seq[T] = {
+  def getAllDocumentsByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T] = {
     getAllDocumentsByKey[T](field, value, lookupTable(typeTag.tpe))
   }
 
-  def insert[T](doc: T)(implicit ct: ClassTag[T]) = {
+  def insert[T](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
     addDocumentToCollection(lookupTable(typeTag.tpe), doc)
   }
 
-  def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T]) = {
+  def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
     val document = getDocumentByField[T]("name", BsonString(doc.name))
 
     document match {
@@ -187,21 +187,23 @@ object WaspDB {
   import org.mongodb.scala.bson.codecs.Macros._
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
-    createCodecProvider(classOf[PipegraphModel]),
-    createCodecProvider(classOf[ProducerModel]),
-    createCodecProvider(classOf[TopicModel]),
-    createCodecProvider(classOf[IndexModel]),
-    createCodecProvider(classOf[RawModel]),
-    createCodecProvider(classOf[KeyValueModel]),
-    createCodecProvider(classOf[BatchJobModel]),
-    createCodecProvider(classOf[MlModelOnlyInfo]),
-    createCodecProvider(classOf[KafkaConfigModel]),
-    createCodecProvider(classOf[SparkBatchConfigModel]),
-    createCodecProvider(classOf[SparkStreamingConfigModel]),
-    createCodecProvider(classOf[ElasticConfigModel]),
-    createCodecProvider(classOf[SolrConfigModel]),
-    createCodecProvider(classOf[WebsocketModel]),
-    createCodecProvider(classOf[BatchSchedulerModel])
+    createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
+    createCodecProviderIgnoreNone(classOf[PipegraphModel]),
+    createCodecProviderIgnoreNone(classOf[ProducerModel]),
+    createCodecProviderIgnoreNone(classOf[ETLModel]),
+    createCodecProviderIgnoreNone(classOf[TopicModel]),
+    createCodecProviderIgnoreNone(classOf[IndexModel]),
+    createCodecProviderIgnoreNone(classOf[RawModel]),
+    createCodecProviderIgnoreNone(classOf[KeyValueModel]),
+    createCodecProviderIgnoreNone(classOf[BatchJobModel]),
+    createCodecProviderIgnoreNone(classOf[MlModelOnlyInfo]),
+    createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
+    createCodecProviderIgnoreNone(classOf[SparkBatchConfigModel]),
+    createCodecProviderIgnoreNone(classOf[SparkStreamingConfigModel]),
+    createCodecProviderIgnoreNone(classOf[ElasticConfigModel]),
+    createCodecProviderIgnoreNone(classOf[SolrConfigModel]),
+    createCodecProviderIgnoreNone(classOf[WebsocketModel]),
+    createCodecProviderIgnoreNone(classOf[BatchSchedulerModel])
   ).asJava
 
 
@@ -224,7 +226,7 @@ object WaspDB {
   def DBInitialization(actorSystem: ActorSystem): Unit = {
     // MongoDB initialization
     val mongoDBConfig = ConfigManager.getMongoDBConfig
-    log.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
+    //log.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
     assert(actorSystem != null)
 
     val codecRegistry = fromRegistries(fromProviders(codecRegisters), DEFAULT_CODEC_REGISTRY)

@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 
 import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
 
-case class KafkaConfigModel(connections: Array[ConnectionConfig],
+case class KafkaConfigModel(connections: Seq[ConnectionConfig],
                             ingest_rate: String,
 	                          zookeeper: ConnectionConfig,
 	                          broker_id: String,
@@ -17,7 +17,7 @@ case class KafkaConfigModel(connections: Array[ConnectionConfig],
 
 }
 
-case class TinyKafkaConfig(connections: Array[ConnectionConfig],
+case class TinyKafkaConfig(connections: Seq[ConnectionConfig],
                            batch_send_size: Int,
                            default_encoder: String,
                            encoder_fqcn: String,

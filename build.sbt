@@ -12,6 +12,8 @@ lazy val core = Project("wasp-core", file("core"))
 	.settings(Settings.sbtBuildInfoSettings:_*)
 
 lazy val master = Project("wasp-master", file("master"))
+	.dependsOn(core)
+	.settings(libraryDependencies ++= Dependencies.master)
 	.settings(Settings.commonSettings:_*)
 
 lazy val producers = Project("wasp-producers", file("producers"))

@@ -15,7 +15,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
-private[utils] trait MongoDBHelper {
+private[utils] trait MongoDBHelper  extends WaspLogger {
 
   import MongoDBHelper._
 
@@ -26,9 +26,15 @@ private[utils] trait MongoDBHelper {
 
   protected def getCollection(collection: String) =  mongoDatabase.getCollection(collection)
   protected def createCollection(collection: String): Unit = {
-      mongoDatabase
-        .createCollection(collection, new CreateCollectionOptions().autoIndex(true))
-        .headResult()
+    try {
+      if (!mongoDatabase.listCollectionNames().results().contains(collection)) {
+        mongoDatabase
+          .createCollection(collection, new CreateCollectionOptions().autoIndex(true))
+          .headResult()
+      }
+    } catch {
+      case e: Exception => log.error("Error during the creation of a collection", e)
+    }
   }
 
   protected def getDocumentByKey[T](key: String, value: BsonValue, collection: String)(implicit ct: ClassTag[T]): Option[T] = {
@@ -36,7 +42,7 @@ private[utils] trait MongoDBHelper {
     log.info(s"Locating document(s) by key $key with value $value on collection $collection")
     val query = BsonDocument(key -> value)
 
-    getCollection(collection).find[T](query).results().headOption
+    Some(getCollection(collection).find[T](query).headResult())
   }
 
   protected def getDocumentByQueryParams[T](queryParams: Map[String, BsonValue], collection: String)(implicit ct: ClassTag[T]): Option[T] = {
