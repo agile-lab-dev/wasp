@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.core
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.ReaderModel._
 import it.agilelab.bigdata.wasp.core.models.WriterModel._
-import it.agilelab.bigdata.wasp.core.utils.BSONFormats
-import reactivemongo.bson.BSONObjectID
+import it.agilelab.bigdata.wasp.core.utils.JsonConverter
+import org.mongodb.scala.bson.BsonObjectId
 
 /**
 	* Default system pipegraphs: logging & raw.
@@ -34,8 +34,8 @@ private[wasp] object LoggerTopic {
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
-		schema = Some(BSONFormats.fromString(topicSchema).get),
-		_id = Some(BSONObjectID.generate)
+		schema = JsonConverter.fromString(topicSchema),
+		_id = Some(BsonObjectId())
 	)
 
 	private def topicSchema = s"""
@@ -63,7 +63,7 @@ private[wasp] object LoggerProducer {
 		isActive = false,
 		None,
 		isRemote = false,
-		Some(BSONObjectID.generate)
+		Some(BsonObjectId())
 	)
 }
 
@@ -74,8 +74,8 @@ private[wasp] object LoggerIndex {
 	def apply() = IndexModel(
 		name = IndexModel.normalizeName(index_name),
 		creationTime = WaspSystem.now,
-		schema = BSONFormats.fromString(indexSchema),
-		_id = Some(BSONObjectID.generate)
+		schema = JsonConverter.fromString(indexSchema),
+		_id = Some(BsonObjectId())
 	)
 
 	private def indexSchema = s"""
@@ -107,7 +107,7 @@ private[wasp] object LoggerPipegraph {
 		rt = Nil,
 		dashboard = None,
 		isActive = true,
-		_id = Some(BSONObjectID.generate)
+		_id = Some(BsonObjectId())
 	)
 }
 
@@ -121,8 +121,8 @@ private[wasp] object RawTopic {
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
-		schema = Some(BSONFormats.fromString(topicSchema).get),
-		_id = Some(BSONObjectID.generate)
+		schema = JsonConverter.fromString(topicSchema),
+		_id = Some(BsonObjectId())
 	)
 
 	private def topicSchema = s"""
@@ -141,8 +141,8 @@ private[wasp] object RawIndex {
 	def apply() = IndexModel(
 		name = IndexModel.normalizeName(index_name),
 		creationTime = WaspSystem.now,
-		schema = BSONFormats.fromString(indexSchema),
-		_id = Some(BSONObjectID.generate)
+		schema = JsonConverter.fromString(indexSchema),
+		_id = Some(BsonObjectId())
 	)
 
 	private val indexSchema = s"""
@@ -169,6 +169,6 @@ private[wasp] object RawPipegraph {
 		rt = Nil,
 		dashboard = None,
 		isActive = true,
-		_id = Some(BSONObjectID.generate)
+		_id = Some(BsonObjectId())
 	)
 }

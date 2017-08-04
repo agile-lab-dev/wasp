@@ -82,12 +82,12 @@ object Dependencies {
 	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % "2.8.2" // TODO remove
 	val log4jSl4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.8.2" // TODO remove
 	val metrics = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
+	val mongodbScala = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
 	val playcore = "com.typesafe.play" %% "play" % Versions.play // TODO remove
 	val playws = "com.typesafe.play" %% "play-ws" % Versions.play // TODO remove
 	val playcache = "com.typesafe.play" %% "play-cache" % Versions.play // TODO remove
 	val playjson = "com.typesafe.play" %% "play-json" % Versions.play // TODO remove
 	val playserver = "com.typesafe.play" %% "play-netty-server" % Versions.play // TODO remove
-	val reactiveMongo = "org.reactivemongo" %% "reactivemongo" % Versions.reactiveMongo
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
@@ -147,17 +147,13 @@ object Dependencies {
 		Seq(
 			avro,
 			kafka, // TODO remove when switching to plugins
+			mongodbScala,
 			playws,
-			reactiveMongo,
 			sparkSQL,
 			typesafeConfig
 		)
 	
-	val producers = akka ++ logging ++ test ++
-		Seq(
-			akkaHttp,
-			akkaStream
-		)
+	val producers = akka ++ logging ++ test ++ Seq(akkaHttp, akkaStream)
 	
 	val consumers_spark = json ++ test ++ spark ++ hbase ++
 		Seq(
@@ -165,7 +161,6 @@ object Dependencies {
 			kafkaStreaming,
 			elasticSearchSpark
 		)
-	
 	/*
 	val master = logging ++ time ++ json ++ elastic
 	

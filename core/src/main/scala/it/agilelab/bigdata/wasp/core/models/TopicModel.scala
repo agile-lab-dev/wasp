@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import reactivemongo.bson.{BSONDocument, BSONObjectID}
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+
 
 object TopicModel {
   val readerType = "topic"
@@ -25,5 +26,5 @@ case class TopicModel(override val name: String,
                       partitions: Int,
                       replicas: Int,
                       topicDataType: String, // avro, json, xml
-                      schema: Option[BSONDocument],
-                      _id: Option[BSONObjectID] = None) extends Model
+                      schema: Option[BsonDocument],
+                      _id: Option[BsonObjectId] = None) extends Model

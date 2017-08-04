@@ -1,38 +1,35 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{BSONConversionHelper, WebsocketModel}
+import it.agilelab.bigdata.wasp.core.models.{WebsocketModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import reactivemongo.bson.{BSONString, BSONObjectID}
-import reactivemongo.api.commands.WriteResult
-
-import scala.concurrent.Future
+import org.bson.BsonString
+import org.mongodb.scala.bson.BsonObjectId
 
 trait WebsocketBL {
-  def getByName(name: String): Future[Option[WebsocketModel]]
+  def getByName(name: String): Option[WebsocketModel]
 
-  def getById(id: String): Future[Option[WebsocketModel]]
+  def getById(id: String): Option[WebsocketModel]
 
-  def persist(topicModel: WebsocketModel): Future[WriteResult]
+  def persist(topicModel: WebsocketModel): Unit
 }
 
 
-class WebsocketBLImp(waspDB: WaspDB) extends WebsocketBL with BSONConversionHelper {
+class WebsocketBLImp(waspDB: WaspDB) extends WebsocketBL  {
 
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   private def factory(ws: WebsocketModel) = new WebsocketModel(ws.name, ws.host, ws.port, ws.resourceName, ws.options, ws._id)
 
-  def getByName(name: String): Future[Option[WebsocketModel]] = {
-    waspDB.getDocumentByField[WebsocketModel]("name", new BSONString(name)).map(ws => {
-      ws.map(p => factory(p))
+  def getByName(name: String): Option[WebsocketModel] = {
+    waspDB.getDocumentByField[WebsocketModel]("name", new BsonString(name)).map(ws => {
+      factory(ws)
     })
   }
 
-  def getById(id: String): Future[Option[WebsocketModel]] = {
-    waspDB.getDocumentByID[WebsocketModel](BSONObjectID(id)).map(ws => {
-      ws.map(p => factory(p))
+  def getById(id: String): Option[WebsocketModel] = {
+    waspDB.getDocumentByID[WebsocketModel](BsonObjectId(id)).map(ws => {
+      factory(ws)
     })
   }
 
-  override def persist(wsModel: WebsocketModel): Future[WriteResult] = waspDB.insert[WebsocketModel](wsModel)
+  override def persist(wsModel: WebsocketModel): Unit = waspDB.insert[WebsocketModel](wsModel)
 }

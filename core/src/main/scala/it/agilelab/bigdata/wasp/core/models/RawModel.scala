@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import reactivemongo.bson.BSONObjectID
+import org.mongodb.scala.bson.BsonObjectId
 
 // TODO external scaladocs links
 /**
@@ -26,7 +26,7 @@ case class RawModel(override val name: String,
                     timed: Boolean = true,
                     schema: String,
                     options: RawOptions = RawOptions.default,
-                    _id: Option[BSONObjectID] = None) extends Model
+                    _id: Option[BsonObjectId] = None) extends Model
 
 // TODO external scaladocs links
 /**

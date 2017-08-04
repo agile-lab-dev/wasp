@@ -1,83 +1,68 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{BSONConversionHelper, ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import reactivemongo.bson.{BSONBoolean, BSONObjectID, BSONString}
-import reactivemongo.api.commands.WriteResult
-
-import scala.concurrent._
+import org.bson.BsonBoolean
+import org.mongodb.scala.bson.{BsonObjectId, BsonString}
 
 trait ProducerBL {
 
-  def getByName(name: String): Future[Option[ProducerModel]]
+  def getByName(name: String): Option[ProducerModel]
 
-  def getById(id: String): Future[Option[ProducerModel]]
+  def getById(id: String): Option[ProducerModel]
 
-  def getActiveProducers(isActive: Boolean = true): Future[List[ProducerModel]]
+  def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel]
 
-  def getByTopicId(id_topic: BSONObjectID): Future[List[ProducerModel]]
+  def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel]
 
-  def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Future[Option[TopicModel]]
+  def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel]
 
-  def getAll: Future[List[ProducerModel]]
+  def getAll: Seq[ProducerModel]
 
-  def update(producerModel: ProducerModel): Future[WriteResult]
+  def update(producerModel: ProducerModel): Unit
 
-  def setIsActive(producerModel: ProducerModel, isActive: Boolean): Future[WriteResult] = {
+  def setIsActive(producerModel: ProducerModel, isActive: Boolean): Unit = {
     producerModel.isActive = isActive
     update(producerModel)
   }
 
-  def persist(producerModel: ProducerModel): Future[WriteResult]
+  def persist(producerModel: ProducerModel): Unit
 }
 
-class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL with BSONConversionHelper{
-  import scala.concurrent.ExecutionContext.Implicits.global
+class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
 
   private def factory(p: ProducerModel) = ProducerModel(p.name, p.className, p.id_topic, p.isActive, p.configuration, p.isRemote, p._id)
 
-  def getByName(name: String): Future[Option[ProducerModel]] = {
-    waspDB.getDocumentByField[ProducerModel]("name", new BSONString(name)).map(producer => {
-      producer.map(p => factory(p))
-    })
+  def getByName(name: String): Option[ProducerModel] = {
+    waspDB.getDocumentByField[ProducerModel]("name", new BsonString(name)).map(factory)
   }
 
-  def getById(id: String): Future[Option[ProducerModel]] = {
-    waspDB.getDocumentByID[ProducerModel](BSONObjectID(id)).map(producer => {
-      producer.map(p => factory(p))
-    })
+  def getById(id: String): Option[ProducerModel] = {
+    waspDB.getDocumentByID[ProducerModel](BsonObjectId(id)).map(factory)
   }
 
-  def getActiveProducers(isActive: Boolean = true): Future[List[ProducerModel]] = {
-    waspDB.getAllDocumentsByField[ProducerModel]("isActive", new BSONBoolean(isActive)).map(producer => {
-      producer.map(p => factory(p))
-    })
+  def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel] = {
+    waspDB.getAllDocumentsByField[ProducerModel]("isActive", new BsonBoolean(isActive)).map(factory)
   }
 
-  def getByTopicId(id_topic: BSONObjectID): Future[List[ProducerModel]] = {
-    waspDB.getAllDocumentsByField[ProducerModel]("id_topic", id_topic).map(producer => {
-      producer.map(p => factory(p))
-    })
+  def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel] = {
+    waspDB.getAllDocumentsByField[ProducerModel]("id_topic", id_topic).map(factory)
   }
 
-  def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Future[Option[TopicModel]] = {
+  def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
     if (producerModel.hasOutput)
-      topicBL.getById(producerModel.id_topic.get.stringify)
+      topicBL.getById(producerModel.id_topic.get.asString().getValue)
     else
-      future {
         None
-      }
   }
 
-  def getAll: Future[List[ProducerModel]] = {
-    waspDB.getAll[ProducerModel].map(producer => {
-      producer.map(p => factory(p))
-    })
+  def getAll: Seq[ProducerModel] = {
+    waspDB.getAll[ProducerModel]().map(factory)
   }
 
-  def update(producerModel: ProducerModel): Future[WriteResult] = {
+  def update(producerModel: ProducerModel): Unit = {
     waspDB.updateById[ProducerModel](producerModel._id.get, producerModel)
   }
 
-  override def persist(producerModel: ProducerModel): Future[WriteResult] = waspDB.insert[ProducerModel](producerModel)
+  override def persist(producerModel: ProducerModel): Unit = waspDB.insert[ProducerModel](producerModel)
 }

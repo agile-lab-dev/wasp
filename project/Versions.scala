@@ -19,6 +19,7 @@ object Versions {
 	val json4s = "3.2.10"
 	val kafka = "0.8.2.1"
 	val kryo = "3.0.0"
+	val mongodbScala = "2.1.0"
 	val play = "2.4.8"
 	val reactiveMongo = "0.11.14"
 	val scala = "2.11.11"

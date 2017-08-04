@@ -1,45 +1,43 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{BSONConversionHelper, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import reactivemongo.bson.{BSONObjectID, BSONString}
-import reactivemongo.api.commands.WriteResult
+import org.bson.BsonString
+import org.mongodb.scala.bson.BsonObjectId
 
 import scala.concurrent.Future
 
 trait TopicBL {
 
-  def getByName(name: String): Future[Option[TopicModel]]
+  def getByName(name: String): Option[TopicModel]
 
-  def getById(id: String): Future[Option[TopicModel]]
+  def getById(id: String): Option[TopicModel]
 
-  def getAll : Future[List[TopicModel]]
+  def getAll : Seq[TopicModel]
 
-  def persist(topicModel: TopicModel): Future[WriteResult]
+  def persist(topicModel: TopicModel): Unit
 
 }
 
-class TopicBLImp(waspDB: WaspDB) extends TopicBL with BSONConversionHelper {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
+class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
 
   private def factory(t: TopicModel) = new TopicModel(t.name, t.creationTime, t.partitions, t.replicas, t.topicDataType, t.schema, t._id)
 
-  def getByName(name: String): Future[Option[TopicModel]] = {
-    waspDB.getDocumentByField[TopicModel]("name", new BSONString(name)).map(topic => {
-      topic.map(p => factory(p))
+  def getByName(name: String): Option[TopicModel] = {
+    waspDB.getDocumentByField[TopicModel]("name", new BsonString(name)).map(topic => {
+      factory(topic)
     })
   }
 
-  def getById(id: String): Future[Option[TopicModel]] = {
-    waspDB.getDocumentByID[TopicModel](BSONObjectID(id)).map(Topic => {
-      Topic.map(p => factory(p))
+  def getById(id: String): Option[TopicModel] = {
+    waspDB.getDocumentByID[TopicModel](BsonObjectId(id)).map(topic => {
+      factory(topic)
     })
   }
 
-  def getAll = {
-    waspDB.getAll[TopicModel]
+  def getAll: Seq[TopicModel] = {
+    waspDB.getAll[TopicModel]()
   }
 
-  override def persist(topicModel: TopicModel): Future[WriteResult] = waspDB.insert[TopicModel](topicModel)
+  override def persist(topicModel: TopicModel): Unit = waspDB.insert[TopicModel](topicModel)
 }

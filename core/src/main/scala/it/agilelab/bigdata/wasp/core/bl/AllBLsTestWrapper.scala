@@ -2,66 +2,57 @@ package it.agilelab.bigdata.wasp.core.bl
 
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.SerializationUtils
+import org.mongodb.scala.bson.BsonObjectId
 import play.api.libs.iteratee.Enumerator
-import reactivemongo.bson.BSONObjectID
-import reactivemongo.api.commands._
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 
 //TODO Spostarlo nella cartella test
 class AllBLsTestWrapper {
-  val success = Future.successful(DefaultWriteResult(ok = true, n = 0, writeErrors = Nil, writeConcernError = None,
-    code = None,
-    errmsg = None))
 
   val batchJobBL: BatchJobBL = new BatchJobBL {
     val database = new ListBuffer[BatchJobModel]
 
-    override def update(batchJobModel: BatchJobModel): Future[WriteResult] = {
+    override def update(batchJobModel: BatchJobModel): Unit = {
       val index = database.indexWhere(b => b._id == batchJobModel._id)
       database.update(index, batchJobModel)
-      success
     }
 
-    override def getById(id: String): Future[Option[BatchJobModel]] = {
-      Future(database.find(p => p._id.get.stringify == id))
+    override def getById(id: String): Option[BatchJobModel] = {
+      database.find(p => p._id.get.asString().getValue == id)
     }
 
-    override def getPendingJobs(state: String): Future[List[BatchJobModel]] = {
-      Future(database.filter(p => p.state == state).toList)
+    override def getPendingJobs(state: String): Seq[BatchJobModel] = {
+      database.filter(p => p.state == state)
     }
 
-    override def getAll: Future[List[BatchJobModel]] = {
-      Future(database.toList)
+    override def getAll: Seq[BatchJobModel] = {
+      database.toList
     }
 
-    override def persist(batchJobModel: BatchJobModel): Future[WriteResult] = {
+    override def persist(batchJobModel: BatchJobModel): Unit = {
       database.+=(batchJobModel)
-      success
     }
 
-    override def insert(batchJobModel: BatchJobModel): Future[WriteResult] = persist(batchJobModel)
+    override def insert(batchJobModel: BatchJobModel): Unit = persist(batchJobModel)
 
-    override def deleteById(id_string: String): Future[WriteResult] = {
-      val index = database.filter(_._id.isDefined).indexWhere(b => b._id.get.stringify == id_string)
+    override def deleteById(id_string: String): Unit = {
+      val index = database.filter(_._id.isDefined).indexWhere(b => b._id.get.asString().getValue == id_string)
       database.remove(index)
-      success
     }
   }
 
   val indexBL: IndexBL = new IndexBL {
     val database = new ListBuffer[IndexModel]
 
-    override def getByName(name: String): Future[Option[IndexModel]] = ???
+    override def getByName(name: String): Option[IndexModel] = ???
 
-    override def getById(id: String): Future[Option[IndexModel]] =Future(database.find(_._id.get.stringify == id))
+    override def getById(id: String): Option[IndexModel] =database.find(_._id.get.asString().getValue == id)
 
-    override def persist(indexModel: IndexModel): Future[WriteResult] = {
+    override def persist(indexModel: IndexModel): Unit = {
       database.+=(indexModel)
-      success
     }
   }
 
@@ -70,40 +61,39 @@ class AllBLsTestWrapper {
     val fs = new mutable.HashMap[String, Array[Byte]]()
 
 
-    override def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Future[WriteResult] = {
+    override def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
       database.+=:(mlModelOnlyInfo)
-      success
     }
 
-    override def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Future[Option[Enumerator[Any]]] = {
+    override def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Enumerator[Any]] = {
       val arrayByte = fs.get(mlModelOnlyInfo.modelFileId.get.toString()).get
       val obj: Any = SerializationUtils.deserialize(arrayByte)
-      Future.successful(Some(Enumerator(obj)))
+      Some(Enumerator(obj))
     }
 
-    override def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): Future[BSONObjectID] = {
+    override def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId = {
       val arrayByte = SerializationUtils.serialize(transformerModel)
-      val key = BSONObjectID.generate
+      val key = BsonObjectId()
       fs.put(key.toString(), arrayByte)
-      Future.successful(key)
+      key
     }
 
-    override def getMlModelOnlyInfo(name: String, version: String): Future[Option[MlModelOnlyInfo]] = {
+    override def getMlModelOnlyInfo(name: String, version: String): Option[MlModelOnlyInfo] = {
       val model = database.filter(p => p.name == name && p.version == version).maxBy(_.timestamp.getOrElse(0l))
 
-      Future.successful(Some(model))
+     Some(model)
     }
 
-    override def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Future[Option[MlModelOnlyInfo]] = {
+    override def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Option[MlModelOnlyInfo] = {
       val model = database.filter(p => p.name == name && p.version == version && p.timestamp.get == timestamp)
-      Future.successful(model.headOption)
+      model.headOption
     }
 
-    override def getAll: Future[List[MlModelOnlyInfo]] = Future.successful(database.toList)
+    override def getAll: Seq[MlModelOnlyInfo] = database
 
-    override def getById(id: String): Future[Option[MlModelOnlyInfo]] = ???
+    override def getById(id: String): Option[MlModelOnlyInfo] = ???
 
-    override def delete(id: String): Future[Option[WriteResult]] = ???
+    override def delete(id: String): Unit = ???
 
     /**
      * Delete the metadata and the transformer model in base to name, version, timestamp
@@ -112,71 +102,68 @@ class AllBLsTestWrapper {
      * @param timestamp
      * @return
      */
-    override def delete(name: String, version: String, timestamp: Long): Future[Option[WriteResult]] = ???
+    override def delete(name: String, version: String, timestamp: Long): Unit = ???
 
     /**
      * Update only the metadata about the model
      * @param mlModelOnlyInfo
      * @return
      */
-    override def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Future[WriteResult] = ???
+    override def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = ???
   }
 
   val topicBL = new TopicBL {
     val database = new ListBuffer[TopicModel]
-    override def getByName(name: String): Future[Option[TopicModel]] = Future(database.find(_.name == name))
+    override def getByName(name: String): Option[TopicModel] = database.find(_.name == name)
 
-    override def getById(id: String): Future[Option[TopicModel]] = Future(database.find(_._id.get.stringify == id))
+    override def getById(id: String): Option[TopicModel] = database.find(_._id.get.asString().getValue == id)
 
-    override def persist(topicModel: TopicModel): Future[WriteResult] = {
+    override def persist(topicModel: TopicModel): Unit = {
       database.+=(topicModel)
-      success
     }
 
-    override def getAll: Future[List[TopicModel]] = Future(database.toList)
+    override def getAll: Seq[TopicModel] = database
   }
 
   val producerBL = new ProducerBL {
     val database = new ListBuffer[ProducerModel]
 
-    override def update(producerModel: ProducerModel): Future[WriteResult] = {
+    override def update(producerModel: ProducerModel): Unit = {
       val index = database.indexWhere(_.name == producerModel.name)
       database.remove(index)
       database += producerModel
-      success
     }
 
-    override def getByName(name: String): Future[Option[ProducerModel]] = Future(database.find(_.name == name))
+    override def getByName(name: String): Option[ProducerModel] = database.find(_.name == name)
 
-    override def getByTopicId(id_topic: BSONObjectID): Future[List[ProducerModel]] = Future(database.filter(_.id_topic.isDefined).filter(_.id_topic.get == id_topic).toList)
+    override def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel] = database.filter(_.id_topic.isDefined).filter(_.id_topic.get == id_topic).toList
 
-    override def getById(id: String): Future[Option[ProducerModel]] = Future(database.find(p => p._id.isDefined && p._id.get.stringify == id))
+    override def getById(id: String): Option[ProducerModel] = database.find(p => p._id.isDefined && p._id.get.asString().getValue == id)
 
-    override def getActiveProducers(isActive: Boolean): Future[List[ProducerModel]] = Future(database.filter(_.isActive == isActive).toList)
+    override def getActiveProducers(isActive: Boolean): Seq[ProducerModel] = database.filter(_.isActive == isActive)
 
-    override def getAll: Future[List[ProducerModel]] = Future(database.toList)
+    override def getAll: Seq[ProducerModel] = database.toList
 
-    override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Future[Option[TopicModel]] = {
+    override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
       if (producerModel.hasOutput)
-        topicBL.getById(producerModel.id_topic.get.stringify)
+        topicBL.getById(producerModel.id_topic.get.asString().getValue)
       else
-        Future(None)
+        None
     }
 
-    override def persist(producerModel: ProducerModel): Future[WriteResult] = {
+    override def persist(producerModel: ProducerModel):  Unit = {
       database.+=(producerModel)
-      success
     }
 
   }
   
   // TODO implement this
   val rawBL = new RawBL {
-    override def getByName(name: String): Future[Option[RawModel]] = ???
+    override def getByName(name: String): Option[RawModel] = ???
   
-    override def getById(id: String): Future[Option[RawModel]] = ???
+    override def getById(id: String): Option[RawModel] = ???
   
-    override def persist(rawModel: RawModel): Future[LastError] = ???
+    override def persist(rawModel: RawModel): Unit = ???
   }
 
   val keyValueBL = new KeyValueBL {override def getByName(name: String) = ???
