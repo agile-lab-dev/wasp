@@ -6,10 +6,9 @@ import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
-import it.agilelab.bigdata.wasp.core.elastic.CheckOrCreateIndex
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.solr.CheckOrCreateCollection
-import it.agilelab.bigdata.wasp.core.utils.{BSONFormats, ConfigManager, SolrConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
@@ -17,10 +16,6 @@ import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
-import reactivemongo.bson.{BSONArray, BSONDocument, BSONObjectID}
-
-import scala.concurrent.{Await, Future}
-import scala.reflect._
 
 /**
   * Created by matbovet on 02/09/2016.
@@ -48,8 +43,7 @@ class SolrSparkStreamingWriter(env: { val indexBL: IndexBL }, val ssc: Streaming
   override def write(stream: DStream[String]): Unit = {
 
     val sqlContext = SQLContext.getOrCreate(ssc.sparkContext)
-    val indexFut: Future[Option[IndexModel]] = env.indexBL.getById(id)
-    val indexOpt: Option[IndexModel] = Await.result(indexFut, timeout.duration)
+    val indexOpt: Option[IndexModel] = env.indexBL.getById(id)
     indexOpt.foreach(index => {
 
       val indexName = ConfigManager.buildTimedName(index.name)
@@ -60,8 +54,7 @@ class SolrSparkStreamingWriter(env: { val indexBL: IndexBL }, val ssc: Streaming
               WaspSystem.solrAdminActor,
               CheckOrCreateCollection(
                   indexName,
-                  BSONFormats.toString(
-                      index.schema.get.getAs[BSONArray]("properties").get),
+                  index.schema.get.get("properties").asArray().toString,
                   index.numShards.getOrElse(1),
                   index.replicationFactor.getOrElse(1)))) {
 
@@ -96,8 +89,7 @@ class SolrSparkWriter(env: { val indexBL: IndexBL }, sc: SparkContext, id: Strin
   override def write(data: DataFrame): Unit = {
 
     val sqlContext = SQLContext.getOrCreate(sc)
-    val indexFut = env.indexBL.getById(id)
-    val indexOpt = Await.result(indexFut, timeout.duration)
+    val indexOpt = env.indexBL.getById(id)
     indexOpt.foreach(index => {
 
       val indexName = ConfigManager.buildTimedName(index.name)
@@ -106,8 +98,7 @@ class SolrSparkWriter(env: { val indexBL: IndexBL }, sc: SparkContext, id: Strin
               WaspSystem.solrAdminActor,
               CheckOrCreateCollection(
                   indexName,
-                  BSONFormats.toString(
-                      index.schema.get.getAs[BSONArray]("properties").get),
+                  index.schema.get.get("properties").asArray().toString,
                   index.numShards.getOrElse(1),
                   index.replicationFactor.getOrElse(1)))) {
 

@@ -6,10 +6,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.Params
-import org.joda.time.DateTime
+import org.mongodb.scala.bson.BsonObjectId
 import play.api.libs.iteratee.{Enumerator, Iteratee}
-import reactivemongo.bson.BSONObjectID
-import reactivemongo.api.commands.WriteResult
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -50,10 +48,9 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
    * @return
    */
   def read(name: String, version: String, timestampOpt: Option[Long]): Future[TransformerWithInfo] = {
-    val transformerInfoFuture: Future[Option[MlModelOnlyInfo]] =
-      readOnlyInfo(name, version, timestampOpt)
-
-    transformerInfoFuture.flatMap {
+    val transformerInfoOption: Option[MlModelOnlyInfo] = readOnlyInfo(name, version, timestampOpt)
+  
+    transformerInfoOption map {
       case Some(transformerInfo) =>
         env.mlModelBL.getSerializedTransformer(transformerInfo)
           .flatMap {
@@ -71,7 +68,7 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
         }
 
       // Da gestire l'eccezione nel caso di mancanza delle info
-      case None => Future.failed(new Exception(s"The model info not found: name: $name, version: $version, timestamp: $timestampOpt"))
+      case None => throw new Exception(s"The model info not found: name: $name, version: $version, timestamp: $timestampOpt")
     }
 
   }
@@ -100,29 +97,27 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
    * @param mlModel
    * @return an error if something was wrong and the saved model with all the ids initialized
    */
-  def write(mlModel: TransformerWithInfo): Future[(WriteResult, TransformerWithInfo)] = {
+  def write(mlModel: TransformerWithInfo): TransformerWithInfo = {
     val mlModelWithID = if (mlModel._id.isDefined) {
       mlModel
     } else {
-      mlModel.copy(_id = Some(BSONObjectID.generate))
+      mlModel.copy(_id = Some(new BsonObjectId()))
     }
-    val futureFileId: Future[BSONObjectID] = env.mlModelBL.saveTransformer(mlModelWithID.transformer, mlModelWithID.name, mlModelWithID.version, mlModelWithID.timestamp)
-    futureFileId.flatMap(fileId =>  {
-      env.mlModelBL.saveMlModelOnlyInfo(mlModel.toOnlyInfo(fileId)).map(e => (e, mlModelWithID.copy(modelFileId = Some(fileId))))
-    })
+    val fileId: BsonObjectId = env.mlModelBL.saveTransformer(mlModelWithID.transformer, mlModelWithID.name, mlModelWithID.version, mlModelWithID.timestamp)
+    env.mlModelBL.saveMlModelOnlyInfo(mlModel.toOnlyInfo(fileId))
+    
+    mlModelWithID.copy(modelFileId = Some(fileId))
   }
 
-  def write(mlModels: List[TransformerWithInfo]): Future[List[(WriteResult, TransformerWithInfo)]] = {
-    val futures = mlModels.map(write)
-    Future.sequence(futures)
+  def write(mlModels: List[TransformerWithInfo]): List[TransformerWithInfo] = {
+    mlModels.map(write)
   }
 
-
-  def delete(name: String, version: String, timestamp: Long): Future[Option[WriteResult]] = {
+  def delete(name: String, version: String, timestamp: Long): Unit = {
     env.mlModelBL.delete(name, version, timestamp)
   }
 
-  def readOnlyInfo(name: String, version: String, timestampOpt: Option[Long]): Future[Option[MlModelOnlyInfo]] = {
+  def readOnlyInfo(name: String, version: String, timestampOpt: Option[Long]): Option[MlModelOnlyInfo] = {
     timestampOpt match {
       case Some(timestamp) => env.mlModelBL.getMlModelOnlyInfo(name, version, timestamp)
       case None => env.mlModelBL.getMlModelOnlyInfo(name, version)

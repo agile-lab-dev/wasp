@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.core.models.MlModelOnlyInfo
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.Params
 import org.joda.time.DateTime
-import reactivemongo.bson.BSONObjectID
+import org.mongodb.scala.bson.BsonObjectId
 
 /**
  * Created by Mattia Bertorello on 28/09/15.
@@ -12,13 +12,13 @@ import reactivemongo.bson.BSONObjectID
 
 
 case class TransformerWithInfo(name: String, version: String,
-                                transformer: Transformer with Params,
-                                timestamp: Long = DateTime.now().getMillis,
-                                favorite: Boolean = false, description: String = "",
-                                _id: Option[BSONObjectID] = None,
-                                modelFileId: Option[BSONObjectID] = None) {
+                               transformer: Transformer with Params,
+                               timestamp: Long = DateTime.now().getMillis,
+                               favorite: Boolean = false, description: String = "",
+                               _id: Option[BsonObjectId] = None,
+                               modelFileId: Option[BsonObjectId] = None) {
   val className: String = transformer.getClass.getName
-  def toOnlyInfo(modelFileId: BSONObjectID) = {
+  def toOnlyInfo(modelFileId: BsonObjectId) = {
     MlModelOnlyInfo(_id = _id, name = name, version = version, className = Some(className),
       timestamp = Some(timestamp), favorite = favorite, description = description,
       modelFileId = Some(modelFileId)

@@ -12,9 +12,10 @@ import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang.exception.ExceptionUtils._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
-import reactivemongo.bson._
+import org.mongodb.scala.bson.BsonObjectId
 
 import scala.concurrent.{Await, Future}
+import scala.collection.JavaConverters._
 
 
 object BatchJobActor {
@@ -55,41 +56,53 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
         s
       })
       val resDf = applyStrategy(dfsMap, mlModelsBroadcast, strategy)
-      log.info("Saving strategy models")
-      val futuresWriteResult = mlModelsDB.write(mlModelsBroadcast.getModelsToSave)
-
+  
       logger.info(s"Strategy for batch ${jobModel.name} applied successfully")
-
-      var writeSuccess = false
+      
+      log.info(s"Saving batch job ${jobModel.name} ml models")
+  
+      var writeMlModelsSuccess = false
+      try {
+        val modelsWriteResult = mlModelsDB.write(mlModelsBroadcast.getModelsToSave)
+        writeMlModelsSuccess = true
+        log.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
+      } catch {
+        case e: Exception => {
+          log.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
+        }
+      }
+  
+      log.info(s"Saving batch job ${jobModel.name} output")
+  
+      var writeOutputSuccess = false
       resDf match {
         case Some(res) =>
           try {
-            writeSuccess = writeResult(res, jobModel.etl.output)
+            writeOutputSuccess = writeResult(res, jobModel.etl.output)
+            if (writeOutputSuccess) {
+              log.info(s"Successfully wrote output for batch job ${jobModel.name}")
+            } else {
+              log.error(s"Failed to write output for batch job ${jobModel.name}")
+            }
           } catch {
-            case e: Exception =>
-              logger.error(s"Batch job ${jobModel.name} has failed to save the results. Exception: ${getStackTrace(e)}")
-              writeSuccess = false
-          }//TODO: sistemare stringa quando useremo enum
+            case e: Exception => {
+              log.error(s"Failed to write output for batch job ${jobModel.name}", e)
+              writeOutputSuccess = false
+            }
+          }
         case None =>
-          logger.warn(s"Batch job ${jobModel.name} has no result to be written.")
-          writeSuccess = true
+          logger.warn(s"Batch job ${jobModel.name} has no output to be written.")
+          writeOutputSuccess = true
       }
 
-      val modelsWriteResult = Await.result(futuresWriteResult, timeout.duration)
-      val possibleError = modelsWriteResult.filter(_._1.inError)
-      if (possibleError.nonEmpty) {
-        writeSuccess = false
-        log.error(s"MongoDB error saving the models. ${possibleError.map(_.toString())} ")
-      }
-
-      val jobResult = if (writeSuccess) {
+      val jobResult = if (writeMlModelsSuccess && writeOutputSuccess) {
         JobStateEnum.SUCCESSFUL
       } else {
         JobStateEnum.FAILED
       }
       changeBatchState(jobModel._id.get, jobResult)
-      lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.stringify, jobResult)
-
+      
+      lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
 
       logger.info(s"Batch Job ${jobModel.name} has been processed.")
   }
@@ -136,21 +149,17 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       //.getOrElse(Class.forName(strategyModel.className).newInstance()).asInstanceOf[Strategy]
       result.configuration = strategyModel.configuration match {
         case None => Map[String, Any]()
-        case Some(configuration) =>
-          implicit def reader = new BSONDocumentReader[Map[String, Any]] {
-            def read(bson: BSONDocument) =
-              bson.elements.map(tuple =>
-                tuple._1 -> (tuple._2 match {
-                  case s: BSONString => s.value
-                  case b: BSONBoolean => b.value
-                  case i: BSONInteger => i.value
-                  case l: BSONLong => l.value
-                  case d: BSONDouble => d.value
-                  case o: Any => o.toString
-                })).toMap
+        case Some(configuration) => configuration.entrySet().asScala.map {
+          entry => {
+            val key = entry.getKey
+            val value = entry.getValue match {
+              case x => 
+            }
+            
+            (key, value)
           }
-
-          BSON.readDocument[Map[String, Any]](configuration)
+        }
+        
       }
 
       logger.info("strategy: " + result)
@@ -163,7 +172,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   private def indexReaders(readers: List[ReaderModel]): List[Option[StaticReader]] = {
     readers.flatMap({
       case ReaderModel(id, name, IndexModel.readerType) =>
-        Some(IndexReader.create(env.indexBL, id.stringify, name))
+        Some(IndexReader.create(env.indexBL, id.getValue.toHexString, name))
       case _ => None
     })
   }
@@ -173,7 +182,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     */
   private def rawReaders(readers: List[ReaderModel]): List[Option[StaticReader]] = {
     readers.flatMap({
-      case ReaderModel(id, name, "raw") => Some(RawReader.create(env.rawBL, id.stringify, name))
+      case ReaderModel(id, name, "raw") => Some(RawReader.create(env.rawBL, id.getValue.toHexString, name))
       case _ => None
     })
   }
@@ -186,10 +195,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     */
   private def staticReaders(readers: List[ReaderModel]): List[Option[StaticReader]] = indexReaders(readers) ++ rawReaders(readers)
 
-  private def changeBatchState(id: BSONObjectID, newState: String): Unit =
+  private def changeBatchState(id: BsonObjectId, newState: String): Unit =
   {
-    val jobFut = env.batchJobBL.getById(id.stringify)
-    val job: Option[BatchJobModel] = Await.result(jobFut, timeout.duration)
+    val job = env.batchJobBL.getById(id.getValue.toHexString)
     job match {
       case Some(jobModel) => env.batchJobBL.setJobState(jobModel, newState)
       case None => logger.error("BatchEndedMessage with invalid id found.")

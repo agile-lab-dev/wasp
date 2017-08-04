@@ -23,14 +23,14 @@ object SparkWriterFactoryDefault extends SparkWriterFactory {
     writerModel.writerType.wtype match {
       case "index" => {
         defaultDataStoreIndexed match {
-          case "elastic" => Some(new ElasticSparkStreamingWriter(env, ssc, writerModel.id.stringify))
-          case "solr" => Some(new SolrSparkStreamingWriter(env, ssc, writerModel.id.stringify))
-          case _ => Some(new ElasticSparkStreamingWriter(env, ssc, writerModel.id.stringify))
+          case "elastic" => Some(new ElasticSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
+          case "solr" => Some(new SolrSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
+          case _ => Some(new ElasticSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
         }
       }
-      case "topic" => Some(new KafkaSparkStreamingWriter(env, ssc, writerModel.id.stringify))
-      case "raw" => RawWriter.createSparkStreamingWriter(env, ssc, writerModel.id.stringify)
-      case "hbase" => HBaseWriter.createSparkStreamingWriter(env, ssc, writerModel.id.stringify)
+      case "topic" => Some(new KafkaSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
+      case "raw" => RawWriter.createSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString)
+      case "hbase" => HBaseWriter.createSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString)
       case _ =>
         logger.error(s"Invalid spark streaming writer type, writer model: $writerModel")
         None
@@ -41,13 +41,13 @@ object SparkWriterFactoryDefault extends SparkWriterFactory {
     writerModel.writerType.wtype match {
       case "index" => {
         defaultDataStoreIndexed match {
-          case "elastic" => Some(new ElasticSparkWriter(env, sc, writerModel.id.stringify))
-          case "solr" => Some(new SolrSparkWriter(env, sc, writerModel.id.stringify))
-          case _ =>  Some(new ElasticSparkWriter(env, sc, writerModel.id.stringify))
+          case "elastic" => Some(new ElasticSparkWriter(env, sc, writerModel.id.getValue.toHexString))
+          case "solr" => Some(new SolrSparkWriter(env, sc, writerModel.id.getValue.toHexString))
+          case _ =>  Some(new ElasticSparkWriter(env, sc, writerModel.id.getValue.toHexString))
         }
       }
-      case "raw" => RawWriter.createSparkWriter(env, sc, writerModel.id.stringify)
-      case "hbase" => HBaseWriter.createSparkWriter(env, sc, writerModel.id.stringify)
+      case "raw" => RawWriter.createSparkWriter(env, sc, writerModel.id.getValue.toHexString)
+      case "hbase" => HBaseWriter.createSparkWriter(env, sc, writerModel.id.getValue.toHexString)
       case _ =>
         logger.error(s"Invalid spark writer type, writer model: $writerModel")
         None
