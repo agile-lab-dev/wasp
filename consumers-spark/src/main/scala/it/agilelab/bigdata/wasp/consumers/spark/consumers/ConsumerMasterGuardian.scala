@@ -160,12 +160,6 @@ class ConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL:
         logger.info(s"***Starting Streaming Etl actor [${element.name}]")
         context.actorOf(Props(new ConsumerEtlActor(env, sparkWriterFactory, streamingReader, ssc, element, self)))
       })
-
-      activeRT.foreach(element => {
-        logger.info(s"***Starting RT actor [${element.name}]")
-        val rtActor = context.actorOf(Props(new ConsumerRTActor(env, element, self)))
-        rtActor ! StartRT
-      })
       //TODO If statement added to handle pipegraphs with only RT components, cleaner way to do this to be found
       if(activeETL.isEmpty)
         {
