@@ -93,10 +93,10 @@ object Dependencies {
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
-	//val solrspark = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions TODO misses support for scala 2.11
 	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
 	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
+	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
@@ -111,7 +111,7 @@ object Dependencies {
 		akkaSlf4j
 	)
 	
-	val apachesolr = Seq(solr/*, solrspark*/)
+	val apacheSolr = Seq(solr, sparkSolr)
 	
 	val elastic = Seq(elasticSearch)
 	
@@ -144,13 +144,13 @@ object Dependencies {
 		time ++
 		test ++
 		elastic ++ // TODO remove when switching to plugins
-		apachesolr ++ // TODO remove when switching to plugins
 		Seq(
 			avro,
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
 			playws,
 			sparkSQL,
+			solr,
 			typesafeConfig
 		)
 	
@@ -161,6 +161,7 @@ object Dependencies {
 			elasticSearchSpark,
 			kafka,
 			kafkaStreaming,
+			sparkSolr,
 			quartz
 		)
 	/*

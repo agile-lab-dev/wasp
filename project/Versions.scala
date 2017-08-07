@@ -25,7 +25,18 @@ object Versions {
 	val scala = "2.11.11"
 	val scalaTest = "2.2.5"
 	val slf4j = "1.7.12"
+	private val solrSparkBase = "1.1.0"
 	val solr = "4.10.4"
-	val solrSpark = "1.0.0"
 	val spark = "1.6.2"
+	
+	// calculated versions ===============================================================================================
+	val solrSpark = buildCompleteSolrSparkVersion(solrSparkBase, spark, scala)
+	
+	// calculates the proper spark & scala components of the spark-solr version
+	def buildCompleteSolrSparkVersion(solrSparkBase: String, spark: String, scala: String): String = {
+		val sparkMajor = spark.split('.').dropRight(1).mkString(".")
+		val scalaMajor = scala.split('.').dropRight(1).mkString(".")
+		
+		s"$solrSparkBase-spark-$sparkMajor-scala-$scalaMajor"
+	}
 }
