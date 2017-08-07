@@ -4,15 +4,13 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.elastic.CheckOrCreateIndex
-import it.agilelab.bigdata.wasp.core.utils.{BSONFormats, ConfigManager, ElasticConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.elasticsearch.spark.sparkRDDFunctions
 import org.elasticsearch.spark.sql.EsSparkSQL
-
-import scala.concurrent.Await
 
 
 class ElasticSparkStreamingWriter(env: {val indexBL: IndexBL},
@@ -22,12 +20,11 @@ class ElasticSparkStreamingWriter(env: {val indexBL: IndexBL},
 
   override def write(stream: DStream[String]): Unit = {
 
-    val indexFut = env.indexBL.getById(id)
-    val indexOpt = Await.result(indexFut, timeout.duration)
+    val indexOpt = env.indexBL.getById(id)
     indexOpt.foreach(index => {
 
       val indexName = ConfigManager.buildTimedName(index.name)
-      if (??[Boolean](WaspSystem.elasticAdminActor, CheckOrCreateIndex(indexName, index.name, index.dataType, BSONFormats.toString(index.schema.get)))) {
+      if (??[Boolean](WaspSystem.elasticAdminActor, CheckOrCreateIndex(indexName, index.name, index.dataType, index.getJsonSchema))) {
         val resourceBroadcast = ssc.sparkContext.broadcast(index.resource)
         val addressBroadcast = ssc.sparkContext.broadcast(elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest").mkString(","))
 
@@ -46,8 +43,7 @@ class ElasticSparkWriter(env: {val indexBL: IndexBL},
   extends SparkWriter with ElasticConfiguration {
   
   override def write(data: DataFrame): Unit = {
-    val indexFut = env.indexBL.getById(id)
-    val indexOpt = Await.result(indexFut, timeout.duration)
+    val indexOpt = env.indexBL.getById(id)
     indexOpt.foreach(index => {
       
       val indexName = ConfigManager.buildTimedName(index.name)
@@ -59,7 +55,7 @@ class ElasticSparkWriter(env: {val indexBL: IndexBL},
         //TODO Gestire meglio l'eccezione
         throw new Exception(s"The index name must be all lowercase: $index")
       }
-      if (??[Boolean](WaspSystem.elasticAdminActor, CheckOrCreateIndex(indexName, index.name, index.dataType, BSONFormats.toString(index.schema.get)))) {
+      if (??[Boolean](WaspSystem.elasticAdminActor, CheckOrCreateIndex(indexName, index.name, index.dataType, index.getJsonSchema))) {
         println(data.count())
         data.printSchema()
         val resourceBroadcast = sc.broadcast(index.resource)
@@ -71,8 +67,6 @@ class ElasticSparkWriter(env: {val indexBL: IndexBL},
         throw new Exception("Error creating index " + index.name)
         //TODO handle errors
       }
-      
-      
     })
   }
 }

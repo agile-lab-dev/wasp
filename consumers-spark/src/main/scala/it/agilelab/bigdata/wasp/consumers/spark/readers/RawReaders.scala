@@ -55,8 +55,7 @@ object RawReader {
 	
 	def create(rawBL: RawBL, id: String, name: String): Option[StaticReader] = {
 		// get the raw model using the provided id & bl
-		val rawModelFut = rawBL.getById(id)
-		val rawModelOpt = Await.result(rawModelFut, timeout.duration)
+		val rawModelOpt = rawBL.getById(id)
 		
 		// if we found a model, try to return the correct reader
 		if (rawModelOpt.isDefined) {

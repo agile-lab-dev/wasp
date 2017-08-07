@@ -42,12 +42,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
       val mlModelsDB = new MlModelsDB(env)
       logger.info(s"Start to get the models")
-      val mlModelsFuture: Future[MlModelsBroadcastDB] =
-        mlModelsDB.createModelsBroadcast(jobModel.etl.mlModels)(sc = sc)
-
-      // Wait for the result
-      val mlModelsBroadcast: MlModelsBroadcastDB =
-        Await.result(mlModelsFuture,  timeout.duration)
+      val mlModelsBroadcast: MlModelsBroadcastDB = mlModelsDB.createModelsBroadcast(jobModel.etl.mlModels)(sc = sc)
 
       val strategy = createStrategy(jobModel.etl).map(s => {
         s.sparkContext = Some(sc)

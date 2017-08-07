@@ -5,12 +5,10 @@ import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.models.configuration.TinyKafkaConfig
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, BSONFormats, ConfigManager, JsonToByteArrayUtil}
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import reactivemongo.bson.BSONDocument
-
-import scala.concurrent.Await
+import org.mongodb.scala.bson.BsonDocument
 
 
 class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingContext, id: String)
@@ -19,13 +17,12 @@ class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingConte
   override def write(stream: DStream[String]): Unit = {
     val kafkaConfig = ConfigManager.getKafkaConfig
 
-    val topicFut = env.topicBL.getById(id)
-    val topicOpt = Await.result(topicFut, timeout.duration)
+    val topicOpt = env.topicBL.getById(id)
     topicOpt.foreach(topic => {
 
       if (??[Boolean](WaspSystem.getKafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-        val schemaB = ssc.sparkContext.broadcast(BSONFormats.toString(topic.schema.getOrElse(BSONDocument())))
+        val schemaB = ssc.sparkContext.broadcast(topic.getJsonSchema)
         val configB = ssc.sparkContext.broadcast(ConfigManager.getKafkaConfig.toTinyConfig())
         val topicNameB = ssc.sparkContext.broadcast(topic.name)
 	      val topicDataTypeB = ssc.sparkContext.broadcast(topic.topicDataType)

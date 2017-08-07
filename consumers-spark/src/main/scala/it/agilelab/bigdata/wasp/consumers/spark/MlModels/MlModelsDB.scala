@@ -28,7 +28,8 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
    * @param version
    * @return
    */
-  def read(name: String, version: String): Future[TransformerWithInfo] = {
+  @throws[Exception]
+  def read(name: String, version: String): TransformerWithInfo = {
     read(name, version, None)
   }
 
@@ -37,7 +38,10 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
    * @param mlModelOnlyInfo
    * @return
    */
-  def read(mlModelOnlyInfo: MlModelOnlyInfo): Future[TransformerWithInfo] = read(mlModelOnlyInfo.name, mlModelOnlyInfo.version, mlModelOnlyInfo.timestamp)
+  @throws[Exception]
+  def read(mlModelOnlyInfo: MlModelOnlyInfo): TransformerWithInfo = {
+    read(mlModelOnlyInfo.name, mlModelOnlyInfo.version, mlModelOnlyInfo.timestamp)
+  }
 
   /**
    * This method can be use to retrieve a complete model with own info,
@@ -47,30 +51,27 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
    * @param timestampOpt
    * @return
    */
-  def read(name: String, version: String, timestampOpt: Option[Long]): Future[TransformerWithInfo] = {
+  @throws[Exception]
+  def read(name: String, version: String, timestampOpt: Option[Long]): TransformerWithInfo = {
     val transformerInfoOption: Option[MlModelOnlyInfo] = readOnlyInfo(name, version, timestampOpt)
   
-    transformerInfoOption map {
-      case Some(transformerInfo) =>
-        env.mlModelBL.getSerializedTransformer(transformerInfo)
-          .flatMap {
-          case Some(transformerObject: Enumerator[Any]) =>
-            //Metto insieme le info del modello con il modello stesso
+    transformerInfoOption match {
+      case Some(transformerInfo) => {
+        env.mlModelBL.getSerializedTransformer(transformerInfo) match {
+           case Some(transformerAny) => {
+             //Metto insieme le info del modello con il modello stesso
+             val transfomer = transformerAny.asInstanceOf[Transformer with Params]
 
-            val a: Future[List[Transformer with Params]] = transformerObject.map(t => {
-              t.asInstanceOf[Transformer with Params]
-            }).run(Iteratee.getChunks[Transformer with Params])
-
-              a.map(transformerModel => TransformerWithInfo.create(transformerInfo, transformerModel.head))
-
-          // Da gestire l'eccezione nel caso di mancanza del file
-          case None => Future.failed(new Exception(s"The file of transformaer model not found: name: $name, version: $version, timestamp: $timestampOpt"))
-        }
+             TransformerWithInfo.create(transformerInfo, transfomer)
+           }
+           // Da gestire l'eccezione nel caso di mancanza del file
+           case None => throw new Exception(s"The file of transformaer model not found: name: $name, version: $version, timestamp: $timestampOpt")
+         }
+      }
 
       // Da gestire l'eccezione nel caso di mancanza delle info
       case None => throw new Exception(s"The model info not found: name: $name, version: $version, timestamp: $timestampOpt")
     }
-
   }
 
   /**
@@ -80,16 +81,12 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
    * @param sc
    * @return
    */
-  def createModelsBroadcast(mlModelsOnlyInfo: List[MlModelOnlyInfo])(implicit sc: SparkContext): Future[MlModelsBroadcastDB] = {
-    // Reading all model from DB
-    val mlModelsListFuture: List[Future[MlModelsBroadcastDB]] = mlModelsOnlyInfo.map(model => {
-      read(model).map(transformer => {
-        MlModelsBroadcastDB(transformer)
-      })
-    })
-    // Collect all future
-    Future.fold(mlModelsListFuture)(MlModelsBroadcastDB())(_ + _)
-
+  def createModelsBroadcast(mlModelsOnlyInfo: List[MlModelOnlyInfo])(implicit sc: SparkContext): MlModelsBroadcastDB = {
+    // read all models and put them in broadcast dbs
+    val mlModelsList: List[MlModelsBroadcastDB] = mlModelsOnlyInfo.map(model => MlModelsBroadcastDB(read(model)))
+    
+    // combine ml model broadcast dbs
+    mlModelsList.fold(MlModelsBroadcastDB())(_ + _)
   }
 
   /**

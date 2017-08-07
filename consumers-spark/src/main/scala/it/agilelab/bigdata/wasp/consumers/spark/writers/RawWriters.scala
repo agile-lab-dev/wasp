@@ -53,8 +53,7 @@ object RawWriter {
 
   private def getModel(env: {val rawBL: RawBL}, id: String): Option[RawModel] = {
     // get the raw model using the provided id & bl
-    val rawModelFut = env.rawBL.getById(id)
-    Await.result(rawModelFut, timeout.duration)
+    env.rawBL.getById(id)
   }
 }
 

@@ -76,7 +76,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   private def indexReaders(): List[Option[StaticReader]] = etl.inputs
     .flatMap({
     case ReaderModel(id, name, IndexModel.readerType) =>
-      Some(IndexReader.create(env.indexBL, id.stringify, name))
+      Some(IndexReader.create(env.indexBL, id.getValue.toHexString, name))
     case _ => None
   })
   
@@ -85,7 +85,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
     */
   private def rawReaders(): List[Option[StaticReader]] = etl.inputs
     .flatMap({
-      case ReaderModel(id, name, "raw") => Some(RawReader.create(env.rawBL, id.stringify, name))
+      case ReaderModel(id, name, "raw") => Some(RawReader.create(env.rawBL, id.getValue.toHexString, name))
       case _ => None
     })
   
@@ -103,10 +103,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   private def topicModels(): List[Option[TopicModel]] = etl.inputs
     .flatMap({
     case ReaderModel(id, name, TopicModel.readerType) =>
-      val topicOpt =  Await.result(
-        env.topicBL.getById(id.stringify),
-        timeout.duration
-      )
+      val topicOpt =  env.topicBL.getById(id.getValue.toHexString)
       Some(topicOpt)
     case _ => None
   })
@@ -115,7 +112,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   private def validationTask(): Unit = {
     etl.inputs.foreach({
       case ReaderModel(id, name, IndexModel.readerType) => {
-        val readerOpt = IndexReader.create(env.indexBL, id.stringify, name)
+        val readerOpt = IndexReader.create(env.indexBL, id.getValue.toHexString, name)
         if (readerOpt.isEmpty) {
           //TODO Better exception
           throw new Exception(s"There isn't this index: $id, $name")
@@ -123,10 +120,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
       }
 
       case ReaderModel(id, name, TopicModel.readerType) => {
-        val topicOpt =  Await.result(
-          env.topicBL.getById(id.stringify),
-          timeout.duration
-        )
+        val topicOpt = env.topicBL.getById(id.getValue.toHexString)
         if (topicOpt.isEmpty) {
           //TODO Better exception
           throw new Exception(s"There isn't this topic: $id, $name")
@@ -173,10 +167,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
         val mlModelsDB = new MlModelsDB(env)
         // --- Broadcast models initialization ----
         // Reading all model from DB and create broadcast
-        val mlModelsFuture: Future[MlModelsBroadcastDB] = mlModelsDB.createModelsBroadcast(etl.mlModels)(ssc.sparkContext)
-
-        // Wait for the result
-        val mlModelsBroadcast: MlModelsBroadcastDB = Await.result(mlModelsFuture,  timeout.duration)
+        val mlModelsBroadcast: MlModelsBroadcastDB = mlModelsDB.createModelsBroadcast(etl.mlModels)(ssc.sparkContext)
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast

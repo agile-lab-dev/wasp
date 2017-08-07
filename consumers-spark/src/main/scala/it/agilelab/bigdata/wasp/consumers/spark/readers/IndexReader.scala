@@ -16,8 +16,6 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.elasticsearch.spark.sql.EsSparkSQL
 import org.elasticsearch.hadoop.cfg.ConfigurationOptions
 
-import scala.concurrent.Await
-import scala.tools.nsc.util.ClassPath.JavaContext
 
 /**
  * Created by Mattia Bertorello on 10/09/15.
@@ -101,9 +99,8 @@ object IndexReader {
   def create(indexBL: IndexBL, id: String, name: String): Option[StaticReader] = {
 
     val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
-
-    val indexFut = indexBL.getById(id)
-    val indexOpt = Await.result(indexFut, timeout.duration)
+  
+    val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {
       defaultDataStoreIndexed match {
         case "elastic" => Some(new ElasticIndexReader(indexOpt.get))

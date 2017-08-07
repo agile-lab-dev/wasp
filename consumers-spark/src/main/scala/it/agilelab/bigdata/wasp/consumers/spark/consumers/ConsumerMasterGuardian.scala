@@ -176,15 +176,14 @@ class ConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL:
   }
 
   //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-  private def loadActivePipegraphs: (List[ETLModel], List[RTModel]) = {
+  private def loadActivePipegraphs: (Seq[ETLModel], Seq[RTModel]) = {
     logger.info(s"Loading all active Pipegraphs ...")
-    val pipegraphs = env.pipegraphBL.getActivePipegraphs()
-    val awaitedPipegraphs: List[PipegraphModel] = Await.result(pipegraphs, timeout.duration)
-    val etlComponents = awaitedPipegraphs.flatMap(pg => pg.etl).filter(etl => etl.isActive)
+    val pipegraphs: Seq[PipegraphModel] = env.pipegraphBL.getActivePipegraphs()
+    val etlComponents = pipegraphs.flatMap(pg => pg.etl).filter(etl => etl.isActive)
     logger.info(s"Found ${etlComponents.length} active ETL...")
     etlListSize = etlComponents.length
 
-    val rtComponents = awaitedPipegraphs.flatMap(pg => pg.rt).filter(rt => rt.isActive)
+    val rtComponents = pipegraphs.flatMap(pg => pg.rt).filter(rt => rt.isActive)
     logger.info(s"Found ${rtComponents.length} active RT...")
     //actorListSize = rtComponents.length
 

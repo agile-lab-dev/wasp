@@ -1,13 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.writers
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
-import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, ReaderModel}
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, RowToAvro}
-import org.apache.avro.Schema
-import org.apache.commons.lang3.NotImplementedException
-import org.apache.hadoop.conf.Configuration
+import it.agilelab.bigdata.wasp.core.models.KeyValueModel
+import it.agilelab.bigdata.wasp.core.utils.RowToAvro
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.spark.HBaseContext
@@ -17,14 +13,9 @@ import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
-import scala.concurrent.Await
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.json4s.JsonAST.JValue
-import play.api.libs.json.{JsValue, Json}
-
-import scala.collection.mutable.ArrayBuffer
-
+import play.api.libs.json.Json
 
 
 trait HbaseConfigData
@@ -61,8 +52,7 @@ object HBaseWriter {
 
 	private def getModel(env: { val keyValueBL: KeyValueBL}, id: String): Option[KeyValueModel] = {
 		// get the raw model using the provided id & bl
-		val rawModelFut = env.keyValueBL.getById(id)
-		Await.result(rawModelFut, timeout.duration)
+		env.keyValueBL.getById(id)
 	}
 
 
