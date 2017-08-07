@@ -11,10 +11,10 @@ import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper.bsonDocumentToMap
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import reactivemongo.bson.{BSON, BSONBoolean, BSONDocument, BSONDocumentReader, BSONDouble, BSONInteger, BSONLong, BSONString}
 
 import scala.concurrent.{Await, Future}
 
@@ -55,29 +55,14 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   /**
    * Strategy object initialize
    */
-   private lazy val createStrategy: Option[Strategy] = etl.strategy match {
+  //TODO: identical to it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.createStrategy, externalize
+  private lazy val createStrategy: Option[Strategy] = etl.strategy match {
     case None => None
     case Some(strategyModel) => {
       val result = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
       result.configuration = strategyModel.configuration match {
         case None => Map[String, Any]()
-        case Some(configuration) => {
-
-          implicit def reader = new BSONDocumentReader[Map[String, Any]] {
-            def read(bson: BSONDocument) =
-              bson.elements.map(tuple =>
-                tuple._1 -> (tuple._2 match {
-                  case s: BSONString => s.value
-                  case b: BSONBoolean => b.value
-                  case i: BSONInteger => i.value
-                  case l: BSONLong => l.value
-                  case d: BSONDouble => d.value
-                  case o: Any => o.toString
-                })).toMap
-          }
-
-          BSON.readDocument[Map[String, Any]](configuration)
-        }
+        case Some(configuration) => bsonDocumentToMap(configuration)
       }
 
       log.info("strategy: " + result)

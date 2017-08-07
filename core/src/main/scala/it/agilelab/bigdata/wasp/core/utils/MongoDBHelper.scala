@@ -6,13 +6,15 @@ import com.mongodb.ConnectionString
 import com.mongodb.client.model.CreateCollectionOptions
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.configuration.MongoDBConfigModel
-import org.mongodb.scala.bson.{BsonDocument, BsonValue}
+import org.mongodb.scala.bson.{BsonArray, BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 import org.mongodb.scala.connection.{ClusterSettings, SocketSettings}
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{MongoClient, MongoClientSettings, MongoDatabase, _}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.language.postfixOps
 import scala.reflect.ClassTag
 
 private[utils] trait MongoDBHelper {
@@ -161,5 +163,42 @@ object MongoDBHelper {
 
     mongoDatabase.listCollectionNames().results()
     mongoDatabase
+  }
+  
+  /**
+    * Function to recursively convert a BsonDocument to a Map[String, Any].
+    *
+    * The keys will be the field names, the values willbe converted to the correpsonding scala types whenever possible.
+    *
+    * The bson-scala type mappings are as follows:
+    * - BsonBoolean   -> Boolean
+    * - BsonInt32     -> Int
+    * - BsonInt64     -> Long
+    * - BsonDouble    -> Double
+    * - BsonString    -> String
+    * - BsonDocument  -> Map[String, Any]
+    * - anything else -> BsonValue
+    */
+  def bsonDocumentToMap(bsonDocument: BsonDocument): Map[String, Any] = {
+    val entries = bsonDocument.entrySet().asScala
+    
+    entries map {
+      entry =>
+        // extract field name to use as key
+        val key = entry.getKey
+        
+        // extract and convert value to corresponding scala type
+        val value = entry.getValue match {
+          case boolean: BsonBoolean   => boolean.getValue
+          case int: BsonInt32         => int.intValue()
+          case long: BsonInt64        => long.longValue()
+          case double: BsonDouble     => double.doubleValue()
+          case string: BsonString     => string.getValue
+          case document: BsonDocument => bsonDocumentToMap(document)
+          case x                      => x
+        }
+        
+        key -> value
+    } toMap
   }
 }
