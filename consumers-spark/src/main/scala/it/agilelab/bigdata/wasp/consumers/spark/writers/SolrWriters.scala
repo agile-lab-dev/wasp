@@ -1,8 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.writers
 
-import com.lucidworks.spark.SolrRDD
 import com.lucidworks.spark.SolrSupport
-import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
