@@ -1,21 +1,19 @@
-package it.agilelab.bigdata.wasp.consumers.spark.consumers
+package it.agilelab.bigdata.wasp.consumers.spark
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
-import it.agilelab.bigdata.wasp.consumers.spark.SparkHolder
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.WaspMessage
-import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.{ETLModel, PipegraphModel, RTModel}
 import it.agilelab.bigdata.wasp.core.utils.SparkStreamingConfiguration
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 

@@ -1,5 +1,5 @@
 
-package it.agilelab.bigdata.wasp.consumers.rt.consumers
+package it.agilelab.bigdata.wasp.consumers.rt
 
 import akka.actor._
 import it.agilelab.bigdata.wasp.consumers.rt.readers.CamelKafkaReader

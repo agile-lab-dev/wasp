@@ -1,8 +1,7 @@
-package it.agilelab.bigdata.wasp.consumers.spark.consumers
+package it.agilelab.bigdata.wasp.consumers.spark
 
 import akka.actor.{Actor, ActorLogging, ActorRef, actorRef2Scala}
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
-import it.agilelab.bigdata.wasp.consumers.spark.SQLContextSingleton
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader, StaticReader, StreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
