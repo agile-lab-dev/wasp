@@ -6,10 +6,7 @@ object Versions {
 	val akkaHttp = "10.0.9" // keep in sync with akka
 	val apacheCommonsLang3Version = "3.4"
 	val avro = "1.7.7"
-	val camelWebsocket = "2.15.3"
-	val camelElasticSearch = "2.15.3"
-	val camelKafka = "2.15.3"
-	val camelQuartz2 = "2.15.3"
+	val camel = "2.17.7"
 	val elasticSearch = "1.7.2"
 	val elasticSearchSpark = "2.3.3"
 	val hbase = "1.2.0-cdh5.9.1"

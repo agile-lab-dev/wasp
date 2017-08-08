@@ -59,10 +59,8 @@ object Dependencies {
 	val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
 	val asynchttpclient = "com.ning" % "async-http-client" % "1.9.39" // remove?
 	val avro = "org.apache.avro" % "avro" % Versions.avro
-	val camelElastic = "org.apache.camel" % "camel-elasticsearch" % Versions.camelElasticSearch
-	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camelKafka
-	val camelQuartz2 = "org.apache.camel" % "camel-quartz2" % Versions.camelQuartz2
-	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camelWebsocket
+	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
+	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
 	val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
 	val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark" % Versions.elasticSearchSpark
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
@@ -156,13 +154,21 @@ object Dependencies {
 	
 	val producers = akka ++ logging ++ test ++ Seq(akkaHttp, akkaStream)
 	
-	val consumers_spark = json ++ test ++ spark ++ hbase ++
+	val consumers_spark = akka ++ json ++ test ++ spark ++ hbase ++
 		Seq(
 			elasticSearchSpark,
 			kafka,
 			kafkaStreaming,
 			sparkSolr,
 			quartz
+		)
+	
+	val consumers_rt = akka ++
+		Seq(
+			akkaCamel,
+			camelKafka,
+			camelWebsocket,
+			kafka
 		)
 	/*
 	val master = logging ++ time ++ json ++ elastic

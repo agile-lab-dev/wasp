@@ -26,6 +26,8 @@ lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark
 
 lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
 	.settings(Settings.commonSettings:_*)
+	.dependsOn(core)
+	.settings(libraryDependencies ++= Dependencies.consumers_rt)
 
 lazy val wasp = Project("wasp", file("."))
 	.settings(Settings.commonSettings:_*)
