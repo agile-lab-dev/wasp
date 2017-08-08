@@ -11,11 +11,12 @@ import it.agilelab.bigdata.wasp.core.bl.{IndexBL, TopicBL, WebsocketBL}
 import it.agilelab.bigdata.wasp.core.elastic.CheckOrCreateIndex
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, BSONFormats, ConfigManager}
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
 import org.apache.camel.component.websocket._
+import org.mongodb.scala.bson.BsonDocument
 import play.libs.Json
-import reactivemongo.bson.{BSONDocument, BSONString}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 
 class RtWritersManagerActor(env:{val topicBL: TopicBL; val websocketBL: WebsocketBL; val indexBL: IndexBL}, writer: Option[WriterModel]) extends Actor{
@@ -63,10 +64,8 @@ class RtWritersManagerActor(env:{val topicBL: TopicBL; val websocketBL: Websocke
 class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
 
   //TODO: Configurazione completa?
-  val kafkaTopicFut: Future[Option[TopicModel]] = topicBL.getById(writer.id.stringify)
-  //TODO recuperare timeout wasp
-  val kafkaTopic: TopicModel = Await.result(kafkaTopicFut, Timeout(30, TimeUnit.SECONDS).duration).get
-  val topicSchema = BSONFormats.toString(kafkaTopic.schema.getOrElse(BSONDocument()))
+  val kafkaTopic: TopicModel = topicBL.getById(writer.id.getValue.toHexString).get
+  val topicSchema = kafkaTopic.getJsonSchema
   val topicDataType = kafkaTopic.topicDataType
 
 
@@ -97,9 +96,7 @@ class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
 }
 
 class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer {
-  val indexConfigFut: Future[Option[IndexModel]] = indexBL.getById(writer.id.stringify)
-  //TODO recuperare timeout wasp
-  val indexConfigOpt: Option[IndexModel] = Await.result(indexConfigFut, Timeout(30, TimeUnit.SECONDS).duration)
+  val indexConfigOpt: Option[IndexModel] = indexBL.getById(writer.id.getValue.toHexString)
   if (indexConfigOpt.isEmpty) {
     //TODO eccezione? fallisce l'attore?
   }
@@ -114,7 +111,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
     val elasticConfig = ConfigManager.getElasticConfig
     val indexName = ConfigManager.buildTimedName(index.name)
     val ips = elasticConfig.connections.map(_.host).mkString(",")
-    if (??[Boolean](WaspSystem.elasticAdminActor, CheckOrCreateIndex(indexName, index.name, index.dataType, BSONFormats.toString(index.schema.get)))) {
+    if (??[Boolean](WaspSystem.elasticAdminActor, CheckOrCreateIndex(indexName, index.name, index.dataType, index.getJsonSchema))) {
       //
     }
     val clusterName = ConfigManager.getElasticConfig.cluster_name
@@ -142,9 +139,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
 
 class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer{
 
-  val webSocketConfigFut: Future[Option[WebsocketModel]] = websocketBL.getById(writer.id.stringify)
-  //TODO recuperare timeout wasp
-  val webSocketConfigOpt: Option[WebsocketModel] = Await.result(webSocketConfigFut, Timeout(30, TimeUnit.SECONDS).duration)
+  val webSocketConfigOpt: Option[WebsocketModel] = websocketBL.getById(writer.id.getValue.toHexString)
   if (webSocketConfigOpt.isEmpty) {
     //TODO eccezione? fallisce l'attore?
   }
@@ -159,8 +154,8 @@ class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extend
   }
 
   def getHttpUri = {
-    def getOptions(websocketConfig: BSONDocument): String = {
-      websocketConfig.elements.map( x => x._1 + "=" + x._2.asInstanceOf[BSONString].value).mkString("&")
+    def getOptions(websocketConfig: BsonDocument): String = {
+      websocketConfig.entrySet().asScala.map( x => x.getKey + "=" + x.getValue.asString().getValue).mkString("&")
     }
 
     val rootUri = s"websocket://${webSocketConfigOpt.get.host}:${webSocketConfigOpt.get.port}/${webSocketConfigOpt.get.resourceName}"

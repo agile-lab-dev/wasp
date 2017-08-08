@@ -7,16 +7,13 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader,
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
-import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper.bsonDocumentToMap
+import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-
-import scala.concurrent.{Await, Future}
 
 
 
@@ -62,7 +59,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
       val result = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
       result.configuration = strategyModel.configuration match {
         case None => Map[String, Any]()
-        case Some(configuration) => bsonDocumentToMap(configuration)
+        case Some(configuration) => MongoDBHelper.bsonDocumentToMap(configuration)
       }
 
       log.info("strategy: " + result)
