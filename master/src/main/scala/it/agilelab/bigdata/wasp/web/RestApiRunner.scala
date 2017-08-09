@@ -33,12 +33,7 @@ object RestApiRunner {
 
 object RestApiRunnerLauncher extends WaspLauncher {
 
-  override protected def startApp(args: Array[String]): Unit = {
+  override def launch(args: Array[String]): Unit = {
     new RestApiRunner().start(ActorSystem("test"),  Index_C.getRoute)
   }
-  /**
-    * Launchers must override this with deployment-specific pipegraph initialization logic;
-    * this usually simply means loading the custom pipegraphs into the database.
-    */
-  override def initializeCustomWorkloads(): Unit = {}
 }

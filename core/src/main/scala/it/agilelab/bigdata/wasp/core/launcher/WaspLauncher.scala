@@ -1,8 +1,7 @@
 package it.agilelab.bigdata.wasp.core.launcher
 
-import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 
 
@@ -26,6 +25,7 @@ trait WaspLauncher {
 		          """.stripMargin
 
 	def main(args: Array[String]) {
+		// TODO switch to commons-cli & make options extensible
 		val options = new WaspOptions(args)
 
 		// handle error, version & help
@@ -38,26 +38,14 @@ trait WaspLauncher {
 			printUsageAndExit()
 		}
 
-		// print banner and build info if starting anything
-		if (options.startApp || options.startStreamingGuardian|| options.startBatchGuardian) {
-			printBannerAndBuildInfo()
-		}
+		// print banner and build info
+		printBannerAndBuildInfo()
 
-		// initialize stuff if starting anything
-		if (options.startApp || options.startStreamingGuardian|| options.startBatchGuardian) {
-			initializeWasp()
-		}
-
-		// handle startup requests
-		if (options.startStreamingGuardian) {
-			startStreamingGuardian()
-		}
-		if (options.startBatchGuardian) {
-			startBatchGuardian()
-		}
-		if (options.startApp) {
-			startApp(args)
-		}
+		// initialize stuff
+		initializeWasp()
+		
+		// launch the application
+		launch(args)
 	}
 
 	def initializeWasp(): Unit = {
@@ -67,9 +55,6 @@ trait WaspLauncher {
 		WaspDB.initializeDB()
 		// waspsystem
 		WaspSystem.initializeActorSystem()
-		// workloads
-		initializeDefaultWorkloads()
-		initializeCustomWorkloads()
 	}
 	
 	private def printErrorAndExit(message: String): Unit = {
@@ -102,48 +87,5 @@ trait WaspLauncher {
 			 """.stripMargin)
 	}
 	
-	protected def startApp(args: Array[String]): Unit = {
-		// redirect to play framework entry point
-		//play.core.server.NettyServer.main(Array.empty[String])
-	}
-
-	/* private def startMasterGuardian(options: WaspOptions): Unit = {
-		val actorSystem = WaspSystem.actorSystem
-		WaspSystem.systemInitialization(actorSystem)
-		WaspDB.DBInitialization(actorSystem)
-		if(startMaster == "true") {
-			masterActor = WaspSystem.actorSystem.actorOf(Props(new MasterGuardian(ConfigBL)))
-		}
-	} */
-
-	private def startStreamingGuardian(): Unit = {
-		//actorSystem.actorOf(Props(new ConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault, KafkaReader)), ConsumersMasterGuardian.name)
-	}
-
-	private def startBatchGuardian(): Unit = {
-		// actorSystem.actorOf(Props(new BatchMasterGuardian(ConfigBL, None, SparkWriterFactoryDefault)), BatchMasterGuardian.name)
-	}
-
-	/**
-		* Initialize DB with default workloads (Raw and Logger pipegraphs)
-		*/
-	private def initializeDefaultWorkloads(): Unit = {
-		println("Default workloads initialization.")
-		val db = WaspDB.getDB
-		// initialize logger pipegraph
-		db.insertIfNotExists[TopicModel](SystemPipegraphs.loggerTopic)
-		db.insertIfNotExists[IndexModel](SystemPipegraphs.loggerIndex)
-		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
-		db.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
-		// initialize raw pipegraph
-		//db.insertIfNotExists[TopicModel](SystemPipegraphs.rawTopic)
-		//db.insertIfNotExists[IndexModel](SystemPipegraphs.rawIndex)
-		//db.insertIfNotExists[PipegraphModel](SystemPipegraphs.rawPipegraph)
-	}
-
-	/**
-		* Launchers must override this with deployment-specific pipegraph initialization logic;
-		* this usually simply means loading the custom pipegraphs into the database.
-		*/
-	def initializeCustomWorkloads(): Unit
+	def launch(args: Array[String]): Unit
 }
