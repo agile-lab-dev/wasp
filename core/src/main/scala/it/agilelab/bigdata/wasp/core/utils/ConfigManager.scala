@@ -159,11 +159,12 @@ object ConfigManager {
     * Initialize the configurations managed by this ConfigManager.
     */
   def initializeConfigs(): Unit = {
-    initializeKafkaConfig()
     initializeSparkBatchConfig()
     initializeSparkStreamingConfig()
     initializeElasticConfig()
     initializeSolrConfig()
+
+    initializeKafkaConfig()
   }
 
   def getKafkaConfig = {
@@ -254,7 +255,7 @@ object ConfigManager {
     * Read the configuration with the specified name from MongoDB or, if it is not present, initialize
     * it with the provided defaults.
 		*/
-  private def retrieveConf[T](default: T, nameConf: String)(implicit ct: ClassTag[T]): Option[T] = {
+  private def retrieveConf[T](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     val document =
       WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
 

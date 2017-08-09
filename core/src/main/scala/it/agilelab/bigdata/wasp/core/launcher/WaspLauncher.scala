@@ -5,6 +5,7 @@ import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 
+
 trait WaspLauncher {
 	// the actual version of WASP being ran
 	val version: String = BuildInfo.version // BuildInfo is generated at compile time by sbt-buildinfo plugin
@@ -101,7 +102,7 @@ trait WaspLauncher {
 			 """.stripMargin)
 	}
 	
-	private def startApp(args: Array[String]): Unit = {
+	protected def startApp(args: Array[String]): Unit = {
 		// redirect to play framework entry point
 		//play.core.server.NettyServer.main(Array.empty[String])
 	}

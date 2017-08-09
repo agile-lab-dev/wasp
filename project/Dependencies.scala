@@ -53,6 +53,7 @@ object Dependencies {
 	val akkaCluster = "com.typesafe.akka" %% "akka-cluster" % Versions.akka
 	val akkaContrib = "com.typesafe.akka" %% "akka-contrib" % Versions.akka
 	val akkaHttp = "com.typesafe.akka" %% "akka-http" % Versions.akkaHttp
+	val akkaHttpSpray = "com.typesafe.akka" %% "akka-http-spray-json" % Versions.akkaHttp
 	val akkaRemote = "com.typesafe.akka" %% "akka-remote" % Versions.akka
 	val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Versions.akka
 	val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
@@ -112,7 +113,7 @@ object Dependencies {
 	val apacheSolr = Seq(solr, sparkSolr)
 	
 	val elastic = Seq(elasticSearch)
-	
+
 	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer, hbaseSpark)
 	
 	val json = Seq(json4sCore, json4sJackson, json4sNative)
@@ -120,9 +121,9 @@ object Dependencies {
 	val logging = Seq(slf4jApi)
 	
 	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
-	
+
 	val time = Seq(jodaConvert, jodaTime)
-	
+
 	
 	// ===================================================================================================================
 	// Test dependencies
@@ -153,7 +154,7 @@ object Dependencies {
 		)
 	
 	val producers = akka ++ logging ++ test ++ Seq(akkaHttp, akkaStream)
-	
+
 	val consumers_spark = akka ++ json ++ test ++ spark ++ hbase ++
 		Seq(
 			elasticSearchSpark,
@@ -162,7 +163,7 @@ object Dependencies {
 			sparkSolr,
 			quartz
 		)
-	
+
 	val consumers_rt = akka ++
 		Seq(
 			akkaCamel,
@@ -170,9 +171,10 @@ object Dependencies {
 			camelWebsocket,
 			kafka
 		)
+  val master = akka ++ Seq(akkaHttp, akkaHttpSpray)
 	/*
 	val master = logging ++ time ++ json ++ elastic
-	
+
 	val wasp_consumers = json ++ test ++
 		Seq(kafka,
 		    kafkaStreaming,

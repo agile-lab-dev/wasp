@@ -170,7 +170,7 @@ object WaspSystem {
    * WASP logger actor.
    * Initialized by trait LoggerInjector through initializeLoggerActor.
    */
-  var loggerActor: Option[ActorRef] = _
+  var loggerActor: Option[ActorRef] = None
 
   /**
     * Initializes the logger actor if needed; safe to call multiple times.
@@ -213,7 +213,7 @@ object WaspSystem {
 
     // close actor system
     if (actorSystem != null)
-      actorSystem.shutdown()
+      actorSystem.terminate()
 
     // close wasp db connections
     WaspDB.getDB.close()
