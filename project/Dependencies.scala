@@ -60,10 +60,8 @@ object Dependencies {
 	val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
 	val asynchttpclient = "com.ning" % "async-http-client" % "1.9.39" // remove?
 	val avro = "org.apache.avro" % "avro" % Versions.avro
-	val camelElastic = "org.apache.camel" % "camel-elasticsearch" % Versions.camelElasticSearch
-	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camelKafka
-	val camelQuartz2 = "org.apache.camel" % "camel-quartz2" % Versions.camelQuartz2
-	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camelWebsocket
+	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
+	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
 	val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
 	val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark" % Versions.elasticSearchSpark
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
@@ -89,14 +87,15 @@ object Dependencies {
 	val playcache = "com.typesafe.play" %% "play-cache" % Versions.play // TODO remove
 	val playjson = "com.typesafe.play" %% "play-json" % Versions.play // TODO remove
 	val playserver = "com.typesafe.play" %% "play-netty-server" % Versions.play // TODO remove
+	val quartz = "org.quartz-scheduler" % "quartz" % Versions.quartz
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
-	//val solrspark = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions TODO misses support for scala 2.11
 	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
 	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
+	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
@@ -111,17 +110,20 @@ object Dependencies {
 		akkaSlf4j
 	)
 	
-	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
+	val apacheSolr = Seq(solr, sparkSolr)
 	
-	val apachesolr = Seq(solr/*, solrspark*/)
+	val elastic = Seq(elasticSearch)
+
+	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer, hbaseSpark)
 	
 	val json = Seq(json4sCore, json4sJackson, json4sNative)
 	
 	val logging = Seq(slf4jApi)
 	
+	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
+
 	val time = Seq(jodaConvert, jodaTime)
-	
-	val elastic = Seq(elasticSearch)
+
 	
 	// ===================================================================================================================
 	// Test dependencies
@@ -141,18 +143,35 @@ object Dependencies {
 		time ++
 		test ++
 		elastic ++ // TODO remove when switching to plugins
-		apachesolr ++ // TODO remove when switching to plugins
 		Seq(
 			avro,
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
 			playws,
 			sparkSQL,
+			solr,
 			typesafeConfig
 		)
 	
 	val producers = akka ++ logging ++ test ++ Seq(akkaHttp, akkaStream)
-	val master = akka ++ Seq(akkaHttp, akkaHttpSpray)
+
+	val consumers_spark = akka ++ json ++ test ++ spark ++ hbase ++
+		Seq(
+			elasticSearchSpark,
+			kafka,
+			kafkaStreaming,
+			sparkSolr,
+			quartz
+		)
+
+	val consumers_rt = akka ++
+		Seq(
+			akkaCamel,
+			camelKafka,
+			camelWebsocket,
+			kafka
+		)
+  val master = akka ++ Seq(akkaHttp, akkaHttpSpray)
 	/*
 	val master = logging ++ time ++ json ++ elastic
 

@@ -3,6 +3,8 @@ package it.agilelab.bigdata.wasp.core.models
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString}
 
+import scala.collection.JavaConverters._
+
 object IndexModel {
   val readerType = "index"
 
@@ -46,15 +48,26 @@ case class IndexModel(override val name: String,
   def resource = s"${ConfigManager.buildTimedName(name)}/$dataType"
 
   def collection = s"${ConfigManager.buildTimedName(name)}"
-
-  //TODO Verify if the code conversion is right
-  def dataType =
+  
+  /**
+    * Returns a JSON representation of the schema of this index's schema.
+    * @return
+    */
+  def getJsonSchema: String = schema.getOrElse(new BsonDocument).toJson
+  
+  /**
+    * Returns the data type of the contents of this index.
+    */
+  def dataType: String = {
     schema
-      .map(
-          bson =>
-            bson.values().toArray.headOption
-              .getOrElse(("undefined", BsonString("undefined")))
-      )
-      .getOrElse("undefined")
+      .map(bson => {
+        bson
+          .keySet() // grab keys; order should be right as it is backed by a LinkedHashMap
+          .asScala
+          .headOption
+          .getOrElse("undefined") // TODO default in case the schema is wrong? does it even make sense?
+      })
+      .getOrElse("undefined") // TODO default in case the schema is absent? does it even make sense?
+  }
 
 }

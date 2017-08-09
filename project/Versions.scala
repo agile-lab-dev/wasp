@@ -6,10 +6,7 @@ object Versions {
 	val akkaHttp = "10.0.9" // keep in sync with akka
 	val apacheCommonsLang3Version = "3.4"
 	val avro = "1.7.7"
-	val camelWebsocket = "2.15.3"
-	val camelElasticSearch = "2.15.3"
-	val camelKafka = "2.15.3"
-	val camelQuartz2 = "2.15.3"
+	val camel = "2.17.7"
 	val elasticSearch = "1.7.2"
 	val elasticSearchSpark = "2.3.3"
 	val hbase = "1.2.0-cdh5.9.1"
@@ -20,12 +17,23 @@ object Versions {
 	val kafka = "0.8.2.1"
 	val kryo = "3.0.0"
 	val mongodbScala = "2.1.0"
+	val quartz = "2.3.0"
 	val play = "2.4.8"
-	val reactiveMongo = "0.11.14"
 	val scala = "2.11.11"
 	val scalaTest = "2.2.5"
 	val slf4j = "1.7.12"
+	private val solrSparkBase = "1.1.0"
 	val solr = "4.10.4"
-	val solrSpark = "1.0.0"
 	val spark = "1.6.2"
+	
+	// calculated versions ===============================================================================================
+	val solrSpark = buildCompleteSolrSparkVersion(solrSparkBase, spark, scala)
+	
+	// calculates the proper spark & scala components of the spark-solr version
+	def buildCompleteSolrSparkVersion(solrSparkBase: String, spark: String, scala: String): String = {
+		val sparkMajor = spark.split('.').dropRight(1).mkString(".")
+		val scalaMajor = scala.split('.').dropRight(1).mkString(".")
+		
+		s"$solrSparkBase-spark-$sparkMajor-scala-$scalaMajor"
+	}
 }
