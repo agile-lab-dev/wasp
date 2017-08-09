@@ -7,10 +7,10 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 
 trait WaspLauncher {
 	// the actual version of WASP being ran
-	val version = BuildInfo.version // BuildInfo is generated at compile time by sbt-buildinfo plugin
+	val version: String = BuildInfo.version // BuildInfo is generated at compile time by sbt-buildinfo plugin
 	
 	// ASCII art from http://bigtext.org/?font=smslant&text=Wasp
-	val banner = """Welcome to
+	val banner: String = """Welcome to
      _       __
     | |     / /___ _ ____ ___
     | | /| / / __ `/ ___/ __ \
@@ -20,7 +20,7 @@ trait WaspLauncher {
 								               """.format(version)
 
 	// TODO write usage information (when command line switches are somewhat definitive)
-	val usage = """Usage:
+	val usage: String = """Usage:
 			TODO!
 		          """.stripMargin
 
@@ -59,7 +59,7 @@ trait WaspLauncher {
 		}
 	}
 
-	def initializeWasp() = {
+	def initializeWasp(): Unit = {
 		// configs
 		ConfigManager.initializeConfigs()
 		// db
