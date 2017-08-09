@@ -9,7 +9,7 @@ import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
 import it.agilelab.bigdata.wasp.core.launcher.WaspLauncher
-import it.agilelab.bigdata.wasp.web.controllers.Index_C
+import it.agilelab.bigdata.wasp.web.controllers.{Index_C, Pipegraph_C, Topic_C}
 
 /**
   * Created by Agile Lab s.r.l. on 04/08/2017.
@@ -36,7 +36,7 @@ object RestApiRunner {
 object RestApiRunnerLauncher extends WaspLauncher {
 
   override protected def startApp(args: Array[String]): Unit = {
-    new RestApiRunner().start(WaspSystem.actorSystem,  Index_C.getRoute)
+    new RestApiRunner().start(WaspSystem.actorSystem,  Index_C.getRoute ~ Topic_C.getRoute ~ Pipegraph_C.getRoute)
   }
   /**
     * Launchers must override this with deployment-specific pipegraph initialization logic;

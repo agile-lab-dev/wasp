@@ -1,6 +1,8 @@
 package it.agilelab.bigdata.wasp.web.utils
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat}
 import spray.json._
@@ -26,3 +28,25 @@ object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol{
   }
 
 }
+// collect your json format instances into a support trait:
+trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+  import it.agilelab.bigdata.wasp.web.utils.BsonConvertToSprayJson._
+  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat7(TopicModel.apply)
+  implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat7(IndexModel.apply)
+  implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat3(ReaderModel.apply)
+  implicit val writeTypeFormat: RootJsonFormat[WriteType] = jsonFormat2(WriteType.apply)
+  implicit val writerModelFormat: RootJsonFormat[WriterModel] = jsonFormat3(WriterModel.apply)
+  implicit val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
+  implicit val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
+  implicit val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
+  implicit val etlModelFormat: RootJsonFormat[ETLModel] = jsonFormat8(ETLModel.apply)
+  implicit val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
+  implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat10(PipegraphModel.apply)
+  implicit val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat10(KafkaConfigModel.apply)
+  implicit val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat15(SparkBatchConfigModel.apply)
+  implicit val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat17(SparkStreamingConfigModel.apply)
+  implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat3(ElasticConfigModel.apply)
+  implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat5(SolrConfigModel.apply)
+
+}
+
