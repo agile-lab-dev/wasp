@@ -64,10 +64,10 @@ trait WaspLauncher extends ActorSystemInjector  {
 	}
 
 	def initializeWasp() = {
-		// db
-		WaspDB.DBInitialization(actorSystem)
 		// configs
 		ConfigManager.initializeConfigs()
+		// db
+		WaspDB.initializeDB()
 		// workloads
 		initializeDefaultWorkloads()
 		initializeCustomWorkloads()

@@ -205,11 +205,10 @@ object WaspDB {
   ).asJava
 
 
-  def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel, actorSystem: ActorSystem): MongoDatabase = {
-     val mongoDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
-    mongoDatabase.listCollectionNames().results()
-    mongoDatabase
+  def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {
+    val mongoDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
 
+    mongoDatabase
   }
   
   def getDB: WaspDB = {
@@ -221,15 +220,14 @@ object WaspDB {
     waspDB
   }
 
-  def DBInitialization(actorSystem: ActorSystem): Unit = {
+  def initializeDB(): Unit = {
     // MongoDB initialization
     val mongoDBConfig = ConfigManager.getMongoDBConfig
     log.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
-    assert(actorSystem != null)
-
+    
     val codecRegistry = fromRegistries(fromProviders(codecRegisters), DEFAULT_CODEC_REGISTRY)
 
-    val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig, actorSystem).withCodecRegistry(codecRegistry)
+    val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig).withCodecRegistry(codecRegistry)
     /*val primaryNode = connection.wait()
     val primaryNodeReady = Await.ready(primaryNode, 6.second)
     println(primaryNodeReady.value)
