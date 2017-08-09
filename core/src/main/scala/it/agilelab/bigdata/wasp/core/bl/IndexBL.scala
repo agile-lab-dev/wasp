@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.IndexModel
+import it.agilelab.bigdata.wasp.core.models.{IndexModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import org.mongodb.scala.bson.{BsonObjectId, BsonString}
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString}
 
 import scala.concurrent.Future
 
@@ -17,18 +17,20 @@ trait IndexBL {
 
 class IndexBLImp(waspDB: WaspDB) extends IndexBL {
 
-  private def factory(t: IndexModel) =
-    new IndexModel(t.name, t.creationTime, t.schema, t._id, t.query, t.numShards, t.replicationFactor)
+  private def factory(t: BsonDocument): IndexModel =
+    new IndexModel(t.get("name").asString().getValue, t.get("creationTime").asInt64().getValue, Option(t.get("schema").asDocument()),
+      Some(t.get("_id").asObjectId()), Option(t.get("query")).map(_.asString().getValue),
+      Option(t.get("numShards")).map(_.asInt32().getValue), Option(t.get("replicationFactor")).map(_.asInt32().getValue))
 
   def getByName(name: String) = {
     waspDB
-      .getDocumentByField[IndexModel]("name", new BsonString(name))
+      .getDocumentByFieldRaw[IndexModel]("name", new BsonString(name))
       .map(factory)
   }
 
   def getById(id: String) = {
     waspDB
-      .getDocumentByID[IndexModel](BsonObjectId(id))
+      .getDocumentByIDRaw[IndexModel](BsonObjectId(id))
       .map(factory)
   }
 

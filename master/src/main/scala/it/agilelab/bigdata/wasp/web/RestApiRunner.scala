@@ -6,6 +6,8 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
 import it.agilelab.bigdata.wasp.core.launcher.WaspLauncher
 import it.agilelab.bigdata.wasp.web.controllers.Index_C
 
@@ -34,7 +36,7 @@ object RestApiRunner {
 object RestApiRunnerLauncher extends WaspLauncher {
 
   override protected def startApp(args: Array[String]): Unit = {
-    new RestApiRunner().start(ActorSystem("test"),  Index_C.getRoute)
+    new RestApiRunner().start(WaspSystem.actorSystem,  Index_C.getRoute)
   }
   /**
     * Launchers must override this with deployment-specific pipegraph initialization logic;
