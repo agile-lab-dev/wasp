@@ -1,27 +1,18 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
-
-import scala.collection.JavaConverters._
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.reflect.runtime.universe.TypeTag
-import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
-
-import scala.collection.JavaConverters._
-import java.net.URI
 import java.util.Map.Entry
 
+import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 object ConfigManager {
-  var conf: Config = ConfigFactory.load
+  var conf: Config = ConfigFactory.load.getConfig("wasp")
 
   val kafkaConfigName = "Kafka"
   val sparkBatchConfigName = "SparkBatch"
@@ -29,13 +20,25 @@ object ConfigManager {
   val elasticConfigName = "Elastic"
   val solrConfigName = "Solr"
 
+  var waspConfig : WaspConfigModel = _
   var mongoDBConfig: MongoDBConfigModel = _
   var kafkaConfig: KafkaConfigModel = _
   var sparkBatchConfig: SparkBatchConfigModel = _
   var sparkStreamingConfig: SparkStreamingConfigModel = _
   var elasticConfig: ElasticConfigModel = _
   var solrConfig: SolrConfigModel = _
-
+  
+  private def initializeWaspConfig(): Unit = {
+    waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
+  }
+  
+  private def getDefaultWaspConfig: WaspConfigModel = {
+    WaspConfigModel(
+      conf.getString("actorSystemName"),
+      conf.getBoolean("indexRollover")
+    )
+  }
+  
   private def initializeMongoConfig(): Unit = {
     mongoDBConfig = getDefaultMongoConfig // mongo config is always read from file, so it's always "default"
   }
@@ -161,23 +164,6 @@ object ConfigManager {
     initializeSparkStreamingConfig()
     initializeElasticConfig()
     initializeSolrConfig()
-  }
-
-  /**
-    * Re-initialize the config manager, reading from file.
-    *
-    * @param file
-    */
-  def reloadConfig(file: File): Unit = {
-    conf = ConfigFactory.parseFile(file)
-    initializeConfigs()
-  }
-
-  /** Re-initialize the config manager.
-    */
-  def reloadConfig(): Unit = {
-    conf = ConfigFactory.load()
-    initializeConfigs()
   }
 
   def getKafkaConfig = {

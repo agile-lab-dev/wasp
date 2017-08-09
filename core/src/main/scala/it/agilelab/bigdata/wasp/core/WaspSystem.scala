@@ -150,7 +150,7 @@ object WaspSystem {
     * @note Only the first call will initialize the actor system; following attempts at initialization
     *       even if with different settings will not have any effect and will silently be ignored.
     */
-  def initializeActorSystem(actorSystemName: String): Unit = {
+  def initializeActorSystem(): Unit = {
     /*
     We check for a null (not initialized) actor system two times:
     - one outside the synchronized block, so this method is cheap to call as it will be invoked
@@ -160,7 +160,8 @@ object WaspSystem {
      */
     if (actorSystem == null) WaspSystem.synchronized {
       if (actorSystem == null) {
-        actorSystem = ActorSystem(actorSystemName)
+        val waspConfig = ConfigManager.waspConfig
+        actorSystem = ActorSystem.create(waspConfig.actorSystemName, ConfigManager.conf)
       }
     }
   }
