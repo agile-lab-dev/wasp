@@ -1,18 +1,14 @@
 package it.agilelab.bigdata.wasp.core.launcher
 
-import akka.actor.Props
-import it.agilelab.bigdata.wasp.core.SystemPipegraphs
-import it.agilelab.bigdata.wasp.core.WaspSystem._
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.core.logging.LoggerInjector
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{ActorSystemInjector, ConfigManager, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 
-trait WaspLauncher extends ActorSystemInjector  {
-	//override def loggerActorProps : Props = Props.create(classOf[InternalLogProducerGuardian], ConfigBL)
-
+trait WaspLauncher {
+	// the actual version of WASP being ran
 	val version = BuildInfo.version // BuildInfo is generated at compile time by sbt-buildinfo plugin
+	
 	// ASCII art from http://bigtext.org/?font=smslant&text=Wasp
 	val banner = """Welcome to
      _       __
@@ -68,6 +64,8 @@ trait WaspLauncher extends ActorSystemInjector  {
 		ConfigManager.initializeConfigs()
 		// db
 		WaspDB.initializeDB()
+		// waspsystem
+		WaspSystem.initializeActorSystem()
 		// workloads
 		initializeDefaultWorkloads()
 		initializeCustomWorkloads()

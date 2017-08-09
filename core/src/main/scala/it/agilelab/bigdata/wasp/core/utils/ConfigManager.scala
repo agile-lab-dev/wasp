@@ -12,7 +12,7 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 object ConfigManager {
-  var conf: Config = ConfigFactory.load.getConfig("wasp")
+  var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   val kafkaConfigName = "Kafka"
   val sparkBatchConfigName = "SparkBatch"
