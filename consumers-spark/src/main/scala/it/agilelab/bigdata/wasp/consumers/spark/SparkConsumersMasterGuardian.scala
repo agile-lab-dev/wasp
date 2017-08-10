@@ -5,7 +5,6 @@ import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
-import it.agilelab.bigdata.wasp.core.WaspMessage
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
@@ -17,8 +16,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-
-case object RestartConsumers extends WaspMessage
 
 object SparkConsumersMasterGuardian {
   val name = "SparkConsumersMasterGuardian"
