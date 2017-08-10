@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.web.utils
+package it.agilelab.bigdata.wasp.master.web.utils
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import it.agilelab.bigdata.wasp.core.models._
@@ -31,7 +31,7 @@ object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol{
 }
 // collect your json format instances into a support trait:
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  import it.agilelab.bigdata.wasp.web.utils.BsonConvertToSprayJson._
+  import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
   implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat7(TopicModel.apply)
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat7(IndexModel.apply)
   implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat3(ReaderModel.apply)

@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.web.controllers
+package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
@@ -6,8 +6,8 @@ import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.IndexModel
-import it.agilelab.bigdata.wasp.web.controllers.Pipegraph_C.logger
-import it.agilelab.bigdata.wasp.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.controllers.Pipegraph_C.logger
+import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json.{DefaultJsonProtocol, _}
 import JsonResultsHelper._
 

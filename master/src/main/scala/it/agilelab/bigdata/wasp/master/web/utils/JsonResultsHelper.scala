@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.web.utils
+package it.agilelab.bigdata.wasp.master.web.utils
 
 import java.util.concurrent.TimeUnit
 
@@ -8,9 +8,9 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
-import it.agilelab.bigdata.wasp.web.controllers.Pipegraph_C
-import it.agilelab.bigdata.wasp.web.controllers.Pipegraph_C.logger
-import it.agilelab.bigdata.wasp.web.controllers.Producer_C.logger
+import it.agilelab.bigdata.wasp.master.web.controllers.Pipegraph_C
+import it.agilelab.bigdata.wasp.master.web.controllers.Pipegraph_C.logger
+import it.agilelab.bigdata.wasp.master.web.controllers.Producer_C.logger
 import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.{JsObject, JsString, JsValue}
 

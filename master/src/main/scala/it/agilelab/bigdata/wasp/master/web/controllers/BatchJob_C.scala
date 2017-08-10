@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.web.controllers
+package it.agilelab.bigdata.wasp.master.web.controllers
 
 import java.util.concurrent.TimeUnit
 
@@ -10,11 +10,11 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.messages.StartBatchJob
 import it.agilelab.bigdata.wasp.core.models.BatchJobModel
-import it.agilelab.bigdata.wasp.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
 import JsonResultsHelper._
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import it.agilelab.bigdata.wasp.web.controllers.Pipegraph_C.logger
+import it.agilelab.bigdata.wasp.master.web.controllers.Pipegraph_C.logger
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.

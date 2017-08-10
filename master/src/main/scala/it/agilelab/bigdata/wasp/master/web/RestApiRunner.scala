@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.web
+package it.agilelab.bigdata.wasp.master.web
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -10,8 +10,8 @@ import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.launcher.WaspLauncher
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
-import it.agilelab.bigdata.wasp.web.controllers._
-import it.agilelab.bigdata.wasp.web.utils.JsonResultsHelper
+import it.agilelab.bigdata.wasp.master.web.controllers._
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import org.apache.commons.lang3.exception.ExceptionUtils
 /**
   * Created by Agile Lab s.r.l. on 04/08/2017.

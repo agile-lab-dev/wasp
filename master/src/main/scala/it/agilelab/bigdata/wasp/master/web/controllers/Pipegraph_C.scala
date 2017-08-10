@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.web.controllers
+package it.agilelab.bigdata.wasp.master.web.controllers
 
 import java.util.concurrent.TimeUnit
 
@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph, StopPipegraph}
 import it.agilelab.bigdata.wasp.core.models.PipegraphModel
-import it.agilelab.bigdata.wasp.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
 import JsonResultsHelper._
 /**
