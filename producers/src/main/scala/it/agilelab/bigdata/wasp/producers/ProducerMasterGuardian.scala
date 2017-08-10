@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.{ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.messages.{StartProducer, StopProducer}
+import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -39,22 +39,22 @@ abstract class ProducerMasterGuardian(env: {val producerBL: ProducerBL; val topi
   override def uninitialized: Actor.Receive = super.uninitialized orElse guardianUnitialized
 
   override def initialized: Actor.Receive = {
-    case StartProducer =>
+    case Start =>
       logger.info("startProducer")
       sender() ! true
 
-    case StopProducer =>
+    case Stop =>
       logger.info("StopProducer")
       stopChildActors
       sender() ! true
   }
 
   def guardianUnitialized: Actor.Receive = {
-    case StartProducer =>
+    case Start =>
       initialize
       sender() ! true
 
-    case StopProducer =>
+    case Stop =>
       sender() ! true
   }
 
