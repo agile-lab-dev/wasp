@@ -2,6 +2,24 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 
 import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
 
+
+trait SparkConfigModel {
+	def appName: String
+	def master: ConnectionConfig
+	def driverCores: Int
+	def driverMemory: String
+	def driverHostname: String
+	def driverPort: Int
+	def executorCores: Int
+	def executorMemory: String
+	def executorInstances: Int
+	def additionalJars: Option[Seq[String]]
+	def yarnJar: String
+	def blockManagerPort: Int
+	def broadcastPort: Int
+	def fileserverPort: Int
+	def name: String
+}
 case class SparkStreamingConfigModel(appName: String,
                                      master: ConnectionConfig,
                                      driverCores: Int,
@@ -18,7 +36,7 @@ case class SparkStreamingConfigModel(appName: String,
                                      fileserverPort: Int,
                                      streamingBatchIntervalMs: Int,
                                      checkpointDir: String,
-                                     name: String)
+                                     name: String) extends SparkConfigModel
 
 case class SparkBatchConfigModel(appName: String,
                                  master: ConnectionConfig,
@@ -34,4 +52,4 @@ case class SparkBatchConfigModel(appName: String,
                                  blockManagerPort: Int,
                                  broadcastPort: Int,
                                  fileserverPort: Int,
-                                 name: String)
+                                 name: String)  extends SparkConfigModel

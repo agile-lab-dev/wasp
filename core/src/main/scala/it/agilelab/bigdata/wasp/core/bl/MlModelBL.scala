@@ -4,10 +4,7 @@ import it.agilelab.bigdata.wasp.core.models.{MlModelOnlyInfo}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString, BsonValue}
-import play.api.libs.iteratee.Enumerator
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 /**
  * This class allow to read and persist the machine learning models
