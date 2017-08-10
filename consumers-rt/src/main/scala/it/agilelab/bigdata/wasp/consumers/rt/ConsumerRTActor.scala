@@ -2,6 +2,7 @@
 package it.agilelab.bigdata.wasp.consumers.rt
 
 import akka.actor._
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.rt.readers.CamelKafkaReader
 import it.agilelab.bigdata.wasp.consumers.rt.strategies.StrategyRT
 import it.agilelab.bigdata.wasp.consumers.rt.writers.RtWritersManagerActor
@@ -106,18 +107,18 @@ class ConsumerRTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; 
 
   def applyStrategy(topic: String, data: String): String = strategy match {
     case None => data
-    case Some(strategy) =>
+    case Some(s) =>
       //TODO: usare campo topic per differenziare strategia a seconda dell'input?
-      strategy.transform(topic, data)
+      s.transform(topic, data)
   }
 
   def createStrategyRT(rt: RTModel): Option[StrategyRT] = rt.strategy match {
     case None => None
     case Some(strategyModel) =>
       val result = Class.forName(strategyModel.className).newInstance().asInstanceOf[StrategyRT]
-      result.configuration = strategyModel.configuration match {
-        case None => Map[String, Any]()
-        case Some(configuration) => MongoDBHelper.bsonDocumentToMap(configuration)
+      result.configuration = strategyModel.configurationConfig() match {
+        case None => ConfigFactory.empty()
+        case Some(configuration) => configuration
       }
       logger.info("strategyRT: " + result)
       Some(result)

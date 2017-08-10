@@ -1,21 +1,18 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader, StaticReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
-import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.messages.BatchJobProcessedMessage
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper.bsonDocumentToMap
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 import org.mongodb.scala.bson.BsonObjectId
-
-import scala.concurrent.{Await, Future}
 
 object BatchJobActor {
   val name = "BatchJobActor"
@@ -141,9 +138,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       val result = classLoader.map(cl => cl.loadClass(strategyModel.className)).get.newInstance().asInstanceOf[Strategy]
 
       //.getOrElse(Class.forName(strategyModel.className).newInstance()).asInstanceOf[Strategy]
-      result.configuration = strategyModel.configuration match {
-        case None => Map[String, Any]()
-        case Some(configuration) => bsonDocumentToMap(configuration)
+      result.configuration = strategyModel.configurationConfig() match {
+        case None => ConfigFactory.empty()
+        case Some(configuration) => configuration
       }
 
       logger.info("strategy: " + result)
