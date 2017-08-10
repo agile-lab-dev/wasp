@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.web.utils
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
+import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat}
 import spray.json._
@@ -42,11 +43,14 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val etlModelFormat: RootJsonFormat[ETLModel] = jsonFormat8(ETLModel.apply)
   implicit val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
   implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat10(PipegraphModel.apply)
+  implicit val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
   implicit val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat10(KafkaConfigModel.apply)
   implicit val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat15(SparkBatchConfigModel.apply)
   implicit val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat17(SparkStreamingConfigModel.apply)
   implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat3(ElasticConfigModel.apply)
   implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat5(SolrConfigModel.apply)
+  implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat8(BatchJobModel.apply)
+  implicit val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat7(ProducerModel.apply)
 
 }
 

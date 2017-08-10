@@ -3,7 +3,9 @@ package it.agilelab.bigdata.wasp.web.controllers
 import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.server.{Directives, Route}
+import akka.pattern.ask
 import akka.util.Timeout
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.messages.StartBatchJob
@@ -54,33 +56,36 @@ object BatchJob_C extends Directives with JsonSupport {
             }
           }
       } ~
-        path(Segment) { id =>
-          get {
-            complete {
-              // complete with serialized Future result
-              ConfigBL.batchJobBL.getById(id).toJson
-            }
-
-          } ~
-            delete {
+        pathPrefix(Segment) { id =>
+          path("start") {
+            get {
               complete {
                 // complete with serialized Future result
-                ConfigBL.batchJobBL.deleteById(id)
+                WaspSystem.masterActor ? StartBatchJob(id)
                 "OK".toJson
               }
 
             }
-        } ~
-        path(Segment / "start") { id =>
-          get {
-            complete {
-              // complete with serialized Future result
-              WaspSystem.masterActor ? StartBatchJob(id)
-              "OK".toJson
-            }
+          } ~
+            pathEnd {
+              get {
+                complete {
+                  // complete with serialized Future result
+                  ConfigBL.batchJobBL.getById(id).toJson
+                }
 
-          }
+              } ~
+                delete {
+                  complete {
+                    // complete with serialized Future result
+                    ConfigBL.batchJobBL.deleteById(id)
+                    "OK".toJson
+                  }
+
+                }
+            }
         }
+
     }
   }
 }

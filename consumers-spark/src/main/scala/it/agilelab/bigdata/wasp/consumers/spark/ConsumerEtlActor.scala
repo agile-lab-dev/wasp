@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
 import akka.actor.{Actor, ActorLogging, ActorRef, actorRef2Scala}
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader, StaticReader, StreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
@@ -54,16 +55,15 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   //TODO: identical to it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.createStrategy, externalize
   private lazy val createStrategy: Option[Strategy] = etl.strategy match {
     case None => None
-    case Some(strategyModel) => {
+    case Some(strategyModel) =>
       val result = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
-      result.configuration = strategyModel.configuration match {
-        case None => Map[String, Any]()
-        case Some(configuration) => MongoDBHelper.bsonDocumentToMap(configuration)
+      result.configuration = strategyModel.configurationConfig() match {
+        case None => ConfigFactory.empty()
+        case Some(configuration) => configuration
       }
 
       log.info("strategy: " + result)
       Some(result)
-    }
   }
   
   /**

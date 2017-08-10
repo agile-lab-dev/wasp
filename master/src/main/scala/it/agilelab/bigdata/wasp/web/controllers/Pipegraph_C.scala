@@ -56,7 +56,25 @@ object Pipegraph_C extends Directives with JsonSupport {
             }
           }
       } ~
-        path(Segment) { id =>
+        pathPrefix(Segment) { id =>
+            path("start") {
+              post {
+                complete {
+                  // complete with serialized Future result
+                  WaspSystem.masterActor ? StartPipegraph(id)
+                  "OK".toJson
+                }
+              }
+            } ~
+            path("stop") {
+              post {
+                complete {
+                  // complete with serialized Future result
+                  WaspSystem.masterActor ? StopPipegraph(id)
+                  "OK".toJson
+                }
+              }
+            } ~
           pathEnd {
             get {
               complete {
@@ -71,24 +89,6 @@ object Pipegraph_C extends Directives with JsonSupport {
                 }
 
               }
-          }
-        } ~
-        path(Segment / "start") { id =>
-          post {
-            complete {
-              // complete with serialized Future result
-              WaspSystem.masterActor ? StartPipegraph(id)
-              "OK".toJson
-            }
-          }
-        } ~
-        path(Segment / "stop") { id =>
-          post {
-            complete {
-              // complete with serialized Future result
-              WaspSystem.masterActor ? StopPipegraph(id)
-              "OK".toJson
-            }
           }
         } ~
         path("name" / Segment) { name: String =>

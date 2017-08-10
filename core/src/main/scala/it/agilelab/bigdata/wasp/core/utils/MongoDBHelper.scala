@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import com.mongodb.ConnectionString
 import com.mongodb.client.model.CreateCollectionOptions
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.configuration.MongoDBConfigModel
 import org.mongodb.scala.bson.{BsonArray, BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}

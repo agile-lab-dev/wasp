@@ -217,6 +217,9 @@ object WaspDB {
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
     createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
+    createCodecProviderIgnoreNone(classOf[DashboardModel]),
+    createCodecProviderIgnoreNone(classOf[RTModel]),
+    createCodecProviderIgnoreNone(classOf[ETLModel]),
     createCodecProviderIgnoreNone(classOf[PipegraphModel]),
     createCodecProviderIgnoreNone(classOf[ProducerModel]),
     createCodecProviderIgnoreNone(classOf[ReaderModel]),

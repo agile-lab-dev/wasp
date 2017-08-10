@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.strategies
 
 import java.util.{Calendar, Date}
 
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.MlModelsBroadcastDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
@@ -14,7 +15,7 @@ trait Strategy {
   val ALTER_DATE_DAY = "alter_date_day"
 
   // TODO restore configuration
-  var configuration = Map[String, Any]()
+  var configuration = Config
 
   var sparkContext: Option[SparkContext] = None
 
@@ -22,13 +23,6 @@ trait Strategy {
 
   override def toString: String = this.getClass.getCanonicalName + "{ configuration: " + configuration + " }"
 
-  protected def alterDateDay(date: Date): Date =
-    configuration.get(ALTER_DATE_DAY).map(ad => {
-      val calendar = Calendar.getInstance
-      calendar.setTime(date)
-      calendar.add(Calendar.DATE, ad.asInstanceOf[Int])
-      calendar.getTime
-    }).getOrElse(date)
 
   /**
    *
