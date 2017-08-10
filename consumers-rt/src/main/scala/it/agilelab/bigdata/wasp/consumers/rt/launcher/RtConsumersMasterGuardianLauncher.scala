@@ -10,7 +10,7 @@ import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 	*
 	* @author Nicolò Bidotti
 	*/
-object SparkConsumersMasterGuardianLauncher extends ClusterSingletonLauncher {
+object RtConsumersMasterGuardianLauncher extends ClusterSingletonLauncher {
 	override def getSingletonProps: Props = {
 		Props(new RtConsumersMasterGuardian(ConfigBL))
 	}
