@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import com.mongodb.ConnectionString
 import com.mongodb.client.model.CreateCollectionOptions
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.configuration.MongoDBConfigModel
 import org.mongodb.scala.bson.{BsonArray, BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
@@ -38,13 +39,19 @@ private[utils] trait MongoDBHelper  extends WaspLogger {
       case e: Exception => log.error("Error during the creation of a collection", e)
     }
   }
+  protected def exitsDocumentByKey(key: String, value: BsonValue, collection: String): Boolean = {
 
+    log.info(s"Locating document(s) by key $key with value $value on collection $collection")
+    val query = BsonDocument(key -> value)
+
+    Option(getCollection(collection).find(query).headResult()).isDefined
+  }
   protected def getDocumentByKey[T](key: String, value: BsonValue, collection: String)(implicit ct: ClassTag[T]): Option[T] = {
 
     log.info(s"Locating document(s) by key $key with value $value on collection $collection")
     val query = BsonDocument(key -> value)
 
-    Some(getCollection(collection).find[T](query).headResult())
+    Option(getCollection(collection).find[T](query).headResult())
   }
 
   protected def getDocumentByQueryParams[T](queryParams: Map[String, BsonValue], collection: String)(implicit ct: ClassTag[T]): Option[T] = {

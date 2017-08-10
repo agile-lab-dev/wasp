@@ -1,11 +1,18 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 
 case class DashboardModel(url: String, needsFilterBox: Boolean)
 
-case class StrategyModel(className: String, configuration: Option[BsonDocument] = None)
+case class StrategyModel(className: String, configuration: Option[String] = None) {
+  def configurationConfig() :Option[Config] = configuration.map(ConfigFactory.parseString)
+}
+
+object StrategyModel {
+  def create(className: String, configuration: Config): StrategyModel = StrategyModel(className, Some(configuration.root().render(ConfigRenderOptions.concise())))
+}
 
 case class ETLModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true)
 

@@ -31,6 +31,16 @@ trait WaspDB extends MongoDBHelper {
 
   def getAllDocumentsByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T]
 
+  def getAllRaw[T]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument]
+
+  def getDocumentByIDRaw[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument]
+
+  def getDocumentByFieldRaw[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument]
+
+  def getDocumentByQueryParamsRaw[T](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument]
+
+  def getAllDocumentsByFieldRaw[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument]
+
   def insert[T](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
@@ -82,19 +92,38 @@ class WaspDBImp(protected val mongoDatabase: MongoDatabase) extends WaspDB   {
     getAllDocumentsByKey[T](field, value, lookupTable(typeTag.tpe))
   }
 
+  def getAllRaw[T]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument] = {
+    getAllDocuments[BsonDocument](lookupTable(typeTag.tpe))
+  }
+
+  def getDocumentByIDRaw[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
+    getDocumentByFieldRaw[T]("_id", id)
+  }
+
+
+  def getDocumentByFieldRaw[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
+    getDocumentByKey[BsonDocument](field, value, lookupTable(typeTag.tpe))
+  }
+
+  def getDocumentByQueryParamsRaw[T](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
+    getDocumentByQueryParams[BsonDocument](query, lookupTable(typeTag.tpe))
+  }
+
+  def getAllDocumentsByFieldRaw[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument] = {
+    getAllDocumentsByKey[BsonDocument](field, value, lookupTable(typeTag.tpe))
+  }
+
   def insert[T](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
     addDocumentToCollection(lookupTable(typeTag.tpe), doc)
   }
 
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
-    val document = getDocumentByField[T]("name", BsonString(doc.name))
-
-    document match {
-      case Some(_) =>
-        log.info("Model '" + doc.name + "' already present");
-      case None =>
-        log.info("Model '" + doc.name + "' not found. It will be created.")
-        insert(doc)
+    val exits = exitsDocumentByKey("name", BsonString(doc.name), lookupTable(typeTag.tpe))
+    if (exits) {
+      log.info("Model '" + doc.name + "' already present")
+    } else {
+      log.info("Model '" + doc.name + "' not found. It will be created.")
+      insert(doc)
     }
     Unit
   }
@@ -188,15 +217,22 @@ object WaspDB {
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
     createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
+    createCodecProviderIgnoreNone(classOf[DashboardModel]),
+    createCodecProviderIgnoreNone(classOf[RTModel]),
+    createCodecProviderIgnoreNone(classOf[ETLModel]),
     createCodecProviderIgnoreNone(classOf[PipegraphModel]),
     createCodecProviderIgnoreNone(classOf[ProducerModel]),
+    createCodecProviderIgnoreNone(classOf[ReaderModel]),
+    createCodecProviderIgnoreNone(classOf[MlModelOnlyInfo]),
+    createCodecProviderIgnoreNone(classOf[StrategyModel]),
+    createCodecProviderIgnoreNone(classOf[WriteType]),
+    createCodecProviderIgnoreNone(classOf[WriterModel]),
     createCodecProviderIgnoreNone(classOf[ETLModel]),
     createCodecProviderIgnoreNone(classOf[TopicModel]),
     createCodecProviderIgnoreNone(classOf[IndexModel]),
     createCodecProviderIgnoreNone(classOf[RawModel]),
     createCodecProviderIgnoreNone(classOf[KeyValueModel]),
     createCodecProviderIgnoreNone(classOf[BatchJobModel]),
-    createCodecProviderIgnoreNone(classOf[MlModelOnlyInfo]),
     createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
     createCodecProviderIgnoreNone(classOf[SparkBatchConfigModel]),
     createCodecProviderIgnoreNone(classOf[SparkStreamingConfigModel]),

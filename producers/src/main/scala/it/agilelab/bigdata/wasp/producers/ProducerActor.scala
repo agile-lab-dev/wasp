@@ -30,9 +30,9 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   //TODO occhio che abbiamo la partition key schianatata, quindi usiamo sempre e solo una partizione
   val partitionKey = "partitionKey"
 
-  val rawTopicSchema = JsonConverter.toString(rawTopic.schema.getOrElse(BsonDocument()))
+  val rawTopicSchema = JsonConverter.toString(rawTopic.schema.getOrElse(BsonDocument()).asDocument())
   lazy val topicSchemaType = topic.get.topicDataType
-  lazy val topicSchema = JsonConverter.toString(topic.get.schema.getOrElse(BsonDocument()))
+  lazy val topicSchema = JsonConverter.toString(topic.get.schema.getOrElse(BsonDocument()).asDocument())
 
   override def postStop() {
     log.info(s"Stopping actor ${this.getClass.getName}")
