@@ -16,11 +16,13 @@ import scala.concurrent.{Await, Future}
 
 case object RestartConsumers extends WaspMessage
 
-object ConsumersMasterGuardian {
-  val name = "ConsumerMasterGuardian"
+object RtConsumersMasterGuardian {
+  val name = "RtConsumersMasterGuardian"
+  
+  val role = "consumers-rt"
 }
 
-class ConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
+class RtConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
   val topicBL: TopicBL; val indexBL: IndexBL;
   val rawBL : RawBL; val keyValueBL: KeyValueBL;
   val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;})

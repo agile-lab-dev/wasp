@@ -20,16 +20,18 @@ import scala.concurrent.{Await, Future}
 
 case object RestartConsumers extends WaspMessage
 
-object ConsumersMasterGuardian {
-  val name = "ConsumerMasterGuardian"
+object SparkConsumersMasterGuardian {
+  val name = "SparkConsumersMasterGuardian"
+  
+  val role = "consumers-spark"
 }
 
-class ConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
+class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
   val topicBL: TopicBL; val indexBL: IndexBL;
   val rawBL : RawBL; val keyValueBL: KeyValueBL;
   val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;},
-                              sparkWriterFactory: SparkWriterFactory,
-                               streamingReader: StreamingReader)
+                                   sparkWriterFactory: SparkWriterFactory,
+                                   streamingReader: StreamingReader)
   extends ClusterAwareNodeGuardian with SparkStreamingConfiguration with Stash {
 
   val logger = WaspLogger(this.getClass.getName)
