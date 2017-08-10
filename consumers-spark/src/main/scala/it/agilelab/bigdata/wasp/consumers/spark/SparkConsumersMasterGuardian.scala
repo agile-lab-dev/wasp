@@ -8,6 +8,7 @@ import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{ETLModel, PipegraphModel, RTModel}
 import it.agilelab.bigdata.wasp.core.utils.SparkStreamingConfiguration
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}

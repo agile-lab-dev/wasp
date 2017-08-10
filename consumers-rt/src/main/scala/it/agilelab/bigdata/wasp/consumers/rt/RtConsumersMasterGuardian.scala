@@ -3,18 +3,16 @@ package it.agilelab.bigdata.wasp.consumers.rt
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
-import it.agilelab.bigdata.wasp.core.WaspMessage
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{ETLModel, RTModel}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-
-case object RestartConsumers extends WaspMessage
 
 object RtConsumersMasterGuardian {
   val name = "RtConsumersMasterGuardian"
