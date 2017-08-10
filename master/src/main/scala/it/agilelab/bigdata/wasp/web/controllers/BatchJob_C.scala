@@ -10,8 +10,11 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.messages.StartBatchJob
 import it.agilelab.bigdata.wasp.core.models.BatchJobModel
-import it.agilelab.bigdata.wasp.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
+import JsonResultsHelper._
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import it.agilelab.bigdata.wasp.web.controllers.Pipegraph_C.logger
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
@@ -31,17 +34,15 @@ object BatchJob_C extends Directives with JsonSupport {
       pathEnd {
         get {
           complete {
-            // complete with serialized Future result
-            ConfigBL.batchJobBL.getAll.toJson
+            getJsonArrayOrEmpty[BatchJobModel](ConfigBL.batchJobBL.getAll, _.toJson)
           }
         } ~
           post {
             // unmarshal with in-scope unmarshaller
             entity(as[BatchJobModel]) { batchJobModel =>
               complete {
-                // complete with serialized Future result
                 ConfigBL.batchJobBL.insert(batchJobModel)
-                "OK".toJson
+                "OK".toJson.toAngularOkResponse
               }
             }
           } ~
@@ -49,9 +50,8 @@ object BatchJob_C extends Directives with JsonSupport {
             // unmarshal with in-scope unmarshaller
             entity(as[BatchJobModel]) { batchJobModel =>
               complete {
-                // complete with serialized Future result
                 ConfigBL.batchJobBL.update(batchJobModel)
-                "OK".toJson
+                "OK".toJson.toAngularOkResponse
               }
             }
           }
@@ -60,9 +60,8 @@ object BatchJob_C extends Directives with JsonSupport {
           path("start") {
             get {
               complete {
-                // complete with serialized Future result
                 WaspSystem.masterActor ? StartBatchJob(id)
-                "OK".toJson
+                "OK".toJson.toAngularOkResponse
               }
 
             }
@@ -70,18 +69,18 @@ object BatchJob_C extends Directives with JsonSupport {
             pathEnd {
               get {
                 complete {
-                  // complete with serialized Future result
-                  ConfigBL.batchJobBL.getById(id).toJson
+                  getJsonOrNotFound[BatchJobModel](ConfigBL.batchJobBL.getById(id), id, "Batch job model", _.toJson)
                 }
 
               } ~
                 delete {
                   complete {
-                    // complete with serialized Future result
-                    ConfigBL.batchJobBL.deleteById(id)
-                    "OK".toJson
+                    runIfExists(ConfigBL.batchJobBL.getById(id),
+                      () => ConfigBL.batchJobBL.deleteById(id),
+                      id,
+                      "Machine learning model",
+                      "delete")
                   }
-
                 }
             }
         }

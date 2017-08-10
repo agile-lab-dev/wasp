@@ -3,10 +3,12 @@ package it.agilelab.bigdata.wasp.web.controllers
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
-import it.agilelab.bigdata.wasp.core.models.{MlModelOnlyInfo, PipegraphModel}
-import it.agilelab.bigdata.wasp.web.controllers.Pipegraph_C.{as, complete, delete, entity, put}
-import it.agilelab.bigdata.wasp.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.core.models.MlModelOnlyInfo
+import it.agilelab.bigdata.wasp.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
+import JsonResultsHelper._
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import it.agilelab.bigdata.wasp.web.controllers.Pipegraph_C.logger
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
@@ -23,15 +25,23 @@ object MlModels_C extends Directives with JsonSupport {
       pathEnd {
         get {
           complete {
-            // complete with serialized Future result
-            ConfigBL.mlModelBL.getAll.toJson
+            
+            val result = ConfigBL.mlModelBL.getAll
+            getJsonArrayOrEmpty[MlModelOnlyInfo](ConfigBL.mlModelBL.getAll, _.toJson)
+            val finalResult: JsValue = if (result.isEmpty) {
+              JsArray()
+            } else {
+              result.toJson
+            }
+
+            finalResult.toAngularOkResponse
           }
         } ~
           put {
             // unmarshal with in-scope unmarshaller
             entity(as[MlModelOnlyInfo]) { mlModel =>
               complete {
-                // complete with serialized Future result
+                
                 ConfigBL.mlModelBL.updateMlModelOnlyInfo(mlModel)
                 "OK".toJson
               }
@@ -41,14 +51,13 @@ object MlModels_C extends Directives with JsonSupport {
         path(Segment) { id =>
           get {
             complete {
-              // complete with serialized Future result
-              ConfigBL.mlModelBL.getById(id).toJson
+              getJsonOrNotFound[MlModelOnlyInfo](ConfigBL.mlModelBL.getById(id), id, "Machine learning model", _.toJson)
             }
           } ~
             delete {
               complete {
-                // complete with serialized Future result
-                ConfigBL.mlModelBL.delete(id).toJson
+                val result = ConfigBL.mlModelBL.getById(id)
+                runIfExists(result, () => ConfigBL.mlModelBL.delete(id), id, "Machine learning model", "delete")
               }
             }
         }

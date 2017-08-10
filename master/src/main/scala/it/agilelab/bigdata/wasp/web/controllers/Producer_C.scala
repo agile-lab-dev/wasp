@@ -10,8 +10,11 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.messages.{StartProducer, StopProducer}
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
-import it.agilelab.bigdata.wasp.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
+import JsonResultsHelper._
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import it.agilelab.bigdata.wasp.web.controllers.MlModels_C.logger
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
@@ -30,8 +33,7 @@ object Producer_C extends Directives with JsonSupport {
       pathEnd {
         get {
           complete {
-            // complete with serialized Future result
-            ConfigBL.producerBL.getAll.toJson
+            getJsonArrayOrEmpty[ProducerModel](ConfigBL.producerBL.getAll, _.toJson)
           }
         } ~
           put {
@@ -40,7 +42,7 @@ object Producer_C extends Directives with JsonSupport {
               complete {
                 // complete with serialized Future result
                 ConfigBL.producerBL.update(producerModel)
-                "OK".toJson
+                "OK".toJson.toAngularOkResponse
               }
             }
           }
@@ -49,7 +51,7 @@ object Producer_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              ConfigBL.producerBL.getById(id).toJson
+              getJsonOrNotFound[ProducerModel](ConfigBL.producerBL.getById(id), id, "Producer model", _.toJson)
             }
 
           }
@@ -60,7 +62,7 @@ object Producer_C extends Directives with JsonSupport {
             complete {
               // complete with serialized Future result
               WaspSystem.masterActor ? StartProducer(id)
-              "OK".toJson
+              "OK".toJson.toAngularOkResponse
             }
           }
         } ~
@@ -69,7 +71,7 @@ object Producer_C extends Directives with JsonSupport {
             complete {
               // complete with serialized Future result
               WaspSystem.masterActor ? StopProducer(id)
-              "OK".toJson
+              "OK".toJson.toAngularOkResponse
             }
           }
         }

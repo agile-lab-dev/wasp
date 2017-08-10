@@ -4,8 +4,12 @@ package it.agilelab.bigdata.wasp.web.controllers
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
-import it.agilelab.bigdata.wasp.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
+import JsonResultsHelper._
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.web.controllers.Producer_C.logger
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
@@ -23,7 +27,7 @@ object Topic_C extends Directives with JsonSupport {
         get {
           complete {
             // complete with serialized Future result
-            ConfigBL.topicBL.getAll.toJson
+            getJsonArrayOrEmpty[TopicModel](ConfigBL.topicBL.getAll, _.toJson)
           }
         }
       } ~
@@ -31,7 +35,7 @@ object Topic_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              ConfigBL.topicBL.getById(id).toJson
+              getJsonOrNotFound[TopicModel](ConfigBL.topicBL.getById(id), id, "Topic model", _.toJson)
             }
 
           }
