@@ -49,10 +49,10 @@ trait WaspLauncher {
 	}
 
 	def initializeWasp(): Unit = {
-		// configs
-		ConfigManager.initializeConfigs()
 		// db
 		WaspDB.initializeDB()
+		// configs
+		ConfigManager.initializeConfigs()
 		// waspsystem
 		WaspSystem.initializeActorSystem()
 	}
