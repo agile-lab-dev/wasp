@@ -8,6 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWrite
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.messages.BatchJobProcessedMessage
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper.bsonDocumentToMap
 import org.apache.spark.SparkContext

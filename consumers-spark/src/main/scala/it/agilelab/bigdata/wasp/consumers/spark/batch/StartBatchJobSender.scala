@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.messages.StartBatchJobMessage
 import org.quartz.{Job, JobExecutionContext, JobExecutionException}
 
 import scala.beans.BeanProperty

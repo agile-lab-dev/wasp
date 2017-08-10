@@ -5,10 +5,10 @@ import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.SparkHolder
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
-import it.agilelab.bigdata.wasp.core.WaspMessage
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, BatchSchedulerModel, JobStateEnum}
 import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
 import org.mongodb.scala.bson.BsonObjectId
@@ -17,14 +17,6 @@ import org.quartz.Scheduler
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
-case class StopBatchJobsMessage() extends WaspMessage
-
-case class CheckJobsBucketMessage() extends WaspMessage
-case class BatchJobProcessedMessage(id: String, jobState: String) extends WaspMessage
-case class StartBatchJobMessage(id: String) extends WaspMessage
-case class BatchJobResult(id:String, result: Boolean) extends WaspMessage
-case class StartSchedulersMessage() extends WaspMessage
 
 object BatchMasterGuardian {
   val name = "BatchMasterGuardian"
