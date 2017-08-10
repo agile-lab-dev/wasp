@@ -51,6 +51,7 @@ object Dependencies {
 	val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
 	val akkaCamel = "com.typesafe.akka" %% "akka-camel" % Versions.akka
 	val akkaCluster = "com.typesafe.akka" %% "akka-cluster" % Versions.akka
+	val akkaClusterTools = "com.typesafe.akka" %% "akka-cluster-tools" % Versions.akka
 	val akkaContrib = "com.typesafe.akka" %% "akka-contrib" % Versions.akka
 	val akkaHttp = "com.typesafe.akka" %% "akka-http" % Versions.akkaHttp
 	val akkaHttpSpray = "com.typesafe.akka" %% "akka-http-spray-json" % Versions.akkaHttp
@@ -105,6 +106,7 @@ object Dependencies {
 	val akka = Seq(
 		akkaActor,
 		akkaCluster,
+		akkaClusterTools,
 		akkaContrib,
 		akkaRemote,
 		akkaSlf4j
