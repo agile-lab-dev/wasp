@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.producers
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.pattern.gracefulStop
 import akka.routing.BalancingPool
-import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, timeout}
+import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, synchronousActorCallTimeout}
 import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
@@ -69,7 +69,7 @@ abstract class ProducerMasterGuardian(env: {val producerBL: ProducerBL; val topi
     //Stop all actors bound to this guardian and the guardian itself
     logger.info(s"Stopping actors bound to ${this.getClass.getName} ...")
 
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, timeout.duration))
+    val globalStatus = Future.traverse(context.children)(gracefulStop(_, synchronousActorCallTimeout.duration))
 
     globalStatus map { res =>
       if (res reduceLeft (_ && _)) {

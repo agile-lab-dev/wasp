@@ -1,30 +1,22 @@
 package it.agilelab.bigdata.wasp.core.solr
 
-import java.io.File
-
 import akka.actor.Actor
 import com.ning.http.client.AsyncHttpClientConfig
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
-import it.agilelab.bigdata.wasp.core.solr._
-import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
+import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
-import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import org.apache.solr.common.params.ModifiableSolrParams
-import com.typesafe.config.ConfigFactory
-import play.api._
 import play.api.libs.json._
-
-import play.api.libs.ws.ning._
 import play.api.libs.ws._
+import play.api.libs.ws.ning._
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
 object SolrAdminActor {
   val name = "SolrAdminActor"

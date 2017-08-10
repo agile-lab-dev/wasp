@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.writers
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
 import it.agilelab.bigdata.wasp.core.models.KeyValueModel
-import it.agilelab.bigdata.wasp.core.utils.RowToAvro
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, RowToAvro}
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.spark.HBaseContext
@@ -12,7 +12,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.spark.sql.types.{DataType, StructType}
 import play.api.libs.json.Json
@@ -150,14 +149,11 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
 	override def write(stream: DStream[String]): Unit = {
 		// get sql context
 		val sqlContext = SQLContext.getOrCreate(ssc.sparkContext)
+		
+		// create hbase configuration
 		val hBaseConfiguration = HBaseConfiguration.create()
-		if (conf.hasPath("hbase.configuration.core-site") && conf.hasPath("hbase.configuration.hbase-site")) {
-			hBaseConfiguration.addResource(new Path(conf.getString("hbase.configuration.core-site")))
-			hBaseConfiguration.addResource(new Path(conf.getString("hbase.configuration.hbase-site")))
-		} else{
-			hBaseConfiguration.addResource(new Path("/etc/hbase/conf/core-site.xml"))
-			hBaseConfiguration.addResource(new Path("/etc/hbase/conf/hbase-site.xml"))
-		}
+		hBaseConfiguration.addResource(new Path(ConfigManager.getHBaseConfig.coreSiteXmlPath))
+		hBaseConfiguration.addResource(new Path(ConfigManager.getHBaseConfig.hbaseSiteXmlPath))
 
 
 		val hBaseContext = new HBaseContext(ssc.sparkContext, hBaseConfiguration)
@@ -199,16 +195,14 @@ class HBaseWriter(hbaseModel: KeyValueModel,
 		
 		// prepare hbase configuration
 		val hBaseConfiguration = HBaseConfiguration.create()
-		// merge additional configuration files if Spark configuration specifies them
+		// merge additional configuration files if configuration specifies them
 		/* TODO verify configuration merging is what we want:
 		 * HBaseConfiguration.create() loads from standard files (those in $HBASE_CONF_DIR), which may have configurations
 		 * in them that we do not want!
 		 * in that case, we should maybe use HBaseConfiguration.create(new Configuration(false)) as base configuration
 		 */
-		if (conf.hasPath("hbase.configuration.core-site") && conf.hasPath("hbase.configuration.hbase-site")) {
-			hBaseConfiguration.addResource(new Path(conf.getString("hbase.configuration.core-site")))
-			hBaseConfiguration.addResource(new Path(conf.getString("hbase.configuration.hbase-site")))
-		}
+		hBaseConfiguration.addResource(new Path(ConfigManager.getHBaseConfig.coreSiteXmlPath))
+		hBaseConfiguration.addResource(new Path(ConfigManager.getHBaseConfig.hbaseSiteXmlPath))
 
 		val hBaseContext = new HBaseContext(sqlContext.sparkContext, hBaseConfiguration)
 		//TODO Write a validator of the data converter configurations

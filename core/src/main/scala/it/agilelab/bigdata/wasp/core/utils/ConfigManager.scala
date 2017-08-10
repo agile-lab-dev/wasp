@@ -10,6 +10,7 @@ import org.bson.BsonString
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 object ConfigManager {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
@@ -19,14 +20,16 @@ object ConfigManager {
   val sparkStreamingConfigName = "SparkStreaming"
   val elasticConfigName = "Elastic"
   val solrConfigName = "Solr"
+  val hbaseConfigName = "HBase"
 
-  var waspConfig : WaspConfigModel = _
-  var mongoDBConfig: MongoDBConfigModel = _
-  var kafkaConfig: KafkaConfigModel = _
-  var sparkBatchConfig: SparkBatchConfigModel = _
-  var sparkStreamingConfig: SparkStreamingConfigModel = _
-  var elasticConfig: ElasticConfigModel = _
-  var solrConfig: SolrConfigModel = _
+  private var waspConfig : WaspConfigModel = _
+  private var mongoDBConfig: MongoDBConfigModel = _
+  private var kafkaConfig: KafkaConfigModel = _
+  private var sparkBatchConfig: SparkBatchConfigModel = _
+  private var sparkStreamingConfig: SparkStreamingConfigModel = _
+  private var elasticConfig: ElasticConfigModel = _
+  private var solrConfig: SolrConfigModel = _
+  private var hbaseConfig: HBaseConfigModel = _
   
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
@@ -34,8 +37,13 @@ object ConfigManager {
   
   private def getDefaultWaspConfig: WaspConfigModel = {
     WaspConfigModel(
-      conf.getString("actorSystemName"),
-      conf.getBoolean("indexRollover")
+      conf.getString("actor-system-name"),
+      conf.getBoolean("index-rollover"),
+      conf.getInt("general-timeout-millis"),
+      conf.getInt("services-timeout-millis"),
+      conf.getString("additional-jars-path"),
+      conf.getString("datastore.indexed"),
+      conf.getString("datastore.keyvalue")
     )
   }
   
@@ -154,34 +162,62 @@ object ConfigManager {
       "wasp"
     )
   }
+  
+  private def initializeHBaseConfig(): Unit = {
+    hbaseConfig = retrieveConf(getDefaultHBaseConfig, hbaseConfigName).get
+  }
+  
+  private def getDefaultHBaseConfig: HBaseConfigModel = {
+    val hbaseSubConfig = conf.getConfig("hbase")
+    HBaseConfigModel(
+      hbaseSubConfig.getString("core-site-xml-path"),
+      hbaseSubConfig.getString("hbase-site-xml-path")
+    )
+  }
 
   /**
     * Initialize the configurations managed by this ConfigManager.
     */
   def initializeConfigs(): Unit = {
+    initializeWaspConfig()
+    initializeMongoConfig()
+    initializeKafkaConfig()
     initializeSparkBatchConfig()
     initializeSparkStreamingConfig()
     initializeElasticConfig()
     initializeSolrConfig()
-
-    initializeKafkaConfig()
+    initializeHBaseConfig()
   }
-
-  def getKafkaConfig = {
+  
+  def getWaspConfig: WaspConfigModel = {
+    if (waspConfig == null) {
+      initializeWaspConfig()
+    }
+    waspConfig
+  }
+  
+  def getMongoDBConfig: MongoDBConfigModel = {
+    if (mongoDBConfig == null) {
+      initializeMongoConfig()
+    }
+    mongoDBConfig
+  }
+  
+  def getKafkaConfig: KafkaConfigModel = {
     if (kafkaConfig == null) {
       throw new Exception("The kafka configuration was not initialized")
     }
     kafkaConfig
   }
 
-  def getSparkBatchConfig = {
+  def getSparkBatchConfig: SparkBatchConfigModel = {
     if (sparkBatchConfig == null) {
       throw new Exception("The spark batch configuration was not initialized")
     }
     sparkBatchConfig
   }
 
-  def getSparkStreamingConfig = {
+  def getSparkStreamingConfig: SparkStreamingConfigModel = {
     if (sparkStreamingConfig == null) {
       throw new Exception(
         "The spark streaming configuration was not initialized")
@@ -189,25 +225,25 @@ object ConfigManager {
     sparkStreamingConfig
   }
 
-  def getElasticConfig = {
+  def getElasticConfig: ElasticConfigModel = {
     if (elasticConfig == null) {
       throw new Exception("The elastic configuration was not initialized")
     }
     elasticConfig
   }
 
-  def getSolrConfig = {
+  def getSolrConfig: SolrConfigModel = {
     if (solrConfig == null) {
       throw new Exception("The solr configuration was not initialized")
     }
     solrConfig
   }
 
-  def getMongoDBConfig = {
-    if (mongoDBConfig == null) {
-      initializeMongoConfig()
+  def getHBaseConfig: HBaseConfigModel = {
+    if (hbaseConfig == null) {
+      throw new Exception("The hbase configuration was not initialized")
     }
-    mongoDBConfig
+    hbaseConfig
   }
 
   private def readConnections(config: Config,
@@ -256,14 +292,12 @@ object ConfigManager {
     * it with the provided defaults.
 		*/
   private def retrieveConf[T](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    val document =
-      WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
+    val document = WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
 
     //val result = document.flatMap(x => if (x.isEmpty) insert[T](default).map { x => Some(default) } else future { Some(default) })
     // A few more line of code but now is working as intended.
     if (document.isEmpty) {
-      WaspDB.getDB
-        .insert[T](default)
+      WaspDB.getDB.insert[T](default)
       Some(default)
     } else {
       document
@@ -299,18 +333,30 @@ case class ConnectionConfig(protocol: String,
   }
 }
 
+trait WaspConfiguration {
+  lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig
+}
+
+trait MongoDBConfiguration {
+  lazy val mongoDBConfig: MongoDBConfigModel = ConfigManager.getMongoDBConfig
+}
+
 trait SparkBatchConfiguration {
-  lazy val sparkBatchConfig = ConfigManager.getSparkBatchConfig
+  lazy val sparkBatchConfig: SparkBatchConfigModel = ConfigManager.getSparkBatchConfig
 }
 
 trait SparkStreamingConfiguration {
-  lazy val sparkStreamingConfig = ConfigManager.getSparkStreamingConfig
+  lazy val sparkStreamingConfig: SparkStreamingConfigModel = ConfigManager.getSparkStreamingConfig
 }
 
 trait ElasticConfiguration {
-  lazy val elasticConfig = ConfigManager.getElasticConfig
+  lazy val elasticConfig: ElasticConfigModel = ConfigManager.getElasticConfig
 }
 
 trait SolrConfiguration {
-  lazy val solrConfig = ConfigManager.getSolrConfig
+  lazy val solrConfig: SolrConfigModel = ConfigManager.getSolrConfig
+}
+
+trait HBaseConfiguration {
+  lazy val hbaseConfig: HBaseConfigModel = ConfigManager.getHBaseConfig
 }

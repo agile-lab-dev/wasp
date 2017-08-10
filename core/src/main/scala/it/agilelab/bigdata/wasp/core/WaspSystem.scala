@@ -2,26 +2,25 @@ package it.agilelab.bigdata.wasp.core
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.config.{Config, ConfigFactory}
-import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
-import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
+import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.{LoggerInjector, WaspLogger}
 import it.agilelab.bigdata.wasp.core.solr.SolrAdminActor
 import it.agilelab.bigdata.wasp.core.utils._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Await
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.util.{Failure, Success}
 
 
 object WaspSystem {
-
   private val log = WaspLogger(this.getClass)
+  
+  private val waspConfig = ConfigManager.getWaspConfig
+  
   var alreadyInit = false
 
   def systemInitialization(actorSystem: ActorSystem, force: Boolean = false) = {
@@ -31,7 +30,7 @@ object WaspSystem {
       //TODO Check if there the config of every component
       ConfigManager.initializeConfigs()
 
-      val wasptimeout = conf.getDuration("default.timeout", TimeUnit.SECONDS)
+      val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
 
       kafkaAdminActor = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
 
@@ -41,7 +40,7 @@ object WaspSystem {
 
       val kafkaResult = kafkaAdminActor.ask(it.agilelab.bigdata.wasp.core.kafka.Initialization(ConfigManager.getKafkaConfig))((KafkaAdminActor.connectionTimeout + 1000).millis)
 
-      val zkKafka = Await.ready(kafkaResult, Duration(wasptimeout, TimeUnit.SECONDS))
+      val zkKafka = Await.ready(kafkaResult, Duration(servicesTimeoutMillis, TimeUnit.SECONDS))
 
       zkKafka.value match {
         case Some(Failure(t)) =>
@@ -54,36 +53,38 @@ object WaspSystem {
         case None => throw new UnknownError("Unknown Error during zookeeper connection initialization")
       }
 
-      val defaultDataStoreIndexed = Option(conf.getString("default.datastore.indexed"))
+      
 
       /* Start the default indexed datastore. */
-
-      defaultDataStoreIndexed.getOrElse("") match {
+      
+      implicit val implicitServicesTimeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
+  
+      val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
+      defaultIndexedDatastore match {
         case "elastic" => {
           log.info(s"Trying to connect with Elastic...")
-          startupElastic(wasptimeout)
+          startupElastic(servicesTimeoutMillis)
         }
         case "solr" => {
           log.info(s"Trying to connect with Solr...")
-          startupSolr(wasptimeout)
+          startupSolr(servicesTimeoutMillis)
         }
         case _ => {
           log.error("No Indexed datastore configurated!")
         }
       }
 
-      val defaultDataStoreKeyValue = Option(conf.getString("default.datastore.keyvalue"))
-
-      defaultDataStoreKeyValue.getOrElse("") match {
+      val defaultKeyvalueDatastore = waspConfig.defaultKeyvalueDatastore
+      defaultKeyvalueDatastore match {
         case "hbase" => {
           log.info(s"Trying to connect with HBase...")
-          startupHBase(wasptimeout)
+          startupHBase(servicesTimeoutMillis)
         }
         case _ => {
           log.error("No KeyValue datastore configurated!")
         }
       }
-      if (defaultDataStoreIndexed.isEmpty && defaultDataStoreKeyValue.isEmpty) {
+      if (defaultIndexedDatastore.isEmpty && defaultKeyvalueDatastore.isEmpty) {
         log.error("No datastore configurated!")
         throw new UnsupportedOperationException("No datastore configurated! Configure a KeyValue or a Indexed datastore")
       }
@@ -134,9 +135,7 @@ object WaspSystem {
   /**
    * Timeout value for actor's syncronous call (ex. 'actor ? msg') 
    */
-  val conf = ConfigFactory.load
-  val notimeout = conf.getBoolean("no_timeout")
-  implicit val timeout = if (notimeout) Timeout(60, TimeUnit.MINUTES) else Timeout(60, TimeUnit.SECONDS)
+  val synchronousActorCallTimeout = Timeout(waspConfig.generalTimeoutMillis, TimeUnit.MILLISECONDS)
 
   /**
    * WASP actor system.
@@ -160,7 +159,6 @@ object WaspSystem {
      */
     if (actorSystem == null) WaspSystem.synchronized {
       if (actorSystem == null) {
-        val waspConfig = ConfigManager.waspConfig
         actorSystem = ActorSystem.create(waspConfig.actorSystemName, ConfigManager.conf)
       }
     }
@@ -225,9 +223,11 @@ object WaspSystem {
   var elasticAdminActor: ActorRef = _
   var solrAdminActor: ActorRef = _
 
-  def ??[T](actorReference: ActorRef, message: WaspMessage, duration: Option[FiniteDuration] = None) =
-    Await.result(actorReference ? message, duration.getOrElse(timeout.duration)).asInstanceOf[T]
+  def ??[T](actorReference: ActorRef, message: WaspMessage, duration: Option[FiniteDuration] = None) = {
+    implicit val implicitSynchronousActorCallTimeout = synchronousActorCallTimeout
+    Await.result(actorReference ? message, duration.getOrElse(synchronousActorCallTimeout.duration)).asInstanceOf[T]
+  }
 
 }
 
-trait WaspSystem extends ActorSystemInjector with LoggerInjector with ElasticConfiguration with SolrConfiguration {}
+trait WaspSystem extends LoggerInjector with ElasticConfiguration with SolrConfiguration {}

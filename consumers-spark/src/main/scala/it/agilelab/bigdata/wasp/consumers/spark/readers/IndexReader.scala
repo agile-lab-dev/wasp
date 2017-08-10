@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.IndexModel
-import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SolrConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration, SolrConfiguration}
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaSparkContext
@@ -93,12 +93,10 @@ class SolrIndexReader(indexModel: IndexModel) extends StaticReader with SolrConf
 }
 
 object IndexReader {
-
-  val conf: Config = ConfigFactory.load
-
+  
   def create(indexBL: IndexBL, id: String, name: String): Option[StaticReader] = {
 
-    val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
+    val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
   
     val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {

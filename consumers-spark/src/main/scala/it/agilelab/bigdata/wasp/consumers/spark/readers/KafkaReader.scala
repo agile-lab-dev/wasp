@@ -5,12 +5,11 @@ import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.models.configuration.DefaultConfiguration
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil}
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.{DStream, InputDStream, ReceiverInputDStream}
+import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
 /**
@@ -42,7 +41,7 @@ object KafkaReader extends StreamingReader {
 
     val kafkaConfigMap: Map[String, String] = Map(
       "zookeeper.connect" -> kafkaConfig.zookeeper.toString,
-      "zookeeper.connection.timeout.ms" -> kafkaConfig.zookeeper.timeout.getOrElse(DefaultConfiguration.timeout).toString
+      "zookeeper.connection.timeout.ms" -> kafkaConfig.zookeeper.timeout.getOrElse(ConfigManager.getWaspConfig.servicesTimeoutMillis).toString
     )
 
 

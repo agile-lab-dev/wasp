@@ -4,6 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.WriterModel
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.StreamingContext
 
@@ -14,8 +15,8 @@ trait SparkWriterFactory {
 
 object SparkWriterFactoryDefault extends SparkWriterFactory {
   val logger = WaspLogger(this.getClass.getName)
-  val conf: Config = ConfigFactory.load
-  val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
+
+  private val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
 
   override def createSparkWriterStreaming(env: {val topicBL: TopicBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ssc: StreamingContext, writerModel: WriterModel): Option[SparkStreamingWriter] = {
 

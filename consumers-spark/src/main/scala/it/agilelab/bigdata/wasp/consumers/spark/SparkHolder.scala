@@ -5,15 +5,14 @@ import java.io.File
 import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.configuration.SparkConfigModel
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.{SparkConf, SparkContext}
 
 object SparkHolder {
   private val logger = WaspLogger(SparkHolder.getClass)
   
   private var sc: SparkContext = _
-
-  private lazy val conf: Config = ConfigFactory.load
-
+  
   /**
     * Try to initialize the SparkContext in the SparkHolder with the provided configuration.
     *
@@ -69,7 +68,7 @@ object SparkHolder {
 
   def getAdditionalJar(skipJars: Set[String]) = {
 
-    val additionalJarsPath = conf.getString("default.additionalJars.path")
+    val additionalJarsPath = ConfigManager.getWaspConfig.additionalJarsPath
 
     val fm = getListOfFiles(s"${additionalJarsPath}/managed/")
     val f = getListOfFiles(s"${additionalJarsPath}/")
