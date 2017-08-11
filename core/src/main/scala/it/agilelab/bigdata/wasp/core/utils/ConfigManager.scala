@@ -43,7 +43,8 @@ object ConfigManager {
       conf.getInt("services-timeout-millis"),
       conf.getString("additional-jars-path"),
       conf.getString("datastore.indexed"),
-      conf.getString("datastore.keyvalue")
+      conf.getString("datastore.keyvalue"),
+      conf.getBoolean("systempipegraphs.start")
     )
   }
   

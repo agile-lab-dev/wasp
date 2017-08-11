@@ -12,5 +12,6 @@ case class WaspConfigModel(
                            servicesTimeoutMillis: Int,
                            additionalJarsPath: String,
                            defaultIndexedDatastore: String,
-                           defaultKeyvalueDatastore: String
+                           defaultKeyvalueDatastore: String,
+                           systemPipegraphsStart: Boolean
                           )
