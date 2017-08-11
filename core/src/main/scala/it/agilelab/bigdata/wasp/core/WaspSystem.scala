@@ -16,10 +16,9 @@ import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.util.{Failure, Success}
 
 
-object WaspSystem {
+object WaspSystem extends WaspConfiguration {
   private val log = WaspLogger(this.getClass)
   
-  private val waspConfig = ConfigManager.getWaspConfig
   
   var alreadyInit = false
 
