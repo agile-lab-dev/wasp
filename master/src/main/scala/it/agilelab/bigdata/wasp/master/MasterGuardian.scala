@@ -24,6 +24,10 @@ import scala.concurrent.duration.{Duration, DurationInt, HOURS, MILLISECONDS}
 object MasterGuardian extends WaspConfiguration {
   lazy val logger = WaspLogger(this.getClass.getName)
   
+  val name = "MasterGuardian"
+  
+  val role = "master"
+  
   // get distributed publish-subscribe mediator
   val mediator = DistributedPubSub.get(WaspSystem.actorSystem).mediator
 
