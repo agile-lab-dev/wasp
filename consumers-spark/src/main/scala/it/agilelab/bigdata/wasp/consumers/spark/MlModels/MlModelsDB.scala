@@ -7,11 +7,8 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.Params
 import org.mongodb.scala.bson.BsonObjectId
-import play.api.libs.iteratee.{Enumerator, Iteratee}
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 
 

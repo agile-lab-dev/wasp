@@ -59,7 +59,6 @@ object Dependencies {
 	val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Versions.akka
 	val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
 	val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
-	val asynchttpclient = "com.ning" % "async-http-client" % "1.9.39" // remove?
 	val avro = "org.apache.avro" % "avro" % Versions.avro
 	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
@@ -83,11 +82,6 @@ object Dependencies {
 	val log4jSl4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.8.2" // TODO remove
 	val metrics = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
 	val mongodbScala = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
-	val playcore = "com.typesafe.play" %% "play" % Versions.play // TODO remove
-	val playws = "com.typesafe.play" %% "play-ws" % Versions.play // TODO remove
-	val playcache = "com.typesafe.play" %% "play-cache" % Versions.play // TODO remove
-	val playjson = "com.typesafe.play" %% "play-json" % Versions.play // TODO remove
-	val playserver = "com.typesafe.play" %% "play-netty-server" % Versions.play // TODO remove
 	val quartz = "org.quartz-scheduler" % "quartz" % Versions.quartz
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
@@ -141,6 +135,7 @@ object Dependencies {
 	// Module dependencies
 	// ===================================================================================================================
 	val core = akka ++
+		Seq(akkaHttp, akkaHttpSpray) ++ //TODO remove when move SolrAdminActor to the own plugin
 		logging ++
 		time ++
 		test ++
@@ -149,7 +144,6 @@ object Dependencies {
 			avro,
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
-			playws,
 			sparkSQL,
 			solr,
 			typesafeConfig

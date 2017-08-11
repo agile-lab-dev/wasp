@@ -1,7 +1,16 @@
 package it.agilelab.bigdata.wasp.core.solr
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.Actor
-import com.ning.http.client.AsyncHttpClientConfig
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
+import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
 import org.apache.solr.client.solrj.SolrQuery
@@ -10,13 +19,13 @@ import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import play.api.libs.json._
-import play.api.libs.ws._
-import play.api.libs.ws.ning._
+import spray.json.{DefaultJsonProtocol, JsField, JsNumber, JsObject, JsString, JsValue}
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.util.Try
+
 
 object SolrAdminActor {
   val name = "SolrAdminActor"
@@ -26,7 +35,8 @@ object SolrAdminActor {
   val template = "managedTemplate"
   val numShards = 1
   val replicationFactor = 1
-  val schema = """[
+  val schema =
+    """[
                         {
                             "name":"id_event",
                             "type":"tdouble",
@@ -76,14 +86,31 @@ object SolrAdminActor {
 
 }
 
-class SolrAdminActor extends Actor {
+class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtocol {
 
   val logger = WaspLogger(classOf[SolrAdminActor])
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
+  //TODO prendere il timeout dalla configurazione
+  //implicit val timeout = Timeout(ConfigManager.config)
+  implicit val timeout = Timeout(30, TimeUnit.SECONDS)
 
-  val builder = new AsyncHttpClientConfig.Builder()
-  val wsClient: WSClient = new NingWSClient(builder.build())
+  implicit val materializer = ActorMaterializer()
+  implicit val system = this.context.system
+
+  //http://limansky.me/posts/2016-04-30-easy-json-analyze-with-spray-json.html
+  class JsFieldOps(val field: Option[JsValue]) {
+    def \(name: String) = field map (_ \ name) getOrElse this
+
+    def ===(x: JsValue) = field.contains(x)
+
+    def =!=(x: JsValue) = !field.contains(x)
+  }
+
+  implicit class JsValueOps(val value: JsValue) {
+    def \(name: String) = new JsFieldOps(Try(value.asJsObject).toOption.flatMap(_.fields.get(name)))
+  }
+
 
   def receive: Actor.Receive = {
     case message: Search => call(message, search)
@@ -114,8 +141,10 @@ class SolrAdminActor extends Actor {
     solrServer = new CloudSolrServer(
       solrConfig.connections
         .map(connection =>
-          s"${connection.host}:${connection.port}${connection.metadata.flatMap(_.get("zookeeperRootNode"))
-            .getOrElse("")}")
+          s"${connection.host}:${connection.port}${
+            connection.metadata.flatMap(_.get("zookeeperRootNode"))
+              .getOrElse("")
+          }")
         .mkString(","))
 
     try {
@@ -131,7 +160,7 @@ class SolrAdminActor extends Actor {
     logger.info(s"Try to create a WASP ConfigSet.")
 
     try {
-      manageConfigSet(wsClient,
+      manageConfigSet(
         SolrAdminActor.configSet,
         SolrAdminActor.template)
     } catch {
@@ -145,9 +174,6 @@ class SolrAdminActor extends Actor {
     if (solrServer != null)
       solrServer.shutdown()
 
-    // close the client http connection.
-    wsClient.close()
-
     solrServer = null
     logger.debug("Solr - client stopped")
   }
@@ -158,50 +184,68 @@ class SolrAdminActor extends Actor {
     sender ! result
   }
 
-  private def manageConfigSet(client: WSClient,
-                              name: String,
+  private def manageConfigSet(name: String,
                               template: String) = {
 
-    assert(client != null)
+    val uri = s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=DELETE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
 
-    val response = client
-      .url(s"${solrConfig.apiEndPoint.get
-        .toString()}/admin/configs?action=DELETE&name=${name}&baseConfigSet=${template}&configSetProp.immutable=false&wt=json")
-      .withHeaders("Content-Type" -> "application/json")
-      .withHeaders("Accept" -> "application/json")
-      .get
-
-    response.foreach(r => {
-      (r.json \ "responseHeader" \ "status").as[Int] match {
-        case 0 =>
-          logger.info("Config Set Deleted")
-          createConfigSet(client, name, template)
-        case 400 =>
-          logger.info("Config Set Doesn't Exists")
-          createConfigSet(client, name, template)
-        case _ => logger.info("Solr Schema API Status Code NOT recognized")
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(
+      HttpRequest(uri = uri)
+        .withHeaders(RawHeader("Content-Type", "application/json"))
+        .withHeaders(RawHeader("Accept", "application/json"))
+    )
+    responseFuture foreach { res =>
+      res.status match {
+        case OK =>
+          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+            if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
+              logger.info("Config Set Deleted")
+              createConfigSet(name, template)
+            } else if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
+              logger.info("Config Set Doesn't Exists")
+              createConfigSet(name, template)
+              logger.info(s"The information for my ip is: $info")
+            } else {
+              logger.error("Solr Schema API Status Code NOT recognized")
+            }
+          }
+        case _ =>
+          Unmarshal(res.entity).to[String].map { body =>
+            logger.info(s"Solr Schema API Status Code NOT recognized $body")
+          }
       }
-    })
-
+    }
   }
 
-  private def createConfigSet(client: WSClient,
-                              name: String,
+  private def createConfigSet(name: String,
                               template: String): Unit = {
-    val response = client
-      .url(s"${solrConfig.apiEndPoint.get
-        .toString()}/admin/configs?action=CREATE&name=${name}&baseConfigSet=${template}&configSetProp.immutable=false&wt=json")
-      .withHeaders("Content-Type" -> "application/json")
-      .withHeaders("Accept" -> "application/json")
-      .get
+    val uri = s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=CREATE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
 
-    response.foreach(r => {
-      (r.json \ "responseHeader" \ "status").as[Int] match {
-        case 0 => logger.info("Config Set Created")
-        case 400 => logger.info("Config Set Doesn't Exists")
-        case _ => logger.info("Solr - Config Set NOT Created")
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(
+      HttpRequest(uri = uri)
+        .withHeaders(RawHeader("Content-Type", "application/json"))
+        .withHeaders(RawHeader("Accept", "application/json"))
+    )
+
+    responseFuture.foreach { res =>
+      res.status match {
+        case OK =>
+          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+            if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
+              logger.info("Config Set Created")
+            } else if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
+              logger.info("Config Set Doesn't Exists")
+            } else {
+              logger.error("Solr - Config Set NOT Created")
+            }
+          }
+        case _ =>
+          Unmarshal(res.entity).to[String].map { body =>
+            logger.error("Solr - Config Set NOT Created")
+            logger.error(s"Solr Schema API Status Code NOT recognized $body")
+          }
       }
-    })
+    }
   }
 
   private def addCollection(message: AddCollection): Boolean = {
@@ -232,22 +276,32 @@ class SolrAdminActor extends Actor {
 
   private def addMapping(message: AddMapping): Boolean = {
 
-    val response = wsClient
-      .url(s"${solrConfig.apiEndPoint.get.toString()}/${message.collection}/schema/fields")
-      .withHeaders("Content-Type" -> "application/json")
-      .withHeaders("Accept" -> "application/json")
-      .post(Json.parse(message.schema))
+    val uri = s"${solrConfig.apiEndPoint.get.toString()}/${message.collection}/schema/fields"
 
-    val r = Await.result(response, Duration.Inf)
+    val jsonEntity = JsObject(
+      "collection" -> JsString(message.collection),
+      "schema" -> JsString(message.schema)
+    ).toString()
 
-    logger.info(
-      s"Solr - Add Mapping response status ${r.status} - ${r.statusText}")
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(
+      HttpRequest(uri = uri)
+        .withHeaders(RawHeader("Content-Type", "application/json"))
+        .withHeaders(RawHeader("Accept", "application/json"))
+        .withMethod(HttpMethods.POST)
+        .withEntity(jsonEntity)
+    )
 
-    val status = r.status
-    if (status != 200)
-      logger.info(s"Solr - Schema NOT created")
 
-    (status == 200)
+    Await.result(responseFuture.map { res =>
+      res.status match {
+        case OK =>
+          logger.info(s"Solr - Add Mapping response status ${res.status.value}, $message")
+          true
+        case _ =>
+          logger.error(s"Solr - Schema NOT created, $message")
+          false
+      }
+    }, timeout.duration)
   }
 
   private def addAlias(message: AddAlias): Boolean = {
@@ -308,7 +362,7 @@ class SolrAdminActor extends Actor {
 
     if (!check) {
       check = addCollection(AddCollection(message.collection, message.numShards, message.replicationFactor)) &&
-              addMapping(AddMapping(message.collection, message.schema))
+        addMapping(AddMapping(message.collection, message.schema))
     }
 
     check
@@ -354,3 +408,5 @@ class SolrAdminActor extends Actor {
   }
 
 }
+
+
