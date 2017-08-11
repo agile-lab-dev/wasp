@@ -19,6 +19,7 @@ import scala.util.{Failure, Success}
 object WaspSystem extends WaspConfiguration {
   private val log = WaspLogger(this.getClass)
   
+  val producersPubSubTopic = "producers"
   
   var alreadyInit = false
 
