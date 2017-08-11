@@ -7,7 +7,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem}
+import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, synchronousActorCallTimeout}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
@@ -55,7 +55,7 @@ object MasterGuardian extends WaspConfiguration {
       val actorPath = "/user/" + name
       val actorSelection = actorSystem.actorSelection(actorPath)
       logger.info(s"Attempting actor selection: $actorSelection")
-      val actor = Await.result(actorSelection.resolveOne(), ConfigManager.getWaspConfig.generalTimeoutMillis milliseconds)
+      val actor = Await.result(actorSelection.resolveOne()(synchronousActorCallTimeout), ConfigManager.getWaspConfig.generalTimeoutMillis milliseconds)
       logger.info(s"Selected actor: $actor")
       actor
     } catch {
@@ -307,7 +307,7 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
 
   private def startBatchJob(batchJob: BatchJobModel): Future[Either[String, String]] = {
     logger.info(s"Send the message StartBatchJobMessage to batchGuardian: job to start: ${batchJob._id.get.getValue.toHexString}")
-
+    implicit val timeut = synchronousActorCallTimeout
     val jobFut = batchGuardian ? StartBatchJobMessage(batchJob._id.get.getValue.toHexString)
     val jobRes = Await.result(jobFut, WaspSystem.synchronousActorCallTimeout.duration).asInstanceOf[BatchJobResult]
     if (jobRes.result) {
