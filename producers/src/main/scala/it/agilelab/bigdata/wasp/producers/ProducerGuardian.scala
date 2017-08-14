@@ -44,18 +44,18 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
   override def initialized: Actor.Receive = {
     case Start =>
-      logger.info("startProducer")
+      logger.info(s"Producer $producerId starting at guardian $self")
       sender() ! true
 
     case Stop =>
-      logger.info("StopProducer")
-      stopChildActors
+      logger.info(s"Producer $producerId stopping")
+      stopChildActors()
       sender() ! true
   }
 
   def guardianUnitialized: Actor.Receive = {
     case Start =>
-      initialize
+      initialize()
       sender() ! true
 
     case Stop =>
@@ -65,26 +65,26 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
   def startChildActors()
 
 
-  def stopChildActors() = {
+  def stopChildActors(): Future[Unit] = {
 
     //Stop all actors bound to this guardian and the guardian itself
-    logger.info(s"Stopping actors bound to ${this.getClass.getName} ...")
+    logger.info(s"Producer $producerId: stopping actors bound to $self...")
 
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, synchronousActorCallTimeout.duration))
 
     globalStatus map { res =>
       if (res reduceLeft (_ && _)) {
 
-        logger.info(s"Graceful shutdown completed.")
+        logger.info(s"Producer $producerId: graceful shutdown completed.")
         env.producerBL.setIsActive(producer, isActive = false)
 
-        logger.info(s"Node is transitioning from 'initialized' to 'uninitialized'")
+        logger.info(s"Producer $producerId: transitioning from 'initialized' to 'uninitialized'")
         kafka_router ! PoisonPill
 
         context become guardianUnitialized
 
       } else {
-        logger.error(s"Something went wrong! Unable to shutdown all nodes")
+        logger.error(s"Producer $producerId: something went wrong! Unable to shutdown all nodes")
       }
     }
   }
@@ -92,32 +92,28 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
   override def initialize(): Unit = {
 
     val producerOption = env.producerBL.getById(producerId)
-
-    val kafkaConfig = ConfigManager.getKafkaConfig
-
+    
     if (producerOption.isDefined) {
       producer = producerOption.get
       if (producer.hasOutput) {
         val topicOption = env.producerBL.getTopic(topicBL = env.topicBL, producer)
         associatedTopic = topicOption
-        logger.info(s"Topic found  $associatedTopic")
+        logger.info(s"Producer $producerId: topic found: $associatedTopic")
         if (??[Boolean](WaspSystem.getKafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))) {
-          logger.info("Before run kafka_router")
           router_name = s"kafka-ingestion-router-$name-${producer._id.get.asString()}-${System.currentTimeMillis()}"
           kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
-          logger.info("After run kafka_router")
           context become initialized
           startChildActors()
 
           env.producerBL.setIsActive(producer, isActive = true)
         } else {
-          logger.error("Error creating topic " + topicOption.get.name)
+          logger.error(s"Producer $producerId: error creating topic " + topicOption.get.name)
         }
 
       }
 
     } else {
-      logger.warn("This producer hasn't associated topic")
+      logger.warn(s"Producer $producerId: this producer doesn't have an associated topic")
     }
   }
 
