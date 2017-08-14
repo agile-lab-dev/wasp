@@ -27,9 +27,6 @@ object MasterGuardian extends WaspConfiguration {
   val name = "MasterGuardian"
   
   val role = "master"
-  
-  // get distributed publish-subscribe mediator
-  val mediator = DistributedPubSub.get(WaspSystem.actorSystem).mediator
 
   if (WaspSystem.masterActor == null)
     WaspSystem.masterActor = actorSystem.actorOf(Props(new MasterGuardian(ConfigBL)))

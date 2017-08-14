@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.core
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.cluster.pubsub.DistributedPubSub
 import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
@@ -227,7 +228,9 @@ object WaspSystem extends WaspConfiguration {
     implicit val implicitSynchronousActorCallTimeout = synchronousActorCallTimeout
     Await.result(actorReference ? message, duration.getOrElse(synchronousActorCallTimeout.duration)).asInstanceOf[T]
   }
-
+  
+  // get distributed publish-subscribe mediator
+  val mediator = DistributedPubSub.get(WaspSystem.actorSystem).mediator
 }
 
 trait WaspSystem extends LoggerInjector with ElasticConfiguration with SolrConfiguration {}
