@@ -6,12 +6,14 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 	* @author Nicolò Bidotti
 	*/
 case class WaspConfigModel(
-	                         actorSystemName: String,
-                           indexRollover: Boolean,
-                           generalTimeoutMillis: Int,
-                           servicesTimeoutMillis: Int,
-                           additionalJarsPath: String,
-                           defaultIndexedDatastore: String,
-                           defaultKeyvalueDatastore: String,
-                           systemPipegraphsStart: Boolean
+	                          actorSystemName: String,
+	                          indexRollover: Boolean,
+	                          generalTimeoutMillis: Int,
+	                          servicesTimeoutMillis: Int,
+	                          additionalJarsPath: String,
+	                          defaultIndexedDatastore: String,
+	                          defaultKeyvalueDatastore: String,
+	                          systemPipegraphsStart: Boolean,
+	                          restServerHostname: String,
+	                          restServerPort: Int
                           )

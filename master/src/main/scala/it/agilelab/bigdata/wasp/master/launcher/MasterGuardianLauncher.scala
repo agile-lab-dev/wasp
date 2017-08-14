@@ -11,6 +11,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
@@ -20,7 +21,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 	* Launcher for the MasterGuardian and REST API.
 	* @author Nicolò Bidotti
 	*/
-object MasterGuardianLauncher extends ClusterSingletonLauncher {
+object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfiguration {
 	private val logger = WaspLogger(getClass.getName)
 	
 	override def launch(args: Array[String]): Unit = {
@@ -62,6 +63,6 @@ object MasterGuardianLauncher extends ClusterSingletonLauncher {
 		implicit val system = actorSystem
 		implicit val materializer = ActorMaterializer()
 		val finalRoute = handleExceptions(myExceptionHandler)(route)
-		val bindingFuture = Http().bindAndHandle(finalRoute, "localhost", 8080)
+		val bindingFuture = Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
 	}
 }

@@ -44,7 +44,9 @@ object ConfigManager {
       conf.getString("additional-jars-path"),
       conf.getString("datastore.indexed"),
       conf.getString("datastore.keyvalue"),
-      conf.getBoolean("systempipegraphs.start")
+      conf.getBoolean("systempipegraphs.start"),
+      conf.getString("rest.server.hostname"),
+      conf.getInt("rest.server.port")
     )
   }
   
