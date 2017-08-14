@@ -3,8 +3,6 @@ package it.agilelab.bigdata.wasp.master
 import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props, actorRef2Scala}
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, synchronousActorCallTimeout}
@@ -15,7 +13,6 @@ import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 
-import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, DurationInt, HOURS, MILLISECONDS}
@@ -30,8 +27,6 @@ object MasterGuardian extends WaspConfiguration {
 
   if (WaspSystem.masterActor == null)
     WaspSystem.masterActor = actorSystem.actorOf(Props(new MasterGuardian(ConfigBL)))
-
-  
   
   // at midnight, restart all active pipelines (this causes new timed indices creation and consumers redirection on new indices)
   if (ConfigManager.getWaspConfig.indexRollover) {
@@ -49,6 +44,7 @@ object MasterGuardian extends WaspConfiguration {
   // TODO use cluster singleton proxy to reach them
   var consumer: ActorRef = _ //findLocallyOrCreateActor(Props(new ConsumersMasterGuardian(ConfigBL, writers.SparkWriterFactoryDefault, KafkaReader)), ConsumersMasterGuardian.name)
   var batchGuardian: ActorRef = _ //findLocallyOrCreateActor(Props(new batch.BatchMasterGuardian(ConfigBL, None, writers.SparkWriterFactoryDefault)), batch.BatchMasterGuardian.name)
+  var producersMasterGuardian: ActorRef = _
 
   // TODO configurable timeout
   def findLocallyOrCreateActor(props: Props, name: String): ActorRef = {
@@ -91,47 +87,13 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
   // TODO just for Class Loader debug.
   // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
   
-  // subscribe to producers topic using distributed publish subscribe
-  mediator ! Subscribe(WaspSystem.producersPubSubTopic, self)
-  
-  // all producers, whether they are local or remote
-  def producers: Map[String, ActorRef] = localProducers ++ remoteProducers
-  
-  // local producers, which run in the same JVM as the MasterGuardian (those with isRemote = false)
-  val localProducers: Map[String, ActorRef] = {
-    env.producerBL
-      .getAll // grab all producers
-      .filterNot(_.isRemote) // filter only local ones
-      .map(producer => {
-      val producerId = producer._id.get.getValue.toHexString
-      if (producer.name == "LoggerProducer") { // logger producer is special
-        producerId -> WaspSystem.loggerActor.get // do not instantiate, but get the already existing one from WaspSystem
-      } else {
-        val producerClass = classLoader.map(cl => cl.loadClass(producer.className)).getOrElse(Class.forName(producer.className))
-        val producerActor = actorSystem.actorOf(Props(producerClass, ConfigBL, producerId), producer.name)
-        producerId -> producerActor
-      }
-    }).toMap
-  }
-  
-  // remote producers, which run in a different JVM than the MasterGuardian (those with isRemote = true)
-  val remoteProducers: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
-  
   // on startup non-system pipegraphs and associated consumers are deactivated
   setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs(false), isActive = false)
   logger.info("Deactivated non-system pipegraphs")
   
-  // on startup all producers are deactivated
-  setProducersActive(env.producerBL.getActiveProducers(), isActive = false)
-  logger.info("Deactivated producers")
-  
   
   private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
     pipegraphs.foreach(pipegraph => env.pipegraphBL.setIsActive(pipegraph, isActive))
-  }
-  
-  private def setProducersActive(producers: Seq[ProducerModel], isActive: Boolean): Unit = {
-    producers.foreach(producer => env.producerBL.setIsActive(producer, isActive))
   }
   
   // TODO manage error in pipegraph initialization
@@ -260,55 +222,43 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
   
   private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Future[Either[String, String]] = {
     val producerId = producerModel._id.get.getValue.toHexString
-    if (remoteProducers.isDefinedAt(producerId)) { // already added
-      Future(Right(s"Remote producer $producerId ($producerActor) not added; already present."))
-    } else { // add to remote producers & start if needed
-      remoteProducers += producerId -> producerActor
-      if (producerModel.isActive) {
-        self ! StartProducer(producerId)
-      }
-      Future(Left(s"Remote producer $producerId ($producerActor) added."))
+    if (??[Boolean](producersMasterGuardian, AddRemoteProducer(producerId, producerActor))) {
+      Future(Right(s"Remote producer $producerId ($producerActor) added."))
+    } else {
+      Future(Left(s"Remote producer $producerId ($producerActor) not added."))
     }
   }
   
   private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Future[Either[String, String]] = {
     val producerId = producerModel._id.get.getValue.toHexString
-    if (remoteProducers.isDefinedAt(producerId)) { // found, remove
-      val producerActor = remoteProducers(producerId)
-      remoteProducers.remove(producerId)
-      Future(Left(s"Remote producer $producerId ($producerActor) removed."))
-    } else { // not found
-      Future(Right(s"Remote producer $producerId not found; either it was never added or it has already been removed."))
+    if (??[Boolean](producersMasterGuardian, RemoveRemoteProducer(producerId, producerActor))) {
+      Future(Right(s"Remote producer $producerId ($producerActor) removed."))
+    } else {
+      Future(Left(s"Remote producer $producerId not removed."))
     }
   }
 
   private def startProducer(producer: ProducerModel): Future[Either[String, String]] = {
-    // initialise producer actor if not already present
-    if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-      if (! ??[Boolean](producers(producer._id.get.getValue.toHexString), Start)) {
-        Future(Right(s"Producer '${producer.name}' not started"))
-      } else {
-        Future(Left(s"Producer '${producer.name}' started"))
-      }
+    val producerId = producer._id.get.getValue.toHexString
+    if (??[Boolean](producersMasterGuardian, StartProducer(producerId))) {
+      Future(Right(s"Producer '${producer.name}' started"))
     } else {
-      Future(Right(s"Producer '${producer.name}' not exists"))
+      Future(Left(s"Producer '${producer.name}' not started"))
     }
-
   }
 
   private def stopProducer(producer: ProducerModel): Future[Either[String, String]] = {
-    if (!producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-      Future(Right("Producer '" + producer.name + "' not initializated"))
-    } else if (! ??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
-      Future(Right("Producer '" + producer.name + "' not stopped"))
+    val producerId = producer._id.get.getValue.toHexString
+    if (??[Boolean](producersMasterGuardian, StopProducer(producerId))) {
+      Future(Right("Producer '" + producer.name + "' stopped"))
     } else {
-      Future(Left("Producer '" + producer.name + "' stopped"))
+      Future(Left("Producer '" + producer.name + "' not stopped"))
     }
   }
 
   private def startBatchJob(batchJob: BatchJobModel): Future[Either[String, String]] = {
     logger.info(s"Send the message StartBatchJobMessage to batchGuardian: job to start: ${batchJob._id.get.getValue.toHexString}")
-    implicit val timeut = synchronousActorCallTimeout
+    implicit val timeout = synchronousActorCallTimeout
     val jobFut = batchGuardian ? StartBatchJobMessage(batchJob._id.get.getValue.toHexString)
     val jobRes = Await.result(jobFut, WaspSystem.synchronousActorCallTimeout.duration).asInstanceOf[BatchJobResult]
     if (jobRes.result) {
