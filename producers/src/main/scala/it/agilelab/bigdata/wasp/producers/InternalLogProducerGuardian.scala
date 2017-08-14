@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 // producerId is an empty string because we override initialize and get the producer model by name instead of using an id
 final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
-    extends ProducerMasterGuardian(env, "") {
+    extends ProducerGuardian(env, "") {
 
   val name = InternalLogProducerGuardian.name
 

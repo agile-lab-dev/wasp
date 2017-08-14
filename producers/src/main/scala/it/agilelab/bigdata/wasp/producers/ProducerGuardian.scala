@@ -16,7 +16,11 @@ import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-abstract class ProducerMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String) extends ClusterAwareNodeGuardian {
+/**
+  * Base class for a WASP producer. A ProducerGuardian represents a producer and manages the lifecycle of the child
+  * ProducerActors that actually produce the data.
+  */
+abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String) extends ClusterAwareNodeGuardian {
   val logger = WaspLogger(this.getClass.getName)
   
   val name: String
