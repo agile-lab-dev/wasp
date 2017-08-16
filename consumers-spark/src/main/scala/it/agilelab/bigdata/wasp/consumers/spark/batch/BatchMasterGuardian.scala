@@ -21,6 +21,8 @@ import scala.concurrent.{Await, Future}
 object BatchMasterGuardian {
   val name = "BatchMasterGuardian"
   
+  val role = "batch"
+  
   // quartz2 scheduler for batch jobs
   val scheduler: Scheduler = buildScheduler()
 }

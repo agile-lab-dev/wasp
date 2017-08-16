@@ -1,1 +1,1 @@
-mainClass in Compile := Some("it.agilelab.bigdata.wasp.consumers.spark.launcher.SparkConsumersMasterGuardianLauncher")
+mainClass in Compile := Some("it.agilelab.bigdata.wasp.consumers.spark.launcher.SparkConsumersAndBatchMasterGuardianLauncher")
