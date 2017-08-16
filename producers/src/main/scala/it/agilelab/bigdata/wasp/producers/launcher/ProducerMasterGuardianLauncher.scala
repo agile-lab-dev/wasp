@@ -17,5 +17,5 @@ object ProducerMasterGuardianLauncher extends ClusterSingletonLauncher {
 	
 	override def getSingletonName: String = ProducersMasterGuardian.name
 	
-	override def getSingletonRole: String = ProducersMasterGuardian.role
+	override def getSingletonRoles: Seq[String] = Seq(ProducersMasterGuardian.role)
 }

@@ -17,6 +17,6 @@ object RtConsumersMasterGuardianLauncher extends ClusterSingletonLauncher {
 	
 	override def getSingletonName: String = RtConsumersMasterGuardian.name
 	
-	override def getSingletonRole: String = RtConsumersMasterGuardian.role
+	override def getSingletonRoles: Seq[String] = Seq(RtConsumersMasterGuardian.role)
 }
 

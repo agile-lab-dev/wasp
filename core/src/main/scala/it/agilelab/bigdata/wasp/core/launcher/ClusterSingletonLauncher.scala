@@ -1,32 +1,20 @@
 package it.agilelab.bigdata.wasp.core.launcher
 
-import akka.actor.{PoisonPill, Props}
-import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings}
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import akka.actor.Props
 
 /**
-	* Launcher for cluster singleton actor.
+	* Launcher for a single cluster singleton actor.
 	*
 	* @author Nicolò Bidotti
 	*/
-trait ClusterSingletonLauncher extends WaspLauncher {
-	override def launch(args: Array[String]): Unit = {
-		val actorSystem = WaspSystem.actorSystem
-		
-		// spawn the cluster singleton manager, which will spawn the actual singleton actor as defined by the getters
-		actorSystem.actorOf(
-			ClusterSingletonManager.props(
-				singletonProps = getSingletonProps,
-				terminationMessage = PoisonPill,
-				settings = ClusterSingletonManagerSettings(actorSystem).withRole(getSingletonRole)
-			),
-			name = getSingletonName
-		)
+trait ClusterSingletonLauncher extends MultipleClusterSingletonsLauncher {
+	override final def getSingletonInfos: Seq[(Props, String, Seq[String])] = {
+		Seq((getSingletonProps, getSingletonName, getSingletonRoles))
 	}
 	
 	def getSingletonProps: Props
 	
 	def getSingletonName: String
 	
-	def getSingletonRole: String
+	def getSingletonRoles: Seq[String]
 }

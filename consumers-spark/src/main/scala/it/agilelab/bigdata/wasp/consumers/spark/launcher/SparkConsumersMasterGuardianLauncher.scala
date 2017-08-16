@@ -5,10 +5,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.KafkaReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.consumers.spark.{SparkConsumersMasterGuardian, SparkHolder}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
+import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MultipleClusterSingletonsLauncher}
 
 /**
-	* Launcher for the SparkConsumersMasterGuardian.
+	* Launcher for the SparkConsumersMasterGuardian and BatchMasterGuardian.
 	*
 	* @author Nicolò Bidotti
 	*/
@@ -19,6 +19,6 @@ object SparkConsumersMasterGuardianLauncher extends ClusterSingletonLauncher {
 	
 	override def getSingletonName: String = SparkConsumersMasterGuardian.name
 	
-	override def getSingletonRole: String = SparkConsumersMasterGuardian.role
+	override def getSingletonRoles: Seq[String] = Seq(SparkConsumersMasterGuardian.role)
 }
 
