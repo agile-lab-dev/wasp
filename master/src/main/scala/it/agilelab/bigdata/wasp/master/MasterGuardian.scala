@@ -42,7 +42,8 @@ object MasterGuardian extends WaspConfiguration {
   }
 
   // TODO use cluster singleton proxy to reach them
-  var consumer: ActorRef = _ //findLocallyOrCreateActor(Props(new ConsumersMasterGuardian(ConfigBL, writers.SparkWriterFactoryDefault, KafkaReader)), ConsumersMasterGuardian.name)
+  var sparkConsumersMasterGuardian: ActorRef = _ //findLocallyOrCreateActor(Props(new ConsumersMasterGuardian(ConfigBL, writers.SparkWriterFactoryDefault, KafkaReader)), ConsumersMasterGuardian.name)
+  var rtConsumersMasterGuardian: ActorRef = _
   var batchGuardian: ActorRef = _ //findLocallyOrCreateActor(Props(new batch.BatchMasterGuardian(ConfigBL, None, writers.SparkWriterFactoryDefault)), batch.BatchMasterGuardian.name)
   var producersMasterGuardian: ActorRef = _
 
@@ -149,7 +150,8 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
   }
   
   private def onRestartPipegraphs(): Future[Either[String, String]] = {
-    consumer ! RestartConsumers
+    sparkConsumersMasterGuardian ! RestartConsumers
+    rtConsumersMasterGuardian ! RestartConsumers
     Future(Left("Pipegraphs restart started."))
   }
   
@@ -200,9 +202,10 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Future[Either[String, String]] = {
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
-    val res = ??[Boolean](consumer, RestartConsumers, Some(WaspSystem.synchronousActorCallTimeout.duration))
-
-    if (res) {
+    val res1 = ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(WaspSystem.synchronousActorCallTimeout.duration))
+    val res2 = ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(WaspSystem.synchronousActorCallTimeout.duration))
+    
+    if (res1 && res2) {
       Future(Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped")))
     } else {
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
@@ -279,7 +282,7 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
     WaspSystem.elasticAdminActor ! PoisonPill
     WaspSystem.getKafkaAdminActor ! PoisonPill
     WaspSystem.solrAdminActor ! PoisonPill
-    consumer ! PoisonPill
+    sparkConsumersMasterGuardian ! PoisonPill
     batchGuardian ! PoisonPill
 
     super.postStop()
