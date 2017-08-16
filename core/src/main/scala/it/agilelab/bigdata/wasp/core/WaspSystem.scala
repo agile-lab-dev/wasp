@@ -22,14 +22,19 @@ object WaspSystem extends WaspConfiguration {
   
   // constants
   val batchMasterGuardianName = "BatchMasterGuardian"
+  val batchMasterGuardianSingletonManagerName = "BatchMasterGuardianSingletonManager"
   val batchMasterGuardianRole = "batch"
   val masterGuardianName = "MasterGuardian"
+  val masterGuardianSingletonManagerName = "MasterGuardianSingletonManager"
   val masterGuardianRole = "master"
   val producersMasterGuardianName = "ProducersMasterGuardian"
+  val producersMasterGuardianSingletonManagerName = "ProducersMasterGuardianSingletonManager"
   val producersMasterGuardianRole = "producers"
   val rtConsumersMasterGuardianName = "RtConsumersMasterGuardian"
+  val rtConsumersMasterGuardianSingletonManagerName = "RtConsumersMasterGuardianSingletonManager"
   val rtConsumersMasterGuardianRole = "consumers-rt"
   val sparkConsumersMasterGuardianName = "SparkConsumersMasterGuardian"
+  val sparkConsumersMasterGuardianSingletonManagerName = "SparkConsumersMasterGuardianSingletonManager"
   val sparkConsumersMasterGuardianRole = "consumers-spark"
   val producersPubSubTopic = "producers"
   

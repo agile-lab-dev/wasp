@@ -18,6 +18,8 @@ object RtConsumersMasterGuardianLauncher extends ClusterSingletonLauncher {
 	
 	override def getSingletonName: String = WaspSystem.rtConsumersMasterGuardianName
 	
+	override def getSingletonManagerName: String = WaspSystem.rtConsumersMasterGuardianSingletonManagerName
+	
 	override def getSingletonRoles: Seq[String] = Seq(WaspSystem.rtConsumersMasterGuardianRole)
 }
 

@@ -15,10 +15,21 @@ import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 	* @author Nicolò Bidotti
 	*/
 object SparkConsumersAndBatchMasterGuardianLauncher extends MultipleClusterSingletonsLauncher {
-	override def getSingletonInfos: Seq[(Props, String, Seq[String])] = {
-		Seq(
-			(Props(new SparkConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault, KafkaReader)), WaspSystem.sparkConsumersMasterGuardianName, Seq(WaspSystem.sparkConsumersMasterGuardianRole)),
-			(Props(new BatchMasterGuardian(ConfigBL, None, SparkWriterFactoryDefault)), WaspSystem.batchMasterGuardianName, Seq(WaspSystem.batchMasterGuardianRole))
+	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
+		val sparkConsumersMasterGuardianSingletonInfo = (
+			Props(new SparkConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault, KafkaReader)),
+			WaspSystem.sparkConsumersMasterGuardianName,
+			WaspSystem.sparkConsumersMasterGuardianSingletonManagerName,
+			Seq(WaspSystem.sparkConsumersMasterGuardianRole)
 		)
+		
+		val batchMasterGuardianSingletonInfo = (
+			Props(new BatchMasterGuardian(ConfigBL, None, SparkWriterFactoryDefault)),
+			WaspSystem.batchMasterGuardianName,
+			WaspSystem.batchMasterGuardianSingletonManagerName,
+			Seq(WaspSystem.batchMasterGuardianRole)
+		)
+		
+		Seq(sparkConsumersMasterGuardianSingletonInfo, batchMasterGuardianSingletonInfo)
 	}
 }

@@ -18,5 +18,7 @@ object ProducerMasterGuardianLauncher extends ClusterSingletonLauncher {
 	
 	override def getSingletonName: String = WaspSystem.producersMasterGuardianName
 	
+	override def getSingletonManagerName: String = WaspSystem.producersMasterGuardianSingletonManagerName
+	
 	override def getSingletonRoles: Seq[String] = Seq(WaspSystem.producersMasterGuardianRole)
 }

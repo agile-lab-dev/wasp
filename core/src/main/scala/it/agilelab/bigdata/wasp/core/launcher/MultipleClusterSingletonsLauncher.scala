@@ -18,30 +18,31 @@ trait MultipleClusterSingletonsLauncher extends WaspLauncher {
 		
 		// for each singleton to launch
 		getSingletonInfos foreach {
-			case (props, name, roles) => {
+			case (singletonProps, singletonName, singletonManagerName, roles) => {
 				// build the settings
 				val settings = roles.foldLeft(ClusterSingletonManagerSettings(actorSystem))(addRoleToSettings)
 				// spawn the cluster singleton manager, which will spawn the actual singleton actor as defined by the getters
 				actorSystem.actorOf(
 					ClusterSingletonManager.props(
-						singletonProps = props,
+						singletonProps = singletonProps,
 						terminationMessage = PoisonPill,
-						settings = settings
+						settings = settings.withSingletonName(singletonName)
 					),
-					name = name
+					name = singletonManagerName
 				)
 			}
 		}
 	}
 	
 	/**
-		* Get the list of triples describing the cluster singletons to start.
+		* Get the list of quadruples describing the cluster singletons to start.
 		*
 		* The triples' elements are:
-		* - actor's Props
-		* - actor's name
+		* - singleton actor's Props
+		* - singleton actor's name
+		* - singleton manager actor's name
 		* - valid node roles
 		* @return
 		*/
-	def getSingletonInfos: Seq[(Props, String, Seq[String])]
+	def getSingletonInfos: Seq[(Props, String, String, Seq[String])]
 }
