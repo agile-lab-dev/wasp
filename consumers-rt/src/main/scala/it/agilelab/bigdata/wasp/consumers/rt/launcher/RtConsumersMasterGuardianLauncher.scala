@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.rt.launcher
 
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.rt.RtConsumersMasterGuardian
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 
@@ -15,8 +16,8 @@ object RtConsumersMasterGuardianLauncher extends ClusterSingletonLauncher {
 		Props(new RtConsumersMasterGuardian(ConfigBL))
 	}
 	
-	override def getSingletonName: String = RtConsumersMasterGuardian.name
+	override def getSingletonName: String = WaspSystem.rtConsumersMasterGuardianName
 	
-	override def getSingletonRoles: Seq[String] = Seq(RtConsumersMasterGuardian.role)
+	override def getSingletonRoles: Seq[String] = Seq(WaspSystem.rtConsumersMasterGuardianRole)
 }
 

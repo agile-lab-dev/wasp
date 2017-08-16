@@ -36,9 +36,9 @@ object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfigur
 		Props(new MasterGuardian(ConfigBL))
 	}
 	
-	override def getSingletonName: String = MasterGuardian.name
+	override def getSingletonName: String = WaspSystem.masterGuardianName
 	
-	override def getSingletonRoles: Seq[String] = Seq(MasterGuardian.role)
+	override def getSingletonRoles: Seq[String] = Seq(WaspSystem.masterGuardianRole)
 	
 	private val myExceptionHandler = ExceptionHandler {
     case e: Exception =>

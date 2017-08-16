@@ -20,10 +20,6 @@ import scala.concurrent.duration.{Duration, DurationInt, HOURS, MILLISECONDS}
 
 object MasterGuardian extends WaspConfiguration {
   lazy val logger = WaspLogger(this.getClass.getName)
-  
-  val name = "MasterGuardian"
-  
-  val role = "master"
 
   if (WaspSystem.masterActor == null)
     WaspSystem.masterActor = actorSystem.actorOf(Props(new MasterGuardian(ConfigBL)))

@@ -127,9 +127,3 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		}
 	}
 }
-
-object ProducersMasterGuardian {
-	val name = "ProducersMasterGuardian"
-	
-	val role = "producers"
-}

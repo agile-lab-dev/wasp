@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.producers.launcher
 
 import akka.actor.Props
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 import it.agilelab.bigdata.wasp.producers.ProducersMasterGuardian
@@ -15,7 +16,7 @@ object ProducerMasterGuardianLauncher extends ClusterSingletonLauncher {
 		Props(new ProducersMasterGuardian(ConfigBL))
 	}
 	
-	override def getSingletonName: String = ProducersMasterGuardian.name
+	override def getSingletonName: String = WaspSystem.producersMasterGuardianName
 	
-	override def getSingletonRoles: Seq[String] = Seq(ProducersMasterGuardian.role)
+	override def getSingletonRoles: Seq[String] = Seq(WaspSystem.producersMasterGuardianRole)
 }

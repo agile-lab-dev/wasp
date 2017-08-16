@@ -20,7 +20,19 @@ import scala.util.{Failure, Success}
 object WaspSystem extends WaspConfiguration {
   private val log = WaspLogger(this.getClass)
   
+  // constants
+  val batchMasterGuardianName = "BatchMasterGuardian"
+  val batchMasterGuardianRole = "batch"
+  val masterGuardianName = "MasterGuardian"
+  val masterGuardianRole = "master"
+  val producersMasterGuardianName = "ProducersMasterGuardian"
+  val producersMasterGuardianRole = "producers"
+  val rtConsumersMasterGuardianName = "RtConsumersMasterGuardian"
+  val rtConsumersMasterGuardianRole = "consumers-rt"
+  val sparkConsumersMasterGuardianName = "SparkConsumersMasterGuardian"
+  val sparkConsumersMasterGuardianRole = "consumers-spark"
   val producersPubSubTopic = "producers"
+  
   
   var alreadyInit = false
 

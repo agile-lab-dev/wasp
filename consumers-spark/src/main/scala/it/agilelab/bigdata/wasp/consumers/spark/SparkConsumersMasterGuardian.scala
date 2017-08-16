@@ -18,12 +18,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
-object SparkConsumersMasterGuardian {
-  val name = "SparkConsumersMasterGuardian"
-  
-  val role = "consumers-spark"
-}
-
 class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
   val topicBL: TopicBL; val indexBL: IndexBL;
   val rawBL : RawBL; val keyValueBL: KeyValueBL;
