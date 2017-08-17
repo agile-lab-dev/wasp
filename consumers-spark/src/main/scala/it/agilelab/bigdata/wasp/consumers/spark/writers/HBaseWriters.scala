@@ -1,8 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.writers
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
-import it.agilelab.bigdata.wasp.core.models.KeyValueModel
+import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, RowToAvro}
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.client.Put
@@ -14,7 +15,9 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.spark.sql.types.{DataType, StructType}
-import play.api.libs.json.Json
+import spray.json.{DefaultJsonProtocol, JsValue, JsonParser, RootJsonFormat}
+
+import scala.util.Try
 
 
 trait HbaseConfigData
@@ -24,6 +27,20 @@ case class RowKeyInfo(col: String, `type`: String) extends HbaseConfigData
 case class InfoCol(col: Option[String], `type`: Option[String],  mappingType: String, avro: Option[String], pivotCol: Option[String]) extends HbaseConfigData
 
 object HBaseWriter {
+
+	//http://limansky.me/posts/2016-04-30-easy-json-analyze-with-spray-json.html
+	class JsFieldOps(val field: Option[JsValue]) {
+		def \(name: String) = field map (_ \ name) getOrElse this
+
+		def ===(x: JsValue) = field.contains(x)
+
+		def =!=(x: JsValue) = !field.contains(x)
+	}
+
+	implicit class JsValueOps(val value: JsValue) {
+		def \(name: String) = new JsFieldOps(Try(value.asJsObject).toOption.flatMap(_.fields.get(name)))
+	}
+
 
 	def createSparkStreamingWriter(env: { val keyValueBL: KeyValueBL}, ssc: StreamingContext, id: String): Option[SparkStreamingWriter] = {
 		// if we find the model, try to return the correct reader
@@ -56,19 +73,16 @@ object HBaseWriter {
 
 
 	def getHbaseConfDataConvert(json: String): HbaseTableModel = {
+		import SprayJsonSupport._
+		import  DefaultJsonProtocol._
+		implicit val tableNameCFormat: RootJsonFormat[TableNameC] = jsonFormat2(TableNameC.apply)
+		implicit val rowKeyInfoFormat: RootJsonFormat[RowKeyInfo] = jsonFormat2(RowKeyInfo.apply)
+		implicit val infoColFormat: RootJsonFormat[InfoCol] = jsonFormat5(InfoCol.apply)
 
-		implicit def hbtf = Json.format[TableNameC]
-		implicit def hb2f = Json.format[RowKeyInfo]
-		implicit def hb3f = Json.format[InfoCol]
-
-		import play.api.libs.json.Reads._
-		import play.api.libs.json._
-
-
-		val js = Json.parse(json)
-		val result = (js \ "table").as[TableNameC]
-		val rowKey = (js \ "rowkey").as[Seq[RowKeyInfo]]
-		val columns: Map[String, Seq[Map[String, InfoCol]]] = (js \ "columns").as[Map[String, Seq[Map[String, InfoCol]]]]
+		val js = JsonParser(json)
+		val result = (js \ "table").field.get.convertTo[TableNameC]
+		val rowKey = (js \ "rowkey").field.get.convertTo[Seq[RowKeyInfo]]
+		val columns: Map[String, Seq[Map[String, InfoCol]]] = (js \ "columns").field.get.convertTo[Map[String, Seq[Map[String, InfoCol]]]]
 
 		HbaseTableModel(result, rowKey, columns)
 	}

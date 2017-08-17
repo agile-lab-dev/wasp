@@ -3,11 +3,9 @@ package it.agilelab.bigdata.wasp.core.bl
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.BsonObjectId
-import play.api.libs.iteratee.Enumerator
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.concurrent._
 
 //TODO Spostarlo nella cartella test
 class AllBLsTestWrapper {
@@ -65,10 +63,10 @@ class AllBLsTestWrapper {
       database.+=:(mlModelOnlyInfo)
     }
 
-    override def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Enumerator[Any]] = {
+    override def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any] = {
       val arrayByte = fs.get(mlModelOnlyInfo.modelFileId.get.toString()).get
       val obj: Any = SerializationUtils.deserialize(arrayByte)
-      Some(Enumerator(obj))
+      Some(obj)
     }
 
     override def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId = {

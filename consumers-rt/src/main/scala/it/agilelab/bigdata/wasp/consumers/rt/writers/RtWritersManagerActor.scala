@@ -14,7 +14,6 @@ import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
 import org.apache.camel.component.websocket._
 import org.mongodb.scala.bson.BsonDocument
-import play.libs.Json
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
@@ -122,9 +121,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
   override def transformOutgoingMessage(msg: Any): Any = {
     msg match {
       case m: String => {
-        val json = Json.parse(m)
-        val finalString = Json.stringify(json)
-        finalString
+        m
       }
       case camel: CamelMessage => {
         camel
