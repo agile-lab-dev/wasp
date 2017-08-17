@@ -9,7 +9,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
-import it.agilelab.bigdata.wasp.core.logging.{Logging, WaspLogger}
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.solr.SolrAdminActor
 import it.agilelab.bigdata.wasp.core.utils._
 

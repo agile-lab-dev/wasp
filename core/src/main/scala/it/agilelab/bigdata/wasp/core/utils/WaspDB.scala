@@ -1,22 +1,23 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import java.nio.ByteBuffer
-import java.util
 
-import akka.actor.ActorSystem
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils.WaspDB._
 import org.bson.codecs.configuration.CodecProvider
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
 import org.mongodb.scala.gridfs.GridFSBucket
 import org.mongodb.scala.result.UpdateResult
-import org.mongodb.scala.{Document, MongoDatabase}
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 trait WaspDB extends MongoDBHelper {
@@ -211,10 +212,7 @@ object WaspDB {
     typeTag[WebsocketModel].tpe -> websocketsName,
     typeTag[BatchSchedulerModel].tpe -> batchSchedulersName
   )
-  import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-  import org.bson.codecs.configuration.CodecRegistries.{ fromRegistries, fromProviders }
-  import scala.collection.JavaConverters._
-  import org.mongodb.scala.bson.codecs.Macros._
+
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
     createCodecProviderIgnoreNone(classOf[ConnectionConfig]),

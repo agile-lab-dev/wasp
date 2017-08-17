@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.master
 
 import java.util.Calendar
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props, actorRef2Scala}
+import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
