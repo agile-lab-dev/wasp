@@ -167,22 +167,6 @@ object Dependencies {
 			camelWebsocket,
 			kafka
 		)
+	
   val master = akka ++ Seq(akkaHttp, akkaHttpSpray)
-	/*
-	val master = logging ++ time ++ json ++ elastic
-
-	val wasp_consumers = json ++ test ++
-		Seq(kafka,
-		    kafkaStreaming,
-		    spark,
-		    elasticSearchSpark,
-		    camelKafka,
-		    camelWebsocket,
-		    camelElastic,
-		    camelQuartz2,
-		    hbaseSpark,
-		    hbaseClient,
-		    hbaseServer,
-		    hbaseCommon)
-	*/
 }
