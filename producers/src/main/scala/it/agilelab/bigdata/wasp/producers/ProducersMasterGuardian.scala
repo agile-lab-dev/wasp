@@ -36,7 +36,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			.map(producer => {
 			val producerId = producer._id.get.getValue.toHexString
 			if (producer.name == "LoggerProducer") { // logger producer is special
-				producerId -> WaspSystem.loggerActor.get // do not instantiate, but get the already existing one from WaspSystem
+				producerId -> WaspSystem.loggerActor // do not instantiate, but get the already existing one from WaspSystem
 			} else {
 				val producerClass = Class.forName(producer.className)
 				val producerActor = actorSystem.actorOf(Props(producerClass, ConfigBL, producerId), producer.name)
