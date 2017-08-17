@@ -18,7 +18,7 @@ import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-private[utils] trait MongoDBHelper  extends WaspLogger {
+private[utils] trait MongoDBHelper {
 
   import MongoDBHelper._
 
