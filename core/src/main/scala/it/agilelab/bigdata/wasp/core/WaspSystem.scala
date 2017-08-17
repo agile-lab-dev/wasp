@@ -9,7 +9,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
-import it.agilelab.bigdata.wasp.core.logging.{LoggerInjector, WaspLogger}
+import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.solr.SolrAdminActor
 import it.agilelab.bigdata.wasp.core.utils._
 
@@ -21,7 +21,7 @@ import scala.util.{Failure, Success}
 object WaspSystem extends WaspConfiguration {
   private val log = WaspLogger(this.getClass)
   
-  // constants
+  // actor/singleton manager/proxy for master guardians
   val batchMasterGuardianName = "BatchMasterGuardian"
   val batchMasterGuardianSingletonManagerName = "BatchMasterGuardianSingletonManager"
   val batchMasterGuardianSingletonProxyName = "BatchMasterGuardianSingletonProxy"
@@ -42,6 +42,14 @@ object WaspSystem extends WaspConfiguration {
   val sparkConsumersMasterGuardianSingletonManagerName = "SparkConsumersMasterGuardianSingletonManager"
   val sparkConsumersMasterGuardianSingletonProxyName = "SparkConsumersMasterGuardianSingletonProxy"
   val sparkConsumersMasterGuardianRole = "consumers-spark"
+  
+  // actor/singleton manager/proxy names/roles for logger
+  val loggerActorName = "LoggerActor"
+  val loggerActorSingletonManagerName = "LoggerActorSingletonManager"
+  val loggerActorSingletonProxyName = "LoggerActorSingletonProxy"
+  val loggerActorRole = "logger"
+  
+  // producers topic for distributed publish subscribe
   val producersPubSubTopic = "producers"
   
   /**
@@ -58,7 +66,7 @@ object WaspSystem extends WaspConfiguration {
   var sparkConsumersMasterGuardian: ActorRef = _
   
   // proxy to singleton of logger actor
-  var loggerActor: Option[ActorRef] = None
+  var loggerActor: ActorRef = _
   
   // actor refs of admin actors
   var kafkaAdminActor: ActorRef = _
@@ -89,8 +97,9 @@ object WaspSystem extends WaspConfiguration {
       rtConsumersMasterGuardian = createSingletonProxy(rtConsumersMasterGuardianSingletonProxyName, rtConsumersMasterGuardianSingletonManagerName, Seq(rtConsumersMasterGuardianRole))
       sparkConsumersMasterGuardian = createSingletonProxy(sparkConsumersMasterGuardianSingletonProxyName, sparkConsumersMasterGuardianSingletonManagerName, Seq(sparkConsumersMasterGuardianRole))
   
-      // TODO init logging here with cluster singleton proxy
-    
+      // create cluster singleton proxy to logger actor
+      loggerActor = createSingletonProxy(loggerActorSingletonProxyName, loggerActorSingletonManagerName, Seq(loggerActorRole))
+  
       // spawn admin actors
       kafkaAdminActor = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
       elasticAdminActor = actorSystem.actorOf(Props(new ElasticAdminActor), ElasticAdminActor.name)
