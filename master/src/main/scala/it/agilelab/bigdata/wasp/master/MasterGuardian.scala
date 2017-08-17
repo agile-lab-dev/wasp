@@ -5,7 +5,7 @@ import java.util.Calendar
 import akka.actor.{Actor, ActorRef, PoisonPill, Props, actorRef2Scala}
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, synchronousActorCallTimeout}
+import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, masterGuardian, synchronousActorCallTimeout}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
@@ -20,9 +20,6 @@ import scala.concurrent.duration.{Duration, DurationInt, HOURS, MILLISECONDS}
 
 object MasterGuardian extends WaspConfiguration {
   lazy val logger = WaspLogger(this.getClass.getName)
-
-  if (WaspSystem.masterActor == null)
-    WaspSystem.masterActor = actorSystem.actorOf(Props(new MasterGuardian(ConfigBL)))
   
   // at midnight, restart all active pipelines (this causes new timed indices creation and consumers redirection on new indices)
   if (ConfigManager.getWaspConfig.indexRollover) {
@@ -31,7 +28,7 @@ object MasterGuardian extends WaspConfiguration {
     val interval = Duration(24, HOURS)
     logger.info(f"Index rollover is enabled: scheduling index rollover ${initialDelay.toUnit(HOURS)}%4.2f hours from now and then every $interval")
     actorSystem.scheduler.schedule(initialDelay, interval) {
-      ??[Boolean](WaspSystem.masterActor, RestartPipegraphs)
+      ??[Boolean](masterGuardian, RestartPipegraphs)
     }
   } else {
     logger.info("Index rollover is disabled.")

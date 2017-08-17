@@ -32,7 +32,7 @@ private[wasp] object LoggerTopic {
 
 	def apply() = TopicModel(
 		name = TopicModel.name(topic_name),
-		creationTime = WaspSystem.now,
+		creationTime = System.currentTimeMillis,
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
@@ -75,7 +75,7 @@ private[wasp] object LoggerIndex {
 
 	def apply() = IndexModel(
 		name = IndexModel.normalizeName(index_name),
-		creationTime = WaspSystem.now,
+		creationTime = System.currentTimeMillis,
 		schema = JsonConverter.fromString(indexSchema),
 		_id = Some(BsonObjectId())
 	)
@@ -101,7 +101,7 @@ private[wasp] object LoggerPipegraph {
 		description = "System Logger Pipegraph",
 		owner = "system",
 		system = true,
-		creationTime = WaspSystem.now,
+		creationTime = System.currentTimeMillis,
 		etl = List(ETLModel(
 			"write on index", List(TopicReader(loggerTopic._id.get, loggerTopic.name)),
 			IndexWriter(loggerIndex._id.get, loggerIndex.name), List(),None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
@@ -119,7 +119,7 @@ private[wasp] object RawTopic {
 
 	def apply() = TopicModel(
 		name = TopicModel.name(topic_name),
-		creationTime = WaspSystem.now,
+		creationTime = System.currentTimeMillis,
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
@@ -142,7 +142,7 @@ private[wasp] object RawIndex {
 
 	def apply() = IndexModel(
 		name = IndexModel.normalizeName(index_name),
-		creationTime = WaspSystem.now,
+		creationTime = System.currentTimeMillis,
 		schema = JsonConverter.fromString(indexSchema),
 		_id = Some(BsonObjectId())
 	)
@@ -162,7 +162,7 @@ private[wasp] object RawPipegraph {
 		description = "System Raw Pipegraph",
 		owner = "system",
 		system = true,
-		creationTime = WaspSystem.now,
+		creationTime = System.currentTimeMillis,
 		etl = List(ETLModel(
 			"write on index",
 			List(TopicReader(rawTopic._id.get, rawTopic.name)),
