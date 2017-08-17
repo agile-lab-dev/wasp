@@ -81,12 +81,14 @@ final class WaspLogger(protected val slf4jLogger: Logger) {
     }
   }
   
-  protected def remoteLog(level: Int, msg: String, throwable: Throwable = null) {
-    level match {
-      case DEBUG_INT => WaspSystem.loggerActor ! akka.event.Logging.Debug(loggerName, classOf[WaspLogger], msg)
-      case INFO_INT => WaspSystem.loggerActor ! akka.event.Logging.Info(loggerName, classOf[WaspLogger], msg)
-      case WARN_INT => WaspSystem.loggerActor ! akka.event.Logging.Warning(loggerName, classOf[WaspLogger], msg)
-      case ERROR_INT => WaspSystem.loggerActor ! akka.event.Logging.Error(loggerName, classOf[WaspLogger], msg)
+  protected def remoteLog(level: Int, msg: String, throwable: Throwable = null): Unit = {
+    if (WaspSystem.loggerActor != null) {
+      level match {
+        case DEBUG_INT => WaspSystem.loggerActor ! akka.event.Logging.Debug(loggerName, classOf[WaspLogger], msg)
+        case INFO_INT => WaspSystem.loggerActor ! akka.event.Logging.Info(loggerName, classOf[WaspLogger], msg)
+        case WARN_INT => WaspSystem.loggerActor ! akka.event.Logging.Warning(loggerName, classOf[WaspLogger], msg)
+        case ERROR_INT => WaspSystem.loggerActor ! akka.event.Logging.Error(loggerName, classOf[WaspLogger], msg)
+      }
     }
   }
 }
