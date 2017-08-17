@@ -4,8 +4,7 @@ import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props, actorRef2Scala}
 import akka.pattern.ask
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, masterGuardian, synchronousActorCallTimeout}
+import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.WaspLogger
@@ -33,12 +32,6 @@ object MasterGuardian extends WaspConfiguration {
   } else {
     logger.info("Index rollover is disabled.")
   }
-
-  // TODO use cluster singleton proxy to reach them
-  var sparkConsumersMasterGuardian: ActorRef = _ //findLocallyOrCreateActor(Props(new ConsumersMasterGuardian(ConfigBL, writers.SparkWriterFactoryDefault, KafkaReader)), ConsumersMasterGuardian.name)
-  var rtConsumersMasterGuardian: ActorRef = _
-  var batchGuardian: ActorRef = _ //findLocallyOrCreateActor(Props(new batch.BatchMasterGuardian(ConfigBL, None, writers.SparkWriterFactoryDefault)), batch.BatchMasterGuardian.name)
-  var producersMasterGuardian: ActorRef = _
 
   // TODO configurable timeout
   def findLocallyOrCreateActor(props: Props, name: String): ActorRef = {
@@ -108,7 +101,7 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
   }
   
   logger.info("Batch schedulers initializing ...")
-  batchGuardian ! StartSchedulersMessage()
+  batchMasterGuardian ! StartSchedulersMessage()
   
   // TODO try without sender parenthesis
   def initialized: Actor.Receive = {
@@ -195,8 +188,8 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Future[Either[String, String]] = {
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
-    val res1 = ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(WaspSystem.synchronousActorCallTimeout.duration))
-    val res2 = ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(WaspSystem.synchronousActorCallTimeout.duration))
+    val res1 = ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(synchronousActorCallTimeout.duration))
+    val res2 = ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(synchronousActorCallTimeout.duration))
     
     if (res1 && res2) {
       Future(Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped")))
@@ -255,8 +248,8 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
   private def startBatchJob(batchJob: BatchJobModel): Future[Either[String, String]] = {
     logger.info(s"Send the message StartBatchJobMessage to batchGuardian: job to start: ${batchJob._id.get.getValue.toHexString}")
     implicit val timeout = synchronousActorCallTimeout
-    val jobFut = batchGuardian ? StartBatchJobMessage(batchJob._id.get.getValue.toHexString)
-    val jobRes = Await.result(jobFut, WaspSystem.synchronousActorCallTimeout.duration).asInstanceOf[BatchJobResult]
+    val jobFut = batchMasterGuardian ? StartBatchJobMessage(batchJob._id.get.getValue.toHexString)
+    val jobRes = Await.result(jobFut, synchronousActorCallTimeout.duration).asInstanceOf[BatchJobResult]
     if (jobRes.result) {
       Future(Left("Batch job '" + batchJob.name + "' queued or processing"))
     } else {
@@ -267,17 +260,18 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
   private def startPendingBatchJobs(): Future[Either[String, String]] = {
     //TODO: delete log
     logger.info("Sending CheckJobsBucketMessage to Batch Guardian.")
-    batchGuardian ! CheckJobsBucketMessage()
+    batchMasterGuardian ! CheckJobsBucketMessage()
     Future(Left("Batch jobs checking started"))
   }
 
   override def postStop() {
-    WaspSystem.elasticAdminActor ! PoisonPill
-    WaspSystem.kafkaAdminActor ! PoisonPill
-    WaspSystem.solrAdminActor ! PoisonPill
+    /*
+    elasticAdminActor ! PoisonPill
+    kafkaAdminActor ! PoisonPill
+    solrAdminActor ! PoisonPill
     sparkConsumersMasterGuardian ! PoisonPill
-    batchGuardian ! PoisonPill
-
+    batchMasterGuardian ! PoisonPill
+    */
     super.postStop()
   }
 }
