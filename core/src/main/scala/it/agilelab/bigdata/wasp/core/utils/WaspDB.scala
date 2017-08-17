@@ -207,6 +207,7 @@ object WaspDB {
     typeTag[SparkStreamingConfigModel].tpe -> configurationsName,
     typeTag[ElasticConfigModel].tpe -> configurationsName,
     typeTag[SolrConfigModel].tpe -> configurationsName,
+    typeTag[HBaseConfigModel].tpe -> configurationsName,
     typeTag[WebsocketModel].tpe -> websocketsName,
     typeTag[BatchSchedulerModel].tpe -> batchSchedulersName
   )
@@ -238,6 +239,7 @@ object WaspDB {
     createCodecProviderIgnoreNone(classOf[SparkStreamingConfigModel]),
     createCodecProviderIgnoreNone(classOf[ElasticConfigModel]),
     createCodecProviderIgnoreNone(classOf[SolrConfigModel]),
+    createCodecProviderIgnoreNone(classOf[HBaseConfigModel]),
     createCodecProviderIgnoreNone(classOf[WebsocketModel]),
     createCodecProviderIgnoreNone(classOf[BatchSchedulerModel])
   ).asJava
