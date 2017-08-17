@@ -227,34 +227,6 @@ object WaspSystem extends WaspConfiguration {
   }
   
   /**
-    * Initializes the logger actor if needed; safe to call multiple times.
-    *
-    * @note Only the first call will initialize the logger actor; following attempts at initialization
-    *       even if with different settings will not have any effect and will silently be ignored.
-    */
-  def initializeLoggerActor(loggerActorProps: Props, loggerActorName: String): Unit = {
-    /*
-    We check for a null (not initialized) logger actor two times:
-    - one outside the synchronized block, so this method is cheap to call as it will be invoked
-      when instantiating anything mixing in the LoggerInjector trait
-    - one inside the synchronized block, as the outside one does not guarantee that it has not been
-      initialized by someone else while we were blocked on the synchronized
-     */
-    if (loggerActor == null) WaspSystem.synchronized {
-      if (loggerActor == null) {
-        if (actorSystem == null) {
-          loggerActor = None
-        } else {
-          /*val actorPath = actorSystem / "InternalLogProducerGuardian"
-					val future = actorSystem.actorSelection(actorPath).resolveOne()
-					Some(Await.result(future, timeout.duration))*/
-          loggerActor = Some(actorSystem.actorOf(loggerActorProps, loggerActorName))
-        }
-      }
-    }
-  }
-  
-  /**
    * Unique global shutdown point.
    */
   def shutdown(): Unit = {
