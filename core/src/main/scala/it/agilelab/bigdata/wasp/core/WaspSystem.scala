@@ -9,7 +9,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.{Logging, WaspLogger}
 import it.agilelab.bigdata.wasp.core.solr.SolrAdminActor
 import it.agilelab.bigdata.wasp.core.utils._
 
@@ -18,9 +18,7 @@ import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.util.{Failure, Success}
 
 
-object WaspSystem extends WaspConfiguration {
-  private val log = WaspLogger(this.getClass)
-  
+object WaspSystem extends WaspConfiguration with Logging {
   // actor/singleton manager/proxy for master guardians
   val batchMasterGuardianName = "BatchMasterGuardian"
   val batchMasterGuardianSingletonManagerName = "BatchMasterGuardianSingletonManager"
@@ -87,24 +85,36 @@ object WaspSystem extends WaspConfiguration {
     */
   def initializeSystem(): Unit = WaspSystem.synchronized {
     if (actorSystem == null) {
+      logger.info("Initializing WASP system")
+      
       // initialize actor system
+      logger.info("Initializing actor system")
       actorSystem = ActorSystem.create(waspConfig.actorSystemName, ConfigManager.conf)
-    
+      logger.info(s"Initialized actor system: $actorSystem")
+      
       // create cluster singleton proxies to master guardians
+      logger.info("Initializing proxies for master guardians")
       batchMasterGuardian = createSingletonProxy(batchMasterGuardianSingletonProxyName, batchMasterGuardianSingletonManagerName, Seq(batchMasterGuardianRole))
       masterGuardian = createSingletonProxy(masterGuardianSingletonProxyName, masterGuardianSingletonManagerName, Seq(masterGuardianRole))
       producersMasterGuardian = createSingletonProxy(producersMasterGuardianSingletonProxyName, producersMasterGuardianSingletonManagerName, Seq(producersMasterGuardianRole))
       rtConsumersMasterGuardian = createSingletonProxy(rtConsumersMasterGuardianSingletonProxyName, rtConsumersMasterGuardianSingletonManagerName, Seq(rtConsumersMasterGuardianRole))
       sparkConsumersMasterGuardian = createSingletonProxy(sparkConsumersMasterGuardianSingletonProxyName, sparkConsumersMasterGuardianSingletonManagerName, Seq(sparkConsumersMasterGuardianRole))
+      logger.info("Initialized proxies for master guardians")
   
       // create cluster singleton proxy to logger actor
+      logger.info("Initializing proxy for logger actor")
       loggerActor = createSingletonProxy(loggerActorSingletonProxyName, loggerActorSingletonManagerName, Seq(loggerActorRole))
-  
+      logger.info("Initialized proxy for logger actor")
+      
       // spawn admin actors
+      logger.info("Spawning admin actors")
       kafkaAdminActor = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
       elasticAdminActor = actorSystem.actorOf(Props(new ElasticAdminActor), ElasticAdminActor.name)
       solrAdminActor = actorSystem.actorOf(Props(new SolrAdminActor), SolrAdminActor.name)
-      
+      logger.info("Spawned admin actors")
+  
+      logger.info("Connecting to services")
+  
       // services timeout, used below
       val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
   
@@ -113,13 +123,13 @@ object WaspSystem extends WaspConfiguration {
       val zkKafka = Await.ready(kafkaResult, Duration(servicesTimeoutMillis, TimeUnit.SECONDS))
       zkKafka.value match {
         case Some(Failure(t)) =>
-          log.error(t.getMessage)
+          logger.error(t.getMessage)
           throw new Exception(t)
     
         case Some(Success(_)) =>
-          log.info("The system is connected with zookeeper of kafka")
+          logger.info("The system is connected with the Zookeeper cluster of Kafka")
     
-        case None => throw new UnknownError("Unknown Error during zookeeper connection initialization")
+        case None => throw new UnknownError("Unknown error during Zookeeper connection initialization")
       }
     
       // implicit timeout used below
@@ -129,15 +139,15 @@ object WaspSystem extends WaspConfiguration {
       val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
       defaultIndexedDatastore match {
         case "elastic" => {
-          log.info(s"Trying to connect with Elastic...")
+          logger.info(s"Trying to connect with Elastic...")
           startupElastic(servicesTimeoutMillis)
         }
         case "solr" => {
-          log.info(s"Trying to connect with Solr...")
+          logger.info(s"Trying to connect with Solr...")
           startupSolr(servicesTimeoutMillis)
         }
         case _ => {
-          log.error("No Indexed datastore configurated!")
+          logger.error("No indexed datastore configured!")
         }
       }
     
@@ -145,23 +155,31 @@ object WaspSystem extends WaspConfiguration {
       val defaultKeyvalueDatastore = waspConfig.defaultKeyvalueDatastore
       defaultKeyvalueDatastore match {
         case "hbase" => {
-          log.info(s"Trying to connect with HBase...")
+          logger.info(s"Trying to connect with HBase...")
           startupHBase(servicesTimeoutMillis)
         }
         case _ => {
-          log.error("No KeyValue datastore configurated!")
+          logger.error("No keyvalue datastore configured!")
         }
       }
       
       // TODO do we really want this? what if there is a rt-only pipegraph using just kafka?
       // fail if neither indexed nor keyvalue datastore is configured
       if (defaultIndexedDatastore.isEmpty && defaultKeyvalueDatastore.isEmpty) {
-        log.error("No datastore configurated!")
-        throw new UnsupportedOperationException("No datastore configurated! Configure a KeyValue or a Indexed datastore")
+        logger.error("No datastore configured!")
+        throw new UnsupportedOperationException("No datastore configured! Configure a keyvalue or an indexed datastore")
       }
+      
+      logger.info("Connected to services")
   
       // get distributed pub sub mediator
+      logger.info("Initializing distributed pub sub mediator")
       mediator = DistributedPubSub.get(WaspSystem.actorSystem).mediator
+      logger.info("Initialized distributed pub sub mediator")
+  
+      logger.info("Initialized WASP system")
+    } else {
+      logger.warn("WASP already initialized, ignoring initialization request!")
     }
   }
   
@@ -178,11 +196,15 @@ object WaspSystem extends WaspConfiguration {
     val settings = roles.foldLeft(ClusterSingletonProxySettings(actorSystem))(addRoleToSettings)
     
     // build the proxy
-    actorSystem.actorOf(
+    val proxy = actorSystem.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/$singletonManagerName",
         settings = settings),
       name = singletonProxyName)
+    
+    logger.info(s"Created cluster singleton proxy: $proxy")
+    
+    proxy
   }
 
   private def startupHBase(wasptimeout: Long) = {
@@ -199,13 +221,13 @@ object WaspSystem extends WaspConfiguration {
 
     elasticConnectionResult.value match {
       case Some(Failure(t)) =>
-        log.error(t.getMessage)
+        logger.error(t.getMessage)
         throw new Exception(t)
 
       case Some(Success(_)) =>
-        log.info("The system is connected with Elastic")
+        logger.info("The system is connected with Elastic")
 
-      case None => throw new UnknownError("Unknown Error during Elastic connection initialization")
+      case None => throw new UnknownError("Unknown error during Elastic connection initialization")
     }
   }
 
@@ -216,13 +238,13 @@ object WaspSystem extends WaspConfiguration {
 
     solrConnectionResult.value match {
       case Some(Failure(t)) =>
-        log.error(t.getMessage)
+        logger.error(t.getMessage)
         throw new Exception(t)
 
       case Some(Success(_)) =>
-        log.info("The system is connected with Solr")
+        logger.info("The system is connected with Solr")
 
-      case None => throw new UnknownError("Unknown Error during Solr connection initialization")
+      case None => throw new UnknownError("Unknown error during Solr connection initialization")
     }
   }
   
@@ -241,6 +263,4 @@ object WaspSystem extends WaspConfiguration {
     implicit val implicitSynchronousActorCallTimeout = synchronousActorCallTimeout
     Await.result(actorReference ? message, duration.getOrElse(synchronousActorCallTimeout.duration)).asInstanceOf[T]
   }
-  
-  
 }
