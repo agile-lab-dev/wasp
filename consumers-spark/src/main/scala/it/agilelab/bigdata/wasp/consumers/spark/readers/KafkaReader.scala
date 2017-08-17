@@ -45,7 +45,7 @@ object KafkaReader extends StreamingReader {
     )
 
 
-    if (??[Boolean](WaspSystem.getKafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
+    if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
       val receiver: DStream[(String, Array[Byte])] =  accessType match {
         case "direct" => KafkaUtils.createDirectStream[String, Array[Byte], StringDecoder, DefaultDecoder](

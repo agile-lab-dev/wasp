@@ -20,7 +20,7 @@ class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingConte
     val topicOpt = env.topicBL.getById(id)
     topicOpt.foreach(topic => {
 
-      if (??[Boolean](WaspSystem.getKafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
+      if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
         val schemaB = ssc.sparkContext.broadcast(topic.getJsonSchema)
         val configB = ssc.sparkContext.broadcast(ConfigManager.getKafkaConfig.toTinyConfig())

@@ -54,7 +54,7 @@ trait WaspLauncher {
 		// configs
 		ConfigManager.initializeConfigs()
 		// waspsystem
-		WaspSystem.initializeActorSystem()
+		WaspSystem.initializeSystem()
 	}
 	
 	private def printErrorAndExit(message: String): Unit = {

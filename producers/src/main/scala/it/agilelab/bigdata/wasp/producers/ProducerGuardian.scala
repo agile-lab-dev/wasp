@@ -99,7 +99,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
         val topicOption = env.producerBL.getTopic(topicBL = env.topicBL, producer)
         associatedTopic = topicOption
         logger.info(s"Producer $producerId: topic found: $associatedTopic")
-        if (??[Boolean](WaspSystem.getKafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))) {
+        if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))) {
           router_name = s"kafka-ingestion-router-$name-${producer._id.get.asString()}-${System.currentTimeMillis()}"
           kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
           context become initialized
