@@ -94,16 +94,16 @@ object WaspSystem extends WaspConfiguration with Logging {
       
       // create cluster singleton proxies to master guardians
       logger.info("Initializing proxies for master guardians")
-      batchMasterGuardian = createSingletonProxy(batchMasterGuardianSingletonProxyName, batchMasterGuardianSingletonManagerName, Seq(batchMasterGuardianRole))
-      masterGuardian = createSingletonProxy(masterGuardianSingletonProxyName, masterGuardianSingletonManagerName, Seq(masterGuardianRole))
-      producersMasterGuardian = createSingletonProxy(producersMasterGuardianSingletonProxyName, producersMasterGuardianSingletonManagerName, Seq(producersMasterGuardianRole))
-      rtConsumersMasterGuardian = createSingletonProxy(rtConsumersMasterGuardianSingletonProxyName, rtConsumersMasterGuardianSingletonManagerName, Seq(rtConsumersMasterGuardianRole))
-      sparkConsumersMasterGuardian = createSingletonProxy(sparkConsumersMasterGuardianSingletonProxyName, sparkConsumersMasterGuardianSingletonManagerName, Seq(sparkConsumersMasterGuardianRole))
+      batchMasterGuardian = createSingletonProxy(batchMasterGuardianName, batchMasterGuardianSingletonProxyName, batchMasterGuardianSingletonManagerName, Seq(batchMasterGuardianRole))
+      masterGuardian = createSingletonProxy(masterGuardianName, masterGuardianSingletonProxyName, masterGuardianSingletonManagerName, Seq(masterGuardianRole))
+      producersMasterGuardian = createSingletonProxy(producersMasterGuardianName, producersMasterGuardianSingletonProxyName, producersMasterGuardianSingletonManagerName, Seq(producersMasterGuardianRole))
+      rtConsumersMasterGuardian = createSingletonProxy(rtConsumersMasterGuardianName, rtConsumersMasterGuardianSingletonProxyName, rtConsumersMasterGuardianSingletonManagerName, Seq(rtConsumersMasterGuardianRole))
+      sparkConsumersMasterGuardian = createSingletonProxy(sparkConsumersMasterGuardianName, sparkConsumersMasterGuardianSingletonProxyName, sparkConsumersMasterGuardianSingletonManagerName, Seq(sparkConsumersMasterGuardianRole))
       logger.info("Initialized proxies for master guardians")
   
       // create cluster singleton proxy to logger actor
       logger.info("Initializing proxy for logger actor")
-      loggerActor = createSingletonProxy(loggerActorSingletonProxyName, loggerActorSingletonManagerName, Seq(loggerActorRole))
+      loggerActor = createSingletonProxy(loggerActorName, loggerActorSingletonProxyName, loggerActorSingletonManagerName, Seq(loggerActorRole))
       logger.info("Initialized proxy for logger actor")
       
       // spawn admin actors
@@ -188,7 +188,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     * The singleton is identified by the cluster singleton manager name & roles; the path to the cluster manager is
     * automatically built as "/user/`singletonManagerName`".
     */
-  def createSingletonProxy(singletonProxyName: String, singletonManagerName: String, roles: Seq[String]): ActorRef = {
+  def createSingletonProxy(singletonName: String, singletonProxyName: String, singletonManagerName: String, roles: Seq[String]): ActorRef = {
     // helper for adding role to ClusterSingletonProxySettings
     val addRoleToSettings = (settings: ClusterSingletonProxySettings, role: String) => settings.withRole(role)
   
@@ -199,7 +199,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     val proxy = actorSystem.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/$singletonManagerName",
-        settings = settings),
+        settings = settings.withSingletonName(singletonName)),
       name = singletonProxyName)
     
     logger.info(s"Created cluster singleton proxy: $proxy")
