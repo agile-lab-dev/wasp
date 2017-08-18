@@ -28,13 +28,19 @@ object Settings {
     Resolver.sonatypeRepo("releases")
 	)
 	
+	// global exclusions for slf4j implementations and the like
+	lazy val globalExclusions = Seq(
+		SbtExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
+	)
+	
 	// base build settings
 	lazy val buildSettings = Seq(
 		resolvers ++= customResolvers,
 		exportJars := true,
 		scalacOptions ++= Seq("-encoding", "UTF-8", s"-target:jvm-${Versions.jdk}", "-feature", "-language:_", "-deprecation", "-unchecked", "-Xlint"),
 		javacOptions ++= Seq("-encoding", "UTF-8", "-source", Versions.jdk, "-target", Versions.jdk, "-Xlint:deprecation", "-Xlint:unchecked"),
-		scalaVersion := Versions.scala
+		scalaVersion := Versions.scala,
+		excludeDependencies ++= globalExclusions
 	)
 	
 	// common settings for all modules

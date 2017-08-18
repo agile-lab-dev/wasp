@@ -39,10 +39,10 @@ object Dependencies {
 		
 		def sparkSolrExclusions: ModuleID =
 			module.excludeAll(
-				ExclusionRule(organization = "org.eclipse.jetty"),
-				ExclusionRule(organization = "javax.servlet"),
-				ExclusionRule(organization = "org.eclipse.jetty.orbit")
-			)
+					ExclusionRule(organization = "org.eclipse.jetty"),
+					ExclusionRule(organization = "javax.servlet"),
+					ExclusionRule(organization = "org.eclipse.jetty.orbit")
+				)
 	}
 	
 	// ===================================================================================================================
@@ -77,9 +77,9 @@ object Dependencies {
 	val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka kafkaExclusions
 	val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka kafkaExclusions
 	val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka" % Versions.spark sparkExclusions
-	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % "2.8.2" // TODO remove
-	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % "2.8.2" // TODO remove
-	val log4jSl4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.8.2" // TODO remove
+	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional"
+	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional"
+	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional"
 	val metrics = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
 	val mongodbScala = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
 	val quartz = "org.quartz-scheduler" % "quartz" % Versions.quartz
@@ -116,6 +116,8 @@ object Dependencies {
 	
 	val logging = Seq(slf4jApi)
 	
+	val log4j = Seq(log4jApi, log4jCore, log4jSlf4jImpl)
+	
 	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
 
 	val time = Seq(jodaConvert, jodaTime)
@@ -149,9 +151,13 @@ object Dependencies {
 			typesafeConfig
 		)
 	
-	val producers = akka ++ logging ++ test ++ Seq(akkaHttp, akkaStream)
+	val producers = akka ++ log4j ++ test ++
+		Seq(
+			akkaHttp,
+			akkaStream
+		)
 
-	val consumers_spark = akka ++ json ++ test ++ spark ++ hbase ++
+	val consumers_spark = akka ++ json ++ log4j ++ test ++ spark ++ hbase ++
 		Seq(
 			elasticSearchSpark,
 			kafka,
@@ -160,7 +166,7 @@ object Dependencies {
 			quartz
 		)
 
-	val consumers_rt = akka ++
+	val consumers_rt = akka ++ log4j ++
 		Seq(
 			akkaCamel,
 			camelKafka,
@@ -168,5 +174,9 @@ object Dependencies {
 			kafka
 		)
 	
-  val master = akka ++ Seq(akkaHttp, akkaHttpSpray)
+  val master = akka ++ log4j ++
+	  Seq(
+		  akkaHttp,
+		  akkaHttpSpray
+	  )
 }

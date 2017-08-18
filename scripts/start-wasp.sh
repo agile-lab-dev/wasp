@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
+# absolute path to this script. /home/user/bin/foo.sh
+SCRIPT=$(readlink -f $0)
+# absolute path this script is in. /home/user/bin
+SCRIPT_DIR=`dirname $SCRIPT`
 # cd into the project root
-SCRIPT_DIR=`dirname $0`
-cd $SCRIPT_DIR/..
+cd ${SCRIPT_DIR}/..
 
 # define colors
 red=$(tput setaf 1)
@@ -18,10 +21,11 @@ trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 sbt stage
 
 # launch each module
-master/target/universal/stage/bin/wasp-master 2>&1 | sed "s/.*/$red&$default/" &
-producers/target/universal/stage/bin/wasp-producers 2>&1 | sed "s/.*/$green&$default/" &
-consumers-rt/target/universal/stage/bin/wasp-consumers-rt 2>&1 | sed "s/.*/$yellow&$default/" &
-consumers-spark/target/universal/stage/bin/wasp-consumers-spark 2>&1 | sed "s/.*/$blue&$default/" &
+LOG4J2_OPTS="-Dlog4j.configurationFile=$SCRIPT_DIR/log4j2.properties"
+master/target/universal/stage/bin/wasp-master ${LOG4J2_OPTS} 2>&1 | sed "s/.*/$red&$default/" &
+producers/target/universal/stage/bin/wasp-producers ${LOG4J2_OPTS} 2>&1 | sed "s/.*/$green&$default/" &
+consumers-rt/target/universal/stage/bin/wasp-consumers-rt ${LOG4J2_OPTS} 2>&1 | sed "s/.*/$yellow&$default/" &
+consumers-spark/target/universal/stage/bin/wasp-consumers-spark ${LOG4J2_OPTS} 2>&1 | sed "s/.*/$blue&$default/" &
 
 # wait for all children to end
 wait
