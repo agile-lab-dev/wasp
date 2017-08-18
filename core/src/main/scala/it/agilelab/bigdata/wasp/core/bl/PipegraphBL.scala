@@ -22,15 +22,15 @@ trait PipegraphBL  {
 
   def insert(pipegraph: PipegraphModel): Unit
 
-  def update(producerModel: PipegraphModel): Unit
+  def update(pipegraphModel: PipegraphModel): Unit
 
   def deleteById(id_string: String): Unit
 
-  def setIsActive(producerModel: PipegraphModel, isActive: Boolean): Unit = {
-    producerModel.isActive = isActive
-    producerModel.etl.foreach(etl => etl.isActive = isActive)
-    producerModel.rt.foreach(rt => rt.isActive = isActive)
-    update(producerModel)
+  def setIsActive(pipegraphModel: PipegraphModel, isActive: Boolean): Unit = {
+    pipegraphModel.isActive = isActive
+    pipegraphModel.etl.foreach(etl => etl.isActive = isActive)
+    pipegraphModel.rt.foreach(rt => rt.isActive = isActive)
+    update(pipegraphModel)
   }
 }
 
@@ -62,8 +62,8 @@ class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
   def getActivePipegraphs(isActive: Boolean = true) = {
     waspDB.getAllDocumentsByField[PipegraphModel]("isActive", new BsonBoolean(isActive)).map(factory)
   }
-  def update(producerModel: PipegraphModel): Unit = {
-    waspDB.updateById[PipegraphModel](producerModel._id.get, producerModel)
+  def update(pipegraphModel: PipegraphModel): Unit = {
+    waspDB.updateById[PipegraphModel](pipegraphModel._id.get, pipegraphModel)
   }
 
   def insert(pipegraph: PipegraphModel) = {
