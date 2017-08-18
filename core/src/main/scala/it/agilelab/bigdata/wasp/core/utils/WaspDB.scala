@@ -46,9 +46,9 @@ trait WaspDB extends MongoDBHelper {
 
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
-  def deleteById[T](id: BsonObjectId)(implicit ct: ClassTag[T]): Unit
+  def deleteById[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
-  def updateById[T](id: BsonObjectId, doc: T)(implicit ct: ClassTag[T]): UpdateResult
+  def updateById[T](id: BsonObjectId, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
 
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId
 
@@ -128,13 +128,12 @@ class WaspDBImp(protected val mongoDatabase: MongoDatabase) extends WaspDB   {
     }
     Unit
   }
-
-
-  def deleteById[T](id: BsonObjectId)(implicit ct: ClassTag[T]): Unit = {
+  
+  def deleteById[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit = {
     removeDocumentFromCollection[T]("_id", id, lookupTable(typeTag.tpe))
   }
 
-  def updateById[T](id: BsonObjectId, doc: T)(implicit ct: ClassTag[T]): UpdateResult = {
+  def updateById[T](id: BsonObjectId, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult = {
     replaceDocumentToCollection[T]("_id", id, doc, lookupTable(typeTag.tpe))
   }
 
