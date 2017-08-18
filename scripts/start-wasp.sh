@@ -14,14 +14,14 @@ default=$(tput sgr0)
 # kill everything on exit
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
-# package everything
-sbt package
+# run stage task
+sbt stage
 
 # launch each module
-sbt wasp-master/run 2>&1 | sed "s/.*/$red&$default/" &
-sbt wasp-producers/run 2>&1 | sed "s/.*/$green&$default/" &
-sbt wasp-consumers-rt/run 2>&1 | sed "s/.*/$yellow&$default/" &
-sbt wasp-consumers-spark/run 2>&1 | sed "s/.*/$blue&$default/" &
+master/target/universal/stage/bin/wasp-master 2>&1 | sed "s/.*/$red&$default/" &
+producers/target/universal/stage/bin/wasp-producers 2>&1 | sed "s/.*/$green&$default/" &
+consumers-rt/target/universal/stage/bin/wasp-consumers-rt 2>&1 | sed "s/.*/$yellow&$default/" &
+consumers-spark/target/universal/stage/bin/wasp-consumers-spark 2>&1 | sed "s/.*/$blue&$default/" &
 
 # wait for all children to end
 wait
