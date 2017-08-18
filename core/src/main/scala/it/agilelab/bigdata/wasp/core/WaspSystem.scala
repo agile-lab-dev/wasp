@@ -117,7 +117,7 @@ object WaspSystem extends WaspConfiguration with Logging {
   
       // services timeout, used below
       val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
-  
+
       // check connectivity with kafka's zookeper
       val kafkaResult = kafkaAdminActor.ask(it.agilelab.bigdata.wasp.core.kafka.Initialization(ConfigManager.getKafkaConfig))((KafkaAdminActor.connectionTimeout + 1000).millis)
       val zkKafka = Await.ready(kafkaResult, Duration(servicesTimeoutMillis, TimeUnit.SECONDS))
@@ -131,7 +131,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     
         case None => throw new UnknownError("Unknown error during Zookeeper connection initialization")
       }
-    
+
       // implicit timeout used below
       implicit val implicitServicesTimeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
     
@@ -259,7 +259,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     WaspDB.getDB.close()
   }
   
-  def ??[T](actorReference: ActorRef, message: WaspMessage, duration: Option[FiniteDuration] = None): T = {
+  def ??[T](actorReference: ActorRef, message: Any, duration: Option[FiniteDuration] = None): T = {
     implicit val implicitSynchronousActorCallTimeout = synchronousActorCallTimeout
     Await.result(actorReference ? message, duration.getOrElse(synchronousActorCallTimeout.duration)).asInstanceOf[T]
   }

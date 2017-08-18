@@ -59,7 +59,7 @@ trait WaspDB extends MongoDBHelper {
   def getFileByID(id: BsonObjectId): Array[Byte]
 
 }
-class WaspDBImp(protected val mongoDatabase: MongoDatabase) extends WaspDB   {
+class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
 
 
   def initializeCollections() {
