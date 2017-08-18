@@ -25,7 +25,7 @@ private[utils] trait MongoDBHelper {
   //protected var queryMaxWaitTime = 2500;
   protected val log = WaspLogger(this.getClass)
 
-  protected def mongoDatabase: MongoDatabase
+  def mongoDatabase: MongoDatabase
 
   protected def getCollection(collection: String) =  mongoDatabase.getCollection(collection)
   protected def createCollection(collection: String): Unit = {

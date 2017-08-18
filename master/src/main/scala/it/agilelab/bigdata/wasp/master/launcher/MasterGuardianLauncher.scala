@@ -72,7 +72,8 @@ object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfigur
 		MlModels_C.getRoute  ~
 		Pipegraph_C.getRoute ~
 		Producer_C.getRoute ~
-		Topic_C.getRoute
+		Topic_C.getRoute ~
+		Status_C.getRoute
 	}
 	
 	private def startRestServer(actorSystem: ActorSystem, route: Route): Unit = {

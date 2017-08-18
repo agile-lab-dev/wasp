@@ -3,7 +3,9 @@ package it.agilelab.bigdata.wasp.master
 import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
+import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.ask
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
@@ -11,8 +13,9 @@ import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.{angularErrorBuilder, httpResponseJson}
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, DurationInt, HOURS, MILLISECONDS}
 
@@ -27,7 +30,11 @@ object MasterGuardian extends WaspConfiguration {
     val interval = Duration(24, HOURS)
     logger.info(f"Index rollover is enabled: scheduling index rollover ${initialDelay.toUnit(HOURS)}%4.2f hours from now and then every $interval")
     actorSystem.scheduler.schedule(initialDelay, interval) {
-      ??[Boolean](masterGuardian, RestartPipegraphs)
+
+      WaspSystem.??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
+        case Right(s) => logger.info(s"RestartPipegraphs: $s")
+        case Left(s) => logger.error(s"Failuer during the pipegraphs restarting: $s")
+      }
     }
   } else {
     logger.info("Index rollover is disabled.")
@@ -121,44 +128,42 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
     //case message: Any                     => logger.error("unknown message: " + message)
   }
   
-  private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, future: Future[Either[String, String]]) = {
-    future.map(result => {
-      logger.info(message + ": " + result)
-      sender ! result
-    })
+  private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]) = {
+    logger.info(message + ": " + result)
+    sender ! result
   }
   
-  private def onPipegraph(id: String, f: PipegraphModel => Future[Either[String, String]]) = {
+  private def onPipegraph(id: String, f: PipegraphModel => Either[String, String]) = {
     env.pipegraphBL.getById(id) match {
-      case None => Future(Right("Pipegraph not retrieved"))
+      case None => Right("Pipegraph not retrieved")
       case Some(pipegraph) => f(pipegraph)
     }
   }
   
-  private def onRestartPipegraphs(): Future[Either[String, String]] = {
+  private def onRestartPipegraphs(): Either[String, String] = {
     sparkConsumersMasterGuardian ! RestartConsumers
     rtConsumersMasterGuardian ! RestartConsumers
-    Future(Left("Pipegraphs restart started."))
+    Right("Pipegraphs restart started.")
   }
   
-  private def onProducer(id: String, f: ProducerModel => Future[Either[String, String]]) = {
+  private def onProducer(id: String, f: ProducerModel => Either[String, String]) = {
     env.producerBL.getById(id) match {
-      case None => Future(Right("Producer not retrieved"))
+      case None => Right("Producer not retrieved")
       case Some(producer) => f(producer)
     }
   }
   
   
-  private def onEtl(idPipegraph: String, etlName: String, f: (PipegraphModel, String) => Future[Either[String, String]]) = {
+  private def onEtl(idPipegraph: String, etlName: String, f: (PipegraphModel, String) => Either[String, String]) = {
     env.pipegraphBL.getById(idPipegraph) match {
-      case None => Future(Right("ETL not retrieved"))
+      case None => Left("ETL not retrieved")
       case Some(pipegraph) => f(pipegraph, etlName)
     }
   }
 
-  private def onBatchJob(id: String, f: BatchJobModel => Future[Either[String, String]]) = {
+  private def onBatchJob(id: String, f: BatchJobModel => Either[String, String]) = {
     env.batchJobBL.getById(id) match {
-      case None => Future(Right("BatchJob not retrieved"))
+      case None => Left("BatchJob not retrieved")
       case Some(batchJob) => f(batchJob)
     }
   }
@@ -182,86 +187,86 @@ class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: Pipegrap
     setActiveAndRestart(pipegraph, active = true)
   }
 
-  private def stopPipegraph(pipegraph: PipegraphModel): Future[Either[String, String]] = {
+  private def stopPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
     setActiveAndRestart(pipegraph, active = false)
   }
 
-  private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Future[Either[String, String]] = {
+  private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
     val res1 = ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(synchronousActorCallTimeout.duration))
     val res2 = ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(synchronousActorCallTimeout.duration))
     
     if (res1 && res2) {
-      Future(Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped")))
+      Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped"))
     } else {
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
-      Future(Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped")))
+      Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped"))
     }
   }
 
   //TODO  implementare questa parte
-  private def startEtl(pipegraph: PipegraphModel, etlName: String): Future[Either[String, String]] = {
-    Future(Right("ETL '" + etlName + "' not started"))
+  private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
+    Right("ETL '" + etlName + "' not started")
   }
 
   //TODO  implementare questa parte
-  private def stopEtl(pipegraph: PipegraphModel, etlName: String): Future[Either[String, String]] = {
-    Future(Right("ETL '" + etlName + "' not stopped"))
+  private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
+    Right("ETL '" + etlName + "' not stopped")
   }
   
-  private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Future[Either[String, String]] = {
+  private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
     val producerId = producerModel._id.get.getValue.toHexString
     if (??[Boolean](producersMasterGuardian, AddRemoteProducer(producerId, producerActor))) {
-      Future(Right(s"Remote producer $producerId ($producerActor) added."))
+      Right(s"Remote producer $producerId ($producerActor) added.")
     } else {
-      Future(Left(s"Remote producer $producerId ($producerActor) not added."))
+      Left(s"Remote producer $producerId ($producerActor) not added.")
     }
   }
   
-  private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Future[Either[String, String]] = {
+  private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
     val producerId = producerModel._id.get.getValue.toHexString
     if (??[Boolean](producersMasterGuardian, RemoveRemoteProducer(producerId, producerActor))) {
-      Future(Right(s"Remote producer $producerId ($producerActor) removed."))
+      Right(s"Remote producer $producerId ($producerActor) removed.")
     } else {
-      Future(Left(s"Remote producer $producerId not removed."))
+      Left(s"Remote producer $producerId not removed.")
     }
   }
 
-  private def startProducer(producer: ProducerModel): Future[Either[String, String]] = {
+  private def startProducer(producer: ProducerModel): Either[String, String] = {
     val producerId = producer._id.get.getValue.toHexString
     if (??[Boolean](producersMasterGuardian, StartProducer(producerId))) {
-      Future(Right(s"Producer '${producer.name}' started"))
+      Right(s"Producer '${producer.name}' started")
     } else {
-      Future(Left(s"Producer '${producer.name}' not started"))
+      Left(s"Producer '${producer.name}' not started")
     }
   }
 
-  private def stopProducer(producer: ProducerModel): Future[Either[String, String]] = {
+  private def stopProducer(producer: ProducerModel): Either[String, String] = {
     val producerId = producer._id.get.getValue.toHexString
     if (??[Boolean](producersMasterGuardian, StopProducer(producerId))) {
-      Future(Right("Producer '" + producer.name + "' stopped"))
+      Right("Producer '" + producer.name + "' stopped")
     } else {
-      Future(Left("Producer '" + producer.name + "' not stopped"))
+      Left("Producer '" + producer.name + "' not stopped")
     }
   }
 
-  private def startBatchJob(batchJob: BatchJobModel): Future[Either[String, String]] = {
+  private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
     logger.info(s"Send the message StartBatchJobMessage to batchGuardian: job to start: ${batchJob._id.get.getValue.toHexString}")
     implicit val timeout = synchronousActorCallTimeout
     val jobFut = batchMasterGuardian ? StartBatchJobMessage(batchJob._id.get.getValue.toHexString)
     val jobRes = Await.result(jobFut, synchronousActorCallTimeout.duration).asInstanceOf[BatchJobResult]
     if (jobRes.result) {
-      Future(Left("Batch job '" + batchJob.name + "' queued or processing"))
+      Right("Batch job '" + batchJob.name + "' queued or processing")
     } else {
-      Future(Right("Batch job '" + batchJob.name + "' not processing"))
+      Left("Batch job '" + batchJob.name + "' not processing")
     }
   }
 
-  private def startPendingBatchJobs(): Future[Either[String, String]] = {
+  private def startPendingBatchJobs(): Either[String, String] = {
     //TODO: delete log
     logger.info("Sending CheckJobsBucketMessage to Batch Guardian.")
     batchMasterGuardian ! CheckJobsBucketMessage()
-    Future(Left("Batch jobs checking started"))
+    Right("Batch jobs checking started")
   }
 
   override def postStop() {
