@@ -7,11 +7,11 @@ import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.stream.ActorMaterializer
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
-import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
+import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.utils.{WaspConfiguration, WaspDB}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
@@ -23,6 +23,9 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 	*/
 object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfiguration {
 	override def launch(args: Array[String]): Unit = {
+		// add system pipegraphs
+		addSystemPipegraphs()
+		
 		// launch cluster singleton
 		super.launch(args)
 		
@@ -37,6 +40,21 @@ object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfigur
 	override def getSingletonManagerName: String = WaspSystem.masterGuardianSingletonManagerName
 	
 	override def getSingletonRoles: Seq[String] = Seq(WaspSystem.masterGuardianRole)
+	
+	private def addSystemPipegraphs(): Unit = {
+		val db = WaspDB.getDB
+		
+		// add logger pipegraph
+		db.insertIfNotExists[TopicModel](SystemPipegraphs.loggerTopic)
+		db.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
+		db.insertIfNotExists[IndexModel](SystemPipegraphs.loggerIndex)
+		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
+		
+		// add raw pipegraph
+		db.insertIfNotExists[TopicModel](SystemPipegraphs.rawTopic)
+		db.insertIfNotExists[IndexModel](SystemPipegraphs.rawIndex)
+		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.rawPipegraph)
+	}
 	
 	private val myExceptionHandler = ExceptionHandler {
     case e: Exception =>

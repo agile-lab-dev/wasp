@@ -1,12 +1,11 @@
 package it.agilelab.bigdata.wasp.core
 
-import it.agilelab.bigdata.wasp.core.LoggerTopic.topicSchema
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.ReaderModel._
 import it.agilelab.bigdata.wasp.core.models.WriterModel._
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import org.mongodb.scala.bson.BsonObjectId
-import org.mongodb.scala.bson.collection.mutable.Document
+
 
 /**
 	* Default system pipegraphs: logging & raw.
