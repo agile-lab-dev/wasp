@@ -3,13 +3,14 @@ package it.agilelab.bigdata.wasp.core.launcher
 import akka.actor.{PoisonPill, Props}
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings}
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.logging.Logging
 
 /**
 	* Launcher for multiple cluster singleton actors.
 	*
 	* @author Nicolò Bidotti
 	*/
-trait MultipleClusterSingletonsLauncher extends WaspLauncher {
+trait MultipleClusterSingletonsLauncher extends WaspLauncher with Logging {
 	override def launch(args: Array[String]): Unit = {
 		val actorSystem = WaspSystem.actorSystem
 		
@@ -19,10 +20,16 @@ trait MultipleClusterSingletonsLauncher extends WaspLauncher {
 		// for each singleton to launch
 		getSingletonInfos foreach {
 			case (singletonProps, singletonName, singletonManagerName, roles) => {
+				logger.info(s"""Starting cluster singleton manager "$singletonManagerName" """ +
+					            s"""for singleton "$singletonName" """ +
+					            s"with props $singletonProps " +
+					            s"and roles $roles")
+				
 				// build the settings
 				val settings = roles.foldLeft(ClusterSingletonManagerSettings(actorSystem))(addRoleToSettings)
+				
 				// spawn the cluster singleton manager, which will spawn the actual singleton actor as defined by the getters
-				actorSystem.actorOf(
+				val singletonManager = actorSystem.actorOf(
 					ClusterSingletonManager.props(
 						singletonProps = singletonProps,
 						terminationMessage = PoisonPill,
@@ -30,6 +37,10 @@ trait MultipleClusterSingletonsLauncher extends WaspLauncher {
 					),
 					name = singletonManagerName
 				)
+				
+				logger.info(s"Started singleton manager $singletonManager")
+				
+				singletonManager
 			}
 		}
 	}

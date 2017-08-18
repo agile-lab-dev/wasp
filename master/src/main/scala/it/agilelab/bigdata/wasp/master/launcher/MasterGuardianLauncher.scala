@@ -22,8 +22,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 	* @author Nicolò Bidotti
 	*/
 object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfiguration {
-	private val logger = WaspLogger(getClass.getName)
-	
 	override def launch(args: Array[String]): Unit = {
 		// launch cluster singleton
 		super.launch(args)
@@ -32,9 +30,7 @@ object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfigur
 		startRestServer(WaspSystem.actorSystem, getRoutes)
 	}
 	
-	override def getSingletonProps: Props = {
-		Props(new MasterGuardian(ConfigBL))
-	}
+	override def getSingletonProps: Props = Props(new MasterGuardian(ConfigBL))
 	
 	override def getSingletonName: String = WaspSystem.masterGuardianName
 	
@@ -67,4 +63,6 @@ object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfigur
 		val finalRoute = handleExceptions(myExceptionHandler)(route)
 		val bindingFuture = Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
 	}
+	
+	override def getNodeName: String = "master"
 }

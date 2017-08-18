@@ -32,4 +32,6 @@ object SparkConsumersAndBatchMasterGuardianLauncher extends MultipleClusterSingl
 		
 		Seq(sparkConsumersMasterGuardianSingletonInfo, batchMasterGuardianSingletonInfo)
 	}
+	
+	override def getNodeName: String = "consumers spark"
 }

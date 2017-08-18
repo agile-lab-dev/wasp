@@ -85,7 +85,10 @@ trait WaspLauncher {
 				 |  Git commit hash : ${BuildInfo.gitCommitHash}
 				 |  Git work dir    : ${if (BuildInfo.gitWorkDirStatus) "clean" else "dirty"}
 			 """.stripMargin)
+		println(s"This is WASP node $getNodeName")
 	}
 	
 	def launch(args: Array[String]): Unit
+	
+	def getNodeName: String
 }

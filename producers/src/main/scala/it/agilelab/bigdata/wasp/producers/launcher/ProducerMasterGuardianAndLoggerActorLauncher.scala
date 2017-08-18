@@ -29,4 +29,6 @@ object ProducerMasterGuardianAndLoggerActorLauncher extends MultipleClusterSingl
 		
 		Seq(producersMasterGuardianSingletonInfo, loggerActorSingletonInfo)
 	}
+	
+	override def getNodeName: String = "producers"
 }
