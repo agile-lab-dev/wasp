@@ -12,7 +12,10 @@ import it.agilelab.bigdata.wasp.core.models.BatchJobModel
 import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
 import JsonResultsHelper._
+import akka.http.scaladsl.model.StatusCodes
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
+import it.agilelab.bigdata.wasp.core.WaspSystem.??
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
@@ -58,8 +61,10 @@ object BatchJob_C extends Directives with JsonSupport {
           path("start") {
             get {
               complete {
-                masterGuardian ? StartBatchJob(id)
-                "OK".toJson.toAngularOkResponse
+                WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(id)) match {
+                  case Right(s) => s.toJson.toAngularOkResponse
+                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                }
               }
 
             }
