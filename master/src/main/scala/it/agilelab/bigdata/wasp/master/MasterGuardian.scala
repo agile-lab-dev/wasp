@@ -87,14 +87,11 @@ class MasterGuardian(env: {
   setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs(false), isActive = false)
   logger.info("Deactivated non-system pipegraphs")
   
-  
-  private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
-    pipegraphs.foreach(pipegraph => env.pipegraphBL.setIsActive(pipegraph, isActive))
-  }
-  
   // TODO manage error in pipegraph initialization
-  // auto-start raw pipegraph
   if (waspConfig.systemPipegraphsStart) {
+    logger.info("Activating system pipegraphs")
+  
+    // auto-start raw pipegraph
     env.pipegraphBL.getByName("RawPipegraph") match {
       case None => logger.error("RawPipegraph not found")
       case Some(pipegraph) => self.actorRef ! StartPipegraph(pipegraph._id.get.getValue.toHexString)
@@ -106,7 +103,12 @@ class MasterGuardian(env: {
       case Some(pipegraph) => self.actorRef ! StartPipegraph(pipegraph._id.get.getValue.toHexString)
     }
   } else {
+    logger.info("Deactivating system pipegraphs")
     setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs(), isActive = false)
+  }
+  
+  private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
+    pipegraphs.foreach(pipegraph => env.pipegraphBL.setIsActive(pipegraph, isActive))
   }
   
   logger.info("Batch schedulers initializing ...")
@@ -131,7 +133,7 @@ class MasterGuardian(env: {
   }
   
   private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]) = {
-    logger.info(message + ": " + result)
+    logger.info(s"Call invocation: message: $message result: $result")
     sender ! result
   }
   
