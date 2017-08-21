@@ -56,12 +56,15 @@ class RtConsumersMasterGuardian(env: {
   override def initialized: Actor.Receive = {
     case RestartConsumers =>
       lastRestartMasterRef = sender()
-      stopGuardian()
-      startGuardian()
+      val stopSuccessful = stopGuardian()
+      if (stopSuccessful) { // restart only if stopping was successful
+        startGuardian()
+      }
   }
   
   // overriden ClusterAwareNodeGuardian methods ========================================================================
   
+  // TODO do we really need joinSeedNodes here? we are we trying to join ourselves???
   override def preStart(): Unit = {
     super.preStart()
     //TODO:capire joinseednodes
@@ -90,7 +93,7 @@ class RtConsumersMasterGuardian(env: {
 
   // private methods ===================================================================================================
 
-  private def stopGuardian() {
+  private def stopGuardian(): Boolean = {
     logger.info(s"Stopping...")
     
     // stop all actors bound to this guardian and the guardian itself
@@ -102,9 +105,13 @@ class RtConsumersMasterGuardian(env: {
     if (res reduceLeft (_ && _)) {
       logger.info(s"Stopping sequence completed")
       numActiveRtComponents = 0
-    }
-    else {
+      true
+    } else {
       logger.error(s"Stopping sequence failed! Unable to shutdown all children")
+      numActiveRtComponents = context.children.size
+      logger.error(s"Found $numActiveRtComponents children still running")
+      lastRestartMasterRef ! false
+      false
     }
   }
 
@@ -112,16 +119,18 @@ class RtConsumersMasterGuardian(env: {
     logger.info(s"Starting up...")
     
     // find all rt components marked as active, save how many they are in state
-    val activeRtComponents = loadActiveRtComponents
+    val activeRtComponents = findActiveRtComponents
     targetNumActiveRtComponents = activeRtComponents.size
     
     if (activeRtComponents.isEmpty) {
+      // no rts to start
       logger.info(s"Found $targetNumActiveRtComponents RT components marked as active; entering uninitialized state")
       context become uninitialized
       logger.info("Sending success to master guardian")
       lastRestartMasterRef ! true
       logger.info("Startup sequence completed, no RT components started")
     } else {
+      // start rts
       logger.info(s"Found $targetNumActiveRtComponents RT components marked as active; entering starting state")
       context become starting
       logger.info("Starting RT components...")
@@ -137,8 +146,8 @@ class RtConsumersMasterGuardian(env: {
     }
   }
 
-  private def loadActiveRtComponents: Seq[RTModel] = {
-    logger.info(s"Loading all active RT components...")
+  private def findActiveRtComponents: Seq[RTModel] = {
+    logger.info(s"Finding all active RT components...")
     
     val activePipegraphs = env.pipegraphBL.getActivePipegraphs()
   
