@@ -208,48 +208,32 @@ class MasterGuardian(env: {
 
   //TODO  implementare questa parte
   private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
-    Right("ETL '" + etlName + "' not started")
+    Left("ETL '" + etlName + "' not started")
   }
 
   //TODO  implementare questa parte
   private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
-    Right("ETL '" + etlName + "' not stopped")
+    Left("ETL '" + etlName + "' not stopped")
   }
   
   private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
     val producerId = producerModel._id.get.getValue.toHexString
-    if (??[Boolean](producersMasterGuardian, AddRemoteProducer(producerId, producerActor))) {
-      Right(s"Remote producer $producerId ($producerActor) added.")
-    } else {
-      Left(s"Remote producer $producerId ($producerActor) not added.")
-    }
+    ??[Either[String, String]](producersMasterGuardian, AddRemoteProducer(producerId, producerActor))
   }
   
   private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
     val producerId = producerModel._id.get.getValue.toHexString
-    if (??[Boolean](producersMasterGuardian, RemoveRemoteProducer(producerId, producerActor))) {
-      Right(s"Remote producer $producerId ($producerActor) removed.")
-    } else {
-      Left(s"Remote producer $producerId not removed.")
-    }
+    ??[Either[String, String]](producersMasterGuardian, RemoveRemoteProducer(producerId, producerActor))
   }
 
   private def startProducer(producer: ProducerModel): Either[String, String] = {
     val producerId = producer._id.get.getValue.toHexString
-    if (??[Boolean](producersMasterGuardian, StartProducer(producerId))) {
-      Right(s"Producer '${producer.name}' started")
-    } else {
-      Left(s"Producer '${producer.name}' not started")
-    }
+    ??[Either[String, String]](producersMasterGuardian, StartProducer(producerId))
   }
 
   private def stopProducer(producer: ProducerModel): Either[String, String] = {
     val producerId = producer._id.get.getValue.toHexString
-    if (??[Boolean](producersMasterGuardian, StopProducer(producerId))) {
-      Right("Producer '" + producer.name + "' stopped")
-    } else {
-      Left("Producer '" + producer.name + "' not stopped")
-    }
+    ??[Either[String, String]](producersMasterGuardian, StopProducer(producerId))
   }
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
