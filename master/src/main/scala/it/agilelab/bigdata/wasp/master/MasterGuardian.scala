@@ -37,13 +37,12 @@ object MasterGuardian extends WaspConfiguration with Logging {
     logger.info("Index rollover is disabled.")
   }
 
-  // TODO configurable timeout
   def findLocallyOrCreateActor(props: Props, name: String): ActorRef = {
     try {
       val actorPath = "/user/" + name
       val actorSelection = actorSystem.actorSelection(actorPath)
       logger.info(s"Attempting actor selection: $actorSelection")
-      val actor = Await.result(actorSelection.resolveOne()(synchronousActorCallTimeout), ConfigManager.getWaspConfig.generalTimeoutMillis milliseconds)
+      val actor = Await.result(actorSelection.resolveOne()(generalTimeout), generalTimeout.duration)
       logger.info(s"Selected actor: $actor")
       actor
     } catch {
@@ -197,8 +196,8 @@ class MasterGuardian(env: {
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
-    val res1 = ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(synchronousActorCallTimeout.duration))
-    val res2 = ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(synchronousActorCallTimeout.duration))
+    val res1 = ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+    val res2 = ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
     
     if (res1 && res2) {
       Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped"))
@@ -240,9 +239,9 @@ class MasterGuardian(env: {
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
     logger.info(s"Send the message StartBatchJobMessage to batchGuardian: job to start: ${batchJob._id.get.getValue.toHexString}")
-    implicit val timeout = synchronousActorCallTimeout
+    implicit val timeout = generalTimeout
     val jobFut = batchMasterGuardian ? StartBatchJobMessage(batchJob._id.get.getValue.toHexString)
-    val jobRes = Await.result(jobFut, synchronousActorCallTimeout.duration).asInstanceOf[BatchJobResult]
+    val jobRes = Await.result(jobFut, generalTimeout.duration).asInstanceOf[BatchJobResult]
     if (jobRes.result) {
       Right("Batch job '" + batchJob.name + "' queued or processing")
     } else {

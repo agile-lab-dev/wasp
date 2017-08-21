@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.utils
 
-import java.util.concurrent.TimeUnit
-
 import akka.http.scaladsl.model._
-import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import spray.json.{JsObject, JsString, JsValue, _}
 
@@ -14,8 +11,6 @@ import scala.collection.immutable
   * Created by Agile Lab s.r.l. on 10/08/2017.
   */
 object JsonResultsHelper extends JsonSupport with Logging {
-  val timeout: Timeout = Timeout(30, TimeUnit.SECONDS)
-
   implicit class AngularOkResponse(js: JsValue){
     def toAngularOkResponse: HttpResponse  = {
       val jsonResult = JsObject(

@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.util.concurrent.TimeUnit
-
 import akka.http.scaladsl.server.{Directives, Route}
-import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartProducer, StopProducer}
@@ -19,7 +16,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
   * Created by Agile Lab s.r.l. on 09/08/2017.
   */
 object Producer_C extends Directives with JsonSupport {
-  implicit val timeout = Timeout(30, TimeUnit.SECONDS)
+  implicit val implicitTimeout = WaspSystem.generalTimeout
 
   def getRoute: Route = {
     // extract URI path element as Int

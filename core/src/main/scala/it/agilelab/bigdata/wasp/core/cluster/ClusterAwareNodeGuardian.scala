@@ -10,6 +10,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.WaspEvent.NodeInitialized
+import it.agilelab.bigdata.wasp.core.WaspSystem
 
 abstract class ClusterAwareNodeGuardian extends ClusterAware {
   // customize
@@ -49,8 +50,7 @@ abstract class ClusterAwareNodeGuardian extends ClusterAware {
   def initialized: Actor.Receive
 
   def gracefulShutdown(): Unit = {
-    val timeout = Timeout(5.seconds)
-    context.children foreach (gracefulStop(_, timeout.duration))
+    context.children foreach (gracefulStop(_, WaspSystem.generalTimeout.duration))
     log.info(s"Graceful shutdown completed.")
   }
 }

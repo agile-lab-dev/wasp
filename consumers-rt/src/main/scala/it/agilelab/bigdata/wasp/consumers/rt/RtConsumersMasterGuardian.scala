@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.rt
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
+import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -10,8 +11,6 @@ import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.RTModel
 import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
@@ -98,9 +97,9 @@ class RtConsumersMasterGuardian(env: {
     
     // stop all actors bound to this guardian and the guardian itself
     logger.info(s"Stopping child actors bound to this rt consumers master guardian $self")
-    val timeout = waspConfig.generalTimeoutMillis milliseconds
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, timeout))
-    val res = Await.result(globalStatus, timeout)
+    val generalTimeoutDuration = generalTimeout.duration
+    val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
+    val res = Await.result(globalStatus, generalTimeoutDuration)
 
     if (res reduceLeft (_ && _)) {
       logger.info(s"Stopping sequence completed")

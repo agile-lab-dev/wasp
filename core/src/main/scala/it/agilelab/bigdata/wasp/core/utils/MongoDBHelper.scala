@@ -164,7 +164,7 @@ object MongoDBHelper extends Logging {
           .build())
         .build()
 
-    resultTimeout =   Duration(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
+    resultTimeout = Duration(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
 
     mongoClient = MongoClient(settings)
     val mongoDatabase = mongoClient.getDatabase(mongoDBConfig.databaseName)

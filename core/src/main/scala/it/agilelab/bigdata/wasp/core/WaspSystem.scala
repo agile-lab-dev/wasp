@@ -71,8 +71,8 @@ object WaspSystem extends WaspConfiguration with Logging {
   // distributed publish-subscribe mediator
   private var mediator_ : ActorRef = _
   
-  // timeout value for actor's syncronous call (ex. 'actor ? msg')
-  val synchronousActorCallTimeout = Timeout(waspConfig.generalTimeoutMillis, TimeUnit.MILLISECONDS)
+  // general timeout value, eg for actor's syncronous call (i.e. 'actor ? msg')
+  val generalTimeout = Timeout(waspConfig.generalTimeoutMillis, TimeUnit.MILLISECONDS)
   
   /**
     * Initializes the WASP system if needed.
@@ -260,8 +260,8 @@ object WaspSystem extends WaspConfiguration with Logging {
     * Synchronous ask
     */
   def ??[T](actorReference: ActorRef, message: Any, duration: Option[FiniteDuration] = None): T = {
-    implicit val implicitSynchronousActorCallTimeout = synchronousActorCallTimeout
-    Await.result(actorReference ? message, duration.getOrElse(synchronousActorCallTimeout.duration)).asInstanceOf[T]
+    implicit val implicitSynchronousActorCallTimeout = generalTimeout
+    Await.result(actorReference ? message, duration.getOrElse(generalTimeout.duration)).asInstanceOf[T]
   }
   
   // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident

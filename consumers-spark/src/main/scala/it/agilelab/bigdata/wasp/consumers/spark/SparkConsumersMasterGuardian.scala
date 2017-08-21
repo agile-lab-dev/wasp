@@ -5,6 +5,7 @@ import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
+import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -121,9 +122,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     ssc.stop(stopSparkContext = false, stopGracefully = true)
     ssc.awaitTermination()
   
-    val timeout = waspConfig.generalTimeoutMillis milliseconds
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, timeout))
-    val res = Await.result(globalStatus, timeout)
+    val generalTimeoutDuration = generalTimeout.duration
+    val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
+    val res = Await.result(globalStatus, generalTimeoutDuration)
 
     if (res reduceLeft (_ && _)) {
       logger.info(s"Stopping sequence completed")

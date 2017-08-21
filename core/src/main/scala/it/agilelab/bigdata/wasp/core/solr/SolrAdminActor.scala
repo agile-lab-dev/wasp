@@ -11,6 +11,7 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
 import org.apache.solr.client.solrj.SolrQuery
@@ -92,7 +93,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
   var solrServer: CloudSolrServer = _
   //TODO prendere il timeout dalla configurazione
   //implicit val timeout = Timeout(ConfigManager.config)
-  implicit val timeout = Timeout(30, TimeUnit.SECONDS)
+  implicit val timeout = WaspSystem.generalTimeout
 
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system

@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.util.concurrent.TimeUnit
-
 import akka.http.scaladsl.server.{Directives, Route}
-import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph, StopPipegraph}
 import it.agilelab.bigdata.wasp.core.models.PipegraphModel
@@ -19,10 +16,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
   * Created by Agile Lab s.r.l. on 09/08/2017.
   */
 object Pipegraph_C extends Directives with JsonSupport {
-  //TODO prendere il timeout dalla configurazione
-  //implicit val timeout = Timeout(ConfigManager.config)
-  implicit val timeout = Timeout(30, TimeUnit.SECONDS)
-
+  implicit val implicitTimeout = WaspSystem.generalTimeout
 
   def getRoute: Route = {
     // extract URI path element as Int
