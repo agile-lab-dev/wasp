@@ -65,7 +65,7 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
                 logger.info(s"Topic found  $topicOption")
                 if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))) {
                   logger.info("Before run kafka_router")
-                  router_name = s"kafka-ingestion-router-$name-${producer._id.get.asString()}-${System.currentTimeMillis()}"
+                  router_name = s"kafka-ingestion-router-$name-${producer._id.get.asObjectId().getValue.toHexString}-${System.currentTimeMillis()}"
                   kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
                   logger.info("After run kafka_router")
                   context become initialized

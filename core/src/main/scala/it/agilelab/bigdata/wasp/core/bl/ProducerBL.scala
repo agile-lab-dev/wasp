@@ -51,7 +51,7 @@ class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
 
   def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
     if (producerModel.hasOutput)
-      topicBL.getById(producerModel.id_topic.get.asString().getValue)
+      topicBL.getById(producerModel.id_topic.get.asObjectId().getValue.toHexString)
     else
         None
   }
