@@ -12,6 +12,7 @@ import it.agilelab.bigdata.wasp.core.models.RTModel
 import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class RtConsumersMasterGuardian(env: {
