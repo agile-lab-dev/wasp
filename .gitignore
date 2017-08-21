@@ -4,3 +4,6 @@ target
 
 # IntelliJ IDEA
 .idea
+
+# Spark tmp dir
+tmp
