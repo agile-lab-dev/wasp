@@ -113,6 +113,7 @@ class RtConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphB
         val rtActor = context.actorOf(Props(new ConsumerRTActor(env, element, self)))
         rtActor ! StartRT
       })
+      lastRestartMasterRef ! true
     }
   }
 
