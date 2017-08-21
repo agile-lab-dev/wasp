@@ -11,8 +11,6 @@ import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 /**
 	* Master guardian for WASP producers.
@@ -63,65 +61,63 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		case message: StopProducer => call(sender(), message, onProducer(message.id, stopProducer))
 	}
 	
-	private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, future: Future[Either[String, String]]) = {
-		future.map(result => {
-			logger.info(message + ": " + result)
-			sender ! result
-		})
+	private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]): Unit = {
+		logger.info(s"Call invocation: message: $message result: $result")
+		sender ! result
 	}
 	
-	private def onProducer(id: String, f: ProducerModel => Future[Either[String, String]]) = {
+	private def onProducer(id: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
 		env.producerBL.getById(id) match {
-			case None => Future(Right("Producer not retrieved"))
+			case None => Right("Producer not retrieved")
 			case Some(producer) => f(producer)
 		}
 	}
 	
-	private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Future[Either[String, String]] = {
+	private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
 		val producerId = producerModel._id.get.getValue.toHexString
 		if (remoteProducers.isDefinedAt(producerId)) { // already added
-			Future(Right(s"Remote producer $producerId ($producerActor) not added; already present."))
+			Left(s"Remote producer $producerId ($producerActor) not added; already present.")
 		} else { // add to remote producers & start if needed
 			remoteProducers += producerId -> producerActor
 			if (producerModel.isActive) {
 				self ! StartProducer(producerId)
 			}
-			Future(Left(s"Remote producer $producerId ($producerActor) added."))
+			Right(s"Remote producer $producerId ($producerActor) added.")
 		}
 	}
 	
-	private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Future[Either[String, String]] = {
+	private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
 		val producerId = producerModel._id.get.getValue.toHexString
 		if (remoteProducers.isDefinedAt(producerId)) { // found, remove
 			val producerActor = remoteProducers(producerId)
 			remoteProducers.remove(producerId)
-			Future(Left(s"Remote producer $producerId ($producerActor) removed."))
+			Right(s"Remote producer $producerId ($producerActor) removed.")
 		} else { // not found
-			Future(Right(s"Remote producer $producerId not found; either it was never added or it has already been removed."))
+			Left(s"Remote producer $producerId not found; either it was never added or it has already been removed.")
 		}
 	}
 	
-	private def startProducer(producer: ProducerModel): Future[Either[String, String]] = {
+	private def startProducer(producer: ProducerModel): Either[String, String] = {
 		// initialise producer actor if not already present
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
 			if (! ??[Boolean](producers(producer._id.get.getValue.toHexString), Start)) {
-				Future(Right(s"Producer '${producer.name}' not started"))
+				Left(s"Producer '${producer.name}' not started")
 			} else {
-				Future(Left(s"Producer '${producer.name}' started"))
+				Right(s"Producer '${producer.name}' started")
 			}
 		} else {
-			Future(Right(s"Producer '${producer.name}' not exists"))
+			Left(s"Producer '${producer.name}' does not exist")
 		}
 		
 	}
 	
-	private def stopProducer(producer: ProducerModel): Future[Either[String, String]] = {
+	private def stopProducer(producer: ProducerModel): Either[String, String] = {
 		if (!producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-			Future(Right("Producer '" + producer.name + "' not initializated"))
+			Left("Producer '" + producer.name + "' not initialized")
 		} else if (! ??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
-			Future(Right("Producer '" + producer.name + "' not stopped"))
+			Left("Producer '" + producer.name + "' not stopped")
 		} else {
-			Future(Left("Producer '" + producer.name + "' stopped"))
+			Right("Producer '" + producer.name + "' stopped")
 		}
 	}
 }
