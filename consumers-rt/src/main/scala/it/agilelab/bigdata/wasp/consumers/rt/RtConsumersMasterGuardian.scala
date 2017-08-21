@@ -7,56 +7,46 @@ import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.core.models.{ETLModel, RTModel}
+import it.agilelab.bigdata.wasp.core.models.RTModel
+import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
-class RtConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
-  val topicBL: TopicBL; val indexBL: IndexBL;
-  val rawBL : RawBL; val keyValueBL: KeyValueBL;
-  val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;})
-  extends ClusterAwareNodeGuardian with Stash with Logging {
+class RtConsumersMasterGuardian(env: {
+                                       val pipegraphBL: PipegraphBL
+                                       val topicBL: TopicBL
+                                       val indexBL: IndexBL
+                                       val websocketBL: WebsocketBL
+                                     })
+    extends ClusterAwareNodeGuardian
+    with Stash
+    with Logging
+    with WaspConfiguration {
   
-  /** STARTUP PHASE **/
-  /** *****************/
-
+  // initial state is uninitialized
   context become uninitialized
 
-  /** BASIC METHODS **/
-  /** *****************/
+  // internal state
+  private var lastRestartMasterRef: ActorRef = _ // last master actor ref, needed for ask pattern
+  private var numActiveRtComponents = 0 // number of currently active rt components (i.e. running)
+  private var targetNumActiveRtComponents = 0 // target number of active rt components (i.e. should be running)
 
-  private var lastRestartMasterRef: ActorRef = _
-
-
-  override def preStart(): Unit = {
-    super.preStart()
-    //TODO:capire joinseednodes
-    cluster.joinSeedNodes(Vector(cluster.selfAddress))
-  }
-
-  override def initialize(): Unit = {
-    logger.info(s"New actor registered with Master!")
-
-    super.initialize()
-    lastRestartMasterRef ! true
-    context become initialized
-    logger.info("ConsumerMasterGuardian Initialized")
-    logger.info("Unstashing queued messages...")
-    unstashAll()
-  }
-
+  // available states ==================================================================================================
+  
   override def uninitialized: Actor.Receive = {
-
     case RestartConsumers =>
       lastRestartMasterRef = sender()
       startGuardian()
   }
 
   def starting: Actor.Receive = {
-    case OutputStreamInitialized => initialize()
+    case OutputStreamInitialized =>
+      logger.info(s"RT component ${sender()} confirmed it is running")
+      numActiveRtComponents += 1
+      initialize()
     case RestartConsumers =>
       logger.info(s"Stashing restart ...")
       stash()
@@ -69,65 +59,93 @@ class RtConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphB
       stopGuardian()
       startGuardian()
   }
+  
+  // overriden ClusterAwareNodeGuardian methods ========================================================================
+  
+  override def preStart(): Unit = {
+    super.preStart()
+    //TODO:capire joinseednodes
+    cluster.joinSeedNodes(Vector(cluster.selfAddress))
+  }
+  
+  // TODO should we really be calling this multiple times? maybe it should be "attemptInitialization()"?
+  override def initialize(): Unit = {
+    super.initialize()
+  
+    logger.info(s"Currently $numActiveRtComponents out of $targetNumActiveRtComponents active RT components are " +
+                 "confirmed as running")
+    
+    if (numActiveRtComponents == targetNumActiveRtComponents) {
+      logger.info("All active RT components are confirmed as running; entering initialized state")
+      context become initialized
+      logger.info("Sending success to master guardian")
+      lastRestartMasterRef ! true
+      logger.info(s"Startup sequence completed, all $targetNumActiveRtComponents RT components are running")
+      logger.info("Unstashing queued messages...")
+      unstashAll()
+    } else {
+      logger.info("Not all active RT components are confirmed as running; waiting for the remaining ones")
+    }
+  }
 
-  /** PRIVATE METHODS **/
-  /** ******************/
+  // private methods ===================================================================================================
 
   private def stopGuardian() {
-
-    //Stop all actors bound to this guardian and the guardian itself
-    logger.info(s"Stopping actors bound to ConsumersMasterGuardian ...")
-
-    //logger.info(s"stopping Spark Context") why was this log line even here? we never stop it!
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, 60 seconds))
-    val res = Await.result(globalStatus, 20 seconds)
+    logger.info(s"Stopping...")
+    
+    // stop all actors bound to this guardian and the guardian itself
+    logger.info(s"Stopping child actors bound to this rt consumers master guardian $self")
+    val timeout = waspConfig.generalTimeoutMillis milliseconds
+    val globalStatus = Future.traverse(context.children)(gracefulStop(_, timeout))
+    val res = Await.result(globalStatus, timeout)
 
     if (res reduceLeft (_ && _)) {
-      logger.info(s"Graceful shutdown completed.")
+      logger.info(s"Stopping sequence completed")
+      numActiveRtComponents = 0
     }
     else {
-      logger.error(s"Something went wrong! Unable to shutdown all nodes")
+      logger.error(s"Stopping sequence failed! Unable to shutdown all children")
     }
-
   }
 
-  private def startGuardian() {
-
-    logger.info(s"Starting ConsumersMasterGuardian actors...")
+  private def startGuardian(): Unit = {
+    logger.info(s"Starting up...")
     
-
-    val (activeETL, activeRT) = loadActivePipegraphs
-    //TODO Why no pipegraphs with only RT modules?
-    //if (activeETL.isEmpty) {
-    if (activeETL.isEmpty && activeRT.isEmpty) {
+    // find all rt components marked as active, save how many they are in state
+    val activeRtComponents = loadActiveRtComponents
+    targetNumActiveRtComponents = activeRtComponents.size
+    
+    if (activeRtComponents.isEmpty) {
+      logger.info(s"Found $targetNumActiveRtComponents RT components marked as active; entering uninitialized state")
       context become uninitialized
-      logger.info("ConsumerMasterGuardian Uninitialized")
+      logger.info("Sending success to master guardian")
       lastRestartMasterRef ! true
+      logger.info("Startup sequence completed, no RT components started")
     } else {
+      logger.info(s"Found $targetNumActiveRtComponents RT components marked as active; entering starting state")
       context become starting
-      logger.info("ConsumerMasterGuardian Starting")
-      activeRT.foreach(element => {
-        logger.info(s"***Starting RT actor [${element.name}]")
-        val rtActor = context.actorOf(Props(new ConsumerRTActor(env, element, self)))
-        rtActor ! StartRT
-      })
-      lastRestartMasterRef ! true
+      logger.info("Starting RT components...")
+      activeRtComponents foreach {
+        rtComponent => {
+          logger.info(s"Starting RT actor for component ${rtComponent.name}")
+          val rtActor = context.actorOf(Props(new ConsumerRTActor(env, rtComponent, self)))
+          rtActor ! StartRT
+          logger.info(s"Started RT actor for component ${rtComponent.name}")
+        }
+      }
+      logger.info(s"Started $targetNumActiveRtComponents RT components; waiting for confirmation that they are all running")
     }
   }
 
-  //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-  private def loadActivePipegraphs: (Seq[ETLModel], Seq[RTModel]) = {
-    logger.info(s"Loading all active Pipegraphs ...")
-    val pipegraphs = env.pipegraphBL.getActivePipegraphs()
-    val etlComponents = pipegraphs.flatMap(pg => pg.etl).filter(etl => etl.isActive)
-    logger.info(s"Found ${etlComponents.length} active ETL...")
-
-    val rtComponents = pipegraphs.flatMap(pg => pg.rt).filter(rt => rt.isActive)
-    logger.info(s"Found ${rtComponents.length} active RT...")
-    //actorListSize = rtComponents.length
-
-
-    (etlComponents, rtComponents)
+  private def loadActiveRtComponents: Seq[RTModel] = {
+    logger.info(s"Loading all active RT components...")
+    
+    val activePipegraphs = env.pipegraphBL.getActivePipegraphs()
+  
+    //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
+    val rtComponents = activePipegraphs.flatMap(pg => pg.rt).filter(rt => rt.isActive)
+    
+    rtComponents
   }
 
 }
