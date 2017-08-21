@@ -54,25 +54,25 @@ object WaspSystem extends WaspConfiguration with Logging {
     * WASP actor system.
     * Initialized in initializeWaspSystem.
     */
-  implicit var actorSystem: ActorSystem = _
+  private var actorSystem_ : ActorSystem = _
   
   // proxies to cluster singletons of master guardians
-  var batchMasterGuardian: ActorRef = _
-  var masterGuardian: ActorRef = _
-  var producersMasterGuardian: ActorRef = _
-  var rtConsumersMasterGuardian: ActorRef = _
-  var sparkConsumersMasterGuardian: ActorRef = _
+  private var batchMasterGuardian_ : ActorRef = _
+  private var masterGuardian_ : ActorRef = _
+  private var producersMasterGuardian_ : ActorRef = _
+  private var rtConsumersMasterGuardian_ : ActorRef = _
+  private var sparkConsumersMasterGuardian_ : ActorRef = _
   
   // proxy to singleton of logger actor
-  var loggerActor: ActorRef = _
+  private var loggerActor_ : ActorRef = _
   
   // actor refs of admin actors
-  var kafkaAdminActor: ActorRef = _
-  var elasticAdminActor: ActorRef = _
-  var solrAdminActor: ActorRef = _
+  private var kafkaAdminActor_ : ActorRef = _
+  private var elasticAdminActor_ : ActorRef = _
+  private var solrAdminActor_ : ActorRef = _
   
   // distributed publish-subscribe mediator
-  var mediator: ActorRef = _
+  private var mediator_ : ActorRef = _
   
   // timeout value for actor's syncronous call (ex. 'actor ? msg')
   val synchronousActorCallTimeout = Timeout(waspConfig.generalTimeoutMillis, TimeUnit.MILLISECONDS)
@@ -89,28 +89,28 @@ object WaspSystem extends WaspConfiguration with Logging {
       
       // initialize actor system
       logger.info("Initializing actor system")
-      actorSystem = ActorSystem.create(waspConfig.actorSystemName, ConfigManager.conf)
+      actorSystem_ = ActorSystem.create(waspConfig.actorSystemName, ConfigManager.conf)
       logger.info(s"Initialized actor system: $actorSystem")
       
       // create cluster singleton proxies to master guardians
       logger.info("Initializing proxies for master guardians")
-      batchMasterGuardian = createSingletonProxy(batchMasterGuardianName, batchMasterGuardianSingletonProxyName, batchMasterGuardianSingletonManagerName, Seq(batchMasterGuardianRole))
-      masterGuardian = createSingletonProxy(masterGuardianName, masterGuardianSingletonProxyName, masterGuardianSingletonManagerName, Seq(masterGuardianRole))
-      producersMasterGuardian = createSingletonProxy(producersMasterGuardianName, producersMasterGuardianSingletonProxyName, producersMasterGuardianSingletonManagerName, Seq(producersMasterGuardianRole))
-      rtConsumersMasterGuardian = createSingletonProxy(rtConsumersMasterGuardianName, rtConsumersMasterGuardianSingletonProxyName, rtConsumersMasterGuardianSingletonManagerName, Seq(rtConsumersMasterGuardianRole))
-      sparkConsumersMasterGuardian = createSingletonProxy(sparkConsumersMasterGuardianName, sparkConsumersMasterGuardianSingletonProxyName, sparkConsumersMasterGuardianSingletonManagerName, Seq(sparkConsumersMasterGuardianRole))
+      batchMasterGuardian_ = createSingletonProxy(batchMasterGuardianName, batchMasterGuardianSingletonProxyName, batchMasterGuardianSingletonManagerName, Seq(batchMasterGuardianRole))
+      masterGuardian_ = createSingletonProxy(masterGuardianName, masterGuardianSingletonProxyName, masterGuardianSingletonManagerName, Seq(masterGuardianRole))
+      producersMasterGuardian_ = createSingletonProxy(producersMasterGuardianName, producersMasterGuardianSingletonProxyName, producersMasterGuardianSingletonManagerName, Seq(producersMasterGuardianRole))
+      rtConsumersMasterGuardian_ = createSingletonProxy(rtConsumersMasterGuardianName, rtConsumersMasterGuardianSingletonProxyName, rtConsumersMasterGuardianSingletonManagerName, Seq(rtConsumersMasterGuardianRole))
+      sparkConsumersMasterGuardian_ = createSingletonProxy(sparkConsumersMasterGuardianName, sparkConsumersMasterGuardianSingletonProxyName, sparkConsumersMasterGuardianSingletonManagerName, Seq(sparkConsumersMasterGuardianRole))
       logger.info("Initialized proxies for master guardians")
   
       // create cluster singleton proxy to logger actor
       logger.info("Initializing proxy for logger actor")
-      loggerActor = createSingletonProxy(loggerActorName, loggerActorSingletonProxyName, loggerActorSingletonManagerName, Seq(loggerActorRole))
+      loggerActor_ = createSingletonProxy(loggerActorName, loggerActorSingletonProxyName, loggerActorSingletonManagerName, Seq(loggerActorRole))
       logger.info("Initialized proxy for logger actor")
       
       // spawn admin actors
       logger.info("Spawning admin actors")
-      kafkaAdminActor = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
-      elasticAdminActor = actorSystem.actorOf(Props(new ElasticAdminActor), ElasticAdminActor.name)
-      solrAdminActor = actorSystem.actorOf(Props(new SolrAdminActor), SolrAdminActor.name)
+      kafkaAdminActor_ = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
+      elasticAdminActor_ = actorSystem.actorOf(Props(new ElasticAdminActor), ElasticAdminActor.name)
+      solrAdminActor_ = actorSystem.actorOf(Props(new SolrAdminActor), SolrAdminActor.name)
       logger.info("Spawned admin actors")
   
       logger.info("Connecting to services")
@@ -174,7 +174,7 @@ object WaspSystem extends WaspConfiguration with Logging {
   
       // get distributed pub sub mediator
       logger.info("Initializing distributed pub sub mediator")
-      mediator = DistributedPubSub.get(WaspSystem.actorSystem).mediator
+      mediator_ = DistributedPubSub.get(WaspSystem.actorSystem).mediator
       logger.info("Initialized distributed pub sub mediator")
   
       logger.info("Initialized WASP system")
@@ -249,8 +249,8 @@ object WaspSystem extends WaspConfiguration with Logging {
   }
   
   /**
-   * Unique global shutdown point.
-   */
+    * Unique global shutdown point.
+    */
   def shutdown(): Unit = {
     // close actor system
     if (actorSystem != null) actorSystem.terminate()
@@ -259,8 +259,24 @@ object WaspSystem extends WaspConfiguration with Logging {
     WaspDB.getDB.close()
   }
   
+  /**
+    * Synchronous ask
+    */
   def ??[T](actorReference: ActorRef, message: Any, duration: Option[FiniteDuration] = None): T = {
     implicit val implicitSynchronousActorCallTimeout = synchronousActorCallTimeout
     Await.result(actorReference ? message, duration.getOrElse(synchronousActorCallTimeout.duration)).asInstanceOf[T]
   }
+  
+  // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident
+  implicit def actorSystem: ActorSystem = actorSystem_
+  def batchMasterGuardian: ActorRef = batchMasterGuardian_
+  def masterGuardian: ActorRef = masterGuardian_
+  def producersMasterGuardian: ActorRef = producersMasterGuardian_
+  def rtConsumersMasterGuardian: ActorRef = rtConsumersMasterGuardian_
+  def sparkConsumersMasterGuardian: ActorRef = sparkConsumersMasterGuardian_
+  def loggerActor: ActorRef = loggerActor_
+  def kafkaAdminActor: ActorRef = kafkaAdminActor_
+  def elasticAdminActor: ActorRef = elasticAdminActor_
+  def solrAdminActor: ActorRef = solrAdminActor_
+  def mediator: ActorRef = mediator_
 }
