@@ -10,7 +10,7 @@ import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{ETLModel, PipegraphModel, RTModel}
-import it.agilelab.bigdata.wasp.core.utils.SparkStreamingConfiguration
+import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,7 +24,11 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;},
                                    sparkWriterFactory: SparkWriterFactory,
                                    streamingReader: StreamingReader)
-  extends ClusterAwareNodeGuardian with SparkStreamingConfiguration with Stash with Logging {
+    extends ClusterAwareNodeGuardian
+    with SparkStreamingConfiguration
+    with Stash
+    with Logging
+    with WaspConfiguration {
   
   var etlListSize = 0
   var readyEtls = 0
@@ -68,7 +72,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
       Thread.sleep(5 * 1000)
       lastRestartMasterRef ! true
       context become initialized
-      logger.info("ConsumerMasterGuardian Initialized")
+      logger.info("SparkConsumerMasterGuardian Initialized")
       logger.info("Unstashing queued messages...")
       unstashAll()
     }
@@ -95,17 +99,20 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   override def initialized: Actor.Receive = {
     case RestartConsumers =>
       lastRestartMasterRef = sender()
-      stopGuardian()
-      startGuardian()
+      val stoppingSuccessful = stopGuardian()
+      if (stoppingSuccessful) {
+        startGuardian()
+      }
   }
 
   /** PRIVATE METHODS **/
   /** ******************/
 
-  private def stopGuardian() {
-
-    //Stop all actors bound to this guardian and the guardian itself
-    logger.info(s"Stopping actors bound to ConsumersMasterGuardian ...")
+  private def stopGuardian(): Boolean = {
+    logger.info(s"Stopping...")
+  
+    // stop all actors bound to this guardian and the guardian itself
+    logger.info(s"Stopping child actors bound to this spark consumers master guardian $self")
 
     //questa sleep serve perchè se si fa la stop dello spark streamng context subito dopo che e' stato
     //startato va tutto iin timeout
@@ -113,17 +120,22 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     //Thread.sleep(1500)
     ssc.stop(stopSparkContext = false, stopGracefully = true)
     ssc.awaitTermination()
-
-    //logger.info(s"stopping Spark Context") why was this log line even here? we never stop it!
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, 60 seconds))
-    val res = Await.result(globalStatus, 20 seconds)
+  
+    val timeout = waspConfig.generalTimeoutMillis milliseconds
+    val globalStatus = Future.traverse(context.children)(gracefulStop(_, timeout))
+    val res = Await.result(globalStatus, timeout)
 
     if (res reduceLeft (_ && _)) {
-      logger.info(s"Graceful shutdown completed.")
+      logger.info(s"Stopping sequence completed")
       readyEtls = 0
+      true
     }
     else {
-      logger.error(s"Something went wrong! Unable to shutdown all nodes")
+      logger.error(s"Stopping sequence failed! Unable to shutdown all nodes")
+      readyEtls = context.children.size
+      logger.error(s"Found $readyEtls children still running")
+      lastRestartMasterRef ! false
+      false
     }
 
   }
