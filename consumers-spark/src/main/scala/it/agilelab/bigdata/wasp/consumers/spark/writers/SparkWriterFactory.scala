@@ -1,20 +1,19 @@
 package it.agilelab.bigdata.wasp.consumers.spark.writers
 
-import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.WriterModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.StreamingContext
+
 
 trait SparkWriterFactory {
   def createSparkWriterStreaming(env: {val indexBL: IndexBL; val topicBL: TopicBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ssc: StreamingContext, writerModel: WriterModel): Option[SparkStreamingWriter]
   def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter]
 }
 
-object SparkWriterFactoryDefault extends SparkWriterFactory {
-  val logger = WaspLogger(this.getClass.getName)
+object SparkWriterFactoryDefault extends SparkWriterFactory with Logging {
 
   private val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
 

@@ -2,11 +2,10 @@ package it.agilelab.bigdata.wasp.core.utils
 
 import java.nio.ByteBuffer
 
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
-import it.agilelab.bigdata.wasp.core.utils.WaspDB._
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.MongoDatabase
@@ -60,7 +59,7 @@ trait WaspDB extends MongoDBHelper {
 
 }
 class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
-
+  import WaspDB._
 
   def initializeCollections() {
     createCollection(pipegraphsName)
@@ -121,9 +120,9 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
     val exits = exitsDocumentByKey("name", BsonString(doc.name), lookupTable(typeTag.tpe))
     if (exits) {
-      log.info("Model '" + doc.name + "' already present")
+      logger.info("Model '" + doc.name + "' already present")
     } else {
-      log.info("Model '" + doc.name + "' not found. It will be created.")
+      logger.info("Model '" + doc.name + "' not found. It will be created.")
       insert(doc)
     }
     Unit
@@ -164,7 +163,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
 
   def getFileByID(id: BsonObjectId): Array[Byte] = {
 
-    log.info(s"Locating file by id $id")
+    logger.info(s"Locating file by id $id")
     val gridFile = GridFSBucket(mongoDatabase).openDownloadStream(id)
     val length = gridFile.gridFSFile().headResult().getLength
     // MUST be less than 4GB
@@ -175,8 +174,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   }
 }
 
-object WaspDB {
-  private val log = WaspLogger(this.getClass)
+object WaspDB extends Logging {
   private var waspDB: WaspDB = _
 
 
@@ -251,7 +249,7 @@ object WaspDB {
   def getDB: WaspDB = {
     if (waspDB == null) {
       val msg = "The waspDB was not initialized"
-      log.error(msg)
+      logger.error(msg)
       throw new Exception(msg)
     }
     waspDB
@@ -260,7 +258,7 @@ object WaspDB {
   def initializeDB(): Unit = {
     // MongoDB initialization
     val mongoDBConfig = ConfigManager.getMongoDBConfig
-    log.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
+    logger.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
 
     val codecRegistry = fromRegistries(fromProviders(codecRegisters), DEFAULT_CODEC_REGISTRY)
 

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.kafka
 
 import akka.actor.{Actor, actorRef2Scala}
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import kafka.admin.AdminUtils
 import kafka.utils.ZKStringSerializer
 import org.I0Itec.zkclient.ZkClient
@@ -16,9 +16,8 @@ object KafkaAdminActor {
   val replicas = 1
 }
 
-class KafkaAdminActor extends Actor {
+class KafkaAdminActor extends Actor with Logging {
 
-  val logger = WaspLogger(classOf[KafkaAdminActor])
   var zkClient: ZkClient = _
 
   def receive: Actor.Receive = {

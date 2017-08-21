@@ -8,7 +8,7 @@ import org.slf4j.{Logger, LoggerFactory}
 /**
   * SLF4J logger wrapper that also logs to the logger actor at `WaspSystem.loggerActor`
   */
-final class WaspLogger(protected val slf4jLogger: Logger) {
+private[logging] final class WaspLogger(protected val slf4jLogger: Logger) {
   val loggerName: String = slf4jLogger.getName
   
   def error(msg: => String) {
@@ -93,7 +93,7 @@ final class WaspLogger(protected val slf4jLogger: Logger) {
   }
 }
 
-object WaspLogger {
+private[logging] object WaspLogger {
   /**
     * Creates a Logger named corresponding to the given class.
     * @param clazz Class used for the Logger's name. Must not be null!

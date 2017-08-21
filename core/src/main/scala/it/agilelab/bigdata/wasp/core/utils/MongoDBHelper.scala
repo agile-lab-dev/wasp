@@ -4,10 +4,9 @@ import java.util.concurrent.TimeUnit
 
 import com.mongodb.ConnectionString
 import com.mongodb.client.model.CreateCollectionOptions
-import com.typesafe.config.Config
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.MongoDBConfigModel
-import org.mongodb.scala.bson.{BsonArray, BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
+import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 import org.mongodb.scala.connection.{ClusterSettings, SocketSettings}
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{MongoClient, MongoClientSettings, MongoDatabase, _}
@@ -18,12 +17,9 @@ import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-private[utils] trait MongoDBHelper {
+private[utils] trait MongoDBHelper extends Logging {
 
   import MongoDBHelper._
-
-  //protected var queryMaxWaitTime = 2500;
-  protected val log = WaspLogger(this.getClass)
 
   def mongoDatabase: MongoDatabase
 
@@ -36,19 +32,19 @@ private[utils] trait MongoDBHelper {
           .headResult()
       }
     } catch {
-      case e: Exception => log.error("Error during the creation of a collection", e)
+      case e: Exception => logger.error("Error during the creation of a collection", e)
     }
   }
   protected def exitsDocumentByKey(key: String, value: BsonValue, collection: String): Boolean = {
 
-    log.info(s"Locating document(s) by key $key with value $value on collection $collection")
+    logger.info(s"Locating document(s) by key $key with value $value on collection $collection")
     val query = BsonDocument(key -> value)
 
     Option(getCollection(collection).find(query).headResult()).isDefined
   }
   protected def getDocumentByKey[T](key: String, value: BsonValue, collection: String)(implicit ct: ClassTag[T]): Option[T] = {
 
-    log.info(s"Locating document(s) by key $key with value $value on collection $collection")
+    logger.info(s"Locating document(s) by key $key with value $value on collection $collection")
     val query = BsonDocument(key -> value)
 
     Option(getCollection(collection).find[T](query).headResult())
@@ -56,7 +52,7 @@ private[utils] trait MongoDBHelper {
 
   protected def getDocumentByQueryParams[T](queryParams: Map[String, BsonValue], collection: String)(implicit ct: ClassTag[T]): Option[T] = {
 
-    log.info(s"Locating document(s) by $queryParams on collection $collection")
+    logger.info(s"Locating document(s) by $queryParams on collection $collection")
 
     val query = BsonDocument(queryParams)
 
@@ -65,7 +61,7 @@ private[utils] trait MongoDBHelper {
 
   protected def getAllDocumentsByKey[T](key: String, value: BsonValue, collection: String)(implicit ct: ClassTag[T]): Seq[T] = {
 
-    log.info(s"Locating document(s) by key $key with value $value on collection $collection")
+    logger.info(s"Locating document(s) by key $key with value $value on collection $collection")
     val query = BsonDocument(key -> value)
 
     getCollection(collection).find[T](query).results()
@@ -73,35 +69,35 @@ private[utils] trait MongoDBHelper {
 
   protected def getAllDocuments[T](collection: String)(implicit ct: ClassTag[T]): Seq[T] = {
 
-    log.info(s"Locating document(s) on collection $collection")
+    logger.info(s"Locating document(s) on collection $collection")
 
     getCollection(collection).find[T]().results()
   }
 
   protected def addDocumentToCollection[T](collection: String, doc: T)(implicit ct: ClassTag[T]): Unit = {
-    log.info(s"Adding document to collection $collection")
+    logger.info(s"Adding document to collection $collection")
 
     try {
       mongoDatabase.getCollection[T](collection).insertOne(doc).results()
-      log.info(s"Document correctly added $doc")
+      logger.info(s"Document correctly added $doc")
     } catch {
       case e: Exception =>
-        log.error(s"Unable to add document. Error message: ${e.getMessage}")
+        logger.error(s"Unable to add document. Error message: ${e.getMessage}")
         throw e
     }
   }
 
   protected def removeDocumentFromCollection[T](key: String, value: BsonValue, collection: String)(implicit ct: ClassTag[T]): Unit = {
-    log.info(s"Removing document from collection $collection")
+    logger.info(s"Removing document from collection $collection")
     val query = BsonDocument(key -> value)
 
 
     try {
       val result = getCollection(collection).deleteMany(query).results()
-      log.info(s"Document correctly removed $result, filter: $query")
+      logger.info(s"Document correctly removed $result, filter: $query")
     } catch {
       case e: Exception =>
-        log.error(s"Unable to delete document. Error message: ${e.getMessage} filter: $query")
+        logger.error(s"Unable to delete document. Error message: ${e.getMessage} filter: $query")
         throw e
     }
   }
@@ -112,11 +108,11 @@ private[utils] trait MongoDBHelper {
     val result =
       try {
       val result1 = mongoDatabase.getCollection[T](collection).replaceOne(selector, updateValue).headResult()
-      log.info(s"Replaced success for field $key with value $value, updateValue: $updateValue, collection: $collection, result: $result1")
+      logger.info(s"Replaced success for field $key with value $value, updateValue: $updateValue, collection: $collection, result: $result1")
       result1
     } catch {
       case e: Exception =>
-        log.error(s"Unable to delete document. Error message: ${e.getMessage}, field $key with value $value, updateValue: $updateValue, collection: $collection ")
+        logger.error(s"Unable to delete document. Error message: ${e.getMessage}, field $key with value $value, updateValue: $updateValue, collection: $collection ")
         throw e
     }
     result
@@ -124,8 +120,7 @@ private[utils] trait MongoDBHelper {
 
 }
 
-object MongoDBHelper {
-  private val log = WaspLogger(this.getClass)
+object MongoDBHelper extends Logging {
   private var resultTimeout = Duration(10, TimeUnit.SECONDS)
   private var mongoClient: MongoClient = _
 

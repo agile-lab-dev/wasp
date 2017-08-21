@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.producers
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable}
+import akka.actor.{Actor, ActorRef, Cancellable}
 import it.agilelab.bigdata.wasp.core.SystemPipegraphs._
 import it.agilelab.bigdata.wasp.core.WaspEvent.WaspMessageEnvelope
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, JsonToByteArrayUtil}
 import org.mongodb.scala.bson.BsonDocument
@@ -12,9 +12,7 @@ case object StopMainTask
 
 case object StartMainTask
 
-abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel]) extends Actor with ActorLogging {
-
-  val logger = WaspLogger(this.getClass.getName)
+abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel]) extends Actor with Logging {
   implicit val system = context.system
   implicit val contextPlay = scala.concurrent.ExecutionContext.Implicits.global
   var task: Option[Cancellable] = None
@@ -35,7 +33,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   lazy val topicSchema = JsonConverter.toString(topic.get.schema.getOrElse(BsonDocument()).asDocument())
 
   override def postStop() {
-    log.info(s"Stopping actor ${this.getClass.getName}")
+    logger.info(s"Stopping actor ${this.getClass.getName}")
     stopMainTask()
     super.postStop()
   }

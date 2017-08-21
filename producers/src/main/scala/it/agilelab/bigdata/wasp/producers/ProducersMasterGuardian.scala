@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, mediator}
 import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 
@@ -19,9 +19,7 @@ import scala.concurrent.Future
 	*
 	* @author Nicolò Bidotti
 	*/
-class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}) extends ClusterAwareNodeGuardian {
-	lazy val logger = WaspLogger(this.getClass.getName)
-	
+class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}) extends ClusterAwareNodeGuardian with Logging {
 	// subscribe to producers topic using distributed publish subscribe
 	mediator ! Subscribe(WaspSystem.producersPubSubTopic, self)
 	

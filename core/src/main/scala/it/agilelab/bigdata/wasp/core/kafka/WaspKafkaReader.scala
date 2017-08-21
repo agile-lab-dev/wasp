@@ -2,19 +2,16 @@ package it.agilelab.bigdata.wasp.core.kafka
 
 import java.util
 import java.util.Properties
-import java.util.concurrent.Executors
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
-import it.agilelab.bigdata.wasp.core.utils.AvroToJsonUtil
-import kafka.consumer.{KafkaStream, ConsumerConfig, Consumer}
+import kafka.consumer.{Consumer, ConsumerConfig, KafkaStream}
 import kafka.javaapi.consumer.ConsumerConnector
-import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
+
 import scala.collection.convert.decorateAsScala._
 
-class WaspKafkaReader[K, V](consumerConfig: Properties) {
-  val logger = WaspLogger(WaspKafkaReader.getClass.toString)
+class WaspKafkaReader[K, V](consumerConfig: Properties) extends Logging {
 
   def this(conf: KafkaConfigModel, group: String, zookeeper: String) = this(WaspKafkaReader.createConfig(
     conf.connections.map(x => x.toString).toSet, group, zookeeper))

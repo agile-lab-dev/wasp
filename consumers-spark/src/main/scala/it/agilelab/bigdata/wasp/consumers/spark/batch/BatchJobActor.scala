@@ -1,13 +1,13 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader, StaticReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.BatchJobProcessedMessage
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.spark.SparkContext
@@ -21,10 +21,7 @@ object BatchJobActor {
 class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL;  val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
                     val classLoader: Option[ClassLoader] = None,
                     sparkWriterFactory: SparkWriterFactory,
-                    sc: SparkContext) extends Actor with ActorLogging {
-
-  val logger = WaspLogger(this.getClass.getName)
-
+                    sc: SparkContext) extends Actor with Logging {
   var lastBatchMasterRef : ActorRef = _
 
   def receive: Actor.Receive = {
@@ -49,21 +46,21 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       val resDf = applyStrategy(dfsMap, mlModelsBroadcast, strategy)
   
       logger.info(s"Strategy for batch ${jobModel.name} applied successfully")
-      
-      log.info(s"Saving batch job ${jobModel.name} ml models")
+  
+      logger.info(s"Saving batch job ${jobModel.name} ml models")
   
       var writeMlModelsSuccess = false
       try {
         val modelsWriteResult = mlModelsDB.write(mlModelsBroadcast.getModelsToSave)
         writeMlModelsSuccess = true
-        log.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
+        logger.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
       } catch {
         case e: Exception => {
-          log.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
+          logger.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
         }
       }
   
-      log.info(s"Saving batch job ${jobModel.name} output")
+      logger.info(s"Saving batch job ${jobModel.name} output")
   
       var writeOutputSuccess = false
       resDf match {
@@ -71,13 +68,13 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
           try {
             writeOutputSuccess = writeResult(res, jobModel.etl.output)
             if (writeOutputSuccess) {
-              log.info(s"Successfully wrote output for batch job ${jobModel.name}")
+              logger.info(s"Successfully wrote output for batch job ${jobModel.name}")
             } else {
-              log.error(s"Failed to write output for batch job ${jobModel.name}")
+              logger.error(s"Failed to write output for batch job ${jobModel.name}")
             }
           } catch {
             case e: Exception => {
-              log.error(s"Failed to write output for batch job ${jobModel.name}", e)
+              logger.error(s"Failed to write output for batch job ${jobModel.name}", e)
               writeOutputSuccess = false
             }
           }

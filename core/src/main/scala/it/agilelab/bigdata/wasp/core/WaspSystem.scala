@@ -50,10 +50,7 @@ object WaspSystem extends WaspConfiguration with Logging {
   // producers topic for distributed publish subscribe
   val producersPubSubTopic = "producers"
   
-  /**
-    * WASP actor system.
-    * Initialized in initializeWaspSystem.
-    */
+  // WASP actor system
   private var actorSystem_ : ActorSystem = _
   
   // proxies to cluster singletons of master guardians

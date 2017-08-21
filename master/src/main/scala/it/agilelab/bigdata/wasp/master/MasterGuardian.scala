@@ -3,25 +3,22 @@ package it.agilelab.bigdata.wasp.master
 import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
-import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
-import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.{angularErrorBuilder, httpResponseJson}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, DurationInt, HOURS, MILLISECONDS}
 
 
-object MasterGuardian extends WaspConfiguration {
-  lazy val logger = WaspLogger(this.getClass.getName)
+object MasterGuardian extends WaspConfiguration with Logging {
   
   // at midnight, restart all active pipelines (this causes new timed indices creation and consumers redirection on new indices)
   if (ConfigManager.getWaspConfig.indexRollover) {
@@ -72,11 +69,16 @@ object MasterGuardian extends WaspConfiguration {
   }
 }
 
-class MasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL; val batchJobBL: BatchJobBL; val batchSchedulerBL: BatchSchedulersBL; }, val classLoader: Option[ClassLoader] = None) extends ClusterAwareNodeGuardian {
-  
+class MasterGuardian(env: {
+                           val producerBL: ProducerBL
+                           val pipegraphBL: PipegraphBL
+                           val batchJobBL: BatchJobBL
+                           val batchSchedulerBL: BatchSchedulersBL
+                          },
+                     classLoader: Option[ClassLoader] = None)
+    extends ClusterAwareNodeGuardian
+    with Logging {
   import MasterGuardian._
-  
-  lazy val logger = WaspLogger(this.getClass.getName)
   
   // TODO just for Class Loader debug.
   // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())

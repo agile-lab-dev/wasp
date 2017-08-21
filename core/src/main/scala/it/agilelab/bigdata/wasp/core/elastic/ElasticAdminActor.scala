@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.elastic
 
 import akka.actor.{Actor, actorRef2Scala}
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.{Logging, WaspLogger}
 import it.agilelab.bigdata.wasp.core.models.configuration.ElasticConfigModel
 import it.agilelab.bigdata.wasp.core.utils.ElasticConfiguration
 import org.elasticsearch.action.search.SearchResponse
@@ -64,9 +64,8 @@ object ElasticAdminActor {
 
 }
 
-class ElasticAdminActor extends Actor {
+class ElasticAdminActor extends Actor with Logging {
 
-  val logger = WaspLogger(classOf[ElasticAdminActor])
   var elasticConfig: ElasticConfigModel = _
   var transportClient: TransportClient = _
 

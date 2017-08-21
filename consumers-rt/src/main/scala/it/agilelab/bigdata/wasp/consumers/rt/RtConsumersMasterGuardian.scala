@@ -5,7 +5,7 @@ import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{ETLModel, RTModel}
 
@@ -18,10 +18,8 @@ class RtConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphB
   val topicBL: TopicBL; val indexBL: IndexBL;
   val rawBL : RawBL; val keyValueBL: KeyValueBL;
   val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;})
-  extends ClusterAwareNodeGuardian with Stash {
-
-  val logger = WaspLogger(this.getClass.getName)
-
+  extends ClusterAwareNodeGuardian with Stash with Logging {
+  
   /** STARTUP PHASE **/
   /** *****************/
 
@@ -30,7 +28,7 @@ class RtConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphB
   /** BASIC METHODS **/
   /** *****************/
 
-  var lastRestartMasterRef: ActorRef = _
+  private var lastRestartMasterRef: ActorRef = _
 
 
   override def preStart(): Unit = {

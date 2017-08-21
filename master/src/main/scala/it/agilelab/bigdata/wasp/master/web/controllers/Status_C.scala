@@ -5,7 +5,6 @@ import akka.cluster.Cluster
 import akka.http.scaladsl.server.{Directives, Route}
 import com.typesafe.config.ConfigRenderOptions
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
@@ -15,9 +14,6 @@ import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
 
 
 object Status_C extends Directives with JsonSupport {
-
-  val logger = WaspLogger(Status_C.getClass.getName)
-
   def getRoute: Route = {
 
     pathPrefix("status") {

@@ -2,14 +2,13 @@ package it.agilelab.bigdata.wasp.consumers.spark
 
 import java.io.File
 
-import com.typesafe.config.{Config, ConfigFactory}
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SparkConfigModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.{SparkConf, SparkContext}
 
-object SparkHolder {
-  private val logger = WaspLogger(SparkHolder.getClass)
+
+object SparkHolder extends Logging {
   
   private var sc: SparkContext = _
   

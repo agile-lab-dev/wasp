@@ -2,23 +2,16 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
 import it.agilelab.bigdata.wasp.core.models.MlModelOnlyInfo
 import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
 import JsonResultsHelper._
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import it.agilelab.bigdata.wasp.master.web.controllers.Pipegraph_C.logger
+
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
   */
-
-
 object MlModels_C extends Directives with JsonSupport {
-
-  val logger = WaspLogger(MlModels_C.getClass.getName)
-
   def getRoute: Route = {
     // extract URI path element as Int
     pathPrefix("mlmodels") {

@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.SparkHolder
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, BatchSchedulerModel, JobStateEnum}
 import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
@@ -26,11 +26,9 @@ object BatchMasterGuardian {
 class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL;  val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL; val batchSchedulerBL: BatchSchedulersBL},
                           val classLoader: Option[ClassLoader] = None,
                           sparkWriterFactory: SparkWriterFactory)
-  extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration {
+  extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration with Logging {
   import BatchMasterGuardian._
-
-  val logger = WaspLogger(this.getClass.getName)
-
+  
   /** STARTUP PHASE **/
   /** *****************/
 

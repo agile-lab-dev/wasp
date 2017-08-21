@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.{Logging, WaspLogger}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper
 import org.apache.spark.sql.DataFrame
@@ -23,10 +23,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
                        ssc: StreamingContext,
                        etl: ETLModel,
                        listener: ActorRef
-                        ) extends Actor with ActorLogging  {
-
-  val logger = WaspLogger(this.getClass.getName)
-
+                        ) extends Actor with Logging {
   case object StreamReady
 
   /*
@@ -40,7 +37,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   // TODO check if mainTask has really to be invoked here
   override def preStart(): Unit = {
     super.preStart()
-    log.info(s"Actor is transitioning from 'uninitialized' to 'initialized'")
+    logger.info(s"Actor is transitioning from 'uninitialized' to 'initialized'")
     validationTask()
     mainTask()
   }
@@ -62,7 +59,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
         case Some(configuration) => configuration
       }
 
-      log.info("strategy: " + result)
+      logger.info("strategy: " + result)
       Some(result)
   }
   
@@ -180,7 +177,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
     // For some reason, trying to send directly a message from here to the guardian is not working ...
     // NOTE: Maybe because mainTask is invoked in preStart ? 
     // TODO check required
-    log.info(s"Actor is notifying the guardian that it's ready")
+    logger.info(s"Actor is notifying the guardian that it's ready")
     self ! StreamReady
   }
 

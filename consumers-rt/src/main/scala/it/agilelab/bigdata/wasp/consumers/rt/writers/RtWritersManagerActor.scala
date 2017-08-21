@@ -1,25 +1,28 @@
 package it.agilelab.bigdata.wasp.consumers.rt.writers
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.camel.{CamelMessage, Producer}
-import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, TopicBL, WebsocketBL}
 import it.agilelab.bigdata.wasp.core.elastic.CheckOrCreateIndex
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
 import org.apache.camel.component.websocket._
 import org.mongodb.scala.bson.BsonDocument
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
 
-class RtWritersManagerActor(env:{val topicBL: TopicBL; val websocketBL: WebsocketBL; val indexBL: IndexBL}, writer: Option[WriterModel]) extends Actor{
-  private val log = WaspLogger(this.getClass.getName)
+
+class RtWritersManagerActor(env: {
+                                  val topicBL: TopicBL
+                                  val websocketBL: WebsocketBL
+                                  val indexBL: IndexBL
+                                 },
+                            writer: Option[WriterModel])
+    extends Actor
+    with Logging {
 
   val endpoint: Option[ActorRef] = if(writer.isDefined)
   {
@@ -48,7 +51,7 @@ class RtWritersManagerActor(env:{val topicBL: TopicBL; val websocketBL: Websocke
       case "topic" => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
       case "index" => writer.writerType.product match {
         case "elastic" => {
-          println("DEBUG: Starting a CamelElasticWriter")
+          logger.debug("Starting a CamelElasticWriter")
           Some(context.actorOf(Props(new CamelElasticWriter(env.indexBL, writer))))
         }
         case "solr" => ??? // TODO

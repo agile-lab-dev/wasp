@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{ETLModel, PipegraphModel, RTModel}
 import it.agilelab.bigdata.wasp.core.utils.SparkStreamingConfiguration
@@ -24,10 +24,8 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;},
                                    sparkWriterFactory: SparkWriterFactory,
                                    streamingReader: StreamingReader)
-  extends ClusterAwareNodeGuardian with SparkStreamingConfiguration with Stash {
-
-  val logger = WaspLogger(this.getClass.getName)
-
+  extends ClusterAwareNodeGuardian with SparkStreamingConfiguration with Stash with Logging {
+  
   var etlListSize = 0
   var readyEtls = 0
 
@@ -48,7 +46,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   /** BASIC METHODS **/
   /** *****************/
 
-  var lastRestartMasterRef: ActorRef = _
+  private var lastRestartMasterRef: ActorRef = _
 
 
   override def preStart(): Unit = {

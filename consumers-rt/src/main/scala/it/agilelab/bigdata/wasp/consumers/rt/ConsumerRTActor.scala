@@ -7,8 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.rt.readers.CamelKafkaReader
 import it.agilelab.bigdata.wasp.consumers.rt.strategies.StrategyRT
 import it.agilelab.bigdata.wasp.consumers.rt.writers.RtWritersManagerActor
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, TopicBL, WebsocketBL}
-import it.agilelab.bigdata.wasp.core.kafka.WaspKafkaReader
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{RTModel, ReaderModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils._
 
@@ -22,9 +21,7 @@ case class StopRT()
 class ConsumerRTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val indexBL: IndexBL},
                       rt: RTModel,
                       listener: ActorRef)
-  extends Actor with ActorLogging {
-
-  val logger = WaspLogger(WaspKafkaReader.getClass.toString)
+  extends Actor with Logging {
   val strategy: Option[StrategyRT] = createStrategyRT(rt)
   lazy val kafkaReaders: List[Option[ActorRef]] = {
     rt.inputs.map { input =>

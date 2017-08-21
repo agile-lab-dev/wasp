@@ -1,17 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.readers
 
-import com.lucidworks.spark.SolrRDD
-import com.typesafe.config.{Config, ConfigFactory}
-import it.agilelab.bigdata.wasp.consumers.spark.SparkHolder
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration, SolrConfiguration}
-import org.apache.solr.client.solrj.SolrQuery
 import org.apache.spark.SparkContext
-import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.elasticsearch.spark.sql.EsSparkSQL
 import org.elasticsearch.hadoop.cfg.ConfigurationOptions
@@ -20,7 +13,6 @@ import org.elasticsearch.hadoop.cfg.ConfigurationOptions
 /**
  * Created by Mattia Bertorello on 10/09/15.
  */
-
 trait StaticReader {
   val name: String
   val readerType: String
@@ -34,10 +26,9 @@ trait StaticReader {
   *
   * @param indexModel Elastic configuration
  */
-class ElasticIndexReader(indexModel: IndexModel) extends StaticReader with ElasticConfiguration {
+class ElasticIndexReader(indexModel: IndexModel) extends StaticReader with ElasticConfiguration with Logging {
   val name: String = indexModel.name
   val readerType: String = IndexModel.readerType
-  private val logger = WaspLogger(this.getClass.getName)
 
   override def read(sc: SparkContext): DataFrame = {
 
@@ -64,10 +55,9 @@ class ElasticIndexReader(indexModel: IndexModel) extends StaticReader with Elast
   *
   * @param indexModel Solr configuration
   */
-class SolrIndexReader(indexModel: IndexModel) extends StaticReader with SolrConfiguration {
+class SolrIndexReader(indexModel: IndexModel) extends StaticReader with SolrConfiguration with Logging {
   val name: String = indexModel.name
   val readerType: String = IndexModel.readerType
-  private val logger = WaspLogger(this.getClass.getName)
 
   override def read(sc: SparkContext): DataFrame = ???
   /* {

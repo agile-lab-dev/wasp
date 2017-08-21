@@ -2,19 +2,16 @@ package it.agilelab.bigdata.wasp.core.utils
 
 import java.io._
 
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import org.apache.avro.Schema
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.DecoderFactory
 
-object AvroToJsonUtil {
-
-  //TODO change logger
-  val log = WaspLogger(this.getClass.getName)
+object AvroToJsonUtil extends Logging {
 
   def jsonToAvro(json: String, schemaStr: String) = {
-    log.debug("Starting jsonToAvro encoding ...")
+    logger.debug("Starting jsonToAvro encoding ...")
 
     var encoder = null
 
@@ -47,7 +44,7 @@ object AvroToJsonUtil {
   }
 
   def avroToJson(avro: Array[Byte]): String = {
-    log.debug("Starting avroToJson encoding ...")
+    logger.debug("Starting avroToJson encoding ...")
 
     val pretty = false
     val JsonEncoder = null

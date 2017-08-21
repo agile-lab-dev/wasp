@@ -11,7 +11,7 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrServer
@@ -19,7 +19,7 @@ import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsField, JsNumber, JsObject, JsString, JsValue}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -86,9 +86,8 @@ object SolrAdminActor {
 
 }
 
-class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtocol {
+class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtocol with Logging {
 
-  val logger = WaspLogger(classOf[SolrAdminActor])
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
   //TODO prendere il timeout dalla configurazione
