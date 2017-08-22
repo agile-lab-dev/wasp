@@ -17,10 +17,6 @@ object Settings {
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
 		licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
-		bintrayOrganization := Some("agile-lab-dev"),
-		bintrayRepository := "WASP", // target repo
-		bintrayPackage := "wasp", // target package
-		bintrayReleaseOnPublish := false // do not automatically release, instead do sbt publish, then sbt bintrayRelease
 	)
 	
 	// custom resolvers for dependencies
@@ -48,9 +44,18 @@ object Settings {
 		scalaVersion := Versions.scala,
 		excludeDependencies ++= globalExclusions
 	)
-	
+
+  // settings for the bintray-sbt plugin used to publish to Bintray
+  // set here because "in ThisBuild" scoping doesn't work!
+  lazy val bintraySettings = Seq(
+    bintrayOrganization := Some("agile-lab-dev"),
+    bintrayRepository := "WASP", // target repo
+    bintrayPackage := "wasp", // target package
+    bintrayReleaseOnPublish := false // do not automatically release, instead do sbt publish, then sbt bintrayRelease
+  )
+
 	// common settings for all modules
-	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings
+	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings ++ bintraySettings
 	
 	// sbt-buildinfo action to get current git commit
 	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") { Process("git rev-parse HEAD").lines.head }
