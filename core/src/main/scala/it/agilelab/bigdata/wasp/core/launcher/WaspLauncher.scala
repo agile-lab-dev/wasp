@@ -24,7 +24,7 @@ trait WaspLauncher {
 			TODO!
 		          """.stripMargin
 
-	var waspDB = _
+	var waspDB: WaspDB = _
 
 	def main(args: Array[String]) {
 		// TODO switch to commons-cli & make options extensible
