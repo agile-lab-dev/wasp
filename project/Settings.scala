@@ -16,7 +16,7 @@ object Settings {
 		organization := "it.agilelab.bigdata.wasp",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
-		licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
+		licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 	)
 	
 	// custom resolvers for dependencies
