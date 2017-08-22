@@ -14,7 +14,7 @@ import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 	*
 	* @author Nicolò Bidotti
 	*/
-object SparkConsumersAndBatchMasterGuardianLauncher extends MultipleClusterSingletonsLauncher {
+object SparkConsumersNodeLauncher extends MultipleClusterSingletonsLauncher {
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val sparkConsumersMasterGuardianSingletonInfo = (
 			Props(new SparkConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault, KafkaReader)),

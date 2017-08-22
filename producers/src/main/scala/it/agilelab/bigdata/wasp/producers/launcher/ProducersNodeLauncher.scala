@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.producers.{InternalLogProducerGuardian, Producer
 	*
 	* @author Nicolò Bidotti
 	*/
-object ProducerMasterGuardianAndLoggerActorLauncher extends MultipleClusterSingletonsLauncher {
+object ProducersNodeLauncher extends MultipleClusterSingletonsLauncher {
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val producersMasterGuardianSingletonInfo = (
 			Props(new ProducersMasterGuardian(ConfigBL)),

@@ -21,7 +21,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 	* Launcher for the MasterGuardian and REST API.
 	* @author Nicolò Bidotti
 	*/
-object MasterGuardianLauncher extends ClusterSingletonLauncher with WaspConfiguration {
+object MasterNodeLauncher extends ClusterSingletonLauncher with WaspConfiguration {
 	override def launch(args: Array[String]): Unit = {
 		// add system pipegraphs
 		addSystemPipegraphs()

@@ -24,6 +24,8 @@ trait WaspLauncher {
 			TODO!
 		          """.stripMargin
 
+	var waspDB = _
+
 	def main(args: Array[String]) {
 		// TODO switch to commons-cli & make options extensible
 		val options = new WaspOptions(args)
@@ -51,6 +53,7 @@ trait WaspLauncher {
 	def initializeWasp(): Unit = {
 		// db
 		WaspDB.initializeDB()
+		waspDB = WaspDB.getDB
 		// configs
 		ConfigManager.initializeConfigs()
 		// waspsystem
