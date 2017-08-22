@@ -17,7 +17,10 @@ object Settings {
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
 		licenses := Seq(("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
-		bintrayOrganization := Some("agile-lab-dev")
+		bintrayOrganization := Some("agile-lab-dev"),
+		bintrayRepository := "WASP", // target repo
+		bintrayPackage := "wasp", // target package
+		bintrayReleaseOnPublish := false // do not automatically release, instead do sbt publish, then sbt bintrayRelease
 	)
 	
 	// custom resolvers for dependencies
