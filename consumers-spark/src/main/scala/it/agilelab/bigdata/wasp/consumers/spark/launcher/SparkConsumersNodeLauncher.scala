@@ -11,10 +11,11 @@ import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 
 /**
 	* Launcher for the SparkConsumersMasterGuardian and BatchMasterGuardian.
+	* This trait is useful for who want extend the launcher
 	*
 	* @author Nicolò Bidotti
 	*/
-object SparkConsumersNodeLauncher extends MultipleClusterSingletonsLauncher {
+trait SparkConsumersNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val sparkConsumersMasterGuardianSingletonInfo = (
 			Props(new SparkConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault, KafkaReader)),
@@ -35,3 +36,9 @@ object SparkConsumersNodeLauncher extends MultipleClusterSingletonsLauncher {
 	
 	override def getNodeName: String = "consumers spark"
 }
+
+/**
+	* Create the main static method to run
+	*
+	*/
+object SparkConsumersNodeLauncher extends SparkConsumersNodeLauncherTrait

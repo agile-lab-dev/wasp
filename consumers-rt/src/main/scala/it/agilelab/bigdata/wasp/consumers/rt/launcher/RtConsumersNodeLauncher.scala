@@ -8,10 +8,11 @@ import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 
 /**
 	* Launcher for the RtConsumersMasterGuardian.
+	* This trait is useful for who want extend the launcher
 	*
 	* @author Nicolò Bidotti
 	*/
-object RtConsumersNodeLauncher extends ClusterSingletonLauncher {
+trait RtConsumersNodeLauncherTrait extends  ClusterSingletonLauncher {
 	override def getSingletonProps: Props = Props(new RtConsumersMasterGuardian(ConfigBL))
 	
 	override def getSingletonName: String = WaspSystem.rtConsumersMasterGuardianName
@@ -23,3 +24,8 @@ object RtConsumersNodeLauncher extends ClusterSingletonLauncher {
 	override def getNodeName: String = "consumers rt"
 }
 
+/**
+	*
+	* Create the main static method to run
+	*/
+object RtConsumersNodeLauncher extends RtConsumersNodeLauncherTrait

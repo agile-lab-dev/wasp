@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.core.solr
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.Actor
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -10,10 +8,10 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
+import it.agilelab.bigdata.wasp.core.utils.JsonOps._
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
@@ -24,8 +22,7 @@ import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
-import scala.util.Try
+
 
 
 object SolrAdminActor {
@@ -97,19 +94,6 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
 
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
-
-  //http://limansky.me/posts/2016-04-30-easy-json-analyze-with-spray-json.html
-  class JsFieldOps(val field: Option[JsValue]) {
-    def \(name: String) = field map (_ \ name) getOrElse this
-
-    def ===(x: JsValue) = field.contains(x)
-
-    def =!=(x: JsValue) = !field.contains(x)
-  }
-
-  implicit class JsValueOps(val value: JsValue) {
-    def \(name: String) = new JsFieldOps(Try(value.asJsObject).toOption.flatMap(_.fields.get(name)))
-  }
 
 
   def receive: Actor.Receive = {

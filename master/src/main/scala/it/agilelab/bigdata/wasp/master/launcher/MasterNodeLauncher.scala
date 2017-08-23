@@ -19,9 +19,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 
 /**
 	* Launcher for the MasterGuardian and REST API.
+	* This trait is useful for who want extend the launcher
 	* @author Nicolò Bidotti
 	*/
-object MasterNodeLauncher extends ClusterSingletonLauncher with WaspConfiguration {
+trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
 	override def launch(args: Array[String]): Unit = {
 		// add system pipegraphs
 		addSystemPipegraphs()
@@ -85,3 +86,9 @@ object MasterNodeLauncher extends ClusterSingletonLauncher with WaspConfiguratio
 	
 	override def getNodeName: String = "master"
 }
+
+/**
+	*
+	* Create the main static method to run
+	*/
+object MasterNodeLauncher extends MasterNodeLauncherTrait

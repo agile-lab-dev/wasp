@@ -8,10 +8,10 @@ import it.agilelab.bigdata.wasp.producers.{InternalLogProducerGuardian, Producer
 
 /**
 	* Launcher for the ProducersMasterGuardian and InternalLogProducerGuardian.
-	*
+	* This trait is useful for who want extend the launcher
 	* @author Nicolò Bidotti
 	*/
-object ProducersNodeLauncher extends MultipleClusterSingletonsLauncher {
+trait ProducersNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val producersMasterGuardianSingletonInfo = (
 			Props(new ProducersMasterGuardian(ConfigBL)),
@@ -32,3 +32,9 @@ object ProducersNodeLauncher extends MultipleClusterSingletonsLauncher {
 	
 	override def getNodeName: String = "producers"
 }
+
+/**
+	*
+	* Create the main static method to run
+	*/
+object ProducersNodeLauncher extends ProducersNodeLauncherTrait

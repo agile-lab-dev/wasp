@@ -14,7 +14,6 @@ case object StartMainTask
 
 abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel]) extends Actor with Logging {
   implicit val system = context.system
-  implicit val contextPlay = scala.concurrent.ExecutionContext.Implicits.global
   var task: Option[Cancellable] = None
 
   def generateRawOutputJsonMessage(input: T): String
