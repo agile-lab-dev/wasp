@@ -67,7 +67,6 @@ object Dependencies {
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase
 	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase
-	val hbaseSpark = "org.apache.hbase" % "hbase-spark" % Versions.hbase
 	val httpmime = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
 	val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
 	val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
@@ -76,7 +75,7 @@ object Dependencies {
 	val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
 	val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka kafkaExclusions
 	val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka kafkaExclusions
-	val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka" % Versions.spark sparkExclusions
+	val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark sparkExclusions
 	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional"
 	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional"
 	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional"
@@ -110,7 +109,7 @@ object Dependencies {
 	
 	val elastic = Seq(elasticSearch)
 
-	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer, hbaseSpark)
+	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer)
 	
 	val json = Seq(json4sCore, json4sJackson, json4sNative)
 	

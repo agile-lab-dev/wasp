@@ -10,7 +10,7 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SQLContext}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
@@ -57,9 +57,9 @@ class SolrSparkStreamingWriter(env: { val indexBL: IndexBL }, val ssc: Streaming
                   index.replicationFactor.getOrElse(1)))) {
 
         val docs: DStream[SolrInputDocument] = stream.transform { rdd =>
-          val df: DataFrame = sqlContext.read.json(rdd)
+          val df: Dataset[Row] = sqlContext.read.json(rdd)
 
-          df.map { r =>
+          df.rdd.map { r =>
             SolrSparkWriter.createSolrDocument(r)
           }
         }
@@ -100,7 +100,7 @@ class SolrSparkWriter(env: { val indexBL: IndexBL }, sc: SparkContext, id: Strin
                   index.numShards.getOrElse(1),
                   index.replicationFactor.getOrElse(1)))) {
 
-        val docs = data.map { r =>
+        val docs = data.rdd.map { r =>
           SolrSparkWriter.createSolrDocument(r)
         }
 

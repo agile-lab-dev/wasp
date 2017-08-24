@@ -5,12 +5,11 @@ import akka.cluster.Cluster
 import akka.http.scaladsl.server.{Directives, Route}
 import com.typesafe.config.ConfigRenderOptions
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
-import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
-
 
 
 object Status_C extends Directives with JsonSupport {
@@ -18,81 +17,81 @@ object Status_C extends Directives with JsonSupport {
 
   val helpApi = Map(
     "wasp" -> Map(
-      "/pipegraphs" ->  Map(
+      "/pipegraphs" -> Map(
         "GET" -> "Get all the pipegraph in the system.",
         "POST" -> "Insert a new pipegraph.",
         "PUT" -> "Update an existing pipegraph."
       ),
-      "/pipegraphs/{id}" ->  Map(
+      "/pipegraphs/{id}" -> Map(
         "GET" -> "Get the pipegraph with the specified id.",
-        "DELETE" -> "\tDelete the pipegraph with the specified id."
-        ),
-      "/pipegraphs/name/{name}" ->  Map(
+        "DELETE" -> "Delete the pipegraph with the specified id."
+      ),
+      "/pipegraphs/name/{name}" -> Map(
         "GET" -> "Get the pipegraph with the specified name."
       ),
-      "/pipegraphs/{id}/start" ->  Map(
+      "/pipegraphs/{id}/start" -> Map(
         "POST" -> "Start the pipegraph with the specified id."
       ),
-      "/pipegraphs/{id}/stop" ->  Map(
+      "/pipegraphs/{id}/stop" -> Map(
         "POST" -> "Stop the pipegraph with the specified id."
       ),
-      "/producers" ->  Map(
+      "/producers" -> Map(
         "GET" -> "Get all the procuders in the system.",
         "PUT" -> "Update an existing pipegraph."
       ),
-      "/producers/{id}" ->  Map(
+      "/producers/{id}" -> Map(
         "GET" -> "Get the producer with the specified id."
       ),
-      "/producers/{id}/start" ->  Map(
+      "/producers/{id}/start" -> Map(
         "POST" -> "Start the producer with the specified id."
       ),
-      "/producers/{id}/stop" ->  Map(
+      "/producers/{id}/stop" -> Map(
         "POST" -> "Stop the producer with the specified id."
       ),
-      "/topics" ->  Map(
+      "/topics" -> Map(
         "GET" -> "Get all the topics in the system."
       ),
-      "/topics/{id}" ->  Map(
+      "/topics/{id}" -> Map(
         "GET" -> "Get the producer with the specified id."
       ),
-      "/batchjobs" ->  Map(
+      "/batchjobs" -> Map(
         "GET" -> "Get all the batchjobs in the system.",
         "POST" -> "Insert a new batchjobs.",
         "PUT" -> "Update an existing batchjobs."
       ),
-      "/batchjobs/{id}" ->  Map(
+      "/batchjobs/{id}" -> Map(
         "GET" -> "Get the batchjobs with the specified id.",
         "DELETE" -> "Delete the batchjobs with the specified id."
       ),
-      "/batchjobs/{id}/start" ->  Map(
+      "/batchjobs/{id}/start" -> Map(
         "POST" -> "Start the batchjobs with the specified id."
       ),
-      "/index/{name}" ->  Map(
+      "/index/{name}" -> Map(
         "GET" -> "Get the pipegraph with the specified name."
       ),
-      "/mlmodels" ->  Map(
+      "/mlmodels" -> Map(
         "GET" -> "Get all the ML models in the system.",
         "PUT" -> "Update an existing ML models."
       ),
-      "/mlmodels/{id}" ->  Map(
+      "/mlmodels/{id}" -> Map(
         "GET" -> "Get the ML models with the specified id.",
         "DELETE" -> "Delete the ML models with the specified id."
       ),
-      "/configs/kafka" ->  Map(
+      "/configs/kafka" -> Map(
         "GET" -> "Get the Kakfa configuration."
       ),
-      "/configs/sparkbatch" ->  Map(
+      "/configs/sparkbatch" -> Map(
         "GET" -> "Get the Spark batch configuration."
       ),
-      "/configs/sparkstreaming" ->  Map(
+      "/configs/sparkstreaming" -> Map(
         "GET" -> "Get the Spark streaming configuration."
       ),
-      "/configs/es" ->  Map(
+      "/configs/es" -> Map(
         "GET" -> "Get the Elasticsearch configuration. If exists."
       ),
-      "/configs/solr" ->  Map(
+      "/configs/solr" -> Map(
         "GET" -> "Get the Solr configuration. If exists."
-      ),
+      )
     )
   ).toJson
 
@@ -117,10 +116,10 @@ object Status_C extends Directives with JsonSupport {
 
             val result = Map(
               "wasp" -> Map(
-                "actorSystemName" ->  WaspSystem.actorSystem.name.toJson,
+                "actorSystemName" -> WaspSystem.actorSystem.name.toJson,
                 "clusterMembers" -> members,
                 "mongoDBConfigurations" -> mongoDBConfigurations,
-                "configurations"   -> waspConfig
+                "configurations" -> waspConfig
               )
             ).toJson
             httpResponseJson(entity = result.prettyPrint)
@@ -135,7 +134,9 @@ object Status_C extends Directives with JsonSupport {
               httpResponseJson(entity = helpApi.prettyPrint)
             }
           }
+        }
       } ~
+      pathPrefix("") {
         pathEnd {
           get {
             complete {
@@ -143,5 +144,7 @@ object Status_C extends Directives with JsonSupport {
             }
           }
         }
+      }
+  }
 
 }

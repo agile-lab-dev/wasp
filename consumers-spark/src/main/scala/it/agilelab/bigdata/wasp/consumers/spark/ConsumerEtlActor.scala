@@ -193,7 +193,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
       if (dataframeToTransform.schema.nonEmpty) {
 
         val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
-        strategyBroadcast.value.transform(completeMapOfDFs).toJSON
+        strategyBroadcast.value.transform(completeMapOfDFs).toJSON.rdd
 
       } else {
         rdd
