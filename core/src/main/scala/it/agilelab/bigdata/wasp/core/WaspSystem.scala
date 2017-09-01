@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core
 
+import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, ActorSystem, Props}
@@ -10,9 +11,11 @@ import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.plugins.WaspPlugin
 import it.agilelab.bigdata.wasp.core.solr.SolrAdminActor
 import it.agilelab.bigdata.wasp.core.utils._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.util.{Failure, Success}
@@ -109,6 +112,18 @@ object WaspSystem extends WaspConfiguration with Logging {
       elasticAdminActor_ = actorSystem.actorOf(Props(new ElasticAdminActor), ElasticAdminActor.name)
       solrAdminActor_ = actorSystem.actorOf(Props(new SolrAdminActor), SolrAdminActor.name)
       logger.info("Spawned admin actors")
+      
+      logger.info("Finding WASP plugins")
+      val pluginLoader: ServiceLoader[WaspPlugin] = ServiceLoader.load[WaspPlugin](classOf[WaspPlugin])
+      val plugins = pluginLoader.iterator().asScala.toList
+      logger.info(s"Found ${plugins.size} plugins")
+      logger.info("Initializing plugins")
+      plugins foreach {
+        plugin => {
+          logger.info(s"Initializing plugin ${plugin.getClass.getSimpleName}")
+          plugin.initialize()
+        }
+      }
   
       logger.info("Connecting to services")
   
