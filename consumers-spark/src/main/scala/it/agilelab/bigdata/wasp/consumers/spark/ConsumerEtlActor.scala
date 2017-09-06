@@ -71,17 +71,18 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
    */
   private def indexReaders(): List[StaticReader] =  {
     val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
-    etl.inputs.map({
+    etl.inputs.flatMap({
       case ReaderModel(id, name, readerType) =>
         val readerTypeFixed = Utils.getIndexType(readerType, defaultDataStoreIndexed)
         logger.info(s"Get index reader plugin $readerTypeFixed before was $readerType, plugin map: $plugins")
 
         val readerPlugin = plugins.get(readerTypeFixed)
         if (readerPlugin.isDefined) {
-            readerPlugin.get.getSparkReader(id.getValue.toHexString, name)
+          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
           } else {
-            logger.error(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
-            throw new Exception(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
+          //TODO Check if readerType != topic
+          logger.warn(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
+          None
           }
       })
   }
@@ -97,8 +98,9 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
         if (readerPlugin.isDefined) {
           Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
         } else {
+          //TODO Check if readerType != topic
           logger.error(s"The $readerType plugin in rawReaders does not exists")
-          throw new Exception(s"The $readerType plugin in rawReaders does not exists")
+          None
         }
     })
   
