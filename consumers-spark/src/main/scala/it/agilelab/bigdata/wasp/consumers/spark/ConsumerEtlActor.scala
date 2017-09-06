@@ -1,18 +1,18 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
-import akka.actor.{Actor, ActorLogging, ActorRef, actorRef2Scala}
+import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader, StaticReader, StreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Utils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.logging.{Logging, WaspLogger}
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, MongoDBHelper}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -77,7 +77,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
         logger.info(s"Get index reader plugin $readerTypeFixed before was $readerType, plugin map: $plugins")
 
         val readerPlugin = plugins.get(readerTypeFixed)
-          if (readerPlugin.isDefined) {
+        if (readerPlugin.isDefined) {
             readerPlugin.get.getSparkReader(id.getValue.toHexString, name)
           } else {
             logger.error(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
@@ -124,10 +124,13 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
 
   private def validationTask(): Unit = {
     etl.inputs.foreach({
-      case ReaderModel(id, name, IndexModel.readerType) => {
-        val readerOpt = IndexReader.create(env.indexBL, id.getValue.toHexString, name)
-        if (readerOpt.isEmpty) {
+      case ReaderModel(id, name, readerType) => {
+        val readerPlugin = plugins.get(readerType)
+        if (readerPlugin.isDefined) {
+          readerPlugin.get.getSparkReader(id.getValue.toHexString, name)
+        } else {
           //TODO Better exception
+          logger.error(s"There isn't the plugin for this index: '$id', '$name', readerType: '$readerType'")
           throw new Exception(s"There isn't this index: $id, $name")
         }
       }

@@ -36,13 +36,7 @@ object Dependencies {
 				.exclude("com.sun.jmx", "jmxri")
 				.exclude("com.sun.jdmk", "jmxtools")
 				.exclude("net.sf.jopt-simple", "jopt-simple")
-		
-		def sparkSolrExclusions: ModuleID =
-			module.excludeAll(
-					ExclusionRule(organization = "org.eclipse.jetty"),
-					ExclusionRule(organization = "javax.servlet"),
-					ExclusionRule(organization = "org.eclipse.jetty.orbit")
-				)
+
 	}
 	
 	// ===================================================================================================================
@@ -62,8 +56,6 @@ object Dependencies {
 	val avro = "org.apache.avro" % "avro" % Versions.avro
 	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
-	val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
-	val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase
 	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase
@@ -85,11 +77,9 @@ object Dependencies {
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
-	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
 	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
 	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
-	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
@@ -104,10 +94,7 @@ object Dependencies {
 		akkaRemote,
 		akkaSlf4j
 	)
-	
-	val apacheSolr = Seq(solr, sparkSolr)
-	
-	val elastic = Seq(elasticSearch)
+
 
 	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer)
 	
@@ -140,13 +127,11 @@ object Dependencies {
 		logging ++
 		time ++
 		test ++
-		elastic ++ // TODO remove when switching to plugins
 		Seq(
 			avro,
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
 			sparkSQL,
-			solr,
 			typesafeConfig
 		)
 	
@@ -158,10 +143,8 @@ object Dependencies {
 
 	val consumers_spark = akka ++ json ++ log4j ++ test ++ spark ++ hbase ++
 		Seq(
-			elasticSearchSpark,
 			kafka,
 			kafkaStreaming,
-			sparkSolr,
 			quartz
 		)
 

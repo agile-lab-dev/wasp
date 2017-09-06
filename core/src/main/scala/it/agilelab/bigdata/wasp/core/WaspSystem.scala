@@ -8,11 +8,9 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.pattern.ask
 import akka.util.Timeout
-import it.agilelab.bigdata.wasp.core.elastic.ElasticAdminActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.plugins.WaspPlugin
-import it.agilelab.bigdata.wasp.core.solr.SolrAdminActor
 import it.agilelab.bigdata.wasp.core.utils._
 
 import scala.collection.JavaConverters._
@@ -68,8 +66,6 @@ object WaspSystem extends WaspConfiguration with Logging {
   
   // actor refs of admin actors
   private var kafkaAdminActor_ : ActorRef = _
-  private var elasticAdminActor_ : ActorRef = _
-  private var solrAdminActor_ : ActorRef = _
   
   // distributed publish-subscribe mediator
   private var mediator_ : ActorRef = _
@@ -109,8 +105,6 @@ object WaspSystem extends WaspConfiguration with Logging {
       // spawn admin actors
       logger.info("Spawning admin actors")
       kafkaAdminActor_ = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
-      elasticAdminActor_ = actorSystem.actorOf(Props(new ElasticAdminActor), ElasticAdminActor.name)
-      solrAdminActor_ = actorSystem.actorOf(Props(new SolrAdminActor), SolrAdminActor.name)
       logger.info("Spawned admin actors")
       
       logger.info("Finding WASP plugins")
@@ -149,20 +143,11 @@ object WaspSystem extends WaspConfiguration with Logging {
     
       // initialize indexed datastore
       val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
-      defaultIndexedDatastore match {
-        case "elastic" => {
-          logger.info(s"Trying to connect with Elastic...")
-          startupElastic(servicesTimeoutMillis)
-        }
-        case "solr" => {
-          logger.info(s"Trying to connect with Solr...")
-          startupSolr(servicesTimeoutMillis)
-        }
-        case _ => {
-          logger.error("No indexed datastore configured!")
-        }
+      if (defaultIndexedDatastore != "elastic" || defaultIndexedDatastore != "solr") {
+        logger.error("No indexed datastore configured!")
+
       }
-    
+
       // initialize keyvalue datastore
       val defaultKeyvalueDatastore = waspConfig.defaultKeyvalueDatastore
       defaultKeyvalueDatastore match {
@@ -223,42 +208,6 @@ object WaspSystem extends WaspConfiguration with Logging {
     //TODO Initialize the HBase configurations and test if It's up
   }
 
-
-  private def startupElastic(wasptimeout: Long)(implicit timeout: Timeout) = {
-    //TODO if elasticConfig are not initialized skip the initialization
-    val elasticResult = elasticAdminActor ?  it.agilelab.bigdata.wasp.core.elastic.Initialization(ConfigManager.getElasticConfig)
-
-    //TODO remove infinite waiting and enable index swapping
-    val elasticConnectionResult = Await.ready(elasticResult, Duration(wasptimeout, TimeUnit.SECONDS))
-
-    elasticConnectionResult.value match {
-      case Some(Failure(t)) =>
-        logger.error(t.getMessage)
-        throw new Exception(t)
-
-      case Some(Success(_)) =>
-        logger.info("The system is connected with Elastic")
-
-      case None => throw new UnknownError("Unknown error during Elastic connection initialization")
-    }
-  }
-
-  private def startupSolr(wasptimeout: Long)(implicit timeout: Timeout) = {
-    //TODO if solrConfig are not initialized skip the initialization
-    val solrResult = solrAdminActor ?  it.agilelab.bigdata.wasp.core.solr.Initialization(ConfigManager.getSolrConfig)
-    val solrConnectionResult = Await.ready(solrResult, Duration(wasptimeout, TimeUnit.SECONDS))
-
-    solrConnectionResult.value match {
-      case Some(Failure(t)) =>
-        logger.error(t.getMessage)
-        throw new Exception(t)
-
-      case Some(Success(_)) =>
-        logger.info("The system is connected with Solr")
-
-      case None => throw new UnknownError("Unknown error during Solr connection initialization")
-    }
-  }
   
   /**
     * Unique global shutdown point.
@@ -288,7 +237,5 @@ object WaspSystem extends WaspConfiguration with Logging {
   def sparkConsumersMasterGuardian: ActorRef = sparkConsumersMasterGuardian_
   def loggerActor: ActorRef = loggerActor_
   def kafkaAdminActor: ActorRef = kafkaAdminActor_
-  def elasticAdminActor: ActorRef = elasticAdminActor_
-  def solrAdminActor: ActorRef = solrAdminActor_
   def mediator: ActorRef = mediator_
 }
