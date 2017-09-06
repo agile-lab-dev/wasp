@@ -8,7 +8,7 @@ object Versions {
 	val avro = "1.7.7"
 	val camel = "2.17.7"
 	val elasticSearch = "1.7.2"
-	val elasticSearchSpark = "2.3.3"
+	val elasticSearchSpark = "5.5.2"
 	val hbase = "1.2.0-cdh5.9.1"
 	val jdk = "1.7"
 	val jodaConvert = "1.8.1"
