@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
@@ -20,11 +21,12 @@ import scala.concurrent.{Await, Future}
 
 
 class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
-  val topicBL: TopicBL; val indexBL: IndexBL;
-  val rawBL : RawBL; val keyValueBL: KeyValueBL;
+  val topicBL: TopicBL; val indexBL: IndexBL
+  val rawBL : RawBL; val keyValueBL: KeyValueBL
   val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;},
                                    sparkWriterFactory: SparkWriterFactory,
-                                   streamingReader: StreamingReader)
+                                   streamingReader: StreamingReader,
+                                   plugins: Map[String, WaspConsumerSparkPlugin])
     extends ClusterAwareNodeGuardian
     with SparkStreamingConfiguration
     with Stash
@@ -161,7 +163,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
       logger.info("ConsumerMasterGuardian Starting")
       activeETL.map(element => {
         logger.info(s"***Starting Streaming Etl actor [${element.name}]")
-        context.actorOf(Props(new ConsumerEtlActor(env, sparkWriterFactory, streamingReader, ssc, element, self)))
+        context.actorOf(Props(new ConsumerEtlActor(env, sparkWriterFactory, streamingReader, ssc, element, self, plugins)))
       })
       //TODO If statement added to handle pipegraphs with only RT components, cleaner way to do this to be found
       if(activeETL.isEmpty)

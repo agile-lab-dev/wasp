@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.writers
 
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.utils.Utils
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.WriterModel
@@ -13,44 +15,40 @@ trait SparkWriterFactory {
   def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter]
 }
 
-object SparkWriterFactoryDefault extends SparkWriterFactory with Logging {
+case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumerSparkPlugin]) extends SparkWriterFactory with Logging {
 
   private val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
 
   override def createSparkWriterStreaming(env: {val topicBL: TopicBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ssc: StreamingContext, writerModel: WriterModel): Option[SparkStreamingWriter] = {
 
+    val writerType = writerModel.writerType.wtype
+    // Get the plugin, the index type does not exists anymore.
+    // It was replace by the right data store like elastic or solr
+    val backCompatibilityWriteType = Utils.getIndexType(writerType, defaultDataStoreIndexed)
+    logger.info(s"Get SparkWriterStreaming plugin $backCompatibilityWriteType before was $writerType, plugin map: $plugins")
 
-    writerModel.writerType.wtype match {
-      case "index" => {
-        defaultDataStoreIndexed match {
-          case "elastic" => Some(new ElasticSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
-          case "solr" => Some(new SolrSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
-          case _ => Some(new ElasticSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
-        }
-      }
-      case "topic" => Some(new KafkaSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString))
-      case "raw" => RawWriter.createSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString)
-      case "hbase" => HBaseWriter.createSparkStreamingWriter(env, ssc, writerModel.id.getValue.toHexString)
-      case _ =>
-        logger.error(s"Invalid spark streaming writer type, writer model: $writerModel")
-        None
+    val writerPlugin = plugins.get(backCompatibilityWriteType)
+    if (writerPlugin.isDefined) {
+      Some(writerPlugin.get.getSparkStreamingWriter(ssc, writerModel))
+    } else {
+      logger.error(s"Invalid spark streaming writer type, writer model: $writerModel")
+      None
     }
   }
 
   override def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter] = {
-    writerModel.writerType.wtype match {
-      case "index" => {
-        defaultDataStoreIndexed match {
-          case "elastic" => Some(new ElasticSparkWriter(env, sc, writerModel.id.getValue.toHexString))
-          case "solr" => Some(new SolrSparkWriter(env, sc, writerModel.id.getValue.toHexString))
-          case _ =>  Some(new ElasticSparkWriter(env, sc, writerModel.id.getValue.toHexString))
-        }
-      }
-      case "raw" => RawWriter.createSparkWriter(env, sc, writerModel.id.getValue.toHexString)
-      case "hbase" => HBaseWriter.createSparkWriter(env, sc, writerModel.id.getValue.toHexString)
-      case _ =>
-        logger.error(s"Invalid spark writer type, writer model: $writerModel")
-        None
+    val writerType = writerModel.writerType.wtype
+    // Get the plugin, the index type does not exists anymore.
+    // It was replace by the right data store like elastic or solr
+    val backCompatibilityWriteType = Utils.getIndexType(writerType, defaultDataStoreIndexed)
+    logger.info(s"Get SparkWriterStreaming plugin $backCompatibilityWriteType before was $writerType, plugin map: $plugins")
+
+    val writerPlugin = plugins.get(backCompatibilityWriteType)
+    if (writerPlugin.isDefined) {
+      Some(writerPlugin.get.getSparkWriter(sc, writerModel))
+    } else {
+      logger.error(s"Invalid spark writer type, writer model: $writerModel")
+      None
     }
   }
 }

@@ -45,7 +45,10 @@ trait WaspLauncher {
 
 		// initialize stuff
 		initializeWasp()
-		
+
+		// initialize plugins
+		initializePlugins(args)
+
 		// launch the application
 		launch(args)
 	}
@@ -92,6 +95,15 @@ trait WaspLauncher {
 	}
 	
 	def launch(args: Array[String]): Unit
-	
+
+
+	/**
+		* Initialize the WASP plugins, this method is called after the wasp initialization
+		* @param args command line arguments
+		*/
+	def initializePlugins(args: Array[String]): Unit = {
+		Unit
+	}
+
 	def getNodeName: String
 }

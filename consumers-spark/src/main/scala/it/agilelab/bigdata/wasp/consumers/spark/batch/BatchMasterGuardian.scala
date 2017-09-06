@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.SparkHolder
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
@@ -25,7 +26,8 @@ object BatchMasterGuardian {
 
 class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL;  val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL; val batchSchedulerBL: BatchSchedulersBL},
                           val classLoader: Option[ClassLoader] = None,
-                          sparkWriterFactory: SparkWriterFactory)
+                          sparkWriterFactory: SparkWriterFactory,
+                          plugins: Map[String, WaspConsumerSparkPlugin])
   extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration with Logging {
   import BatchMasterGuardian._
   
@@ -36,7 +38,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   val scCreated = SparkHolder.createSparkContext(sparkBatchConfig)
   if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark batch configuration!")
   val sc = SparkHolder.getSparkContext
-  val batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc)))
+  val batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))
 
 
   context become notinitialized

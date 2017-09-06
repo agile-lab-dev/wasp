@@ -3,14 +3,16 @@ package it.agilelab.bigdata.wasp.consumers.spark
 import akka.actor.{Actor, ActorLogging, ActorRef, actorRef2Scala}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader, StaticReader, StreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.Utils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.{Logging, WaspLogger}
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, MongoDBHelper}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -22,7 +24,8 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
                        streamingReader: StreamingReader,
                        ssc: StreamingContext,
                        etl: ETLModel,
-                       listener: ActorRef
+                       listener: ActorRef,
+                       plugins: Map[String, WaspConsumerSparkPlugin]
                         ) extends Actor with Logging {
   case object StreamReady
 
@@ -66,20 +69,37 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   /**
    * Index readers initialization
    */
-  private def indexReaders(): List[Option[StaticReader]] = etl.inputs
-    .flatMap({
-    case ReaderModel(id, name, IndexModel.readerType) =>
-      Some(IndexReader.create(env.indexBL, id.getValue.toHexString, name))
-    case _ => None
-  })
+  private def indexReaders(): List[StaticReader] =  {
+    val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
+    etl.inputs.map({
+      case ReaderModel(id, name, readerType) =>
+        val readerTypeFixed = Utils.getIndexType(readerType, defaultDataStoreIndexed)
+        logger.info(s"Get index reader plugin $readerTypeFixed before was $readerType, plugin map: $plugins")
+
+        val readerPlugin = plugins.get(readerTypeFixed)
+          if (readerPlugin.isDefined) {
+            readerPlugin.get.getSparkReader(id.getValue.toHexString, name)
+          } else {
+            logger.error(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
+            throw new Exception(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
+          }
+      })
+  }
   
   /**
     * Raw readers initialization
     */
-  private def rawReaders(): List[Option[StaticReader]] = etl.inputs
+  private def rawReaders(): List[StaticReader] = etl.inputs
     .flatMap({
-      case ReaderModel(id, name, "raw") => Some(RawReader.create(env.rawBL, id.getValue.toHexString, name))
-      case _ => None
+      case ReaderModel(id, name, readerType) =>
+        logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
+        val readerPlugin = plugins.get(readerType)
+        if (readerPlugin.isDefined) {
+          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
+        } else {
+          logger.error(s"The $readerType plugin in rawReaders does not exists")
+          throw new Exception(s"The $readerType plugin in rawReaders does not exists")
+        }
     })
   
   // TODO unify readers initialization (see BatchJobActor)
@@ -88,7 +108,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
     *
     * @return
    */
-  private def staticReaders(): List[Option[StaticReader]] = indexReaders() ++ rawReaders()
+  private def staticReaders(): List[StaticReader] = indexReaders() ++ rawReaders()
 
   /**
    * Topic models initialization
@@ -149,10 +169,8 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
         //TODO cache or reading?
         // Reading static source to DF
         val dataStoreDFs: Map[ReaderKey, DataFrame] =
-          staticReaders().map(maybeStaticReader => {
-            assert(maybeStaticReader.isDefined)
+          staticReaders().map(staticReader => {
 
-            val staticReader = maybeStaticReader.get
             val dataSourceDF = staticReader.read(ssc.sparkContext)
             (ReaderKey(staticReader.readerType, staticReader.name), dataSourceDF)
           }).toMap

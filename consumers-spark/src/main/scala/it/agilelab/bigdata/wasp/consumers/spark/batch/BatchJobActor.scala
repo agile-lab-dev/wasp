@@ -3,13 +3,16 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{IndexReader, RawReader, StaticReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.Utils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.BatchJobProcessedMessage
 import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 import org.mongodb.scala.bson.BsonObjectId
@@ -21,7 +24,8 @@ object BatchJobActor {
 class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL;  val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
                     val classLoader: Option[ClassLoader] = None,
                     sparkWriterFactory: SparkWriterFactory,
-                    sc: SparkContext) extends Actor with Logging {
+                    sc: SparkContext,
+                    plugins: Map[String, WaspConsumerSparkPlugin]) extends Actor with Logging {
   var lastBatchMasterRef : ActorRef = _
 
   def receive: Actor.Receive = {
@@ -98,7 +102,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   private def retrieveDFs(readerModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
     val readers = staticReaders(readerModels)
 
-    readers.map(reader => (ReaderKey(reader.get.name,reader.get.readerType), reader.get.read(sc))).toMap
+    readers.map(reader => (ReaderKey(reader.name,reader.readerType), reader.read(sc))).toMap
     //TODO: check readerType : NO streams allowed
   }
 
@@ -147,10 +151,19 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   /**
    * Index readers initialization
    */
-  private def indexReaders(readers: List[ReaderModel]): List[Option[StaticReader]] = {
+  private def indexReaders(readers: List[ReaderModel]): List[StaticReader] = {
+    val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
     readers.flatMap({
-      case ReaderModel(id, name, IndexModel.readerType) =>
-        Some(IndexReader.create(env.indexBL, id.getValue.toHexString, name))
+      case ReaderModel(id, name, readerType) =>
+        val readerTypeFixed = Utils.getIndexType(readerType, defaultDataStoreIndexed)
+        logger.info(s"Get index reader plugin $readerTypeFixed before was $readerType, plugin map: $plugins")
+        val readerPlugin = plugins.get(readerTypeFixed)
+        if (readerPlugin.isDefined) {
+          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
+        } else {
+          logger.error(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
+          None
+        }
       case _ => None
     })
   }
@@ -158,9 +171,17 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   /**
     * Raw readers initialization
     */
-  private def rawReaders(readers: List[ReaderModel]): List[Option[StaticReader]] = {
+  private def rawReaders(readers: List[ReaderModel]): List[StaticReader] = {
     readers.flatMap({
-      case ReaderModel(id, name, "raw") => Some(RawReader.create(env.rawBL, id.getValue.toHexString, name))
+      case ReaderModel(id, name, readerType) =>
+        logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
+        val readerPlugin = plugins.get(readerType)
+        if (readerPlugin.isDefined) {
+          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
+        } else {
+          logger.error(s"The $readerType plugin in rawReaders does not exists")
+          None
+        }
       case _ => None
     })
   }
@@ -171,7 +192,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     *
     * @return
     */
-  private def staticReaders(readers: List[ReaderModel]): List[Option[StaticReader]] = indexReaders(readers) ++ rawReaders(readers)
+  private def staticReaders(readers: List[ReaderModel]): List[StaticReader] = indexReaders(readers) ++ rawReaders(readers)
 
   private def changeBatchState(id: BsonObjectId, newState: String): Unit =
   {
