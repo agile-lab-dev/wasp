@@ -124,6 +124,13 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
 
   private def validationTask(): Unit = {
     etl.inputs.foreach({
+      case ReaderModel(id, name, TopicModel.readerType) => {
+        val topicOpt = env.topicBL.getById(id.getValue.toHexString)
+        if (topicOpt.isEmpty) {
+          //TODO Better exception
+          throw new Exception(s"There isn't this topic: $id, $name")
+        }
+      }
       case ReaderModel(id, name, readerType) => {
         val readerPlugin = plugins.get(readerType)
         if (readerPlugin.isDefined) {
@@ -132,14 +139,6 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
           //TODO Better exception
           logger.error(s"There isn't the plugin for this index: '$id', '$name', readerType: '$readerType'")
           throw new Exception(s"There isn't this index: $id, $name")
-        }
-      }
-
-      case ReaderModel(id, name, TopicModel.readerType) => {
-        val topicOpt = env.topicBL.getById(id.getValue.toHexString)
-        if (topicOpt.isEmpty) {
-          //TODO Better exception
-          throw new Exception(s"There isn't this topic: $id, $name")
         }
       }
     })
