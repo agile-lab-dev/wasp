@@ -64,6 +64,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   def initializeCollections() {
     createCollection(pipegraphsName)
     createCollection(producersName)
+    createCollection(rawName)
     createCollection(batchjobName)
     createCollection(configurationsName)
     createCollection(websocketsName)
