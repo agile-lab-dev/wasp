@@ -64,6 +64,7 @@ private[wasp] object LoggerProducer {
 		isActive = false,
 		None,
 		isRemote = false,
+		isSystem = true,
 		Some(BsonObjectId())
 	)
 }
@@ -99,7 +100,7 @@ private[wasp] object LoggerPipegraph {
 		name = SystemPipegraphs.loggerPipegraphName,
 		description = "System Logger Pipegraph",
 		owner = "system",
-		system = true,
+		isSystem = true,
 		creationTime = System.currentTimeMillis,
 		etl = List(ETLModel(
 			"write on index", List(TopicReader(loggerTopic._id.get, loggerTopic.name)),
@@ -160,7 +161,7 @@ private[wasp] object RawPipegraph {
 		name = SystemPipegraphs.rawPipegraphName,
 		description = "System Raw Pipegraph",
 		owner = "system",
-		system = true,
+		isSystem = true,
 		creationTime = System.currentTimeMillis,
 		etl = List(ETLModel(
 			"write on index",

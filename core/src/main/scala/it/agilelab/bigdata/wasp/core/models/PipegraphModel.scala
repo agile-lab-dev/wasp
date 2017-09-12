@@ -54,7 +54,7 @@ object ReaderModel {
 case class PipegraphModel(override val name: String,
                           description: String,
                           owner: String,
-                          system: Boolean,
+                          isSystem: Boolean,
                           creationTime: Long,
                           etl: List[ETLModel],
                           rt: List[RTModel],
