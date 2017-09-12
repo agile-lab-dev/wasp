@@ -45,6 +45,7 @@ object ConfigManager {
       conf.getString("datastore.indexed"),
       conf.getString("datastore.keyvalue"),
       conf.getBoolean("systempipegraphs.start"),
+      conf.getBoolean("systemproducers.start"),
       conf.getString("rest.server.hostname"),
       conf.getInt("rest.server.port")
     )

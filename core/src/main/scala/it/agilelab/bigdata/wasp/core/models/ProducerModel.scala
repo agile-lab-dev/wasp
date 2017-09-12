@@ -10,6 +10,7 @@ case class ProducerModel(override val name: String,
                          var isActive: Boolean,
                          configuration: Option[BsonDocument] = None,
                          isRemote: Boolean,
+                         isSystem: Boolean,
                          _id: Option[BsonObjectId] = None) extends Model {
 
   def hasOutput: Boolean = id_topic.isDefined

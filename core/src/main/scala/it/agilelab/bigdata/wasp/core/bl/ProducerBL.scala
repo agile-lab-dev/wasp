@@ -12,7 +12,11 @@ trait ProducerBL {
   def getById(id: String): Option[ProducerModel]
 
   def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel]
-
+  
+  def getSystemProducers: Seq[ProducerModel]
+  
+  def getNonSystemProducers: Seq[ProducerModel]
+  
   def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel]
 
   def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel]
@@ -31,7 +35,7 @@ trait ProducerBL {
 
 class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
 
-  private def factory(p: ProducerModel) = ProducerModel(p.name, p.className, p.id_topic, p.isActive, p.configuration, p.isRemote, p._id)
+  private def factory(p: ProducerModel) = ProducerModel(p.name, p.className, p.id_topic, p.isActive, p.configuration, p.isRemote, p.isSystem, p._id)
 
   def getByName(name: String): Option[ProducerModel] = {
     waspDB.getDocumentByField[ProducerModel]("name", new BsonString(name)).map(factory)
@@ -43,6 +47,14 @@ class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
 
   def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel] = {
     waspDB.getAllDocumentsByField[ProducerModel]("isActive", new BsonBoolean(isActive)).map(factory)
+  }
+  
+  def getSystemProducers: Seq[ProducerModel] = {
+    waspDB.getAllDocumentsByField[ProducerModel]("isSystem", new BsonBoolean(true)).map(factory)
+  }
+  
+  def getNonSystemProducers: Seq[ProducerModel] = {
+    waspDB.getAllDocumentsByField[ProducerModel]("isSystem", new BsonBoolean(false)).map(factory)
   }
 
   def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel] = {

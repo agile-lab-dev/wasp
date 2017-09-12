@@ -139,7 +139,11 @@ class AllBLsTestWrapper {
     override def getById(id: String): Option[ProducerModel] = database.find(p => p._id.isDefined && p._id.get.asString().getValue == id)
 
     override def getActiveProducers(isActive: Boolean): Seq[ProducerModel] = database.filter(_.isActive == isActive)
-
+  
+    override def getSystemProducers: Seq[ProducerModel] = database.filter(_.isSystem == true)
+  
+    override def getNonSystemProducers: Seq[ProducerModel] = database.filter(_.isSystem == false)
+  
     override def getAll: Seq[ProducerModel] = database.toList
 
     override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {

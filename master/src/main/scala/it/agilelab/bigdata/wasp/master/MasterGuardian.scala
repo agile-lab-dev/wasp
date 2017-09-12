@@ -82,11 +82,12 @@ class MasterGuardian(env: {
   // TODO just for Class Loader debug.
   // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
   
-  // on startup non-system pipegraphs and associated consumers are deactivated
+  // non-system pipegraphs and associated consumers are deactivated on startup
   logger.info("Deactivating non-system pipegraphs...")
   setPipegraphsActive(env.pipegraphBL.getNonSystemPipegraphs, isActive = false)
   logger.info("Deactivated non-system pipegraphs")
   
+  // activate/deactivate system pipegraphs and associated consumers according to config on startup
   // TODO manage error in pipegraph initialization
   if (waspConfig.systemPipegraphsStart) {
     logger.info("Activating system pipegraphs...")

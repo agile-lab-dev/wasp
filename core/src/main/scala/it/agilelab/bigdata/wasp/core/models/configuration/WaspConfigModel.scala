@@ -14,6 +14,7 @@ case class WaspConfigModel(
 	                          defaultIndexedDatastore: String,
 	                          defaultKeyvalueDatastore: String,
 	                          systemPipegraphsStart: Boolean,
+	                          systemProducersStart: Boolean,
 	                          restServerHostname: String,
 	                          restServerPort: Int
                           )

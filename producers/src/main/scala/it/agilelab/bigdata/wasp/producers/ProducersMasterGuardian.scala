@@ -9,6 +9,7 @@ import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
+import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 
 import scala.collection.mutable
 
@@ -17,7 +18,10 @@ import scala.collection.mutable
 	*
 	* @author Nicolò Bidotti
 	*/
-class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}) extends ClusterAwareNodeGuardian with Logging {
+class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
+	  extends ClusterAwareNodeGuardian
+		with WaspConfiguration
+		with Logging {
 	// subscribe to producers topic using distributed publish subscribe
 	mediator ! Subscribe(WaspSystem.producersPubSubTopic, self)
 	
@@ -31,7 +35,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			.filterNot(_.isRemote) // filter only local ones
 			.map(producer => {
 			val producerId = producer._id.get.getValue.toHexString
-			if (producer.name == "LoggerProducer") { // logger producer is special
+			if (producer.name == InternalLogProducerGuardian.name) { // logger producer is special
 				producerId -> WaspSystem.loggerActor // do not instantiate, but get the already existing one from WaspSystem
 			} else {
 				val producerClass = Class.forName(producer.className)
@@ -44,9 +48,30 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	// remote producers, which run in a different JVM than the MasterGuardian (those with isRemote = true)
 	val remoteProducers: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
 	
-	// on startup all producers are deactivated
-	setProducersActive(env.producerBL.getActiveProducers(), isActive = false)
-	logger.info("Deactivated producers")
+	// on startup non-system producers are deactivated
+	logger.info("Deactivating non-system producers...")
+	setProducersActive(env.producerBL.getNonSystemProducers, isActive = false)
+	logger.info("Deactivated non-system producers")
+	
+	// activate/deactivate system producers according to config on startup
+	// TODO manage error in pipegraph initialization
+	if (waspConfig.systemProducersStart) {
+		logger.info("Activating system producers...")
+		
+		env.producerBL.getSystemProducers foreach {
+			producer => {
+				logger.info("Activating system producer \"" + producer.name + "\"...")
+				WaspSystem.masterGuardian ! StartProducer(producer._id.get.getValue.toHexString)
+				logger.info("Activated system producer \"" + producer.name + "\"")
+			}
+		}
+		
+		logger.info("Activated system producers")
+	} else {
+		logger.info("Deactivating system producers...")
+		setProducersActive(env.producerBL.getSystemProducers, isActive = false)
+		logger.info("Deactivated system producers")
+	}
 	
 	
 	private def setProducersActive(producers: Seq[ProducerModel], isActive: Boolean): Unit = {
