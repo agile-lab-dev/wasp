@@ -83,27 +83,27 @@ class MasterGuardian(env: {
   // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
   
   // on startup non-system pipegraphs and associated consumers are deactivated
-  setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs(false), isActive = false)
+  logger.info("Deactivating non-system pipegraphs...")
+  setPipegraphsActive(env.pipegraphBL.getNonSystemPipegraphs, isActive = false)
   logger.info("Deactivated non-system pipegraphs")
   
   // TODO manage error in pipegraph initialization
   if (waspConfig.systemPipegraphsStart) {
-    logger.info("Activating system pipegraphs")
+    logger.info("Activating system pipegraphs...")
   
-    // auto-start raw pipegraph
-    env.pipegraphBL.getByName("RawPipegraph") match {
-      case None => logger.error("RawPipegraph not found")
-      case Some(pipegraph) => self.actorRef ! StartPipegraph(pipegraph._id.get.getValue.toHexString)
+    env.pipegraphBL.getSystemPipegraphs foreach {
+      pipegraph => {
+        logger.info("Activating system pipegraph \"" + pipegraph.name + "\"...")
+        self.actorRef ! StartPipegraph(pipegraph._id.get.getValue.toHexString)
+        logger.info("Activated system pipegraph \"" + pipegraph.name + "\"")
+      }
     }
   
-    // auto-start logger pipegraph
-    env.pipegraphBL.getByName("LoggerPipegraph") match {
-      case None => logger.error("LoggerPipegraph not found")
-      case Some(pipegraph) => self.actorRef ! StartPipegraph(pipegraph._id.get.getValue.toHexString)
-    }
+    logger.info("Activated system pipegraphs")
   } else {
-    logger.info("Deactivating system pipegraphs")
-    setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs(), isActive = false)
+    logger.info("Deactivating system pipegraphs...")
+    setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs, isActive = false)
+    logger.info("Deactivated system pipegraphs")
   }
   
   private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
@@ -155,7 +155,6 @@ class MasterGuardian(env: {
       case Some(producer) => f(producer)
     }
   }
-  
   
   private def onEtl(idPipegraph: String, etlName: String, f: (PipegraphModel, String) => Either[String, String]) = {
     env.pipegraphBL.getById(idPipegraph) match {
