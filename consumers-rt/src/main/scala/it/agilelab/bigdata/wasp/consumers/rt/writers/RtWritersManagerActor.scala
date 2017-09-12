@@ -2,10 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.rt.writers
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.camel.{CamelMessage, Producer}
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, TopicBL, WebsocketBL}
-import it.agilelab.bigdata.wasp.core.elastic.CheckOrCreateIndex
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
@@ -50,10 +47,11 @@ class RtWritersManagerActor(env: {
     writer.writerType.wtype match {
       case "topic" => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
       case "index" => writer.writerType.product match {
-        case "elastic" => {
-          logger.debug("Starting a CamelElasticWriter")
-          Some(context.actorOf(Props(new CamelElasticWriter(env.indexBL, writer))))
-        }
+        case "elastic" => ???
+        //TODO Migrate to the RT plugin
+        //logger.debug("Starting a CamelElasticWriter")
+        //Some(context.actorOf(Props(new CamelElasticWriter(env.indexBL, writer))))
+
         case "solr" => ??? // TODO
         case _ => ??? // TODO exception?
       }
@@ -97,6 +95,8 @@ class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
   }
 }
 
+//TODO Migrate to the elastic consumer rt plugin
+/*
 class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer {
   val indexConfigOpt: Option[IndexModel] = indexBL.getById(writer.id.getValue.toHexString)
   if (indexConfigOpt.isEmpty) {
@@ -136,6 +136,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
   }
 
 }
+*/
 
 class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer{
 
