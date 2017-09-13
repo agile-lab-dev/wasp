@@ -7,7 +7,7 @@ import java.sql.Time
 
 object TimeFormatter {
 
-  val baseFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+  val baseFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 
   def format(time: Date): String = new SimpleDateFormat(baseFormat).format(time)
 
