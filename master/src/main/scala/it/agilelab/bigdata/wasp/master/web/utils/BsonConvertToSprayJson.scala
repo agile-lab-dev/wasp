@@ -34,9 +34,10 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
   implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat7(TopicModel.apply)
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat7(IndexModel.apply)
-  implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat3(ReaderModel.apply)
-  implicit val writeTypeFormat: RootJsonFormat[WriteType] = jsonFormat2(WriteType.apply)
-  implicit val writerModelFormat: RootJsonFormat[WriterModel] = jsonFormat3(WriterModel.apply)
+  implicit val readerTypeFormat: RootJsonFormat[ReaderType] = jsonFormat2(ReaderType.apply)
+  implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat3((name: String, endpointId: BsonObjectId, readerType: ReaderType) => ReaderModel.apply(name, endpointId, readerType))
+  implicit val writerTypeFormat: RootJsonFormat[WriterType] = jsonFormat2(WriterType.apply)
+  implicit val writerModelFormat: RootJsonFormat[WriterModel] = jsonFormat3((name: String, endpointId: BsonObjectId, writerType: WriterType) => WriterModel.apply(name, endpointId, writerType))
   implicit val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
   implicit val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
   implicit val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)

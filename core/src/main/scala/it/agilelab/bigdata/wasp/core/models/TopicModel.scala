@@ -1,8 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import com.typesafe.config.Config
-import org.mongodb.scala.bson.collection.mutable.Document
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonValue}
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 
 object TopicModel {

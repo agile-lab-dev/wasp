@@ -1,8 +1,6 @@
 package it.agilelab.bigdata.wasp.core
 
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.ReaderModel._
-import it.agilelab.bigdata.wasp.core.models.WriterModel._
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import org.mongodb.scala.bson.BsonObjectId
 
@@ -103,8 +101,8 @@ private[wasp] object LoggerPipegraph {
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
 		etl = List(ETLModel(
-			"write on index", List(TopicReader(loggerTopic._id.get, loggerTopic.name)),
-			IndexWriter(loggerIndex._id.get, loggerIndex.name), List(),None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic._id.get)),
+			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
 		rt = Nil,
 		dashboard = None,
@@ -165,8 +163,8 @@ private[wasp] object RawPipegraph {
 		creationTime = System.currentTimeMillis,
 		etl = List(ETLModel(
 			"write on index",
-			List(TopicReader(rawTopic._id.get, rawTopic.name)),
-			IndexWriter(rawIndex._id.get, rawIndex.name), List(), None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+			List(ReaderModel.kafkaReader(rawTopic.name, rawTopic._id.get)),
+			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
 		rt = Nil,
 		dashboard = None,

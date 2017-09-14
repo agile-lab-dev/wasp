@@ -25,7 +25,7 @@ class ConsumerRTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; 
   val strategy: Option[StrategyRT] = createStrategyRT(rt)
   lazy val kafkaReaders: List[Option[ActorRef]] = {
     rt.inputs.map { input =>
-      val topicOpt = env.topicBL.getById(input.id.getValue.toHexString)
+      val topicOpt = env.topicBL.getById(input.endpointId.getValue.toHexString)
       val ref = topicOpt match {
         case Some(topic) => {
           //subscribe(topic.name, self)
@@ -33,7 +33,7 @@ class ConsumerRTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; 
           Some(context.actorOf(Props(new CamelKafkaReader(ConfigManager.getKafkaConfig, topic.name, groupId = this.hashCode().toString, self))))
         }
         case None =>
-          logger.warn(s"RT ${rt.name} has the input id ${input.id.getValue.toHexString} which does not identify a topic")
+          logger.warn(s"RT ${rt.name} has the input id ${input.endpointId.getValue.toHexString} which does not identify a topic")
           None // Should never happen
       }
       ref
@@ -86,13 +86,13 @@ class ConsumerRTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; 
   
   // returns the topic type corresponding to the input given
   private def getTopicDataType(input: ReaderModel): String = {
-    val topicId = input.id.getValue.toHexString
+    val topicId = input.endpointId.getValue.toHexString
     val typeOpt = topicDataTypes.get(topicId)
     
     typeOpt match {
       case Some(topicDataType) => topicDataType // found in cache, simply return it
       case None => { // not found, get from db, add to cache, return it
-        val topicOpt = env.topicBL.getById(input.id.getValue.toHexString)
+        val topicOpt = env.topicBL.getById(input.endpointId.getValue.toHexString)
         val topicDataType = topicOpt.get.topicDataType
         
         topicDataTypes += topicId -> topicDataType

@@ -72,16 +72,16 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
   private def indexReaders(): List[StaticReader] =  {
     val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
     etl.inputs.flatMap({
-      case ReaderModel(id, name, readerType) =>
-        val readerTypeFixed = Utils.getIndexType(readerType, defaultDataStoreIndexed)
-        logger.info(s"Get index reader plugin $readerTypeFixed before was $readerType, plugin map: $plugins")
+      case ReaderModel(name, endpointId, readerType) =>
+        val readerProduct = readerType.getActualProduct
+        logger.info(s"Get index reader plugin $readerProduct before was $readerType, plugin map: $plugins")
 
-        val readerPlugin = plugins.get(readerTypeFixed)
+        val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
+          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
           } else {
           //TODO Check if readerType != topic
-          logger.warn(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
+          logger.warn(s"The $readerProduct plugin in indexReaders does not exists")
           None
           }
       })
@@ -92,11 +92,11 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
     */
   private def rawReaders(): List[StaticReader] = etl.inputs
     .flatMap({
-      case ReaderModel(id, name, readerType) =>
+      case ReaderModel(name, endpointId, readerType) =>
         logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
-        val readerPlugin = plugins.get(readerType)
+        val readerPlugin = plugins.get(readerType.getActualProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
+          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
           //TODO Check if readerType != topic
           logger.error(s"The $readerType plugin in rawReaders does not exists")
@@ -117,8 +117,8 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
    */
   private def topicModels(): List[Option[TopicModel]] = etl.inputs
     .flatMap({
-    case ReaderModel(id, name, TopicModel.readerType) =>
-      val topicOpt =  env.topicBL.getById(id.getValue.toHexString)
+    case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) =>
+      val topicOpt =  env.topicBL.getById(endpointId.getValue.toHexString)
       Some(topicOpt)
     case _ => None
   })
@@ -126,21 +126,21 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
 
   private def validationTask(): Unit = {
     etl.inputs.foreach({
-      case ReaderModel(id, name, TopicModel.readerType) => {
-        val topicOpt = env.topicBL.getById(id.getValue.toHexString)
+      case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) => {
+        val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
         if (topicOpt.isEmpty) {
           //TODO Better exception
-          throw new Exception(s"There isn't this topic: $id, $name")
+          throw new Exception(s"There isn't this topic: $endpointId, $name")
         }
       }
-      case ReaderModel(id, name, readerType) => {
-        val readerPlugin = plugins.get(readerType)
+      case ReaderModel(name, endpointId, readerType) => {
+        val readerPlugin = plugins.get(readerType.getActualProduct)
         if (readerPlugin.isDefined) {
-          readerPlugin.get.getSparkReader(id.getValue.toHexString, name)
+          readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name)
         } else {
           //TODO Better exception
-          logger.error(s"There isn't the plugin for this index: '$id', '$name', readerType: '$readerType'")
-          throw new Exception(s"There isn't this index: $id, $name")
+          logger.error(s"There isn't the plugin for this index: '$endpointId', '$name', readerType: '$readerType'")
+          throw new Exception(s"There isn't this index: $endpointId, $name")
         }
       }
     })

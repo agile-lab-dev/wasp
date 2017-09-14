@@ -154,14 +154,14 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   private def indexReaders(readers: List[ReaderModel]): List[StaticReader] = {
     val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
     readers.flatMap({
-      case ReaderModel(id, name, readerType) =>
-        val readerTypeFixed = Utils.getIndexType(readerType, defaultDataStoreIndexed)
-        logger.info(s"Get index reader plugin $readerTypeFixed before was $readerType, plugin map: $plugins")
-        val readerPlugin = plugins.get(readerTypeFixed)
+      case ReaderModel(name, endpointId, readerType) =>
+        val readerProduct = readerType.getActualProduct
+        logger.info(s"Get index reader plugin $readerProduct before was $readerType, plugin map: $plugins")
+        val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
+          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
-          logger.error(s"The ${Utils.getIndexType(readerType, defaultDataStoreIndexed)} plugin in indexReaders does not exists")
+          logger.error(s"The $readerProduct plugin in indexReaders does not exists")
           None
         }
       case _ => None
@@ -173,11 +173,11 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     */
   private def rawReaders(readers: List[ReaderModel]): List[StaticReader] = {
     readers.flatMap({
-      case ReaderModel(id, name, readerType) =>
+      case ReaderModel(name, endpointId, readerType) =>
         logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
-        val readerPlugin = plugins.get(readerType)
+        val readerPlugin = plugins.get(readerType.getActualProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(id.getValue.toHexString, name))
+          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
           logger.error(s"The $readerType plugin in rawReaders does not exists")
           None
