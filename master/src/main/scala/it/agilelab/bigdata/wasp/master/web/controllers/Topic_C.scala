@@ -2,10 +2,10 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
-import JsonResultsHelper._
-import it.agilelab.bigdata.wasp.core.models.TopicModel
 
 
 /**
@@ -23,11 +23,11 @@ object Topic_C extends Directives with JsonSupport {
           }
         }
       } ~
-        path(Segment) { id =>
+        path(Segment) { name =>
           get {
             complete {
               // complete with serialized Future result
-              getJsonOrNotFound[TopicModel](ConfigBL.topicBL.getById(id), id, "Topic model", _.toJson)
+              getJsonOrNotFound[TopicModel](ConfigBL.topicBL.getByName(name), name, "Topic model", _.toJson)
             }
 
           }

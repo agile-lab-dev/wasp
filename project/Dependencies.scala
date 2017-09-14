@@ -82,6 +82,7 @@ object Dependencies {
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
 	val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
+  val waspPluginElastic = "it.agilelab.bigdata.wasp.plugins" %% "wasp-elastic-spark" % "2.0.13-SNAPSHOT"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
 
 	// grouped dependencies, for convenience =============================================================================
@@ -145,7 +146,8 @@ object Dependencies {
 		Seq(
 			kafka,
 			kafkaStreaming,
-			quartz
+      quartz,
+      waspPluginElastic
 		)
 
 	val consumers_rt = akka ++ log4j ++
