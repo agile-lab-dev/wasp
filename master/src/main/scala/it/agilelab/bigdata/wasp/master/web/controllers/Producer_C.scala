@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartProducer, StopProducer}
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
 
 

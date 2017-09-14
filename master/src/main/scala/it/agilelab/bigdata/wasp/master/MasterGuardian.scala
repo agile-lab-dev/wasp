@@ -2,7 +2,8 @@ package it.agilelab.bigdata.wasp.master
 
 import java.util.Calendar
 
-import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
+import akka.actor.SupervisorStrategy._
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, SupervisorStrategy, actorRef2Scala}
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
@@ -12,10 +13,11 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
+import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
+import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS, _}
 
 
 object MasterGuardian extends WaspConfiguration with Logging {
@@ -78,7 +80,14 @@ class MasterGuardian(env: {
     extends ClusterAwareNodeGuardian
     with Logging {
   import MasterGuardian._
-  
+
+  override val supervisorStrategy: SupervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 100, withinTimeRange = 1.minute) {
+      case e: Exception =>
+        sender() ! Left(e.getMessage + "\n" + ExceptionUtils.getStackTrace(e))
+        Resume
+    }
+
   // TODO just for Class Loader debug.
   // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
   

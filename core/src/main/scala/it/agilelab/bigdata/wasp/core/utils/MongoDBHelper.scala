@@ -47,7 +47,9 @@ private[utils] trait MongoDBHelper extends Logging {
     logger.info(s"Locating document(s) by key $key with value $value on collection $collection")
     val query = BsonDocument(key -> value)
 
-    Option(getCollection(collection).find[T](query).headResult())
+    val document = getCollection(collection).find[T](query)
+    val documents = document.results()
+    documents.headOption
   }
 
   protected def getDocumentByQueryParams[T](queryParams: Map[String, BsonValue], collection: String)(implicit ct: ClassTag[T]): Option[T] = {
@@ -64,14 +66,18 @@ private[utils] trait MongoDBHelper extends Logging {
     logger.info(s"Locating document(s) by key $key with value $value on collection $collection")
     val query = BsonDocument(key -> value)
 
-    getCollection(collection).find[T](query).results()
+    val document = getCollection(collection).find[T](query)
+    val documents = document.results()
+    documents.headOption
   }
 
   protected def getAllDocuments[T](collection: String)(implicit ct: ClassTag[T]): Seq[T] = {
 
     logger.info(s"Locating document(s) on collection $collection")
 
-    getCollection(collection).find[T]().results()
+    val document = getCollection(collection).find[T]()
+    val documents = document.results()
+    documents.headOption
   }
 
   protected def addDocumentToCollection[T](collection: String, doc: T)(implicit ct: ClassTag[T]): Unit = {
