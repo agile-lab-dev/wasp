@@ -1,15 +1,15 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
+import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph, StopPipegraph}
 import it.agilelab.bigdata.wasp.core.models.PipegraphModel
-import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
+import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
-import JsonResultsHelper._
-import akka.http.scaladsl.model.StatusCodes
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 
 
 /**
@@ -48,52 +48,44 @@ object Pipegraph_C extends Directives with JsonSupport {
             }
           }
       } ~
-        pathPrefix(Segment) { id =>
-            path("start") {
-              post {
-                complete {
-                  WaspSystem.??[Either[String, String]](masterGuardian, StartPipegraph(id)) match {
-                    case Right(s) => s.toJson.toAngularOkResponse
-                    case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
-                  }
+        pathPrefix(Segment) { name =>
+          path("start") {
+            post {
+              complete {
+                WaspSystem.??[Either[String, String]](masterGuardian, StartPipegraph(name)) match {
+                  case Right(s) => s.toJson.toAngularOkResponse
+                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                 }
               }
-            } ~
+            }
+          } ~
             path("stop") {
               post {
                 complete {
                   // complete with serialized Future result
-                  WaspSystem.??[Either[String, String]](masterGuardian, StopPipegraph(id)) match {
+                  WaspSystem.??[Either[String, String]](masterGuardian, StopPipegraph(name)) match {
                     case Right(s) => s.toJson.toAngularOkResponse
                     case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                   }
                 }
               }
             } ~
-          pathEnd {
-            get {
-              complete {
-                // complete with serialized Future result
-                getJsonOrNotFound[PipegraphModel](ConfigBL.pipegraphBL.getById(id), id, "Pipegraph", _.toJson)
-              }
-            } ~
-              delete {
+            pathEnd {
+              get {
                 complete {
                   // complete with serialized Future result
-                  val result = ConfigBL.pipegraphBL.getById(id)
-                  runIfExists(result, () => ConfigBL.pipegraphBL.deleteById(id), id, "Pipegraph", "delete")
+                  getJsonOrNotFound[PipegraphModel](ConfigBL.pipegraphBL.getByName(name), name, "Pipegraph", _.toJson)
                 }
+              } ~
+                delete {
+                  complete {
+                    // complete with serialized Future result
+                    val result = ConfigBL.pipegraphBL.getByName(name)
+                    runIfExists(result, () => ConfigBL.pipegraphBL.deleteById(name), name, "Pipegraph", "delete")
+                  }
 
-              }
-          }
-        } ~
-        path("name" / Segment) { name: String =>
-          get {
-            complete {
-              getJsonOrNotFound[PipegraphModel](ConfigBL.pipegraphBL.getByName(name), name, "Pipegraph", _.toJson)
+                }
             }
-
-          }
         }
     }
   }

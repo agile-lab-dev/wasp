@@ -22,6 +22,10 @@ class AllBLsTestWrapper {
       database.find(p => p._id.get.asString().getValue == id)
     }
 
+    override def getByName(name: String): Option[BatchJobModel] = {
+      database.find(p => p.name == name)
+    }
+
     override def getPendingJobs(state: String): Seq[BatchJobModel] = {
       database.filter(p => p.state == state)
     }
@@ -40,6 +44,11 @@ class AllBLsTestWrapper {
       val index = database.filter(_._id.isDefined).indexWhere(b => b._id.get.asString().getValue == id_string)
       database.remove(index)
     }
+
+    override def deleteByName(name: String): Unit = {
+      val index = database.indexWhere(b => b.name == name)
+      database.remove(index)
+    }
   }
 
   val indexBL: IndexBL = new IndexBL {
@@ -52,6 +61,8 @@ class AllBLsTestWrapper {
     override def persist(indexModel: IndexModel): Unit = {
       database.+=(indexModel)
     }
+
+    override def getAll() = database
   }
 
   val mlModelBL: MlModelBL = new MlModelBL {

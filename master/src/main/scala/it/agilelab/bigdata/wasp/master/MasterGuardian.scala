@@ -15,7 +15,7 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{Duration, DurationInt, HOURS, MILLISECONDS}
+import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
 
 
 object MasterGuardian extends WaspConfiguration with Logging {
@@ -95,7 +95,7 @@ class MasterGuardian(env: {
     env.pipegraphBL.getSystemPipegraphs foreach {
       pipegraph => {
         logger.info("Activating system pipegraph \"" + pipegraph.name + "\"...")
-        self.actorRef ! StartPipegraph(pipegraph._id.get.getValue.toHexString)
+        self.actorRef ! StartPipegraph(pipegraph.name)
         logger.info("Activated system pipegraph \"" + pipegraph.name + "\"")
       }
     }
@@ -136,9 +136,9 @@ class MasterGuardian(env: {
     logger.info(s"Call invocation: message: $message result: $result")
     sender ! result
   }
-  
-  private def onPipegraph(id: String, f: PipegraphModel => Either[String, String]) = {
-    env.pipegraphBL.getById(id) match {
+
+  private def onPipegraph(name: String, f: PipegraphModel => Either[String, String]) = {
+    env.pipegraphBL.getByName(name) match {
       case None => Right("Pipegraph not retrieved")
       case Some(pipegraph) => f(pipegraph)
     }
@@ -149,23 +149,23 @@ class MasterGuardian(env: {
     rtConsumersMasterGuardian ! RestartConsumers
     Right("Pipegraphs restart started.")
   }
-  
-  private def onProducer(id: String, f: ProducerModel => Either[String, String]) = {
-    env.producerBL.getById(id) match {
+
+  private def onProducer(name: String, f: ProducerModel => Either[String, String]) = {
+    env.producerBL.getByName(name) match {
       case None => Right("Producer not retrieved")
       case Some(producer) => f(producer)
     }
   }
-  
-  private def onEtl(idPipegraph: String, etlName: String, f: (PipegraphModel, String) => Either[String, String]) = {
-    env.pipegraphBL.getById(idPipegraph) match {
+
+  private def onEtl(pipegraphName: String, etlName: String, f: (PipegraphModel, String) => Either[String, String]) = {
+    env.pipegraphBL.getByName(pipegraphName) match {
       case None => Left("ETL not retrieved")
       case Some(pipegraph) => f(pipegraph, etlName)
     }
   }
 
-  private def onBatchJob(id: String, f: BatchJobModel => Either[String, String]) = {
-    env.batchJobBL.getById(id) match {
+  private def onBatchJob(name: String, f: BatchJobModel => Either[String, String]) = {
+    env.batchJobBL.getByName(name) match {
       case None => Left("BatchJob not retrieved")
       case Some(batchJob) => f(batchJob)
     }

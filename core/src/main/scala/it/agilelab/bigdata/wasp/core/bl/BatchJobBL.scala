@@ -5,14 +5,14 @@ import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.bson.BsonString
 import org.mongodb.scala.bson.BsonObjectId
 
-import scala.concurrent.Future
-
 trait BatchJobBL {
 
 
   def getPendingJobs (state: String = JobStateEnum.PENDING): Seq[BatchJobModel]
 
   def getById(id: String):  Option[BatchJobModel]
+
+  def getByName(name: String): Option[BatchJobModel]
 
   def getAll: Seq[BatchJobModel]
 
@@ -32,6 +32,8 @@ trait BatchJobBL {
 
   def deleteById(id_string: String): Unit
 
+  def deleteByName(name: String): Unit
+
 
 }
 
@@ -49,6 +51,15 @@ class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
     waspDB.getDocumentByID[BatchJobModel](BsonObjectId(id)).map(batchJob => {
       factory(batchJob)
     })
+  }
+
+  def deleteByName(name: String): Unit = {
+    val batchJobBL = getByName(name)
+    if (batchJobBL.isDefined) {
+      waspDB.deleteById[BatchJobModel](batchJobBL.get._id.get)
+    } else {
+      throw new Exception(s"Batch Job with name $name NOT FOUND")
+    }
   }
 
   def getAll: Seq[BatchJobModel] = {
@@ -70,6 +81,12 @@ class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
 
   def deleteById(id_string: String): Unit = {
     waspDB.deleteById[BatchJobModel](BsonObjectId(id_string))
+  }
+
+  def getByName(name: String): Option[BatchJobModel] = {
+    waspDB.getDocumentByField[BatchJobModel]("name", new BsonString(name)).map(batchJob => {
+      factory(batchJob)
+    })
   }
 }
 

@@ -22,52 +22,55 @@ object Status_C extends Directives with JsonSupport {
         "POST" -> "Insert a new pipegraph.",
         "PUT" -> "Update an existing pipegraph."
       ),
-      "/pipegraphs/{id}" -> Map(
-        "GET" -> "Get the pipegraph with the specified id.",
-        "DELETE" -> "Delete the pipegraph with the specified id."
+      "/pipegraphs/{name}" -> Map(
+        "GET" -> "Get the pipegraph with the specified name.",
+        "DELETE" -> "Delete the pipegraph with the specified name."
       ),
-      "/pipegraphs/name/{name}" -> Map(
-        "GET" -> "Get the pipegraph with the specified name."
+      "/pipegraphs/{name}/start" -> Map(
+        "POST" -> "Start the pipegraph with the specified name."
       ),
-      "/pipegraphs/{id}/start" -> Map(
-        "POST" -> "Start the pipegraph with the specified id."
-      ),
-      "/pipegraphs/{id}/stop" -> Map(
-        "POST" -> "Stop the pipegraph with the specified id."
+      "/pipegraphs/{name}/stop" -> Map(
+        "POST" -> "Stop the pipegraph with the specified name."
       ),
       "/producers" -> Map(
         "GET" -> "Get all the procuders in the system.",
         "PUT" -> "Update an existing pipegraph."
       ),
-      "/producers/{id}" -> Map(
-        "GET" -> "Get the producer with the specified id."
+      "/producers/{name}" -> Map(
+        "GET" -> "Get the producer with the specified name."
       ),
-      "/producers/{id}/start" -> Map(
-        "POST" -> "Start the producer with the specified id."
+      "/producers/{name}/start" -> Map(
+        "POST" -> "Start the producer with the specified name."
       ),
-      "/producers/{id}/stop" -> Map(
-        "POST" -> "Stop the producer with the specified id."
+      "/producers/{name}/stop" -> Map(
+        "POST" -> "Stop the producer with the specified name."
       ),
       "/topics" -> Map(
         "GET" -> "Get all the topics in the system."
       ),
-      "/topics/{id}" -> Map(
-        "GET" -> "Get the producer with the specified id."
+      "/topics/{name}" -> Map(
+        "GET" -> "Get the producer with the specified name."
       ),
       "/batchjobs" -> Map(
         "GET" -> "Get all the batchjobs in the system.",
         "POST" -> "Insert a new batchjobs.",
         "PUT" -> "Update an existing batchjobs."
       ),
-      "/batchjobs/{id}" -> Map(
+      "/batchjobs/{name}" -> Map(
         "GET" -> "Get the batchjobs with the specified id.",
-        "DELETE" -> "Delete the batchjobs with the specified id."
+        "DELETE" -> "Delete the batchjobs with the specified name."
       ),
-      "/batchjobs/{id}/start" -> Map(
-        "POST" -> "Start the batchjobs with the specified id."
+      "/batchjobs/{name}/start" -> Map(
+        "POST" -> "Start the batchjobs with the specified name."
       ),
       "/index/{name}" -> Map(
-        "GET" -> "Get the pipegraph with the specified name."
+        "GET" -> "Get the index with the specified name."
+      ),
+      "/indexes" -> Map(
+        "GET" -> "Get all the indexes."
+      ),
+      "/indexes/{name}" -> Map(
+        "GET" -> "Get the index with the specified name."
       ),
       "/mlmodels" -> Map(
         "GET" -> "Get all the ML models in the system.",

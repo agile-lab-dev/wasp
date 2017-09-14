@@ -3,9 +3,9 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.models.MlModelOnlyInfo
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
-import JsonResultsHelper._
 
 
 /**

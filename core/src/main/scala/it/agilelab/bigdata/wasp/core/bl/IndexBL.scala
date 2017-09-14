@@ -1,10 +1,8 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{IndexModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString}
-
-import scala.concurrent.Future
 
 trait IndexBL {
   def getByName(name: String): Option[IndexModel]
@@ -12,6 +10,8 @@ trait IndexBL {
   def getById(id: String): Option[IndexModel]
 
   def persist(indexModel: IndexModel): Unit
+
+  def getAll(): Seq[IndexModel]
 
 }
 
@@ -36,4 +36,6 @@ class IndexBLImp(waspDB: WaspDB) extends IndexBL {
 
   override def persist(indexModel: IndexModel): Unit =
     waspDB.insert[IndexModel](indexModel)
+
+  override def getAll(): Seq[IndexModel] = waspDB.getAllRaw[IndexModel]().map(factory)
 }

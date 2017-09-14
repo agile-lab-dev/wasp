@@ -1,15 +1,15 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartProducer, StopProducer}
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
-import JsonResultsHelper._
-import akka.http.scaladsl.model.StatusCodes
-import it.agilelab.bigdata.wasp.core.WaspSystem
 
 
 /**
@@ -38,30 +38,30 @@ object Producer_C extends Directives with JsonSupport {
             }
           }
       } ~
-        path(Segment) { id =>
+        path(Segment) { name =>
           get {
             complete {
               // complete with serialized Future result
-              getJsonOrNotFound[ProducerModel](ConfigBL.producerBL.getById(id), id, "Producer model", _.toJson)
+              getJsonOrNotFound[ProducerModel](ConfigBL.producerBL.getByName(name), name, "Producer model", _.toJson)
             }
 
           }
 
         } ~
-        path(Segment / "start") { id =>
+        path(Segment / "start") { name =>
           post {
             complete {
-              WaspSystem.??[Either[String, String]](masterGuardian, StartProducer(id)) match {
+              WaspSystem.??[Either[String, String]](masterGuardian, StartProducer(name)) match {
                 case Right(s) => s.toJson.toAngularOkResponse
                 case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
               }
             }
           }
         } ~
-        path(Segment / "stop") { id =>
+        path(Segment / "stop") { name =>
           post {
             complete {
-              WaspSystem.??[Either[String, String]](masterGuardian, StopProducer(id)) match {
+              WaspSystem.??[Either[String, String]](masterGuardian, StopProducer(name)) match {
                 case Right(s) => s.toJson.toAngularOkResponse
                 case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
               }
