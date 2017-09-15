@@ -41,7 +41,7 @@ object Settings {
 	
 	// global exclusions for slf4j implementations and the like
 	lazy val globalExclusions = Seq(
-		SbtExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
+		sbt.ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
 	)
 	
 	// base build settings
@@ -67,10 +67,14 @@ object Settings {
 	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings ++ bintraySettings
 	
 	// sbt-buildinfo action to get current git commit
-	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") { Process("git rev-parse HEAD").lines.head }
+	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") {
+		scala.sys.process.Process("git rev-parse HEAD").lineStream.head
+	}
 	
 	// sbt-buildinfo action to get git working directory status
-	val gitWorkDirStatusAction = BuildInfoKey.action[Boolean]("gitWorkDirStatus") { Process("git status --porcelain").lines.isEmpty }
+	val gitWorkDirStatusAction = BuildInfoKey.action[Boolean]("gitWorkDirStatus") {
+		scala.sys.process.Process("git status --porcelain").lineStream.isEmpty
+	}
 	
 	// sbt-buildinfo plugin configuration
 	lazy val sbtBuildInfoSettings = Seq(
