@@ -79,34 +79,36 @@ class MasterGuardian(env: {
     with Logging {
   import MasterGuardian._
 
+  override def preStart: Unit = {
+    // TODO just for Class Loader debug.
+    // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
 
-  // TODO just for Class Loader debug.
-  // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
-  
-  // non-system pipegraphs and associated consumers are deactivated on startup
-  logger.info("Deactivating non-system pipegraphs...")
-  setPipegraphsActive(env.pipegraphBL.getNonSystemPipegraphs, isActive = false)
-  logger.info("Deactivated non-system pipegraphs")
-  
-  // activate/deactivate system pipegraphs and associated consumers according to config on startup
-  // TODO manage error in pipegraph initialization
-  if (waspConfig.systemPipegraphsStart) {
-    logger.info("Activating system pipegraphs...")
-  
-    env.pipegraphBL.getSystemPipegraphs foreach {
-      pipegraph => {
-        logger.info("Activating system pipegraph \"" + pipegraph.name + "\"...")
-        self.actorRef ! StartPipegraph(pipegraph.name)
-        logger.info("Activated system pipegraph \"" + pipegraph.name + "\"")
+    // non-system pipegraphs and associated consumers are deactivated on startup
+    logger.info("Deactivating non-system pipegraphs...")
+    setPipegraphsActive(env.pipegraphBL.getNonSystemPipegraphs, isActive = false)
+    logger.info("Deactivated non-system pipegraphs")
+
+    // activate/deactivate system pipegraphs and associated consumers according to config on startup
+    // TODO manage error in pipegraph initialization
+    if (waspConfig.systemPipegraphsStart) {
+      logger.info("Activating system pipegraphs...")
+
+      env.pipegraphBL.getSystemPipegraphs foreach {
+        pipegraph => {
+          logger.info("Activating system pipegraph \"" + pipegraph.name + "\"...")
+          self.actorRef ! StartPipegraph(pipegraph.name)
+          logger.info("Activated system pipegraph \"" + pipegraph.name + "\"")
+        }
       }
+
+      logger.info("Activated system pipegraphs")
+    } else {
+      logger.info("Deactivating system pipegraphs...")
+      setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs, isActive = false)
+      logger.info("Deactivated system pipegraphs")
     }
-  
-    logger.info("Activated system pipegraphs")
-  } else {
-    logger.info("Deactivating system pipegraphs...")
-    setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs, isActive = false)
-    logger.info("Deactivated system pipegraphs")
   }
+
   
   private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
     pipegraphs.foreach(pipegraph => env.pipegraphBL.setIsActive(pipegraph, isActive))
@@ -153,7 +155,7 @@ class MasterGuardian(env: {
 
   private def onProducer(name: String, f: ProducerModel => Either[String, String]) = {
     env.producerBL.getByName(name) match {
-      case None => Right("Producer not retrieved")
+      case None => Left("Producer not retrieved")
       case Some(producer) => f(producer)
     }
   }

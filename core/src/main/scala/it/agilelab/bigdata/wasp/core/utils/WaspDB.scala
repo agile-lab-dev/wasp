@@ -281,9 +281,10 @@ object WaspDB extends Logging {
         val completewaspDB = new WaspDBImp(mongoDBDatabase)
         completewaspDB.initializeCollections()
         waspDB = completewaspDB
-/*
-      case None => throw new UnknownError("Unknown Error during db initialization")
-    }*/
+
+    /*
+          case None => throw new UnknownError("Unknown Error during db initialization")
+        }*/
 
   }
 
