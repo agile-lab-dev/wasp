@@ -67,8 +67,7 @@ private[utils] trait MongoDBHelper extends Logging {
     val query = BsonDocument(key -> value)
 
     val document = getCollection(collection).find[T](query)
-    val documents = document.results()
-    documents.headOption
+    document.results()
   }
 
   protected def getAllDocuments[T](collection: String)(implicit ct: ClassTag[T]): Seq[T] = {
@@ -76,8 +75,7 @@ private[utils] trait MongoDBHelper extends Logging {
     logger.info(s"Locating document(s) on collection $collection")
 
     val document = getCollection(collection).find[T]()
-    val documents = document.results()
-    documents.headOption
+    document.results()
   }
 
   protected def addDocumentToCollection[T](collection: String, doc: T)(implicit ct: ClassTag[T]): Unit = {

@@ -75,6 +75,8 @@ services:
     volumes:
       - "./spark-worker:/etc/spark"
       - "./data/spark-worker:/tmp/data"
+    depends_on:
+      - spark-master
   elastickibana:
     image: devdb/kibana:latest
     container_name: elastickibana
