@@ -15,7 +15,8 @@ abstract class ClusterAwareNodeGuardian extends ClusterAware {
     OneForOneStrategy(maxNrOfRetries = 100, withinTimeRange = 1.minute) {
       case e: Exception =>
         if (sender() != null) {
-          sender() ! Left(e.getMessage + "\n" + ExceptionUtils.getStackTrace(e))
+          sender() ! Left(s"${e.getMessage}\n${ExceptionUtils.getStackTrace(e)}")
+          log.error(s"The actor ${self.path.address} throw an exception ${e.getMessage}\n${ExceptionUtils.getStackTrace(e)}")
         }
         Resume
     }
