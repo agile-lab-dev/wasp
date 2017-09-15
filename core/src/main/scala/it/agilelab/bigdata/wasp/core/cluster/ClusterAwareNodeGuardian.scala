@@ -1,26 +1,23 @@
 package it.agilelab.bigdata.wasp.core.cluster
 
-import java.util.concurrent.TimeoutException
-
-import akka.actor._
 import akka.actor.SupervisorStrategy._
+import akka.actor._
 import akka.pattern.gracefulStop
-import akka.util.Timeout
+import it.agilelab.bigdata.wasp.core.WaspEvent.{NodeInitialized, OutputStreamInitialized}
+import it.agilelab.bigdata.wasp.core.WaspSystem
+import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.duration._
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
-import it.agilelab.bigdata.wasp.core.WaspEvent.NodeInitialized
-import it.agilelab.bigdata.wasp.core.WaspSystem
 
 abstract class ClusterAwareNodeGuardian extends ClusterAware {
   // customize
-  override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1.minute) {
-      case _: ActorInitializationException => Stop
-      case _: IllegalArgumentException => Stop
-      case _: IllegalStateException => Restart
-      case _: TimeoutException => Escalate
-      case _: Exception => Escalate
+  override val supervisorStrategy: SupervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 100, withinTimeRange = 1.minute) {
+      case e: Exception =>
+        if (sender() != null) {
+          sender() ! Left(e.getMessage + "\n" + ExceptionUtils.getStackTrace(e))
+        }
+        Resume
     }
 
   override def preStart(): Unit = {
