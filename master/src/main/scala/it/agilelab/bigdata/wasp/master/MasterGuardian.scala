@@ -79,7 +79,7 @@ class MasterGuardian(env: {
     with Logging {
   import MasterGuardian._
 
-  override def preStart: Unit = {
+  override def preStart(): Unit = {
     // TODO just for Class Loader debug.
     // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
 

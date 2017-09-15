@@ -21,7 +21,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumerSparkPlugi
 
   override def createSparkWriterStreaming(env: {val topicBL: TopicBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ssc: StreamingContext, writerModel: WriterModel): Option[SparkStreamingWriter] = {
 
-    val writerType = writerModel.writerType.category
+    val writerType = writerModel.writerType.product.getOrElse(writerModel.writerType.category)
     // Get the plugin, the index type does not exists anymore.
     // It was replace by the right data store like elastic or solr
     val backCompatibilityWriteType = Utils.getIndexType(writerType, defaultDataStoreIndexed)
@@ -37,7 +37,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumerSparkPlugi
   }
 
   override def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter] = {
-    val writerType = writerModel.writerType.category
+    val writerType = writerModel.writerType.product.getOrElse(writerModel.writerType.category)
     // Get the plugin, the index type does not exists anymore.
     // It was replace by the right data store like elastic or solr
     val backCompatibilityWriteType = Utils.getIndexType(writerType, defaultDataStoreIndexed)

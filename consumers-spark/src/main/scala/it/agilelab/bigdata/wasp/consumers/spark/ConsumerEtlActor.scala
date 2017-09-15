@@ -6,7 +6,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, M
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.Utils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
@@ -144,9 +143,9 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
         }
       }
     })
-    val topicReaderModelNumber = etl.inputs.count(_.readerType == TopicModel.readerType)
-    if (topicReaderModelNumber == 0) throw new Exception("There is NO topic to read data")
-    if (topicReaderModelNumber != 1) throw new Exception("MUST be only ONE topic")
+    val topicReaderModelNumber = etl.inputs.count(_.readerType.category == TopicModel.readerType)
+    if (topicReaderModelNumber == 0) throw new Exception("There is NO topic to read data, inputs: " + etl.inputs)
+    if (topicReaderModelNumber != 1) throw new Exception("MUST be only ONE topic, inputs: " + etl.inputs)
   }
   //TODO move in the extender class
   def mainTask(): Unit = {

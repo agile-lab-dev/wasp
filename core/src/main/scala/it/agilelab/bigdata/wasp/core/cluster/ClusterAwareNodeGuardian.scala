@@ -12,13 +12,13 @@ import scala.concurrent.duration._
 abstract class ClusterAwareNodeGuardian extends ClusterAware {
   // customize
   override val supervisorStrategy: SupervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 100, withinTimeRange = 1.minute) {
+    OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 1.minute) {
       case e: Exception =>
         if (sender() != null) {
           sender() ! Left(s"${e.getMessage}\n${ExceptionUtils.getStackTrace(e)}")
           log.error(s"The actor ${self.path.address} throw an exception ${e.getMessage}\n${ExceptionUtils.getStackTrace(e)}")
         }
-        Resume
+        Restart
     }
 
   override def preStart(): Unit = {
