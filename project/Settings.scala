@@ -16,16 +16,7 @@ object Settings {
 		organization := "it.agilelab.bigdata.wasp",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
-		licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
-		publishMavenStyle := true,
-		// How to create a credential file --> https://stackoverflow.com/questions/4348805/how-to-access-a-secured-nexus-with-sbt
-		publishTo := {
-			val nexus = "http://server01.cluster01.atscom.it:8081/"
-			if (isSnapshot.value)
-				Some("snapshots" at nexus + "repository/maven-snapshots")
-			else
-				Some("releases" at nexus + "repository/maven-releases")
-		}
+    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 	)
 	
 	// custom resolvers for dependencies
