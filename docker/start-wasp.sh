@@ -31,7 +31,7 @@ DOCKER_LOG4J2_OPTS="-v $SCRIPT_DIR:/root/configurations"
 DOCKER_OPTS="-it --network=wasp-docker --rm "
 DOCKER_IMAGE="sgrio/java-oracle:jre_8 "
 echo "Build master components Image"
-docker run  ${DOCKER_LOG4J2_OPTS} ${DOCKER_OPTS} --name master -p 8082:8080 -v "$SCRIPT_DIR/../master/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE}  /root/wasp/bin/wasp-master ${WASP_OPTS} -Dwasp.akka.remote.netty.tcp.hostname="master" 2>&1                         | sed "s/.*/$r master           |$d &/" &
+docker run  ${DOCKER_LOG4J2_OPTS} ${DOCKER_OPTS} --name master -p 9000:9000 -v "$SCRIPT_DIR/../master/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE}  /root/wasp/bin/wasp-master ${WASP_OPTS} -Dwasp.akka.remote.netty.tcp.hostname="master" 2>&1                         | sed "s/.*/$r master           |$d &/" &
 docker run  ${DOCKER_LOG4J2_OPTS} ${DOCKER_OPTS} --name producers -v "$SCRIPT_DIR/../producers/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE}  /root/wasp/bin/wasp-producers ${WASP_OPTS} -Dwasp.akka.remote.netty.tcp.hostname="producers" 2>&1                          | sed "s/.*/$g producers        |$d &/" &
 docker run  ${DOCKER_LOG4J2_OPTS} ${DOCKER_OPTS} --name consumers-rt -v "$SCRIPT_DIR/../consumers-rt/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE}  /root/wasp/bin/wasp-consumers-rt ${WASP_OPTS} -Dwasp.akka.remote.netty.tcp.hostname="consumers-rt" 2>&1              | sed "s/.*/$y consumers-rt     |$d &/" &
 docker run  ${DOCKER_LOG4J2_OPTS} ${DOCKER_OPTS} --name consumers-spark -v "$SCRIPT_DIR/../consumers-spark/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE}  /root/wasp/bin/wasp-consumers-spark ${WASP_OPTS} -Dwasp.akka.remote.netty.tcp.hostname="consumers-spark" 2>&1  | sed "s/.*/$b consumers-spark  |$d &/" &
