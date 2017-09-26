@@ -48,8 +48,21 @@ object Settings {
 	lazy val buildSettings = Seq(
 		resolvers ++= customResolvers,
 		exportJars := true,
-		scalacOptions ++= Seq("-encoding", "UTF-8", s"-target:jvm-${Versions.jdk}", "-feature", "-language:_", "-deprecation", "-unchecked", "-Xlint"),
-		javacOptions ++= Seq("-encoding", "UTF-8", "-source", Versions.jdk, "-target", Versions.jdk, "-Xlint:deprecation", "-Xlint:unchecked"),
+		scalacOptions ++= Seq(
+			"-encoding", "UTF-8",
+			s"-target:jvm-${Versions.jdk}",
+			"-feature",
+			"-language:_",
+			"-deprecation",
+			"-unchecked",
+			"-Xlint",
+			"-Xmax-classfile-name", "72"),
+		javacOptions ++= Seq(
+			"-encoding", "UTF-8",
+			"-source", Versions.jdk,
+			"-target", Versions.jdk,
+			"-Xlint:deprecation",
+			"-Xlint:unchecked"),
 		scalaVersion := Versions.scala,
 		excludeDependencies ++= globalExclusions
 	)
