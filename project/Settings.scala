@@ -13,7 +13,7 @@ import sbtbuildinfo.{BuildInfoKey, BuildInfoOption}
 object Settings {
 	// settings related to project information
 	lazy val projectSettings = Seq(
-		organization := "it.agilelab.bigdata.wasp",
+		organization := "it.agilelab",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
     licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
