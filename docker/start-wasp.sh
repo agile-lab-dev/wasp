@@ -16,7 +16,7 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 # prepare binaries for running
 cd $SCRIPT_DIR/..
 echo "Running sbt stage task..."
-#sbt stage
+sbt stage
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR
