@@ -8,7 +8,7 @@ case class ProducerModel(override val name: String,
                          className: String,
                          id_topic: Option[BsonObjectId],
                          var isActive: Boolean,
-                         configuration: Option[BsonDocument] = None,
+                         configuration: Option[String] = None,
                          isRemote: Boolean,
                          isSystem: Boolean,
                          _id: Option[BsonObjectId] = None) extends Model {
