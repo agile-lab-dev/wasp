@@ -5,8 +5,7 @@ services:
     container_name: mongo
     ports:
      - "27017:27017"
-    volumes:
-     - "./data/mongo:/data/db"
+
   zookeeper:
     image: wurstmeister/zookeeper:3.4.6
     container_name: zookeeper
@@ -14,20 +13,22 @@ services:
       - "2182:2181"
     volumes:
       - "./zookeeper:/opt/zookeeper-3.4.6/conf"
-      - "./data/zookeeper:/opt/zookeeper-3.4.6/data"
 
   kafka:
     image: wurstmeister/kafka:0.10.2.1
     container_name: kafka
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka # the standard ip of docker0
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_BROKER_ID: 1001
+      KAFKA_BROKER_ID: 1
+      KAFKA_SESSION_TIMEOUT_MS: 5000
     ports:
       - "9092:9092"
-    volumes:
-      - "./data/kafka:/kafka/"
+    entrypoint: [ # change the entrypoint of the image; this starts the boker only when its Zookeeper node for the id disappears
+      "bash",
+      "-c",
+      "while [[ $$(echo get /brokers/ids/$$KAFKA_BROKER_ID | opt/kafka_2.12-0.10.2.1/bin/zookeeper-shell.sh zookeeper:2181 2>&1 | grep \"Node does not exist\" | wc -l) -eq 0 ]]; do echo \"Sleeping for $$((KAFKA_SESSION_TIMEOUT_MS/1000)) seconds waiting for the Zookeeper node for this broker (id $$KAFKA_BROKER_ID) to expire...\"; sleep $$((KAFKA_SESSION_TIMEOUT_MS/1000)); done; echo \"No Zookeeper node for this broker (id $$KAFKA_BROKER_ID) found, starting...\"; start-kafka.sh"]
     depends_on:
       - zookeeper
 
@@ -52,7 +53,6 @@ services:
       - "18080:18080"
     volumes:
       - "./spark-master:/etc/spark"
-      - "./data/spark-master:/tmp/data"
 
   spark-worker:
     image: gettyimages/spark:2.2.0-hadoop-2.7
@@ -74,9 +74,9 @@ services:
       - "8081:8081"
     volumes:
       - "./spark-worker:/etc/spark"
-      - "./data/spark-worker:/tmp/data"
     depends_on:
       - spark-master
+
   elastickibana:
     image: devdb/kibana:latest
     container_name: elastickibana
@@ -87,7 +87,7 @@ services:
     volumes:
       - "./elasticsearch:/opt/elasticsearch/config"
       - "./kibana:/opt/kibana/config"
-      - "./data/elastickibana:/opt/elasticsearch/data/elasticsearch"
+
 networks:
   default:
     external:
