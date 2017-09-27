@@ -1,7 +1,7 @@
-package it.agilelab.bigdata.wasp.producers
+package it.agilelab.bigdata.wasp.producers.launcher
 
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
-import it.agilelab.bigdata.wasp.producers.launcher.ProducersNodeLauncherTrait
+import it.agilelab.bigdata.wasp.producers.NifiProducerModel
 
 /**
   * Launcher for the NifiProducer.
