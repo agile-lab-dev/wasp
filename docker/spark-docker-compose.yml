@@ -1,0 +1,52 @@
+version: '2'
+services:
+
+  spark-master:
+    # Change to the spark version when gettyimages will put the image tag
+    image: gettyimages/spark:2.2.0-hadoop-2.7
+    command: ["bin/spark-class","org.apache.spark.deploy.master.Master","-h","spark-master"]
+    container_name: spark-master
+    environment:
+      SPARK_CONF_DIR: /etc/spark
+    expose:
+      - "7001"
+      - "7002"
+      - "7003"
+      - "7004"
+      - "7005"
+      - "7006"
+    ports:
+      - "6066:6066"
+      - "7077:7077"
+      - "8080:8080"
+      - "18080:18080"
+    volumes:
+      - "./spark-master:/etc/spark"
+
+  spark-worker:
+    image: gettyimages/spark:2.2.0-hadoop-2.7
+    command: ["bin/spark-class","org.apache.spark.deploy.worker.Worker","spark://spark-master:7077"]
+    container_name: spark-worker
+    environment:
+      SPARK_CONF_DIR: /etc/spark
+      SPARK_WORKER_CORES: 4
+      SPARK_WORKER_MEMORY: 2g
+      SPARK_WORKER_PORT: 8881
+    expose:
+      - "7012"
+      - "7013"
+      - "7014"
+      - "7015"
+      - "7016"
+      - "8881"
+    ports:
+      - "8081:8081"
+    volumes:
+      - "./spark-worker:/etc/spark"
+    depends_on:
+      - spark-master
+
+networks:
+  default:
+    external:
+      name: wasp-docker

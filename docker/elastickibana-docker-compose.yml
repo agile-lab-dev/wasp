@@ -1,0 +1,18 @@
+version: '2'
+services:
+
+  elastickibana:
+    image: devdb/kibana:latest
+    container_name: elastickibana
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - "./elasticsearch:/opt/elasticsearch/config"
+      - "./kibana:/opt/kibana/config"
+
+networks:
+  default:
+    external:
+      name: wasp-docker

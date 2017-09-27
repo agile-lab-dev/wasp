@@ -4,7 +4,7 @@ echo "Finding whether docker-compose can be run without sudo"
 
 # attempt to run an innocuous docker-compose command
 set +e
-docker-compose -f $SCRIPT_DIR/externalizable-services-docker-compose.yml ps &> /dev/null
+docker-compose -f $SCRIPT_DIR/mongodb-docker-compose.yml ps &> /dev/null
 EXIT_CODE=$?
 set -e
 
