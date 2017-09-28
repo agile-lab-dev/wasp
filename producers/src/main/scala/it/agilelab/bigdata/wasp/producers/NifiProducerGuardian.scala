@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.producers
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpMethods, HttpRequest, HttpResponse}
 import akka.routing.BalancingPool
@@ -13,9 +13,18 @@ import it.agilelab.bigdata.wasp.core.models.{ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
-import spray.json._
-import DefaultJsonProtocol._
 import scala.concurrent.Future
+import spray.json._
+
+object NifiRquestJsonProtocol extends DefaultJsonProtocol {
+  implicit def nifiPlatform = jsonFormat2(NifiPlatform.apply)
+  implicit def nifiRequest = jsonFormat3(NifiRequest.apply)
+}
+
+case class NifiRequest(action: String, id: String, id_rpg: List[NifiPlatform])
+case class NifiPlatform(id_platform: String, id_edge: List[String])
+
+import NifiRquestJsonProtocol._
 
 class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
   extends Actor
@@ -26,8 +35,8 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
 
   var nifiProducerConf: Option[ProducerModel] = env.producerBL.getById(producerId)
 
-  val processGroupId: Option[String] = getProcessGroupId(nifiProducerConf)
-  val url = s"http://localhost:8084/nifi-api/flow/process-groups/c257f39a-015e-1000-c58b-ec0b29141625"
+  val configuration: Option[String] = getConfiguration(nifiProducerConf)
+  val url = s"http://localhost:1080"
 
   // initialized in initialize()
   var producer: ProducerModel = _
@@ -40,16 +49,16 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
     case Start =>
       logger.info(s"Producer $producerId starting at guardian $self")
 
-      if(processGroupId.isDefined) {
-        get(url, requestType(processGroupId.get, "RUNNING"))
+      if(configuration.isDefined) {
+        get(url, getRequest(configuration.get, "RUNNING"))
         sender() ! true
       }
 
     case Stop =>
       logger.info(s"Producer $producerId stopping")
 
-      if(processGroupId.isDefined) {
-        get(url, requestType(processGroupId.get, "STOPPED"))
+      if(configuration.isDefined) {
+        get(url, getRequest(configuration.get, "STOPPED"))
         sender() ! true
       }
   }
@@ -80,14 +89,17 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
     }
   }
 
-  // Get ProcessGroup ID in BsonString from id of the nifiProducerConf
-  def getProcessGroupId(producerConf: Option[ProducerModel]): Option[String] = {
+  // Get the content of the configuration field from MongoDB
+  def getConfiguration(producerConf: Option[ProducerModel]): Option[String] = {
     if (!producerConf.isDefined) None
-    producerConf.get.configuration
+    val conf = producerConf.get.configuration
+    logger.info(s"Configuration $conf")
+    conf
   }
 
   // Get Future[HttpResponse] representing http-request
   def get(url: String, jsonReq: JsValue): Future[HttpResponse] = {
+    val method = HttpMethods.PUT
     Http().singleRequest(
       HttpRequest(uri = url)
         .withMethod(HttpMethods.PUT)
@@ -95,7 +107,12 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
     )
   }
 
-  // Set request-type (RUNNING or STOPPED)
-  def requestType(id: String, reqType: String): JsValue =
-    Map("id" -> id, "state" -> reqType).toJson
+  def getRequest(json: String, action: String): JsValue = {
+
+    val conf = json.parseJson.convertTo[NifiRequest]
+    val request = NifiRequest(action, conf.id, conf.id_rpg)
+        .toJson
+    logger.info(s"JSON Request: $request")
+    request
+  }
 }

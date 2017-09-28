@@ -12,7 +12,7 @@ object NifiProducerModel {
     className = "it.agilelab.bigdata.wasp.producers.NifiProducerGuardian",
     id_topic = None,
     isActive = false,
-    configuration = Some("c257f39a-015e-1000-c58b-ec0b29141625"),
+    configuration = Some("{\"action\":\"\",\"id\":\"fcd3d539-f175-30a5-542a-d195d0ca1bd6\",\"id_rpg\":[{\"id_platform\":\"02dcc135-e883-3f42-6674-f5568fa2e33f\",\"id_edge\":[\"9cfd6760-2d1e-3c01-2bf5-ddacae69251b\",\"9cfd6760-2d1e-3c01-2bf5-ddacae69251b\"]}]}"),
     isRemote = false,
     isSystem = false,
     _id = Some(BsonObjectId())
