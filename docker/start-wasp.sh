@@ -30,8 +30,6 @@ y=$(tput setaf 3)
 b=$(tput setaf 4)
 d=$(tput sgr0)
 
-echo "Matteo test"
-
 # launch each module
 WASP_OPTS="-J-Xmx1g -J-Xms512m -Dlog4j.configurationFile=/root/configurations/log4j2.properties -Dconfig.file=/root/configurations/docker-environment.conf"
 DOCKER_LOG4J2_OPTS="-v $SCRIPT_DIR:/root/configurations"
