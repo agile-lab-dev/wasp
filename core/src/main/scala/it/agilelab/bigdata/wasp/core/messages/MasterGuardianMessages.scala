@@ -1,7 +1,9 @@
 package it.agilelab.bigdata.wasp.core.messages
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.model.HttpMethod
 import it.agilelab.bigdata.wasp.core.WaspMessage
+import spray.json.JsValue
 
 trait MasterGuardianMessage extends WaspMessage { val id: String }
 
@@ -18,6 +20,8 @@ case class AddRemoteProducer(override val id: String, remoteProducer: ActorRef) 
 case class RemoveRemoteProducer(override val id: String, remoteProducer: ActorRef) extends ProducerMessage
 case class StartProducer(override val id: String) extends ProducerMessage
 case class StopProducer(override val id: String) extends ProducerMessage
+case class RestProducerRequest
+  (override val id: String, val httpMethod: HttpMethod, val body: JsValue, val model_id: String) extends ProducerMessage
 case class StartETL(override val id: String, override val etlName: String) extends ETLMessage
 case class StopETL(override val id: String, override val etlName: String) extends ETLMessage
 
