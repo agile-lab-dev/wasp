@@ -12,18 +12,9 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
+import it.agilelab.bigdata.wasp.core.messages.{RestProducerRequest, Start, Stop}
 import scala.concurrent.Future
 import spray.json._
-
-object NifiRquestJsonProtocol extends DefaultJsonProtocol {
-  implicit def nifiPlatform = jsonFormat2(NifiPlatform.apply)
-  implicit def nifiRequest = jsonFormat3(NifiRequest.apply)
-}
-
-case class NifiRequest(action: String, id: String, id_rpg: List[NifiPlatform])
-case class NifiPlatform(id_platform: String, id_edge: List[String])
-
 import NifiRquestJsonProtocol._
 
 class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
@@ -34,7 +25,6 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
   implicit val materializer = ActorMaterializer()(WaspSystem.actorSystem)
 
   var nifiProducerConf: Option[ProducerModel] = env.producerBL.getById(producerId)
-
   val configuration: Option[String] = getConfiguration(nifiProducerConf)
   val url = s"http://localhost:1080"
 
@@ -61,6 +51,14 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
         get(url, getRequest(configuration.get, "STOPPED"))
         sender() ! true
       }
+
+    case RestProducerRequest =>
+      logger.info(s"Producer $producerId: generic request")
+
+      if(configuration.isDefined) {
+        get(url, getRequest(configuration.get, "UPDATE"))
+        sender() ! true
+      }
   }
 
   def initialize(): Unit = {
@@ -81,7 +79,6 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
         } else {
           logger.error(s"Producer $producerId: error creating topic " + topicOption.get.name)
         }
-
       }
 
     } else {
@@ -109,10 +106,10 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
 
   def getRequest(json: String, action: String): JsValue = {
 
-    val conf = json.parseJson.convertTo[NifiRequest]
-    val request = NifiRequest(action, conf.id, conf.id_rpg)
-        .toJson
-    logger.info(s"JSON Request: $request")
-    request
+    val conf = json.parseJson.convertTo[Configuration]
+    val newRoutingInfo =
+      NifiRequest(action, conf.routingInfo.id, conf.routingInfo.child)
+
+    Configuration(newRoutingInfo, conf.data).toJson
   }
 }
