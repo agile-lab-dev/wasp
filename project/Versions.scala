@@ -26,7 +26,7 @@ object Versions {
 	private val solrSparkBase = "1.1.0"
 	val solr = "4.10.4"
 	val spark = "2.2.0"
-	val waspPlugins = "2.0.0-SNAPHSOT"
+	val waspPlugins = "2.0.0-SNAPSHOT"
 	
 	// calculated versions ===============================================================================================
 	val solrSpark = buildCompleteSolrSparkVersion(solrSparkBase, spark, scala)
