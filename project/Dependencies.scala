@@ -146,8 +146,7 @@ object Dependencies {
 		Seq(
 			kafka,
 			kafkaStreaming,
-			quartz,
-			waspElasticSpark // needed y system pipegraphs; it is optional, so it is not a transitive dependency
+			quartz
 		)
 
 	val consumers_rt = akka ++ log4j ++
