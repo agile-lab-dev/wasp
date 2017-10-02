@@ -54,14 +54,13 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumerSparkPlugi
     // Get the plugin, the index type does not exists anymore.
     // It was replace by the right data store like elastic or solr
     val backCompatibilityWriteType = Utils.getIndexType(writerType, defaultDataStoreIndexed)
-    logger.info(s"Get SparkWriterStreaming plugin $backCompatibilityWriteType before was $writerType, plugin map: $plugins")
+    logger.info(s"Get SparkStructuredWriterStreaming plugin $backCompatibilityWriteType before was $writerType, plugin map: $plugins")
 
     val writerPlugin = plugins.get(backCompatibilityWriteType)
     if (writerPlugin.isDefined) {
-//      Some(writerPlugin.get.getSparkStreamingWriter(ss, writerModel))
-      None
+        Some(writerPlugin.get.getSparkStructuredStreamingWriter(ss, writerModel))
     } else {
-      logger.error(s"Invalid spark streaming writer type, writer model: $writerModel")
+      logger.error(s"Invalid spark structured streaming writer type, writer model: $writerModel")
       None
     }
 

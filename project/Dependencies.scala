@@ -68,6 +68,7 @@ object Dependencies {
 	val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka kafkaExclusions
 	val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka kafkaExclusions
 	val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark sparkExclusions
+	val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
 	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional"
 	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional"
 	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional"
@@ -146,6 +147,7 @@ object Dependencies {
 		Seq(
 			kafka,
 			kafkaStreaming,
+			kafkaSparkSql,
 			quartz/*,
 			waspElasticSpark */ // needed y system pipegraphs; it is optional, so it is not a transitive dependency
 		)
