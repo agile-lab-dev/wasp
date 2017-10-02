@@ -16,9 +16,7 @@ import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspCon
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
 
 class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
   val topicBL: TopicBL; val indexBL: IndexBL

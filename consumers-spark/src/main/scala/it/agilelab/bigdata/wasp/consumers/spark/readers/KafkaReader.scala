@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.readers
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem._
+import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
@@ -13,26 +13,10 @@ import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
 
-/**
- * Created by Mattia Bertorello on 05/10/15.
- */
-trait StreamingReader {
-  /**
-   *
-   * Create a DStream from a streaming source
-   * @param group
-   * @param topic
-   * @param ssc Spark streaming context
-   * @return a json encoded string
-   */
-  def createStream(group: String, accessType: String, topic: TopicModel)(implicit ssc: StreamingContext): DStream[String]
-
-}
-
 object KafkaReader extends StreamingReader with Logging {
   /**
-   * Kafka configuration
-   */
+    * Kafka configuration
+    */
 
   //TODO: check warning (not understood)
   def createStream(group: String, accessType: String, topic: TopicModel)(implicit ssc: StreamingContext): DStream[String] = {
@@ -72,3 +56,4 @@ object KafkaReader extends StreamingReader with Logging {
     }
   }
 }
+

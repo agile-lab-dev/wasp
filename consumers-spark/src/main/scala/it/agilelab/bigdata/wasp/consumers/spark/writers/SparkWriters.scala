@@ -14,4 +14,3 @@ trait SparkStructuredStreamingWriter {
 trait SparkWriter {
 	def write(data: DataFrame)
 }
-
