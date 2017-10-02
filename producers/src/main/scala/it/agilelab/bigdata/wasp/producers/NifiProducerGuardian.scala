@@ -105,11 +105,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicB
   }
 
   def getRequest(json: String, action: String): JsValue = {
-
-    val conf = json.parseJson.convertTo[Configuration]
-    val newRoutingInfo =
-      NifiRequest(action, conf.routingInfo.id, conf.routingInfo.child)
-
-    Configuration(newRoutingInfo, conf.data).toJson
+    val conf = json.parseJson.convertTo[NifiRequest]
+    NifiRequest(action, conf.id, conf.child, conf.data).toJson
   }
 }
