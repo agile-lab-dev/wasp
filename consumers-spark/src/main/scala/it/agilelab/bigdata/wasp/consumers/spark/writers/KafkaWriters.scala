@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.models.configuration.TinyKafkaConfig
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.sql.kafka010._
@@ -62,6 +62,8 @@ class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingConte
 class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: String, ss: SparkSession)
   extends SparkStructuredStreamingWriter {
   override def write(stream: DataFrame): Unit = {
+    import ss.implicits._
+
     val kafkaConfig = ConfigManager.getKafkaConfig
 
     val topicOpt = env.topicBL.getById(id)
@@ -75,7 +77,7 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-        val kafkaFormattedDF= stream.toJSON.map{
+        val kafkaFormattedDF = stream.toJSON.map{
           json =>
             val payload = topicDataTypeB.value match {
               case "json" => JsonToByteArrayUtil.jsonToByteArray(json)
