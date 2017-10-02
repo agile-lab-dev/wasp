@@ -104,6 +104,7 @@ private[wasp] object LoggerPipegraph {
 			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic._id.get)),
 			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
+		etlStructured = List.empty[ETLStructuredModel],
 		rt = Nil,
 		dashboard = None,
 		isActive = true,
@@ -166,6 +167,7 @@ private[wasp] object RawPipegraph {
 			List(ReaderModel.kafkaReader(rawTopic.name, rawTopic._id.get)),
 			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
+		etlStructured = List.empty[ETLStructuredModel],
 		rt = Nil,
 		dashboard = None,
 		isActive = true,

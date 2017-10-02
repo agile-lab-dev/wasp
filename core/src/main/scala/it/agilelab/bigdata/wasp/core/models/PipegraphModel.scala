@@ -16,6 +16,8 @@ object StrategyModel {
 
 case class ETLModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true)
 
+case class ETLStructuredModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true)
+
 case class RTModel(name: String, inputs: List[ReaderModel], var isActive: Boolean = true, strategy: Option[StrategyModel] = None, endpoint: Option[WriterModel] = None)
 
 case class PipegraphModel(override val name: String,
@@ -24,6 +26,7 @@ case class PipegraphModel(override val name: String,
                           isSystem: Boolean,
                           creationTime: Long,
                           etl: List[ETLModel],
+                          etlStructured: List[ETLStructuredModel],
                           rt: List[RTModel],
                           dashboard: Option[DashboardModel] = None,
                           var isActive: Boolean = true,

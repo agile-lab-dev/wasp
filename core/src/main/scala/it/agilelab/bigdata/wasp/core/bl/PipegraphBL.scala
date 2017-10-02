@@ -39,7 +39,7 @@ trait PipegraphBL  {
 
 class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
 
-  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.etl, p.rt, p.dashboard, p.isActive, p._id)
+  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.etl, p.etlStructured, p.rt, p.dashboard, p.isActive, p._id)
 
   def getByName(name: String): Option[PipegraphModel] = {
     waspDB.getDocumentByField[PipegraphModel]("name", new BsonString(name)).map(pipegraph => {
