@@ -43,7 +43,7 @@ class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingConte
                 case "avro" => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
                 case _ => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
               }
-              writer.send(topicNameB.value, "partitionKey", bytes)
+              writer.send(topicNameB.value, null, bytes)
 
             })
 
@@ -87,10 +87,10 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
             payload
         }
 
+        val pkf = topic.partitionKeyField.getOrElse("null")
 
-        //TODO partitionKey definition?
         val dsw: DataStreamWriter[Row] = kafkaFormattedDF
-          .selectExpr("""'partitionKey'""", "value")
+          .selectExpr( pkf, "value")
           .writeStream
           .format("kafka")
           .option("topic", topic.name)

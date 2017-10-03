@@ -23,7 +23,7 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
 
   private def factory(t: BsonDocument): TopicModel = new TopicModel(t.get("name").asString().getValue, t.get("creationTime").asInt64().getValue,
       t.get("partitions").asInt32().getValue, t.get("replicas").asInt32().getValue,
-    t.get("topicDataType").asString().getValue , Option(t.get("schema").asDocument()), Some(t.get("_id").asObjectId()))
+    t.get("topicDataType").asString().getValue , Option(t.get("partitionKeyField").asString().getValue), Option(t.get("schema").asDocument()), Some(t.get("_id").asObjectId()))
 
   def getByName(name: String): Option[TopicModel] = {
     waspDB.getDocumentByFieldRaw[TopicModel]("name", new BsonString(name)).map(topic => {
