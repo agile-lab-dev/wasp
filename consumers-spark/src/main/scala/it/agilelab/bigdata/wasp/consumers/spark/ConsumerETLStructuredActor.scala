@@ -10,7 +10,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{ETLStructuredModel, ReaderModel, ReaderType, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{StructuredStreamingModel, ReaderModel, ReaderType, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -20,7 +20,7 @@ class ConsumerETLStructuredActor(env: {
   val rawBL: RawBL;
   val keyValueBL: KeyValueBL;
   val mlModelBL: MlModelBL
-}, sparkWriterFactory: SparkWriterFactory, structuredStreamingReader: StructuredStreamingReader, ss: SparkSession, etlStructured: ETLStructuredModel, listener: ActorRef, plugins: Map[String, WaspConsumerSparkPlugin])
+}, sparkWriterFactory: SparkWriterFactory, structuredStreamingReader: StructuredStreamingReader, ss: SparkSession, etlStructured: StructuredStreamingModel, listener: ActorRef, plugins: Map[String, WaspConsumerSparkPlugin])
     extends Actor
     with Logging {
 

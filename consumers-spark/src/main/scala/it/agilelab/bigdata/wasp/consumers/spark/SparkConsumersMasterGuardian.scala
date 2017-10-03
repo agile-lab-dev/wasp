@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.core.models.{ETLModel, ETLStructuredModel, PipegraphModel, RTModel}
+import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, RTModel, StreamingModel, StructuredStreamingModel}
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
@@ -49,7 +49,13 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   var ssc: StreamingContext = _
   logger.info("Spark streaming context created")
 
-  var ss: SparkSession = _
+  // TODO ***************************
+  // TODO get Spark Session from the new Spark Holder.
+  // TODO ***************************
+  var ss: SparkSession = SparkSession
+    .builder
+    .appName(sparkStreamingConfig.appName)
+    .getOrCreate()
   logger.info("Spark Session created")
 
   context become uninitialized
@@ -165,8 +171,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
 
     ssc = new StreamingContext(sc, Milliseconds(sparkStreamingConfig.streamingBatchIntervalMs))
 
-    ss = new SparkSession()
-
     logger.info(s"Streaming context created...")
 
     val (activeETL, activeStructuredETL, activeRT) = loadActivePipegraphs
@@ -203,14 +207,14 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   }
 
   //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-  private def loadActivePipegraphs: (Seq[ETLModel], Seq[ETLStructuredModel], Seq[RTModel]) = {
+  private def loadActivePipegraphs: (Seq[StreamingModel], Seq[StructuredStreamingModel], Seq[RTModel]) = {
     logger.info(s"Loading all active Pipegraphs ...")
     val pipegraphs: Seq[PipegraphModel] = env.pipegraphBL.getActivePipegraphs()
-    val etlComponents = pipegraphs.flatMap(pg => pg.etl).filter(etl => etl.isActive)
+    val etlComponents = pipegraphs.flatMap(pg => pg.streaming).filter(etl => etl.isActive)
     logger.info(s"Found ${etlComponents.length} active ETL...")
     etlListSize = etlComponents.length
 
-    val etlStructuredComponents = pipegraphs.flatMap(pg => pg.etlStructured).filter(etls => etls.isActive)
+    val etlStructuredComponents = pipegraphs.flatMap(pg => pg.structuredStreaming).filter(etls => etls.isActive)
     logger.info(s"Found ${etlStructuredComponents.length} active Structured ETL...")
     etlStructuredListSize = etlComponents.length
 

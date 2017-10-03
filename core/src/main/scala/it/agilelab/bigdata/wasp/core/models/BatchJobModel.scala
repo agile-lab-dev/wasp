@@ -18,7 +18,7 @@ case class BatchJobModel(
                           owner: String,
                           system: Boolean,
                           creationTime: Long,
-                          etl: ETLModel,
+                          etl: StreamingModel,
                           var state: String,
                           _id: Option[BsonObjectId] = None
                           ) extends Model {

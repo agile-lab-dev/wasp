@@ -9,7 +9,6 @@ import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonT
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.sql.kafka010._
 import org.apache.spark.sql.streaming.DataStreamWriter
 
 

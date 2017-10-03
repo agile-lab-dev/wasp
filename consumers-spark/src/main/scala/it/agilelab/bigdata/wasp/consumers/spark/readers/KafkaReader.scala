@@ -7,11 +7,27 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil}
 import kafka.serializer.{DefaultDecoder, StringDecoder}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
+
+// TODO mock
+object KafkaStructuredReader extends StructuredStreamingReader with Logging {
+  /**
+    *
+    * Create a Dataframe from a streaming source
+    *
+    * @param group
+    * @param accessType
+    * @param topic
+    * @param ss
+    * @return
+    */
+  override def createStructuredStream(group: String, accessType: String, topic: TopicModel)(implicit ss: SparkSession) = ???
+}
 
 object KafkaReader extends StreamingReader with Logging {
   /**
