@@ -32,7 +32,7 @@ object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol{
 // collect your json format instances into a support trait:
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
-  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat7(TopicModel.apply)
+  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat8(TopicModel.apply)
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat7(IndexModel.apply)
   implicit val readerTypeFormat: RootJsonFormat[ReaderType] = jsonFormat2(ReaderType.apply)
   implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat3((name: String, endpointId: BsonObjectId, readerType: ReaderType) => ReaderModel.apply(name, endpointId, readerType))
