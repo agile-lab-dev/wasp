@@ -1,19 +1,25 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import java.nio.ByteBuffer
+import java.nio.channels.AsynchronousFileChannel
+import java.nio.file.{Paths, StandardOpenOption}
 
+import com.mongodb.async.client.gridfs.helpers.{AsynchronousChannelHelper => JAsynchronousChannelHelper}
+import org.mongodb.scala.gridfs.{AsyncInputStream, GridFSBucket, GridFSUploadOptions, GridFSUploadStream}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.mongodb.scala.MongoDatabase
+import org.bson.types.ObjectId
+import org.mongodb.scala.{Completed, MongoDatabase}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros._
+import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
-import org.mongodb.scala.gridfs.GridFSBucket
 import org.mongodb.scala.result.UpdateResult
+import org.mongodb.scala.gridfs.GridFSBucket
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -138,10 +144,14 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   }
 
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId = {
-    val uploadStreamFile = GridFSBucket(mongoDatabase)
-      .openUploadStream(file)
-    uploadStreamFile.write(ByteBuffer.wrap(arrayBytes))
-    uploadStreamFile.close()
+    val uploadStreamFile = GridFSBucket(mongoDatabase).openUploadStream(file)
+    uploadStreamFile.write(ByteBuffer.wrap(arrayBytes)).subscribe(
+      (x: Int) => None, (throwable: Throwable ) => (), () => {
+        uploadStreamFile.close().subscribe(
+          (x: Completed) => None, (throwable: Throwable ) => (), () => {
+          })
+      })
+
     BsonObjectId(uploadStreamFile.objectId)
   }
 
