@@ -26,6 +26,7 @@ case class TopicModel(override val name: String,
                       partitions: Int,
                       replicas: Int,
                       topicDataType: String, // avro, json, xml
+                      partitionKeyField: Option[String],
                       schema: Option[BsonDocument],
                       _id: Option[BsonObjectId] = None) extends Model {
   def getJsonSchema: String = schema.getOrElse(new BsonDocument).toJson

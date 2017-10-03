@@ -33,6 +33,7 @@ private[wasp] object LoggerTopic {
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
+		partitionKeyField = None,
 		schema = JsonConverter.fromString(topicSchema),
 		_id = Some(BsonObjectId())
 	)
@@ -122,6 +123,7 @@ private[wasp] object RawTopic {
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
+		partitionKeyField = None,
 		schema = JsonConverter.fromString(topicSchema),
 		_id = Some(BsonObjectId())
 	)
