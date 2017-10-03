@@ -25,7 +25,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
 	override def launch(args: Array[String]): Unit = {
 		// add system pipegraphs
-//		addSystemPipegraphs()
+		addSystemPipegraphs()
 		
 		// launch cluster singleton
 		super.launch(args)
