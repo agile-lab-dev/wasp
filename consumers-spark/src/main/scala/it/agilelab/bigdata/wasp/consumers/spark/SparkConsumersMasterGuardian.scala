@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StreamingReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
@@ -11,8 +11,9 @@ import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.core.models.{ETLModel, PipegraphModel, RTModel}
+import it.agilelab.bigdata.wasp.core.models.{ETLModel, ETLStructuredModel, PipegraphModel, RTModel}
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,14 +25,16 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;},
                                    sparkWriterFactory: SparkWriterFactory,
                                    streamingReader: StreamingReader,
+                                   structuredStreamingReader: StructuredStreamingReader,
                                    plugins: Map[String, WaspConsumerSparkPlugin])
     extends ClusterAwareNodeGuardian
     with SparkStreamingConfiguration
     with Stash
     with Logging
     with WaspConfiguration {
-  
+
   var etlListSize = 0
+  var etlStructuredListSize = 0
   var readyEtls = 0
 
   /** STARTUP PHASE **/
@@ -45,6 +48,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   /** Creates the Spark Streaming context. */
   var ssc: StreamingContext = _
   logger.info("Spark streaming context created")
+
+  var ss: SparkSession = _
+  logger.info("Spark Session created")
 
   context become uninitialized
 
@@ -65,16 +71,23 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     readyEtls = readyEtls + 1
 
     // Until all children aren't ready to stream we don't start the SSC
-    if (readyEtls == etlListSize) {
+    if (readyEtls == (etlListSize + etlStructuredListSize)) {
       super.initialize()
+
       logger.info("All consumer child actors have sucessfully connected to the master guardian! Starting SSC")
+
       ssc.checkpoint(sparkStreamingConfig.checkpointDir)
       ssc.start()
+
       Thread.sleep(5 * 1000)
+
       lastRestartMasterRef ! true
+
       context become initialized
+
       logger.info("SparkConsumerMasterGuardian Initialized")
       logger.info("Unstashing queued messages...")
+
       unstashAll()
     }
     else {
@@ -121,6 +134,11 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     //Thread.sleep(1500)
     ssc.stop(stopSparkContext = false, stopGracefully = true)
     ssc.awaitTermination()
+
+    // TODO la sleep la devo fare anche per lo structured?
+    // TODO stoppare i figli? Stoppo quella globale?
+    ss.stop()
+    ss.close()
   
     val generalTimeoutDuration = generalTimeout.duration
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
@@ -147,22 +165,34 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
 
     ssc = new StreamingContext(sc, Milliseconds(sparkStreamingConfig.streamingBatchIntervalMs))
 
+    ss = new SparkSession()
+
     logger.info(s"Streaming context created...")
 
-    val (activeETL, activeRT) = loadActivePipegraphs
+    val (activeETL, activeStructuredETL, activeRT) = loadActivePipegraphs
     //TODO Why no pipegraphs with only RT modules?
     //if (activeETL.isEmpty) {
-    if (activeETL.isEmpty && activeRT.isEmpty) {
+    if (activeETL.isEmpty && activeStructuredETL.isEmpty && activeRT.isEmpty) {
       context become uninitialized
+
       logger.info("ConsumerMasterGuardian Uninitialized")
+
       lastRestartMasterRef ! true
     } else {
       context become starting
+
       logger.info("ConsumerMasterGuardian Starting")
+
       activeETL.map(element => {
         logger.info(s"***Starting Streaming Etl actor [${element.name}]")
         context.actorOf(Props(new ConsumerEtlActor(env, sparkWriterFactory, streamingReader, ssc, element, self, plugins)))
       })
+
+      activeStructuredETL.map( element => {
+        logger.info(s"***Starting Structured Streaming Etl actor [${element.name}]")
+        context.actorOf(Props(new ConsumerETLStructuredActor(env, sparkWriterFactory, structuredStreamingReader, ss, element, self, plugins)))
+      })
+
       //TODO If statement added to handle pipegraphs with only RT components, cleaner way to do this to be found
       if(activeETL.isEmpty)
         {
@@ -173,19 +203,23 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   }
 
   //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-  private def loadActivePipegraphs: (Seq[ETLModel], Seq[RTModel]) = {
+  private def loadActivePipegraphs: (Seq[ETLModel], Seq[ETLStructuredModel], Seq[RTModel]) = {
     logger.info(s"Loading all active Pipegraphs ...")
     val pipegraphs: Seq[PipegraphModel] = env.pipegraphBL.getActivePipegraphs()
     val etlComponents = pipegraphs.flatMap(pg => pg.etl).filter(etl => etl.isActive)
     logger.info(s"Found ${etlComponents.length} active ETL...")
     etlListSize = etlComponents.length
 
+    val etlStructuredComponents = pipegraphs.flatMap(pg => pg.etlStructured).filter(etls => etls.isActive)
+    logger.info(s"Found ${etlStructuredComponents.length} active Structured ETL...")
+    etlStructuredListSize = etlComponents.length
+
     val rtComponents = pipegraphs.flatMap(pg => pg.rt).filter(rt => rt.isActive)
     logger.info(s"Found ${rtComponents.length} active RT...")
     //actorListSize = rtComponents.length
 
 
-    (etlComponents, rtComponents)
+    (etlComponents, etlStructuredComponents, rtComponents)
   }
 
 }

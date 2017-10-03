@@ -16,7 +16,7 @@ object StrategyModel {
 
 case class ETLModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true)
 
-case class ETLStructuredModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true)
+case class ETLStructuredModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true, config: Map[String, String])
 
 case class RTModel(name: String, inputs: List[ReaderModel], var isActive: Boolean = true, strategy: Option[StrategyModel] = None, endpoint: Option[WriterModel] = None)
 
