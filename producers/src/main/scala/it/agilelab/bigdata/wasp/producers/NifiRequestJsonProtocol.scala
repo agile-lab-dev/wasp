@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.producers
 
-import spray.json.DefaultJsonProtocol
+import spray.json.{DefaultJsonProtocol}
 
 case class NifiRequest(action: String, id: Option[String], child: Option[List[NifiPlatform]], data: Option[Array[Byte]])
 case class NifiPlatform(id: String, edge: Option[List[String]])

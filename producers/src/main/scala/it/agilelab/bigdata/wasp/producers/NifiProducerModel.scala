@@ -19,7 +19,7 @@ object NifiProducerModel {
   //val data = SerializationUtils.serialize(new File("/home/amarino/RegressionSumModels_1")).toJson.toString
 
   //val nifiRequest = NifiRequest(action, id, all_child, data).toJson.toString
-  val nifiRequest = "{\"action\":\"RUNNING\",\n\"child\":\n[\n    {\"id\": \"4db1f23f-ac33-303b-b476-a55b09fe0a0d\",\n    \"edge\": [\"7c9ec4ab-784d-3c5d-fd37-6f2a61264462\"]\n    },\n    {\"id\": \"4db1f23f-ac33-303b-6720-4d6391c79b58\",\n     \"edge\": [\"7c9ec4ab-784d-3c5d-69b3-41f74ed83649\", \"7c9ec4ab-784d-3c5d-a8f8-256068577306\"]\n    }\n]\n\n}"
+  val nifiRequest = "{\"action\":\"RUNNING\",\n\"child\":\n[\n    {\"id\": \"c9c86be7-c7e5-35f2-1ef1-eb3270dde40d\",\n    \"edge\": [\"8062d204-c379-31e4-25a8-042b1de389b6\"]\n    }\n]\n}"
 
   lazy val nifiProducer = ProducerModel(
     name = "NifiProducerGuardian",
