@@ -243,7 +243,7 @@ class MasterGuardian(env: {
 
   private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
     val producerId = producer._id.get.getValue.toHexString
-    ??[Either[String, String]](producersMasterGuardian, request)
+    ??[Either[String, String]](producersMasterGuardian, request.copy(id = producerId))
   }
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {

@@ -9,7 +9,9 @@ import it.agilelab.bigdata.wasp.core.messages.{RestProducerRequest, StartProduce
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
+import org.mongodb.scala.bson.BsonObjectId
 import spray.json._
+
 import scala.collection.immutable
 
 /**
@@ -71,15 +73,15 @@ object Producer_C extends Directives with JsonSupport {
         } ~
         path(Segment / "rest") { name =>
           post {
-            extractMethod { method =>
-              decodeRequest {
-                entity(as[JsValue]) { body: JsValue =>
-                  complete {
-                    val model_id = body.asJsObject.getFields("model_id").mkString
-                    WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, method, body, model_id)) match {
-                      case Right(s) => s.toJson.toAngularOkResponse
-                      case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
-                    }
+            decodeRequest {
+              entity(as[JsValue]) { json: JsValue =>
+                complete {
+                  val httpMethod = HttpMethod.custom(json.asJsObject.fields("http-method").convertTo[String])
+                  val data = json.asJsObject.fields("data")
+                  val mlModelId = json.asJsObject.fields("mlmodel").convertTo[String]
+                  WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, httpMethod, data, mlModelId)) match {
+                    case Right(s) => s.toJson.toAngularOkResponse
+                    case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                   }
                 }
               }
