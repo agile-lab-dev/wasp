@@ -11,15 +11,8 @@ import NifiRquestJsonProtocol._
 
 object NifiProducerModel {
 
-  /*val action = ""
-  val id = None
-  val all_child = Some(child1)
-    val child1 = List(NifiPlatform("4db1f23f-ac33-303b-6720-4d6391c79b", edge))
-      val edge = Some(List("afa3f732-7607-3bc7-4386-e6aebdabd2a1"))*/
-  //val data = SerializationUtils.serialize(new File("/home/amarino/RegressionSumModels_1")).toJson.toString
-
-  //val nifiRequest = NifiRequest(action, id, all_child, data).toJson.toString
-  val nifiRequest = "{\"action\":\"RUNNING\",\n\"child\":\n[\n    {\"id\": \"c9c86be7-c7e5-35f2-1ef1-eb3270dde40d\",\n    \"edge\": [\"8062d204-c379-31e4-25a8-042b1de389b6\"]\n    }\n]\n}"
+  // TODO Creazione configuration attraverso mapping con case class
+  val nifiRequest = "{\"action\":\"RUNNING\",\n\"child\":\n[\n    {\n    \"id\": \"64cdcd10-6ccc-3452-44e8-5f2ccbdfe19b\",\n    \"edge\": [\"cd17f96e-2b72-32c8-1aa0-da137cef5c9e\"]\n    }\n]\n}"
 
   lazy val nifiProducer = ProducerModel(
     name = "NifiProducerGuardian",

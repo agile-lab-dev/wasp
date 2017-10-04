@@ -75,6 +75,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
     createCollection(configurationsName)
     createCollection(websocketsName)
     createCollection(batchSchedulersName)
+    createCollection(mlModelsName)
   }
 
 
@@ -179,9 +180,15 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
     val length = gridFile.gridFSFile().headResult().getLength
     // MUST be less than 4GB
     assert(length < Integer.MAX_VALUE)
+    //val resultFile = ByteBuffer.allocate(length.toInt)
+    //gridFile.read(resultFile).headResult()
     val resultFile = ByteBuffer.allocate(length.toInt)
-    gridFile.read(resultFile)
+    gridFile.read(resultFile).subscribe((x: Int) => None, (throwable: Throwable ) => (), () => {
+      (x: Completed) => return resultFile.array()
+    })
     resultFile.array()
+
+    //resultFile.array()
   }
 }
 
