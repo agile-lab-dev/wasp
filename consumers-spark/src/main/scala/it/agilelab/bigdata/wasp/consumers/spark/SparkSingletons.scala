@@ -10,10 +10,10 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 object SparkSingletons extends Logging {
   
-  private var sc: SparkContext = _
+  private var sparkContext: SparkContext = _
   
   /**
-    * Try to initialize the SparkContext in the SparkHolder with the provided configuration.
+    * Try to initialize the SparkContext in the SparkSingleton with the provided configuration.
     *
     * If the SparkContext does not exist, it will be created using the settings from sparkConfig,
     * and true will be returned.
@@ -21,10 +21,13 @@ object SparkSingletons extends Logging {
     */
   def createSparkContext(sparkConfig: SparkConfigModel): Boolean =
     SparkSingletons.synchronized {
-      if (sc == null) {
-        logger.info("Instantiating SparkContext.")
-        val loadedJars = sparkConfig.additionalJars.getOrElse(
-          getAdditionalJar(Set(sparkConfig.yarnJar)))
+      if (sparkContext == null) {
+        // validate config & log it
+        validateConfig(sparkConfig)
+        logger.info("Spark config model:\n" + sparkConfig)
+        
+        // build SparkConf from spark configuration model & log it
+        val loadedJars = sparkConfig.additionalJars.getOrElse(getAdditionalJar(Set(sparkConfig.yarnJar)))
         //TODO: gestire appName in maniera dinamica (e.g. batchGuardian, consumerGuardian..)
         val conf = new SparkConf()
           .setAppName(sparkConfig.appName)
@@ -41,12 +44,11 @@ object SparkSingletons extends Logging {
           .set("spark.blockManager.port", sparkConfig.blockManagerPort.toString)
           .set("spark.broadcast.port", sparkConfig.broadcastPort.toString)
           .set("spark.fileserver.port", sparkConfig.fileserverPort.toString)
-          
-        validateConfig(sparkConfig)
-
-        logger.info("Spark configuration:\n\t" + conf.toDebugString.replace("\n", "\n\t"))
+        logger.info("SparkConf:\n\t" + conf.toDebugString.replace("\n", "\n\t"))
         
-        sc = new SparkContext(conf)
+        // instantiate SparkContext
+        logger.info("Instantiating SparkContext...")
+        sparkContext = new SparkContext(conf)
         logger.info("Successfully instantiated SparkContext.")
         
         true
@@ -58,14 +60,15 @@ object SparkSingletons extends Logging {
   /**
     * Returns the SparkContext held by this SparkHolder, or throws an exception if it was not initialized.
     */
-  def getSparkContext = {
-    if (sc == null) {
-      throw new Exception("The SparkContext was not initialized")
+  def getSparkContext: SparkContext =
+    SparkSingletons.synchronized {
+      if (sparkContext == null) {
+        throw new Exception("The SparkContext was not initialized")
+      }
+      sparkContext
     }
-    sc
-  }
 
-  def getAdditionalJar(skipJars: Set[String]) = {
+  def getAdditionalJar(skipJars: Set[String]): Seq[String] = {
 
     val additionalJarsPath = ConfigManager.getWaspConfig.additionalJarsPath
 
