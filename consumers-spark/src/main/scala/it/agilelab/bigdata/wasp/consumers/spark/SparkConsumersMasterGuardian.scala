@@ -40,9 +40,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   /** *****************/
 
   /** Initialize and retrieve the SparkContext */
-  val scCreated = SparkHolder.createSparkContext(sparkStreamingConfig)
+  val scCreated = SparkSingletons.createSparkContext(sparkStreamingConfig)
   if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark streaming configuration!")
-  val sc = SparkHolder.getSparkContext
+  val sc = SparkSingletons.getSparkContext
 
   /** Creates the Spark Streaming context. */
   var ssc: StreamingContext = _

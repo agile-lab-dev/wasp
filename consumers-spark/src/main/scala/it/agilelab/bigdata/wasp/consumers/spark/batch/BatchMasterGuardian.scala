@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.consumers.spark.SparkHolder
+import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.core.bl._
@@ -35,9 +35,9 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   /** *****************/
 
   /** Initialize and retrieve the SparkContext */
-  val scCreated = SparkHolder.createSparkContext(sparkBatchConfig)
+  val scCreated = SparkSingletons.createSparkContext(sparkBatchConfig)
   if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark batch configuration!")
-  val sc = SparkHolder.getSparkContext
+  val sc = SparkSingletons.getSparkContext
   val batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))
 
 

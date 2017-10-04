@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.{SparkConf, SparkContext}
 
 
-object SparkHolder extends Logging {
+object SparkSingletons extends Logging {
   
   private var sc: SparkContext = _
   
@@ -20,7 +20,7 @@ object SparkHolder extends Logging {
     * If the SparkContext already exists, nothing will be done, and false will be returned.
     */
   def createSparkContext(sparkConfig: SparkConfigModel): Boolean =
-    SparkHolder.synchronized {
+    SparkSingletons.synchronized {
       if (sc == null) {
         logger.info("Instantiating SparkContext.")
         val loadedJars = sparkConfig.additionalJars.getOrElse(
