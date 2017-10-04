@@ -1,0 +1,24 @@
+version: '2'
+services:
+
+  solr:
+    build: .
+    image: solr_cdh:5.11
+    container_name: solr
+    hostname: solr
+    environment:
+      SOLR_ZK_ENSEMBLE: zookeeper:2181/solr
+      dataDir: /data
+    ports:
+      - "8983:8983"
+    volumes:
+      - "./data/solr:/data"
+    links:
+      - zookeeper
+    depends_on:
+      - zookeeper
+
+networks:
+  default:
+    external:
+      name: wasp-docker
