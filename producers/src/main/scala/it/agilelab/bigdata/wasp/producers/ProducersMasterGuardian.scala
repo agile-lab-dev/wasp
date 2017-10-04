@@ -95,7 +95,9 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def onProducer(id: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
 		env.producerBL.getById(id) match {
 			case None => Right("Producer not retrieved")
-			case Some(producer) => f(producer)
+			case Some(producer) => {
+				f(producer)
+			}
 		}
 	}
 	
@@ -147,13 +149,9 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		}
 	}
 
-  private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
-    if (!producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-      Left("Producer '" + producer.name + "' not initialized")
-    } else if (! ??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
-      Left("Producer '" + producer.name + "' not stopped")
-    } else {
-      Right("Producer '" + producer.name + "' stopped")
-    }
-  }
+	private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
+		if(! ??[Boolean](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId)))
+			Left(s"Producer '${producer.name}' does not exist")
+		Right("Producer '" + producer.name + "' request")
+	}
 }
