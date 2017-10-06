@@ -19,17 +19,3 @@ object NifiProducersNodeLauncher extends ProducersNodeLauncherTrait {
     waspDB.insertIfNotExists[ProducerModel](NifiProducerModel.nifiProducer)
   }
 }
-
-object InsertModelLauncher extends ProducersNodeLauncherTrait {
-  override def launch(args: Array[String]): Unit = {
-    super.launch(args)
-    val path = "/home/amarino/Agile.Wasp2/"
-    val fileName = "RegressionSumModels_1"
-
-    val data = new File(path + fileName)
-    val vec: Array[Byte] = FileUtils.readFileToByteArray(data)
-    val modelField = waspDB.saveFile(vec, path + fileName, new BsonDocument())
-    val mlModel = MlModelOnlyInfo(fileName, "", None, None, Some(modelField), favorite = false, "", None)
-    waspDB.insertIfNotExists[MlModelOnlyInfo](mlModel)
-  }
-}

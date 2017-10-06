@@ -1,18 +1,25 @@
 package it.agilelab.bigdata.wasp.producers
 
-import java.io.File
-
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
-import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.BsonObjectId
-import spray.json._
-
-import NifiRquestJsonProtocol._
 
 object NifiProducerModel {
 
-  // TODO Creazione configuration attraverso mapping con case class
-  val nifiRequest = "{\"action\":\"\",\n\"child\":\n[\n    {\n    \"id\": \"64cdcd10-6ccc-3452-44e8-5f2ccbdfe19b\",\n    \"edge\": [\"cd17f96e-2b72-32c8-06d2-b5139cae00ac\"],\n \"data\": \"\"    }\n]\n}"
+  val nifiRequest: String =
+    """{
+      |"request":
+      |{
+      |  "scheme":"http",
+      |  "host":"localhost",
+      |  "port":1080
+      |},
+      |"child":[
+      |  {
+      |    "id":"64cdcd10-6ccc-3452-44e8-5f2ccbdfe19b",
+      |    "edge":["cd17f96e-2b72-32c8-06d2-b5139cae00ac"]
+      |  }
+      |]
+      |}""".stripMargin
 
   lazy val nifiProducer = ProducerModel(
     name = "NifiProducerGuardian",
