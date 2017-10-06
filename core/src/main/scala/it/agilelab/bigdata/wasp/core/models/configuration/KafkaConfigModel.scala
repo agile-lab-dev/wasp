@@ -15,6 +15,15 @@ case class KafkaConfigModel(connections: Seq[ConnectionConfig],
 
 	def toTinyConfig() = TinyKafkaConfig(connections, batch_send_size, default_encoder, encoder_fqcn, partitioner_fqcn)
 
+	def ingestRateToMills() = {
+		val defaultIngestRate = 1000
+		try {
+			this.ingest_rate.replace("s", "").toInt * defaultIngestRate
+		} catch {
+			case _ : Throwable => defaultIngestRate
+		}
+	}
+
 }
 
 case class TinyKafkaConfig(connections: Seq[ConnectionConfig],
