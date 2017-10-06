@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, Spa
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 
 /**
   * Singletons an initialization code related to Spark.
@@ -33,7 +33,6 @@ object SparkSingletons extends Logging {
     *
     * @throws IllegalStateException if Spark was already initialized but <b>not by using this method</b>
     */
-  // TODO we can detect that a SparkSession was already created; how to detect that a SparkContext was already created?
   @throws[lang.IllegalStateException]
   def initializeSpark(sparkConfigModel: SparkConfigModel): Boolean =
     SparkSingletons.synchronized {
@@ -44,19 +43,34 @@ object SparkSingletons extends Logging {
           // throw an exception as this should never happen
           // if we do not control the creation we are not sure that a sensible config was used
           // TODO demote to warning?
-          throw new IllegalStateException("Spark was already intialized without using this method!")
+          throw new IllegalStateException("Spark was already initialized without using this method!")
         } else { // no global default session
           val sparkConf = buildSparkConfFromSparkConfigModel(sparkConfigModel)
+          
+          // try and build SparkContext even if the SparkSession would do it anyway
+          // to ensure we are the one initializing Spark
+          try {
+            new SparkContext(sparkConf)
+          } catch {
+            case se: SparkException if se.getMessage.contains("SPARK-2243") =>
+              // another SparkContext was already running; this means we did not create it!
+              // the guard with the .contains("SPARK-2243") ensures we only catch the SparkException thrown by Spark in
+              // SparkContext.assertNoOtherContextIsRunning; SPARK-2243 is a JIRA for multiple SparkContext in the same JVM
+              // throw an exception as this should never happen
+              // if we do not control the creation we are not sure that a sensible config was used
+              // TODO demote to warning?
+              throw new IllegalStateException("Spark was already initialized without using this method!")
+          }
   
           // instantiate & assign SparkSession
           logger.info("Instantiating SparkSession...")
           sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
           logger.info("Successfully instantiated SparkSession.")
-          
+
           // assign SparkContext & SQLContext
           sparkContext = sparkSession.sparkContext
           sqlContext = sparkSession.sqlContext
-  
+
           true
         }
       } else {
@@ -76,7 +90,6 @@ object SparkSingletons extends Logging {
     *
     * @throws IllegalStateException if Spark was not already initialized
     */
-  // TODO we can detect that a SparkSession was already created; how to detect that s SparkContext was already created??
   @throws[lang.IllegalStateException]
   def initializeSparkStreaming(sparkStreamingConfigModel: SparkStreamingConfigModel): Boolean =
     SparkSingletons.synchronized {
