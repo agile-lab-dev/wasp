@@ -11,10 +11,15 @@ import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.messages.RestRequest
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-
 import scala.concurrent.Future
 import spray.json._
 import NifiRquestJsonProtocol._
+
+/**
+  * NiFi Producer.
+  *
+  * @author Alessandro Marino
+  */
 
 class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlModelBL}, producerId: String)
   extends Actor
@@ -75,7 +80,6 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
       .convertTo[NifiProducerConfiguration].child.get
   }
 
-  // Get Future[HttpResponse] representing http-response
   def httpRequest(uri: Uri, jsonReq: JsValue, httpMethod: HttpMethod): Future[HttpResponse] = {
     Http().singleRequest(
       HttpRequest(uri = uri)
