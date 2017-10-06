@@ -8,6 +8,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil}
 import kafka.serializer.{DefaultDecoder, StringDecoder}
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
@@ -48,8 +49,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
         .load()
         // retrive key and values
-        .selectExpr("CAST(key AS STRING)", "value")
-        .as[(String, Array[Byte])]
+        .selectExpr("CAST(topic AS STRING)", "CAST(key AS STRING)", "value")
         .toDF()
 
       // prepare the udf
