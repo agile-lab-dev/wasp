@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# exit on any error
+set -e
+
 # absolute path to this script. /home/user/bin/foo.sh
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -10,10 +13,12 @@ done
 # this variable contains the directory of the script
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-# get docker command
-cd $SCRIPT_DIR
-source get-docker-cmd.sh
+source $SCRIPT_DIR/../get-docker-cmd.sh
 
-# stop containers
-echo "Stopping containers running the modules..."
-$DOCKER_CMD stop master producers consumers-rt consumers-spark
+cd base_cdh
+
+$DOCKER_CMD build --rm -t base_cdh:5.11 .
+
+cd ..
+
+$DOCKER_CMD build --rm -t solr_cdh:5.11 .
