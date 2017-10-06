@@ -9,7 +9,7 @@ import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, ProducerBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.messages.{RestRequest, Start, Stop}
+import it.agilelab.bigdata.wasp.core.messages.RestRequest
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 
 import scala.concurrent.Future
@@ -20,30 +20,23 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
   extends Actor
     with Logging {
 
-  val name: String = "NifiProducerGuardian"
-  implicit val materializer = ActorMaterializer()(WaspSystem.actorSystem)
-
+  implicit val materializer: ActorMaterializer = ActorMaterializer()(WaspSystem.actorSystem)
   val nifiProducerConf: Option[ProducerModel] = env.producerBL.getById(producerId)
-  val configuration = getConfiguration(nifiProducerConf)
-  val url = s"http://localhost:1080"
 
   override def receive: Actor.Receive = {
 
     case RestRequest(httpMethod, data, mlModelId) =>
+
       val action = data.asJsObject.fields("action").convertTo[String]
       val request = checkActionType(action, data, mlModelId)
+
+      printConf()
+
       if(nifiProducerConf.isDefined) {
-        get(url, request, httpMethod)
+        val uri = getUriFromConfiguration(nifiProducerConf.get)
+        httpRequest(uri, request, httpMethod)
         sender() ! true
       }
-  }
-
-  // Get the content of the configuration field from MongoDB
-  def getConfiguration(producerConf: Option[ProducerModel]): Option[String] = {
-    if (!producerConf.isDefined) None
-    val conf = producerConf.get.configuration
-    logger.info(s"Configuration $conf")
-    conf
   }
 
   def checkActionType(action: String, data: JsValue, mlModelId: String): JsValue = {
@@ -51,7 +44,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
     val conf = data.convertTo[NifiRequest]
 
     action.toUpperCase() match {
-      case "UPDATE" => {
+      case "UPDATE" =>
         val mlModel = env.mlModelBL.getById(mlModelId)
         if (mlModel.isDefined) {
           val modelFile = Some(WaspDB.getDB.getFileByID(mlModel.get.modelFileId.get))
@@ -61,15 +54,31 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
           logger.error(s"mlModelId field is undefined.")
           NifiRequest(action, conf.id, conf.child, None).toJson // TODO gestire eccezione lato controller (Producer_C)
         }
-      }
       case _ => NifiRequest(action, conf.id, conf.child, None).toJson
     }
   }
 
+  def printConf(): Unit = {
+    val request = nifiProducerConf.get.configuration.get
+    print(request)
+  }
+
+  def getUriFromConfiguration(nifiProducerConf: ProducerModel): Uri = {
+    val info = nifiProducerConf.configuration.get.parseJson
+      .convertTo[NifiProducerConfiguration].request
+
+    Uri.from(scheme = info.scheme, host = info.host, port = info.port)
+  }
+
+  def getChildFromConfiguration(nifiProducerConf: ProducerModel): List[NifiPlatform] = {
+    nifiProducerConf.configuration.get.parseJson
+      .convertTo[NifiProducerConfiguration].child.get
+  }
+
   // Get Future[HttpResponse] representing http-response
-  def get(url: String, jsonReq: JsValue, httpMethod: HttpMethod): Future[HttpResponse] = {
+  def httpRequest(uri: Uri, jsonReq: JsValue, httpMethod: HttpMethod): Future[HttpResponse] = {
     Http().singleRequest(
-      HttpRequest(uri = url)
+      HttpRequest(uri = uri)
         .withMethod(httpMethod)
         .withEntity(ContentTypes.`application/json`, jsonReq.toString())
     )
