@@ -110,6 +110,17 @@ object SparkSingletons extends Logging {
     }
   
   /**
+    * Try to deinitialize the StreamingContext in the SparkSingleton.
+    *
+    * This only removes the reference to the StreamingContext in the SparkSingletons; <b>it does not stop it.</b>
+    */
+  @throws[lang.IllegalStateException]
+  def deinitializeSparkStreaming(): Unit =
+    SparkSingletons.synchronized {
+      streamingContext = null
+    }
+  
+  /**
     * Returns the SparkSession singleton, or throws an exception if Spark was not initialized.
     *
     * @throws IllegalStateException if Spark was not already initialized

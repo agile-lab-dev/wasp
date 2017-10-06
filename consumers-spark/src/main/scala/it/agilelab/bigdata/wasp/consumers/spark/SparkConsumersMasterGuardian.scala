@@ -39,14 +39,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   /** STARTUP PHASE **/
   /** *****************/
 
-  /** Initialize and retrieve the SparkContext */
+  // initialize Spark
   val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
-  if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark streaming configuration!")
-  val sc = SparkSingletons.getSparkContext
-
-  /** Creates the Spark Streaming context. */
-  var ssc: StreamingContext = _
-  logger.info("Spark streaming context created")
+  if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")
 
   context become uninitialized
 
@@ -70,8 +65,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     if (readyEtls == etlListSize) {
       super.initialize()
       logger.info("All consumer child actors have sucessfully connected to the master guardian! Starting SSC")
-      ssc.checkpoint(sparkStreamingConfig.checkpointDir)
-      ssc.start()
+      SparkSingletons.getStreamingContext.start()
       Thread.sleep(5 * 1000)
       lastRestartMasterRef ! true
       context become initialized
@@ -121,8 +115,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     //startato va tutto iin timeout
     //TODO capire come funziona
     //Thread.sleep(1500)
-    ssc.stop(stopSparkContext = false, stopGracefully = true)
-    ssc.awaitTermination()
+    SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
+    SparkSingletons.getStreamingContext.awaitTermination()
+    SparkSingletons.deinitializeSparkStreaming()
   
     val generalTimeoutDuration = generalTimeout.duration
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
@@ -147,7 +142,8 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
 
     logger.info(s"Starting ConsumersMasterGuardian actors...")
 
-    ssc = new StreamingContext(sc, Milliseconds(sparkStreamingConfig.streamingBatchIntervalMs))
+    SparkSingletons.initializeSparkStreaming(sparkStreamingConfig)
+    val ssc = SparkSingletons.getStreamingContext
 
     logger.info(s"Streaming context created...")
 
