@@ -206,7 +206,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
                         stream: DStream[String],
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy): DStream[String] = {
-    val sqlContext = SQLContextSingleton.getInstance(ssc.sparkContext)
+    val sqlContext = SparkSingletons.getSQLContext
     val strategyBroadcast = ssc.sparkContext.broadcast(strategy)
     stream.transform(rdd => {
       //TODO Verificare se questo è il comportamento che si vuole
