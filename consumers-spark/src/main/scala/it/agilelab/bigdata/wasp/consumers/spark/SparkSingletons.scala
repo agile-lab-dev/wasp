@@ -102,6 +102,7 @@ object SparkSingletons extends Logging {
         // instantiate & assign StreamingContext
         val batchDuration = Milliseconds(sparkStreamingConfigModel.streamingBatchIntervalMs)
         streamingContext = new StreamingContext(getSparkContext, batchDuration)
+        streamingContext.checkpoint(sparkStreamingConfigModel.checkpointDir)
   
         true
       } else {
