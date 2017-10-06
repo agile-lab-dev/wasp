@@ -88,13 +88,16 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
 
         val pkf = topic.partitionKeyField.getOrElse("null")
 
+        val cpDir = ConfigManager.getSparkStreamingConfig.checkpointDir
+
         val dsw: DataStreamWriter[Row] = kafkaFormattedDF
           .selectExpr( pkf, "value")
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
+          .option("checkpointLocation", cpDir)
 
-        val dswWithWritingConf = addKafkaConf(dsw,tinyKafkaConfig)
+        val dswWithWritingConf = addKafkaConf(dsw, tinyKafkaConfig)
 
         dswWithWritingConf.start()
       } else {
