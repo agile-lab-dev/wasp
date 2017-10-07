@@ -7,18 +7,38 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, JsonToByteArrayUtil}
 import org.mongodb.scala.bson.BsonDocument
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue}
 
 case object StopMainTask
 
 case object StartMainTask
 
-abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel]) extends Actor with Logging {
+abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel]) extends Actor  with Logging {
   implicit val system = context.system
   var task: Option[Cancellable] = None
 
-  def generateRawOutputJsonMessage(input: T): String
+  def generateRawOutputJsonMessage(input: T): Map[String, JsValue]
 
-  def generateOutputJsonMessage(input: T): String
+  def generateOutputJsonMessage(input: T): Map[String, JsValue]
+
+  private def decorateJsonWithMetadata(input: T, f: (T) => Map[String, JsValue] ): Map[String, JsValue] = {
+    val res = f(input)
+
+    if(res.get("metadata").isEmpty) {
+      res + ("metadata" -> JsObject("id" -> JsString("null"),
+        "arrivalTimestamp" -> JsNumber(0L),
+        "lat" -> JsNumber(0D),
+        "lon" -> JsNumber(0D),
+        "lastSeenTimestamp" -> JsNumber(0L),
+        "path" -> JsArray()))
+    }
+
+    else {
+      logger.warn("Attention! Has been defined a metadata field that the framework uses internally")
+      res
+    }
+
+  }
 
   def stopMainTask() = task.map(_.cancel())
 
@@ -50,7 +70,8 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   def sendMessage(input: T) = {
 
     if (topic.isEmpty) {
-      val rawJson = generateRawOutputJsonMessage(input)
+      val msg = decorateJsonWithMetadata(input, generateRawOutputJsonMessage)
+      val rawJson = JsObject(msg).toString()
       //TODO: Add rawSchema from system raw pipeline
       try {
         topicSchemaType match {
@@ -65,7 +86,9 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
     }
 
     topic.foreach { p =>
-      val customJson = generateOutputJsonMessage(input)
+      //decorate with metadata field
+      val msg = decorateJsonWithMetadata(input, generateOutputJsonMessage)
+      val customJson = JsObject(msg).toString()
       try {
         topicSchemaType match {
           case "avro" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, partitionKey, AvroToJsonUtil.jsonToAvro(customJson, topicSchema))
