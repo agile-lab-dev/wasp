@@ -2,9 +2,10 @@ package it.agilelab.bigdata.wasp.core.models
 
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
-
 object TopicModel {
   val readerType = "topic"
+
+  val metadata ="""{ "metadata": { "id": "", "arrivalTimestamp": "", "lat": "", "lon": "", "lastSeenTimestamp": "", "path":[] }}"""
 
   val schema_base = """
       {"name":"id_event","type":"double"},
@@ -16,9 +17,43 @@ object TopicModel {
       {"name":"longitude","type":"double"},
       {"name":"value","type":"double"},
       {"name":"payload","type":"string"}
-                    """
+  """
 
   def name(basename: String) = s"${basename.toLowerCase}.topic"
+
+  /**
+    * Generate final schema for TopicModel. Use this method if you schema have a field metadata.
+    * @param ownSchema
+    * @return
+    */
+
+  def generateField(ownSchema: Option[String]): String = {
+    val schema = (Some(TopicModel.schema_base) :: ownSchema :: Nil).flatten.mkString(", ")
+    s"""
+    {"type":"record",
+    "namespace":"Logging",
+    "name":"Logging",
+    "fields":[
+      ${schema}
+    ]}"""
+  }
+
+  /**
+    * Generate final schema for TopicModel. Use this method if you schema not have a field metadata.
+    * @param ownSchema
+    * @return
+    */
+
+  def generateMetadataAndField(ownSchema: Option[String]): String = {
+    val schema = (Some(metadata) :: Some(TopicModel.schema_base) :: ownSchema :: Nil).flatten.mkString(", ")
+    s"""
+    {"type":"record",
+    "namespace":"Logging",
+    "name":"Logging",
+    "fields":[
+      ${schema}
+    ]}"""
+  }
 }
 
 case class TopicModel(override val name: String,
