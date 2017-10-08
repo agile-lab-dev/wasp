@@ -5,7 +5,31 @@ import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 object TopicModel {
   val readerType = "topic"
 
-  val metadata ="""{ "metadata": { "id": "", "arrivalTimestamp": "", "lat": "", "lon": "", "lastSeenTimestamp": "", "path":[] }}"""
+  val metadata = """{"name": "metadata", "type": {
+    "name": "metadata_fields",
+    "type": "record",
+      "fields": [
+        {"name": "id", "type": "string"},
+        {"name": "arrivalTimestamp", "type": "long"},
+        {"name": "lat", "type": "double"},
+        {"name": "lon", "type": "double"},
+        {"name": "lastSeenTimestamp", "type": "long"},
+        {"name": "path",
+          "type": {
+            "type": "array",
+            "items": {
+              "name": "Path",
+              "type": "record",
+              "fields": [
+                {"name": "name", "type": "string"},
+                {"name": "ts", "type": "long"}
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }"""
 
   val schema_base = """
       {"name":"id_event","type":"double"},
