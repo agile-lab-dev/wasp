@@ -13,7 +13,6 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, RTModel, StreamingModel, StructuredStreamingModel}
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,23 +39,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   /** STARTUP PHASE **/
   /** *****************/
 
-  /** Initialize and retrieve the SparkContext */
-  val scCreated = SparkHolder.createSparkContext(sparkStreamingConfig)
-  if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark streaming configuration!")
-  val sc = SparkHolder.getSparkContext
-
-  /** Creates the Spark Streaming context. */
-  var ssc: StreamingContext = _
-  logger.info("Spark streaming context created")
-
-  // TODO ***************************
-  // TODO get Spark Session from the new Spark Holder.
-  // TODO ***************************
-  var ss: SparkSession = SparkSession
-    .builder
-    .appName(sparkStreamingConfig.appName)
-    .getOrCreate()
-  logger.info("Spark Session created")
+  // initialize Spark
+  val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
+  if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")
 
   context become uninitialized
 
@@ -81,10 +66,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
       super.initialize()
 
       logger.info("All consumer child actors have sucessfully connected to the master guardian! Starting SSC")
-
-      ssc.checkpoint(sparkStreamingConfig.checkpointDir)
-      ssc.start()
-
+      SparkSingletons.getStreamingContext.start()
       Thread.sleep(5 * 1000)
 
       lastRestartMasterRef ! true
@@ -138,13 +120,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     //startato va tutto iin timeout
     //TODO capire come funziona
     //Thread.sleep(1500)
-    ssc.stop(stopSparkContext = false, stopGracefully = true)
-    ssc.awaitTermination()
-
-    // TODO la sleep la devo fare anche per lo structured?
-    // TODO stoppare i figli? Stoppo quella globale?
-    ss.stop()
-    ss.close()
+    SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
+    SparkSingletons.getStreamingContext.awaitTermination()
+    SparkSingletons.deinitializeSparkStreaming()
   
     val generalTimeoutDuration = generalTimeout.duration
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
@@ -169,7 +147,10 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
 
     logger.info(s"Starting ConsumersMasterGuardian actors...")
 
-    ssc = new StreamingContext(sc, Milliseconds(sparkStreamingConfig.streamingBatchIntervalMs))
+    SparkSingletons.initializeSparkStreaming(sparkStreamingConfig)
+    val ssc = SparkSingletons.getStreamingContext
+    
+    val ss = SparkSingletons.getSparkSession
 
     logger.info(s"Streaming context created...")
 
@@ -178,7 +159,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     //if (activeETL.isEmpty) {
     if (activeETL.isEmpty && activeStructuredETL.isEmpty && activeRT.isEmpty) {
       context become uninitialized
-
       logger.info("ConsumerMasterGuardian Uninitialized")
 
       lastRestartMasterRef ! true

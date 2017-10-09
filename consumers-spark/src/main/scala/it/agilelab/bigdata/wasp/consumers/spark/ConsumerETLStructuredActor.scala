@@ -238,7 +238,6 @@ class ConsumerETLStructuredActor(env: {
                         stream: DataFrame,
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy): DataFrame = {
-    val sqlContext = SQLContextSingleton.getInstance(ss.sparkContext)
     val strategyBroadcast = ss.sparkContext.broadcast(strategy)
     strategyBroadcast.value.transform(dataStoreDFs)
   }

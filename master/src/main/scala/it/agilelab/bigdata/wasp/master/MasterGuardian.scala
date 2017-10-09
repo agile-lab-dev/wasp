@@ -143,7 +143,7 @@ class MasterGuardian(env: {
 
   private def onPipegraph(name: String, f: PipegraphModel => Either[String, String]) = {
     env.pipegraphBL.getByName(name) match {
-      case None => Right("Pipegraph not retrieved")
+      case None => Left("Pipegraph not retrieved")
       case Some(pipegraph) => f(pipegraph)
     }
   }
