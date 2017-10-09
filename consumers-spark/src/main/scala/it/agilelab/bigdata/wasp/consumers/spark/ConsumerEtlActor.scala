@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
@@ -15,8 +17,11 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.sql.functions._
 
 
+case class Path (name: String, ts: Long)
+case class Metadata(id: String, arrivalTimestamp: Long, lat: Double, lon: Double, lastSeenTimestamp: Long, path: Array[Path])
 
 class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val rawBL : RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
                        sparkWriterFactory: SparkWriterFactory,
@@ -208,10 +213,30 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
                         strategy: Strategy): DStream[String] = {
     val sqlContext = SQLContextSingleton.getInstance(ssc.sparkContext)
     val strategyBroadcast = ssc.sparkContext.broadcast(strategy)
+
+    val etlName = etl.name
+
     stream.transform(rdd => {
+
       //TODO Verificare se questo è il comportamento che si vuole
       val dataframeToTransform = sqlContext.read.json(rdd)
       if (dataframeToTransform.schema.nonEmpty) {
+
+        val updateMetadata = udf((mId: String, mArrivalTimestamp: Long, mLat: Double, mLon: Double, mLastSeenTimestamp: Long, mPath: List[Path], lat: Double, lon: Double) => {
+
+          val now = System.currentTimeMillis()
+
+          if(mId == "")
+            Metadata(UUID.randomUUID().toString, now, lat, lon, now, List(Path(etlName, now)).toArray)
+          else
+            Metadata(mId, mArrivalTimestamp, lat, lon, now, (mPath :+ Path(etlName, now)).toArray)
+        })
+
+        //update values in field metadata
+        dataframeToTransform
+          .withColumn("metadata2", updateMetadata(col("metadata.id"), col("metadata.arrivalTimestamp"), col("metadata.lat"), col("metadata.lon"), col("metadata.lastSeenTimestamp"), col("metadata.path"), col("latitude"), col("longitude")))
+          .drop("metadata")
+          .withColumnRenamed("metadata2", "metadata")
 
         val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
         strategyBroadcast.value.transform(completeMapOfDFs).toJSON.rdd
