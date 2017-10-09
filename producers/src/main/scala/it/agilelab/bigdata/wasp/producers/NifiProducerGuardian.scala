@@ -35,11 +35,13 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
       val action = data.asJsObject.fields("action").convertTo[String]
       val request = checkActionType(action, data, mlModelId)
 
-      printConf()
+      println(s"*** $request ***")
 
       if(nifiProducerConf.isDefined) {
         val uri = getUriFromConfiguration(nifiProducerConf.get)
-        httpRequest(uri, request, httpMethod)
+        val res = httpRequest(uri, request, httpMethod)
+        println(s"RESPONSE: $res")
+        println(s"*** ${uri.toString()} ***")
         sender() ! true
       }
   }
@@ -55,10 +57,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
           val modelFile = Some(WaspDB.getDB.getFileByID(mlModel.get.modelFileId.get))
           NifiRequest(action, conf.id, conf.child, modelFile).toJson
         }
-        else {
-          logger.error(s"mlModelId field is undefined.")
-          NifiRequest(action, conf.id, conf.child, None).toJson // TODO gestire eccezione lato controller (Producer_C)
-        }
+        else throw new RuntimeException(s"mlModel does not exist.")
       case _ => NifiRequest(action, conf.id, conf.child, None).toJson
     }
   }
