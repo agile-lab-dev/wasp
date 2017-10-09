@@ -4,6 +4,7 @@ import java.io.File
 import java.lang
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.{SQLContext, SparkSession}
@@ -258,5 +259,12 @@ object SparkSingletons extends Logging {
     if (master.protocol == "" && master.host.startsWith("yarn"))
       logger.warn("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
   }
-
+  
+  def generateCheckpointDir(sparkStreamingConfigModel: SparkStreamingConfigModel,
+                            pipegraph: PipegraphModel,
+                            writer: WriterModel): String = {
+    sparkStreamingConfigModel.checkpointDir + "/" +
+    "pipegraph_" + pipegraph.name + "/" +
+    "writer_" + writer.name
+  }
 }
