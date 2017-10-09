@@ -127,6 +127,7 @@ class MasterGuardian(env: {
     case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
     case message: StartProducer => call(sender(), message, onProducer(message.id, startProducer))
     case message: StopProducer => call(sender(), message, onProducer(message.id, stopProducer))
+    case message: RestProducerRequest => call(sender(), message, onProducer(message.id, restProducerRequest(message, _)))
     case message: StartETL => call(sender(), message, onEtl(message.id, message.etlName, startEtl))
     case message: StopETL => call(sender(), message, onEtl(message.id, message.etlName, stopEtl))
     case message: StartBatchJob => call(sender(), message, onBatchJob(message.id, startBatchJob))
@@ -238,6 +239,11 @@ class MasterGuardian(env: {
   private def stopProducer(producer: ProducerModel): Either[String, String] = {
     val producerId = producer._id.get.getValue.toHexString
     ??[Either[String, String]](producersMasterGuardian, StopProducer(producerId))
+  }
+
+  private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
+    val producerId = producer._id.get.getValue.toHexString
+    ??[Either[String, String]](producersMasterGuardian, request.copy(id = producerId))
   }
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {

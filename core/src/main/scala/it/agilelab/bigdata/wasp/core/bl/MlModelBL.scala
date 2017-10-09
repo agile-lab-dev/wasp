@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{MlModelOnlyInfo}
+import it.agilelab.bigdata.wasp.core.models.{MlModelOnlyInfo, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString, BsonValue}
@@ -161,7 +161,11 @@ class MlModelBLImp(waspDB: WaspDB) extends MlModelBL {
     waspDB.saveFile(serialized, s"$name-$version-$timestamp", metadata)
   }
 
-  override def getById(id: String): Option[MlModelOnlyInfo] = waspDB.getDocumentByID[MlModelOnlyInfo](BsonObjectId(id))
+  private def factory(p: MlModelOnlyInfo) = MlModelOnlyInfo(p.name, p.version, p.className,
+    p.timestamp, p.modelFileId, p.favorite, p.description, p._id)
+
+  override def getById(id: String): Option[MlModelOnlyInfo] =
+    waspDB.getDocumentByID[MlModelOnlyInfo](BsonObjectId(id)).map(factory)
 
 
   override def delete(id: String): Unit = {
