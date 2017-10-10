@@ -169,12 +169,12 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
 
       activeETL.map(element => {
         logger.info(s"***Starting Streaming Etl actor [${element.name}]")
-        context.actorOf(Props(new ConsumerEtlActor(env, sparkWriterFactory, streamingReader, ssc, element, self, plugins)))
+        context.actorOf(Props(new LegacyStreamingETLActor(env, sparkWriterFactory, streamingReader, ssc, element, self, plugins)))
       })
 
       activeStructuredETL.map( element => {
         logger.info(s"***Starting Structured Streaming Etl actor [${element.name}]")
-        context.actorOf(Props(new ConsumerETLStructuredActor(env, sparkWriterFactory, structuredStreamingReader, ss, element, self, plugins)))
+        context.actorOf(Props(new StructuredStreamingETLActor(env, sparkWriterFactory, structuredStreamingReader, ss, element, self, plugins)))
       })
 
       //TODO If statement added to handle pipegraphs with only RT components, cleaner way to do this to be found

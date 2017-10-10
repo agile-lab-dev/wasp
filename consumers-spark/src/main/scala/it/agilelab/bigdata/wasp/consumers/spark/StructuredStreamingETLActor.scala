@@ -10,22 +10,23 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-class ConsumerETLStructuredActor(env: {val topicBL: TopicBL
+class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                                        val indexBL: IndexBL
                                        val rawBL: RawBL
                                        val keyValueBL: KeyValueBL
                                        val mlModelBL: MlModelBL},
-                                 sparkWriterFactory: SparkWriterFactory,
-                                 structuredStreamingReader: StructuredStreamingReader,
-                                 sparkSession: SparkSession,
-                                 structuredStreamingETL: StructuredStreamingETLModel,
-                                 listener: ActorRef,
-                                 plugins: Map[String, WaspConsumerSparkPlugin])
+                                  sparkWriterFactory: SparkWriterFactory,
+                                  structuredStreamingReader: StructuredStreamingReader,
+                                  sparkSession: SparkSession,
+                                  structuredStreamingETL: StructuredStreamingETLModel,
+                                  listener: ActorRef,
+                                  plugins: Map[String, WaspConsumerSparkPlugin])
     extends Actor
+    with SparkStreamingConfiguration
     with Logging {
 
   case object StreamReady
@@ -245,5 +246,4 @@ class ConsumerETLStructuredActor(env: {val topicBL: TopicBL
     val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
     strategyBroadcast.value.transform(dataStoreDFs)
   }
-
 }

@@ -17,15 +17,19 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
 
-
-class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val rawBL : RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
-                       sparkWriterFactory: SparkWriterFactory,
-                       streamingReader: StreamingReader,
-                       ssc: StreamingContext,
-                       etl: LegacyStreamingETLModel,
-                       listener: ActorRef,
-                       plugins: Map[String, WaspConsumerSparkPlugin]
-                        ) extends Actor with Logging {
+class LegacyStreamingETLActor(env: {val topicBL: TopicBL
+                                    val indexBL: IndexBL
+                                    val rawBL: RawBL
+                                    val keyValueBL: KeyValueBL
+                                    val mlModelBL: MlModelBL},
+                              sparkWriterFactory: SparkWriterFactory,
+                              streamingReader: StreamingReader,
+                              ssc: StreamingContext,
+                              etl: LegacyStreamingETLModel,
+                              listener: ActorRef,
+                              plugins: Map[String, WaspConsumerSparkPlugin])
+    extends Actor
+    with Logging {
   case object StreamReady
 
   /*
