@@ -152,7 +152,7 @@ class RtConsumersMasterGuardian(env: {
     val activePipegraphs = env.pipegraphBL.getActivePipegraphs()
   
     //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-    val rtComponents = activePipegraphs.flatMap(pg => pg.rt).filter(rt => rt.isActive)
+    val rtComponents = activePipegraphs.flatMap(pg => pg.rtComponents).filter(rt => rt.isActive)
     
     rtComponents
   }
