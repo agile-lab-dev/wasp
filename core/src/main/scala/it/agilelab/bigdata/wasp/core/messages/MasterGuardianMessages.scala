@@ -21,7 +21,7 @@ case class RemoveRemoteProducer(override val id: String, remoteProducer: ActorRe
 case class StartProducer(override val id: String) extends ProducerMessage
 case class StopProducer(override val id: String) extends ProducerMessage
 case class RestProducerRequest
-  (override val id: String, httpMethod: HttpMethod, data: JsValue, mlModelId: String) extends ProducerMessage
+  (override val id: String, httpMethod: HttpMethod, data: JsValue, mlModelId: Option[String]) extends ProducerMessage
 
 case class StartETL(override val id: String, override val etlName: String) extends ETLMessage
 case class StopETL(override val id: String, override val etlName: String) extends ETLMessage
