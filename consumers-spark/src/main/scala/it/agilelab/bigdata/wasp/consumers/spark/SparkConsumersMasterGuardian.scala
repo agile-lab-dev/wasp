@@ -6,17 +6,19 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, RTModel, LegacyStreamingETLModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, PipegraphModel, RTModel, StructuredStreamingETLModel}
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
+// TODO: ignore rt components in counts
 // TODO: uninitialized/initialized/starting handle different messages; are we sure can we just let everything else go into the dead letters *safely*?
 class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                                          val pipegraphBL: PipegraphBL
@@ -46,34 +48,23 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // counter for ready components
   var numberOfReadyComponents = 0
 
-  /** STARTUP PHASE **/
-  /** *****************/
-
-    // TODO move this stuff in preStart()
-  // initialize Spark
-  val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
-  if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")
-
-  // we start in uninitialized state
-  context become uninitialized
-
-  // TODO: use proxy from waspsystem
-  private var lastRestartMasterRef: ActorRef = _
+  // shortcut to MasterGuardian
+  private val masterGuardian = WaspSystem.masterGuardian
   
-  // TODO: wipe this
   override def preStart(): Unit = {
-    super.preStart()
-    //TODO:capire joinseednodes
-    cluster.joinSeedNodes(Vector(cluster.selfAddress))
+    // initialize Spark
+    val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
+    if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")
+  
+    // we start in uninitialized state
+    context become uninitialized
   }
   
   // behaviours ========================================================================================================
 
   // behaviour when uninitialized
   override def uninitialized: Actor.Receive = {
-    case RestartConsumers =>
-      lastRestartMasterRef = sender()
-      beginStartup()
+    case RestartConsumers => beginStartup()
   }
 
   // behaviour while starting
@@ -97,7 +88,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // behavior once initialized
   override def initialized: Actor.Receive = {
     case RestartConsumers =>
-      lastRestartMasterRef = sender()
       // attempt stopping
       val stoppingSuccessful = stopGuardian()
       
@@ -156,7 +146,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       logger.info(s"SparkConsumersMasterGuardian $self is now in uninitialized state")
       
       // answer ok to MasterGuardian since this is normal if all pipegraphs are unactive
-      lastRestartMasterRef ! true
+      masterGuardian ! true
     } else { // we have pipegaphs/components to start
       // enter starting state so we stash restarts
       context become starting
@@ -205,7 +195,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     Thread.sleep(5 * 1000)
     
     // confirm startup success to MasterGuardian
-    lastRestartMasterRef ! true
+    masterGuardian ! true
     
     // enter intialized state
     context become initialized
@@ -243,7 +233,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
       numberOfReadyComponents = context.children.size
       logger.error(s"Found $numberOfReadyComponents children still running")
-      lastRestartMasterRef ! false
+      masterGuardian ! false
       false
     }
     
