@@ -41,8 +41,8 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
   implicit val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
   implicit val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
-  implicit val etlModelFormat: RootJsonFormat[StreamingModel] = jsonFormat8(StreamingModel.apply)
-  implicit val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingModel] = jsonFormat9(StructuredStreamingModel.apply)
+  implicit val etlModelFormat: RootJsonFormat[LegacyStreamingETLModel] = jsonFormat8(LegacyStreamingETLModel.apply)
+  implicit val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingETLModel] = jsonFormat9(StructuredStreamingETLModel.apply)
   implicit val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
   implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat11(PipegraphModel.apply)
   implicit val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
@@ -51,6 +51,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat17(SparkStreamingConfigModel.apply)
   implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat3(ElasticConfigModel.apply)
   implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat5(SolrConfigModel.apply)
+  implicit val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)
   implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat8(BatchJobModel.apply)
   implicit val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat8(ProducerModel.apply)
 

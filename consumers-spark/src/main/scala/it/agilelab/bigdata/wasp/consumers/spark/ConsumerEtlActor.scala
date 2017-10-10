@@ -22,7 +22,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
                        sparkWriterFactory: SparkWriterFactory,
                        streamingReader: StreamingReader,
                        ssc: StreamingContext,
-                       etl: StreamingModel,
+                       etl: LegacyStreamingETLModel,
                        listener: ActorRef,
                        plugins: Map[String, WaspConsumerSparkPlugin]
                         ) extends Actor with Logging {

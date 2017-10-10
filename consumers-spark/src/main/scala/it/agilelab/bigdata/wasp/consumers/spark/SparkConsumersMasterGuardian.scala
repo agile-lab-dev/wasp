@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, RTModel, StreamingModel, StructuredStreamingModel}
+import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, RTModel, LegacyStreamingETLModel, StructuredStreamingETLModel}
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 
@@ -187,7 +187,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
   }
 
   //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-  private def loadActivePipegraphs: (Seq[StreamingModel], Seq[StructuredStreamingModel], Seq[RTModel]) = {
+  private def loadActivePipegraphs: (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel]) = {
     logger.info(s"Loading all active Pipegraphs ...")
     val pipegraphs: Seq[PipegraphModel] = env.pipegraphBL.getActivePipegraphs()
     val etlComponents = pipegraphs.flatMap(pg => pg.streaming).filter(etl => etl.isActive)

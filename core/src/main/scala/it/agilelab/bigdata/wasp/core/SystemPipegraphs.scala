@@ -101,11 +101,11 @@ private[wasp] object LoggerPipegraph {
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
-		streaming = List(StreamingModel(
+		streaming = List(LegacyStreamingETLModel(
 			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic._id.get)),
-			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, StreamingModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
-		structuredStreaming = List.empty[StructuredStreamingModel],
+		structuredStreaming = List.empty[StructuredStreamingETLModel],
 		rt = Nil,
 		dashboard = None,
 		isActive = true,
@@ -164,12 +164,12 @@ private[wasp] object RawPipegraph {
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
-		streaming = List(StreamingModel(
+		streaming = List(LegacyStreamingETLModel(
 			"write on index",
 			List(ReaderModel.kafkaReader(rawTopic.name, rawTopic._id.get)),
-			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, StreamingModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
-		structuredStreaming = List.empty[StructuredStreamingModel],
+		structuredStreaming = List.empty[StructuredStreamingETLModel],
 		rt = Nil,
 		dashboard = None,
 		isActive = true,
