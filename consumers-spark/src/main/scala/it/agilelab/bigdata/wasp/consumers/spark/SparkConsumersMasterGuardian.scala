@@ -13,15 +13,19 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, RTModel, LegacyStreamingETLModel, StructuredStreamingETLModel}
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
-import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
-class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegraphBL: PipegraphBL;
-  val topicBL: TopicBL; val indexBL: IndexBL
-  val rawBL : RawBL; val keyValueBL: KeyValueBL
-  val websocketBL: WebsocketBL; val mlModelBL: MlModelBL;},
+// TODO: uninitialized/initialized/starting handle different messages; are we sure can we just let everything else go into the dead letters *safely*?
+class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
+                                         val pipegraphBL: PipegraphBL
+                                         val topicBL: TopicBL
+                                         val indexBL: IndexBL
+                                         val rawBL: RawBL
+                                         val keyValueBL: KeyValueBL
+                                         val websocketBL: WebsocketBL
+                                         val mlModelBL: MlModelBL},
                                    sparkWriterFactory: SparkWriterFactory,
                                    streamingReader: StreamingReader,
                                    structuredStreamingReader: StructuredStreamingReader,
@@ -31,179 +35,244 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL; val pipegra
     with Stash
     with Logging
     with WaspConfiguration {
-
-  var etlListSize = 0
-  var etlStructuredListSize = 0
-  var readyEtls = 0
+  // type alias for pipegraph -> components map
+  type PipegraphsToComponentsMap = Map[PipegraphModel, (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel])]
+  
+  // counters for components
+  var legacyStreamingETLTotal = 0
+  var structuredStreamingETLTotal = 0
+  var rtTotal = 0
+  
+  // counter for ready components
+  var numberOfReadyComponents = 0
 
   /** STARTUP PHASE **/
   /** *****************/
 
+    // TODO move this stuff in preStart()
   // initialize Spark
   val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
   if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")
 
+  // we start in uninitialized state
   context become uninitialized
 
-  /** BASIC METHODS **/
-  /** *****************/
-
+  // TODO: use proxy from waspsystem
   private var lastRestartMasterRef: ActorRef = _
-
-
+  
+  // TODO: wipe this
   override def preStart(): Unit = {
     super.preStart()
     //TODO:capire joinseednodes
     cluster.joinSeedNodes(Vector(cluster.selfAddress))
   }
+  
+  // behaviours ========================================================================================================
 
-  override def initialize(): Unit = {
-    logger.info(s"New actor registered with Master!")
-    readyEtls = readyEtls + 1
-
-    // Until all children aren't ready to stream we don't start the SSC
-    if (readyEtls == (etlListSize + etlStructuredListSize)) {
-      super.initialize()
-
-      logger.info("All consumer child actors have sucessfully connected to the master guardian! Starting SSC")
-      SparkSingletons.getStreamingContext.start()
-      Thread.sleep(5 * 1000)
-
-      lastRestartMasterRef ! true
-
-      context become initialized
-
-      logger.info("SparkConsumerMasterGuardian Initialized")
-      logger.info("Unstashing queued messages...")
-
-      unstashAll()
-    }
-    else {
-      logger.info(s"Not all actors have registered to the cluster (right now [$readyEtls]), waiting for more ...")
-    }
-  }
-
+  // behaviour when uninitialized
   override def uninitialized: Actor.Receive = {
-
     case RestartConsumers =>
       lastRestartMasterRef = sender()
-      startGuardian()
+      beginStartup()
   }
 
+  // behaviour while starting
   def starting: Actor.Receive = {
-    case OutputStreamInitialized => initialize()
+    case OutputStreamInitialized =>
+      // register component actor
+      registerComponentActor(sender())
+      
+      if (numberOfReadyComponents == (legacyStreamingETLTotal + structuredStreamingETLTotal)) {
+        // all component actors registered; finish startup
+        finishStartup()
+      } else {
+        logger.info(s"Not all component actors have registered to the cluster (right now only $numberOfReadyComponents " +
+                    s"out of ${legacyStreamingETLTotal + structuredStreamingETLTotal}), waiting for more...")
+      }
     case RestartConsumers =>
-      logger.info(s"Stashing restart ...")
+      logger.info(s"Stashing RestartConsumers from ${sender()}")
       stash()
   }
 
-  /** This node guardian's customer behavior once initialized. */
+  // behavior once initialized
   override def initialized: Actor.Receive = {
     case RestartConsumers =>
       lastRestartMasterRef = sender()
+      // attempt stopping
       val stoppingSuccessful = stopGuardian()
+      
+      // only proceed with restart if we actually stopped
       if (stoppingSuccessful) {
-        startGuardian()
+        beginStartup()
       }
   }
-
-  /** PRIVATE METHODS **/
-  /** ******************/
-
-  private def stopGuardian(): Boolean = {
-    logger.info(s"Stopping...")
   
-    // stop all actors bound to this guardian and the guardian itself
-    logger.info(s"Stopping child actors bound to this spark consumers master guardian $self")
+  // methods implementing start/stop ===================================================================================
 
-    //questa sleep serve perchè se si fa la stop dello spark streamng context subito dopo che e' stato
-    //startato va tutto iin timeout
-    //TODO capire come funziona
-    //Thread.sleep(1500)
-    SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
-    SparkSingletons.getStreamingContext.awaitTermination()
-    SparkSingletons.deinitializeSparkStreaming()
-  
-    val generalTimeoutDuration = generalTimeout.duration
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
-    val res = Await.result(globalStatus, generalTimeoutDuration)
-
-    if (res reduceLeft (_ && _)) {
-      logger.info(s"Stopping sequence completed")
-      readyEtls = 0
-      true
-    }
-    else {
-      logger.error(s"Stopping sequence failed! Unable to shutdown all nodes")
-      readyEtls = context.children.size
-      logger.error(s"Found $readyEtls children still running")
-      lastRestartMasterRef ! false
-      false
-    }
-
-  }
-
-  private def startGuardian() {
-
-    logger.info(s"Starting ConsumersMasterGuardian actors...")
+  private def beginStartup() {
+    logger.info(s"SparkConsumersMasterGuardian $self starting...")
 
     SparkSingletons.initializeSparkStreaming(sparkStreamingConfig)
     val ssc = SparkSingletons.getStreamingContext
-    
     val ss = SparkSingletons.getSparkSession
 
-    logger.info(s"Streaming context created...")
-
-    val (activeETL, activeStructuredETL, activeRT) = loadActivePipegraphs
-    //TODO Why no pipegraphs with only RT modules?
-    //if (activeETL.isEmpty) {
-    if (activeETL.isEmpty && activeStructuredETL.isEmpty && activeRT.isEmpty) {
+    // gab map containing pipegraph -> components info for active pipegraphs
+    logger.info(s"Loading all active pipegraphs...")
+    val pipegraphsToComponentsMap = getActivePipegraphsToComponentsMap
+    logger.info(s"Found ${pipegraphsToComponentsMap.size} active pipegraphs")
+  
+    // zero counters for components
+    legacyStreamingETLTotal = 0
+    structuredStreamingETLTotal = 0
+    rtTotal = 0
+    
+    // update counters for components
+    pipegraphsToComponentsMap foreach {
+      case (pipegraph, (lseComponents, sseComponents, rtComponents)) => {
+        // grab sizes
+        val lseListSize = lseComponents.size
+        val sseListSize = sseComponents.size
+        val rtListSize = rtComponents.size
+    
+        // increment size counters for components
+        legacyStreamingETLTotal += lseListSize
+        structuredStreamingETLTotal += sseListSize
+        rtTotal += rtListSize
+    
+        logger.info(s"Found ${lseListSize + sseListSize + rtListSize} total components for pipegraph ${pipegraph.name} " +
+                      s"($lseListSize legacy streaming, $sseListSize structured streaming, $rtListSize rt)")
+      }
+    }
+  
+    logger.info(s"Found ${legacyStreamingETLTotal + structuredStreamingETLTotal + rtTotal} total components " +
+                  s"($legacyStreamingETLTotal legacy streaming, $structuredStreamingETLTotal structured streaming, " +
+                  s"$rtTotal rt)")
+  
+    if (legacyStreamingETLTotal + structuredStreamingETLTotal == 0) { // no active pipegraphs/no components to start
+      logger.info("No active pipegraphs/components found; aborting startup sequence")
+      
+      // enter unitizialized state because we don't have anything to do
       context become uninitialized
-      logger.info("ConsumerMasterGuardian Uninitialized")
-
+      logger.info(s"SparkConsumersMasterGuardian $self is now in uninitialized state")
+      
+      // answer ok to MasterGuardian since this is normal if all pipegraphs are unactive
       lastRestartMasterRef ! true
-    } else {
+    } else { // we have pipegaphs/components to start
+      // enter starting state so we stash restarts
       context become starting
-
-      logger.info("ConsumerMasterGuardian Starting")
-
-      activeETL.map(element => {
-        logger.info(s"***Starting Streaming Etl actor [${element.name}]")
-        context.actorOf(Props(new LegacyStreamingETLActor(env, sparkWriterFactory, streamingReader, ssc, element, self, plugins)))
-      })
-
-      activeStructuredETL.map( element => {
-        logger.info(s"***Starting Structured Streaming Etl actor [${element.name}]")
-        context.actorOf(Props(new StructuredStreamingETLActor(env, sparkWriterFactory, structuredStreamingReader, ss, element, self, plugins)))
-      })
-
-      //TODO If statement added to handle pipegraphs with only RT components, cleaner way to do this to be found
-      if(activeETL.isEmpty)
-        {
-          lastRestartMasterRef ! true
-          context become initialized
+      logger.info(s"SparkConsumersMasterGuardian $self is now in starting state")
+      
+      // loop over pipegraph -> components map spawning the appropriate actors for each component
+      pipegraphsToComponentsMap foreach {
+        case (pipegraph, (lseComponents, sseComponents, rtComponents)) => {
+          logger.info(s"Starting *StreaminETLActors for pipegraph ${pipegraph.name}")
+          
+          // start actors for legacy streaming components
+          lseComponents.foreach(component => {
+            logger.info(s"Starting LegacyStreamingETLActor for pipegraph ${pipegraph.name}, component ${component.name}...")
+            val actor = context.actorOf(Props(new LegacyStreamingETLActor(env, sparkWriterFactory, streamingReader, ssc, component, self, plugins)))
+            logger.info(s"Started LegacyStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
+          })
+  
+          // start actors for structured streaming components
+          sseComponents.foreach(component => {
+            logger.info(s"Starting StructuredStreamingETLActor for pipegraph ${pipegraph.name}, component ${component.name}...")
+            val actor = context.actorOf(Props(new StructuredStreamingETLActor(env, sparkWriterFactory, structuredStreamingReader, ss, null, component, self, plugins)))
+            logger.info(s"Started StructuredStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
+          })
+          
+          // do not do anything for rt components
+          logger.info(s"Ignoring ${rtComponents.size} rt components for pipegraph ${pipegraph.name} as they are handled by RtConsumersMasterGuardian")
         }
+      }
+  
+      // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
+      logger.info("Waiting for all component actors to register...")
     }
   }
+  
+  private def registerComponentActor(componentActor: ActorRef): Unit = {
+    logger.info(s"Component actor $componentActor registered")
+    numberOfReadyComponents += 1
+  }
+  
+  private def finishStartup(): Unit = {
+    logger.info("All consumer child actors have registered! Starting StreamingContext")
+    SparkSingletons.getStreamingContext.start()
+    //questa sleep serve perchè se si fa la stop dello spark streamng context subito dopo che e' stato
+    //startato va tutto iin timeout
+    // TODO check if this is needed, we lose precious seconds of timeout here
+    Thread.sleep(5 * 1000)
+    
+    // confirm startup success to MasterGuardian
+    lastRestartMasterRef ! true
+    
+    // enter intialized state
+    context become initialized
+    logger.info(s"SparkConsumersMasterGuardian $self is now in initialized state")
+    
+    // unstash RestartConsumers stashed while in starting state
+    logger.info("Unstashing queued messages...")
+    unstashAll()
+  }
+  
+  private def stopGuardian(): Boolean = {
+    logger.info(s"SparkConsumersMasterGuardian $self stopping...")
+    
+    // stop all component actors bound to this guardian and the guardian itself
+    logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
+    
+    // stop StreamingContext
+    SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
+    SparkSingletons.getStreamingContext.awaitTermination()
+    SparkSingletons.deinitializeSparkStreaming()
+    
+    // TODO stop queries
+    ???
+    
+    val generalTimeoutDuration = generalTimeout.duration
+    val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
+    val res = Await.result(globalStatus, generalTimeoutDuration)
+    
+    if (res reduceLeft (_ && _)) {
+      logger.info(s"Stopping sequence completed")
+      numberOfReadyComponents = 0
+      true
+    }
+    else {
+      logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
+      numberOfReadyComponents = context.children.size
+      logger.error(s"Found $numberOfReadyComponents children still running")
+      lastRestartMasterRef ! false
+      false
+    }
+    
+  }
+  
+  // helper methods ====================================================================================================
 
   //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-  private def loadActivePipegraphs: (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel]) = {
-    logger.info(s"Loading all active Pipegraphs ...")
+  private def getActivePipegraphsToComponentsMap: PipegraphsToComponentsMap = {
     val pipegraphs: Seq[PipegraphModel] = env.pipegraphBL.getActivePipegraphs()
-    val etlComponents = pipegraphs.flatMap(pg => pg.streaming).filter(etl => etl.isActive)
-    logger.info(s"Found ${etlComponents.length} active ETL...")
-    etlListSize = etlComponents.length
-
-    val etlStructuredComponents = pipegraphs.flatMap(pg => pg.structuredStreaming).filter(etls => etls.isActive)
-    logger.info(s"Found ${etlStructuredComponents.length} active Structured ETL...")
-    etlStructuredListSize = etlComponents.length
-
-    val rtComponents = pipegraphs.flatMap(pg => pg.rt).filter(rt => rt.isActive)
-    logger.info(s"Found ${rtComponents.length} active RT...")
-    //actorListSize = rtComponents.length
-
-
-    (etlComponents, etlStructuredComponents, rtComponents)
+    
+    // extract components from active pipegraphs as a Map pipegraph -> components
+    val pipegraphsToComponentsMap: PipegraphsToComponentsMap = pipegraphs map {
+      pipegraph => {
+        // grab components
+        val lseComponents = pipegraph.legacyStreamingComponents
+        val sseComponents = pipegraph.structuredStreamingComponents
+        val rtComponents = pipegraph.rtComponents
+        
+        // grab sizes
+        val lseListSize = lseComponents.size
+        val sseListSize = sseComponents.size
+        val rtListSize = rtComponents.size
+        
+        pipegraph -> (lseComponents, sseComponents, rtComponents)
+      }
+    } toMap
+    
+    pipegraphsToComponentsMap
   }
 
 }
