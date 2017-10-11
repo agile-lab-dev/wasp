@@ -150,7 +150,8 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	}
 
 	private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
-		if(! ??[Boolean](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId)))
+		if(! ??[Boolean](producers(producer._id.get.getValue.toHexString),
+			RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse(""))))
 			Left(s"Producer '${producer.name}' does not exist")
 		Right("Producer '" + producer.name + "' request: " + request.data)
 	}
