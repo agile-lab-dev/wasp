@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.WaspSystem
@@ -15,6 +16,7 @@ import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, PipegraphModel, RTModel, StructuredStreamingETLModel}
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
@@ -46,6 +48,12 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   
   // counter for ready components
   var numberOfReadyComponents = 0
+  
+  // map of componentName -> StructuredStreamingETLActor
+  val nameToActorStructuredStreaming: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+  
+  // map of componentName -> LegacyStreamingETLActor
+  val nameToActorLegacyStreaming: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
 
   // shortcut to MasterGuardian
   private val masterGuardian = WaspSystem.masterGuardian
@@ -155,16 +163,32 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
           
           // start actors for legacy streaming components
           lseComponents.foreach(component => {
+            // start component actor
             logger.info(s"Starting LegacyStreamingETLActor for pipegraph ${pipegraph.name}, component ${component.name}...")
             val actor = context.actorOf(Props(new LegacyStreamingETLActor(env, sparkWriterFactory, streamingReader, ssc, component, self, plugins)))
             logger.info(s"Started LegacyStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
+  
+            // add to component actor tracking map
+            nameToActorStructuredStreaming += (generateUniqueComponentName(pipegraph, component) -> actor)
           })
   
-          // start actors for structured streaming components
+          // start actors for structured streaming components if they are not already started
           sseComponents.foreach(component => {
-            logger.info(s"Starting StructuredStreamingETLActor for pipegraph ${pipegraph.name}, component ${component.name}...")
-            val actor = context.actorOf(Props(new StructuredStreamingETLActor(env, sparkWriterFactory, structuredStreamingReader, ss, null, component, self, plugins)))
-            logger.info(s"Started StructuredStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
+            val structuredQueryName = generateUniqueComponentName(pipegraph, component)
+            if (nameToActorStructuredStreaming.contains(structuredQueryName)) {
+              // component actor already running, skip component
+              logger.info(s"Component actor for pipegraph ${pipegraph.name}, component ${component.name} already exists " +
+                          s"as StructuredStreamingETLActor ${nameToActorStructuredStreaming(structuredQueryName)}, " +
+                          s"skipping creation")
+            } else {
+              // start component actor
+              logger.info(s"Starting StructuredStreamingETLActor for pipegraph ${pipegraph.name}, component ${component.name}...")
+              val actor = context.actorOf(Props(new StructuredStreamingETLActor(env, sparkWriterFactory, structuredStreamingReader, ss, pipegraph, component, self, plugins)))
+              logger.info(s"Started StructuredStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
+              
+              // add to component actor tracking map
+              nameToActorStructuredStreaming += (structuredQueryName -> actor)
+            }
           })
           
           // do not do anything for rt components
@@ -210,27 +234,57 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     // stop all component actors bound to this guardian and the guardian itself
     logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
     
-    // stop StreamingContext
+    // stop StreamingContext and all LegacyStreamingETLActor
+    // stop streamin context
     SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
     SparkSingletons.getStreamingContext.awaitTermination()
     SparkSingletons.deinitializeSparkStreaming()
-    
-    // TODO stop queries
-    ???
-    
+    // gracefully stop all component actors corresponding to legacy components
+    logger.info(s"Gracefully stopping all ${nameToActorLegacyStreaming.size} legacy streaming component actors...")
     val generalTimeoutDuration = generalTimeout.duration
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeoutDuration))
-    val res = Await.result(globalStatus, generalTimeoutDuration)
+    val legacyStreamingStatuses = nameToActorLegacyStreaming.values.map(gracefulStop(_, generalTimeoutDuration))
+  
+    // TODO cleanup nameToActorLegacyStreaming
     
+    // find and stop StructuredStreamingETLActor belonging to pipegraphs that are no longer active
+    // get the componnt names for all components of all active pipegraphs
+    val activeStructuredStreamingComponentNames = getActivePipegraphsToComponentsMap flatMap {
+      case (pipegraph, (_, sseComponents, _)) => {
+        sseComponents map { component => generateUniqueComponentName(pipegraph, component) }
+      }
+    } toSet
+    // intersect with the set of component names for component actors
+    val inactiveStructuredStreamingComponentNames = nameToActorStructuredStreaming.keys.toSet.diff(activeStructuredStreamingComponentNames)
+    // grab corresponding actor refs
+    val inactiveStructuredStreamingComponentActors = inactiveStructuredStreamingComponentNames.map(nameToActorStructuredStreaming).toSeq
+    // gracefully stop all component actors corresponding to now-inactive pipegraphs
+    logger.info(s"Gracefully stopping ${inactiveStructuredStreamingComponentActors.size} structured streaming component actors managing now-inactive components...")
+    val stucturedStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration))
+    
+    // TODO remove inactiveStructuredStreamingComponentActors from nameToActorStructuredStreaming
+    
+    // await all component actors' stopping
+    val globalStatuses = legacyStreamingStatuses ++ stucturedStreamingStatuses
+    val res = Await.result(Future.sequence(globalStatuses), generalTimeoutDuration)
+    
+    // check whether all components actors that had to stop actually stopped
     if (res reduceLeft (_ && _)) {
       logger.info(s"Stopping sequence completed")
-      numberOfReadyComponents = 0
+      
+      // cleanup references to now stopped component actors
+      nameToActorLegacyStreaming.clear() // remove all legacy streaming components actors
+      inactiveStructuredStreamingComponentNames.map(nameToActorStructuredStreaming.remove) // remove structured streaming components actors that we stopped
+      
+      // update counter for ready components because some structured streaming components actors might have been left running
+      numberOfReadyComponents = nameToActorStructuredStreaming.size
       true
-    }
-    else {
+    } else {
       logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
       numberOfReadyComponents = context.children.size
       logger.error(s"Found $numberOfReadyComponents children still running")
+      
+      // TODO rebuild maps by intersecting values with context.children
+      // TODO log info on which component actors did not stop
       masterGuardian ! false
       false
     }
