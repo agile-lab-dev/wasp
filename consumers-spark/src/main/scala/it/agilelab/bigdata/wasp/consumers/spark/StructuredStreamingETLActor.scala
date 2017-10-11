@@ -10,18 +10,23 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{StructuredStreamingModel, ReaderModel, ReaderType, TopicModel}
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-class ConsumerETLStructuredActor(env: {
-  val topicBL: TopicBL;
-  val indexBL: IndexBL;
-  val rawBL: RawBL;
-  val keyValueBL: KeyValueBL;
-  val mlModelBL: MlModelBL
-}, sparkWriterFactory: SparkWriterFactory, structuredStreamingReader: StructuredStreamingReader, ss: SparkSession, etlStructured: StructuredStreamingModel, listener: ActorRef, plugins: Map[String, WaspConsumerSparkPlugin])
+class StructuredStreamingETLActor(env: {val topicBL: TopicBL
+                                       val indexBL: IndexBL
+                                       val rawBL: RawBL
+                                       val keyValueBL: KeyValueBL
+                                       val mlModelBL: MlModelBL},
+                                  sparkWriterFactory: SparkWriterFactory,
+                                  structuredStreamingReader: StructuredStreamingReader,
+                                  sparkSession: SparkSession,
+                                  structuredStreamingETL: StructuredStreamingETLModel,
+                                  listener: ActorRef,
+                                  plugins: Map[String, WaspConsumerSparkPlugin])
     extends Actor
+    with SparkStreamingConfiguration
     with Logging {
 
   case object StreamReady
@@ -51,7 +56,7 @@ class ConsumerETLStructuredActor(env: {
     */
   //TODO: identical to it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.createStrategy, externalize
   private lazy val createStrategy: Option[Strategy] =
-    etlStructured.strategy match {
+    structuredStreamingETL.strategy match {
       case None => None
       case Some(strategyModel) =>
         val result = Class
@@ -73,7 +78,7 @@ class ConsumerETLStructuredActor(env: {
   private def indexReaders(): List[StaticReader] = {
     val defaultDataStoreIndexed =
       ConfigManager.getWaspConfig.defaultIndexedDatastore
-    etlStructured.inputs.flatMap({
+    structuredStreamingETL.inputs.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         val readerProduct = readerType.getActualProduct
         logger.info(
@@ -97,7 +102,7 @@ class ConsumerETLStructuredActor(env: {
     * Raw readers initialization
     */
   private def rawReaders(): List[StaticReader] =
-    etlStructured.inputs
+    structuredStreamingETL.inputs
       .flatMap({
         case ReaderModel(name, endpointId, readerType) =>
           logger.info(
@@ -128,7 +133,7 @@ class ConsumerETLStructuredActor(env: {
     * Topic models initialization
     */
   private def topicModels(): List[Option[TopicModel]] =
-    etlStructured.inputs
+    structuredStreamingETL.inputs
       .flatMap({
         case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) =>
           val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
@@ -137,7 +142,7 @@ class ConsumerETLStructuredActor(env: {
       })
 
   private def validationTask(): Unit = {
-    etlStructured.inputs.foreach({
+    structuredStreamingETL.inputs.foreach({
       case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) => {
         val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
         if (topicOpt.isEmpty) {
@@ -158,13 +163,13 @@ class ConsumerETLStructuredActor(env: {
       }
     })
     val topicReaderModelNumber =
-      etlStructured.inputs.count(_.readerType.category == TopicModel.readerType)
+      structuredStreamingETL.inputs.count(_.readerType.category == TopicModel.readerType)
     if (topicReaderModelNumber == 0)
       throw new Exception(
-        "There is NO topic to read data, inputs: " + etlStructured.inputs)
+        "There is NO topic to read data, inputs: " + structuredStreamingETL.inputs)
     if (topicReaderModelNumber != 1)
       throw new Exception(
-        "MUST be only ONE topic, inputs: " + etlStructured.inputs)
+        "MUST be only ONE topic, inputs: " + structuredStreamingETL.inputs)
   }
 
   //TODO move in the extender class
@@ -176,9 +181,9 @@ class ConsumerETLStructuredActor(env: {
 
         val topicModel = topicModelOpt.get
         val stream: DataFrame =
-          structuredStreamingReader.createStructuredStream(etlStructured.group,
-                                                 etlStructured.kafkaAccessType,
-                                                 topicModel)(ss)
+          structuredStreamingReader.createStructuredStream(structuredStreamingETL.group,
+                                                           structuredStreamingETL.kafkaAccessType,
+                                                           topicModel)(sparkSession)
         (ReaderKey(TopicModel.readerType, topicModel.name), stream)
       })
 
@@ -199,7 +204,7 @@ class ConsumerETLStructuredActor(env: {
           staticReaders()
             .map(staticReader => {
 
-              val dataSourceDF = staticReader.read(ss.sparkContext)
+              val dataSourceDF = staticReader.read(sparkSession.sparkContext)
               (ReaderKey(staticReader.readerType, staticReader.name),
                dataSourceDF)
             })
@@ -209,7 +214,7 @@ class ConsumerETLStructuredActor(env: {
         // --- Broadcast models initialization ----
         // Reading all model from DB and create broadcast
         val mlModelsBroadcast: MlModelsBroadcastDB =
-          mlModelsDB.createModelsBroadcast(etlStructured.mlModels)(ss.sparkContext)
+          mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(sparkSession.sparkContext)
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
@@ -221,8 +226,8 @@ class ConsumerETLStructuredActor(env: {
         topicStreamWithKey._2
       }
 
-    val sparkWriterOpt =
-      sparkWriterFactory.createSparkWriterStructuredStreaming(env, ss, etlStructured.output)
+    val sparkWriterOpt = sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETL.output)
+    
     sparkWriterOpt.foreach(w => {
       w.write(outputStream)
     })
@@ -238,9 +243,7 @@ class ConsumerETLStructuredActor(env: {
                         stream: DataFrame,
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy): DataFrame = {
-    val sqlContext = SQLContextSingleton.getInstance(ss.sparkContext)
-    val strategyBroadcast = ss.sparkContext.broadcast(strategy)
+    val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
     strategyBroadcast.value.transform(dataStoreDFs)
   }
-
 }
