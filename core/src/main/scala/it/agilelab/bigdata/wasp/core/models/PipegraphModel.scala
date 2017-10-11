@@ -13,11 +13,33 @@ object StrategyModel {
   def create(className: String, configuration: Config): StrategyModel = StrategyModel(className, Some(configuration.root().render(ConfigRenderOptions.concise())))
 }
 
-case class LegacyStreamingETLModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true)
+// TODO: move common members from child classes here
+trait ProcessingComponentModel
 
-case class StructuredStreamingETLModel(name: String, inputs: List[ReaderModel], output: WriterModel, mlModels: List[MlModelOnlyInfo], strategy: Option[StrategyModel], kafkaAccessType: String, group: String = "default", var isActive: Boolean = true, config: Map[String, String])
+case class LegacyStreamingETLModel(name: String,
+                                   inputs: List[ReaderModel],
+                                   output: WriterModel,
+                                   mlModels: List[MlModelOnlyInfo],
+                                   strategy: Option[StrategyModel],
+                                   kafkaAccessType: String,
+                                   group: String = "default",
+                                   var isActive: Boolean = true) extends ProcessingComponentModel
 
-case class RTModel(name: String, inputs: List[ReaderModel], var isActive: Boolean = true, strategy: Option[StrategyModel] = None, endpoint: Option[WriterModel] = None)
+case class StructuredStreamingETLModel(name: String,
+                                       inputs: List[ReaderModel],
+                                       output: WriterModel,
+                                       mlModels: List[MlModelOnlyInfo],
+                                       strategy: Option[StrategyModel],
+                                       kafkaAccessType: String,
+                                       group: String = "default",
+                                       var isActive: Boolean = true,
+                                       config: Map[String, String]) extends ProcessingComponentModel
+
+case class RTModel(name: String,
+                   inputs: List[ReaderModel],
+                   var isActive: Boolean = true,
+                   strategy: Option[StrategyModel] = None,
+                   endpoint: Option[WriterModel] = None) extends ProcessingComponentModel
 
 /**
   * A model for a pipegraph, a processing pipeline abstraction.
