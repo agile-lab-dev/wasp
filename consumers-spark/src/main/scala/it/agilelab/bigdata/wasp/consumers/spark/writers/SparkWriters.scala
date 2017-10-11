@@ -8,7 +8,7 @@ trait SparkStreamingWriter {
 }
 
 trait SparkStructuredStreamingWriter {
-  def write(stream: DataFrame)
+  def write(stream: DataFrame, queryName: String, checkpointDir: String)
 }
 
 trait SparkWriter {

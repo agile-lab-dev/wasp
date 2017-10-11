@@ -6,6 +6,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, M
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
@@ -22,6 +23,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                                   sparkWriterFactory: SparkWriterFactory,
                                   structuredStreamingReader: StructuredStreamingReader,
                                   sparkSession: SparkSession,
+                                  pipegraph: PipegraphModel,
                                   structuredStreamingETL: StructuredStreamingETLModel,
                                   listener: ActorRef,
                                   plugins: Map[String, WaspConsumerSparkPlugin])
@@ -227,9 +229,11 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
       }
 
     val sparkWriterOpt = sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETL.output)
+    val queryName = generateUniqueComponentName(pipegraph, structuredStreamingETL)
+    val checkpointDir = generateStructuredStreamingCheckpointDir(sparkStreamingConfig, pipegraph, structuredStreamingETL)
     
     sparkWriterOpt.foreach(w => {
-      w.write(outputStream)
+      w.write(outputStream, queryName, checkpointDir)
     })
 
     // For some reason, trying to send directly a message from here to the guardian is not working ...

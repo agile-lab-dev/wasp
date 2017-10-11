@@ -60,7 +60,7 @@ class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingConte
 
 class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: String, ss: SparkSession)
   extends SparkStructuredStreamingWriter {
-  override def write(stream: DataFrame): Unit = {
+  override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
     import ss.implicits._
 
     val kafkaConfig = ConfigManager.getKafkaConfig
@@ -87,15 +87,14 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
         }
 
         val pkf = topic.partitionKeyField.getOrElse("null")
-
-        val cpDir = ConfigManager.getSparkStreamingConfig.checkpointDir
-
+        
         val dsw: DataStreamWriter[Row] = kafkaFormattedDF
           .selectExpr( pkf, "value")
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
-          .option("checkpointLocation", cpDir)
+          .option("checkpointLocation", checkpointDir)
+          .queryName(queryName)
 
         val dswWithWritingConf = addKafkaConf(dsw, tinyKafkaConfig)
 
