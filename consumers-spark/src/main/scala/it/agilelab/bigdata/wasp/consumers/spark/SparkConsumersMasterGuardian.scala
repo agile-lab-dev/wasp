@@ -43,7 +43,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // counters for components
   var legacyStreamingETLTotal = 0
   var structuredStreamingETLTotal = 0
-  var rtTotal = 0
   
   // counter for ready components
   var numberOfReadyComponents = 0
@@ -75,6 +74,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       
       if (numberOfReadyComponents == (legacyStreamingETLTotal + structuredStreamingETLTotal)) {
         // all component actors registered; finish startup
+        logger.info("All consumer child actors have registered! Continuing startup sequence...")
         finishStartup()
       } else {
         logger.info(s"Not all component actors have registered to the cluster (right now only $numberOfReadyComponents " +
@@ -100,7 +100,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // methods implementing start/stop ===================================================================================
 
   private def beginStartup() {
-    logger.info(s"SparkConsumersMasterGuardian $self starting...")
+    logger.info(s"SparkConsumersMasterGuardian $self beginning startup sequence...")
 
     SparkSingletons.initializeSparkStreaming(sparkStreamingConfig)
     val ssc = SparkSingletons.getStreamingContext
@@ -114,7 +114,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     // zero counters for components
     legacyStreamingETLTotal = 0
     structuredStreamingETLTotal = 0
-    rtTotal = 0
     
     // update counters for components
     pipegraphsToComponentsMap foreach {
@@ -122,21 +121,18 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
         // grab sizes
         val lseListSize = lseComponents.size
         val sseListSize = sseComponents.size
-        val rtListSize = rtComponents.size
     
         // increment size counters for components
         legacyStreamingETLTotal += lseListSize
         structuredStreamingETLTotal += sseListSize
-        rtTotal += rtListSize
     
-        logger.info(s"Found ${lseListSize + sseListSize + rtListSize} total components for pipegraph ${pipegraph.name} " +
-                      s"($lseListSize legacy streaming, $sseListSize structured streaming, $rtListSize rt)")
+        logger.info(s"Found ${lseListSize + sseListSize} total components for pipegraph ${pipegraph.name} " +
+                      s"($lseListSize legacy streaming, $sseListSize structured streaming)")
       }
     }
   
-    logger.info(s"Found ${legacyStreamingETLTotal + structuredStreamingETLTotal + rtTotal} total components " +
-                  s"($legacyStreamingETLTotal legacy streaming, $structuredStreamingETLTotal structured streaming, " +
-                  s"$rtTotal rt)")
+    logger.info(s"Found ${legacyStreamingETLTotal + structuredStreamingETLTotal} total components " +
+                  s"($legacyStreamingETLTotal legacy streaming, $structuredStreamingETLTotal structured streaming)")
   
     if (legacyStreamingETLTotal + structuredStreamingETLTotal == 0) { // no active pipegraphs/no components to start
       logger.info("No active pipegraphs/components found; aborting startup sequence")
@@ -155,7 +151,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       // loop over pipegraph -> components map spawning the appropriate actors for each component
       pipegraphsToComponentsMap foreach {
         case (pipegraph, (lseComponents, sseComponents, rtComponents)) => {
-          logger.info(s"Starting *StreaminETLActors for pipegraph ${pipegraph.name}")
+          logger.info(s"Starting component actors for pipegraph ${pipegraph.name}")
           
           // start actors for legacy streaming components
           lseComponents.foreach(component => {
@@ -177,7 +173,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       }
   
       // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
-      logger.info("Waiting for all component actors to register...")
+      logger.info(s"SparkConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
     }
   }
   
@@ -187,7 +183,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   }
   
   private def finishStartup(): Unit = {
-    logger.info("All consumer child actors have registered! Starting StreamingContext")
+    logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
+  
+    logger.info("Starting StreamingContext")
     SparkSingletons.getStreamingContext.start()
     //questa sleep serve perchè se si fa la stop dello spark streamng context subito dopo che e' stato
     //startato va tutto iin timeout
@@ -252,11 +250,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
         val lseComponents = pipegraph.legacyStreamingComponents
         val sseComponents = pipegraph.structuredStreamingComponents
         val rtComponents = pipegraph.rtComponents
-        
-        // grab sizes
-        val lseListSize = lseComponents.size
-        val sseListSize = sseComponents.size
-        val rtListSize = rtComponents.size
         
         pipegraph -> (lseComponents, sseComponents, rtComponents)
       }
