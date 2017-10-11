@@ -2,7 +2,7 @@
 
 cd ..
 git pull
-cd docker
+cd scripts
 ./start-wasp.sh
 
 wait
