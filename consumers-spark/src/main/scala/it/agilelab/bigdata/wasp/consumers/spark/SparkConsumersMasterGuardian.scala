@@ -58,6 +58,8 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // shortcut to MasterGuardian
   private val masterGuardian = WaspSystem.masterGuardian
   
+  // actor lifecycle callbacks =========================================================================================
+  
   override def preStart(): Unit = {
     // initialize Spark
     val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
@@ -65,6 +67,14 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   
     // we start in uninitialized state
     context become uninitialized
+  }
+  
+  override def postStop(): Unit = {
+    // TODO: the last 2 lines use blocking calls without timeouts... maybe use the ones with a timeout?
+    // stop all streaming
+    SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = false)
+    SparkSingletons.getStreamingContext.awaitTermination()
+    SparkSingletons.getSparkSession.streams.active.foreach(_.stop())
   }
   
   // behaviours ========================================================================================================
