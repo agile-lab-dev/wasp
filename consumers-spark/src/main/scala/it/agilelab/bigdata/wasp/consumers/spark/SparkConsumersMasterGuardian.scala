@@ -10,7 +10,6 @@ import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, PipegraphModel, RTModel, StructuredStreamingETLModel}
@@ -20,7 +19,7 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
-// TODO: ignore rt components in counts
+
 // TODO: uninitialized/initialized/starting handle different messages; are we sure can we just let everything else go into the dead letters *safely*?
 class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                                          val pipegraphBL: PipegraphBL
@@ -34,8 +33,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                                    streamingReader: StreamingReader,
                                    structuredStreamingReader: StructuredStreamingReader,
                                    plugins: Map[String, WaspConsumerSparkPlugin])
-    extends ClusterAwareNodeGuardian
-    with SparkStreamingConfiguration
+    extends SparkStreamingConfiguration
     with Stash
     with Logging
     with WaspConfiguration {
@@ -78,9 +76,13 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   }
   
   // behaviours ========================================================================================================
-
+  
+  // standard receive
+  // NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
+  override def receive: Actor.Receive = uninitialized
+  
   // behaviour when uninitialized
-  override def uninitialized: Actor.Receive = {
+  def uninitialized: Actor.Receive = {
     case RestartConsumers => beginStartup()
   }
 
@@ -104,7 +106,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   }
 
   // behavior once initialized
-  override def initialized: Actor.Receive = {
+  def initialized: Actor.Receive = {
     case RestartConsumers =>
       // attempt stopping
       val stoppingSuccessful = stopGuardian()
@@ -254,8 +256,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     logger.info(s"Gracefully stopping all ${lsComponentActors.size} legacy streaming component actors...")
     val generalTimeoutDuration = generalTimeout.duration
     val legacyStreamingStatuses = lsComponentActors.values.map(gracefulStop(_, generalTimeoutDuration))
-  
-    // TODO cleanup nameToActorLegacyStreaming
     
     // find and stop StructuredStreamingETLActor belonging to pipegraphs that are no longer active
     // get the componnt names for all components of all active pipegraphs
@@ -271,8 +271,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     // gracefully stop all component actors corresponding to now-inactive pipegraphs
     logger.info(s"Gracefully stopping ${inactiveStructuredStreamingComponentActors.size} structured streaming component actors managing now-inactive components...")
     val stucturedStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration))
-    
-    // TODO remove inactiveStructuredStreamingComponentActors from nameToActorStructuredStreaming
     
     // await all component actors' stopping
     val globalStatuses = legacyStreamingStatuses ++ stucturedStreamingStatuses
