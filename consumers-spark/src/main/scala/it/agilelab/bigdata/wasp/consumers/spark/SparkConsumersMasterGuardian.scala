@@ -53,8 +53,8 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // tracking map for legacy streaming components ( componentName -> LegacyStreamingETLActor )
   val lsComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
 
-  // shortcut to MasterGuardian
-  private val masterGuardian = WaspSystem.masterGuardian
+  // ActorRef to MasterGuardian returned by the last ask - cannot be replaced with base ActorRef!
+  private var masterGuardian: ActorRef = _
   
   // actor lifecycle callbacks =========================================================================================
   
@@ -83,7 +83,11 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   
   // behaviour when uninitialized
   def uninitialized: Actor.Receive = {
-    case RestartConsumers => beginStartup()
+    case RestartConsumers =>
+	    // update MasterGuardian ActorRef
+      masterGuardian = sender()
+	    
+	    beginStartup()
   }
 
   // behaviour while starting
@@ -108,7 +112,10 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // behavior once initialized
   def initialized: Actor.Receive = {
     case RestartConsumers =>
-      // attempt stopping
+	    // update MasterGuardian ActorRef
+      masterGuardian = sender()
+	
+	    // attempt stopping
       val stoppingSuccessful = stopGuardian()
       
       // only proceed with restart if we actually stopped
@@ -232,7 +239,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     context become initialized
     logger.info(s"SparkConsumersMasterGuardian $self is now in initialized state")
     
-    // unstash RestartConsumers stashed while in starting state
+    // unstash messages stashed while in starting state
     logger.info("Unstashing queued messages...")
     unstashAll()
     
