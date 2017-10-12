@@ -235,10 +235,14 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     val sparkWriterOpt = sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETL.output)
     val queryName = generateUniqueComponentName(pipegraph, structuredStreamingETL)
     val checkpointDir = generateStructuredStreamingCheckpointDir(sparkStreamingConfig, pipegraph, structuredStreamingETL)
-    
-    sparkWriterOpt.foreach(w => {
-      w.write(outputStream, queryName, checkpointDir)
-    })
+  
+    sparkWriterOpt match {
+      case Some(writer) => writer.write(outputStream, queryName, checkpointDir)
+      case None         =>
+        val error = s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}"
+        logger.error(error)
+        throw new Exception(error)
+    }
 
     // For some reason, trying to send directly a message from here to the guardian is not working ...
     // NOTE: Maybe because mainTask is invoked in preStart ?

@@ -195,9 +195,13 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
       }
 
     val sparkWriterOpt = sparkWriterFactory.createSparkWriterStreaming(env, ssc, etl.output)
-    sparkWriterOpt.foreach(w => {
-     w.write(outputStream)
-    })
+    sparkWriterOpt match {
+      case Some(writer) => writer.write(outputStream)
+      case None         =>
+        val error = s"No Spark Streaming writer available for writer ${etl.output}"
+        logger.error(error)
+        throw new Exception(error)
+    }
 
     // For some reason, trying to send directly a message from here to the guardian is not working ...
     // NOTE: Maybe because mainTask is invoked in preStart ? 
