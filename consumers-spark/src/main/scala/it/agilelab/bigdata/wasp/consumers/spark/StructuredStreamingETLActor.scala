@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, PoisonPill}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
@@ -37,8 +37,12 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
    * Actor methods start
    */
 
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case StreamReady => listener ! OutputStreamInitialized
+    case PoisonPill =>
+      stopProcessingComponent()
+      context stop self
+      logger.info(s"Component actor $self stopped")
   }
 
   // TODO check if mainTask has really to be invoked here
@@ -249,5 +253,23 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                         strategy: Strategy): DataFrame = {
     val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
     strategyBroadcast.value.transform(dataStoreDFs)
+  }
+  
+  /**
+    * Stops the processing component belonging to this component actor
+    */
+  private def stopProcessingComponent(): Unit = {
+    val queryName = generateUniqueComponentName(pipegraph, structuredStreamingETL)
+    logger.info(s"Stopping component $queryName")
+  
+    val structuredQueryOpt = sparkSession.streams.active.find(_.name == queryName)
+    structuredQueryOpt match {
+      case Some(structuredQuery) =>
+        logger.info(s"Found StructuredQuery $structuredQuery corresponding to component $queryName, stopping it...")
+        structuredQuery.stop()
+        logger.info(s"Successfully stopped StructuredQuery corresponding to component $queryName")
+      case None                  =>
+        logger.warn(s"No matching StructuredQuery found for component $queryName! Maybe it has already been stopped?")
+    }
   }
 }
