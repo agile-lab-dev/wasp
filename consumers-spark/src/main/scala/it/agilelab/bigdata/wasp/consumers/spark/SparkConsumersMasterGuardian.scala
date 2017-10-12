@@ -264,7 +264,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
         sseComponents map { component => generateUniqueComponentName(pipegraph, component) }
       }
     } toSet
-    // intersect with the set of component names for component actors
+    // diff with the set of component names for component actors to find the ones we have to stop
     val inactiveStructuredStreamingComponentNames = ssComponentActors.keys.toSet.diff(activeStructuredStreamingComponentNames)
     // grab corresponding actor refs
     val inactiveStructuredStreamingComponentActors = inactiveStructuredStreamingComponentNames.map(ssComponentActors).toSeq
@@ -310,7 +310,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       lsComponentActors foreach {
         case (name, actor) => logger.error(s"Legacy streaming component actor $actor for component $name is still running")
       }
-      lsComponentActors foreach {
+      ssComponentActors foreach {
         case (name, actor) => logger.error(s"Structured streaming component actor $actor for component $name is still running")
       }
   
