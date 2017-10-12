@@ -211,10 +211,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   
     logger.info("Starting StreamingContext...")
     SparkSingletons.getStreamingContext.start()
-    //questa sleep serve perchè se si fa la stop dello spark streaming context subito dopo che e' stato
-    //startato va tutto iin timeout
-    // TODO check if this is needed, we lose precious seconds of timeout here
-    Thread.sleep(5 * 1000)
     logger.info("Started StreamingContext")
     
     // confirm startup success to MasterGuardian
@@ -227,6 +223,10 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     // unstash RestartConsumers stashed while in starting state
     logger.info("Unstashing queued messages...")
     unstashAll()
+    
+    // TODO check if this is still needed in Spark 2.x
+    // sleep to avoid quick star/stop/start of StreamingContext which breaks with timeout errors
+    Thread.sleep(5 * 1000)
   }
   
   private def stopGuardian(): Boolean = {
