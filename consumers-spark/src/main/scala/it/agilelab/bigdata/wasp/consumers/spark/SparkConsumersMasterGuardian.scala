@@ -49,11 +49,11 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // counter for ready components
   var numberOfReadyComponents = 0
   
-  // map of componentName -> StructuredStreamingETLActor
-  val nameToActorStructuredStreaming: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+  // tracking map for structured streaming components ( componentName -> StructuredStreamingETLActor )
+  val ssComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
   
-  // map of componentName -> LegacyStreamingETLActor
-  val nameToActorLegacyStreaming: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+  // tracking map for legacy streaming components ( componentName -> LegacyStreamingETLActor )
+  val lsComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
 
   // shortcut to MasterGuardian
   private val masterGuardian = WaspSystem.masterGuardian
@@ -169,16 +169,16 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
             logger.info(s"Started LegacyStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
   
             // add to component actor tracking map
-            nameToActorStructuredStreaming += (generateUniqueComponentName(pipegraph, component) -> actor)
+            lsComponentActors += (generateUniqueComponentName(pipegraph, component) -> actor)
           })
   
           // start actors for structured streaming components if they are not already started
           sseComponents.foreach(component => {
             val structuredQueryName = generateUniqueComponentName(pipegraph, component)
-            if (nameToActorStructuredStreaming.contains(structuredQueryName)) {
+            if (ssComponentActors.contains(structuredQueryName)) {
               // component actor already running, skip component
               logger.info(s"Component actor for pipegraph ${pipegraph.name}, component ${component.name} already exists " +
-                          s"as StructuredStreamingETLActor ${nameToActorStructuredStreaming(structuredQueryName)}, " +
+                          s"as StructuredStreamingETLActor ${ssComponentActors(structuredQueryName)}, " +
                           s"skipping creation")
             } else {
               // start component actor
@@ -187,7 +187,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
               logger.info(s"Started StructuredStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
               
               // add to component actor tracking map
-              nameToActorStructuredStreaming += (structuredQueryName -> actor)
+              ssComponentActors += (structuredQueryName -> actor)
             }
           })
           
@@ -209,12 +209,13 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   private def finishStartup(): Unit = {
     logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
   
-    logger.info("Starting StreamingContext")
+    logger.info("Starting StreamingContext...")
     SparkSingletons.getStreamingContext.start()
-    //questa sleep serve perchè se si fa la stop dello spark streamng context subito dopo che e' stato
+    //questa sleep serve perchè se si fa la stop dello spark streaming context subito dopo che e' stato
     //startato va tutto iin timeout
     // TODO check if this is needed, we lose precious seconds of timeout here
     Thread.sleep(5 * 1000)
+    logger.info("Started StreamingContext")
     
     // confirm startup success to MasterGuardian
     masterGuardian ! true
@@ -240,9 +241,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     SparkSingletons.getStreamingContext.awaitTermination()
     SparkSingletons.deinitializeSparkStreaming()
     // gracefully stop all component actors corresponding to legacy components
-    logger.info(s"Gracefully stopping all ${nameToActorLegacyStreaming.size} legacy streaming component actors...")
+    logger.info(s"Gracefully stopping all ${lsComponentActors.size} legacy streaming component actors...")
     val generalTimeoutDuration = generalTimeout.duration
-    val legacyStreamingStatuses = nameToActorLegacyStreaming.values.map(gracefulStop(_, generalTimeoutDuration))
+    val legacyStreamingStatuses = lsComponentActors.values.map(gracefulStop(_, generalTimeoutDuration))
   
     // TODO cleanup nameToActorLegacyStreaming
     
@@ -254,9 +255,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       }
     } toSet
     // intersect with the set of component names for component actors
-    val inactiveStructuredStreamingComponentNames = nameToActorStructuredStreaming.keys.toSet.diff(activeStructuredStreamingComponentNames)
+    val inactiveStructuredStreamingComponentNames = ssComponentActors.keys.toSet.diff(activeStructuredStreamingComponentNames)
     // grab corresponding actor refs
-    val inactiveStructuredStreamingComponentActors = inactiveStructuredStreamingComponentNames.map(nameToActorStructuredStreaming).toSeq
+    val inactiveStructuredStreamingComponentActors = inactiveStructuredStreamingComponentNames.map(ssComponentActors).toSeq
     // gracefully stop all component actors corresponding to now-inactive pipegraphs
     logger.info(s"Gracefully stopping ${inactiveStructuredStreamingComponentActors.size} structured streaming component actors managing now-inactive components...")
     val stucturedStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration))
@@ -272,23 +273,44 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       logger.info(s"Stopping sequence completed")
       
       // cleanup references to now stopped component actors
-      nameToActorLegacyStreaming.clear() // remove all legacy streaming components actors
-      inactiveStructuredStreamingComponentNames.map(nameToActorStructuredStreaming.remove) // remove structured streaming components actors that we stopped
+      lsComponentActors.clear() // remove all legacy streaming components actors
+      inactiveStructuredStreamingComponentNames.map(ssComponentActors.remove) // remove structured streaming components actors that we stopped
       
       // update counter for ready components because some structured streaming components actors might have been left running
-      numberOfReadyComponents = nameToActorStructuredStreaming.size
+      numberOfReadyComponents = ssComponentActors.size
+      
+      // no message sent to the MasterGuardian because we still need to startup again after this
+      
       true
     } else {
       logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
-      numberOfReadyComponents = context.children.size
-      logger.error(s"Found $numberOfReadyComponents children still running")
       
-      // TODO rebuild maps by intersecting values with context.children
-      // TODO log info on which component actors did not stop
+      // find out which children are still running
+      val childrenSet = context.children.toSet
+      numberOfReadyComponents = childrenSet.size
+      logger.error(s"Found $numberOfReadyComponents children still running")
+  
+      // filter out component actor tracking maps
+      val filteredLSCA = lsComponentActors filter { case (name, actor) => childrenSet(actor) }
+      lsComponentActors.clear()
+      lsComponentActors ++= filteredLSCA
+      val filteredSSCA = ssComponentActors filter { case (name, actor) => childrenSet(actor) }
+      ssComponentActors.clear()
+      ssComponentActors ++= filteredSSCA
+      
+      // output info about component actors still running
+      lsComponentActors foreach {
+        case (name, actor) => logger.error(s"Legacy streaming component actor $actor for component $name is still running")
+      }
+      lsComponentActors foreach {
+        case (name, actor) => logger.error(s"Structured streaming component actor $actor for component $name is still running")
+      }
+  
+      // tell the MasterGuardian we failed
       masterGuardian ! false
+      
       false
     }
-    
   }
   
   // helper methods ====================================================================================================
