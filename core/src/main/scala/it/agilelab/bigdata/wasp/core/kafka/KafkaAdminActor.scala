@@ -4,6 +4,7 @@ import akka.actor.{Actor, actorRef2Scala}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import kafka.admin.AdminUtils
 import kafka.utils.ZkUtils
+import kafka.utils.ZKStringSerializer
 import org.I0Itec.zkclient.exception.ZkTimeoutException
 import org.I0Itec.zkclient.{ZkClient, ZkConnection}
 
@@ -40,7 +41,7 @@ class KafkaAdminActor extends Actor with Logging {
 
     logger.info(s"Before create a zookeeper client with config: $kafkaConfig ")
     try {
-      val zkClient = new ZkClient(kafkaConfig.zookeeper.toString, KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
+      val zkClient = ZkUtils.createZkClient(kafkaConfig.zookeeper.toString, KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
       zkUtils = new ZkUtils(zkClient, new ZkConnection(kafkaConfig.zookeeper.toString), false)
       logger.info(s"New zookeeper client created $zkClient")
       true
