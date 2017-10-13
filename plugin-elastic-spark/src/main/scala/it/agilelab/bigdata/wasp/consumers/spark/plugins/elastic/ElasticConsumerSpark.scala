@@ -48,7 +48,10 @@ class ElasticConsumerSpark extends WaspConsumerSparkPlugin with Logging {
     new ElasticSparkStreamingWriter(indexBL, ssc, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
   }
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = ???
+  override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
+    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
+    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
+  }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
