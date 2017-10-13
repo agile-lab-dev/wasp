@@ -1,15 +1,24 @@
 version: '2'
 services:
 
-  elastickibana:
-    image: devdb/kibana:latest
-    container_name: elastickibana
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.2
+    container_name: elasticsearch
+    environment:
+      - "transport.host=localhost"
+      - "bootstrap.system_call_filter=false"
     ports:
-      - "5601:5601"
       - "9200:9200"
       - "9300:9300"
     volumes:
       - "./elasticsearch:/opt/elasticsearch/config"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:5.6.2
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    volumes:
       - "./kibana:/opt/kibana/config"
 
 networks:
