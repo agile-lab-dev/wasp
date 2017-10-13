@@ -25,12 +25,14 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
     val res = f(input)
 
     if(res.get("metadata").isEmpty) {
+      val v = Vector(JsObject("name" -> JsString(""), "ts" -> JsNumber(0L)))
+
       res + ("metadata" -> JsObject("id" -> JsString(""),
         "arrivalTimestamp" -> JsNumber(0L),
         "lat" -> JsNumber(0D),
         "lon" -> JsNumber(0D),
         "lastSeenTimestamp" -> JsNumber(0L),
-        "path" -> JsArray()))
+        "path" -> JsArray(v)))
     }
 
     else {
