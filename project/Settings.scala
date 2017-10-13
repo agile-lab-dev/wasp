@@ -40,8 +40,12 @@ object Settings {
 	
 	// global exclusions for slf4j implementations and the like
 	lazy val globalExclusions = Seq(
+		sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-api"),
+		sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-core"),
+		sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-slf4j-impl"),
 		sbt.ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
 	)
+	
 	// base build settings
 	lazy val buildSettings = Seq(
 		resolvers ++= customResolvers,
