@@ -51,15 +51,9 @@ object TopicModel {
     * @return
     */
 
-  def generateField(ownSchema: Option[String]): String = {
+  def generateField(namespace: String, name: String, ownSchema: Option[String]): String = {
     val schema = (Some(TopicModel.schema_base) :: ownSchema :: Nil).flatten.mkString(", ")
-    s"""
-    {"type":"record",
-    "namespace":"Logging",
-    "name":"Logging",
-    "fields":[
-      ${schema}
-    ]}"""
+    generate(namespace, name, schema)
   }
 
   /**
@@ -68,12 +62,16 @@ object TopicModel {
     * @return
     */
 
-  def generateMetadataAndField(ownSchema: Option[String]): String = {
+  def generateMetadataAndField(namespace: String, name: String, ownSchema: Option[String]): String = {
     val schema = (Some(metadata) :: Some(TopicModel.schema_base) :: ownSchema :: Nil).flatten.mkString(", ")
+    generate(namespace, name, schema)
+  }
+
+  private def generate(namespace: String, name: String, schema: String) = {
     s"""
     {"type":"record",
-    "namespace":"Logging",
-    "name":"Logging",
+    "namespace":"${namespace}",
+    "name":"${name}",
     "fields":[
       ${schema}
     ]}"""
