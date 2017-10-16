@@ -99,13 +99,16 @@ class ElasticAdminActor extends Actor with Logging {
     transportClient = new PreBuiltTransportClient(settings)
     logger.info(s"New elastic client created with settings: $settings and config $elasticConfig")
 
-    for (connection <- elasticConfig.connections/*.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "binary")*/) {
+    logger.info(s"${transportClient.listedNodes()}")
+
+    for (connection <- elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "binary")) {
       val address = new InetSocketTransportAddress(InetAddress.getByName(connection.host), connection.port)
       if (address.address().isUnresolved) {
         logger.warn(s"Impossible to resolve connection: ${connection.host}:${connection.port}")
       } else {
         try {
           transportClient.addTransportAddress(address)
+          logger.info(s"${transportClient.listedNodes()}")
           logger.debug("added elastic node '" + connection.host + ":" + connection.port + "'")
         }
         catch {
@@ -117,6 +120,8 @@ class ElasticAdminActor extends Actor with Logging {
       }
 
     }
+
+    logger.info(s"${transportClient.listedNodes()}")
 
     if (transportClient.connectedNodes().isEmpty) {
       logger.error(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
