@@ -50,7 +50,6 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .load()
         // retrive key and values
 //        .selectExpr("topic", "key", "value")
-        .toDF()
 
       // prepare the udf
       val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
