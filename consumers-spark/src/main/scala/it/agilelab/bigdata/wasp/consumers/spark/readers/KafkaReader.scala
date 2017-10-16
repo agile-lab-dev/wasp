@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.readers
 
+import com.esotericsoftware.minlog.Log.Logger
 import it.agilelab.bigdata.wasp.consumers.spark.readers.KafkaReader.logger
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
@@ -41,6 +42,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
           WaspSystem.kafkaAdminActor,
           CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
+      logger.info("ss.readStream")
       // create the stream
       val receiver = ss.readStream
         .format("kafka")
@@ -50,6 +52,9 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .load()
         // retrive key and values
 //        .selectExpr("topic", "key", "value")
+
+      receiver.show()
+      logger.info("pre udf")
 
       // prepare the udf
       val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
