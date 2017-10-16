@@ -49,7 +49,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
         .load()
         // retrive key and values
-        .selectExpr("CAST(topic AS STRING)", "CAST(key AS STRING)", "value")
+//        .selectExpr("topic", "key", "value")
         .toDF()
 
       // prepare the udf
