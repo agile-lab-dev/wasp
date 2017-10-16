@@ -123,10 +123,10 @@ class ElasticAdminActor extends Actor with Logging {
 
     logger.info(s"${transportClient.listedNodes()}")
 
-    if (transportClient.connectedNodes().isEmpty) {
-      logger.error(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
-      throw new Exception(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
-    }
+//    if (transportClient.connectedNodes().isEmpty) {
+//      logger.error(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
+//      throw new Exception(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
+//    }
 
     true
   }
