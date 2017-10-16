@@ -53,22 +53,21 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         // retrive key and values
 //        .selectExpr("topic", "key", "value")
 
-      receiver.show()
-      logger.info("pre udf")
-
+      receiver
+      
       // prepare the udf
-      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
-      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
-
-      import org.apache.spark.sql.functions.udf
-      val avroToJsonUDF = udf(avroToJson)
-      val byteArrayToJsonUDF = udf(byteArrayToJson)
-
-      topic.topicDataType match {
-        case "avro" => receiver.withColumn("value", avroToJsonUDF())
-        case "json" => receiver.withColumn("value", byteArrayToJsonUDF())
-        case _ => receiver.withColumn("value", avroToJsonUDF())
-      }
+//      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
+//      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
+//
+//      import org.apache.spark.sql.functions.udf
+//      val avroToJsonUDF = udf(avroToJson)
+//      val byteArrayToJsonUDF = udf(byteArrayToJson)
+//
+//      topic.topicDataType match {
+//        case "avro" => receiver.withColumn("value", avroToJsonUDF())
+//        case "json" => receiver.withColumn("value", byteArrayToJsonUDF())
+//        case _ => receiver.withColumn("value", avroToJsonUDF())
+//      }
 
     } else {
       logger.error(s"Topic not found on Kafka: $topic")
