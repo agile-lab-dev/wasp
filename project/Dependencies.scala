@@ -29,6 +29,9 @@ object Dependencies {
 				.exclude("com.google.guava", "guava")
 				.exclude("org.apache.spark", "spark-core")
 				.exclude("org.slf4j", "slf4j-log4j12")
+	  		.exclude("org.apache.logging.log4j", "log4j-api")
+				.exclude("org.apache.logging.log4j", "log4j-core")
+				.exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
 		
 		def kafkaExclusions: ModuleID =
 			module
