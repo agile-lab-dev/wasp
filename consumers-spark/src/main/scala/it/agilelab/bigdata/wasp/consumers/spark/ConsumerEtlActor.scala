@@ -14,10 +14,11 @@ import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StructType
 
 
 case class Path (name: String, ts: Long)
@@ -196,8 +197,39 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
       }
 
     val sparkWriterOpt = sparkWriterFactory.createSparkWriterStreaming(env, ssc, etl.output)
+
+
     sparkWriterOpt.foreach(w => {
-     w.write(outputStream)
+      val outStr = etl.output.writerType.category match {
+        //In kafka field metadata i structure.
+        case "kafka" =>  outputStream
+        //In other case field metadata is expanse.
+        case _  =>
+          val sqlContext = SQLContextSingleton.getInstance(ssc.sparkContext)
+
+          outputStream.transform(rdd => {
+            val df = sqlContext.read.json(rdd)
+            if (df.schema.nonEmpty) {
+
+              df.select(flattenSchema(df.schema): _*)
+
+              def flattenSchema(schema: StructType, prefix: String = null): Array[Column] = {
+                schema.fields.flatMap(f => {
+                  val colName = if (prefix == null) f.name else (prefix + "." + f.name)
+
+                  f.dataType match {
+                    case st: StructType => flattenSchema(st, colName)
+                    case _ => Array(col(colName))
+                  }
+                })
+              }
+            }
+
+            rdd
+        })
+      }
+
+      w.write(outStr)
     })
 
     // For some reason, trying to send directly a message from here to the guardian is not working ...
