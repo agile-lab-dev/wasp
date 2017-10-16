@@ -21,7 +21,7 @@ import org.apache.spark.sql.functions._
 
 
 case class Path (name: String, ts: Long)
-case class Metadata(id: String, arrivalTimestamp: Long, lat: Double, lon: Double, lastSeenTimestamp: Long, path: Array[Path])
+case class Metadata(id: String, sourceId: String, arrivalTimestamp: Long, lastSeenTimestamp: Long, path: Array[Path])
 
 class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val rawBL : RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
                        sparkWriterFactory: SparkWriterFactory,
@@ -222,19 +222,19 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
       val df = sqlContext.read.json(rdd)
       if (df.schema.nonEmpty) {
 
-        val updateMetadata = udf((mId: String, mArrivalTimestamp: Long, mLat: Double, mLon: Double, mLastSeenTimestamp: Long, mPath: Seq[Path], lat: Double, lon: Double) => {
+        val updateMetadata = udf((mId: String, mSourceId:String, mArrivalTimestamp: Long, mLastSeenTimestamp: Long, mPath: Seq[Path]) => {
 
           val now = System.currentTimeMillis()
 
           if(mId == "")
-            Metadata(UUID.randomUUID().toString, now, lat, lon, now, Seq(Path(etlName, now)).toArray)
+            Metadata(UUID.randomUUID().toString, mSourceId, now, now, Seq(Path(etlName, now)).toArray)
           else
-            Metadata(mId, mArrivalTimestamp, lat, lon, now, (mPath :+ Path(etlName, now)).toArray)
+            Metadata(mId, mSourceId, mArrivalTimestamp, now, (mPath :+ Path(etlName, now)).toArray)
         })
 
         //update values in field metadata
         val dataframeToTransform = df
-          .withColumn("metadata2", updateMetadata(col("metadata.id"), col("metadata.arrivalTimestamp"), col("metadata.lat"), col("metadata.lon"), col("metadata.lastSeenTimestamp"), col("metadata.path"), col("latitude"), col("longitude")))
+          .withColumn("metadata2", updateMetadata(col("metadata.id"), col("metadata.sourceId"), col("metadata.arrivalTimestamp"), col("metadata.lastSeenTimestamp"), col("metadata.path")))
           .drop("metadata")
           .withColumnRenamed("metadata2", "metadata")
 

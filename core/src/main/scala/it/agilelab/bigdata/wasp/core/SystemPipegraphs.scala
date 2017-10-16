@@ -37,9 +37,8 @@ private[wasp] object LoggerTopic {
 		schema = JsonConverter.fromString(topicSchema),
 		_id = Some(BsonObjectId())
 	)
-	println("topicSchema:"+topicSchema)
-	println("topicSchemaJson:"+JsonConverter.fromString(topicSchema))
-	private def topicSchema = s"${TopicModel.generateMetadataAndField(None)}"
+
+	private def topicSchema = s"${TopicModel.generateMetadataAndField("Logging", "Logging", None)}"
 
 }
 

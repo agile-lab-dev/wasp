@@ -10,9 +10,8 @@ object TopicModel {
     "type": "record",
       "fields": [
         {"name": "id", "type": "string"},
+        {"name": "sourceId", "type": "string"},
         {"name": "arrivalTimestamp", "type": "long"},
-        {"name": "lat", "type": "double"},
-        {"name": "lon", "type": "double"},
         {"name": "lastSeenTimestamp", "type": "long"},
         {"name": "path",
           "type": {

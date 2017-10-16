@@ -1,8 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import it.agilelab.bigdata.wasp.core.models.TopicModel.metadata
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString}
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 import scala.collection.JavaConverters._
 
@@ -10,13 +9,12 @@ object IndexModel {
   val readerType = "index"
 
   val metadata_elastic = """
-        "metadata.id":{"type": "string","index":"not_analyzed","store":"true","enabled":"true"},
-        "metadata.arrivalTimestamp": {"type": "long", "index":"not_analyzed","store":"true","enabled":"true"},
-        "metadata.lat": { "type": "double", "index":"not_analyzed","store":"true","enabled":"true"},
-        "metadata.lon": { "type": "double", "index":"not_analyzed","store":"true","enabled":"true"},
-        "metadata.lastSeenTimestamp": { "type": "long", "index":"not_analyzed","store":"true","enabled":"true"},
-        "metadata.path.name": { "type": "long", "index":"not_analyzed","store":"true","enabled":"true", multiValued="true"},
-        "metadata.path.ts": { "type": "long", "index":"not_analyzed","store":"true","enabled":"true", multiValued="true"}
+        "id":{"type": "string","index":"not_analyzed","store":"true","enabled":"true"},
+        "sourceId":{"type": "string","index":"not_analyzed","store":"true","enabled":"true"},
+        "arrivalTimestamp": {"type": "long", "index":"not_analyzed","store":"true","enabled":"true"},
+        "lastSeenTimestamp": { "type": "long", "index":"not_analyzed","store":"true","enabled":"true"},
+        "path": { "type": "string", "index":"not_analyzed","store":"true","enabled":"true", multiValued="true"}
+
   """
 
   val schema_base_elastic = """
@@ -32,13 +30,11 @@ object IndexModel {
   """
 
   val metadata_solr = """
-    {"name": "metadata.id", "type": "string", "stored":true },
-    {"name": "metadata.arrivalTimestamp", "type": "tlong", "stored":true},
-    {"name": "metadata.lat", "type": "tdouble", "stored":true},
-    {"name": "metadata.lon", "type": "tdouble", "stored":true},
-    {"name": "metadata.lastSeenTimestamp", "type": "tlong", "stored":true},
-    {"name": "metadata.path.name", "type": "tlong", "store":"true", multiValued="true"},
-    {"name": "metadata.path.ts", "type": "tlong", "store":"true", multiValued="true"}
+    {"name": "id", "type": "string", "stored":true },
+    {"name": "sourceId", "type": "string", "stored":true },
+    {"name": "arrivalTimestamp", "type": "tlong", "stored":true},
+    {"name": "lastSeenTimestamp", "type": "tlong", "stored":true},
+    {"name": "path", "type": "string", "store":"true", multiValued="true"}
   """
 
   val schema_base_solr = """
