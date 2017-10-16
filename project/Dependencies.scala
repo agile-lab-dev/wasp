@@ -63,8 +63,8 @@ object Dependencies {
 	val avro = "org.apache.avro" % "avro" % Versions.avro
 	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
-	val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
-	val elasticClientTransport = "org.elasticsearch.client" % "transport" % Versions.elasticSearch
+	val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch sparkExclusions
+	val elasticClientTransport = "org.elasticsearch.client" % "transport" % Versions.elasticSearch sparkExclusions
 	val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark sparkExclusions
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase
