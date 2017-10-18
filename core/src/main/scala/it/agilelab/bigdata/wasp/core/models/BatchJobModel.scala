@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import it.agilelab.bigdata.wasp.core.WaspSystem
 import org.mongodb.scala.bson.BsonObjectId
 
 object JobStateEnum extends Enumeration {
@@ -12,15 +11,21 @@ object JobStateEnum extends Enumeration {
 
 }
 
-case class BatchJobModel(
-                          override val name: String,
-                          description: String,
-                          owner: String,
-                          system: Boolean,
-                          creationTime: Long,
-                          etl: ETLModel,
-                          var state: String,
-                          _id: Option[BsonObjectId] = None
-                          ) extends Model {
+case class BatchJobModel(override val name: String,
+                         description: String,
+                         owner: String,
+                         system: Boolean,
+                         creationTime: Long,
+                         etl: BatchETLModel,
+                         var state: String,
+                         _id: Option[BsonObjectId] = None)
+	  extends Model
 
-}
+case class BatchETLModel(name: String,
+                         inputs: List[ReaderModel],
+                         output: WriterModel,
+                         mlModels: List[MlModelOnlyInfo],
+                         strategy: Option[StrategyModel],
+                         kafkaAccessType: String,
+                         group: String = "default",
+                         var isActive: Boolean = false)

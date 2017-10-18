@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Run the initdb, then start solr in the foreground
+set -e
+
+if [[ "$VERBOSE" = "yes" ]]; then
+    set -x
+fi
+
+
+. /lib/lsb/init-functions
+
+. /etc/default/solr
+
+STATUS_RUNNING=0
+STATUS_DEAD=1
+STATUS_DEAD_AND_LOCK=2
+STATUS_NOT_RUNNING=3
+
+ERROR_PROGRAM_NOT_INSTALLED=5
+
+SOLR_RUN_DIR=/var/run/solr
+SOLR_HOME=/usr/lib/solr
+SOLR_USER=solr
+
+SOLR_LOCK_DIR="/var/lock/subsys/"
+LOCKFILE="${SOLR_LOCK_DIR}/solr"
+desc="Solr server daemon"
+
+EXEC_PATH=". $SOLR_HOME/bin/solrd"
+
+BIGTOP_DEFAULTS_DIR=${BIGTOP_DEFAULTS_DIR-/etc/default}
+[ -n "${BIGTOP_DEFAULTS_DIR}" -a -r ${BIGTOP_DEFAULTS_DIR}/solr ] && \
+    EXEC_PATH=". ${BIGTOP_DEFAULTS_DIR}/solr ; ${EXEC_PATH}"
+
+SOLR_PID_FILE=${SOLR_RUN_DIR}/solr.pid
+
+# These directories may be tmpfs and may or may not exist
+# depending on the OS (ex: /var/lock/subsys does not exist on debian/ubuntu)
+for dir in "$SOLR_RUN_DIR" "$SOLR_LOCK_DIR"; do
+  [ -d "${dir}" ] || install -d -m 0755 -o $SOLR_USER -g $SOLR_USER ${dir}
+done
+
+SOLR_SHUTDOWN_TIMEOUT=${SOLR_SHUTDOWN_TIMEOUT:-60}
+
+
+. /usr/lib/solr/tomcat-deployment.sh
+set +e
+solrctl init
+set -e
+eval ${EXEC_PATH} run

@@ -7,14 +7,15 @@ object Versions {
 	val apacheCommonsLang3Version = "3.4"
 	val avro = "1.7.7"
 	val camel = "2.17.7"
-	val elasticSearch = "1.7.2"
-	val elasticSearchSpark = "5.5.2"
+	val elasticSearch = "5.6.2"
+//	val elasticSearchSpark = "5.6.2"
+	val elasticSearchSpark = "6.0.0-rc1"
 	val hbase = "1.2.0-cdh5.9.1"
 	val jdk = "1.7"
 	val jodaConvert = "1.8.1"
 	val jodaTime = "2.8.2"
 	val json4s = "3.2.10"
-	val kafka = "0.8.2.1"
+	val kafka = "0.10.2.1"
 	val kryo = "3.0.0"
 	val log4j = "2.8.2"
 	val mongodbScala = "2.1.0"
@@ -23,19 +24,7 @@ object Versions {
 	val scala = "2.11.11"
 	val scalaTest = "2.2.5"
 	val slf4j = "1.7.12"
-	private val solrSparkBase = "1.1.0"
-	val solr = "4.10.4"
+	val solrSpark = "3.2.1"
+	val solr = "4.10.3-cdh5.12.1"
 	val spark = "2.2.0"
-	val waspPlugins = "2.0.0-SNAPSHOT"
-	
-	// calculated versions ===============================================================================================
-	val solrSpark = buildCompleteSolrSparkVersion(solrSparkBase, spark, scala)
-	
-	// calculates the proper spark & scala components of the spark-solr version
-	def buildCompleteSolrSparkVersion(solrSparkBase: String, spark: String, scala: String): String = {
-		val sparkMajor = spark.split('.').dropRight(1).mkString(".")
-		val scalaMajor = scala.split('.').dropRight(1).mkString(".")
-		
-		s"$solrSparkBase-spark-$sparkMajor-scala-$scalaMajor"
-	}
 }

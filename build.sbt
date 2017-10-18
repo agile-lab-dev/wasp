@@ -35,6 +35,20 @@ lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
 	.settings(libraryDependencies ++= Dependencies.consumers_rt)
 	.enablePlugins(JavaAppPackaging)
 
+lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+
+lazy val plugin_elastic_spark = Project("wasp-plugin-elastic-spark", file("plugin-elastic-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+	.settings(libraryDependencies ++= Dependencies.plugin_elastic_spark)
+
+lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+	.settings(libraryDependencies ++= Dependencies.plugin_solr_spark)
+
 lazy val wasp = Project("wasp", file("."))
 	.settings(Settings.commonSettings:_*)
-	.aggregate(core, master, producers, consumers_spark, consumers_rt)
+	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_solr_spark)

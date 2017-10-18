@@ -5,7 +5,7 @@ services:
     image: wurstmeister/zookeeper:3.4.6
     container_name: zookeeper
     ports:
-      - "2182:2181"
+      - "2181:2181"
     volumes:
       - "./zookeeper:/opt/zookeeper-3.4.6/conf"
 

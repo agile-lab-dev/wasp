@@ -4,7 +4,7 @@ import java.util.ServiceLoader
 
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchMasterGuardian
-import it.agilelab.bigdata.wasp.consumers.spark.readers.KafkaReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{KafkaReader, KafkaStructuredReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.consumers.spark.SparkConsumersMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
@@ -25,7 +25,7 @@ trait SparkConsumersNodeLauncherTrait extends MultipleClusterSingletonsLauncher 
 	var plugins: Map[String, WaspConsumerSparkPlugin] = Map()
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val sparkConsumersMasterGuardianSingletonInfo = (
-			Props(new SparkConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault(plugins), KafkaReader, plugins)),
+			Props(new SparkConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault(plugins), KafkaReader, KafkaStructuredReader, plugins)),
 			WaspSystem.sparkConsumersMasterGuardianName,
 			WaspSystem.sparkConsumersMasterGuardianSingletonManagerName,
 			Seq(WaspSystem.sparkConsumersMasterGuardianRole)

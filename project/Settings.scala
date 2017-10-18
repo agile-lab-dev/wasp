@@ -1,4 +1,4 @@
-import bintray.BintrayKeys._
+//import bintray.BintrayKeys._
 import sbt.Keys._
 import sbt._
 import sbtbuildinfo.BuildInfoKeys._
@@ -16,7 +16,15 @@ object Settings {
 		organization := "it.agilelab",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
-    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
+    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
+		publishMavenStyle := true,
+		publishTo := {
+			val nexus = "http://localhost:8081/"
+			if (isSnapshot.value)
+				Some("snapshots" at nexus + "repository/maven-snapshots")
+			else
+				Some("releases"  at nexus + "repository/maven-releases")
+		}
 	)
 	
 	// custom resolvers for dependencies
@@ -32,6 +40,9 @@ object Settings {
 	
 	// global exclusions for slf4j implementations and the like
 	lazy val globalExclusions = Seq(
+		sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-api"),
+		sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-core"),
+		sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-slf4j-impl"),
 		sbt.ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
 	)
 	
@@ -60,15 +71,15 @@ object Settings {
 
   // settings for the bintray-sbt plugin used to publish to Bintray
   // set here because "in ThisBuild" scoping doesn't work!
-  lazy val bintraySettings = Seq(
+/*  lazy val bintraySettings = Seq(
     bintrayOrganization := Some("agile-lab-dev"),
     bintrayRepository := "WASP", // target repo
     bintrayPackage := "wasp", // target package
     bintrayReleaseOnPublish := false // do not automatically release, instead do sbt publish, then sbt bintrayRelease
   )
-
+*/
 	// common settings for all modules
-	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings ++ bintraySettings
+	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings //++ bintraySettings
 	
 	// sbt-buildinfo action to get current git commit
 	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") {

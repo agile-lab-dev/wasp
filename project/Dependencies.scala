@@ -29,6 +29,9 @@ object Dependencies {
 				.exclude("com.google.guava", "guava")
 				.exclude("org.apache.spark", "spark-core")
 				.exclude("org.slf4j", "slf4j-log4j12")
+	  		.exclude("org.apache.logging.log4j", "log4j-api")
+				.exclude("org.apache.logging.log4j", "log4j-core")
+				.exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
 		
 		def kafkaExclusions: ModuleID =
 			module
@@ -36,6 +39,13 @@ object Dependencies {
 				.exclude("com.sun.jmx", "jmxri")
 				.exclude("com.sun.jdmk", "jmxtools")
 				.exclude("net.sf.jopt-simple", "jopt-simple")
+
+		def sparkSolrExclusions: ModuleID =
+			module.excludeAll(
+				ExclusionRule(organization = "org.eclipse.jetty"),
+				ExclusionRule(organization = "javax.servlet"),
+				ExclusionRule(organization = "org.eclipse.jetty.orbit")
+			)
 
 	}
 	
@@ -56,6 +66,9 @@ object Dependencies {
 	val avro = "org.apache.avro" % "avro" % Versions.avro
 	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
+	val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch sparkExclusions
+	val elasticClientTransport = "org.elasticsearch.client" % "transport" % Versions.elasticSearch sparkExclusions
+	val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark sparkExclusions
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase
 	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase
@@ -68,6 +81,7 @@ object Dependencies {
 	val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka kafkaExclusions
 	val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka kafkaExclusions
 	val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark sparkExclusions
+	val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
 	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional"
 	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional"
 	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional"
@@ -77,13 +91,15 @@ object Dependencies {
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
+	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
+	val sparkSolr = "com.lucidworks.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
 	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
 	val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
-	val waspElasticSpark = "it.agilelab.bigdata.wasp" %% "wasp-elastic-spark" % Versions.waspPlugins % "optional"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
+
 
 	// grouped dependencies, for convenience =============================================================================
 	
@@ -146,7 +162,9 @@ object Dependencies {
 		Seq(
 			kafka,
 			kafkaStreaming,
-			quartz
+			kafkaSparkSql,
+			quartz/*,
+			waspElasticSpark */ // needed y system pipegraphs; it is optional, so it is not a transitive dependency
 		)
 
 	val consumers_rt = akka ++ log4j ++
@@ -162,4 +180,17 @@ object Dependencies {
 		  akkaHttp,
 		  akkaHttpSpray
 	  )
+
+	val plugin_elastic_spark =
+		Seq(
+			elasticSearch,
+			elasticClientTransport,
+			elasticSearchSpark
+		)
+
+	val plugin_solr_spark =
+		Seq(
+			solr,
+			sparkSolr
+		)
 }

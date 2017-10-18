@@ -34,6 +34,7 @@ private[wasp] object LoggerTopic {
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
+		partitionKeyField = None,
 		schema = JsonConverter.fromString(topicSchema),
 		_id = Some(BsonObjectId())
 	)
@@ -90,11 +91,12 @@ private[wasp] object LoggerPipegraph {
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
-		etl = List(ETLModel(
+		legacyStreamingComponents = List(LegacyStreamingETLModel(
 			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic._id.get)),
-			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
-		rt = Nil,
+		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
+		rtComponents = Nil,
 		dashboard = None,
 		isActive = true,
 		_id = Some(BsonObjectId())
@@ -111,6 +113,7 @@ private[wasp] object RawTopic {
 		partitions = 3,
 		replicas = 1,
 		topicDataType = "avro",
+		partitionKeyField = None,
 		schema = JsonConverter.fromString(topicSchema),
 		_id = Some(BsonObjectId())
 	)
@@ -151,12 +154,13 @@ private[wasp] object RawPipegraph {
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
-		etl = List(ETLModel(
+		legacyStreamingComponents = List(LegacyStreamingETLModel(
 			"write on index",
 			List(ReaderModel.kafkaReader(rawTopic.name, rawTopic._id.get)),
-			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, ETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
-		rt = Nil,
+		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
+		rtComponents = Nil,
 		dashboard = None,
 		isActive = true,
 		_id = Some(BsonObjectId())

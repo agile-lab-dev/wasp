@@ -30,8 +30,8 @@ trait PipegraphBL  {
 
   def setIsActive(pipegraphModel: PipegraphModel, isActive: Boolean): Unit = {
     pipegraphModel.isActive = isActive
-    pipegraphModel.etl.foreach(etl => etl.isActive = isActive)
-    pipegraphModel.rt.foreach(rt => rt.isActive = isActive)
+    pipegraphModel.legacyStreamingComponents.foreach(etl => etl.isActive = isActive)
+    pipegraphModel.rtComponents.foreach(rt => rt.isActive = isActive)
     update(pipegraphModel)
   }
 }
@@ -39,7 +39,7 @@ trait PipegraphBL  {
 
 class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
 
-  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.etl, p.rt, p.dashboard, p.isActive, p._id)
+  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.legacyStreamingComponents, p.structuredStreamingComponents, p.rtComponents, p.dashboard, p.isActive, p._id)
 
   def getByName(name: String): Option[PipegraphModel] = {
     waspDB.getDocumentByField[PipegraphModel]("name", new BsonString(name)).map(pipegraph => {

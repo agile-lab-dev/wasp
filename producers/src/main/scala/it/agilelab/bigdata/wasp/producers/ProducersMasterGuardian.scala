@@ -84,6 +84,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
 		case message: StartProducer => call(sender(), message, onProducer(message.id, startProducer))
 		case message: StopProducer => call(sender(), message, onProducer(message.id, stopProducer))
+    case message: RestProducerRequest => call(sender(), message, onProducer(message.id, restProducerRequest(message, _)))
 	}
 	
 	private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]): Unit = {
@@ -94,7 +95,9 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def onProducer(id: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
 		env.producerBL.getById(id) match {
 			case None => Right("Producer not retrieved")
-			case Some(producer) => f(producer)
+			case Some(producer) => {
+				f(producer)
+			}
 		}
 	}
 	
@@ -144,5 +147,12 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		} else {
 			Right("Producer '" + producer.name + "' stopped")
 		}
+	}
+
+	private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
+		if(! ??[Boolean](producers(producer._id.get.getValue.toHexString),
+			RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse(""))))
+			Left(s"Producer '${producer.name}' does not exist")
+		Right("Producer '" + producer.name + "' request: " + request.data)
 	}
 }

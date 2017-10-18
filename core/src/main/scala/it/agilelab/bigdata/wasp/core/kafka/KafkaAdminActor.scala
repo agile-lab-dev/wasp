@@ -3,9 +3,10 @@ package it.agilelab.bigdata.wasp.core.kafka
 import akka.actor.{Actor, actorRef2Scala}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import kafka.admin.AdminUtils
+import kafka.utils.ZkUtils
 import kafka.utils.ZKStringSerializer
-import org.I0Itec.zkclient.ZkClient
 import org.I0Itec.zkclient.exception.ZkTimeoutException
+import org.I0Itec.zkclient.{ZkClient, ZkConnection}
 
 object KafkaAdminActor {
   val name = "KafkaAdminActor"
@@ -18,7 +19,8 @@ object KafkaAdminActor {
 
 class KafkaAdminActor extends Actor with Logging {
 
-  var zkClient: ZkClient = _
+//  var zkClient: ZkClient = _
+  var zkUtils: ZkUtils = _
 
   def receive: Actor.Receive = {
 
@@ -31,15 +33,16 @@ class KafkaAdminActor extends Actor with Logging {
   }
 
   def initialization(message: Initialization): Boolean = {
-    if (zkClient != null) {
+    if (zkUtils != null) {
       logger.warn(s"Zookeeper client re-initialization, the before client will be close")
-      zkClient.close()
+      zkUtils.close()
     }
     val kafkaConfig = message.kafkaConfigModel
 
     logger.info(s"Before create a zookeeper client with config: $kafkaConfig ")
     try {
-      zkClient = new ZkClient(kafkaConfig.zookeeper.toString, KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout, ZKStringSerializer)
+      val zkClient = ZkUtils.createZkClient(kafkaConfig.zookeeper.toString, KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
+      zkUtils = new ZkUtils(zkClient, new ZkConnection(kafkaConfig.zookeeper.toString), false)
       logger.info(s"New zookeeper client created $zkClient")
       true
     } catch {
@@ -58,10 +61,10 @@ class KafkaAdminActor extends Actor with Logging {
 
   override def postStop() = {
 
-    if (zkClient != null)
-      zkClient.close()
+    if (zkUtils != null)
+      zkUtils.close()
 
-    zkClient = null
+    zkUtils = null
     logger.debug("zookeeper client stopped")
   }
 
@@ -84,7 +87,7 @@ class KafkaAdminActor extends Actor with Logging {
 
   private def addTopic(message: AddTopic): Boolean =
     try {
-      AdminUtils.createTopic(zkClient, message.topic, message.partitions, message.replicas)
+      AdminUtils.createTopic(zkUtils, message.topic, message.partitions, message.replicas)
       logger.info("Created topic " + message.topic)
       true
     }
@@ -96,11 +99,11 @@ class KafkaAdminActor extends Actor with Logging {
     }
 
   private def checkTopic(message: CheckTopic): Boolean =
-    AdminUtils.topicExists(zkClient, message.topic)
+    AdminUtils.topicExists(zkUtils, message.topic)
 
   private def removeTopic(message: RemoveTopic): Boolean =
     try {
-      AdminUtils.deleteTopic(zkClient, message.topic)
+      AdminUtils.deleteTopic(zkUtils, message.topic)
       logger.info("Removed topic " + message.topic)
       true
     }

@@ -24,14 +24,19 @@ import org.apache.spark.sql.types.StructType
 case class Path (name: String, ts: Long)
 case class Metadata(id: String, sourceId: String, arrivalTimestamp: Long, lastSeenTimestamp: Long, path: Array[Path])
 
-class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val rawBL : RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
-                       sparkWriterFactory: SparkWriterFactory,
-                       streamingReader: StreamingReader,
-                       ssc: StreamingContext,
-                       etl: ETLModel,
-                       listener: ActorRef,
-                       plugins: Map[String, WaspConsumerSparkPlugin]
-                        ) extends Actor with Logging {
+
+class LegacyStreamingETLActor(env: {val topicBL: TopicBL
+                                    val indexBL: IndexBL
+                                    val rawBL: RawBL
+                                    val keyValueBL: KeyValueBL
+                                    val mlModelBL: MlModelBL},
+                              sparkWriterFactory: SparkWriterFactory,
+                              streamingReader: StreamingReader,
+                              ssc: StreamingContext,
+                              etl: LegacyStreamingETLModel,
+                              listener: ActorRef,
+                              plugins: Map[String, WaspConsumerSparkPlugin]) extends Actor with Logging {
+
   case object StreamReady
 
   /*
@@ -198,8 +203,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
 
     val sparkWriterOpt = sparkWriterFactory.createSparkWriterStreaming(env, ssc, etl.output)
 
-
-    sparkWriterOpt.foreach(w => {
+    /*sparkWriterOpt.foreach(w => {
       val outStr = etl.output.writerType.category match {
         //In kafka field metadata i structure.
         case "kafka" =>  outputStream
@@ -230,7 +234,14 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
       }
 
       w.write(outStr)
-    })
+    })*/
+    sparkWriterOpt match {
+      case Some(writer) => writer.write(outputStream)
+      case None         =>
+        val error = s"No Spark Streaming writer available for writer ${etl.output}"
+        logger.error(error)
+        throw new Exception(error)
+    }
 
     // For some reason, trying to send directly a message from here to the guardian is not working ...
     // NOTE: Maybe because mainTask is invoked in preStart ? 
@@ -243,7 +254,7 @@ class ConsumerEtlActor(env: {val topicBL: TopicBL; val indexBL: IndexBL; val raw
                         stream: DStream[String],
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy): DStream[String] = {
-    val sqlContext = SQLContextSingleton.getInstance(ssc.sparkContext)
+    val sqlContext = SparkSingletons.getSQLContext
     val strategyBroadcast = ssc.sparkContext.broadcast(strategy)
 
     val etlName = etl.name
