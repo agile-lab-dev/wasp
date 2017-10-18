@@ -10,13 +10,13 @@ object NifiProducerModel {
       |"request":
       |{
       |  "scheme":"http",
-      |  "host":"localhost",
+      |  "host":"172.22.0.2",
       |  "port":1080
       |},
       |"child":[
       |  {
-      |    "id":"64cdcd10-6ccc-3452-44e8-5f2ccbdfe19b",
-      |    "edge":["cd17f96e-2b72-32c8-06d2-b5139cae00ac"]
+      |    "id":"64cdcd10-6ccc-3452-f4b0-452a3069b04b",
+      |    "edge":["70c05e86-2ef1-3f6d-b6d5-2f6f880b27c8"]
       |  }
       |]
       |}""".stripMargin
