@@ -63,9 +63,9 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val byteArrayToJsonUDF = udf(byteArrayToJson)
 
       topic.topicDataType match {
-        case "avro" => receiver.withColumn("value", avroToJsonUDF())
-        case "json" => receiver.withColumn("value", byteArrayToJsonUDF())
-        case _ => receiver.withColumn("value", avroToJsonUDF())
+        case "avro" => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
+        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
+        case _ => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
       }
 
     } else {
