@@ -83,8 +83,9 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
       val q = receiver
         .writeStream
+        .format("kafka")
+        .option("topic", "testmatteo")
         .option("checkpointLocation", "/home/matteo/data/ckp")
-        .option("path", "/home/matteo/data")
         .start()
 
       q.awaitTermination()
