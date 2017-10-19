@@ -78,18 +78,23 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .load()
         // retrive key and values
 
-      val receiver = r.selectExpr("CAST(topic AS STRING)", "CAST(key AS STRING)", "value")
+      val receiver = r.selectExpr("CAST(key AS STRING)", "value")
+
+      receiver.show()
+
+      receiver.count()
 
       // prepare the udf
       val avroToJson: Array[Byte] => String = avroToJsonInternal
 //      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 
-      import org.apache.spark.sql.functions.udf
+      import org.apache.spark.sql.functions._
       val avroToJsonUDF = udf(avroToJson)
 //      val byteArrayToJsonUDF = udf(byteArrayToJson)
 
+
       topic.topicDataType match {
-        case "avro" => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
+        case "avro" => receiver.withColumn("value2", avroToJsonUDF(col("value"))).withColumnRenamed("value2", "value")
 //        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
         case _ => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
       }
