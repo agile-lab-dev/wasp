@@ -84,7 +84,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       receiver.writeStream
         .format("parquet")
         .outputMode("append")
-        .option("path", "hdfs://nameservice1/user/matbovet")
+        .option("path", "/user/matbovet")
         .start()
 
       r
