@@ -80,7 +80,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
       val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value as STRING)").as[(String, String)]
 
-      receiver.writeStream.
+      receiver.writeStream
         .format("parquet")
         .outputMode("append")
         .option("path", "hdfs://nameservice1/user/matbovet")
