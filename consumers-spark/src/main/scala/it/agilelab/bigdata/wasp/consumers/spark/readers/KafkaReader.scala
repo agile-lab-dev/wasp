@@ -78,6 +78,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .load()
         // retrive key and values
 
+      import ss.implicits._
       val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value as STRING)").as[(String, String)]
 
       receiver.writeStream
@@ -85,6 +86,8 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .outputMode("append")
         .option("path", "hdfs://nameservice1/user/matbovet")
         .start()
+
+      r
 
       // prepare the udf
 //      val avroToJson: Array[Byte] => String = avroToJsonInternal
