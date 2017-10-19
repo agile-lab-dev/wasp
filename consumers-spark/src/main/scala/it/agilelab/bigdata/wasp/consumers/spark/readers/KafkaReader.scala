@@ -2,8 +2,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.readers
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-import com.esotericsoftware.minlog.Log.Logger
-import it.agilelab.bigdata.wasp.consumers.spark.readers.KafkaReader.logger
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
@@ -14,15 +12,38 @@ import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonT
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
-// TODO mock
 object KafkaStructuredReader extends StructuredStreamingReader with Logging {
+
+  def avroToJson: Array[Byte] => String =
+    (avro: Array[Byte]) => {
+      logger.debug("Starting avroToJson encoding ...")
+
+      val pretty = false
+      val JsonEncoder = null
+
+      val reader = new GenericDatumReader[GenericRecord]()
+      val input = new ByteArrayInputStream(avro)
+      val streamReader = new DataFileStream[GenericRecord](input, reader)
+      val output = new ByteArrayOutputStream()
+
+      val schema = streamReader.getSchema
+      val writer = new GenericDatumWriter[GenericRecord](schema)
+      val encoder = new SimpleUnionJsonEncoder(schema, output)
+
+      while (streamReader.iterator.hasNext) {
+        writer.write(streamReader.iterator().next(), encoder)
+      }
+
+      encoder.flush()
+      output.flush()
+      new String(output.toByteArray, "UTF-8")
+  }
 
   /**
     *
@@ -60,32 +81,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val receiver = r.selectExpr("CAST(topic AS STRING)", "CAST(key AS STRING)", "value")
 
       // prepare the udf
-//      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
-      def avroToJson: Array[Byte] => String =
-      (avro: Array[Byte]) => {
-          logger.debug("Starting avroToJson encoding ...")
-
-          val pretty = false
-          val JsonEncoder = null
-
-          val reader = new GenericDatumReader[GenericRecord]()
-          val input = new ByteArrayInputStream(avro)
-          val streamReader = new DataFileStream[GenericRecord](input, reader)
-          val output = new ByteArrayOutputStream()
-
-          val schema = streamReader.getSchema
-          val writer = new GenericDatumWriter[GenericRecord](schema)
-          val encoder = new SimpleUnionJsonEncoder(schema, output)
-
-          while (streamReader.iterator.hasNext) {
-            writer.write(streamReader.iterator().next(), encoder)
-          }
-
-          encoder.flush()
-          output.flush()
-          new String(output.toByteArray, "UTF-8")
-        }
-
+      val avroToJson: Array[Byte] => String = avroToJson
 //      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 
       import org.apache.spark.sql.functions.udf
