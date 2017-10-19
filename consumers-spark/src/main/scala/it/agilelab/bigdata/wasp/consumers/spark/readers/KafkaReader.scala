@@ -81,15 +81,13 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       import ss.implicits._
       val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value as STRING)").as[(String, String)]
 
-      receiver
+      val q = receiver
         .writeStream
         .option("checkpointLocation", "/home/matteo/data/ckp")
         .option("path", "/home/matteo/data")
         .start()
 
-      receiver.show()
-
-      receiver.count()
+      q.awaitTermination()
 
       r
 
