@@ -81,6 +81,8 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       import ss.implicits._
       val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value as STRING)").as[(String, String)]
 
+      receiver.writeStream.start()
+
       receiver.show()
 
       receiver.count()
