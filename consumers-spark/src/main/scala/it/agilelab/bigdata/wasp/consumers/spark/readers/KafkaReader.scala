@@ -20,7 +20,7 @@ import org.apache.spark.streaming.kafka.KafkaUtils
 
 object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
-  def avroToJson: Array[Byte] => String =
+  def avroToJsonInternal: Array[Byte] => String =
     (avro: Array[Byte]) => {
       logger.debug("Starting avroToJson encoding ...")
 
@@ -81,7 +81,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val receiver = r.selectExpr("CAST(topic AS STRING)", "CAST(key AS STRING)", "value")
 
       // prepare the udf
-      val avroToJson: Array[Byte] => String = avroToJson
+      val avroToJson: Array[Byte] => String = avroToJsonInternal
 //      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 
       import org.apache.spark.sql.functions.udf
