@@ -84,6 +84,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       receiver.writeStream
         .format("parquet")
         .outputMode("append")
+        .option("checkpointLocation", "/user/matbovet/ckp")
         .option("path", "/user/matbovet")
         .start()
 
