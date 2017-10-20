@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.readers
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.{RawTopic, WaspSystem}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -84,7 +84,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val q = receiver
         .writeStream
         .format("kafka")
-        .option("topic", "testmatteo")
+        .option("topic", "raw.topic")
         .option("checkpointLocation", "/home/matteo/data/ckp")
         .start()
 
