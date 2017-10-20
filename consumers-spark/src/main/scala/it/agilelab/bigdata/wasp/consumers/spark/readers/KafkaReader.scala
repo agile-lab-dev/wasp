@@ -10,6 +10,7 @@ import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.AvroToJsonUtil.logger
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, SimpleUnionJsonEncoder}
 import kafka.serializer.{DefaultDecoder, StringDecoder}
+import org.apache.avro.Schema
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.spark.sql.types.{DataType, StructType}
@@ -81,15 +82,19 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 
       import org.apache.spark.sql.functions._
+      import com.databricks.spark.avro._
       val avroToJsonUDF = udf(avroToJson)
 //      val byteArrayToJsonUDF = udf(byteArrayToJson)
+
+      val schemaAvro = new Schema.Parser().parse(topic.getJsonSchema)
+      val schema: DataType = SchemaConverters.toSqlType(schemaAvro).dataType
 
       topic.topicDataType match {
         case "avro" => {
           r
             .withColumn("value2", avroToJsonUDF(col("value")))
             .drop("value")
-            .select(from_json(col("value2"), DataType.fromJson(topic.getJsonSchema)).alias("value"))
+            .select(from_json(col("value2"), schema).alias("value"))
         }
 //        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
         case _ => r.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
