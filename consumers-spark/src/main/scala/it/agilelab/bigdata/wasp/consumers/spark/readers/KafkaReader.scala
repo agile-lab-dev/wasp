@@ -95,6 +95,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
             .withColumn("value2", avroToJsonUDF(col("value")))
             .drop("value")
             .select(from_json(col("value2"), schema).alias("value"))
+            .select(explode(col("value")))
         }
 //        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
         case _ => r.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
