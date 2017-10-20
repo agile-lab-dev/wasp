@@ -256,8 +256,12 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy): DataFrame = {
     val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
-    val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
-    strategyBroadcast.value.transform(completeMapOfDFs)
+
+    val dataframeToTransform = sparkSession.sqlContext.read.json(stream.toDF("value").toJSON)
+    if (dataframeToTransform.schema.nonEmpty) {
+      val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
+      strategyBroadcast.value.transform(completeMapOfDFs)
+    }
   }
   
   /**

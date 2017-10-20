@@ -79,12 +79,8 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         // retrive key and values
 
       import ss.implicits._
-      val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value as STRING)").as[(String, String)]
+      val receiver = r.selectExpr("CAST(key AS STRING)", "value").as[(String, Array[Byte])]
 
-
-      receiver.toDF()
-
-//
 //      val q = receiver
 //        .writeStream
 //        .format("kafka")
@@ -94,20 +90,20 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 //        .option("checkpointLocation", "/home/matteo/data/ckp")
 //        .start()
 
-      // prepare the udf
-//      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
-////      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
-//
-//      import org.apache.spark.sql.functions._
-//      val avroToJsonUDF = udf(avroToJson)
-////      val byteArrayToJsonUDF = udf(byteArrayToJson)
-//
-//
-//      topic.topicDataType match {
-//        case "avro" => receiver.withColumn("value2", avroToJsonUDF(col("value"))).withColumnRenamed("value2", "value")
-////        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
-//        case _ => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
-//      }
+//       prepare the udf
+      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
+//      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
+
+      import org.apache.spark.sql.functions._
+      val avroToJsonUDF = udf(avroToJson)
+//      val byteArrayToJsonUDF = udf(byteArrayToJson)
+
+
+      topic.topicDataType match {
+        case "avro" => receiver.withColumn("value2", avroToJsonUDF(col("value"))).withColumnRenamed("value2", "value")
+//        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
+        case _ => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
+      }
 
     } else {
       logger.error(s"Topic not found on Kafka: $topic")
