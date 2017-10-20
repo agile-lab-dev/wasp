@@ -76,10 +76,11 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .option("kafka.bootstrap.servers", "kafka:9092")
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
         .load()
-        // retrive key and values
 
       import ss.implicits._
-      val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)").as[(String, String)]
+      val receiver = r
+        .selectExpr("CAST(key AS STRING)", "value")
+        .as[(String, Array[Byte])]
 
       val q = receiver
         .writeStream
@@ -90,10 +91,9 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .option("checkpointLocation", "/home/matteo/data/ckp")
         .start()
 
-
       val j = receiver.toJSON
 
-      j.show()
+      j.foreach(println(_))
 
       q.awaitTermination()
 
@@ -113,7 +113,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 ////        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
 //        case _ => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
 //      }
-
+//
     } else {
       logger.error(s"Topic not found on Kafka: $topic")
       throw new Exception(s"Topic not found on Kafka: $topic")

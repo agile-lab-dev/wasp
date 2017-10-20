@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
+import java.io.CharArrayWriter
+
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
@@ -13,7 +15,9 @@ import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.json.{JSONOptions, JacksonGenerator}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                                        val indexBL: IndexBL
@@ -224,6 +228,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
+
         transform(topicStreamWithKey._1,
                   topicStreamWithKey._2,
                   dataStoreDFs,
@@ -237,7 +242,9 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     val checkpointDir = generateStructuredStreamingCheckpointDir(sparkStreamingConfig, pipegraph, structuredStreamingETL)
   
     sparkWriterOpt match {
-      case Some(writer) => writer.write(outputStream, queryName, checkpointDir)
+      case Some(writer) => {
+        writer.write(outputStream, queryName, checkpointDir)
+      }
       case None         =>
         val error = s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}"
         logger.error(error)
@@ -251,13 +258,15 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     self ! StreamReady
   }
 
+
   private def transform(readerKey: ReaderKey,
                         stream: DataFrame,
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy): DataFrame = {
-    val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
 
+    val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
     val dataframeToTransform = sparkSession.sqlContext.read.json(stream.toJSON)
+
     if (dataframeToTransform.schema.nonEmpty) {
       val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
       strategyBroadcast.value.transform(completeMapOfDFs)
