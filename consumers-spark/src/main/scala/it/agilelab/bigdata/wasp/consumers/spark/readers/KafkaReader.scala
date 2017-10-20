@@ -79,31 +79,38 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         // retrive key and values
 
       import ss.implicits._
-      val receiver = r.selectExpr("CAST(key AS STRING)", "value").as[(String, Array[Byte])]
+      val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)").as[(String, String)]
 
-//      val q = receiver
-//        .writeStream
-//        .format("kafka")
-//        .option("topic", "raw.topic")
-//        .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
-//        .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
-//        .option("checkpointLocation", "/home/matteo/data/ckp")
-//        .start()
+      val q = receiver
+        .writeStream
+        .format("kafka")
+        .option("topic", "raw.topic")
+        .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
+        .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
+        .option("checkpointLocation", "/home/matteo/data/ckp")
+        .start()
+
+
+      val j = receiver.toJSON
+
+      j.show()
+
+      q.awaitTermination()
 
 //       prepare the udf
-      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
-//      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
-
-      import org.apache.spark.sql.functions._
-      val avroToJsonUDF = udf(avroToJson)
-//      val byteArrayToJsonUDF = udf(byteArrayToJson)
-
-
-      topic.topicDataType match {
-        case "avro" => receiver.withColumn("value2", avroToJsonUDF(col("value"))).drop("value").withColumnRenamed("value2", "value")
-//        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
-        case _ => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
-      }
+//      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
+////      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
+//
+//      import org.apache.spark.sql.functions._
+//      val avroToJsonUDF = udf(avroToJson)
+////      val byteArrayToJsonUDF = udf(byteArrayToJson)
+//
+//
+//      topic.topicDataType match {
+//        case "avro" => receiver.withColumn("value2", avroToJsonUDF(col("value"))).drop("value").withColumnRenamed("value2", "value")
+////        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
+//        case _ => receiver.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
+//      }
 
     } else {
       logger.error(s"Topic not found on Kafka: $topic")
