@@ -73,7 +73,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val r = ss.readStream
         .format("kafka")
         .option("subscribe", topic.name)
-        .option("kafka.bootstrap.servers", kafkaConfig.zookeeper.toString)
+        .option("kafka.bootstrap.servers", "kafka:9092")
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
         .load()
         // retrive key and values
@@ -85,10 +85,10 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .writeStream
         .format("kafka")
         .option("topic", "raw.topic")
+        .option("kafka.bootstrap.servers", "kafka:9092")
+        .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
         .option("checkpointLocation", "/home/matteo/data/ckp")
         .start()
-
-      q.awaitTermination()
 
       r
 
