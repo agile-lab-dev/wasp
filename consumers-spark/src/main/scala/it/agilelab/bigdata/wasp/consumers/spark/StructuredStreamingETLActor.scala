@@ -261,6 +261,8 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     if (dataframeToTransform.schema.nonEmpty) {
       val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
       strategyBroadcast.value.transform(completeMapOfDFs)
+    } else {
+      dataframeToTransform
     }
   }
   
