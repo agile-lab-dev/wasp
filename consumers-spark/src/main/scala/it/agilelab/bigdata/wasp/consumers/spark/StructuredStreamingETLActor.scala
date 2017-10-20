@@ -263,7 +263,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
       strategyBroadcast.value.transform(completeMapOfDFs)
     } else {
       dataframeToTransform
-//    }
+    }
   }
   
   /**

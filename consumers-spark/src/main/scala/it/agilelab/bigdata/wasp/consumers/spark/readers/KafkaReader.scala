@@ -96,7 +96,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       j.show()
 
       q.awaitTermination()
-      
+
       r.toDF()
 
 //       prepare the udf
