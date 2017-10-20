@@ -93,6 +93,8 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
+          // TODO fix it
+          .option("kafka.bootstrap.servers", "host1:port1,host2:port2")
           .option("checkpointLocation", checkpointDir)
           .queryName(queryName)
 

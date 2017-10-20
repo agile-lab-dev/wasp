@@ -85,12 +85,16 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .writeStream
         .format("kafka")
         .option("topic", "raw.topic")
-        .option("kafka.bootstrap.servers", "kafka:9092")
+        .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
         .option("checkpointLocation", "/home/matteo/data/ckp")
         .start()
 
-      r
+      receiver.show()
+
+      receiver.count()
+
+      receiver.toDF()
 
       // prepare the udf
 //      val avroToJson: Array[Byte] => String = avroToJsonInternal
