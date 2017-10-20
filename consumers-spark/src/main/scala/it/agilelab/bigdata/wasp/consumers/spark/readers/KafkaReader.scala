@@ -20,30 +20,30 @@ import org.apache.spark.streaming.kafka.KafkaUtils
 
 object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
-  def avroToJsonInternal: Array[Byte] => String =
-    (avro: Array[Byte]) => {
-      logger.debug("Starting avroToJson encoding ...")
-
-      val pretty = false
-      val JsonEncoder = null
-
-      val reader = new GenericDatumReader[GenericRecord]()
-      val input = new ByteArrayInputStream(avro)
-      val streamReader = new DataFileStream[GenericRecord](input, reader)
-      val output = new ByteArrayOutputStream()
-
-      val schema = streamReader.getSchema
-      val writer = new GenericDatumWriter[GenericRecord](schema)
-      val encoder = new SimpleUnionJsonEncoder(schema, output)
-
-      while (streamReader.iterator.hasNext) {
-        writer.write(streamReader.iterator().next(), encoder)
-      }
-
-      encoder.flush()
-      output.flush()
-      new String(output.toByteArray, "UTF-8")
-  }
+//  def avroToJsonInternal: Array[Byte] => String =
+//    (avro: Array[Byte]) => {
+//      logger.debug("Starting avroToJson encoding ...")
+//
+//      val pretty = false
+//      val JsonEncoder = null
+//
+//      val reader = new GenericDatumReader[GenericRecord]()
+//      val input = new ByteArrayInputStream(avro)
+//      val streamReader = new DataFileStream[GenericRecord](input, reader)
+//      val output = new ByteArrayOutputStream()
+//
+//      val schema = streamReader.getSchema
+//      val writer = new GenericDatumWriter[GenericRecord](schema)
+//      val encoder = new SimpleUnionJsonEncoder(schema, output)
+//
+//      while (streamReader.iterator.hasNext) {
+//        writer.write(streamReader.iterator().next(), encoder)
+//      }
+//
+//      encoder.flush()
+//      output.flush()
+//      new String(output.toByteArray, "UTF-8")
+//  }
 
   /**
     *
@@ -81,23 +81,21 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       import ss.implicits._
       val receiver = r.selectExpr("CAST(key AS STRING)", "CAST(value as STRING)").as[(String, String)]
 
-      val q = receiver
-        .writeStream
-        .format("kafka")
-        .option("topic", "raw.topic")
-        .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
-        .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
-        .option("checkpointLocation", "/home/matteo/data/ckp")
-        .start()
-
-      receiver.show()
-
-      receiver.count()
 
       receiver.toDF()
 
+//
+//      val q = receiver
+//        .writeStream
+//        .format("kafka")
+//        .option("topic", "raw.topic")
+//        .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
+//        .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
+//        .option("checkpointLocation", "/home/matteo/data/ckp")
+//        .start()
+
       // prepare the udf
-//      val avroToJson: Array[Byte] => String = avroToJsonInternal
+//      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
 ////      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 //
 //      import org.apache.spark.sql.functions._
