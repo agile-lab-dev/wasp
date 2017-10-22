@@ -1,6 +1,52 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import it.agilelab.bigdata.wasp.core.models.TopicModel.{generate, metadata}
 import org.mongodb.scala.bson.BsonObjectId
+
+
+
+object RawModel{
+	val metadata = """
+    {"name": "id", "type":"string", "nullable":false, "metadata":{}},
+    {"name": "sourceId", "type":"string", "nullable":false, "metadata":{} },
+    {"name": "arrivalTimestamp", "type":"tlong", "nullable":false, "metadata":{}},
+    {"name": "lastSeenTimestamp", "type":"tlong", "nullable":false, "metadata":{}},
+    {"name": "path", "type":"string", "store":"true", nullable=false, "metadata":{}}
+  """
+
+	/**
+		* Generate final schema for RawModel. Use this method if you schema have a field metadata.
+		* @param ownSchema
+		* @return
+		*/
+
+	def generateField(ownSchema: Option[String]): String = {
+		val schema = (ownSchema :: Nil).flatten.mkString(", ")
+		generate(schema)
+	}
+
+	/**
+		* Generate final schema for RawModel. Use this method if you schema not have a field metadata.
+		* @param ownSchema
+		* @return
+		*/
+
+	def generateMetadataAndField(ownSchema: Option[String]): String = {
+		val schema = (Some(metadata)  :: ownSchema :: Nil).flatten.mkString(", ")
+		generate(schema)
+	}
+
+	private def generate(schema: String) = {
+		s"""
+			 |{
+			 |      "type":"struct",
+			 |      "fields":[
+			 |        ${schema}
+			 |      ]
+			 |}
+       """.stripMargin
+	}
+}
 
 // TODO external scaladocs links
 /**
@@ -21,6 +67,7 @@ import org.mongodb.scala.bson.BsonObjectId
 	* @param options the options for the datastore
 	* @param _id the MongoDB id for this model
 	*/
+
 case class RawModel(override val name: String,
                     uri: String,
                     timed: Boolean = true,

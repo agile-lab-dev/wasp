@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
+import kafka.utils.Json
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 import scala.collection.JavaConverters._
@@ -9,24 +10,23 @@ object IndexModel {
   val readerType = "index"
 
   val metadata_elastic = """
-        "id":{"type": "string","index":"not_analyzed","store":"true","enabled":"true"},
-        "sourceId":{"type": "string","index":"not_analyzed","store":"true","enabled":"true"},
-        "arrivalTimestamp": {"type": "long", "index":"not_analyzed","store":"true","enabled":"true"},
-        "lastSeenTimestamp": { "type": "long", "index":"not_analyzed","store":"true","enabled":"true"},
-        "path": { "type": "string", "index":"not_analyzed","store":"true","enabled":"true", multiValued="true"}
-
+        "id":{"type": "string","index":"not_analyzed","store":"true"},
+        "sourceId":{"type": "string","index":"not_analyzed","store":"true"},
+        "arrivalTimestamp": {"type": "long", "index":"not_analyzed","store":"true"},
+        "lastSeenTimestamp": { "type": "long", "index":"not_analyzed","store":"true"},
+        "path": { "type": "nested"}
   """
 
   val schema_base_elastic = """
-    "id_event":{"type":"double","index":"not_analyzed","store":"true","enabled":"true"},
-    "source_name":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-    "Index_name":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-    "metric_name":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-    "timestamp":{"type":"date","format":"date_time","index":"not_analyzed","store":"true","enabled":"true"},
-    "latitude":{"type":"double","index":"not_analyzed","store":"true","enabled":"true"},
-    "longitude":{"type":"double","index":"not_analyzed","store":"true","enabled":"true"},
-    "value":{"type":"double","index":"not_analyzed","store":"true","enabled":"true"},
-    "payload":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"}
+    "id_event":{"type":"double","index":"not_analyzed","store":"true"},
+    "source_name":{"type":"string","index":"not_analyzed","store":"true"},
+    "Index_name":{"type":"string","index":"not_analyzed","store":"true"},
+    "metric_name":{"type":"string","index":"not_analyzed","store":"true"},
+    "timestamp":{"type":"date","format":"date_time","index":"not_analyzed","store":"true"},
+    "latitude":{"type":"double","index":"not_analyzed","store":"true"},
+    "longitude":{"type":"double","index":"not_analyzed","store":"true"},
+    "value":{"type":"double","index":"not_analyzed","store":"true"},
+    "payload":{"type":"string","index":"not_analyzed","store":"true"}
   """
 
   val metadata_solr = """
@@ -34,7 +34,7 @@ object IndexModel {
     {"name": "sourceId", "type": "string", "stored":true },
     {"name": "arrivalTimestamp", "type": "tlong", "stored":true},
     {"name": "lastSeenTimestamp", "type": "tlong", "stored":true},
-    {"name": "path", "type": "string", "store":"true", multiValued="true"}
+    {"name": "path", "type": "string", "store":"true", "multiValued":"true"}
   """
 
   val schema_base_solr = """
@@ -62,6 +62,7 @@ object IndexModel {
         val schema = (Some(IndexModel.schema_base_solr) :: ownSchema :: Nil).flatten.mkString(", ")
         generateSolr(schema)
     }
+
   }
 
   /**
@@ -71,7 +72,6 @@ object IndexModel {
     */
 
   def generateMetadataAndField(indexType: IndexType.Type, name: Option[String], ownSchema: Option[String]): String = {
-
     indexType match {
       case IndexType.ELASTIC =>
         val schema = (Some(metadata_elastic) :: Some(IndexModel.schema_base_elastic) :: ownSchema :: Nil).flatten.mkString(", ")
@@ -87,7 +87,7 @@ object IndexModel {
     s"""{
       "${name.getOrElse("defaultElastic")}":{
         "properties":{
-          ${schema},
+          ${schema}
         }
       }}"""
   }
