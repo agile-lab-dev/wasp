@@ -196,51 +196,25 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
-        transform(topicStreamWithKey._1, topicStreamWithKey._2, dataStoreDFs, strategy)
+        transform(topicStreamWithKey._1, topicStreamWithKey._2, dataStoreDFs, strategy, etl.output.writerType)
       } else {
         topicStreamWithKey._2
       }
 
     val sparkWriterOpt = sparkWriterFactory.createSparkWriterStreaming(env, ssc, etl.output)
 
-    /*sparkWriterOpt.foreach(w => {
-      val outStr = etl.output.writerType.category match {
-        //In kafka field metadata i structure.
-        case "kafka" =>  outputStream
-        //In other case field metadata is expanse.
-        case _  =>
-          val sqlContext = SQLContextSingleton.getInstance(ssc.sparkContext)
+    sparkWriterOpt match {
 
-          outputStream.transform(rdd => {
-            val df = sqlContext.read.json(rdd)
-            if (df.schema.nonEmpty) {
-
-              df.select(flattenSchema(df.schema): _*)
-
-              def flattenSchema(schema: StructType, prefix: String = null): Array[Column] = {
-                schema.fields.flatMap(f => {
-                  val colName = if (prefix == null) f.name else (prefix + "." + f.name)
-
-                  f.dataType match {
-                    case st: StructType => flattenSchema(st, colName)
-                    case _ => Array(col(colName))
-                  }
-                })
-              }
-            }
-
-            rdd
-        })
+      case Some(writer) => {
+        outputStream.print()
+        writer.write(outputStream)
       }
 
-      w.write(outStr)
-    })*/
-    sparkWriterOpt match {
-      case Some(writer) => writer.write(outputStream)
       case None         =>
         val error = s"No Spark Streaming writer available for writer ${etl.output}"
         logger.error(error)
         throw new Exception(error)
+
     }
 
     // For some reason, trying to send directly a message from here to the guardian is not working ...
@@ -253,7 +227,8 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
   private def transform(readerKey: ReaderKey,
                         stream: DStream[String],
                         dataStoreDFs: Map[ReaderKey, DataFrame],
-                        strategy: Strategy): DStream[String] = {
+                        strategy: Strategy,
+                        writerType: WriterType): DStream[String] = {
     val sqlContext = SparkSingletons.getSQLContext
     val strategyBroadcast = ssc.sparkContext.broadcast(strategy)
 
@@ -262,6 +237,7 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
     stream.transform(rdd => {
 
       //TODO Verificare se questo è il comportamento che si vuole
+
       val df = sqlContext.read.json(rdd)
       if (df.schema.nonEmpty) {
 
@@ -276,16 +252,34 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
         })
 
         //update values in field metadata
-        val dataframeToTransform = df
-          .withColumn("metadata2", updateMetadata(col("metadata.id"), col("metadata.sourceId"), col("metadata.arrivalTimestamp"), col("metadata.lastSeenTimestamp"), col("metadata.path")))
-          .drop("metadata")
-          .withColumnRenamed("metadata2", "metadata")
+        var dataframeToTransform = df
+          .withColumn("metadata", updateMetadata(col("metadata.id"), col("metadata.sourceId"), col("metadata.arrivalTimestamp"), col("metadata.lastSeenTimestamp"), col("metadata.path")))
 
         val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
-        strategyBroadcast.value.transform(completeMapOfDFs).toJSON.rdd
+        completeMapOfDFs.map(x=> x._2.show())
+        val output = strategyBroadcast.value.transform(completeMapOfDFs)//.toJSON.rdd
+
+        //if writer is kafka metadata remain struct, in other case field metadata is expanse.
+        writerType.getActualProduct match {
+          case "kafka" =>  output.toJSON.rdd
+          case _  => output.select(flattenSchema(df.schema,None): _*).toJSON.rdd
+        }
 
       } else {
         rdd
+      }
+    })
+  }
+
+  /** Retrieve an array of column with struct type expanse.
+    */
+   val flattenSchema: (StructType,  Option[String]) => Array[Column] = (schema: StructType, prefix: Option[String]) => {
+    schema.fields.flatMap(f => {
+      val colName = if (prefix.isEmpty) f.name else (prefix + "." + f.name)
+
+      f.dataType match {
+        case st: StructType => flattenSchema(st, Some(colName))
+        case _ => Array(col(colName))
       }
     })
   }
