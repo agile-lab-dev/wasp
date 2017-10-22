@@ -205,11 +205,9 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
 
     sparkWriterOpt match {
 
-      case Some(writer) => {
-        outputStream.print()
+      case Some(writer) =>
         writer.write(outputStream)
-      }
-
+        
       case None         =>
         val error = s"No Spark Streaming writer available for writer ${etl.output}"
         logger.error(error)
@@ -241,6 +239,19 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
       val df = sqlContext.read.json(rdd)
       if (df.schema.nonEmpty) {
 
+        /** Retrieve an array of column with struct type expanse.
+          */
+       def flattenSchema(schema: StructType, prefix: Option[String]): Array[Column] = {
+          schema.fields.flatMap(f => {
+            val colName = if (prefix.isEmpty) f.name else (prefix + "." + f.name)
+
+            f.dataType match {
+              case st: StructType => flattenSchema(st, Some(colName))
+              case _ => Array(col(colName))
+            }
+          })
+        }
+
         val updateMetadata = udf((mId: String, mSourceId:String, mArrivalTimestamp: Long, mLastSeenTimestamp: Long, mPath: Seq[Path]) => {
 
           val now = System.currentTimeMillis()
@@ -267,19 +278,6 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
 
       } else {
         rdd
-      }
-    })
-  }
-
-  /** Retrieve an array of column with struct type expanse.
-    */
-   val flattenSchema: (StructType,  Option[String]) => Array[Column] = (schema: StructType, prefix: Option[String]) => {
-    schema.fields.flatMap(f => {
-      val colName = if (prefix.isEmpty) f.name else (prefix + "." + f.name)
-
-      f.dataType match {
-        case st: StructType => flattenSchema(st, Some(colName))
-        case _ => Array(col(colName))
       }
     })
   }
