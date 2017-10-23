@@ -76,20 +76,20 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-        val kafkaFormattedDF = stream.toJSON.map{
-          json =>
-            val payload = topicDataTypeB.value match {
-              case "json" => JsonToByteArrayUtil.jsonToByteArray(json)
-              case "avro" => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
-              case _ => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
-            }
-            payload
-        }
+//        val kafkaFormattedDF = stream.toJSON.map{
+//          json =>
+//            val payload = topicDataTypeB.value match {
+//              case "json" => JsonToByteArrayUtil.jsonToByteArray(json)
+//              case "avro" => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
+//              case _ => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
+//            }
+//            payload
+//        }
 
         val pkf = topic.partitionKeyField.getOrElse("null")
         
-        val dsw: DataStreamWriter[Row] = kafkaFormattedDF
-          .selectExpr( pkf, "value")
+        val dsw: DataStreamWriter[Row] = stream
+          .selectExpr( pkf, "to_json(struct(*)) AS value")
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
