@@ -101,7 +101,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                   s"($legacyStreamingETLTotal legacy streaming, $structuredStreamingETLTotal structured streaming)")
   
     if (legacyStreamingETLTotal + structuredStreamingETLTotal == 0) { // no active pipegraphs/no components to start
-      logger.info("No active pipegraphs/components found; aborting startup sequence")
+      logger.info("No active pipegraphs with legacy streaming/structured streaming components found; aborting startup sequence")
       
       // enter unitizialized state because we don't have anything to do
       context become uninitialized
@@ -202,7 +202,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     val generalTimeoutDuration = generalTimeout.duration
     val legacyStreamingStatuses = lsComponentActors.values.map(gracefulStop(_, generalTimeoutDuration))
     
-    // find and stop StructuredStreamingETLActor belonging to pipegraphs that are no longer active
+    // find and stop all StructuredStreamingETLActors belonging to pipegraphs that are no longer active
     // get the component names for all components of all active pipegraphs
     val activeStructuredStreamingComponentNames = getActivePipegraphsToComponentsMap flatMap {
       case (pipegraph, (_, sseComponents, _)) => {
