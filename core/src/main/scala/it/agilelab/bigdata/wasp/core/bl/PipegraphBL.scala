@@ -31,6 +31,7 @@ trait PipegraphBL  {
   def setIsActive(pipegraphModel: PipegraphModel, isActive: Boolean): Unit = {
     pipegraphModel.isActive = isActive
     pipegraphModel.legacyStreamingComponents.foreach(etl => etl.isActive = isActive)
+    pipegraphModel.structuredStreamingComponents.foreach(etl => etl.isActive = isActive)
     pipegraphModel.rtComponents.foreach(rt => rt.isActive = isActive)
     update(pipegraphModel)
   }

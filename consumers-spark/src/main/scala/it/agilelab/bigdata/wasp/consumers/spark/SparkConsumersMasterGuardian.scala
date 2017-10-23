@@ -227,10 +227,14 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   
   private def finishStartup(): Unit = {
     logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
-  
-    logger.info("Starting StreamingContext...")
-    SparkSingletons.getStreamingContext.start()
-    logger.info("Started StreamingContext")
+
+    if (legacyStreamingETLTotal > 0) {
+      logger.info("Starting StreamingContext...")
+      SparkSingletons.getStreamingContext.start()
+      logger.info("Started StreamingContext")
+    } else {
+      logger.info("Not starting StreamingContext because no legacy streaming components are present")
+    }
     
     // confirm startup success to MasterGuardian
     masterGuardian ! true
