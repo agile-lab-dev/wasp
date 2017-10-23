@@ -84,7 +84,7 @@ class RtConsumersMasterGuardian(env: {
           rtComponents.foreach(component => {
             // start component actor
             logger.info(s"Starting RTActor for pipegraph ${pipegraph.name}, component ${component.name}...")
-            val actor = context.actorOf(Props(new ConsumerRTActor(env, component, self)))
+            val actor = context.actorOf(Props(new RTActor(env, component, self)))
             actor ! StartRT
             logger.info(s"Started LegacyStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
           
