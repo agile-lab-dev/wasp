@@ -39,6 +39,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
     // get the config
     val kafkaConfig = ConfigManager.getKafkaConfig
+    val schemaB = ss.sparkContext.broadcast(topic.getDataType)
 
     // check or create
     if (??[Boolean](
@@ -72,7 +73,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
       ret
         .drop("value")
-        .select(from_json(col("value_parsed"), topic.getDataType).alias("value"))
+        .select(from_json(col("value_parsed"), schemaB.value).alias("value"))
         .select(col("value.*"))
 
     } else {

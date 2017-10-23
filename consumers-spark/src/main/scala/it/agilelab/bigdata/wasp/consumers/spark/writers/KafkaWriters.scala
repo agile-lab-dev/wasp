@@ -79,17 +79,35 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
 //        val kafkaFormattedDF = stream.toJSON.map{
 //          json =>
 //            val payload = topicDataTypeB.value match {
-//              case "json" => JsonToByteArrayUtil.jsonToByteArray(json)
 //              case "avro" => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
+//              case "json" => JsonToByteArrayUtil.jsonToByteArray(json)
 //              case _ => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
 //            }
 //            payload
 //        }
 
+        // partition key
         val pkf = topic.partitionKeyField.getOrElse("null")
-        
-        val dsw: DataStreamWriter[Row] = stream
+
+        // prepare the udf
+        import org.apache.spark.sql.functions._
+        def jsonToAvroUDF = udf(AvroToJsonUtil.jsonToAvro(_ : String, schemaB.value))
+
+        // json conversion
+        val dsw = stream
           .selectExpr( pkf, "to_json(struct(*)) AS value")
+
+        val dswParsed = topicDataTypeB.value match {
+          case "avro" => {
+            dsw
+              .withColumn("value_parsed", jsonToAvroUDF(col("value")))
+              .drop("value")
+              .withColumnRenamed("value_parsed", "value")
+          }
+          case _ => dsw
+        }
+
+        val dswParsedReady = dswParsed
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
@@ -97,7 +115,7 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
           .option("checkpointLocation", checkpointDir)
           .queryName(queryName)
 
-        val dswWithWritingConf = addKafkaConf(dsw, tinyKafkaConfig)
+        val dswWithWritingConf = addKafkaConf(dswParsedReady, tinyKafkaConfig)
 
         dswWithWritingConf.start()
       } else {
