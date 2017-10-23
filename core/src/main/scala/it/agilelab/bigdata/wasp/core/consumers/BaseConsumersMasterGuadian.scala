@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl.PipegraphBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, PipegraphModel, RTModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.core.models._
 
 /** Base class for consumer master guardians. Provides skeleton for behaviour and helpers.
 	*
@@ -111,5 +111,12 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 		} toMap
 		
 		pipegraphsToComponentsMap
+	}
+}
+
+object BaseConsumersMasterGuadian {
+	def generateUniqueComponentName(pipegraph: PipegraphModel,
+	                                component: ProcessingComponentModel): String = {
+		pipegraph.generateStandardPipegraphName + "_" + component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName
 	}
 }
