@@ -259,7 +259,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
     
     // stop StreamingContext and all LegacyStreamingETLActor
-    // stop streamin context
+    // stop streaming context
     SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
     SparkSingletons.getStreamingContext.awaitTermination()
     SparkSingletons.deinitializeSparkStreaming()
@@ -269,7 +269,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     val legacyStreamingStatuses = lsComponentActors.values.map(gracefulStop(_, generalTimeoutDuration))
     
     // find and stop StructuredStreamingETLActor belonging to pipegraphs that are no longer active
-    // get the componnt names for all components of all active pipegraphs
+    // get the component names for all components of all active pipegraphs
     val activeStructuredStreamingComponentNames = getActivePipegraphsToComponentsMap flatMap {
       case (pipegraph, (_, sseComponents, _)) => {
         sseComponents map { component => generateUniqueComponentName(pipegraph, component) }
@@ -281,10 +281,10 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     val inactiveStructuredStreamingComponentActors = inactiveStructuredStreamingComponentNames.map(ssComponentActors).toSeq
     // gracefully stop all component actors corresponding to now-inactive pipegraphs
     logger.info(s"Gracefully stopping ${inactiveStructuredStreamingComponentActors.size} structured streaming component actors managing now-inactive components...")
-    val stucturedStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration))
+    val structuredStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration))
     
     // await all component actors' stopping
-    val globalStatuses = legacyStreamingStatuses ++ stucturedStreamingStatuses
+    val globalStatuses = legacyStreamingStatuses ++ structuredStreamingStatuses
     val res = Await.result(Future.sequence(globalStatuses), generalTimeoutDuration)
     
     // check whether all components actors that had to stop actually stopped
