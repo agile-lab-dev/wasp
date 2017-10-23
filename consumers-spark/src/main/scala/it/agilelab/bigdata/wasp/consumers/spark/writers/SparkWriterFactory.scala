@@ -35,10 +35,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumerSparkPlugi
         Some(new KafkaSparkStreamingWriter(env, ssc, writerModel.endpointId.getValue.toHexString))
 
       case _ =>
-        val backCompatibilityWriteType = Utils.getIndexType(writerType, defaultDataStoreIndexed)
-        logger.info(s"Get SparkWriterStreaming plugin $backCompatibilityWriteType before was $writerType, plugin map: $plugins")
-
-        val writerPlugin = plugins.get(backCompatibilityWriteType)
+        val writerPlugin = plugins.get(writerType)
 
         if (writerPlugin.isDefined) {
           Some(writerPlugin.get.getSparkStreamingWriter(ssc, writerModel))
@@ -60,20 +57,24 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumerSparkPlugi
     val indexBL: IndexBL
   }, ss: SparkSession, writerModel: WriterModel) = {
 
-    val writerType = writerModel.writerType.product.getOrElse(writerModel.writerType.category)
+    val writerType = writerModel.writerType.getActualProduct
     // Get the plugin, the index type does not exists anymore.
     // It was replace by the right data store like elastic or solr
-    val backCompatibilityWriteType = Utils.getIndexType(writerType, defaultDataStoreIndexed)
-    logger.info(s"Get SparkWriterStructuredStreaming plugin $backCompatibilityWriteType before was $writerType, plugin map: $plugins")
 
-    val writerPlugin = plugins.get(backCompatibilityWriteType)
-    if (writerPlugin.isDefined) {
-      Some(writerPlugin.get.getSparkStructuredStreamingWriter(ss, writerModel))
-    } else {
-      logger.error(s"Invalid spark structured streaming writer type, writer model: $writerModel")
-      None
+    // Kafka isn't a plugin handle as exception.
+    writerType match {
+      case Datastores.kafkaProduct =>
+        Some(new KafkaSparkStructuredStreamingWriter(env, writerModel.endpointId.getValue.toHexString, ss))
+
+      case _ =>
+        val writerPlugin = plugins.get(writerType)
+        if (writerPlugin.isDefined) {
+          Some(writerPlugin.get.getSparkStructuredStreamingWriter(ss, writerModel))
+        } else {
+          logger.error(s"Invalid spark structured streaming writer type, writer model: $writerModel")
+          None
+        }
     }
-
   }
 
   override def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter] = {
