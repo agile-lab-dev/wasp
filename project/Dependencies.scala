@@ -150,7 +150,8 @@ object Dependencies {
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
 			sparkSQL,
-			typesafeConfig
+			typesafeConfig,
+			sparkAvro
 		)
 	
 	val producers = akka ++ log4j ++ test ++
@@ -164,8 +165,7 @@ object Dependencies {
 			kafka,
 			kafkaStreaming,
 			kafkaSparkSql,
-			quartz,
-			sparkAvro
+			quartz
 			/*,
 			waspElasticSpark */ // needed y system pipegraphs; it is optional, so it is not a transitive dependency
 		)

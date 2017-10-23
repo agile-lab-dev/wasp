@@ -61,12 +61,8 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 
       import org.apache.spark.sql.functions._
-      import com.databricks.spark.avro._
       val avroToJsonUDF = udf(avroToJson)
       val byteArrayToJsonUDF = udf(byteArrayToJson)
-
-      val schemaAvro = new Schema.Parser().parse(topic.getJsonSchema)
-      val schema: DataType = SchemaConverters.toSqlType(schemaAvro).dataType
 
       val ret = topic.topicDataType match {
         case "avro" => r.withColumn("value_parsed", avroToJsonUDF(col("value")))
@@ -76,7 +72,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
       ret
         .drop("value")
-        .select(from_json(col("value_parsed"), schema).alias("value"))
+        .select(from_json(col("value_parsed"), topic.getDataType).alias("value"))
         .select(col("value.*"))
 
     } else {

@@ -1,5 +1,8 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import com.databricks.spark.avro.SchemaConverters
+import org.apache.avro.Schema
+import org.apache.spark.sql.types.DataType
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 
@@ -30,4 +33,9 @@ case class TopicModel(override val name: String,
                       schema: BsonDocument,
                       _id: Option[BsonObjectId] = None) extends Model {
   def getJsonSchema: String = schema.toJson
+  def getDataType: DataType = {
+    import com.databricks.spark.avro._
+    val schemaAvro = new Schema.Parser().parse(this.getJsonSchema)
+    val schema: DataType = SchemaConverters.toSqlType(schemaAvro).dataType
+  }
 }

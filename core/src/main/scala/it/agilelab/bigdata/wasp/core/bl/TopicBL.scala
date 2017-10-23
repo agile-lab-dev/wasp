@@ -24,7 +24,7 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
     t.get("topicDataType").asString().getValue ,
       if (t.containsKey("partitionKeyField")) Some(t.get("partitionKeyField").asString().getValue)
       else None
-    , Option(t.get("schema").asDocument()), Some(t.get("_id").asObjectId()))
+    , t.get("schema").asDocument(), Some(t.get("_id").asObjectId()))
 
   def getByName(name: String): Option[TopicModel] = {
     waspDB.getDocumentByFieldRaw[TopicModel]("name", new BsonString(name)).map(topic => {
