@@ -52,57 +52,32 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       val r: DataFrame = ss.readStream
         .format("kafka")
         .option("subscribe", topic.name)
-        .option("kafka.bootstrap.servers", "kafka:9092")
+        .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
         .load()
 
-//      val receiver = r
-//        .selectExpr("CAST(key AS STRING)", "value")
-//        .as[(String, Array[Byte])]
-
-//      val q = receiver
-//        .writeStream
-//        .format("kafka")
-//        .option("topic", "raw.topic")
-//        .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
-//        .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
-//        .option("checkpointLocation", "/home/matteo/data/ckp")
-//        .start()
-//
-//      val j = receiver.toJSON
-//
-//      j.foreach(println(_))
-//
-//      q.awaitTermination()
-//
-//      r.toDF()
-
-//       prepare the udf
+      // prepare the udf
       val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
       val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 
       import org.apache.spark.sql.functions._
       import com.databricks.spark.avro._
       val avroToJsonUDF = udf(avroToJson)
-//      val byteArrayToJsonUDF = udf(byteArrayToJson)
+      val byteArrayToJsonUDF = udf(byteArrayToJson)
 
-      topic.topicDataType match {
-        case "avro" => {
-          val schemaAvro = new Schema.Parser().parse(topic.getJsonSchema)
-          val schema: DataType = SchemaConverters.toSqlType(schemaAvro).dataType
+      val schemaAvro = new Schema.Parser().parse(topic.getJsonSchema)
+      val schema: DataType = SchemaConverters.toSqlType(schemaAvro).dataType
 
-          logger.info(schemaAvro.toString(true))
-          logger.info(schema.toString())
-
-          r
-            .withColumn("value2", avroToJsonUDF(col("value")))
-            .drop("value")
-            .select(from_json(col("value2"), schema).alias("value"))
-            .select(col("value.*"))
-        }
-//        case "json" => receiver.withColumn("value2", byteArrayToJsonUDF()).withColumnRenamed("value2", "value")
-        case _ => r.withColumn("value2", avroToJsonUDF()).withColumnRenamed("value2", "value")
+      val ret = topic.topicDataType match {
+        case "avro" => r.withColumn("value_parsed", avroToJsonUDF(col("value")))
+        case "json" => r.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
+        case _ => r.withColumn("value_parsed", avroToJsonUDF(col("value")))
       }
+
+      ret
+        .drop("value")
+        .select(from_json(col("value_parsed"), schema).alias("value"))
+        .select(col("value.*"))
 
     } else {
       logger.error(s"Topic not found on Kafka: $topic")
