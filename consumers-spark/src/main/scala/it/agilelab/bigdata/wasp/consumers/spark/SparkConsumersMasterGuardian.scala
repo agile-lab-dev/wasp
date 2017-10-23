@@ -41,19 +41,19 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   type PipegraphsToComponentsMap = Map[PipegraphModel, (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel])]
   
   // counters for components
-  var legacyStreamingETLTotal = 0
-  var structuredStreamingETLTotal = 0
+  private var legacyStreamingETLTotal = 0
+  private var structuredStreamingETLTotal = 0
   
   // counter for ready components
-  var numberOfReadyComponents = 0
+  private var numberOfReadyComponents = 0
   
   // tracking map for structured streaming components ( componentName -> StructuredStreamingETLActor )
-  val ssComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+  private val ssComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
   
   // tracking map for legacy streaming components ( componentName -> LegacyStreamingETLActor )
-  val lsComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+  private val lsComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
 
-  // ActorRef to MasterGuardian returned by the last ask - cannot be replaced with base ActorRef!
+  // ActorRef to MasterGuardian returned by the last ask - cannot be replaced with a simple ActorRef or singleton proxy!
   private var masterGuardian: ActorRef = _
   
   // actor lifecycle callbacks =========================================================================================
@@ -98,7 +98,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       
       if (numberOfReadyComponents == (legacyStreamingETLTotal + structuredStreamingETLTotal)) {
         // all component actors registered; finish startup
-        logger.info("All consumer child actors have registered! Continuing startup sequence...")
+        logger.info(s"All $numberOfReadyComponents consumer child actors have registered! Continuing startup sequence...")
         finishStartup()
       } else {
         logger.info(s"Not all component actors have registered to the cluster (right now only $numberOfReadyComponents " +
@@ -116,7 +116,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       masterGuardian = sender()
 	
 	    // attempt stopping
-      val stoppingSuccessful = stopGuardian()
+      val stoppingSuccessful = stop()
       
       // only proceed with restart if we actually stopped
       if (stoppingSuccessful) {
@@ -252,7 +252,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     Thread.sleep(5 * 1000)
   }
   
-  private def stopGuardian(): Boolean = {
+  private def stop(): Boolean = {
     logger.info(s"SparkConsumersMasterGuardian $self stopping...")
     
     // stop all component actors bound to this guardian and the guardian itself
@@ -334,7 +334,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   
   // helper methods ====================================================================================================
 
-  //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
   private def getActivePipegraphsToComponentsMap: PipegraphsToComponentsMap = {
     val pipegraphs: Seq[PipegraphModel] = env.pipegraphBL.getActivePipegraphs()
     
