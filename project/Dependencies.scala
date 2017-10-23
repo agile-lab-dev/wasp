@@ -167,8 +167,6 @@ object Dependencies {
 			kafkaSparkSql,
 			quartz,
 			sparkAvro
-			/*,
-			waspElasticSpark */ // needed y system pipegraphs; it is optional, so it is not a transitive dependency
 		)
 
 	val consumers_rt = akka ++ log4j ++
