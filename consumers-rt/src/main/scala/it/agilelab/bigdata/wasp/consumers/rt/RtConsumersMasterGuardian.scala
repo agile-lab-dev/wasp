@@ -1,12 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.rt
 
-import akka.actor.{Actor, ActorRef, Props, Stash}
+import akka.actor.{ActorRef, Props}
 import akka.pattern.gracefulStop
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
+import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
 import it.agilelab.bigdata.wasp.core.models.RTModel
 import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 
@@ -21,80 +19,20 @@ class RtConsumersMasterGuardian(env: {
                                        val indexBL: IndexBL
                                        val websocketBL: WebsocketBL
                                      })
-    extends Stash
-    with Logging
+    extends BaseConsumersMasterGuadian(env)
     with WaspConfiguration {
   // counters for components
   private var rtTotal = 0
   
-  // counter for ready components
-  private var numberOfReadyComponents = 0
+  // getter for total number of components that should be running
+  def getTargetNumberOfReadyComponents: Int = rtTotal
   
   // tracking map for rt components ( componentName -> RTActor )
   private val rtComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
   
-  // ActorRef to MasterGuardian returned by the last ask - cannot be replaced with a simple ActorRef or singleton proxy!
-  private var masterGuardian: ActorRef = _
-  
-  // actor lifecycle callbacks =========================================================================================
-  
-  override def preStart(): Unit = {
-    // we start in uninitialized state
-    context become uninitialized
-  }
-  
-  // behaviours ========================================================================================================
-  
-  // standard receive
-  // NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
-  override def receive: Actor.Receive = uninitialized
-  
-  // behaviour when uninitialized
-  def uninitialized: Actor.Receive = {
-    case RestartConsumers =>
-      // update MasterGuardian ActorRef
-      masterGuardian = sender()
-      
-      beginStartup()
-  }
-  
-  // behaviour while starting
-  def starting: Actor.Receive = {
-    case OutputStreamInitialized =>
-      // register component actor
-      registerComponentActor(sender())
-      
-      if (numberOfReadyComponents == rtTotal) {
-        // all component actors registered; finish startup
-        logger.info(s"All consumer $numberOfReadyComponents child actors have registered! Continuing startup sequence...")
-        finishStartup()
-      } else {
-        logger.info(s"Not all component actors have registered to the cluster (right now only $numberOfReadyComponents " +
-                      s"out of $rtTotal), waiting for more...")
-      }
-    case RestartConsumers =>
-      logger.info(s"Stashing RestartConsumers from ${sender()}")
-      stash()
-  }
-  
-  // behavior once initialized
-  def initialized: Actor.Receive = {
-    case RestartConsumers =>
-      // update MasterGuardian ActorRef
-      masterGuardian = sender()
-      
-      // attempt stopping
-      val stopSuccessful = stop()
-  
-      // only proceed with restart if we actually stopped
-      if (stopSuccessful) {
-        beginStartup()
-      }
-  }
-  
   // methods implementing start/stop ===================================================================================
   
-  private def beginStartup(): Unit = {
+  override def beginStartup(): Unit = {
     logger.info(s"RtConsumersMasterGuardian $self beginning startup sequence...")
     
     // find all rt components marked as active, save how many they are in state
@@ -126,12 +64,7 @@ class RtConsumersMasterGuardian(env: {
     }
   }
   
-  private def registerComponentActor(componentActor: ActorRef): Unit = {
-    logger.info(s"Component actor $componentActor registered")
-    numberOfReadyComponents += 1
-  }
-  
-  private def finishStartup(): Unit = {
+  override def finishStartup(): Unit = {
     logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
     
     // confirm startup success to MasterGuardian
@@ -146,7 +79,7 @@ class RtConsumersMasterGuardian(env: {
     unstashAll()
   }
   
-  private def stop(): Boolean = {
+  override def stop(): Boolean = {
     logger.info(s"Stopping...")
     
     // stop all actors bound to this guardian and the guardian itself
