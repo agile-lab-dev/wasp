@@ -8,6 +8,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
+import org.apache.spark.sql.functions.col
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
@@ -133,5 +134,30 @@ class HDFSSparkWriter(hdfsModel: RawModel,
 
     // write
     writer.save(path)
+  }
+}
+
+object RawWriters {
+  // prepares a dataframe for a writer using partitionBy; given a list of columns on which to partition and whether to
+  // keep them, return a new df with sacrifical generated columns and the list of columns on which to partition
+  def prepareDfForPartitionBy(df: DataFrame, partitionBy: List[(String, Boolean)]): (DataFrame, List[String]) = {
+    // find list of columns to save and generate aliases for their sacrifical clones
+    val sacrificalColumns = partitionBy.filter(_._2).map({
+                                                           case (column, keep) => (column, "_" + column)
+                                                         })
+  
+    // add sacrifical columns to df
+    val dfWithAllSacrificalColumns = sacrificalColumns.foldLeft(df) {
+      case (dfWithSacrificalColumns, (column, sacrificalColumn)) => {
+        dfWithSacrificalColumns.withColumn(sacrificalColumn, col(column))
+      }
+    }
+    
+    // generate final list of columns on which to partition
+    val finalPartitionByColumns = partitionBy map {
+      case (column, keep) => if (keep) "_" else "" + column
+    }
+    
+    (dfWithAllSacrificalColumns, finalPartitionByColumns)
   }
 }
