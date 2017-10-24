@@ -76,7 +76,10 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 			
 			// only proceed with restart if we actually stopped
 			if (stoppingSuccessful) {
+				logger.info("Stopping successful, starting up again")
 				beginStartup()
+			} else {
+				logger.error("Stopping unsuccessful, not starting up again")
 			}
 	}
 	

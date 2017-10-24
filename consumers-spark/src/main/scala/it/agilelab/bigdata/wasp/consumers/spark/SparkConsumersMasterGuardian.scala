@@ -193,10 +193,17 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
     
     // stop StreamingContext and all LegacyStreamingETLActor
-    // stop streaming context
-    SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
-    SparkSingletons.getStreamingContext.awaitTermination()
-    SparkSingletons.deinitializeSparkStreaming()
+    // stop streaming context if needed
+    if (legacyStreamingETLTotal > 0) {
+      logger.info("Stopping StreamingContext...")
+      SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
+      SparkSingletons.getStreamingContext.awaitTermination()
+      SparkSingletons.deinitializeSparkStreaming()
+      logger.info("Stopped StreamingContext")
+    } else {
+      logger.info("Not stopping StreamingContext because no legacy streaming components are present")
+    }
+    
     // gracefully stop all component actors corresponding to legacy components
     logger.info(s"Gracefully stopping all ${lsComponentActors.size} legacy streaming component actors...")
     val generalTimeoutDuration = generalTimeout.duration
