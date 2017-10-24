@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, Structure
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
+import it.agilelab.bigdata.wasp.core.WaspEvent.{OutputStreamInitialized, StopProcessingComponent}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -40,7 +40,8 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
 
   override def receive: Actor.Receive = {
     case StreamReady => listener ! OutputStreamInitialized
-    case PoisonPill =>
+    case StopProcessingComponent =>
+      logger.info(s"Component actor $self stopping...")
       stopProcessingComponent()
       context stop self
       logger.info(s"Component actor $self stopped")

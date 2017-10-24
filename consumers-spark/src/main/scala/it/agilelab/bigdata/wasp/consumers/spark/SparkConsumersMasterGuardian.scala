@@ -5,6 +5,7 @@ import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
+import it.agilelab.bigdata.wasp.core.WaspEvent.StopProcessingComponent
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
@@ -222,7 +223,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     val inactiveStructuredStreamingComponentActors = inactiveStructuredStreamingComponentNames.map(ssComponentActors).toSeq
     // gracefully stop all component actors corresponding to now-inactive pipegraphs
     logger.info(s"Gracefully stopping ${inactiveStructuredStreamingComponentActors.size} structured streaming component actors managing now-inactive components...")
-    val structuredStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration))
+    val structuredStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration, StopProcessingComponent))
     
     // await all component actors' stopping
     val globalStatuses = legacyStreamingStatuses ++ structuredStreamingStatuses

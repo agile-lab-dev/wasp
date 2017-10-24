@@ -27,6 +27,7 @@ object WaspEvent {
   sealed trait LifeCycleEvent extends WaspEvent
 
   case object OutputStreamInitialized extends LifeCycleEvent
+  case object StopProcessingComponent
 
   case object NodeInitialized extends LifeCycleEvent
 
