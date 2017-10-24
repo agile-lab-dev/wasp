@@ -6,7 +6,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, M
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.Utils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging

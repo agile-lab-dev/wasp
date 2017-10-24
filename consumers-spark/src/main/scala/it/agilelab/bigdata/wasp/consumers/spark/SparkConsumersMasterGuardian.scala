@@ -1,18 +1,15 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
-import akka.actor.{Actor, ActorRef, Props, Stash}
+import akka.actor.{ActorRef, Props}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
-import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, PipegraphModel, RTModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
+import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
+import it.agilelab.bigdata.wasp.core.messages.StopProcessingComponent
 import it.agilelab.bigdata.wasp.core.utils.{SparkStreamingConfiguration, WaspConfiguration}
 
 import scala.collection.mutable
@@ -33,38 +30,30 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                                    streamingReader: StreamingReader,
                                    structuredStreamingReader: StructuredStreamingReader,
                                    plugins: Map[String, WaspConsumerSparkPlugin])
-    extends SparkStreamingConfiguration
-    with Stash
-    with Logging
+    extends BaseConsumersMasterGuadian(env)
+    with SparkStreamingConfiguration
     with WaspConfiguration {
-  // type alias for pipegraph -> components map
-  type PipegraphsToComponentsMap = Map[PipegraphModel, (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel])]
-  
   // counters for components
-  var legacyStreamingETLTotal = 0
-  var structuredStreamingETLTotal = 0
+  private var legacyStreamingETLTotal = 0
+  private var structuredStreamingETLTotal = 0
   
-  // counter for ready components
-  var numberOfReadyComponents = 0
+  // getter for total number of components that should be running
+  def getTargetNumberOfReadyComponents: Int = legacyStreamingETLTotal + structuredStreamingETLTotal
   
   // tracking map for structured streaming components ( componentName -> StructuredStreamingETLActor )
-  val ssComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+  private val ssComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
   
   // tracking map for legacy streaming components ( componentName -> LegacyStreamingETLActor )
-  val lsComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
-
-  // ActorRef to MasterGuardian returned by the last ask - cannot be replaced with base ActorRef!
-  private var masterGuardian: ActorRef = _
+  private val lsComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
   
   // actor lifecycle callbacks =========================================================================================
   
   override def preStart(): Unit = {
+    super.preStart()
+    
     // initialize Spark
     val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
     if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")
-  
-    // we start in uninitialized state
-    context become uninitialized
   }
   
   override def postStop(): Unit = {
@@ -75,58 +64,9 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     SparkSingletons.getSparkSession.streams.active.foreach(_.stop())
   }
   
-  // behaviours ========================================================================================================
-  
-  // standard receive
-  // NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
-  override def receive: Actor.Receive = uninitialized
-  
-  // behaviour when uninitialized
-  def uninitialized: Actor.Receive = {
-    case RestartConsumers =>
-	    // update MasterGuardian ActorRef
-      masterGuardian = sender()
-	    
-	    beginStartup()
-  }
-
-  // behaviour while starting
-  def starting: Actor.Receive = {
-    case OutputStreamInitialized =>
-      // register component actor
-      registerComponentActor(sender())
-      
-      if (numberOfReadyComponents == (legacyStreamingETLTotal + structuredStreamingETLTotal)) {
-        // all component actors registered; finish startup
-        logger.info("All consumer child actors have registered! Continuing startup sequence...")
-        finishStartup()
-      } else {
-        logger.info(s"Not all component actors have registered to the cluster (right now only $numberOfReadyComponents " +
-                    s"out of ${legacyStreamingETLTotal + structuredStreamingETLTotal}), waiting for more...")
-      }
-    case RestartConsumers =>
-      logger.info(s"Stashing RestartConsumers from ${sender()}")
-      stash()
-  }
-
-  // behavior once initialized
-  def initialized: Actor.Receive = {
-    case RestartConsumers =>
-	    // update MasterGuardian ActorRef
-      masterGuardian = sender()
-	
-	    // attempt stopping
-      val stoppingSuccessful = stopGuardian()
-      
-      // only proceed with restart if we actually stopped
-      if (stoppingSuccessful) {
-        beginStartup()
-      }
-  }
-  
   // methods implementing start/stop ===================================================================================
 
-  private def beginStartup() {
+  override def beginStartup(): Unit = {
     logger.info(s"SparkConsumersMasterGuardian $self beginning startup sequence...")
 
     SparkSingletons.initializeSparkStreaming(sparkStreamingConfig)
@@ -162,7 +102,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                   s"($legacyStreamingETLTotal legacy streaming, $structuredStreamingETLTotal structured streaming)")
   
     if (legacyStreamingETLTotal + structuredStreamingETLTotal == 0) { // no active pipegraphs/no components to start
-      logger.info("No active pipegraphs/components found; aborting startup sequence")
+      logger.info("No active pipegraphs with legacy streaming/structured streaming components found; aborting startup sequence")
       
       // enter unitizialized state because we don't have anything to do
       context become uninitialized
@@ -220,12 +160,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     }
   }
   
-  private def registerComponentActor(componentActor: ActorRef): Unit = {
-    logger.info(s"Component actor $componentActor registered")
-    numberOfReadyComponents += 1
-  }
-  
-  private def finishStartup(): Unit = {
+  override def finishStartup(): Unit = {
     logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
 
     if (legacyStreamingETLTotal > 0) {
@@ -252,24 +187,31 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     Thread.sleep(5 * 1000)
   }
   
-  private def stopGuardian(): Boolean = {
+  override def stop(): Boolean = {
     logger.info(s"SparkConsumersMasterGuardian $self stopping...")
     
     // stop all component actors bound to this guardian and the guardian itself
     logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
     
     // stop StreamingContext and all LegacyStreamingETLActor
-    // stop streamin context
-    SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
-    SparkSingletons.getStreamingContext.awaitTermination()
-    SparkSingletons.deinitializeSparkStreaming()
+    // stop streaming context if needed
+    if (legacyStreamingETLTotal > 0) {
+      logger.info("Stopping StreamingContext...")
+      SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)
+      SparkSingletons.getStreamingContext.awaitTermination()
+      SparkSingletons.deinitializeSparkStreaming()
+      logger.info("Stopped StreamingContext")
+    } else {
+      logger.info("Not stopping StreamingContext because no legacy streaming components are present")
+    }
+    
     // gracefully stop all component actors corresponding to legacy components
     logger.info(s"Gracefully stopping all ${lsComponentActors.size} legacy streaming component actors...")
     val generalTimeoutDuration = generalTimeout.duration
     val legacyStreamingStatuses = lsComponentActors.values.map(gracefulStop(_, generalTimeoutDuration))
     
-    // find and stop StructuredStreamingETLActor belonging to pipegraphs that are no longer active
-    // get the componnt names for all components of all active pipegraphs
+    // find and stop all StructuredStreamingETLActors belonging to pipegraphs that are no longer active
+    // get the component names for all components of all active pipegraphs
     val activeStructuredStreamingComponentNames = getActivePipegraphsToComponentsMap flatMap {
       case (pipegraph, (_, sseComponents, _)) => {
         sseComponents map { component => generateUniqueComponentName(pipegraph, component) }
@@ -281,10 +223,10 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     val inactiveStructuredStreamingComponentActors = inactiveStructuredStreamingComponentNames.map(ssComponentActors).toSeq
     // gracefully stop all component actors corresponding to now-inactive pipegraphs
     logger.info(s"Gracefully stopping ${inactiveStructuredStreamingComponentActors.size} structured streaming component actors managing now-inactive components...")
-    val stucturedStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration))
+    val structuredStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration, StopProcessingComponent))
     
     // await all component actors' stopping
-    val globalStatuses = legacyStreamingStatuses ++ stucturedStreamingStatuses
+    val globalStatuses = legacyStreamingStatuses ++ structuredStreamingStatuses
     val res = Await.result(Future.sequence(globalStatuses), generalTimeoutDuration)
     
     // check whether all components actors that had to stop actually stopped
@@ -331,26 +273,4 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       false
     }
   }
-  
-  // helper methods ====================================================================================================
-
-  //TODO: Maybe we should groupBy another field to avoid duplicates (if exist)...
-  private def getActivePipegraphsToComponentsMap: PipegraphsToComponentsMap = {
-    val pipegraphs: Seq[PipegraphModel] = env.pipegraphBL.getActivePipegraphs()
-    
-    // extract components from active pipegraphs as a Map pipegraph -> components
-    val pipegraphsToComponentsMap: PipegraphsToComponentsMap = pipegraphs map {
-      pipegraph => {
-        // grab components
-        val lseComponents = pipegraph.legacyStreamingComponents
-        val sseComponents = pipegraph.structuredStreamingComponents
-        val rtComponents = pipegraph.rtComponents
-        
-        pipegraph -> (lseComponents, sseComponents, rtComponents)
-      }
-    } toMap
-    
-    pipegraphsToComponentsMap
-  }
-
 }
