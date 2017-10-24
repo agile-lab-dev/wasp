@@ -2,9 +2,8 @@ package it.agilelab.bigdata.wasp.core.kafka
 
 import java.util.Properties
 
-import it.agilelab.bigdata.wasp.core.WaspEvent
-import it.agilelab.bigdata.wasp.core.WaspEvent.WaspMessageEnvelope
-import it.agilelab.bigdata.wasp.core.models.configuration.{TinyKafkaConfig, KafkaConfigModel}
+import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaConfigModel, TinyKafkaConfig}
 import kafka.producer.{DefaultPartitioner, KeyedMessage, Producer, ProducerConfig}
 import kafka.serializer.StringEncoder
 import kafka.server.KafkaConfig
@@ -24,9 +23,7 @@ class WaspKafkaWriter[K, V](producerConfig: ProducerConfig) {
 
   def this(conf: TinyKafkaConfig) = this(WaspKafkaWriter.createConfig(
     conf.connections.map(x => x.toString).toSet, conf.batch_send_size, "async", conf.default_encoder, conf.encoder_fqcn, conf.partitioner_fqcn))
-
-  import WaspEvent._
-
+  
   private val producer = new Producer[K, V](producerConfig)
 
   /** Sends the data, partitioned by key to the topic. */

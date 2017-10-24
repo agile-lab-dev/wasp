@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
-import akka.actor.{Actor, ActorRef, PoisonPill}
+import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
@@ -8,10 +8,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, Structure
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.WaspEvent.{OutputStreamInitialized, StopProcessingComponent}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, StopProcessingComponent}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
 import org.apache.spark.sql.{DataFrame, SparkSession}

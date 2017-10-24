@@ -1,10 +1,9 @@
 package it.agilelab.bigdata.wasp.core.consumers
 
 import akka.actor.{ActorRef, Stash}
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl.PipegraphBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
+import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, RestartConsumers}
 import it.agilelab.bigdata.wasp.core.models._
 
 /** Base class for consumer master guardians. Provides skeleton for behaviour and helpers.
