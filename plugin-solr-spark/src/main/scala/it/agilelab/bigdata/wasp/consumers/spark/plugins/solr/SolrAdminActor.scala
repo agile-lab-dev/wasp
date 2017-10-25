@@ -28,7 +28,7 @@ object SolrAdminActor {
   val collection = "wasp-def-collection"
   val alias = "wasp-alias"
   val configSet = "waspConfigSet"
-  val template = "managedTemplate"
+  val template = "schemalessTemplate"
   val numShards = 1
   val replicationFactor = 1
   val schema =
