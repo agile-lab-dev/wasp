@@ -64,7 +64,9 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
           )) {
 
         val docs: DStream[SolrInputDocument] = stream.transform { rdd =>
-          val df: Dataset[Row] = sqlContext.read.json(rdd)
+          val df: DataFrame = sqlContext.read.json(rdd)
+
+          df.show()
 
           df.rdd.map { r =>
             SolrSparkWriter.createSolrDocument(r)
