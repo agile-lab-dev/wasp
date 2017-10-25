@@ -2,11 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
 import akka.actor.ActorRef
 import com.lucidworks.spark.util.SolrSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkStreamingWriter,
-  SparkStructuredStreamingWriter,
-  SparkWriter
-}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -14,7 +10,9 @@ import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
@@ -105,6 +103,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     // get index model from BL
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
+      val index = indexOpt.get
 
       // create streaming options
       val extraOptions = Map(
@@ -115,10 +114,20 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
       )
 
       // configure and start streaming
-      stream.writeStream
-        .format("solr")
+//      stream.writeStream
+//        .format("solr")
+//        .options(extraOptions)
+//        .option("checkpointLocation", checkpointDir)
+//        .queryName(queryName)
+//        .start()
+
+      val solrWriter = new SolrForeatchWriter(ss, index)
+
+      stream
+        .writeStream
         .options(extraOptions)
         .option("checkpointLocation", checkpointDir)
+        .foreach(solrWriter)
         .queryName(queryName)
         .start()
 
@@ -129,6 +138,31 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
   }
 
+}
+
+class SolrForeatchWriter(val ss: SparkSession, val indexModel: IndexModel) extends ForeachWriter[Row]
+  with SolrConfiguration
+  with Logging {
+  override def open(partitionId: Long, version: Long): Boolean = true
+
+  override def process(value: Row): Unit = {
+    val indexName = ConfigManager.buildTimedName(indexModel.name)
+
+    val docs = SolrSparkWriter.createSolrDocument(value)
+//    SolrSupport.indexDStreamOfDocs(solrConfig.connections.mkString(","),
+//      indexName,
+//      100,
+//      docs)
+
+    val a: RDD[SolrInputDocument] = ss.sparkContext.parallelize(Seq(docs))
+
+    SolrSupport.indexDocs(solrConfig.connections.mkString(","),
+      indexName,
+      1000,
+      a)
+  }
+
+  override def close(errorOrNull: Throwable): Unit = {}
 }
 
 class SolrSparkWriter(indexBL: IndexBL,
