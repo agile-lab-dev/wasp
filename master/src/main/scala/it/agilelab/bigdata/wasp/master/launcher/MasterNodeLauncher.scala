@@ -13,8 +13,10 @@ import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, Produce
 import it.agilelab.bigdata.wasp.core.utils.{WaspConfiguration, WaspDB}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
+import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.httpResponseJson
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 /**
@@ -74,8 +76,11 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		Pipegraph_C.getRoute ~
 		Producer_C.getRoute ~
 		Topic_C.getRoute ~
-		Status_C.getRoute
+		Status_C.getRoute ~
+			additionalRoutes()
 	}
+
+	def additionalRoutes(): Route = pass(complete(httpResponseJson(entity = helpApi.prettyPrint)))
 	
 	private def startRestServer(actorSystem: ActorSystem, route: Route): Unit = {
 		implicit val system = actorSystem
