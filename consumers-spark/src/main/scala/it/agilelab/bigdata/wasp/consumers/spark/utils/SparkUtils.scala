@@ -93,35 +93,7 @@ object SparkUtils extends Logging {
                                                component: StructuredStreamingETLModel): String = {
     sparkStreamingConfigModel.checkpointDir + "/" +
 	    "structured_streaming" + "/" +
-	    generatePipegraphPart(pipegraph) + "/" +
-	    generateProcessingComponentPart(component) + "_" + generateWriterPart(component)
+	    pipegraph.generateStandardPipegraphName + "/" +
+	    component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName
   }
-	
-	def generateUniqueComponentName(pipegraph: PipegraphModel,
-	                                component: ProcessingComponentModel): String = {
-		generatePipegraphPart(pipegraph) + "_" + generateProcessingComponentPart(component) + "_" + generateWriterPart(component)
-	}
-	
-	private def generatePipegraphPart(pipegraph: PipegraphModel): String = {
-		s"pipegraph_${pipegraph.name}"
-	}
-	
-	private def generateProcessingComponentPart(component: ProcessingComponentModel): String = {
-		component match { // TODO: remove match once name member is moved into ProcessingComponentModel
-			case ss: StructuredStreamingETLModel => s"structuredstreaming_${ss.name}"
-			case ls: LegacyStreamingETLModel => s"legacystreaming_${ls.name}"
-			case rt: RTModel => s"rt_${rt.name}"
-		}
-	}
-	
-	private def generateWriterPart(component: ProcessingComponentModel): String = {
-		component match { // TODO: remove match once output member is moved into ProcessingComponentModel
-			case ss: StructuredStreamingETLModel => s"writer_${ss.output.name}"
-			case ls: LegacyStreamingETLModel => s"writer_${ls.output.name}"
-			case rt: RTModel => rt.endpoint match {
-				case Some(output) => s"writer_${output.name}"
-				case None => "no_writer"
-			}
-		}
-	}
 }

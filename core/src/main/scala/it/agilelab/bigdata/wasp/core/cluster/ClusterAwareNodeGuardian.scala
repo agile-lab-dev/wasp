@@ -3,8 +3,9 @@ package it.agilelab.bigdata.wasp.core.cluster
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.pattern.gracefulStop
-import it.agilelab.bigdata.wasp.core.WaspEvent.{NodeInitialized, OutputStreamInitialized}
+import it.agilelab.bigdata.wasp.core.WaspEvent.NodeInitialized
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.messages.OutputStreamInitialized
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.duration._

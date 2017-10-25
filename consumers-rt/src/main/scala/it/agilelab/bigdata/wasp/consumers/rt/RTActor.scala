@@ -18,9 +18,9 @@ case class StartRT()
 
 case class StopRT()
 
-class ConsumerRTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val indexBL: IndexBL},
-                      rt: RTModel,
-                      listener: ActorRef)
+class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val indexBL: IndexBL},
+              rt: RTModel,
+              listener: ActorRef)
   extends Actor with Logging {
   val strategy: Option[StrategyRT] = createStrategyRT(rt)
   lazy val kafkaReaders: List[Option[ActorRef]] = {

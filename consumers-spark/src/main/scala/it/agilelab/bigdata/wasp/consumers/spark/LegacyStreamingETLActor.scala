@@ -7,9 +7,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.DataFrame

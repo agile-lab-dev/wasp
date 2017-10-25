@@ -1,5 +1,9 @@
 package it.agilelab.bigdata.wasp.producers
 
+import java.io.File
+import java.nio.file.{Files, Path, Paths}
+import java.util.Base64
+
 import akka.actor.Actor
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -11,9 +15,12 @@ import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.messages.RestRequest
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
+
 import scala.concurrent.Future
 import spray.json._
 import NifiRquestJsonProtocol._
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.SerializationUtils
 
 /**
   * NiFi Producer.
@@ -34,7 +41,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
 
       val action = data.asJsObject.fields("action").convertTo[String]
       val request = checkActionType(action, data, mlModelId)
-      
+
       if(nifiProducerConf.isDefined) {
         val uri = getUriFromConfiguration(nifiProducerConf.get)
         val res = httpRequest(uri, request, httpMethod)
@@ -51,7 +58,11 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
         val mlModel = env.mlModelBL.getById(mlModelId)
         if (mlModel.isDefined) {
           val modelFile = Some(WaspDB.getDB.getFileByID(mlModel.get.modelFileId.get))
-          NifiRequest(action, conf.id, conf.child, modelFile).toJson
+          val encodedModel: Option[String] = Some(Base64.getEncoder().encodeToString(modelFile.get))
+          val file = new File("/root/wasp/models/encodedModel")
+          FileUtils.writeStringToFile(file, encodedModel.get)
+          NifiRequest(action, conf.id, conf.child, encodedModel).toJson
+
         }
         else throw new RuntimeException(s"mlModel does not exist.")
       case _ => NifiRequest(action, conf.id, conf.child, None).toJson

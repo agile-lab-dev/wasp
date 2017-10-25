@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.producers
 import akka.actor.{Actor, ActorLogging}
 import it.agilelab.bigdata.wasp.core.WaspEvent
 import it.agilelab.bigdata.wasp.core.kafka.WaspKafkaWriter
+import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
 import kafka.producer.ProducerConfig
 

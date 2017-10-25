@@ -14,7 +14,24 @@ object StrategyModel {
 }
 
 // TODO: move common members from child classes here
-trait ProcessingComponentModel
+trait ProcessingComponentModel {
+  def name: String
+  
+  def generateStandardProcessingComponentName: String = this match {
+    case ss: StructuredStreamingETLModel => s"structuredstreaming_${ss.name}"
+    case ls: LegacyStreamingETLModel => s"legacystreaming_${ls.name}"
+    case rt: RTModel => s"rt_${rt.name}"
+  }
+  
+  def generateStandardWriterName: String = this match { // TODO: remove match once output member is moved into ProcessingComponentModel
+    case ss: StructuredStreamingETLModel => s"writer_${ss.output.name}"
+    case ls: LegacyStreamingETLModel => s"writer_${ls.output.name}"
+    case rt: RTModel => rt.endpoint match {
+      case Some(output) => s"writer_${output.name}"
+      case None => "no_writer"
+    }
+  }
+}
 
 case class LegacyStreamingETLModel(name: String,
                                    inputs: List[ReaderModel],
@@ -66,7 +83,9 @@ case class PipegraphModel(override val name: String,
                           rtComponents: List[RTModel],
                           dashboard: Option[DashboardModel] = None,
                           var isActive: Boolean = true,
-                          _id: Option[BsonObjectId] = None) extends Model
+                          _id: Option[BsonObjectId] = None) extends Model {
+  def generateStandardPipegraphName: String = s"pipegraph_$name"
+}
 
 object LegacyStreamingETLModel {
   val KAFKA_ACCESS_TYPE_DIRECT = "direct"

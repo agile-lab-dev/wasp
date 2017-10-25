@@ -2,15 +2,15 @@ package it.agilelab.bigdata.wasp.producers
 
 import akka.actor.{Actor, ActorRef, Cancellable}
 import it.agilelab.bigdata.wasp.core.SystemPipegraphs._
-import it.agilelab.bigdata.wasp.core.WaspEvent.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, JsonToByteArrayUtil}
-import org.mongodb.scala.bson.BsonDocument
 
 case object StopMainTask
 
 case object StartMainTask
+
 
 abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel]) extends Actor with Logging {
   implicit val system = context.system
