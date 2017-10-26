@@ -196,7 +196,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
           }
         case _ =>
           Unmarshal(res.entity).to[String].map { body =>
-            logger.info(s"Solr Schema API Status Code NOT recognized $body")
+            logger.error(s"Solr Schema API Status Code NOT recognized $body")
           }
       }
     }
