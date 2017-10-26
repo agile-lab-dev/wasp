@@ -216,7 +216,8 @@ object Dependencies {
 	val plugin_solr_spark =
 		Seq(
 			solr,
-			solrCore/*,
+			solrCore,
+			sparkMLlib/*,
 			sparkSolr*/
 		)
 }
