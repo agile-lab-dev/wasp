@@ -121,7 +121,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    solrServer = new CloudSolrServer(solrConfig.connections.toString().mkString(","))
+    solrServer = new CloudSolrServer(solrConfig.connections.mkString(","))
 
     try {
       solrServer.connect()
