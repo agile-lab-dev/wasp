@@ -8,7 +8,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.solr._
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
@@ -19,7 +18,7 @@ import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -122,14 +121,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    solrServer = new CloudSolrServer(
-      solrConfig.connections
-        .map(connection =>
-          s"${connection.host}:${connection.port}${
-            connection.metadata.flatMap(_.get("zookeeperRootNode"))
-              .getOrElse("")
-          }")
-        .mkString(","))
+    solrServer = new CloudSolrServer(solrConfig.connections.toString())
 
     try {
       solrServer.connect()

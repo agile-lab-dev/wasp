@@ -1,5 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
+import java.util
+import java.util.{Date, List}
+
 import akka.actor.ActorRef
 import com.lucidworks.spark.SolrSupport
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
@@ -8,6 +11,8 @@ import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
+import org.apache.solr.client.solrj.SolrServer
+import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
@@ -140,26 +145,25 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 class SolrForeatchWriter(val ss: SparkSession, val indexModel: IndexModel) extends ForeachWriter[Row]
   with SolrConfiguration
   with Logging {
-  override def open(partitionId: Long, version: Long): Boolean = true
+
+  var solrServer: CloudSolrServer = _
+  var batch: util.ArrayList[SolrInputDocument] = _
+
+  override def open(partitionId: Long, version: Long): Boolean = {
+    solrServer = SolrSupport.getSolrServer(solrConfig.connections.toString())
+    batch = new util.ArrayList[SolrInputDocument]
+    true
+  }
 
   override def process(value: Row): Unit = {
     val indexName = ConfigManager.buildTimedName(indexModel.name)
-
-    val docs = SolrSparkWriter.createSolrDocument(value)
-//    SolrSupport.indexDStreamOfDocs(solrConfig.connections.mkString(","),
-//      indexName,
-//      100,
-//      docs)
-
-    val a: RDD[SolrInputDocument] = ss.sparkContext.parallelize(Seq(docs))
-
-    SolrSupport.indexDocs(solrConfig.connections.mkString(","),
-      indexName,
-      1000,
-      a)
+    val docs: SolrInputDocument = SolrSparkWriter.createSolrDocument(value)
+    batch.add(docs)
   }
 
-  override def close(errorOrNull: Throwable): Unit = {}
+  override def close(errorOrNull: Throwable): Unit = {
+    SolrSupport.sendBatchToSolr(solrServer, indexModel.collection, batch)
+  }
 }
 
 class SolrSparkWriter(indexBL: IndexBL, sc: SparkContext, id: String,
