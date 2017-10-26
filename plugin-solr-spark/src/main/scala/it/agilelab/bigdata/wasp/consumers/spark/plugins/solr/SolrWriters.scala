@@ -123,7 +123,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 //        .queryName(queryName)
 //        .start()
 
-      val solrWriter = new SolrForeatchWriter(ss, index)
+      val solrWriter = new SolrForeatchWriter(ss, index.name, index.collection)
 
       stream
         .writeStream
@@ -142,7 +142,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 }
 
-class SolrForeatchWriter(val ss: SparkSession, val indexModel: IndexModel) extends ForeachWriter[Row]
+class SolrForeatchWriter(val ss: SparkSession, val indexName: String, collection: String) extends ForeachWriter[Row]
   with SolrConfiguration
   with Logging {
 
@@ -156,13 +156,12 @@ class SolrForeatchWriter(val ss: SparkSession, val indexModel: IndexModel) exten
   }
 
   override def process(value: Row): Unit = {
-    val indexName = ConfigManager.buildTimedName(indexModel.name)
     val docs: SolrInputDocument = SolrSparkWriter.createSolrDocument(value)
     batch.add(docs)
   }
 
   override def close(errorOrNull: Throwable): Unit = {
-    SolrSupport.sendBatchToSolr(solrServer, indexModel.collection, batch)
+    SolrSupport.sendBatchToSolr(solrServer, collection, batch)
   }
 }
 
