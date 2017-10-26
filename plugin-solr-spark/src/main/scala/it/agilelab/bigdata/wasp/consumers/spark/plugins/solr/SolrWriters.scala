@@ -146,6 +146,7 @@ class SolrForeatchWriter(val ss: SparkSession, val connection: String, val index
 
   var solrServer: CloudSolrServer = _
   var batch: util.ArrayList[SolrInputDocument] = _
+  var batchSize = 10
 
   override def open(partitionId: Long, version: Long): Boolean = {
     solrServer = SolrSupport.getSolrServer(connection)
@@ -156,10 +157,18 @@ class SolrForeatchWriter(val ss: SparkSession, val connection: String, val index
   override def process(value: Row): Unit = {
     val docs: SolrInputDocument = SolrSparkWriter.createSolrDocument(value)
     batch.add(docs)
+
+    if (batch.size() > batchSize) {
+      SolrSupport.sendBatchToSolr(solrServer, collection, batch)
+      batch.clear()
+    }
   }
 
   override def close(errorOrNull: Throwable): Unit = {
-    SolrSupport.sendBatchToSolr(solrServer, collection, batch)
+    if (batch.size() > batchSize) {
+      SolrSupport.sendBatchToSolr(solrServer, collection, batch)
+      batch.clear()
+    }
   }
 }
 
