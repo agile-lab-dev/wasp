@@ -175,6 +175,9 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
       res.status match {
         case OK =>
           Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+
+            logger.info(s"************************ manageConfigSet info: ${info}")
+
             if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
               logger.info("Config Set Deleted")
               createConfigSet(name, template)
@@ -212,6 +215,9 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
       res.status match {
         case OK =>
           Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+
+            logger.info(s"******************** createConfigSet info: ${info}")
+
             if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
               logger.info("Config Set Created")
             } else if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {

@@ -107,27 +107,10 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     if (indexOpt.isDefined) {
       val index = indexOpt.get
 
-      // create streaming options
-      val extraOptions = Map(
-        "collection" -> indexOpt.get.collection,
-        "zkhost" -> solrConfig.connections.mkString(","),
-        // Generate unique key if the 'id' field does not exist
-        "gen_uniq_key" -> "true"
-      )
-
-      // configure and start streaming
-//      stream.writeStream
-//        .format("solr")
-//        .options(extraOptions)
-//        .option("checkpointLocation", checkpointDir)
-//        .queryName(queryName)
-//        .start()
-
       val solrWriter = new SolrForeatchWriter(ss, solrConfig.connections.mkString(","), index.name, index.collection)
 
       stream
         .writeStream
-        .options(extraOptions)
         .option("checkpointLocation", checkpointDir)
         .foreach(solrWriter)
         .queryName(queryName)
