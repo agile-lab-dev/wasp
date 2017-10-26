@@ -123,7 +123,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 //        .queryName(queryName)
 //        .start()
 
-      val solrWriter = new SolrForeatchWriter(ss, index.name, index.collection)
+      val solrWriter = new SolrForeatchWriter(ss, solrConfig.connections.toString(), index.name, index.collection)
 
       stream
         .writeStream
@@ -142,15 +142,13 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 }
 
-class SolrForeatchWriter(val ss: SparkSession, val indexName: String, collection: String) extends ForeachWriter[Row]
-  with SolrConfiguration
-  with Logging {
+class SolrForeatchWriter(val ss: SparkSession, val connection: String, val indexName: String, val collection: String) extends ForeachWriter[Row] {
 
   var solrServer: CloudSolrServer = _
   var batch: util.ArrayList[SolrInputDocument] = _
 
   override def open(partitionId: Long, version: Long): Boolean = {
-    solrServer = SolrSupport.getSolrServer(solrConfig.connections.toString())
+    solrServer = SolrSupport.getSolrServer(connection)
     batch = new util.ArrayList[SolrInputDocument]
     true
   }
