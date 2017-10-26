@@ -92,6 +92,7 @@ object Dependencies {
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
+	val solrCore = "org.apache.solr" % "solr-core" % Versions.solr
 	val sparkAvro = "com.databricks" %% "spark-avro" % Versions.avroSpark
 //	val sparkSolr = "com.lucidworks.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 //	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
@@ -214,7 +215,8 @@ object Dependencies {
 
 	val plugin_solr_spark =
 		Seq(
-			solr/*,
+			solr,
+			solrCore/*,
 			sparkSolr*/
 		)
 }
