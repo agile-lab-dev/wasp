@@ -94,35 +94,13 @@ object Dependencies {
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
 	val solrCore = "org.apache.solr" % "solr-core" % Versions.solr
 	val sparkAvro = "com.databricks" %% "spark-avro" % Versions.avroSpark
-//	val sparkSolr = "com.lucidworks.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
-//	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
+	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
 	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
 	val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
-
-
-	<dependency>
-		<groupId>org.apache.solr</groupId>
-		<artifactId>solr-solrj</artifactId>
-		<version>4.10.3</version>
-		<type>jar</type>
-	</dependency>
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-core</artifactId>
-			<version>4.10.3</version>
-			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-test-framework</artifactId>
-			<version>4.10.3</version>
-			<type>jar</type>
-			<scope>test</scope>
-		</dependency>
 
 
 	// grouped dependencies, for convenience =============================================================================
@@ -216,8 +194,6 @@ object Dependencies {
 	val plugin_solr_spark =
 		Seq(
 			solr,
-			solrCore,
-			sparkMLlib/*,
-			sparkSolr*/
+			sparkSolr
 		)
 }
