@@ -2,10 +2,11 @@ package it.agilelab.bigdata.wasp.core.utils
 
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 import java.util
 
-import org.apache.avro.Schema
+import it.agilelab.bigdata.wasp.core.logging.Logging
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.Schema.Type
 import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.GenericData.Record
@@ -28,22 +29,34 @@ import scala.collection.JavaConverters._
   * @author Nicolò Bidotti
   */
 case class RowToAvro(schema: StructType,
-                     schemaAvroJson: String)  {
-  import RowToAvro._
-  
-  // check schemas are  compatible
-  checkSchemas(schema, schemaAvroJson)
-  
-  // these fields are lazy because otherwise we would not be able to serialize instances of the case class
-  private lazy val schemaAvro: Schema = new Schema.Parser().parse(schemaAvroJson)
-  private lazy val converter: (Any) => Any = createConverterToAvro(schema, schemaAvro)
+                     structName: String,
+                     recordNamespace: String,
+                     fieldsToWrite: Option[Set[String]] = None,
+                     schemaAvroJson: Option[String] = None) {
 
+  import RowToAvro._
+
+  // check schemas are  compatible
+  schemaAvroJson.foreach(s => checkSchemas(schema, s))
+
+  // these fields are lazy because otherwise we would not be able to serialize instances of the case class
+  private lazy val externalSchema: Option[Schema] = schemaAvroJson.map(s => new Schema.Parser().parse(s))
+  private lazy val converter: (Any) => Any = createConverterToAvro(schema, structName, recordNamespace, fieldsToWrite, externalSchema)
+  private lazy val actualSchema: Schema = getSchema()
+
+  def getSchema(): Schema = {
+    val builder = SchemaBuilder.record(structName).namespace(recordNamespace)
+    schemaAvroJson.map(s => new Schema.Parser().parse(s)).getOrElse(
+      SchemaConverters.convertStructToAvro(schema, builder, recordNamespace)
+    )
+  }
 
   def write(row: Row): Array[Byte] = {
     val output = new ByteArrayOutputStream()
     val value: GenericRecord = converter(row).asInstanceOf[GenericRecord]
-    var writer = new DataFileWriter(new GenericDatumWriter[GenericRecord]())
-    writer.create(schemaAvro, output)
+    val writer = new DataFileWriter(new GenericDatumWriter[GenericRecord]())
+    //TODO con questo metodo viene integrato lo schema avro in ogni row sarebbe meglio toglierlo
+    writer.create(actualSchema, output)
     writer.append(value)
     writer.flush()
     output.toByteArray
@@ -52,26 +65,30 @@ case class RowToAvro(schema: StructType,
 
 
   /**
-    * This function constructs a converter function for a given sparkSQL datatype. This is used in
-    * writing Avro records out to disk.
-    *
-    * Warning: while it does work with nested types, it will not work with nested types used as array elements!!
+    * This function constructs converter function for a given sparkSQL datatype. This is used in
+    * writing Avro records out to disk
     */
-  private def createConverterToAvro(dataType: DataType,
-                                    schema: Schema,
-                                    fieldName: String = ""): (Any) => Any = {
+  private def createConverterToAvro(
+                                     dataType: DataType,
+                                     structName: String,
+                                     recordNamespace: String,
+                                     fieldsToWrite: Option[Set[String]],
+                                     externalSchema: Option[Schema]): (Any) => Any = {
     dataType match {
-      case BinaryType => (item: Any) => item match {
-        case null => null
-        case bytes: Array[Byte] => ByteBuffer.wrap(bytes)
-      }
+      case BinaryType => (item: Any) =>
+        item match {
+          case null => null
+          case bytes: Array[Byte] => ByteBuffer.wrap(bytes)
+        }
       case ByteType | ShortType | IntegerType | LongType |
            FloatType | DoubleType | StringType | BooleanType => identity
       case _: DecimalType => (item: Any) => if (item == null) null else item.toString
       case TimestampType => (item: Any) =>
         if (item == null) null else item.asInstanceOf[Timestamp].getTime
+      case DateType => (item: Any) =>
+        if (item == null) null else item.asInstanceOf[Date].getTime
       case ArrayType(elementType, _) =>
-        val elementConverter = createConverterToAvro(elementType, schema)
+        val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, None)
         (item: Any) => {
           if (item == null) {
             null
@@ -88,7 +105,7 @@ case class RowToAvro(schema: StructType,
           }
         }
       case MapType(StringType, valueType, _) =>
-        val valueConverter = createConverterToAvro(valueType, schema)
+        val valueConverter = createConverterToAvro(valueType, structName, recordNamespace, None, None)
         (item: Any) => {
           if (item == null) {
             null
@@ -101,75 +118,49 @@ case class RowToAvro(schema: StructType,
           }
         }
       case structType: StructType =>
-        if (fieldName == "") { // top-level
-          val fieldConverters = structType.fields.map(field =>
-            createConverterToAvro(field.dataType, schema, field.name))
-          (item: Any) => {
-            if (item == null) {
-              null
-            } else {
-              val record = new Record(schema)
-              val convertersIterator = fieldConverters.iterator
-              val fieldNamesIterator = dataType.asInstanceOf[StructType].fieldNames.iterator
-              val rowIterator = item.asInstanceOf[Row].toSeq.iterator
-      
-              while (convertersIterator.hasNext) {
-                val converter = convertersIterator.next()
-                val fieldName = fieldNamesIterator.next()
-                if (schema.getField(fieldName) != null) {
-                  record.put(fieldName, converter(rowIterator.next()))
-          
-                }
-              }
-              record
-            }
-          }
-        } else { // nested struct
-          // find the nested schema corresponding to the field name, handling union types
-          val unknownNestedSchema = schema.getField(fieldName).schema()
-          val nestedSchema = if (unknownNestedSchema.getType == Schema.Type.UNION) {
-            unknownNestedSchema.getTypes.asScala.filter(_.getType != Schema.Type.NULL).head
+        val builder = SchemaBuilder.record(structName).namespace(recordNamespace)
+        val schema: Schema = externalSchema.getOrElse(
+          SchemaConverters.convertStructToAvro(structType, builder, recordNamespace)
+        )
+
+        val fieldConverters = structType.fields.filter(f => {
+          if (fieldsToWrite.isDefined) {
+            fieldsToWrite.get.contains(f.name)
           } else {
-            unknownNestedSchema
+            true
           }
-          // build field converters for nested fields
-          val fieldConverters = structType.fields.map(field =>
-            createConverterToAvro(field.dataType, nestedSchema, field.name))
-          // return appropriate converter using nested schema
-          (item: Any) => {
-            if (item == null) {
-              null
-            } else {
-              val record = new Record(nestedSchema)
-              val convertersIterator = fieldConverters.iterator
-              val fieldNamesIterator = dataType.asInstanceOf[StructType].fieldNames.iterator
-              val rowIterator = item.asInstanceOf[Row].toSeq.iterator
-      
-              while (convertersIterator.hasNext) {
-                val converter = convertersIterator.next()
-                val fieldName = fieldNamesIterator.next()
-                if (nestedSchema.getField(fieldName) != null) {
-                  record.put(fieldName, converter(rowIterator.next()))
-          
-                }
-              }
-              record
+        }).map(field =>
+          createConverterToAvro(field.dataType, field.name, recordNamespace, None, None))
+        (item: Any) => {
+          if (item == null) {
+            null
+          } else {
+            val record = new Record(schema)
+            val convertersIterator = fieldConverters.iterator
+            val fieldNamesIterator = dataType.asInstanceOf[StructType].fieldNames.iterator
+            val rowIterator = item.asInstanceOf[Row].toSeq.iterator
+
+            while (convertersIterator.hasNext) {
+              val converter = convertersIterator.next()
+              record.put(fieldNamesIterator.next(), converter(rowIterator.next()))
             }
+            record
           }
         }
     }
   }
 }
+
 object RowToAvro {
   private val booleanType = "boolean"
-  private val byteType    = "byte"
-  private val intType     = "int"
-  private val longType    = "long"
-  private val floatType   = "float"
-  private val doubleType  = "double"
-  private val stringType  = "string"
-	
-	/**
+  private val byteType = "byte"
+  private val intType = "int"
+  private val longType = "long"
+  private val floatType = "float"
+  private val doubleType = "double"
+  private val stringType = "string"
+
+  /**
     * Ensures schemas are compatible, that is:
     *   - any field appearing int the Avro schema exists in the Spark schema
     *   - any such field has the same type in both schemas
@@ -178,11 +169,11 @@ object RowToAvro {
                    schemaAvroJson: String): Unit = {
     // parse avro schema from json
     val schemaAvro: Schema = new Schema.Parser().parse(schemaAvroJson)
-    
+
     // flatten schemas, convert spark field list into a map
     val sparkFields: Map[String, String] = flattenSparkSchema(schemaSpark).toMap // the key is the field name, the value is the field type
     val avroFields: List[(String, String)] = flattenAvroSchema(schemaAvro)
-  
+
     // iterate over the Avro field list. If any is missing from the Spark schema, or has a different type, throw an exception.
     avroFields foreach {
       case (fieldName, fieldAvroType) => {
@@ -198,8 +189,8 @@ object RowToAvro {
       }
     }
   }
-	
-	/**
+
+  /**
     * Flattens the provided Spark schema, returning a list of tuples.
     * The first element of each tuple is the field name, the second one is the field type.
     * Nested fields are represented using dot notation.
@@ -219,17 +210,17 @@ object RowToAvro {
       }
     }
   }
-  
+
   def sparkTypeToString(dataType: DataType): String = dataType match {
-    case _ : BooleanType => booleanType
-    case _ : ByteType    => byteType
-    case _ : IntegerType => intType
-    case _ : LongType    => longType
-    case _ : FloatType   => floatType
-    case _ : DoubleType  => doubleType
-    case _ : StringType  => stringType
+    case _: BooleanType => booleanType
+    case _: ByteType => byteType
+    case _: IntegerType => intType
+    case _: LongType => longType
+    case _: FloatType => floatType
+    case _: DoubleType => doubleType
+    case _: StringType => stringType
   }
-  
+
   /**
     * Flattens the provided Avro schema, returning a list of tuples.
     * The first element of each tuple is the field name, the second one is the field type.
@@ -265,14 +256,14 @@ object RowToAvro {
       }
     }
   }
-  
+
   def avroTypeToString(tpe: Type): String = tpe match {
     case Type.BOOLEAN => booleanType
-    case Type.BYTES   => byteType
-    case Type.INT     => intType
-    case Type.LONG    => longType
-    case Type.FLOAT   => floatType
-    case Type.DOUBLE  => doubleType
-    case Type.STRING  => stringType
+    case Type.BYTES => byteType
+    case Type.INT => intType
+    case Type.LONG => longType
+    case Type.FLOAT => floatType
+    case Type.DOUBLE => doubleType
+    case Type.STRING => stringType
   }
 }

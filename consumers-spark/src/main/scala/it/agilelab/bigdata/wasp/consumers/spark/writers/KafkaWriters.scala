@@ -4,8 +4,9 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.TinyKafkaConfig
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil}
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, RowToAvro}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -59,7 +60,7 @@ class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingConte
 }
 
 class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: String, ss: SparkSession)
-  extends SparkStructuredStreamingWriter {
+  extends SparkStructuredStreamingWriter with Logging {
   override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
     import ss.implicits._
 
@@ -72,7 +73,6 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
     topicOpt.foreach(topic => {
 
       val topicDataTypeB = ss.sparkContext.broadcast(topic.topicDataType)
-      val schemaB = ss.sparkContext.broadcast(topic.getJsonSchema)
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
@@ -87,24 +87,25 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
 //        }
 
         // partition key
-        val pkf = topic.partitionKeyField.getOrElse("null")
-
-        // prepare the udf
-        import org.apache.spark.sql.functions._
-        def jsonToAvroUDF = udf(AvroToJsonUtil.jsonToAvro(_ : String, schemaB.value))
-
-        // json conversion
-        val dsw = stream
-          .selectExpr( pkf, "to_json(struct(*)) AS value")
+        val pkf = topic.partitionKeyField
+        val pkfIndex: Option[Int] = pkf.map(k => stream.schema.fieldIndex(k))
 
         val dswParsed = topicDataTypeB.value match {
           case "avro" => {
-            dsw
-              .withColumn("value_parsed", jsonToAvroUDF(col("value")))
-              .drop("value")
-              .withColumnRenamed("value_parsed", "value")
+            val converter: RowToAvro = RowToAvro(stream.schema, topic.name, "wasp")
+            logger.info(s"Schema DF spark, topic name ${topic.name}: " + stream.schema.treeString)
+            logger.info(s"Schema Avro, topic name ${topic.name}: " + converter.getSchema().toString(true))
+
+            stream.map(r => {
+              val key: String = pkfIndex.map(r.getString).orNull
+              (key, converter.write(r))
+            }).toDF("key", "value")
           }
-          case _ => dsw
+          case _ => {
+            // json conversion
+            if (pkf.isDefined)  stream.selectExpr(pkf.get, "to_json(struct(*)) AS value")
+            else stream.selectExpr("to_json(struct(*)) AS value")
+          }
         }
 
         val dswParsedReady = dswParsed

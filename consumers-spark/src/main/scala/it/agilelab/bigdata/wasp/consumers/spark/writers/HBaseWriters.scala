@@ -178,13 +178,13 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
 
     //Validation
     avroSchemas.map(_.mapValues(v => {
-      new RowToAvro(schema, v)
+      new RowToAvro(schema, "", "", schemaAvroJson = Some(v))
     })).getOrElse(Map[String, RowToAvro]())
 
     stream.foreachRDD {
       rdd =>
         val rowAvroConverters: Map[String, RowToAvro] = avroSchemas.map(_.mapValues(v => {
-          new RowToAvro(schema, v)
+          new RowToAvro(schema, "", "", schemaAvroJson = Some(v))
         })).getOrElse(Map[String, RowToAvro]()).map(identity).toMap
 
         val hbaseTable = TableName.valueOf(s"${hbaseDataConfig.table.namespace}:${hbaseDataConfig.table.name}")
@@ -222,7 +222,7 @@ class HBaseWriter(hbaseModel: KeyValueModel,
     val schema: StructType = DataType.fromJson(hbaseModel.dataFrameSchema).asInstanceOf[StructType]
 
     val rowAvroConverters: Map[String, RowToAvro] = hbaseModel.avroSchemas.map(_.mapValues(v => {
-      new RowToAvro(schema, v)
+      RowToAvro(schema, "", "", schemaAvroJson = Some(v))
     })).getOrElse(Map[String, RowToAvro]())
 
 
