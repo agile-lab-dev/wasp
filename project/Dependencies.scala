@@ -103,6 +103,27 @@ object Dependencies {
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
 
 
+	<dependency>
+		<groupId>org.apache.solr</groupId>
+		<artifactId>solr-solrj</artifactId>
+		<version>4.10.3</version>
+		<type>jar</type>
+	</dependency>
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-core</artifactId>
+			<version>4.10.3</version>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-test-framework</artifactId>
+			<version>4.10.3</version>
+			<type>jar</type>
+			<scope>test</scope>
+		</dependency>
+
+
 	// grouped dependencies, for convenience =============================================================================
 	
 	val akka = Seq(
