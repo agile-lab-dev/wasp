@@ -48,7 +48,6 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
 	.settings(Settings.commonSettings: _*)
 	.dependsOn(consumers_spark)
 	.settings(libraryDependencies ++= Dependencies.plugin_solr_spark)
-	.enablePlugins(JavaAppPackaging)
 
 lazy val wasp = Project("wasp", file("."))
 	.settings(Settings.commonSettings:_*)
