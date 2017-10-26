@@ -121,14 +121,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    solrServer = new CloudSolrServer(
-      solrConfig.connections
-        .map(connection =>
-          s"${connection.host}:${connection.port}${
-            connection.metadata.flatMap(_.get("zookeeperRootNode"))
-              .getOrElse("")
-          }")
-        .mkString(","))
+    solrServer = new CloudSolrServer(solrConfig.connections.toString().mkString(","))
 
     try {
       solrServer.connect()

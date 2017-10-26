@@ -123,7 +123,9 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 //        .queryName(queryName)
 //        .start()
 
-      val solrWriter = new SolrForeatchWriter(ss, solrConfig.connections.toString(), index.name, index.collection)
+      logger.info(solrConfig.connections.toString().mkString(","))
+
+      val solrWriter = new SolrForeatchWriter(ss, solrConfig.connections.toString().mkString(","), index.name, index.collection)
 
       stream
         .writeStream
