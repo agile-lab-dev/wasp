@@ -10,10 +10,13 @@ import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
+import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
+
 
 /**
   * Created by matbovet on 02/09/2016.
@@ -34,13 +37,10 @@ object SolrSparkWriter {
 
 }
 
-class SolrSparkStreamingWriter(indexBL: IndexBL,
-                               val ssc: StreamingContext,
-                               val id: String,
+class SolrSparkStreamingWriter(indexBL: IndexBL, val ssc: StreamingContext, val id: String,
                                solrAdminActor: ActorRef)
-    extends SparkStreamingWriter
-    with SolrConfiguration
-    with Logging {
+  extends SparkStreamingWriter
+    with SolrConfiguration with Logging {
 
   override def write(stream: DStream[String]): Unit = {
 
@@ -50,46 +50,42 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
       val index = indexOpt.get
       val indexName = ConfigManager.buildTimedName(index.name)
 
-      logger.info(
-        s"Check or create the index model: '${index.toString} with this index name: $indexName")
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
       if (??[Boolean](
-            solrAdminActor,
-            CheckOrCreateCollection(
-              indexName,
-              index.schema.get.get("properties").asArray().toString,
-              index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1))
-          )) {
+        solrAdminActor,
+        CheckOrCreateCollection(
+          indexName,
+          index.schema.get.get("properties").asArray().toString,
+          index.numShards.getOrElse(1),
+          index.replicationFactor.getOrElse(1)))) {
 
         val docs: DStream[SolrInputDocument] = stream.transform { rdd =>
-          val df: DataFrame = sqlContext.read.json(rdd)
-
-          df.show()
+          val df: Dataset[Row] = sqlContext.read.json(rdd)
 
           df.rdd.map { r =>
             SolrSparkWriter.createSolrDocument(r)
           }
         }
 
-        SolrSupport.indexDStreamOfDocs(solrConfig.connections.mkString(","),
-                                       indexName,
-                                       100,
-                                       docs)
+        SolrSupport.indexDStreamOfDocs(
+          solrConfig.connections.mkString(","),
+          indexName,
+          100,
+          new JavaDStream[SolrInputDocument](docs))
 
       } else {
-        logger.error(
-          s"Error creating solr index: $index with this index name $indexName")
+        logger.error(s"Error creating solr index: $index with this index name $indexName")
         throw new Exception("Error creating solr index " + index.name)
         //TODO handle errors
       }
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 
 }
+
 
 class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
                                          val ss: SparkSession,
@@ -166,13 +162,10 @@ class SolrForeatchWriter(val ss: SparkSession, val indexModel: IndexModel) exten
   override def close(errorOrNull: Throwable): Unit = {}
 }
 
-class SolrSparkWriter(indexBL: IndexBL,
-                      sc: SparkContext,
-                      id: String,
+class SolrSparkWriter(indexBL: IndexBL, sc: SparkContext, id: String,
                       solrAdminActor: ActorRef)
-    extends SparkWriter
-    with SolrConfiguration
-    with Logging {
+  extends SparkWriter
+    with SolrConfiguration with Logging {
 
   override def write(data: DataFrame): Unit = {
 
@@ -181,26 +174,25 @@ class SolrSparkWriter(indexBL: IndexBL,
       val index = indexOpt.get
       val indexName = ConfigManager.buildTimedName(index.name)
 
-      logger.info(
-        s"Check or create the index model: '${index.toString} with this index name: $indexName")
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
+
 
       if (??[Boolean](
-            solrAdminActor,
-            CheckOrCreateCollection(
-              indexName,
-              index.schema.get.get("properties").asArray().toString,
-              index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1))
-          )) {
+        solrAdminActor,
+        CheckOrCreateCollection(
+          indexName,
+          index.schema.get.get("properties").asArray().toString,
+          index.numShards.getOrElse(1),
+          index.replicationFactor.getOrElse(1)))) {
 
         val docs = data.rdd.map { r =>
           SolrSparkWriter.createSolrDocument(r)
         }
 
         SolrSupport.indexDocs(solrConfig.connections.mkString(","),
-                              indexName,
-                              100,
-                              docs)
+          indexName,
+          100,
+          new JavaRDD[SolrInputDocument](docs))
 
       } else {
         throw new Exception("Error creating solr index " + index.name)
@@ -208,10 +200,10 @@ class SolrSparkWriter(indexBL: IndexBL,
       }
 
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
 
     }
 
   }
+
 }
