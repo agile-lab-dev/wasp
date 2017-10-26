@@ -19,7 +19,7 @@ import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
+import spray.json.{DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -177,6 +177,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
       HttpRequest(uri = uri)
         .withHeaders(RawHeader("Content-Type", "application/json"))
         .withHeaders(RawHeader("Accept", "application/json"))
+        .withMethod(HttpMethods.GET)
     )
     responseFuture foreach { res =>
       res.status match {
@@ -212,6 +213,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
       HttpRequest(uri = uri)
         .withHeaders(RawHeader("Content-Type", "application/json"))
         .withHeaders(RawHeader("Accept", "application/json"))
+        .withMethod(HttpMethods.GET)
     )
 
     responseFuture.foreach { res =>
@@ -267,17 +269,17 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
 
     logger.info(s"Add mapping $message, uri: '$uri'")
 
-    val jsonEntity = JsObject(
-      "collection" -> JsString(message.collection),
-      "schema" -> JsString(message.schema)
-    ).toString()
+//    val jsonEntity = JsObject(
+//      "collection" -> JsString(message.collection),
+//      "schema" -> JsString(message.schema)
+//    ).toString()
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(
       HttpRequest(uri = uri)
         .withHeaders(RawHeader("Content-Type", "application/json"))
         .withHeaders(RawHeader("Accept", "application/json"))
         .withMethod(HttpMethods.POST)
-        .withEntity(jsonEntity)
+        .withEntity(message.schema)
     )
 
 
