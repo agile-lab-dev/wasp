@@ -93,7 +93,8 @@ object Dependencies {
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
 	val sparkAvro = "com.databricks" %% "spark-avro" % Versions.avroSpark
-	val sparkSolr = "com.lucidworks.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
+//	val sparkSolr = "com.lucidworks.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
+	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
 	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions

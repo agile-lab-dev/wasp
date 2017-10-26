@@ -8,12 +8,13 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.solr._
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
 import it.agilelab.bigdata.wasp.core.utils.JsonOps._
 import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.client.solrj.impl.CloudSolrClient
+import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
@@ -22,6 +23,7 @@ import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
+
 
 object SolrAdminActor {
   val name = "SolrAdminActor"
@@ -82,14 +84,10 @@ object SolrAdminActor {
 
 }
 
-class SolrAdminActor
-    extends Actor
-    with SprayJsonSupport
-    with DefaultJsonProtocol
-    with Logging {
+class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtocol with Logging {
 
   var solrConfig: SolrConfigModel = _
-  var cloudSolrClient: CloudSolrClient = _
+  var solrServer: CloudSolrServer = _
   //TODO prendere il timeout dalla configurazione
   //implicit val timeout = Timeout(ConfigManager.config)
   implicit val timeout = WaspSystem.generalTimeout
@@ -97,38 +95,44 @@ class SolrAdminActor
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
 
+
   def receive: Actor.Receive = {
-    case message: Search           => call(message, search)
-    case message: AddCollection    => call(message, addCollection)
-    case message: AddMapping       => call(message, addMapping)
-    case message: AddAlias         => call(message, addAlias)
+    case message: Search => call(message, search)
+    case message: AddCollection => call(message, addCollection)
+    case message: AddMapping => call(message, addMapping)
+    case message: AddAlias => call(message, addAlias)
     case message: RemoveCollection => call(message, removeCollection)
-    case message: RemoveAlias      => call(message, removeAlias)
-    case message: Initialization   => call(message, initialization)
+    case message: RemoveAlias => call(message, removeAlias)
+    case message: Initialization => call(message, initialization)
     case message: CheckOrCreateCollection =>
       call(message, checkOrCreateCollection)
     case message: CheckCollection => call(message, checkCollection)
-    case message: Any             => logger.error("unknown message: " + message)
+    case message: Any => logger.error("unknown message: " + message)
   }
 
   def initialization(message: Initialization): Boolean = {
 
-    if (cloudSolrClient != null) {
+    if (solrServer != null) {
       logger.warn(
         s"Solr - Client re-initialization, the before client will be close")
-      cloudSolrClient.close()
+      solrServer.shutdown()
     }
 
     solrConfig = message.solrConfigModel
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    cloudSolrClient = new CloudSolrClient.Builder()
-      .withZkHost(solrConfig.connections.mkString(","))
-      .build()
+    solrServer = new CloudSolrServer(
+      solrConfig.connections
+        .map(connection =>
+          s"${connection.host}:${connection.port}${
+            connection.metadata.flatMap(_.get("zookeeperRootNode"))
+              .getOrElse("")
+          }")
+        .mkString(","))
 
     try {
-      cloudSolrClient.connect()
+      solrServer.connect()
     } catch {
       case e: Exception => {
         logger.info(s"Solr NOT connected!")
@@ -140,20 +144,21 @@ class SolrAdminActor
     logger.info(s"Try to create a WASP ConfigSet.")
 
     try {
-      manageConfigSet(SolrAdminActor.configSet, SolrAdminActor.template)
+      manageConfigSet(
+        SolrAdminActor.configSet,
+        SolrAdminActor.template)
     } catch {
-      case _: Throwable =>
-        logger.info(s"manageConfigSet NOT Created. Go forward!")
+      case _: Throwable => logger.info(s"manageConfigSet NOT Created. Go forward!")
     }
 
     true
   }
 
   override def postStop() = {
-    if (cloudSolrClient != null)
-      cloudSolrClient.close()
+    if (solrServer != null)
+      solrServer.shutdown()
 
-    cloudSolrClient = null
+    solrServer = null
     logger.info("Solr - client stopped")
   }
 
@@ -163,10 +168,10 @@ class SolrAdminActor
     sender ! result
   }
 
-  private def manageConfigSet(name: String, template: String) = {
+  private def manageConfigSet(name: String,
+                              template: String) = {
 
-    val uri =
-      s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=DELETE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
+    val uri = s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=DELETE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(
       HttpRequest(uri = uri)
@@ -180,8 +185,7 @@ class SolrAdminActor
             if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
               logger.info("Config Set Deleted")
               createConfigSet(name, template)
-            } else if ((info \ "responseHeader" \ "status")
-                         .===(JsNumber(400))) {
+            } else if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
               logger.info("Config Set Doesn't Exists")
               createConfigSet(name, template)
               logger.info(s"The information for my ip is: $info")
@@ -197,12 +201,12 @@ class SolrAdminActor
     }
   }
 
-  private def createConfigSet(name: String, template: String): Unit = {
-    val uri =
-      s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=CREATE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
+  private def createConfigSet(name: String,
+                              template: String): Unit = {
+    val uri = s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=CREATE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
 
-    logger.info(
-      s"Create config set with name $name, template $template, uri: '$uri'")
+    logger.info(s"Create config set with name $name, template $template, uri: '$uri'")
+
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(
       HttpRequest(uri = uri)
@@ -216,8 +220,7 @@ class SolrAdminActor
           Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
             if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
               logger.info("Config Set Created")
-            } else if ((info \ "responseHeader" \ "status")
-                         .===(JsNumber(400))) {
+            } else if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
               logger.info("Config Set Doesn't Exists")
             } else {
               logger.error("Solr - Config Set NOT Created")
@@ -234,32 +237,33 @@ class SolrAdminActor
 
   private def addCollection(message: AddCollection): Boolean = {
 
-    logger.info(
-      s"AddCollection with name ${message.collection}, numShards ${message.numShards} and replica factor ${message.replicationFactor}.")
+    logger.info(s"AddCollection with name ${message.collection}, numShards ${message.numShards} and replica factor ${message.replicationFactor}.")
 
-    val numShards =
-      if (message.numShards > 0) message.numShards else SolrAdminActor.numShards
-    val replicationFactor =
-      if (message.replicationFactor > 0) message.replicationFactor
-      else SolrAdminActor.replicationFactor
+    val numShards = if (message.numShards > 0) message.numShards else SolrAdminActor.numShards
+    val replicationFactor = if (message.replicationFactor > 0) message.replicationFactor else SolrAdminActor.replicationFactor
 
-    val createRequest = CollectionAdminRequest
-      .createCollection(message.collection, SolrAdminActor.configSet, numShards, replicationFactor)
+    val createRequest: CollectionAdminRequest.Create =
+      new CollectionAdminRequest.Create()
+
+    createRequest.setConfigName(SolrAdminActor.configSet)
+    createRequest.setCollectionName(message.collection)
+    createRequest.setNumShards(numShards)
+    createRequest.setReplicationFactor(replicationFactor)
 
     val createResponse: CollectionAdminResponse =
-      createRequest.process(cloudSolrClient)
+      createRequest.process(solrServer)
 
     val ret = createResponse.isSuccess()
     if (!ret)
-      logger.info(s"Collection NOT successfully created. ${message.collection}")
+      logger.info(
+        s"Collection NOT successfully created. ${message.collection}")
 
     ret
   }
 
   private def addMapping(message: AddMapping): Boolean = {
 
-    val uri =
-      s"${solrConfig.apiEndPoint.get.toString()}/${message.collection}/schema/fields"
+    val uri = s"${solrConfig.apiEndPoint.get.toString()}/${message.collection}/schema/fields"
 
     logger.info(s"Add mapping $message, uri: '$uri'")
 
@@ -276,29 +280,30 @@ class SolrAdminActor
         .withEntity(jsonEntity)
     )
 
-    Await.result(
-      responseFuture.map { res =>
-        res.status match {
-          case OK =>
-            logger.info(
-              s"Solr - Add Mapping response status ${res.status.value}, $message")
-            true
-          case _ =>
-            logger.error(s"Solr - Schema NOT created, $message")
-            false
-        }
-      },
-      timeout.duration
-    )
+
+    Await.result(responseFuture.map { res =>
+      res.status match {
+        case OK =>
+          logger.info(s"Solr - Add Mapping response status ${res.status.value}, $message")
+          true
+        case _ =>
+          logger.error(s"Solr - Schema NOT created, $message")
+          false
+      }
+    }, timeout.duration)
   }
 
   private def addAlias(message: AddAlias): Boolean = {
     logger.info(s"Add alias $message")
 
-    val createRequest = CollectionAdminRequest.createAlias(message.alias, message.collection)
+    val createRequest: CollectionAdminRequest.CreateAlias =
+      new CollectionAdminRequest.CreateAlias()
+
+    createRequest.setCollectionName(message.collection)
+    createRequest.setAliasedCollections(message.alias)
 
     val createResponse: CollectionAdminResponse =
-      createRequest.process(cloudSolrClient)
+      createRequest.process(solrServer)
 
     val ret = createResponse.isSuccess
     if (!ret) {
@@ -312,14 +317,18 @@ class SolrAdminActor
   private def removeCollection(message: RemoveCollection): Boolean = {
     logger.info(s"Remove collection $message")
 
-    val removeRequest = CollectionAdminRequest.deleteCollection(message.collection)
+    val removeRequest: CollectionAdminRequest.Delete =
+      new CollectionAdminRequest.Delete()
+
+    removeRequest.setCollectionName(message.collection)
 
     val removeResponse: CollectionAdminResponse =
-      removeRequest.process(cloudSolrClient)
+      removeRequest.process(solrServer)
 
     val ret = removeResponse.isSuccess
     if (!ret) {
-      logger.info(s"Collection NOT successfully removed. ${message.collection}")
+      logger.info(
+        s"Collection NOT successfully removed. ${message.collection}")
     }
 
     ret
@@ -328,30 +337,31 @@ class SolrAdminActor
   private def removeAlias(message: RemoveAlias): Boolean = {
     logger.info(s"Remove alias $message")
 
-    val removeRequest = CollectionAdminRequest.deleteAlias(message.collection)
+    val removeRequest: CollectionAdminRequest.DeleteAlias =
+      new CollectionAdminRequest.DeleteAlias()
+
+    removeRequest.setCollectionName(message.collection)
 
     val removeResponse: CollectionAdminResponse =
-      removeRequest.process(cloudSolrClient)
+      removeRequest.process(solrServer)
 
     val ret = removeResponse.isSuccess
     if (!ret) {
-      logger.info(s"Collection NOT successfully removed. ${message.collection}")
+      logger.info(
+        s"Collection NOT successfully removed. ${message.collection}")
     }
 
     ret
   }
 
   private def checkOrCreateCollection(
-      message: CheckOrCreateCollection): Boolean = {
+                                       message: CheckOrCreateCollection): Boolean = {
     logger.info(s"Check or create collection: $message")
 
     var check = checkCollection(CheckCollection(message.collection))
 
     if (!check) {
-      check = addCollection(
-        AddCollection(message.collection,
-                      message.numShards,
-                      message.replicationFactor)) &&
+      check = addCollection(AddCollection(message.collection, message.numShards, message.replicationFactor)) &&
         addMapping(AddMapping(message.collection, message.schema))
     }
 
@@ -361,7 +371,8 @@ class SolrAdminActor
   private def checkCollection(message: CheckCollection): Boolean = {
     logger.info(s"Check collection: $message")
 
-    val zkStateReader: ZkStateReader = cloudSolrClient.getZkStateReader
+    val zkStateReader: ZkStateReader = solrServer.getZkStateReader
+    zkStateReader.updateClusterState(true)
     val clusterState: ClusterState = zkStateReader.getClusterState
 
     val res = clusterState.getCollectionOrNull(message.collection) != null
@@ -375,24 +386,24 @@ class SolrAdminActor
   private def search(message: Search): SolrDocumentList = {
     logger.debug(s"Solr search: $message")
 
-    cloudSolrClient.setDefaultCollection(message.collection)
+    solrServer.setDefaultCollection(message.collection)
 
     val query: SolrQuery = new SolrQuery()
     query.setStart(message.from)
     query.setRows(message.size)
 
     message.query match {
-      case None    => query
+      case None => query
       case Some(q) => q.map(v => query.setQuery(s"${v._1}:${v._2}"))
     }
     message.sort match {
-      case None    => query
+      case None => query
       case Some(q) => q.map(v => query.setSort(v._1, v._2))
     }
 
     logger.debug(s"Performing this query: $query")
 
-    val response: QueryResponse = cloudSolrClient.query(query)
+    val response: QueryResponse = solrServer.query(query)
 
     val list: SolrDocumentList = response.getResults
 
@@ -402,3 +413,4 @@ class SolrAdminActor
   }
 
 }
+
