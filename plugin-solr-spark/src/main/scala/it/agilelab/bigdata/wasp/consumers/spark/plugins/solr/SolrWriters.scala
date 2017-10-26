@@ -146,7 +146,7 @@ class SolrForeatchWriter(val ss: SparkSession, val connection: String, val index
 
   var solrServer: CloudSolrServer = _
   var batch: util.ArrayList[SolrInputDocument] = _
-  var batchSize = 10
+  val batchSize = 100
 
   override def open(partitionId: Long, version: Long): Boolean = {
     solrServer = SolrSupport.getSolrServer(connection)
