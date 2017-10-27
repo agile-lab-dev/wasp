@@ -21,7 +21,7 @@ import org.apache.solr.client.solrj.response.{
 }
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsNumber, JsValue}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -283,50 +283,44 @@ class SolrAdminActor
 
     val uri =
       s"${solrConfig.apiEndPoint.get.toString()}/${collectionNameWShardsAndReplica(message.collection, message.numShards, message.replicationFactor)}/schema/fields"
-    logger.info(s"******************************************")
-    logger.info(
-      s"****************************************** Add mapping $message, uri: '$uri'")
-    logger.info(s"******************************************")
 
-    //    val jsonEntity = JsObject(
-//      "collection" -> JsString(message.collection),
-//      "schema" -> JsString(message.schema)
-//    ).toString()
-    logger.info(s"********************* Create request *********************")
+    logger.info(s"$message, uri: '$uri'")
+
+        val jsonEntity = JsObject(
+      "schema" -> JsString(message.schema)
+    ).toString()
+
+    logger.error(jsonEntity)
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(
       HttpRequest(uri = uri)
         .withHeaders(RawHeader("Content-Type", "application/json"))
         .withHeaders(RawHeader("Accept", "application/json"))
         .withMethod(HttpMethods.POST)
-        .withEntity(ContentTypes.`application/json`, message.schema)
+        .withEntity(JsString(message.schema).toString())
     )
 
-    logger.info(s"********************* foreatch  *********************")
 
-    responseFuture.foreach { res =>
-
-      logger.info(s"********************* responseFuture.foreach ${res} *********************")
-
-      res.status match {
-        case OK => {
-          logger.info(s"********************* OK  *********************")
-          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-            logger.info(s"Solr - Add Mapping response info ${info}, $message")
+    Await.result(
+      responseFuture.map { res =>
+        logger.info(
+          s"********************* responseFuture.foreach ${res} *********************")
+        res.status match {
+          case OK => {
+            logger.info(s"********************* OK  *********************")
+            logger.info(
+              s"Solr - Add Mapping response status ${res.status}, $message")
+            true
           }
-          true
-        }
-        case _ => {
-          logger.info(s"********************* case _ *********************")
-          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-            logger.error(s"Solr - Schema NOT created, $message info ${info}")
+          case _ => {
+            logger.error(
+              s"Solr - Schema NOT created, $message status ${res.status}")
+            false
           }
-          false
         }
-      }
-    }
-
-    false
+      },
+      timeout.duration
+    )
   }
 
   private def addAlias(message: AddAlias): Boolean = {
