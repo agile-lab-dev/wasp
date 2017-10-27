@@ -140,7 +140,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
           .foreach(solrWriter)
           .queryName(queryName)
           .start()
-        
+
       } else {
         logger.error(
           s"Error creating solr index: $index with this index name ${index.name}")
