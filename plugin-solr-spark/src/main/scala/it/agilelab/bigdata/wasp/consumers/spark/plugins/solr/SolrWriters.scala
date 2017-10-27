@@ -147,7 +147,7 @@ class SolrForeatchWriter(val ss: SparkSession, val connection: String, val index
   }
 
   override def close(errorOrNull: Throwable): Unit = {
-    if (batch.size() > batchSize) {
+    if (batch.size() > 0) {
       SolrSupport.sendBatchToSolr(solrServer, collection, batch)
     }
   }
