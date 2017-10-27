@@ -57,7 +57,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   override def getSparkReader(id: String, name: String): SparkReader = {
     val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {
-      new SolrReader(indexOpt.get)
+      new SolrSparkReader(indexOpt.get)
     } else {
       throw new Exception("Solr Option not found")
     }
