@@ -95,10 +95,10 @@ case class RowToAvro(schema: StructType,
           } else {
             val sourceArray = item.asInstanceOf[Seq[Any]]
             val sourceArraySize = sourceArray.size
-            val targetArray = new Array[Any](sourceArraySize)
+            val targetArray = new util.ArrayList[Any](sourceArraySize)
             var idx = 0
             while (idx < sourceArraySize) {
-              targetArray(idx) = elementConverter(sourceArray(idx))
+              targetArray.add(idx, elementConverter(sourceArray(idx)))
               idx += 1
             }
             targetArray
