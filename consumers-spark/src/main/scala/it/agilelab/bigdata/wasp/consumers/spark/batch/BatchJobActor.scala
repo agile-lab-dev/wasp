@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
@@ -24,7 +24,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                     val classLoader: Option[ClassLoader] = None,
                     sparkWriterFactory: SparkWriterFactory,
                     sc: SparkContext,
-                    plugins: Map[String, WaspConsumerSparkPlugin]) extends Actor with Logging {
+                    plugins: Map[String, WaspConsumersSparkPlugin]) extends Actor with Logging {
   var lastBatchMasterRef : ActorRef = _
 
   def receive: Actor.Receive = {
@@ -150,7 +150,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   /**
    * Index readers initialization
    */
-  private def indexReaders(readers: List[ReaderModel]): List[StaticReader] = {
+  private def indexReaders(readers: List[ReaderModel]): List[SparkReader] = {
     val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
     readers.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
@@ -170,7 +170,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   /**
     * Raw readers initialization
     */
-  private def rawReaders(readers: List[ReaderModel]): List[StaticReader] = {
+  private def rawReaders(readers: List[ReaderModel]): List[SparkReader] = {
     readers.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
@@ -191,7 +191,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     *
     * @return
     */
-  private def staticReaders(readers: List[ReaderModel]): List[StaticReader] = indexReaders(readers) ++ rawReaders(readers)
+  private def staticReaders(readers: List[ReaderModel]): List[SparkReader] = indexReaders(readers) ++ rawReaders(readers)
 
   private def changeBatchState(id: BsonObjectId, newState: String): Unit =
   {

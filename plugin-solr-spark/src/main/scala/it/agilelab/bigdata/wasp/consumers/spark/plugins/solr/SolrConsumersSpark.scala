@@ -5,9 +5,9 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
@@ -26,7 +26,7 @@ import scala.util.{Failure, Success}
 /**
   * Created by Agile Lab s.r.l. on 05/09/2017.
   */
-class SolrConsumerSpark extends WaspConsumerSparkPlugin with Logging {
+class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var indexBL: IndexBL = _
   var solrAdminActor_ : ActorRef = _
 
@@ -42,9 +42,9 @@ class SolrConsumerSpark extends WaspConsumerSparkPlugin with Logging {
     startupSolr(servicesTimeoutMillis)
   }
 
-  override def getSparkStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkStreamingWriter = {
+  override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the solr spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new SolrSparkStreamingWriter(indexBL, ssc, writerModel.endpointId.getValue.toHexString, solrAdminActor_)
+    new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.getValue.toHexString, solrAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
@@ -57,10 +57,10 @@ class SolrConsumerSpark extends WaspConsumerSparkPlugin with Logging {
     new SolrSparkWriter(indexBL, sc, writerModel.endpointId.getValue.toHexString, solrAdminActor_)
   }
 
-  override def getSparkReader(id: String, name: String): StaticReader = {
+  override def getSparkReader(id: String, name: String): SparkReader = {
     val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {
-      new SolrReader(indexOpt.get)
+      new SolrSparkReader(indexOpt.get)
     } else {
       throw new Exception("Solr Option not found")
     }
