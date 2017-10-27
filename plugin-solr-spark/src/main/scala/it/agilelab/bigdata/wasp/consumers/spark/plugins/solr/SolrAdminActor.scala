@@ -293,7 +293,7 @@ class SolrAdminActor
         .withHeaders(RawHeader("Content-Type", "application/json"))
         .withHeaders(RawHeader("Accept", "application/json"))
         .withMethod(HttpMethods.POST)
-        .withEntity(message.schema)
+        .withEntity(ContentTypes.`application/json`, message.schema)
     )
 
     Await.result(
