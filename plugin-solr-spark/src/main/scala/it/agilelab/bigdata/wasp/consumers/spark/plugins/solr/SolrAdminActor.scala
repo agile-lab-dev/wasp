@@ -303,11 +303,14 @@ class SolrAdminActor
       responseFuture.map { res =>
         res.status match {
           case OK =>
-            logger.info(
-              s"Solr - Add Mapping response status ${res.status.value}, $message")
+            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+              logger.info(s"Solr - Add Mapping response info ${info}, $message")
+            }
             true
           case _ =>
-            logger.error(s"Solr - Schema NOT created, $message")
+            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+              logger.error(s"Solr - Schema NOT created, $message info ${info}")
+            }
             false
         }
       },
