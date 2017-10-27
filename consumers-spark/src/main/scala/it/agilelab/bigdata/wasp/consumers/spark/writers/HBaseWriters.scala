@@ -35,13 +35,13 @@ case class InfoCol(col: Option[String], `type`: Option[String], mappingType: Str
   */
 object HBaseWriter {
 
-  def createSparkStreamingWriter(env: {val keyValueBL: KeyValueBL}, ssc: StreamingContext, id: String): Option[SparkStreamingWriter] = {
+  def createSparkStreamingWriter(env: {val keyValueBL: KeyValueBL}, ssc: StreamingContext, id: String): Option[SparkLegacyStreamingWriter] = {
     // if we find the model, try to return the correct reader
     val hbaseModelOpt = getModel(env, id)
     if (hbaseModelOpt.isDefined) {
       val hbaseModel = hbaseModelOpt.get
 
-      Some(new HBaseStreamingWriter(hbaseModel, ssc))
+      Some(new HBaseSparkLegacyStreamingWriter(hbaseModel, ssc))
     } else {
       None
     }
@@ -151,9 +151,9 @@ object HBaseWriter {
 
 }
 
-class HBaseStreamingWriter(hbaseModel: KeyValueModel,
-                           ssc: StreamingContext)
-  extends SparkStreamingWriter {
+class HBaseSparkLegacyStreamingWriter(hbaseModel: KeyValueModel,
+                                      ssc: StreamingContext)
+  extends SparkLegacyStreamingWriter {
 
   override def write(stream: DStream[String]): Unit = {
     // get sql context

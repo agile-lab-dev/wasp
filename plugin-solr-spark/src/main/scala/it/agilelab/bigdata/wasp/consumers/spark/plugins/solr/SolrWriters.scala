@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 import akka.actor.ActorRef
 import com.lucidworks.spark.util.SolrSupport
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkStreamingWriter,
+  SparkLegacyStreamingWriter,
   SparkStructuredStreamingWriter,
   SparkWriter
 }
@@ -37,11 +37,11 @@ object SolrSparkWriter {
 
 }
 
-class SolrSparkStreamingWriter(indexBL: IndexBL,
-                               val ssc: StreamingContext,
-                               val id: String,
-                               solrAdminActor: ActorRef)
-    extends SparkStreamingWriter
+class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
+                                     val ssc: StreamingContext,
+                                     val id: String,
+                                     solrAdminActor: ActorRef)
+    extends SparkLegacyStreamingWriter
     with SolrConfiguration
     with Logging {
 

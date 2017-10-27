@@ -5,9 +5,9 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
@@ -26,7 +26,7 @@ import scala.util.{Failure, Success}
 /**
   * Created by Agile Lab s.r.l. on 05/09/2017.
   */
-class ElasticConsumerSpark extends WaspConsumerSparkPlugin with Logging {
+class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var indexBL: IndexBL = _
   var elasticAdminActor_ : ActorRef = _
 
@@ -43,9 +43,9 @@ class ElasticConsumerSpark extends WaspConsumerSparkPlugin with Logging {
     startupElastic(servicesTimeoutMillis)
   }
 
-  override def getSparkStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkStreamingWriter = {
+  override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new ElasticSparkStreamingWriter(indexBL, ssc, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
+    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {

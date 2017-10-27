@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
@@ -27,7 +27,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                                   pipegraph: PipegraphModel,
                                   structuredStreamingETL: StructuredStreamingETLModel,
                                   listener: ActorRef,
-                                  plugins: Map[String, WaspConsumerSparkPlugin])
+                                  plugins: Map[String, WaspConsumersSparkPlugin])
     extends Actor
     with SparkStreamingConfiguration
     with Logging {

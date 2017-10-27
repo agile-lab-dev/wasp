@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{KafkaReader, KafkaStructuredReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.consumers.spark.SparkConsumersMasterGuardian
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
@@ -22,7 +22,7 @@ import scala.collection.JavaConverters._
 	* @author Nicolò Bidotti
 	*/
 trait SparkConsumersNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
-	var plugins: Map[String, WaspConsumerSparkPlugin] = Map()
+	var plugins: Map[String, WaspConsumersSparkPlugin] = Map()
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val sparkConsumersMasterGuardianSingletonInfo = (
 			Props(new SparkConsumersMasterGuardian(ConfigBL, SparkWriterFactoryDefault(plugins), KafkaReader, KafkaStructuredReader, plugins)),
@@ -47,7 +47,7 @@ trait SparkConsumersNodeLauncherTrait extends MultipleClusterSingletonsLauncher 
 		*/
 	override def initializePlugins(args: Array[String]): Unit = {
 		logger.info("Finding WASP plugins")
-		val pluginLoader: ServiceLoader[WaspConsumerSparkPlugin] = ServiceLoader.load[WaspConsumerSparkPlugin](classOf[WaspConsumerSparkPlugin])
+		val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] = ServiceLoader.load[WaspConsumersSparkPlugin](classOf[WaspConsumersSparkPlugin])
 		val pluginsList = pluginLoader.iterator().asScala.toList
 		logger.info(s"Found ${pluginsList.size} plugins")
 		logger.info("Initializing plugins")

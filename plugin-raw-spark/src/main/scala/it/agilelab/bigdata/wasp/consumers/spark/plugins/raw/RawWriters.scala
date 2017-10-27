@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.RawModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
@@ -12,9 +12,9 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
-class HDFSSparkStreamingWriter(hdfsModel: RawModel,
-                               ssc: StreamingContext)
-  extends SparkStreamingWriter with Logging {
+class RawSparkLegacyStreamingWriter(hdfsModel: RawModel,
+                                    ssc: StreamingContext)
+  extends SparkLegacyStreamingWriter with Logging {
 
   override def write(stream: DStream[String]): Unit = {
     // get sql context
@@ -64,8 +64,8 @@ class HDFSSparkStreamingWriter(hdfsModel: RawModel,
   }
 }
 
-class HDFSSparkStructuredStreamingWriter(hdfsModel: RawModel,
-                                         ss: SparkSession)
+class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
+                                        ss: SparkSession)
   extends SparkStructuredStreamingWriter with Logging {
 
   override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
@@ -102,8 +102,8 @@ class HDFSSparkStructuredStreamingWriter(hdfsModel: RawModel,
   }
 }
 
-class HDFSSparkWriter(hdfsModel: RawModel,
-                      sc: SparkContext)
+class RawSparkWriter(hdfsModel: RawModel,
+                     sc: SparkContext)
   extends SparkWriter with Logging {
 
   // TODO: validate against hdfsmodel.schema

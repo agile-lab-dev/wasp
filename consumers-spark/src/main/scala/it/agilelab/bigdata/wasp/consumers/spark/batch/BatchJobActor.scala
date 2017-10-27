@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
@@ -24,7 +24,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                     val classLoader: Option[ClassLoader] = None,
                     sparkWriterFactory: SparkWriterFactory,
                     sc: SparkContext,
-                    plugins: Map[String, WaspConsumerSparkPlugin]) extends Actor with Logging {
+                    plugins: Map[String, WaspConsumersSparkPlugin]) extends Actor with Logging {
   var lastBatchMasterRef : ActorRef = _
 
   def receive: Actor.Receive = {
