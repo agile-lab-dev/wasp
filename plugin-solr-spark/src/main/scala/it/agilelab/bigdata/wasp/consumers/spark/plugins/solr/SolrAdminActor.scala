@@ -286,8 +286,6 @@ class SolrAdminActor
 
     logger.info(s"$message, uri: '$uri'")
 
-    logger.error(s"****************** schema payload ${message.schema}")
-
     val responseFuture: Future[HttpResponse] = Http().singleRequest(
       HttpRequest(uri = uri)
         .withHeaders(RawHeader("Content-Type", "application/json"))
@@ -298,11 +296,8 @@ class SolrAdminActor
 
     Await.result(
       responseFuture.map { res =>
-        logger.info(
-          s"********************* responseFuture.foreach ${res} *********************")
         res.status match {
           case OK => {
-            logger.info(s"********************* OK  *********************")
             logger.info(
               s"Solr - Add Mapping response status ${res.status}, $message")
             true

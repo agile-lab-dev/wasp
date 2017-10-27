@@ -82,7 +82,7 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
       } else {
         logger.error(
           s"Error creating solr index: $index with this index name $indexName")
-        throw new Exception("Error creating solr index " + index.name)
+        throw new Exception("Error creating solr index " + indexName)
         //TODO handle errors
       }
     } else {
@@ -109,6 +109,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
+      val indexName = ConfigManager.buildTimedName(index.name)
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: ${index.name}")
@@ -116,7 +117,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
       if (??[Boolean](
             solrAdminActor,
             CheckOrCreateCollection(
-              index.name,
+              indexName,
               index.getJsonSchema,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
@@ -125,7 +126,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
         val solrWriter = new SolrForeatchWriter(
           ss,
           solrConfig.connections.mkString(","),
-          index.name,
+          indexName,
           index.collection)
 
         stream.writeStream
@@ -136,8 +137,8 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
       } else {
         logger.error(
-          s"Error creating solr index: $index with this index name ${index.name}")
-        throw new Exception("Error creating solr index " + index.name)
+          s"Error creating solr index: $index with this index name ${indexName}")
+        throw new Exception("Error creating solr index " + indexName)
         //TODO handle errors
       }
     } else {
@@ -218,7 +219,7 @@ class SolrSparkWriter(indexBL: IndexBL,
                               new JavaRDD[SolrInputDocument](docs))
 
       } else {
-        throw new Exception("Error creating solr index " + index.name)
+        throw new Exception("Error creating solr index " + indexN)
         //TODO handle errors
       }
 
