@@ -138,26 +138,28 @@ class HDFSSparkWriter(hdfsModel: RawModel,
 }
 
 object RawWriters {
-  // prepares a dataframe for a writer using partitionBy; given a list of columns on which to partition and whether to
-  // keep them, return a new df with sacrifical generated columns and the list of columns on which to partition
-  def prepareDfForPartitionBy(df: DataFrame, partitionBy: List[(String, Boolean)]): (DataFrame, List[String]) = {
-    // find list of columns to save and generate aliases for their sacrifical clones
-    val sacrificalColumns = partitionBy.filter(_._2).map({
-                                                           case (column, keep) => (column, "_" + column)
-                                                         })
-  
-    // add sacrifical columns to df
-    val dfWithAllSacrificalColumns = sacrificalColumns.foldLeft(df) {
-      case (dfWithSacrificalColumns, (column, sacrificalColumn)) => {
-        dfWithSacrificalColumns.withColumn(sacrificalColumn, col(column))
+  /** Prepares a DataFrame with duplicated columns; useful for when wiriting with partitionBy and then reading a single
+    * subdirectory without losing data from the partitionBY columns.
+    *
+    * Returns a new DataFrame with duplicates of the columns in `columns` and the list of new column names. The new names
+    * are created by prepending "_".
+    *
+    * @param df start datafame
+    * @param columns columns to duplicate
+    * @return a tuple (newDataFrame, newColumnNames)
+    */
+  def duplicateColumns(df: DataFrame, columns: String*): (DataFrame, Seq[String]) = {
+    // generate new column names and add duplicate columns to df
+    val (dfWithAllNewColumns, allNewColumns) = columns.foldLeft((df, List.empty[String])) {
+      case ((dfWithNewColumns, newColumns), column) => {
+        val newColumn = "_" + column
+        val dfWithNewColumn = dfWithNewColumns.withColumn(newColumn, col(column))
+        
+        (dfWithNewColumn, newColumn :: newColumns)
       }
     }
     
-    // generate final list of columns on which to partition
-    val finalPartitionByColumns = partitionBy map {
-      case (column, keep) => if (keep) "_" else "" + column
-    }
-    
-    (dfWithAllSacrificalColumns, finalPartitionByColumns)
+    // return new df & new column names (we need to reverse this list because we were prepending them)
+    (dfWithAllNewColumns, allNewColumns.reverse)
   }
 }

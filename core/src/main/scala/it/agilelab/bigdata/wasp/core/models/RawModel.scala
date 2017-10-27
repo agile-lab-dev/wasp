@@ -47,9 +47,8 @@ case class RawModel(override val name: String,
 	*
 	*  `extraOptions` allows specifying any writer-specific options accepted by DataFrameReader/Writer.option
 	*
-	*  `partitionBy` allows specifying columns to be used to partition (by using different directories for different values)
-	*  the data; each element of the list is composed of the column name and a boolean indicating whether to keep that
-	*  column in the saved data
+	*  `partitionBy` allows specifying columns to be used to partition the data by using different directories for
+	*  different values
 	*
 	* @param saveMode specifies the behaviour when the output uri exists
 	* @param format specifies the format to use
@@ -58,8 +57,8 @@ case class RawModel(override val name: String,
 case class RawOptions(saveMode: String,
                       format: String,
                       extraOptions: Option[Map[String, String]],
-                      partitionBy: List[(String, Boolean)])
+                      partitionBy: Option[List[String]])
 
 object RawOptions {
-	val default = RawOptions("default", "parquet", None, Nil)
+	val default = RawOptions("default", "parquet", None, None)
 }
