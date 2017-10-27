@@ -1,30 +1,26 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
 import java.util
-import java.util.{Date, List}
 
 import akka.actor.ActorRef
 import com.lucidworks.spark.SolrSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkStreamingWriter,
-  SparkStructuredStreamingWriter,
-  SparkWriter
-}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
-import org.apache.solr.client.solrj.SolrServer
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
+import org.json4s.jackson.Json
+
+import scala.util.parsing.json.JSON
 
 /**
   * Created by matbovet on 02/09/2016.
@@ -68,7 +64,7 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               indexName,
-              index.schema.get.get("properties").asString().getValue,
+              index.schema.get.get("properties").asJavaScript().getCode,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
