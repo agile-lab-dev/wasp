@@ -283,13 +283,16 @@ class SolrAdminActor
 
     val uri =
       s"${solrConfig.apiEndPoint.get.toString()}/${collectionNameWShardsAndReplica(message.collection, message.numShards, message.replicationFactor)}/schema/fields"
+    logger.info(s"******************************************")
+    logger.info(
+      s"****************************************** Add mapping $message, uri: '$uri'")
+    logger.info(s"******************************************")
 
-    logger.info(s"Add mapping $message, uri: '$uri'")
-
-//    val jsonEntity = JsObject(
+    //    val jsonEntity = JsObject(
 //      "collection" -> JsString(message.collection),
 //      "schema" -> JsString(message.schema)
 //    ).toString()
+    logger.info(s"********************* Create request *********************")
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(
       HttpRequest(uri = uri)
@@ -299,25 +302,28 @@ class SolrAdminActor
         .withEntity(ContentTypes.`application/json`, message.schema)
     )
 
-    Await.result(
-      responseFuture.map { res =>
-        res.status match {
-          case OK => {
-            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-              logger.info(s"Solr - Add Mapping response info ${info}, $message")
-            }
-            true
+    logger.info(s"********************* foreatch  *********************")
+
+    responseFuture.foreach { res =>
+      res.status match {
+        case OK => {
+          logger.info(s"********************* OK  *********************")
+          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+            logger.info(s"Solr - Add Mapping response info ${info}, $message")
           }
-          case _ => {
-            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-              logger.error(s"Solr - Schema NOT created, $message info ${info}")
-            }
-            false
-          }
+          true
         }
-      },
-      timeout.duration
-    )
+        case _ => {
+          logger.info(s"********************* case _ *********************")
+          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+            logger.error(s"Solr - Schema NOT created, $message info ${info}")
+          }
+          false
+        }
+      }
+    }
+
+    false
   }
 
   private def addAlias(message: AddAlias): Boolean = {
