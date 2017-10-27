@@ -219,7 +219,7 @@ class SolrSparkWriter(indexBL: IndexBL,
                               new JavaRDD[SolrInputDocument](docs))
 
       } else {
-        throw new Exception("Error creating solr index " + indexN)
+        throw new Exception("Error creating solr index " + indexName)
         //TODO handle errors
       }
 

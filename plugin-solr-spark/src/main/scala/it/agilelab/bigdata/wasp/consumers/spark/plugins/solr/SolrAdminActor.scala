@@ -224,9 +224,6 @@ class SolrAdminActor
           Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
             if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
               logger.info("Config Set Created")
-            } else if ((info \ "responseHeader" \ "status")
-                         .===(JsNumber(400))) {
-              logger.info("Config Set Doesn't Exists")
             } else {
               logger.error("Solr - Config Set NOT Created")
             }
