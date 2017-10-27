@@ -305,6 +305,9 @@ class SolrAdminActor
     logger.info(s"********************* foreatch  *********************")
 
     responseFuture.foreach { res =>
+
+      logger.info(s"********************* responseFuture.foreach ${res} *********************")
+
       res.status match {
         case OK => {
           logger.info(s"********************* OK  *********************")
