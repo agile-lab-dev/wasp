@@ -10,7 +10,7 @@ import org.apache.avro.io.DecoderFactory
 
 object AvroToJsonUtil extends Logging {
 
-  def jsonToAvro(json: String, schemaStr: String) = {
+  def jsonToAvro(json: String, schemaStr: String): Array[Byte] = {
     logger.debug("Starting jsonToAvro encoding ...")
 
     var encoder = null
@@ -54,7 +54,7 @@ object AvroToJsonUtil extends Logging {
     val streamReader = new DataFileStream[GenericRecord](input, reader)
     val output = new ByteArrayOutputStream()
 
-    val schema = streamReader.getSchema
+    val schema: Schema = streamReader.getSchema
     val writer = new GenericDatumWriter[GenericRecord](schema)
     val encoder = new SimpleUnionJsonEncoder(schema, output)
 

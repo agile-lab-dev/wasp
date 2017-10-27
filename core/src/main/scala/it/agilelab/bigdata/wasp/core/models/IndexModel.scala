@@ -3,6 +3,8 @@ package it.agilelab.bigdata.wasp.core.models
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 import kafka.utils.Json
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 import scala.collection.JavaConverters._
 
@@ -118,7 +120,23 @@ case class IndexModel(override val name: String,
     * Returns a JSON representation of the schema of this index's schema.
     * @return
     */
-  def getJsonSchema: String = schema.getOrElse(new BsonDocument).toJson
+  def getJsonSchema: String = {
+    if (ConfigManager.getWaspConfig.defaultIndexedDatastore == "solr") {
+      val solrProperties = this
+        .schema
+        .get
+        .get("properties")
+        .asArray()
+        .getValues
+        .asScala
+        .map(e => e.asDocument().toJson)
+        .mkString(",")
+
+      s"[${solrProperties}]"
+    } else {
+      schema.getOrElse(new BsonDocument).toJson
+    }
+  }
   
   /**
     * Returns the data type of the contents of this index.

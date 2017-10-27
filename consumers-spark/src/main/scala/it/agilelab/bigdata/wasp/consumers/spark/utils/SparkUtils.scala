@@ -27,13 +27,12 @@ object SparkUtils extends Logging {
     // build SparkConf from spark configuration model & log it
     val loadedJars = sparkConfigModel.additionalJars.getOrElse(getAdditionalJar(Set(sparkConfigModel.yarnJar)))
     //TODO: gestire appName in maniera dinamica (e.g. batchGuardian, consumerGuardian..)
-    val sparkConf = new SparkConf()
+    var sparkConf = new SparkConf()
       .setAppName(sparkConfigModel.appName)
       .setMaster(sparkConfigModel.master.toString)
       .set("spark.driver.cores", sparkConfigModel.driverCores.toString)
       .set("spark.driver.memory", sparkConfigModel.driverMemory) // NOTE: will only work in yarn-cluster
       .set("spark.driver.host", sparkConfigModel.driverHostname)
-      .set("spark.driver.port", sparkConfigModel.driverPort.toString)
       .set("spark.executor.cores", sparkConfigModel.executorCores.toString)
       .set("spark.executor.memory", sparkConfigModel.executorMemory)
       .set("spark.executor.instances", sparkConfigModel.executorInstances.toString)
@@ -42,6 +41,10 @@ object SparkUtils extends Logging {
       .set("spark.blockManager.port", sparkConfigModel.blockManagerPort.toString)
       .set("spark.broadcast.port", sparkConfigModel.broadcastPort.toString)
       .set("spark.fileserver.port", sparkConfigModel.fileserverPort.toString)
+
+		if (sparkConfigModel.driverPort != 0)
+			sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driverPort.toString)
+
     logger.info("Resulting SparkConf:\n\t" + sparkConf.toDebugString.replace("\n", "\n\t"))
     
     sparkConf
@@ -90,35 +93,7 @@ object SparkUtils extends Logging {
                                                component: StructuredStreamingETLModel): String = {
     sparkStreamingConfigModel.checkpointDir + "/" +
 	    "structured_streaming" + "/" +
-	    generatePipegraphPart(pipegraph) + "/" +
-	    generateProcessingComponentPart(component) + "_" + generateWriterPart(component)
+	    pipegraph.generateStandardPipegraphName + "/" +
+	    component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName
   }
-	
-	def generateUniqueComponentName(pipegraph: PipegraphModel,
-	                                component: ProcessingComponentModel): String = {
-		generatePipegraphPart(pipegraph) + "_" + generateProcessingComponentPart(component) + "_" + generateWriterPart(component)
-	}
-	
-	private def generatePipegraphPart(pipegraph: PipegraphModel): String = {
-		s"pipegraph_${pipegraph.name}"
-	}
-	
-	private def generateProcessingComponentPart(component: ProcessingComponentModel): String = {
-		component match { // TODO: remove match once name member is moved into ProcessingComponentModel
-			case ss: StructuredStreamingETLModel => s"structuredstreaming_${ss.name}"
-			case ls: LegacyStreamingETLModel => s"legacystreaming_${ls.name}"
-			case rt: RTModel => s"rt_${rt.name}"
-		}
-	}
-	
-	private def generateWriterPart(component: ProcessingComponentModel): String = {
-		component match { // TODO: remove match once output member is moved into ProcessingComponentModel
-			case ss: StructuredStreamingETLModel => s"writer_${ss.output.name}"
-			case ls: LegacyStreamingETLModel => s"writer_${ls.output.name}"
-			case rt: RTModel => rt.endpoint match {
-				case Some(output) => s"writer_${output.name}"
-				case None => "no_writer"
-			}
-		}
-	}
 }

@@ -7,7 +7,7 @@ import org.apache.spark.sql.DataFrame
 /**
   * Created by Mattia Bertorello on 10/09/15.
   */
-trait StaticReader {
+trait SparkReader {
   val name: String
   val readerType: String
 

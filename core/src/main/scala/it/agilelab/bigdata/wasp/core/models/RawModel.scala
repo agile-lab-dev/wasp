@@ -94,14 +94,18 @@ case class RawModel(override val name: String,
 	*
 	*  `extraOptions` allows specifying any writer-specific options accepted by DataFrameReader/Writer.option
 	*
+	*  `partitionBy` allows specifying columns to be used to partition the data by using different directories for
+	*  different values
+	*
 	* @param saveMode specifies the behaviour when the output uri exists
 	* @param format specifies the format to use
 	* @param extraOptions extra options for the underlying writer
 	*/
 case class RawOptions(saveMode: String,
                       format: String,
-                      extraOptions: Option[Map[String, String]])
+                      extraOptions: Option[Map[String, String]],
+                      partitionBy: Option[List[String]])
 
 object RawOptions {
-	val default = RawOptions("default", "parquet", None)
+	val default = RawOptions("default", "parquet", None, None)
 }

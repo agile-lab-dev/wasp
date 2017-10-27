@@ -5,13 +5,13 @@ import java.util.UUID
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.{Column, DataFrame}
@@ -35,8 +35,9 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
                               ssc: StreamingContext,
                               etl: LegacyStreamingETLModel,
                               listener: ActorRef,
-                              plugins: Map[String, WaspConsumerSparkPlugin]) extends Actor with Logging {
-
+                              plugins: Map[String, WaspConsumersSparkPlugin])
+    extends Actor
+    with Logging {
   case object StreamReady
 
   /*
@@ -79,7 +80,7 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
   /**
    * Index readers initialization
    */
-  private def indexReaders(): List[StaticReader] =  {
+  private def indexReaders(): List[SparkReader] =  {
     val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
     etl.inputs.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
@@ -100,7 +101,7 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
   /**
     * Raw readers initialization
     */
-  private def rawReaders(): List[StaticReader] = etl.inputs
+  private def rawReaders(): List[SparkReader] = etl.inputs
     .flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
@@ -120,7 +121,7 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
     *
     * @return
    */
-  private def staticReaders(): List[StaticReader] = indexReaders() ++ rawReaders()
+  private def staticReaders(): List[SparkReader] = indexReaders() ++ rawReaders()
 
   /**
    * Topic models initialization
@@ -207,7 +208,7 @@ class LegacyStreamingETLActor(env: {val topicBL: TopicBL
 
       case Some(writer) =>
         writer.write(outputStream)
-        
+
       case None         =>
         val error = s"No Spark Streaming writer available for writer ${etl.output}"
         logger.error(error)

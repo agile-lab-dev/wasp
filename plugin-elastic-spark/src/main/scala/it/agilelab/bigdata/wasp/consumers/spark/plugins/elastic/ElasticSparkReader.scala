@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.ElasticConfiguration
@@ -16,7 +16,7 @@ import org.elasticsearch.spark.sql.EsSparkSQL
   *
   * @param indexModel Elastic configuration
   */
-class ElasticIndexReader(indexModel: IndexModel) extends StaticReader with ElasticConfiguration with Logging {
+class ElasticSparkReader(indexModel: IndexModel) extends SparkReader with ElasticConfiguration with Logging {
   val name: String = indexModel.name
   val readerType: String = IndexModel.readerType
 

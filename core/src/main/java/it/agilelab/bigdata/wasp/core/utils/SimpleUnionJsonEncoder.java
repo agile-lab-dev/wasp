@@ -41,15 +41,15 @@ public class SimpleUnionJsonEncoder extends ParsingEncoder implements Parser.Act
      */
     protected BitSet isEmpty = new BitSet();
 
-    SimpleUnionJsonEncoder(Schema sc, OutputStream out) throws IOException {
+    public SimpleUnionJsonEncoder(Schema sc, OutputStream out) throws IOException {
         this(sc, getJsonGenerator(out, false));
     }
 
-    SimpleUnionJsonEncoder(Schema sc, OutputStream out, boolean pretty) throws IOException {
+    public SimpleUnionJsonEncoder(Schema sc, OutputStream out, boolean pretty) throws IOException {
         this(sc, getJsonGenerator(out, pretty));
     }
 
-    SimpleUnionJsonEncoder(Schema sc, JsonGenerator out) throws IOException {
+    public SimpleUnionJsonEncoder(Schema sc, JsonGenerator out) throws IOException {
         configure(out);
         this.parser = new Parser(new JsonGrammarGenerator().generate(sc), this);
     }

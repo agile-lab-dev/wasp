@@ -1,16 +1,17 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
-import akka.actor.{Actor, ActorRef, PoisonPill}
+import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.WaspEvent.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, StopProcessingComponent}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -26,7 +27,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                                   pipegraph: PipegraphModel,
                                   structuredStreamingETL: StructuredStreamingETLModel,
                                   listener: ActorRef,
-                                  plugins: Map[String, WaspConsumerSparkPlugin])
+                                  plugins: Map[String, WaspConsumersSparkPlugin])
     extends Actor
     with SparkStreamingConfiguration
     with Logging {
@@ -39,7 +40,8 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
 
   override def receive: Actor.Receive = {
     case StreamReady => listener ! OutputStreamInitialized
-    case PoisonPill =>
+    case StopProcessingComponent =>
+      logger.info(s"Component actor $self stopping...")
       stopProcessingComponent()
       context stop self
       logger.info(s"Component actor $self stopped")
@@ -81,7 +83,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
   /**
     * Index readers initialization
     */
-  private def indexReaders(): List[StaticReader] = {
+  private def indexReaders(): List[SparkReader] = {
     val defaultDataStoreIndexed =
       ConfigManager.getWaspConfig.defaultIndexedDatastore
     structuredStreamingETL.inputs.flatMap({
@@ -107,7 +109,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
   /**
     * Raw readers initialization
     */
-  private def rawReaders(): List[StaticReader] =
+  private def rawReaders(): List[SparkReader] =
     structuredStreamingETL.inputs
       .flatMap({
         case ReaderModel(name, endpointId, readerType) =>
@@ -132,7 +134,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     *
     * @return
     */
-  private def staticReaders(): List[StaticReader] =
+  private def staticReaders(): List[SparkReader] =
     indexReaders() ++ rawReaders()
 
   /**
@@ -224,6 +226,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
+
         transform(topicStreamWithKey._1,
                   topicStreamWithKey._2,
                   dataStoreDFs,
@@ -237,7 +240,9 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     val checkpointDir = generateStructuredStreamingCheckpointDir(sparkStreamingConfig, pipegraph, structuredStreamingETL)
   
     sparkWriterOpt match {
-      case Some(writer) => writer.write(outputStream, queryName, checkpointDir)
+      case Some(writer) => {
+        writer.write(outputStream, queryName, checkpointDir)
+      }
       case None         =>
         val error = s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}"
         logger.error(error)
@@ -251,12 +256,21 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     self ! StreamReady
   }
 
+
   private def transform(readerKey: ReaderKey,
                         stream: DataFrame,
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy): DataFrame = {
+
     val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
-    strategyBroadcast.value.transform(dataStoreDFs)
+//    val dataframeToTransform = sparkSession.sqlContext.read.json(stream.toJSON)
+
+//    if (dataframeToTransform.schema.nonEmpty) {
+      val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
+      strategyBroadcast.value.transform(completeMapOfDFs)
+//    } else {
+//      dataframeToTransform
+//    }
   }
   
   /**

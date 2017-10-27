@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.producers
 
 import akka.actor.{Actor, ActorRef, Cancellable}
 import it.agilelab.bigdata.wasp.core.SystemPipegraphs._
-import it.agilelab.bigdata.wasp.core.WaspEvent.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, JsonToByteArrayUtil}
 import org.mongodb.scala.bson.BsonDocument
@@ -49,9 +49,9 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   //TODO occhio che abbiamo la partition key schianatata, quindi usiamo sempre e solo una partizione
   val partitionKey = "partitionKey"
 
-  val rawTopicSchema = JsonConverter.toString(rawTopic.schema.getOrElse(BsonDocument()).asDocument())
+  val rawTopicSchema = JsonConverter.toString(rawTopic.schema.asDocument())
   lazy val topicSchemaType = topic.get.topicDataType
-  lazy val topicSchema = JsonConverter.toString(topic.get.schema.getOrElse(BsonDocument()).asDocument())
+  lazy val topicSchema = JsonConverter.toString(topic.get.schema.asDocument())
 
   override def postStop() {
     logger.info(s"Stopping actor ${this.getClass.getName}")

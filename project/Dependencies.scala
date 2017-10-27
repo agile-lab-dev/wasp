@@ -92,7 +92,9 @@ object Dependencies {
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
-	val sparkSolr = "com.lucidworks.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
+	val solrCore = "org.apache.solr" % "solr-core" % Versions.solr
+	val sparkAvro = "com.databricks" %% "spark-avro" % Versions.avroSpark
+	val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkSolrExclusions
 	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
 	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
 	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
@@ -149,7 +151,8 @@ object Dependencies {
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
 			sparkSQL,
-			typesafeConfig
+			typesafeConfig,
+			sparkAvro
 		)
 	
 	val producers = akka ++ log4j ++ test ++
@@ -163,8 +166,8 @@ object Dependencies {
 			kafka,
 			kafkaStreaming,
 			kafkaSparkSql,
-			quartz/*,
-			waspElasticSpark */ // needed y system pipegraphs; it is optional, so it is not a transitive dependency
+			quartz,
+			sparkAvro
 		)
 
 	val consumers_rt = akka ++ log4j ++

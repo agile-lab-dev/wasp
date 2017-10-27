@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.core
 
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import org.mongodb.scala.bson.BsonObjectId
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 
 /**
@@ -35,7 +35,7 @@ private[wasp] object LoggerTopic {
 		replicas = 1,
 		topicDataType = "avro",
 		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema),
+		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
 		_id = Some(BsonObjectId())
 	)
 
@@ -114,7 +114,7 @@ private[wasp] object RawTopic {
 		replicas = 1,
 		topicDataType = "avro",
 		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema),
+		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
 		_id = Some(BsonObjectId())
 	)
 

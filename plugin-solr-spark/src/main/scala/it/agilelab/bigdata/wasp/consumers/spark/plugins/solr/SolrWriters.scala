@@ -1,21 +1,22 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
+import java.util
+
 import akka.actor.ActorRef
-import com.lucidworks.spark.util.SolrSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkStreamingWriter,
-  SparkStructuredStreamingWriter,
-  SparkWriter
-}
+import com.lucidworks.spark.SolrSupport
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
+import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
+import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql._
 import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
 
 /**
@@ -37,11 +38,11 @@ object SolrSparkWriter {
 
 }
 
-class SolrSparkStreamingWriter(indexBL: IndexBL,
-                               val ssc: StreamingContext,
-                               val id: String,
-                               solrAdminActor: ActorRef)
-    extends SparkStreamingWriter
+class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
+                                     val ssc: StreamingContext,
+                                     val id: String,
+                                     solrAdminActor: ActorRef)
+    extends SparkLegacyStreamingWriter
     with SolrConfiguration
     with Logging {
 
@@ -60,7 +61,7 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               indexName,
-              index.schema.get.get("properties").asArray().toString,
+              index.getJsonSchema,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
@@ -76,12 +77,12 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
         SolrSupport.indexDStreamOfDocs(solrConfig.connections.mkString(","),
                                        indexName,
                                        100,
-                                       docs)
+                                       new JavaDStream[SolrInputDocument](docs))
 
       } else {
         logger.error(
           s"Error creating solr index: $index with this index name $indexName")
-        throw new Exception("Error creating solr index " + index.name)
+        throw new Exception("Error creating solr index " + indexName)
         //TODO handle errors
       }
     } else {
@@ -100,28 +101,46 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     with SolrConfiguration
     with Logging {
 
-  override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
+  override def write(stream: DataFrame,
+                     queryName: String,
+                     checkpointDir: String): Unit = {
 
     // get index model from BL
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
+      val index = indexOpt.get
+      val indexName = ConfigManager.buildTimedName(index.name)
 
-      // create streaming options
-      val extraOptions = Map(
-        "collection" -> indexOpt.get.collection,
-        "zkhost" -> solrConfig.connections.mkString(","),
-        // Generate unique key if the 'id' field does not exist
-        "gen_uniq_key" -> "true"
-      )
+      logger.info(
+        s"Check or create the index model: '${index.toString} with this index name: ${index.name}")
 
-      // configure and start streaming
-      stream.writeStream
-        .format("solr")
-        .options(extraOptions)
-        .option("checkpointLocation", checkpointDir)
-        .queryName(queryName)
-        .start()
+      if (??[Boolean](
+            solrAdminActor,
+            CheckOrCreateCollection(
+              indexName,
+              index.getJsonSchema,
+              index.numShards.getOrElse(1),
+              index.replicationFactor.getOrElse(1))
+          )) {
 
+        val solrWriter = new SolrForeatchWriter(
+          ss,
+          solrConfig.connections.mkString(","),
+          indexName,
+          index.collection)
+
+        stream.writeStream
+          .option("checkpointLocation", checkpointDir)
+          .foreach(solrWriter)
+          .queryName(queryName)
+          .start()
+
+      } else {
+        logger.error(
+          s"Error creating solr index: $index with this index name ${indexName}")
+        throw new Exception("Error creating solr index " + indexName)
+        //TODO handle errors
+      }
     } else {
       logger.warn(
         s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
@@ -129,6 +148,38 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
   }
 
+}
+
+class SolrForeatchWriter(val ss: SparkSession,
+                         val connection: String,
+                         val indexName: String,
+                         val collection: String)
+    extends ForeachWriter[Row] {
+
+  var solrServer: CloudSolrServer = _
+  var batch: util.ArrayList[SolrInputDocument] = _
+  val batchSize = 100
+
+  override def open(partitionId: Long, version: Long): Boolean = {
+    solrServer = SolrSupport.getSolrServer(connection)
+    batch = new util.ArrayList[SolrInputDocument]
+    true
+  }
+
+  override def process(value: Row): Unit = {
+    val docs: SolrInputDocument = SolrSparkWriter.createSolrDocument(value)
+    batch.add(docs)
+
+    if (batch.size() > batchSize) {
+      SolrSupport.sendBatchToSolr(solrServer, collection, batch)
+    }
+  }
+
+  override def close(errorOrNull: Throwable): Unit = {
+    if (batch.size() > 0) {
+      SolrSupport.sendBatchToSolr(solrServer, collection, batch)
+    }
+  }
 }
 
 class SolrSparkWriter(indexBL: IndexBL,
@@ -153,7 +204,7 @@ class SolrSparkWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               indexName,
-              index.schema.get.get("properties").asArray().toString,
+              index.getJsonSchema,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
@@ -165,10 +216,10 @@ class SolrSparkWriter(indexBL: IndexBL,
         SolrSupport.indexDocs(solrConfig.connections.mkString(","),
                               indexName,
                               100,
-                              docs)
+                              new JavaRDD[SolrInputDocument](docs))
 
       } else {
-        throw new Exception("Error creating solr index " + index.name)
+        throw new Exception("Error creating solr index " + indexName)
         //TODO handle errors
       }
 
@@ -179,4 +230,5 @@ class SolrSparkWriter(indexBL: IndexBL,
     }
 
   }
+
 }

@@ -1,6 +1,10 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import com.databricks.spark.avro._
+import org.apache.avro.Schema
+import org.apache.spark.sql.types.DataType
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+
 
 object TopicModel {
   val readerType = "topic"
@@ -83,7 +87,12 @@ case class TopicModel(override val name: String,
                       replicas: Int,
                       topicDataType: String, // avro, json, xml
                       partitionKeyField: Option[String],
-                      schema: Option[BsonDocument],
-                      _id: Option[BsonObjectId] = None) extends Model {
-  def getJsonSchema: String = schema.getOrElse(new BsonDocument).toJson
+                      schema: BsonDocument,
+                      _id: Option[BsonObjectId] = None)
+    extends Model {
+  def getJsonSchema: String = schema.toJson
+  def getDataType: DataType = {
+    val schemaAvro = new Schema.Parser().parse(this.getJsonSchema)
+    SchemaConverters.toSqlType(schemaAvro).dataType
+  }
 }

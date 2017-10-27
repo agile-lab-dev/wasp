@@ -6,6 +6,7 @@ object Versions {
 	val akkaHttp = "10.0.9" // keep in sync with akka
 	val apacheCommonsLang3Version = "3.4"
 	val avro = "1.7.7"
+	val avroSpark = "3.2.0"
 	val camel = "2.17.7"
 	val elasticSearch = "5.6.2"
 //	val elasticSearchSpark = "5.6.2"
@@ -24,7 +25,7 @@ object Versions {
 	val scala = "2.11.11"
 	val scalaTest = "2.2.5"
 	val slf4j = "1.7.12"
-	val solrSpark = "3.2.1"
+	val solrSpark = "1.1.0-spark-2.2-scala-2.11"
 	val solr = "4.10.3-cdh5.12.1"
 	val spark = "2.2.0"
 }

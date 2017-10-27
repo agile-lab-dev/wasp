@@ -15,8 +15,6 @@
  */
 package it.agilelab.bigdata.wasp.core
 
-import org.joda.time.DateTime
-
 // TODO document the Event API
 object WaspEvent {
 
@@ -26,10 +24,5 @@ object WaspEvent {
 
   sealed trait LifeCycleEvent extends WaspEvent
 
-  case object OutputStreamInitialized extends LifeCycleEvent
-
   case object NodeInitialized extends LifeCycleEvent
-
-  case class WaspMessageEnvelope[K, V](topic: String, key: K, messages: V*)
-
 }

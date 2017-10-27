@@ -239,6 +239,7 @@ object WaspDB extends Logging {
 	  createCodecProviderIgnoreNone(classOf[StructuredStreamingETLModel]),
 	  createCodecProviderIgnoreNone(classOf[TopicModel]),
 	  createCodecProviderIgnoreNone(classOf[IndexModel]),
+	  createCodecProviderIgnoreNone(classOf[RawOptions]),
 	  createCodecProviderIgnoreNone(classOf[RawModel]),
 	  createCodecProviderIgnoreNone(classOf[KeyValueModel]),
 	  createCodecProviderIgnoreNone(classOf[BatchJobModel]),
