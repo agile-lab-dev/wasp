@@ -296,7 +296,6 @@ class SolrAdminActor
         .withEntity(message.schema)
     )
 
-
     Await.result(
       responseFuture.map { res =>
         logger.info(
