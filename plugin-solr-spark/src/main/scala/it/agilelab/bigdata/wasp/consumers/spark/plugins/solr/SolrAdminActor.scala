@@ -286,18 +286,14 @@ class SolrAdminActor
 
     logger.info(s"$message, uri: '$uri'")
 
-        val jsonEntity = JsObject(
-      "schema" -> JsString(message.schema)
-    ).toString()
-
-    logger.error(jsonEntity)
+    logger.error(JsString(message.schema).value)
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(
       HttpRequest(uri = uri)
         .withHeaders(RawHeader("Content-Type", "application/json"))
         .withHeaders(RawHeader("Accept", "application/json"))
         .withMethod(HttpMethods.POST)
-        .withEntity(JsString(message.schema).toString())
+        .withEntity(JsString(message.schema).value)
     )
 
 
