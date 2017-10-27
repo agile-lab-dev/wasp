@@ -175,20 +175,23 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
       res.status match {
         case OK =>
           Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-
-            logger.info(s"************************ manageConfigSet info: ${info}")
-
             if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
               logger.info("Config Set Deleted")
               createConfigSet(name, template)
-            } else if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
-              logger.info("Config Set Doesn't Exists")
-              createConfigSet(name, template)
-              logger.info(s"The information for my ip is: $info")
             } else {
               logger.error("Solr Schema API Status Code NOT recognized")
             }
           }
+        case BadRequest =>
+          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+            if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
+              logger.info("Config Set Doesn't Exists")
+              createConfigSet(name, template)
+              logger.info(s"The information for my ip is: $info")
+          } else {
+            logger.error("Solr Schema API Status Code NOT recognized")
+          }
+        }
         case _ =>
           Unmarshal(res.entity).to[String].map { body =>
             logger.error(s"Solr Schema API Status Code NOT recognized $body")
@@ -215,12 +218,17 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
       res.status match {
         case OK =>
           Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-
-            logger.info(s"******************** createConfigSet info: ${info}")
-
             if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
               logger.info("Config Set Created")
             } else if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
+              logger.info("Config Set Doesn't Exists")
+            } else {
+              logger.error("Solr - Config Set NOT Created")
+            }
+          }
+        case BadRequest =>
+          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+            if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
               logger.info("Config Set Doesn't Exists")
             } else {
               logger.error("Solr - Config Set NOT Created")
