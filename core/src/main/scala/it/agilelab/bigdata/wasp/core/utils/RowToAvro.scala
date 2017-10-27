@@ -5,17 +5,16 @@ import java.nio.ByteBuffer
 import java.sql.{Date, Timestamp}
 import java.util
 
-import it.agilelab.bigdata.wasp.core.logging.Logging
-import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.Schema.Type
 import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
-import scala.collection.immutable.Map
 import scala.collection.JavaConverters._
+import scala.collection.immutable.Map
 
 /**
   * Spark Row to serialized Avro converter class.
