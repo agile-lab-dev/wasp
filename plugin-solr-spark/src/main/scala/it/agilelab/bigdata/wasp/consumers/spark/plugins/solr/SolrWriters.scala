@@ -18,6 +18,7 @@ import org.apache.spark.sql._
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
+import org.bson.BsonValue
 import org.json4s.jackson.Json
 import org.mongodb.scala.bson.{BsonDocument, BsonValue}
 
@@ -117,11 +118,21 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: ${index.name}")
 
+      import scala.collection.JavaConversions._
+
+      val a =
+        index.schema.get.get("properties").asArray().getValues.toList
+
+      val b = a map {
+        e =>
+          e.asDocument().toJson
+      }
+
       if (??[Boolean](
             solrAdminActor,
             CheckOrCreateCollection(
               index.name,
-              index.getJsonSchema,
+              s"[${b.mkString(",")}]",
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
