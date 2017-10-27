@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkStreamingWriter,
+  SparkLegacyStreamingWriter,
   SparkStructuredStreamingWriter,
   SparkWriter
 }
@@ -19,11 +19,11 @@ import org.apache.spark.streaming.dstream.DStream
 import org.elasticsearch.spark.sparkRDDFunctions
 import org.elasticsearch.spark.sql.EsSparkSQL
 
-class ElasticSparkStreamingWriter(indexBL: IndexBL,
-                                  ssc: StreamingContext,
-                                  id: String,
-                                  elasticAdminActor: ActorRef)
-    extends SparkStreamingWriter
+class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
+                                        ssc: StreamingContext,
+                                        id: String,
+                                        elasticAdminActor: ActorRef)
+    extends SparkLegacyStreamingWriter
     with ElasticConfiguration
     with Logging {
 

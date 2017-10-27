@@ -13,8 +13,8 @@ import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.sql.streaming.DataStreamWriter
 
 
-class KafkaSparkStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingContext, id: String)
-  extends SparkStreamingWriter {
+class KafkaSparkLegacyStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingContext, id: String)
+  extends SparkLegacyStreamingWriter {
 
   override def write(stream: DStream[String]): Unit = {
     val kafkaConfig = ConfigManager.getKafkaConfig

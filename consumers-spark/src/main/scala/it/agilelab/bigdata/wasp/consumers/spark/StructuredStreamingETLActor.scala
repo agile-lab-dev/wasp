@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.consumers.spark
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{StaticReader, StructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
@@ -27,7 +27,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
                                   pipegraph: PipegraphModel,
                                   structuredStreamingETL: StructuredStreamingETLModel,
                                   listener: ActorRef,
-                                  plugins: Map[String, WaspConsumerSparkPlugin])
+                                  plugins: Map[String, WaspConsumersSparkPlugin])
     extends Actor
     with SparkStreamingConfiguration
     with Logging {
@@ -83,7 +83,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
   /**
     * Index readers initialization
     */
-  private def indexReaders(): List[StaticReader] = {
+  private def indexReaders(): List[SparkReader] = {
     val defaultDataStoreIndexed =
       ConfigManager.getWaspConfig.defaultIndexedDatastore
     structuredStreamingETL.inputs.flatMap({
@@ -109,7 +109,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
   /**
     * Raw readers initialization
     */
-  private def rawReaders(): List[StaticReader] =
+  private def rawReaders(): List[SparkReader] =
     structuredStreamingETL.inputs
       .flatMap({
         case ReaderModel(name, endpointId, readerType) =>
@@ -134,7 +134,7 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     *
     * @return
     */
-  private def staticReaders(): List[StaticReader] =
+  private def staticReaders(): List[SparkReader] =
     indexReaders() ++ rawReaders()
 
   /**
