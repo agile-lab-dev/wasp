@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
@@ -14,7 +14,7 @@ import org.apache.spark.sql.DataFrame
   *
   * @param indexModel Solr configuration
   */
-class SolrReader(indexModel: IndexModel) extends StaticReader with SolrConfiguration with Logging {
+class SolrSparkReader(indexModel: IndexModel) extends SparkReader with SolrConfiguration with Logging {
   val name: String = indexModel.name
   val readerType: String = IndexModel.readerType
 

@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 import java.net.URI
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.{RawBL, RawBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -39,9 +39,9 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), sc)
   }
 
-  override def getSparkReader(id: String, name: String): StaticReader = {
+  override def getSparkReader(id: String, name: String): SparkReader = {
     logger.info(s"Initialize HDFSReader with this id: '$id' and name: '$name'")
-    new HDFSReader(getModelAndChekHdfsSchema(id))
+    new RawSparkReader(getModelAndChekHdfsSchema(id))
   }
 
   private def getModelAndChekHdfsSchema(id: String): RawModel = {

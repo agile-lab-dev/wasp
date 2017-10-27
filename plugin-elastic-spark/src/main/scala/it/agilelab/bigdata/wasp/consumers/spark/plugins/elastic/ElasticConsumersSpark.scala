@@ -6,7 +6,7 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
@@ -58,10 +58,10 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     new ElasticSparkWriter(indexBL, sc, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
   }
 
-  override def getSparkReader(id: String, name: String): StaticReader = {
+  override def getSparkReader(id: String, name: String): SparkReader = {
     val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {
-      new ElasticIndexReader(indexOpt.get)
+      new ElasticSparkReader(indexOpt.get)
     } else {
       logger.error(s"Elastic spark reader not found: id: '$id, name: $name'")
       throw new Exception(s"Elastic spark reader not found: id: '$id, name: $name'")
