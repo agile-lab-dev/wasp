@@ -48,12 +48,14 @@ class HDFSSparkStreamingWriter(hdfsModel: RawModel,
           val mode = if (options.saveMode == "default") "append" else options.saveMode
           val format = options.format
           val extraOptions = options.extraOptions.getOrElse(Map())
-
+          val partitionBy = options.partitionBy.getOrElse(Nil)
+  
           // setup writer
           val writer = df.write
             .mode(mode)
             .format(format)
             .options(extraOptions)
+            .partitionBy(partitionBy:_*)
 
           // write
           writer.save(path)
@@ -67,30 +69,32 @@ class HDFSSparkStructuredStreamingWriter(hdfsModel: RawModel,
   extends SparkStructuredStreamingWriter with Logging {
 
   override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
-
-    // get options
-    val extraOptions = hdfsModel.options.extraOptions.getOrElse(Map())
-    // get save mode
-    val mode = if (hdfsModel.options.saveMode == "default") "append" else hdfsModel.options.saveMode
-    // get format
-    val format = hdfsModel.options.format
+  
     // get path timed or standard
     val path = if (hdfsModel.timed) {
       // the path must be timed; add timed subdirectory
       val hdfsPath = new Path(hdfsModel.uri)
       val timedPath = new Path(hdfsPath.toString + "/" + ConfigManager.buildTimedName("").substring(1) + "/")
-
+    
       timedPath.toString
     } else {
       // the path is not timed; return it as-is
       hdfsModel.uri
     }
-
+    
+    // get other options
+    val options = hdfsModel.options
+    val mode = if (options.saveMode == "default") "append" else hdfsModel.options.saveMode
+    val format = options.format
+    val extraOptions = options.extraOptions.getOrElse(Map())
+    val partitionBy = options.partitionBy.getOrElse(Nil)
+  
     // configure and start streaming
     stream.writeStream
       .format(format)
       .outputMode(mode)
       .options(extraOptions)
+      .partitionBy(partitionBy:_*)
       .option("checkpointLocation", checkpointDir)
       .option("path", path)
       .queryName(queryName)
@@ -104,7 +108,7 @@ class HDFSSparkWriter(hdfsModel: RawModel,
 
   // TODO: validate against hdfsmodel.schema
   override def write(df: DataFrame): Unit = {
-    logger.info(s"Initialize the Dataframe HDFS writer: $hdfsModel")
+    logger.info(s"Initializing HDFS writer: $hdfsModel")
 
     // calculate path
     val path = if (hdfsModel.timed) {
@@ -123,13 +127,15 @@ class HDFSSparkWriter(hdfsModel: RawModel,
     val mode = if (options.saveMode == "default") "error" else options.saveMode
     val format = options.format
     val extraOptions = options.extraOptions.getOrElse(Map())
-
+    val partitionBy = options.partitionBy.getOrElse(Nil)
+  
     // setup writer
     val writer = df.write
       .mode(mode)
       .format(format)
       .options(extraOptions)
-
+      .partitionBy(partitionBy:_*)
+  
     logger.info(s"Write in this path: '$path'")
 
     // write
