@@ -8,9 +8,9 @@ trait SolrAdminMessage extends WaspMessage
 
 case class Search(collection: String = SolrAdminActor.collection, query: Option[Map[String, String]], sort: Option[Map[String, SolrQuery.ORDER]], from: Int, size: Int) extends SolrAdminMessage
 
-case class AddCollection(collection: String = SolrAdminActor.collection, numShards: Int = 1, replicationFactor: Int = 1) extends SolrAdminMessage
+case class AddCollection(collection: String = SolrAdminActor.collection, numShards: Int = SolrAdminActor.numShards, replicationFactor: Int = SolrAdminActor.replicationFactor) extends SolrAdminMessage
 
-case class AddMapping(collection: String = SolrAdminActor.collection, schema: String = SolrAdminActor.schema) extends SolrAdminMessage
+case class AddMapping(collection: String = SolrAdminActor.collection, schema: String = SolrAdminActor.schema, numShards: Int = SolrAdminActor.numShards, replicationFactor: Int = SolrAdminActor.replicationFactor) extends SolrAdminMessage
 
 case class AddAlias(collection: String = SolrAdminActor.collection, alias: String = SolrAdminActor.alias) extends SolrAdminMessage
 
