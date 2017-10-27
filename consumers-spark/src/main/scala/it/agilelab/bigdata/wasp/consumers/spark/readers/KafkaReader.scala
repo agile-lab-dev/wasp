@@ -8,13 +8,15 @@ import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.AvroToJsonUtil.logger
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, SimpleUnionJsonEncoder}
+import it.agilelab.bigdata.wasp.core.utils._
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -50,7 +52,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
       logger.info("ss.readStream")
       // create the stream
-      val r: DataFrame = ss.readStream
+      val df: DataFrame = ss.readStream
         .format("kafka")
         .option("subscribe", topic.name)
         .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
@@ -58,23 +60,33 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .load()
 
       // prepare the udf
-      val avroToJson: Array[Byte] => String = AvroToJsonUtil.avroToJson
       val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
 
       import org.apache.spark.sql.functions._
-      val avroToJsonUDF = udf(avroToJson)
+
       val byteArrayToJsonUDF = udf(byteArrayToJson)
 
-      val ret = topic.topicDataType match {
-        case "avro" => r.withColumn("value_parsed", avroToJsonUDF(col("value")))
-        case "json" => r.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
-        case _ => r.withColumn("value_parsed", avroToJsonUDF(col("value")))
-      }
+      val ret: DataFrame = topic.topicDataType match {
+        case "avro" => {
+          val rowConverter = AvroToRow(topic.getJsonSchema)
+          val encoderForDataColumns = RowEncoder(rowConverter.getSchemaSpark().asInstanceOf[StructType])
+          df.select("value").map((r: Row) => {
+            val avroByteValue = r.getAs[Array[Byte]](0)
+            rowConverter.read(avroByteValue)
+          })(encoderForDataColumns)
 
+        }
+        case "json" => {
+          df.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
+            .drop("value")
+            .select(from_json(col("value_parsed"), schemaB.value).alias("value"))
+            .select(col("value.*"))
+        }
+        case _ => throw new Exception(s"No such topic data type ${topic.topicDataType}")
+      }
+      logger.info(s"Kafka reader avro schema: ${new Schema.Parser().parse(topic.getJsonSchema).toString(true)}")
+      logger.info(s"Kafka reader spark schema: ${ret.schema.treeString}")
       ret
-        .drop("value")
-        .select(from_json(col("value_parsed"), schemaB.value).alias("value"))
-        .select(col("value.*"))
 
     } else {
       logger.error(s"Topic not found on Kafka: $topic")
