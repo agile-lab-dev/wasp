@@ -19,7 +19,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
 import org.json4s.jackson.Json
-import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.{BsonDocument, BsonValue}
 
 import scala.util.parsing.json.JSON
 
@@ -65,7 +65,7 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               indexName,
-              index.schema.get.get("properties").asDocument.toJson,
+              index.getJsonSchema,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
@@ -121,7 +121,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               index.name,
-              index.schema.get.get("properties").asDocument.toJson,
+              index.getJsonSchema,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
@@ -207,7 +207,7 @@ class SolrSparkWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               indexName,
-              index.schema.get.get("properties").asArray().toString,
+              index.getJsonSchema,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
