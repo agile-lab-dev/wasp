@@ -121,7 +121,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               index.name,
-              index.schema.get.get("properties").asArray().toString,
+              index.schema.get.get("properties").asDocument.toJson,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
