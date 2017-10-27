@@ -68,7 +68,7 @@ class SolrSparkStreamingWriter(indexBL: IndexBL,
             solrAdminActor,
             CheckOrCreateCollection(
               indexName,
-              index.schema.get.get("properties").asJavaScript().toString,
+              index.schema.get.get("properties").asString().getValue,
               index.numShards.getOrElse(1),
               index.replicationFactor.getOrElse(1))
           )) {
