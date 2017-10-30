@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
@@ -27,7 +27,7 @@ object BatchMasterGuardian {
 class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL;  val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL; val batchSchedulerBL: BatchSchedulersBL},
                           val classLoader: Option[ClassLoader] = None,
                           sparkWriterFactory: SparkWriterFactory,
-                          plugins: Map[String, WaspConsumerSparkPlugin])
+                          plugins: Map[String, WaspConsumersSparkPlugin])
   extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration with Logging {
   import BatchMasterGuardian._
   

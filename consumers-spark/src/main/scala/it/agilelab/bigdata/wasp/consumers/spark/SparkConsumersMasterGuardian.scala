@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark
 
 import akka.actor.{ActorRef, Props}
 import akka.pattern.gracefulStop
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
@@ -29,7 +29,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                                    sparkWriterFactory: SparkWriterFactory,
                                    streamingReader: StreamingReader,
                                    structuredStreamingReader: StructuredStreamingReader,
-                                   plugins: Map[String, WaspConsumerSparkPlugin])
+                                   plugins: Map[String, WaspConsumersSparkPlugin])
     extends BaseConsumersMasterGuadian(env)
     with SparkStreamingConfiguration
     with WaspConfiguration {

@@ -2,9 +2,9 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
 import java.net.URI
 
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.{RawBL, RawBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{RawModel, WriterModel}
@@ -16,7 +16,7 @@ import org.apache.spark.streaming.StreamingContext
 /**
   * Created by Agile Lab s.r.l. on 05/09/2017.
   */
-class RawConsumerSpark extends WaspConsumerSparkPlugin with Logging {
+class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var rawBL: RawBL = _
 
   override def initialize(waspDB: WaspDB): Unit = {
@@ -24,24 +24,24 @@ class RawConsumerSpark extends WaspConsumerSparkPlugin with Logging {
     rawBL = new RawBLImp(waspDB)
   }
 
-  override def getSparkStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkStreamingWriter = {
+  override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize HDFSSparkStreamingWriter with this model: $writerModel")
-    new HDFSSparkStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), ssc)
+    new RawSparkLegacyStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), ssc)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
     logger.info(s"Initialize HDFSSparkStructuredStreamingWriter with this model: $writerModel")
-    new HDFSSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), ss)
+    new RawSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), ss)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     logger.info(s"Initialize HDFSSparkWriter with this model: $writerModel")
-    new HDFSSparkWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), sc)
+    new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), sc)
   }
 
-  override def getSparkReader(id: String, name: String): StaticReader = {
+  override def getSparkReader(id: String, name: String): SparkReader = {
     logger.info(s"Initialize HDFSReader with this id: '$id' and name: '$name'")
-    new HDFSReader(getModelAndChekHdfsSchema(id))
+    new RawSparkReader(getModelAndChekHdfsSchema(id))
   }
 
   private def getModelAndChekHdfsSchema(id: String): RawModel = {
