@@ -328,9 +328,6 @@ class StructuredStreamingETLActor(env: {
     val completeMapOfDFs
       : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
 
-    // TODO debug
-    completeMapOfDFs.map(x => x._2.show())
-
     val output = strategyBroadcast.value.transform(completeMapOfDFs)
     writerType.getActualProduct match {
       case "kafka" => output
