@@ -313,6 +313,14 @@ class LegacyStreamingETLActor(env: {
           case "kafka" => output.toJSON.rdd
           case _       => {
             val newOutput = output.select(MetadataUtils.flattenSchema(df.schema, None): _*)
+
+//            newOutput
+//              .withColumnRenamed("id", "metadata.id")
+//              .withColumnRenamed("sourceId", "metadata.sourceId")
+//              .withColumnRenamed("arrivalTimestamp", "metadata.arrivalTimestamp")
+//              .withColumnRenamed("lastSeenTimestamp", "metadata.lastSeenTimestamp")
+//              .withColumnRenamed("path", "metadata.path")
+
             newOutput.printSchema()
             newOutput.show()
             newOutput.toJSON.rdd

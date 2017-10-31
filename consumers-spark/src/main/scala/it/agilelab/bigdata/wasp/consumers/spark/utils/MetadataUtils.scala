@@ -16,7 +16,7 @@ object MetadataUtils {
 
       f.dataType match {
         case st: StructType => flattenSchema(st, Some(colName))
-        case _              => Array(col(colName))
+        case _              => Array(col(colName).alias(colName))
       }
     })
   }
