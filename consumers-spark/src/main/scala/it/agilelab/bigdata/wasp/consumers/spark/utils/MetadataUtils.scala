@@ -12,7 +12,7 @@ object MetadataUtils {
                     prefix: Option[String]): Array[Column] = {
     schema.fields.flatMap(f => {
       val colName =
-        if (prefix.isEmpty) f.name else (prefix + "." + f.name)
+        if (prefix.isEmpty) f.name else (prefix.getOrElse("") + "." + f.name)
 
       f.dataType match {
         case st: StructType => flattenSchema(st, Some(colName))

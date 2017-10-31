@@ -32,11 +32,11 @@ object IndexModel {
   """
 
   val metadata_solr = """
-    {"name": "id", "type": "string", "stored":true },
-    {"name": "sourceId", "type": "string", "stored":true },
-    {"name": "arrivalTimestamp", "type": "tlong", "stored":true},
-    {"name": "lastSeenTimestamp", "type": "tlong", "stored":true},
-    {"name": "path", "type": "string", "store":"true", "multiValued":"true"}
+    {"name": "metadata.id", "type": "string", "stored":true },
+    {"name": "metadata.sourceId", "type": "string", "stored":true },
+    {"name": "metadata.arrivalTimestamp", "type": "tlong", "stored":true},
+    {"name": "metadata.lastSeenTimestamp", "type": "tlong", "stored":true},
+    {"name": "metadata.path", "type": "string", "store":"true", "multiValued":"true"}
   """
 
   val schema_base_solr = """
