@@ -23,7 +23,7 @@ object Versions {
 	val quartz = "2.3.0"
 	val play = "2.4.8"
 	val scala = "2.11.11"
-	val scalaTest = "2.2.5"
+	val scalaTest = "3.0.4"
 	val slf4j = "1.7.12"
 	val solrSpark = "1.1.0-spark-2.2-scala-2.11"
 	val solr = "4.10.3-cdh5.12.1"

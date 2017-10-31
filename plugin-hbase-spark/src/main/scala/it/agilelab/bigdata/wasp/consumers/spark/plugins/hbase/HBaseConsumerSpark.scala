@@ -4,9 +4,8 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, Props}
 import akka.util.Timeout
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumerSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StaticReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{KeyValueBL, KeyValueBLImp}
@@ -14,13 +13,14 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.WriterModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
 
 
 /**
   * Created by Agile Lab s.r.l. on 05/09/2017.
   */
-class HBaseConsumerSpark extends WaspConsumerSparkPlugin with Logging {
+class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   var keyValueBL: KeyValueBL = _
   var hbaseAdminActor_ : ActorRef = _
 
@@ -36,10 +36,17 @@ class HBaseConsumerSpark extends WaspConsumerSparkPlugin with Logging {
     implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
     startupHBase(servicesTimeoutMillis)
   }
+  private def startupHBase(wasptimeout: Long)(implicit timeout: Timeout): Unit = {
 
-  override def getSparkStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkStreamingWriter = {
+  }
+
+  override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
     HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, writerModel.endpointId.getValue.toHexString)
+  }
+
+  override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel): SparkStructuredStreamingWriter = {
+
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
@@ -47,13 +54,11 @@ class HBaseConsumerSpark extends WaspConsumerSparkPlugin with Logging {
     HBaseWriter.createSparkWriter(keyValueBL, sc, writerModel.endpointId.getValue.toHexString)
   }
 
-  override def getSparkReader(id: String, name: String): StaticReader = {
+  override def getSparkReader(id: String, name: String) = {
     throw new NotImplementedError("The HBase SparkReader")
   }
 
-  private def startupHBase(wasptimeout: Long)(implicit timeout: Timeout): Unit = {
-
-  }
 
   override def pluginType: String = "hbase"
+
 }

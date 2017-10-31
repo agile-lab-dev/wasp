@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
 import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.RowToAvro
@@ -17,10 +17,8 @@ import org.apache.spark.streaming.dstream.DStream
 import spray.json.{DefaultJsonProtocol, JsonParser, RootJsonFormat}
 import it.agilelab.bigdata.wasp.core.utils.JsonOps._
 import spray.json._
-import DefaultJsonProtocol._
-import org.apache.hadoop.hbase.spark.HBaseContext
 
-import scala.concurrent.Await
+
 
 
 
@@ -32,7 +30,7 @@ case class InfoCol(col: Option[String], `type`: Option[String],  mappingType: St
 
 object HBaseWriter extends JsonSupport {
 
-	def createSparkStreamingWriter(keyValueBL: KeyValueBL, ssc: StreamingContext, id: String): Option[SparkStreamingWriter] = {
+	def createSparkStreamingWriter(keyValueBL: KeyValueBL, ssc: StreamingContext, id: String): Option[SparkLegacyStreamingWriter] = {
 		// if we find the model, try to return the correct reader
 		val hbaseModelOpt = getModel(keyValueBL, id)
 		if (hbaseModelOpt.isDefined) {

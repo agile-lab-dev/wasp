@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers
 
-import it.agilelab.bigdata.wasp.consumers.writers._
+
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase.HBaseWriter
 import it.agilelab.bigdata.wasp.core.models.KeyValueModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, RowToAvro}
 import org.apache.avro.Schema
@@ -14,7 +15,7 @@ import org.scalatest.{BeforeAndAfter, _}
 /**
   * Created by mattiabertorello on 27/01/17.
   */
-/*
+
 case class DataTestClass(d1s: String, d2ts: Long)
 
 class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter   {
@@ -23,6 +24,7 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
 
   it should "convert the json schema" in {
 
+/*
     val r: HbaseTableModel = HBaseWriter.getHbaseConfDataConvert(
       """
         |{
@@ -175,10 +177,9 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
     //Bytes.toString(put.get(Bytes.toBytes("cf1"), Bytes.toBytes("HBcol1")).get(0).getValueArray) shouldBe "testValue"
     put.get(Bytes.toBytes("cf1"), Bytes.toBytes("HBcol210")).get(0).getValue.length > 0 shouldBe true
     AvroToJsonUtil.avroToJson(put.get(Bytes.toBytes("cf1"), Bytes.toBytes("HBcol210")).get(0).getValue) shouldBe "{\"col_df\":\"testValue2\",\"col_ts\":10}"
-
+*/
   }
 
 
 
 }
-*/

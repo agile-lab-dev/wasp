@@ -1,21 +1,18 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
-import akka.actor.{Actor, actorRef2Scala}
-import it.agilelab.bigdata.wasp.core.logging.WaspLogger
-import it.agilelab.bigdata.wasp.core.models.configuration.ElasticConfigModel
-import org.elasticsearch.action.search.SearchResponse
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings.ImmutableSettings
-import org.elasticsearch.common.transport.InetSocketTransportAddress
+import akka.actor.Actor
+import it.agilelab.bigdata.wasp.core.logging.Logging
+
+
 
 object HBaseAdminActor {
 
   val name = "HBaseAdminActor"
 }
 
-class HBaseAdminActor extends Actor {
+class HBaseAdminActor extends Actor with Logging {
 
-  val logger = WaspLogger(classOf[HBaseAdminActor])
+
 
   def receive: Actor.Receive = {
 

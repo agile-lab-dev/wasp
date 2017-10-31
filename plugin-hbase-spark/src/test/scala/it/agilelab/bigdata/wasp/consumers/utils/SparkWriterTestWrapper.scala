@@ -1,5 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.utils
-
+/*
 import it.agilelab.bigdata.wasp.consumers.readers.StreamingReader
 import it.agilelab.bigdata.wasp.consumers.writers.{SparkStreamingWriter, SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
@@ -79,5 +79,5 @@ class StreamingReaderTestWrapper(sc: SparkContext) extends StreamingReader {
     lines += sc.makeRDD(data)
   }
 
-
+*/
 }
