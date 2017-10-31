@@ -11,7 +11,7 @@ object MetadataUtils {
   def flatMetadataSchema(schema: StructType,
                          prefix: Option[String]): Array[Column] = {
     schema.fields.flatMap(f => {
-      if (f.name == "metadata") {
+      if (f.name == "metadata" || prefix == "metadata") {
         val colName =
           if (prefix.isEmpty) f.name else (prefix.getOrElse("") + "." + f.name)
 
