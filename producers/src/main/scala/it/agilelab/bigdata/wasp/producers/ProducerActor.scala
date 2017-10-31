@@ -33,9 +33,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
         "arrivalTimestamp" -> JsNumber(0L),
         "lastSeenTimestamp" -> JsNumber(0L),
         "path" -> JsArray(v)))
-    }
-
-    else {
+    } else {
       logger.warn("Attention! Has been defined a metadata field that the framework uses internally")
       res
     }
