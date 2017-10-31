@@ -4,10 +4,16 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
+import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{
+  MlModelsBroadcastDB,
+  MlModelsDB
+}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{
+  SparkReader,
+  StructuredStreamingReader
+}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
@@ -15,9 +21,15 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, StopProcessingComponent}
+import it.agilelab.bigdata.wasp.core.messages.{
+  OutputStreamInitialized,
+  StopProcessingComponent
+}
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.{
+  ConfigManager,
+  SparkStreamingConfiguration
+}
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -233,7 +245,8 @@ class StructuredStreamingETLActor(env: {
         transform(topicStreamWithKey._1,
                   topicStreamWithKey._2,
                   dataStoreDFs,
-                  strategy)
+                  strategy,
+                  structuredStreamingETL.output.writerType)
       } else {
         topicStreamWithKey._2
       }
@@ -289,16 +302,16 @@ class StructuredStreamingETLActor(env: {
 
         if (mId == "")
           Metadata(UUID.randomUUID().toString,
-            mSourceId,
-            now,
-            now,
-            Seq(Path(etlName, now)).toArray)
+                   mSourceId,
+                   now,
+                   now,
+                   Seq(Path(etlName, now)).toArray)
         else
           Metadata(mId,
-            mSourceId,
-            mArrivalTimestamp,
-            now,
-            (mPath :+ Path(etlName, now)).toArray)
+                   mSourceId,
+                   mArrivalTimestamp,
+                   now,
+                   (mPath :+ Path(etlName, now)).toArray)
       })
 
     //update values in field metadata
@@ -306,10 +319,10 @@ class StructuredStreamingETLActor(env: {
       .withColumn(
         "metadata",
         updateMetadata(col("metadata.id"),
-          col("metadata.sourceId"),
-          col("metadata.arrivalTimestamp"),
-          col("metadata.lastSeenTimestamp"),
-          col("metadata.path"))
+                       col("metadata.sourceId"),
+                       col("metadata.arrivalTimestamp"),
+                       col("metadata.lastSeenTimestamp"),
+                       col("metadata.path"))
       )
 
     val completeMapOfDFs
@@ -321,7 +334,8 @@ class StructuredStreamingETLActor(env: {
     val output = strategyBroadcast.value.transform(completeMapOfDFs)
     writerType.getActualProduct match {
       case "kafka" => output
-      case _       => output.select(MetadataUtils.flattenSchema(stream.schema, None): _*)
+      case _ =>
+        output.select(MetadataUtils.flattenSchema(stream.schema, None): _*)
     }
   }
 
