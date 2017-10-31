@@ -103,9 +103,10 @@ case class RawModel(override val name: String,
 	*/
 case class RawOptions(saveMode: String,
                       format: String,
-                      extraOptions: Option[Map[String, String]],
-                      partitionBy: Option[List[String]])
+                      extraOptions: Option[Map[String, String]] = None,
+                      partitionBy: Option[List[String]] = None)
 
 object RawOptions {
-	val default = RawOptions("default", "parquet", None, None)
+	val default = RawOptions("default", "parquet")
+	val defaultAppend = RawOptions("append", "parquet")
 }
