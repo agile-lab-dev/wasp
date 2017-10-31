@@ -20,7 +20,7 @@ object MetadataUtils {
           case _ => Array(col(colName).alias(colName))
         }
       } else {
-        Array.empty[Column]
+        Array(col(f.name))
       }
     })
   }
