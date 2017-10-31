@@ -12,7 +12,7 @@ object Versions {
 //	val elasticSearchSpark = "5.6.2"
 	val elasticSearchSpark = "6.0.0-rc1"
 	val hbase = "1.2.0-cdh5.9.1"
-	val jdk = "1.7"
+	val jdk = "1.8"
 	val jodaConvert = "1.8.1"
 	val jodaTime = "2.8.2"
 	val json4s = "3.2.10"

@@ -74,8 +74,7 @@ public class SimpleUnionJsonEncoder extends ParsingEncoder implements Parser.Act
             DefaultPrettyPrinter pp = new DefaultPrettyPrinter() {
                 //@Override
                 public void writeRootValueSeparator(JsonGenerator jg)
-                        throws IOException
-                {
+                        throws IOException {
                     jg.writeRaw(LINE_SEPARATOR);
                 }
             };
@@ -97,10 +96,9 @@ public class SimpleUnionJsonEncoder extends ParsingEncoder implements Parser.Act
      * reconfigure its output to use a default UTF8 JsonGenerator that writes
      * to the provided OutputStream.
      *
-     * @param out
-     *          The OutputStream to direct output to. Cannot be null.
-     * @throws IOException
+     * @param out The OutputStream to direct output to. Cannot be null.
      * @return this JsonEncoder
+     * @throws IOException
      */
     public SimpleUnionJsonEncoder configure(OutputStream out) throws IOException {
         this.configure(getJsonGenerator(out, false));
@@ -115,10 +113,9 @@ public class SimpleUnionJsonEncoder extends ParsingEncoder implements Parser.Act
      * Otherwise, this JsonEncoder will flush its current output and then
      * reconfigure its output to use the provided JsonGenerator.
      *
-     * @param generator
-     *          The JsonGenerator to direct output to. Cannot be null.
-     * @throws IOException
+     * @param generator The JsonGenerator to direct output to. Cannot be null.
      * @return this JsonEncoder
+     * @throws IOException
      */
     public SimpleUnionJsonEncoder configure(JsonGenerator generator) throws IOException {
         if (null == generator)
@@ -239,7 +236,7 @@ public class SimpleUnionJsonEncoder extends ParsingEncoder implements Parser.Act
 
     @Override
     public void writeArrayEnd() throws IOException {
-        if (! isEmpty.get(pos)) {
+        if (!isEmpty.get(pos)) {
             parser.advance(Symbol.ITEM_END);
         }
         pop();
@@ -258,7 +255,7 @@ public class SimpleUnionJsonEncoder extends ParsingEncoder implements Parser.Act
 
     @Override
     public void writeMapEnd() throws IOException {
-        if (! isEmpty.get(pos)) {
+        if (!isEmpty.get(pos)) {
             parser.advance(Symbol.ITEM_END);
         }
         pop();
@@ -269,7 +266,7 @@ public class SimpleUnionJsonEncoder extends ParsingEncoder implements Parser.Act
 
     @Override
     public void startItem() throws IOException {
-        if (! isEmpty.get(pos)) {
+        if (!isEmpty.get(pos)) {
             parser.advance(Symbol.ITEM_END);
         }
         super.startItem();

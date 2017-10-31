@@ -191,10 +191,7 @@ object Dependencies {
 			elasticSearchSpark
 		)
 
-	val plugin_hbase_spark =
-		Seq(
-			hbase
-		)
+	val plugin_hbase_spark = hbase
 
 	val plugin_solr_spark =
 		Seq(

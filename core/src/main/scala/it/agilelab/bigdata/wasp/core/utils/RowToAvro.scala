@@ -9,6 +9,7 @@ import org.apache.avro.Schema.Type
 import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.{DecoderFactory, EncoderFactory}
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
@@ -53,11 +54,12 @@ case class RowToAvro(schema: StructType,
   def write(row: Row): Array[Byte] = {
     val output = new ByteArrayOutputStream()
     val value: GenericRecord = converter(row).asInstanceOf[GenericRecord]
-    val writer = new DataFileWriter(new GenericDatumWriter[GenericRecord]())
-    //TODO con questo metodo viene integrato lo schema avro in ogni row sarebbe meglio toglierlo
-    writer.create(actualSchema, output)
-    writer.append(value)
-    writer.flush()
+
+    val encoder = EncoderFactory.get.binaryEncoder(output, null)
+    val writer =new GenericDatumWriter[GenericRecord](actualSchema)
+    writer.write(value, encoder)
+
+    encoder.flush()
     output.toByteArray
 
   }

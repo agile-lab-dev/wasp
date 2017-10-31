@@ -14,6 +14,7 @@ import org.scalatest.{BeforeAndAfter, _}
 /**
   * Created by mattiabertorello on 27/01/17.
   */
+/*
 case class DataTestClass(d1s: String, d2ts: Long)
 
 class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter   {
@@ -180,3 +181,4 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
 
 
 }
+*/

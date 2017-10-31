@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.readers
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
+import it.agilelab.bigdata.wasp.core.SystemPipegraphs.rawTopic
 import it.agilelab.bigdata.wasp.core.{RawTopic, WaspSystem}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
@@ -136,16 +137,16 @@ object KafkaReader extends StreamingReader with Logging {
               StorageLevel.MEMORY_AND_DISK_2
             )
       }
-
+      val topicSchema = JsonConverter.toString(topic.schema.asDocument())
       topic.topicDataType match {
         case "avro" =>
-          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2))).map(_._2)
+          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)
         case "json" =>
           receiver
             .map(x => (x._1, JsonToByteArrayUtil.byteArrayToJson(x._2)))
             .map(_._2)
         case _ =>
-          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2))).map(_._2)
+          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)
       }
 
     } else {
