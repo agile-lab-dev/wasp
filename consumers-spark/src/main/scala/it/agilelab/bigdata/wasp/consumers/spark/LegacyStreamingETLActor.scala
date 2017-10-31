@@ -309,9 +309,6 @@ class LegacyStreamingETLActor(env: {
         val completeMapOfDFs
           : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
-        // TODO debug
-        completeMapOfDFs.map(x => x._2.show())
-
         val output = strategyBroadcast.value.transform(completeMapOfDFs)
 
         //if writer is kafka metadata remain struct, in other case field metadata is expanse.

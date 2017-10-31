@@ -326,7 +326,7 @@ class StructuredStreamingETLActor(env: {
       )
 
     val completeMapOfDFs
-      : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
+      : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
     val output = strategyBroadcast.value.transform(completeMapOfDFs)
     writerType.getActualProduct match {
