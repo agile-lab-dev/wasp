@@ -311,7 +311,12 @@ class LegacyStreamingETLActor(env: {
         //if writer is kafka metadata remain struct, in other case field metadata is expanse.
         writerType.getActualProduct match {
           case "kafka" => output.toJSON.rdd
-          case _       => output.select(MetadataUtils.flattenSchema(df.schema, None): _*).toJSON.rdd
+          case _       => {
+            val newOutput = output.select(MetadataUtils.flattenSchema(df.schema, None): _*)
+            newOutput.printSchema()
+            newOutput.show()
+            newOutput.toJSON.rdd
+          }
         }
 
       } else {
