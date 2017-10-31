@@ -332,7 +332,7 @@ class StructuredStreamingETLActor(env: {
     writerType.getActualProduct match {
       case "kafka" => output
       case _ =>
-        output.select(MetadataUtils.flattenSchema(stream.schema, None): _*)
+        output.select(MetadataUtils.flatMetadataSchema(stream.schema, None): _*)
     }
   }
 
