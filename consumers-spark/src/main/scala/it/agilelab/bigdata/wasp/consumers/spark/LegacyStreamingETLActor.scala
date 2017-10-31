@@ -4,10 +4,16 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
+import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{
+  MlModelsBroadcastDB,
+  MlModelsDB
+}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{
+  SparkReader,
+  StreamingReader
+}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
@@ -311,11 +317,11 @@ class LegacyStreamingETLActor(env: {
         //if writer is kafka metadata remain struct, in other case field metadata is expanse.
         writerType.getActualProduct match {
           case "kafka" => output.toJSON.rdd
-          case _       => {
-            val newOutput = output.select(MetadataUtils.flatMetadataSchema(df.schema, None): _*)
-            newOutput.printSchema()
-            newOutput.show()
-            newOutput.toJSON.rdd
+          case _ => {
+            output
+              .select(MetadataUtils.flatMetadataSchema(df.schema, None): _*)
+              .toJSON
+              .rdd
           }
         }
 
