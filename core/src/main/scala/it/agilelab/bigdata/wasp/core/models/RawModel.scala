@@ -5,9 +5,9 @@ import org.mongodb.scala.bson.BsonObjectId
 object RawModel{
 	val metadata = """
     {"name": "id", "type":"string", "nullable":false, "metadata":{}},
-    {"name": "sourceId", "type":"string", "nullable":false, "metadata":{} },
-    {"name": "arrivalTimestamp", "type":"tlong", "nullable":false, "metadata":{}},
-    {"name": "lastSeenTimestamp", "type":"tlong", "nullable":false, "metadata":{}},
+    {"name": "sourceId", "type":"string", "nullable":false, "metadata":{}},
+    {"name": "arrivalTimestamp", "type":"long", "nullable":false, "metadata":{}},
+    {"name": "lastSeenTimestamp", "type":"long", "nullable":false, "metadata":{}},
     {"name": "path", "type":"string", "nullable":false, "metadata":{}}
   """
 
