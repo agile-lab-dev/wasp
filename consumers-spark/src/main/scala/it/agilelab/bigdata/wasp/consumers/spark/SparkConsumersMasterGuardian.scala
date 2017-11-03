@@ -155,8 +155,14 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
         }
       }
   
-      // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
-      logger.info(s"SparkConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
+      if (numberOfReadyComponents == getTargetNumberOfReadyComponents) {
+        // all component actors registered; finish startup
+        logger.info(s"All $numberOfReadyComponents consumer child actors are already running! Continuing startup sequence...")
+        finishStartup()
+      } else {
+        // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
+        logger.info(s"SparkConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
+      }
     }
   }
   
@@ -206,11 +212,11 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     }
   
     // gracefully stop all component actors corresponding to legacy components
-    logger.info(s"Gracefully stopping all ${lsComponentActors.size} legacy streaming component actors...")
+    logger.info(s"Gracefully stopping ${lsComponentActors.size} legacy streaming component actors...")
     val generalTimeoutDuration = generalTimeout.duration
     val legacyStreamingStatuses = lsComponentActors.values.map(gracefulStop(_, generalTimeoutDuration))
   
-    // find and stop all StructuredStreamingETLActors belonging to pipegraphs that are no longer active
+    // gracefully stop all StructuredStreamingETLActors belonging to pipegraphs that are no longer active
     // get the component names for all components of all active pipegraphs
     val activeStructuredStreamingComponentNames = getActivePipegraphsToComponentsMap flatMap {
       case (pipegraph, (_, sseComponents, _)) => {
