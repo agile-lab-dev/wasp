@@ -2,7 +2,8 @@ package it.agilelab.bigdata.wasp.core.launcher
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
+import org.apache.commons.cli.{CommandLine, Option => CliOption}
 
 
 trait WaspLauncher {
@@ -19,25 +20,17 @@ trait WaspLauncher {
                      /_/
 								               """.format(version)
 
-	// TODO write usage information (when command line switches are somewhat definitive)
-	val usage: String = """Usage:
-			TODO!
-		          """.stripMargin
-
 	var waspDB: WaspDB = _
 
 	def main(args: Array[String]) {
-		// TODO switch to commons-cli & make options extensible
-		val options = new WaspOptions(args)
+		// parse command line
+		val commandLine = CliUtils.parseArgsList(args, WaspOptions.allOptions ++ getCustomOptions())
 
-		// handle error, version & help
-		if (options.error) {
-			val value = options.errorValue
-			printErrorAndExit(s"Unrecognized option '$value'.")
-		} else if (options.version) {
+		// handle version & help
+		if (commandLine.hasOption(WaspOptions.version.getOpt)) {
 			printVersionAndExit()
-		} else if (options.help) {
-			printUsageAndExit()
+		} else if (commandLine.hasOption(WaspOptions.help.getOpt)) {
+			printHelpAndExit()
 		}
 
 		// print banner and build info
@@ -50,7 +43,7 @@ trait WaspLauncher {
 		initializePlugins(args)
 
 		// launch the application
-		launch(args)
+		launch(commandLine)
 	}
 
 	def initializeWasp(): Unit = {
@@ -74,8 +67,8 @@ trait WaspLauncher {
 		System.exit(0)
 	}
 
-	private def printUsageAndExit(): Unit = {
-		println(usage)
+	private def printHelpAndExit(): Unit = {
+		CliUtils.printHelpForOptions(WaspOptions.allOptions ++ getCustomOptions())
 		System.exit(0)
 	}
 	
@@ -94,8 +87,9 @@ trait WaspLauncher {
 		println(s"This is WASP node $getNodeName")
 	}
 	
-	def launch(args: Array[String]): Unit
-
+	protected def launch(commadLine: CommandLine): Unit
+	
+	protected def getCustomOptions: Seq[CliOption]
 
 	/**
 		* Initialize the WASP plugins, this method is called after the wasp initialization
