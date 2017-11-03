@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.master.launcher
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpResponse
@@ -10,7 +12,7 @@ import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
-import it.agilelab.bigdata.wasp.core.utils.{WaspConfiguration, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, MongoDBHelper, WaspConfiguration, WaspDB}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
@@ -19,6 +21,9 @@ import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.httpResponseJson
 import org.apache.commons.lang3.exception.ExceptionUtils
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 /**
 	* Launcher for the MasterGuardian and REST API.
 	* This trait is useful for who want extend the launcher
@@ -26,6 +31,18 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 	*/
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
 	override def launch(args: Array[String]): Unit = {
+		// parse command line
+		val options = parseCommandLine(args.toList)
+		
+		// drop db if needed
+		if (options.dropDb) {
+			val config = ConfigManager.getMongoDBConfig
+			logger.info(s"Dropping MongoDB database ${config.databaseName}")
+			val mongoDb = MongoDBHelper.getDatabase(config)
+			val dropFuture = mongoDb.drop().toFuture()
+			Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
+		}
+		
 		// add system pipegraphs
 		addSystemPipegraphs()
 		
@@ -90,6 +107,15 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 	}
 	
 	override def getNodeName: String = "master"
+	
+	private case class Options(dropDb: Boolean = false)
+	
+	private def parseCommandLine(args: List[String], options: Options = Options()): Options = {
+		args match {
+			case "--drop-db" :: tail => parseCommandLine(tail, options.copy(dropDb = true))
+			case Nil => options
+		}
+	}
 }
 
 /**
