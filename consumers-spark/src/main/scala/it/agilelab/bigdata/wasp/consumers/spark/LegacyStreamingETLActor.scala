@@ -295,6 +295,9 @@ class LegacyStreamingETLActor(env: {
                        (mPath :+ Path(etlName, now)).toArray)
           })
 
+        // TODO check if metadata exists
+        // TODO improve flatMetadataSchema functions
+
         //update values in field metadata
         var dataframeToTransform = df
           .withColumn(
