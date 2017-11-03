@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import it.agilelab.bigdata.wasp.core.models.TopicModel.{generate, metadata}
 import org.mongodb.scala.bson.BsonObjectId
-
-
 
 object RawModel{
 	val metadata = """
@@ -73,7 +70,7 @@ case class RawModel(override val name: String,
                     timed: Boolean = true,
                     schema: String,
                     options: RawOptions = RawOptions.default,
-                    _id: Option[BsonObjectId] = None) extends Model
+                    _id: Option[String] = None) extends Model
 
 // TODO external scaladocs links
 /**
@@ -107,6 +104,6 @@ case class RawOptions(saveMode: String,
                       partitionBy: Option[List[String]] = None)
 
 object RawOptions {
-	val default = RawOptions("default", "parquet")
-	val defaultAppend = RawOptions("append", "parquet")
+	lazy val default = RawOptions("default", "parquet")
+	lazy val defaultAppend = RawOptions("append", "parquet")
 }
