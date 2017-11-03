@@ -8,7 +8,7 @@ object RawModel{
     {"name": "sourceId", "type":"string", "nullable":false, "metadata":{} },
     {"name": "arrivalTimestamp", "type":"tlong", "nullable":false, "metadata":{}},
     {"name": "lastSeenTimestamp", "type":"tlong", "nullable":false, "metadata":{}},
-    {"name": "path", "type":"string", "store":"true", nullable=false, "metadata":{}}
+    {"name": "path", "type":"string", "nullable":false, "metadata":{}}
   """
 
 	/**
