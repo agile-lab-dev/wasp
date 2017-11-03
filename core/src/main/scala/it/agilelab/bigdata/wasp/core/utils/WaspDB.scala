@@ -31,6 +31,8 @@ trait WaspDB extends MongoDBHelper {
 
   def getDocumentByID[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
+  def getDocumentByID[T](id: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
+
   def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
   def getDocumentByQueryParams[T](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
@@ -87,6 +89,9 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
     getDocumentByField[T]("_id", id)
   }
 
+  def getDocumentByID[T](id: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+    getDocumentByField[T]("_id", BsonString(id))
+  }
 
   def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     getDocumentByKey[T](field, value, lookupTable(typeTag.tpe))
