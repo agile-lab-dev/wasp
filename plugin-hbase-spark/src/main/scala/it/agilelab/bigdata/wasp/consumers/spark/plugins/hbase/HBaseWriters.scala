@@ -13,7 +13,7 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import spray.json.{DefaultJsonProtocol, RootJsonFormat, _}
@@ -133,12 +133,10 @@ trait HbaseSparkWriter {
 		if (options.isDefined && options.get.contains("core-site") && options.get.contains("hbase-site")) {
 			hBaseConfiguration.addResource(new Path(options.get("hbase.configuration.core-site")))
 			hBaseConfiguration.addResource(new Path(options.get("hbase.configuration.hbase-site")))
-		} else{
+		} else {
 			hBaseConfiguration.addResource(new Path("/etc/hbase/conf/core-site.xml"))
 			hBaseConfiguration.addResource(new Path("/etc/hbase/conf/hbase-site.xml"))
 		}
-
-
 		new HBaseContext(sc, hBaseConfiguration)
 	}
 }
@@ -147,30 +145,6 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
 	extends SparkLegacyStreamingWriter with HbaseSparkWriter {
 
 	override def write(stream: DStream[String]): Unit = {
-		// get sql context
-		val sqlContext = SQLContext.getOrCreate(ssc.sparkContext)
-
-		val hBaseContext = getHbaseContext(hbaseModel, ssc.sparkContext)
-		//TODO Write a validator of the data converter configurations
-		val hbaseDataConfig = HBaseWriter.getHbaseConfDataConvert(hbaseModel.schema)
-		val schema: StructType = DataType.fromJson(hbaseModel.dataFrameSchema).asInstanceOf[StructType]
-
-		val avroSchemas = hbaseModel.avroSchemas
-
-		//Validation
-		avroSchemas.map(_.mapValues(v => {
-			new RowToAvro(schema, v)
-		})).getOrElse(Map[String, RowToAvro]())
-
-		val hbaseTable = TableName.valueOf(s"${hbaseDataConfig.table.namespace}:${hbaseDataConfig.table.name}")
-		val rowAvroConverters: Map[String, RowToAvro] = avroSchemas.map(_.mapValues(v => {
-			new RowToAvro(schema, v)
-		})).getOrElse(Map[String, RowToAvro]()).map(identity).toMap
-
-
-		val conversionFunction: (Row) => Put = HBaseWriter.getConvertPutFunc(hbaseDataConfig, rowAvroConverters)
-
-		hBaseContext.streamBulkPut(stream, hbaseTable, conversionFunction)
 	}
 }
 
@@ -188,8 +162,10 @@ class HBaseWriter(hbaseModel: KeyValueModel,
 		val hbaseTable = TableName.valueOf(s"${hbaseDataConfig.table.namespace}:${hbaseDataConfig.table.name}")
 		val schema: StructType = DataType.fromJson(hbaseModel.dataFrameSchema).asInstanceOf[StructType]
 
-		hBaseContext
-		.
+
+		df.write.options(hbaseModel.options.getOrElse(Map()))
+			.format("hbase")
+			.save()
 	}
 }
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {

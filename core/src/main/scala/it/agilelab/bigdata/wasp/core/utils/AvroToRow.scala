@@ -1,15 +1,9 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-
 import org.apache.avro.Schema
-import org.apache.avro.file.{DataFileReader, DataFileWriter}
-import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.io.BinaryDecoder
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.DecoderFactory
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types.{DataType, StructType}

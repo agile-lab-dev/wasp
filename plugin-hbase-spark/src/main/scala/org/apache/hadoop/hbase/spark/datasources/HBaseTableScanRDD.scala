@@ -33,8 +33,8 @@ import scala.collection.mutable
 
 @InterfaceAudience.Private
 class HBaseTableScanRDD(relation: HBaseRelation,
-                       val hbaseContext: HBaseContext,
-                       @transient val filter: Option[SparkSQLPushDownFilter] = None,
+                        val hbaseContext: HBaseContext,
+                        //@transient val filter: Option[SparkSQLPushDownFilter] = None,
                         val columns: Seq[Field] = Seq.empty
      )extends RDD[Result](relation.sqlContext.sparkContext, Nil) with Logging  {
   private def sparkConf = SparkEnv.get.conf
@@ -82,7 +82,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
           rs.foreach(x => logDebug(x.toString))
         }
         idx += 1
-        Some(HBaseScanPartition(idx - 1, x, rs, ps, SerializedFilter.toSerializedTypedFilter(filter)))
+        Some(HBaseScanPartition(idx - 1, x, rs, ps, SerializedFilter(None))) // SerializedFilter.toSerializedTypedFilter(filter)))
       } else {
         None
       }
@@ -105,7 +105,6 @@ class HBaseTableScanRDD(relation: HBaseRelation,
   private def buildGets(
       tbr: TableResource,
       g: Seq[Array[Byte]],
-      filter: Option[SparkSQLPushDownFilter],
       columns: Seq[Field],
       hbaseContext: HBaseContext): Iterator[Result] = {
     g.grouped(relation.bulkGetSize).flatMap{ x =>
@@ -118,7 +117,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
             g.addColumn(d.cfBytes, d.colBytes)
           }
         }
-        filter.foreach(g.setFilter(_))
+        //filter.foreach(g.setFilter(_))
         gets.add(g)
       }
       hbaseContext.applyCreds()
@@ -156,8 +155,8 @@ class HBaseTableScanRDD(relation: HBaseRelation,
   }
 
   private def buildScan(range: Range,
-      filter: Option[SparkSQLPushDownFilter],
-      columns: Seq[Field]): Scan = {
+                        //filter: Option[SparkSQLPushDownFilter],
+                        columns: Seq[Field]): Scan = {
     val scan = (range.lower, range.upper) match {
       case (Some(Bound(a, b)), Some(Bound(c, d))) => new Scan(a, c)
       case (None, Some(Bound(c, d))) => new Scan(Array[Byte](), c)
@@ -174,7 +173,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
     scan.setCacheBlocks(relation.blockCacheEnable)
     scan.setBatch(relation.batchNum)
     scan.setCaching(relation.cacheSize)
-    filter.foreach(scan.setFilter(_))
+    //filter.foreach(scan.setFilter(_))
     scan
   }
   private def toResultIterator(scanner: ScanResource): Iterator[Result] = {
@@ -209,9 +208,9 @@ class HBaseTableScanRDD(relation: HBaseRelation,
 
   override def compute(split: Partition, context: TaskContext): Iterator[Result] = {
     val partition = split.asInstanceOf[HBaseScanPartition]
-    val filter = SerializedFilter.fromSerializedFilter(partition.sf)
+    //val filter = SerializedFilter.fromSerializedFilter(partition.sf)
     val scans = partition.scanRanges
-      .map(buildScan(_, filter, columns))
+      .map(buildScan(_, columns))
     val tableResource = TableResource(relation)
     context.addTaskCompletionListener(context => close())
     val points = partition.points
@@ -219,7 +218,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
       if (points.isEmpty) {
         Iterator.empty: Iterator[Result]
       } else {
-        buildGets(tableResource, points, filter, columns, hbaseContext)
+        buildGets(tableResource, points, columns, hbaseContext)
       }
     }
     val rIts = scans.par
@@ -272,13 +271,14 @@ object HBaseTableScanRDD {
 case class SerializedFilter(b: Option[Array[Byte]])
 
 object SerializedFilter {
-  def toSerializedTypedFilter(f: Option[SparkSQLPushDownFilter]): SerializedFilter = {
-    SerializedFilter(f.map(_.toByteArray))
-  }
-
-  def fromSerializedFilter(sf: SerializedFilter): Option[SparkSQLPushDownFilter] = {
-    sf.b.map(SparkSQLPushDownFilter.parseFrom(_))
-  }
+  /* def toSerializedTypedFilter(f: Option[SparkSQLPushDownFilter]): SerializedFilter = {
+     SerializedFilter(f.map(_.toByteArray))
+   }
+  Non supportiamo SparkSQLPushDownFilter finchè non si aggiungerà il plugin di protbuf in sbt
+   def fromSerializedFilter(sf: SerializedFilter): Option[SparkSQLPushDownFilter] = {
+     sf.b.map(SparkSQLPushDownFilter.parseFrom(_))
+   }
+  */
 }
 
 private[hbase] case class HBaseRegion(

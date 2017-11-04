@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import com.databricks.spark.avro._
+import it.agilelab.bigdata.wasp.core.utils.SchemaConverters
 import org.apache.avro.Schema
 import org.apache.spark.sql.types.DataType
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}

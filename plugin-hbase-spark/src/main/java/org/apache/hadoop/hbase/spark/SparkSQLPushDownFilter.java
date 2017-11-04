@@ -16,11 +16,13 @@
  */
 
 package org.apache.hadoop.hbase.spark;
-
+/*
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.spark.datasources.BytesEncoder;
@@ -31,19 +33,16 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.spark.sql.datasources.hbase.Field;
 import scala.collection.mutable.MutableList;
 
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.ByteString;
 
-/**
+*//**
  * This filter will push down all qualifier logic given to us
  * by SparkSQL so that we have make the filters at the region server level
  * and avoid sending the data back to the client to be filtered.
- */
+ *//*
 @InterfaceAudience.Private
 public class SparkSQLPushDownFilter extends FilterBase{
   protected static final Log log = LogFactory.getLog(SparkSQLPushDownFilter.class);
@@ -176,11 +175,11 @@ public class SparkSQLPushDownFilter extends FilterBase{
   }
 
 
-  /**
+  *//**
    * @param pbBytes A pb serialized instance
    * @return An instance of SparkSQLPushDownFilter
    * @throws DeserializationException
-   */
+ *//*
   @SuppressWarnings("unused")
   public static SparkSQLPushDownFilter parseFrom(final byte[] pbBytes)
           throws DeserializationException {
@@ -239,9 +238,9 @@ public class SparkSQLPushDownFilter extends FilterBase{
             valueFromQueryArray, currentCellToColumnIndexMap, encoder);
   }
 
-  /**
+  *//**
    * @return The filter serialized using pb
-   */
+ *//*
   public byte[] toByteArray() {
 
     SparkFilterProtos.SQLPredicatePushDownFilter.Builder builder =
@@ -272,4 +271,4 @@ public class SparkSQLPushDownFilter extends FilterBase{
 
     return builder.build().toByteArray();
   }
-}
+}*/

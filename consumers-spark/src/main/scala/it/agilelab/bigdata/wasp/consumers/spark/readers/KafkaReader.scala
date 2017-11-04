@@ -1,23 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.readers
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-
-import it.agilelab.bigdata.wasp.core.SystemPipegraphs.rawTopic
-import it.agilelab.bigdata.wasp.core.{RawTopic, WaspSystem}
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.utils.AvroToJsonUtil.logger
 import it.agilelab.bigdata.wasp.core.utils._
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
-import org.apache.avro.file.DataFileStream
-import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
-import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -48,8 +41,6 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
     if (??[Boolean](
           WaspSystem.kafkaAdminActor,
           CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
-
-      import ss.implicits._
 
       logger.info("ss.readStream")
       // create the stream

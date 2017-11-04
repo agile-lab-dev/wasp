@@ -502,7 +502,7 @@ class HBaseContext(@transient sc: SparkContext,
     * underlining wrapper all mapPartition functions in HBaseContext
     *
     */
-  private def hbaseMapPartition[K, U](
+  def hbaseMapPartition[K, U](
                                        configBroadcast:
                                        Broadcast[SerializableWritable[Configuration]],
                                        it: Iterator[K],
