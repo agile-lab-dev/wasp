@@ -1,0 +1,28 @@
+version: '2'
+services:
+ namenode:
+      build: ./hdfs/
+      image: hdfs_cdh:5.11
+      command: hdfs namenode
+      ports:
+          - "50070:50070"
+      hostname: hdfs-namenode
+      volumes:
+        - "./data/namenode:/data"
+
+ datanode:
+      build: ./hdfs/
+      image: hdfs_cdh:5.11
+      command: hdfs datanode
+      ports:
+      # The host port is randomly assigned by Docker, to allow scaling to multiple DataNodes on the same host
+          - "50075"
+      links:
+          - namenode:hdfs-namenode
+      volumes:
+        - "./data/datanode/:/data"
+
+networks:
+  default:
+    external:
+      name: wasp-docker
