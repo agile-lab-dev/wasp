@@ -20,12 +20,12 @@ package org.apache.hadoop.hbase.spark
 import java.io.IOException
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.hbase.client.{Admin, Connection, ConnectionFactory, RegionLocator, Table}
+import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.ipc.RpcControllerFactory
 import org.apache.hadoop.hbase.security.{User, UserProvider}
 import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
 import org.apache.hadoop.hbase.{HConstants, TableName}
-import org.apache.spark.Logging
+import org.apache.spark.internal.Logging
 
 import scala.collection.mutable
 

@@ -20,25 +20,21 @@ package org.apache.hadoop.hbase.spark
 import java.util
 import java.util.concurrent.ConcurrentLinkedQueue
 
-import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.hadoop.hbase.{CellUtil, HBaseConfiguration, HColumnDescriptor, HTableDescriptor, TableName}
+import org.apache.hadoop.hbase.classification.InterfaceAudience
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapred.TableOutputFormat
 import org.apache.hadoop.hbase.spark.datasources._
 import org.apache.hadoop.hbase.types._
 import org.apache.hadoop.hbase.util.{Bytes, PositionedByteRange, SimplePositionedMutableByteRange}
-import org.apache.hadoop.hbase.HBaseConfiguration
-import org.apache.hadoop.hbase.HTableDescriptor
-import org.apache.hadoop.hbase.HColumnDescriptor
-import org.apache.hadoop.hbase.TableName
-import org.apache.hadoop.hbase.CellUtil
 import org.apache.hadoop.mapred.JobConf
-import org.apache.spark.Logging
+import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.datasources.hbase.{Utils, Field, HBaseTableCatalog}
-import org.apache.spark.sql.{DataFrame, SaveMode, Row, SQLContext}
+import org.apache.spark.sql.datasources.hbase.{Field, HBaseTableCatalog, Utils}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
 
 import scala.collection.mutable
 

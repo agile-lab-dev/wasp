@@ -1,22 +1,22 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
-import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, ProducerModel}
+import it.agilelab.bigdata.wasp.core.models.KeyValueModel
+import it.agilelab.bigdata.wasp.core.utils.JsonOps._
 import it.agilelab.bigdata.wasp.core.utils.RowToAvro
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.client.Put
+import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import spray.json.{DefaultJsonProtocol, JsonParser, RootJsonFormat}
-import it.agilelab.bigdata.wasp.core.utils.JsonOps._
-import spray.json._
+import spray.json.{DefaultJsonProtocol, RootJsonFormat, _}
 
 
 
@@ -29,40 +29,19 @@ case class RowKeyInfo(col: String, `type`: String) extends HbaseConfigData
 case class InfoCol(col: Option[String], `type`: Option[String],  mappingType: String, avro: Option[String], pivotCol: Option[String]) extends HbaseConfigData
 
 object HBaseWriter extends JsonSupport {
+	def createSparkStructuredStreamingWriter(keyValueBL: KeyValueBL, ssc: SparkSession, hbaseModel: KeyValueModel): SparkStructuredStreamingWriter = ???
 
-	def createSparkStreamingWriter(keyValueBL: KeyValueBL, ssc: StreamingContext, id: String): Option[SparkLegacyStreamingWriter] = {
-		// if we find the model, try to return the correct reader
-		val hbaseModelOpt = getModel(keyValueBL, id)
-		if (hbaseModelOpt.isDefined) {
-			val hbaseModel = hbaseModelOpt.get
 
-			Some(new HBaseStreamingWriter(hbaseModel, ssc))
-		} else {
-			None
-		}
+	def createSparkStreamingWriter(keyValueBL: KeyValueBL, ssc: StreamingContext, hbaseModel: KeyValueModel): SparkLegacyStreamingWriter = {
+		new HBaseStreamingWriter(hbaseModel, ssc)
 	}
 
-	def createSparkWriter(keyValueBL: KeyValueBL, sc: SparkContext, id: String): Option[SparkWriter] = {
-		// if we find the model, try to return the correct reader
-		val hbaseModelOpt = getModel(keyValueBL, id)
-		if (hbaseModelOpt.isDefined) {
-			val hbaseModel = hbaseModelOpt.get
-
-			Some(new HBaseWriter(hbaseModel, sc))
-		} else {
-			None
-		}
-	}
-
-	private def getModel(keyValueBL: KeyValueBL, id: String): Option[KeyValueModel] = {
-		// get the raw model using the provided id & bl
-		keyValueBL.getById(id)
+	def createSparkWriter(keyValueBL: KeyValueBL, sc: SparkContext, hbaseModel: KeyValueModel): SparkWriter = {
+		new HBaseWriter(hbaseModel, sc)
 	}
 
 
 	def getHbaseConfDataConvert(json: String): HbaseTableModel = {
-
-
 
 		val js: JsValue = json.parseJson
 		val result = (js \ "table").field.get.convertTo[TableNameC]
@@ -165,7 +144,7 @@ trait HbaseSparkWriter {
 }
 class HBaseStreamingWriter(hbaseModel: KeyValueModel,
                                ssc: StreamingContext)
-  extends SparkStreamingWriter with HbaseSparkWriter {
+	extends SparkLegacyStreamingWriter with HbaseSparkWriter {
 
 	override def write(stream: DStream[String]): Unit = {
 		// get sql context
@@ -209,12 +188,8 @@ class HBaseWriter(hbaseModel: KeyValueModel,
 		val hbaseTable = TableName.valueOf(s"${hbaseDataConfig.table.namespace}:${hbaseDataConfig.table.name}")
 		val schema: StructType = DataType.fromJson(hbaseModel.dataFrameSchema).asInstanceOf[StructType]
 
-		val rowAvroConverters: Map[String, RowToAvro] = hbaseModel.avroSchemas.map(_.mapValues(v => {
-			new RowToAvro(schema, v)
-		})).getOrElse(Map[String, RowToAvro]())
-
-		val conversionFunction: (Row) => Put = HBaseWriter.getConvertPutFunc(hbaseDataConfig, rowAvroConverters)
-		hBaseContext.bulkPut(df.rdd, hbaseTable, conversionFunction)
+		hBaseContext
+		.
 	}
 }
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {

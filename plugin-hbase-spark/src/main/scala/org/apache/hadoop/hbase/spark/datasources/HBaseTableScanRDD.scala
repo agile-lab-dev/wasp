@@ -19,15 +19,15 @@ package org.apache.hadoop.hbase.spark.datasources
 
 import java.util.ArrayList
 
-import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.hadoop.hbase.classification.InterfaceAudience
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.spark._
-import org.apache.hadoop.hbase.spark.hbase._
 import org.apache.hadoop.hbase.spark.datasources.HBaseResources._
 import org.apache.hadoop.hbase.util.ShutdownHookManager
-import org.apache.spark.sql.datasources.hbase.Field
-import org.apache.spark.{SparkEnv, TaskContext, Logging, Partition}
+import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.datasources.hbase.Field
+import org.apache.spark.{Partition, SparkEnv, TaskContext}
 
 import scala.collection.mutable
 
@@ -263,6 +263,10 @@ class HBaseTableScanRDD(relation: HBaseRelation,
       }
     }
   }
+}
+
+object HBaseTableScanRDD {
+
 }
 
 case class SerializedFilter(b: Option[Array[Byte]])

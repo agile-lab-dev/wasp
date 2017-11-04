@@ -9,8 +9,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWri
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{KeyValueBL, KeyValueBLImp}
+import it.agilelab.bigdata.wasp.core.exceptions.ModelNotFound
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.WriterModel
+import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -42,22 +43,32 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, writerModel.endpointId.getValue.toHexString)
+    HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, getKeyValueModel(writerModel))
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel): SparkStructuredStreamingWriter = {
-
+    HBaseWriter.createSparkStructuredStreamingWriter(keyValueBL, ss, getKeyValueModel(writerModel))
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    HBaseWriter.createSparkWriter(keyValueBL, sc, writerModel.endpointId.getValue.toHexString)
+    HBaseWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
   }
 
   override def getSparkReader(id: String, name: String) = {
     throw new NotImplementedError("The HBase SparkReader")
   }
 
+  @throws(classOf[ModelNotFound])
+  private def getKeyValueModel(writerModel: WriterModel): KeyValueModel = {
+    val id = writerModel.endpointId.getValue.toHexString
+    val hbaseModelOpt = keyValueBL.getById(id)
+    if (hbaseModelOpt.isDefined) {
+      hbaseModelOpt.get
+    } else {
+      throw new ModelNotFound(s"The KeyValueModel with this id $id was not found")
+    }
+  }
 
   override def pluginType: String = "hbase"
 

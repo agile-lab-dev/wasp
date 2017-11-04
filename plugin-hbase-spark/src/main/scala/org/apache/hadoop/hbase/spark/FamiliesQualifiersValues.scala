@@ -18,7 +18,8 @@ package org.apache.hadoop.hbase.spark
 
 import java.util
 
-import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.hadoop.hbase.classification.InterfaceAudience
+
 
 /**
  * This object is a clean way to store and sort all cells that will be bulk

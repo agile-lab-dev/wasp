@@ -17,18 +17,7 @@
 
 package org.apache.hadoop.hbase.spark.datasources
 
-import java.io.ByteArrayInputStream
-
-import org.apache.avro.Schema
-import org.apache.avro.Schema.Type._
-import org.apache.avro.generic.GenericDatumReader
-import org.apache.avro.generic.GenericDatumWriter
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.avro.io._
-import org.apache.commons.io.output.ByteArrayOutputStream
 import org.apache.hadoop.hbase.util.Bytes
-import org.apache.spark.sql.types._
 
 // TODO: This is not really used in code.
 trait SerDes {
