@@ -65,7 +65,7 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
   it should "convert the json schema" in {
 
     val ss = SparkSession.builder.config(new SparkConf().setMaster("local").setAppName("hbasetest")).getOrCreate()
-    /*
+
         val data = (0 to 255).map { i =>
           HBaseRecord(i)
         }
@@ -76,7 +76,7 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
             HBaseTableCatalog.newTable -> "5",
             HBaseSparkConf.USE_HBASECONTEXT -> "false"))
           .format("org.apache.hadoop.hbase.spark")
-          .save()*/
+          .save()
     println("End normal writing")
     import ss.implicits._
     val input = new MemoryStream[HBaseRecord](42, ss.sqlContext)

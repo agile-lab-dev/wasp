@@ -2,11 +2,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorRef
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
-import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{KeyValueBL, KeyValueBLImp}
 import it.agilelab.bigdata.wasp.core.exceptions.ModelNotFound
@@ -29,8 +29,8 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info("Initialize the index BL")
     keyValueBL = new KeyValueBLImp(waspDB)
     logger.info(s"Initialize the elastic admin actor with this name ${HBaseAdminActor.name}")
-    hbaseAdminActor_ = WaspSystem.actorSystem
-      .actorOf(Props(new HBaseAdminActor), HBaseAdminActor.name)
+    //hbaseAdminActor_ = WaspSystem.actorSystem
+    //  .actorOf(Props(new HBaseAdminActor), HBaseAdminActor.name)
     // services timeout, used below
     val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
     // implicit timeout used below
@@ -55,8 +55,16 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     HBaseWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
   }
 
-  override def getSparkReader(id: String, name: String) = {
-    throw new NotImplementedError("The HBase SparkReader")
+  override def getSparkReader(id: String, name: String): SparkReader = {
+    logger.info(s"Initialize HBaseReader with this id: '$id' and name: '$name'")
+    val hbaseModelOpt = keyValueBL.getById(id)
+    val model = if (hbaseModelOpt.isDefined) {
+      hbaseModelOpt.get
+    } else {
+      throw new ModelNotFound(s"The KeyValueModel with this id $id was not found")
+    }
+
+    HBaseReaders.createHBaseReader(model, name)
   }
 
   @throws(classOf[ModelNotFound])

@@ -209,7 +209,7 @@ case class HBaseTableCatalog(
 
 @InterfaceAudience.Public
 object HBaseTableCatalog {
-  // If defined and larger than 3, a new table will be created with the nubmer of region specified.
+  // If defined and larger than 3, a new table will be created with the number of region specified.
   val newTable = "newtable"
   // The json string specifying hbase catalog information
   val regionStart = "regionStart"

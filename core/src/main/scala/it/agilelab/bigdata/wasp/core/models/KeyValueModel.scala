@@ -7,9 +7,9 @@ import org.mongodb.scala.bson.BsonObjectId
 	*
 	*/
 case class KeyValueModel(override val name: String,
-												 schema: String,
-												 dataFrameSchema: String,
-												 options: Option[Map[String, String]],
-												 avroSchemas: Option[Map[String, String]],
-                    _id: Option[BsonObjectId] = None) extends Model
+                         tableCatalog: String,
+                         dataFrameSchema: Option[String],
+                         options: Option[Map[String, String]],
+                         avroSchemas: Option[Map[String, String]],
+                         _id: Option[BsonObjectId] = None) extends Model
 
