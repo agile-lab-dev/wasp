@@ -80,4 +80,3 @@ class StreamingReaderTestWrapper(sc: SparkContext) extends StreamingReader {
   }
 
 */
-}

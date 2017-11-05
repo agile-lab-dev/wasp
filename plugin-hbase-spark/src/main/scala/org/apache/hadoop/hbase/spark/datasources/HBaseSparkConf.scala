@@ -42,7 +42,7 @@ object HBaseSparkConf{
   val HBASE_CONFIG_LOCATION = "hbase.spark.config.location"
   /** Set to specify whether create or use latest cached HBaseContext*/
   val USE_HBASECONTEXT = "hbase.spark.use.hbasecontext"
-  val DEFAULT_USE_HBASECONTEXT = true
+  val DEFAULT_USE_HBASECONTEXT = false
   /** Pushdown the filter to data source engine to increase the performance of queries. */
   val PUSHDOWN_COLUMN_FILTER = "hbase.spark.pushdown.columnfilter"
   val DEFAULT_PUSHDOWN_COLUMN_FILTER= true

@@ -554,6 +554,10 @@ class HBaseContext(@transient sc: SparkContext,
     }
   }
 
+  def close(): Unit = {
+    HBaseConnectionCache.close()
+  }
+
   /**
     * Produces a ClassTag[T], which is actually just a casted ClassTag[AnyRef].
     *
@@ -573,5 +577,5 @@ class HBaseContext(@transient sc: SparkContext,
 }
 
 object LatestHBaseContextCache {
-  var latest:HBaseContext = null
+  var latest: HBaseContext = null
 }

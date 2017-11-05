@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.classification.InterfaceAudience
 import org.apache.hadoop.hbase.spark.datasources._
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.types._
 import org.json4s.jackson.JsonMethods._
 
@@ -75,10 +76,10 @@ case class Field(
     }
   }
 
-  val dt = {
+  val dt: DataType = {
     //TODO Prima era così DataTypeParser.parse(_)) da testare
-    sType.map(DataType.fromJson).getOrElse {
-      schema.map{ x=>
+    sType.map(CatalystSqlParser.parseDataType).getOrElse {
+      schema.map { x =>
         SchemaConverters.toSqlType(x).dataType
       }.get
     }
@@ -292,7 +293,7 @@ object HBaseTableCatalog {
   @deprecated("Please use new json format to define HBaseCatalog")
   // TODO: There is no need to deprecate since this is the first release.
   def convert(parameters: Map[String, String]): Map[String, String] = {
-    val tableName = parameters.get(TABLE_KEY).getOrElse(null)
+    val tableName = parameters.get(TABLE_KEY).orNull
     // if the hbase.table is not defined, we assume it is json format already.
     if (tableName == null) return parameters
     val schemaMappingString = parameters.getOrElse(SCHEMA_COLUMNS_MAPPING_KEY, "")

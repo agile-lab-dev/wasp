@@ -20,6 +20,8 @@ package org.apache.hadoop.hbase.spark
 import java.util
 import java.util.concurrent.ConcurrentLinkedQueue
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.classification.InterfaceAudience
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
@@ -115,6 +117,7 @@ class DefaultSource extends RelationProvider
         val config = HBaseConfiguration.create()
         val configResources = parameters.getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
         configResources.split(",").foreach(r => config.addResource(r))
+        configResources.split(",").foreach(r => config.addResource(new Path(r)))
         new HBaseContext(sparkSession.sparkContext, config)
       } else {
         LatestHBaseContextCache.latest
@@ -141,7 +144,7 @@ case class HBaseRelation(
   val minTimestamp = parameters.get(HBaseSparkConf.TIMERANGE_START).map(_.toLong)
   val maxTimestamp = parameters.get(HBaseSparkConf.TIMERANGE_END).map(_.toLong)
   val maxVersions = parameters.get(HBaseSparkConf.MAX_VERSIONS).map(_.toInt)
-  val encoderClsName = parameters.get(HBaseSparkConf.QUERY_ENCODER).getOrElse(HBaseSparkConf.DEFAULT_QUERY_ENCODER)
+  val encoderClsName = parameters.getOrElse(HBaseSparkConf.QUERY_ENCODER, HBaseSparkConf.DEFAULT_QUERY_ENCODER)
 
   @transient val encoder = JavaBytesEncoder.create(encoderClsName)
 
@@ -177,12 +180,13 @@ case class HBaseRelation(
   } else {
     val config = HBaseConfiguration.create()
     configResources.split(",").foreach(r => config.addResource(r))
+    configResources.split(",").foreach(r => config.addResource(new Path(r)))
     new HBaseContext(sqlContext.sparkContext, config)
   }
 
   val wrappedConf = new SerializableConfiguration(hbaseContext.config)
 
-  def hbaseConf = wrappedConf.value
+  def hbaseConf: Configuration = wrappedConf.value
 
   /**
     * Generates a Spark SQL schema objeparametersct so Spark SQL knows what is being
@@ -196,11 +200,9 @@ case class HBaseRelation(
   def createTable() {
     val numReg = parameters.get(HBaseTableCatalog.newTable).map(x => x.toInt).getOrElse(0)
     val startKey = Bytes.toBytes(
-      parameters.get(HBaseTableCatalog.regionStart)
-        .getOrElse(HBaseTableCatalog.defaultRegionStart))
+      parameters.getOrElse(HBaseTableCatalog.regionStart, HBaseTableCatalog.defaultRegionStart))
     val endKey = Bytes.toBytes(
-      parameters.get(HBaseTableCatalog.regionEnd)
-        .getOrElse(HBaseTableCatalog.defaultRegionEnd))
+      parameters.getOrElse(HBaseTableCatalog.regionEnd, HBaseTableCatalog.defaultRegionEnd))
     if (numReg > 3) {
       val tName = TableName.valueOf(catalog.name)
       val cfs = catalog.getColumnFamilies

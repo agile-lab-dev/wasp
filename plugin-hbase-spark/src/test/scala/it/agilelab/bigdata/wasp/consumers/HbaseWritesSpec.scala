@@ -1,14 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers
 
 
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase.HBaseWriter
-import it.agilelab.bigdata.wasp.core.models.KeyValueModel
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, RowToAvro}
-import org.apache.avro.Schema
-import org.apache.hadoop.hbase.client.Put
-import org.apache.hadoop.hbase.util.Bytes
-import org.apache.spark.sql.types.{DataType, StructType}
-import org.scalatest.Matchers._
+import org.apache.hadoop.hbase.spark.LatestHBaseContextCache
+import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
+import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfter, _}
 
@@ -16,13 +14,105 @@ import org.scalatest.{BeforeAndAfter, _}
   * Created by mattiabertorello on 27/01/17.
   */
 
-case class DataTestClass(d1s: String, d2ts: Long)
+case class HBaseRecord(
+                        col0: String,
+                        col1: Boolean,
+                        col2: Double,
+                        col3: Float,
+                        col4: Int,
+                        col5: Long,
+                        col6: Short,
+                        col7: String,
+                        col8: Byte)
+
+object HBaseRecord {
+  def apply(i: Int): HBaseRecord = {
+    val s = s"""row${"%03d".format(i)}"""
+    HBaseRecord(s,
+      i % 2 == 0,
+      i.toDouble,
+      i.toFloat,
+      i,
+      i.toLong,
+      i.toShort,
+      s"String$i extra",
+      i.toByte)
+  }
+}
 
 class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter   {
 
-    behavior of "HBase writer"
+  val cat =
+    s"""{
+       |"table":{"namespace":"default", "name":"HBaseSourceExampleTable"},
+       |"rowkey":"key",
+       |"columns":{
+       |"col0":{"cf":"rowkey", "col":"key", "type":"string"},
+       |"col1":{"cf":"cf1", "col":"col1", "type":"boolean"},
+       |"col2":{"cf":"cf2", "col":"col2", "type":"double"},
+       |"col3":{"cf":"cf3", "col":"col3", "type":"float"},
+       |"col4":{"cf":"cf4", "col":"col4", "type":"int"},
+       |"col5":{"cf":"cf5", "col":"col5", "type":"bigint"},
+       |"col6":{"cf":"cf6", "col":"col6", "type":"smallint"},
+       |"col7":{"cf":"cf7", "col":"col7", "type":"string"},
+       |"col8":{"cf":"cf8", "col":"col8", "type":"tinyint"}
+       |}
+       |}""".stripMargin
+
+
+  behavior of "HBase writer"
 
   it should "convert the json schema" in {
+
+    val ss = SparkSession.builder.config(new SparkConf().setMaster("local").setAppName("hbasetest")).getOrCreate()
+    /*
+        val data = (0 to 255).map { i =>
+          HBaseRecord(i)
+        }
+
+        ss.createDataFrame(data).write.options(
+          Map(HBaseTableCatalog.tableCatalog -> cat,
+            HBaseSparkConf.HBASE_CONFIG_LOCATION -> "/wasp/docker/hbase/conf_ex/hbase-site.xml",
+            HBaseTableCatalog.newTable -> "5",
+            HBaseSparkConf.USE_HBASECONTEXT -> "false"))
+          .format("org.apache.hadoop.hbase.spark")
+          .save()*/
+    println("End normal writing")
+    import ss.implicits._
+    val input = new MemoryStream[HBaseRecord](42, ss.sqlContext)
+    input.addData(
+      Seq(
+        HBaseRecord(302),
+        HBaseRecord(301),
+        HBaseRecord(300)
+      ))
+    val s = input.toDF().writeStream.options(
+      Map(HBaseTableCatalog.tableCatalog -> cat,
+        HBaseSparkConf.HBASE_CONFIG_LOCATION -> "/wasp/docker/hbase/conf_ex/hbase-site.xml",
+        HBaseTableCatalog.newTable -> "5"))
+      .option("checkpointLocation", "/tmp/plugin-hbase-wasp")
+      .format("org.apache.hadoop.hbase.spark")
+      .start()
+    s.awaitTermination(30000)
+    s.stop()
+
+    input.addData(
+      Seq(
+        HBaseRecord(304),
+        HBaseRecord(305),
+        HBaseRecord(306)
+      ))
+
+    val s1 = input.toDF().writeStream.options(
+      Map(HBaseTableCatalog.tableCatalog -> cat,
+        HBaseSparkConf.HBASE_CONFIG_LOCATION -> "/wasp/docker/hbase/conf_ex/hbase-site.xml",
+        HBaseTableCatalog.newTable -> "5"))
+      .option("checkpointLocation", "/tmp/plugin-hbase-wasp")
+      .format("org.apache.hadoop.hbase.spark")
+      .start()
+    s1.awaitTermination(30000)
+    s1.stop()
+    LatestHBaseContextCache.latest.close()
 
 /*
     val r: HbaseTableModel = HBaseWriter.getHbaseConfDataConvert(

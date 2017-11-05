@@ -7,8 +7,8 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
 import org.apache.spark.sql.datasources.hbase.{Field, HBaseTableCatalog, Utils}
-import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.streaming.Sink
+import org.apache.spark.sql.execution.{QueryExecution, SQLExecution}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
@@ -25,12 +25,17 @@ class HBaseSink(sparkSession: SparkSession, parameters: Map[String, String], hBa
     * @param data
     */
   override def addBatch(batchId: Long, data: DataFrame): Unit = {
-    val queryExecution = data.queryExecution
+    val queryExecution: QueryExecution = data.queryExecution
     val schema: StructType = data.schema
     val putConverterFactory = PutConverterFactory(parameters, schema)
-
+    val convertToPut: InternalRow => Put = putConverterFactory.convertToPut
+    val hBaseContextInternal = hBaseContext
     SQLExecution.withNewExecutionId(sparkSession, queryExecution) {
-      hBaseContext.bulkPut(queryExecution.toRdd, putConverterFactory.getTableName, putConverterFactory.convertToPut)
+      hBaseContextInternal
+        .bulkPut(queryExecution.toRdd,
+          putConverterFactory.getTableName(),
+          convertToPut
+        )
     }
   }
 
@@ -73,19 +78,19 @@ class HBaseSink(sparkSession: SparkSession, parameters: Map[String, String], hBa
 
 case class PutConverterFactory(@transient parameters: Map[String, String],
                                @transient schema: StructType) {
-  val catalog = HBaseTableCatalog(parameters)
+  @transient val catalog = HBaseTableCatalog(parameters)
 
-  val rkFields: Seq[Field] = catalog.getRowKey
+  @transient val rkFields: Seq[Field] = catalog.getRowKey
   val rkIdxedFields: Seq[(Int, Field)] = rkFields.map { case x =>
     (schema.fieldIndex(x.colName), x)
   }
-  val colsIdxedFields: Array[(Int, Field)] = schema
+  val colsIdxedFields: Seq[(Int, Field)] = schema
     .fieldNames
     .partition(x => rkFields.map(_.colName).contains(x))
     ._2.map(x => (schema.fieldIndex(x), catalog.getField(x)))
   val enconder: ExpressionEncoder[Row] = RowEncoder.apply(schema).resolveAndBind()
 
-  def getTableName: TableName = TableName.valueOf(catalog.name)
+  def getTableName(): TableName = TableName.valueOf(catalog.name)
 
   def convertToPut(internalRow: InternalRow): Put = {
     val row: Row = enconder.fromRow(internalRow)
