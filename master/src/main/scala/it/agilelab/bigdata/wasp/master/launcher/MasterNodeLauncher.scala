@@ -30,9 +30,9 @@ import scala.concurrent.duration.Duration
 	* @author Nicolò Bidotti
 	*/
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
-	override def launch(args: Array[String]): Unit = {
 		// parse command line
 		val options = parseCommandLine(args.toList)
+	override def launch(commandLine: CommandLine): Unit = {
 		
 		// drop db if needed
 		if (options.dropDb) {
@@ -47,7 +47,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		addSystemPipegraphs()
 		
 		// launch cluster singleton
-		super.launch(args)
+		super.launch(commandLine)
 
 		// launch rest server
 		startRestServer(WaspSystem.actorSystem, getRoutes)
