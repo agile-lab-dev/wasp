@@ -24,7 +24,7 @@ trait WaspLauncher {
 
 	def main(args: Array[String]) {
 		// parse command line
-		val commandLine = CliUtils.parseArgsList(args, WaspOptions.allOptions ++ getCustomOptions())
+		val commandLine = CliUtils.parseArgsList(args, getOptions)
 
 		// handle version & help
 		if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
@@ -89,7 +89,7 @@ trait WaspLauncher {
 	
 	protected def launch(commadLine: CommandLine): Unit
 	
-	protected def getCustomOptions: Seq[CliOption]
+	protected def getOptions: Seq[CliOption] = WaspCommandLineOptions.allOptions
 
 	/**
 		* Initialize the WASP plugins, this method is called after the wasp initialization
