@@ -19,6 +19,8 @@ import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.httpResponseJson
+import org.apache.commons.cli
+import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.Await
@@ -30,12 +32,9 @@ import scala.concurrent.duration.Duration
 	* @author Nicolò Bidotti
 	*/
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
-		// parse command line
-		val options = parseCommandLine(args.toList)
 	override def launch(commandLine: CommandLine): Unit = {
-		
 		// drop db if needed
-		if (options.dropDb) {
+		if (commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)) {
 			val config = ConfigManager.getMongoDBConfig
 			logger.info(s"Dropping MongoDB database ${config.databaseName}")
 			val mongoDb = MongoDBHelper.getDatabase(config)
@@ -108,14 +107,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 	
 	override def getNodeName: String = "master"
 	
-	private case class Options(dropDb: Boolean = false)
-	
-	private def parseCommandLine(args: List[String], options: Options = Options()): Options = {
-		args match {
-			case "--drop-db" :: tail => parseCommandLine(tail, options.copy(dropDb = true))
-			case Nil => options
-		}
-	}
+	override def getOptions: Seq[cli.Option] = super.getOptions ++ MasterCommandLineOptions.allOptions
 }
 
 /**
