@@ -3,7 +3,8 @@ package it.agilelab.bigdata.wasp.core.launcher
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
-import org.apache.commons.cli.{CommandLine, Option => CliOption}
+import org.apache.commons.cli
+import org.apache.commons.cli.CommandLine
 
 
 trait WaspLauncher {
@@ -89,7 +90,7 @@ trait WaspLauncher {
 	
 	protected def launch(commadLine: CommandLine): Unit
 	
-	protected def getOptions: Seq[CliOption] = WaspCommandLineOptions.allOptions
+	protected def getOptions: Seq[cli.Option] = WaspCommandLineOptions.allOptions
 
 	/**
 		* Initialize the WASP plugins, this method is called after the wasp initialization
