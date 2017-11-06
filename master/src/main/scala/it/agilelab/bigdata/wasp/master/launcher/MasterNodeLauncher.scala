@@ -40,6 +40,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 			val mongoDb = MongoDBHelper.getDatabase(config)
 			val dropFuture = mongoDb.drop().toFuture()
 			Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
+			WaspDB.initializeDB() // re-initialize db so collections are recreated
+			ConfigManager.initializeConfigs() // re-create configurations in mongo
 		}
 		
 		// add system pipegraphs
