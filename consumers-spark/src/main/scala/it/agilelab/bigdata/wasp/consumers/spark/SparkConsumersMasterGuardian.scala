@@ -155,8 +155,14 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
         }
       }
   
-      // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
-      logger.info(s"SparkConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
+      if (numberOfReadyComponents == getTargetNumberOfReadyComponents) {
+        // all component actors registered; finish startup
+        logger.info(s"All $numberOfReadyComponents consumer child actors are already running! Continuing startup sequence...")
+        finishStartup()
+      } else {
+        // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
+        logger.info(s"SparkConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
+      }
     }
   }
   
@@ -189,10 +195,10 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   
   override def stop(): Boolean = {
     logger.info(s"SparkConsumersMasterGuardian $self stopping...")
-    
+  
     // stop all component actors bound to this guardian and the guardian itself
     logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
-    
+  
     // stop StreamingContext and all LegacyStreamingETLActor
     // stop streaming context if needed
     if (legacyStreamingETLTotal > 0) {
@@ -204,13 +210,13 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     } else {
       logger.info("Not stopping StreamingContext because no legacy streaming components are present")
     }
-    
+  
     // gracefully stop all component actors corresponding to legacy components
-    logger.info(s"Gracefully stopping all ${lsComponentActors.size} legacy streaming component actors...")
+    logger.info(s"Gracefully stopping ${lsComponentActors.size} legacy streaming component actors...")
     val generalTimeoutDuration = generalTimeout.duration
     val legacyStreamingStatuses = lsComponentActors.values.map(gracefulStop(_, generalTimeoutDuration))
-    
-    // find and stop all StructuredStreamingETLActors belonging to pipegraphs that are no longer active
+  
+    // gracefully stop all StructuredStreamingETLActors belonging to pipegraphs that are no longer active
     // get the component names for all components of all active pipegraphs
     val activeStructuredStreamingComponentNames = getActivePipegraphsToComponentsMap flatMap {
       case (pipegraph, (_, sseComponents, _)) => {
@@ -225,52 +231,64 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     logger.info(s"Gracefully stopping ${inactiveStructuredStreamingComponentActors.size} structured streaming component actors managing now-inactive components...")
     val structuredStreamingStatuses = inactiveStructuredStreamingComponentActors.map(gracefulStop(_, generalTimeoutDuration, StopProcessingComponent))
     
-    // await all component actors' stopping
     val globalStatuses = legacyStreamingStatuses ++ structuredStreamingStatuses
-    val res = Await.result(Future.sequence(globalStatuses), generalTimeoutDuration)
+  
+    if (globalStatuses.nonEmpty) {
+      logger.info(s"Waiting for ${globalStatuses.size} component actors to stop...")
+  
+      // await all component actors' stopping
+      val res = Await.result(Future.sequence(globalStatuses), generalTimeoutDuration)
     
-    // check whether all components actors that had to stop actually stopped
-    if (res reduceLeft (_ && _)) {
-      logger.info(s"Stopping sequence completed")
+      // check whether all components actors that had to stop actually stopped
+      if (res reduceLeft (_ && _)) {
+        logger.info(s"Stopping sequence completed, ${globalStatuses.size} component actors stopped")
       
-      // cleanup references to now stopped component actors
-      lsComponentActors.clear() // remove all legacy streaming components actors
-      inactiveStructuredStreamingComponentNames.map(ssComponentActors.remove) // remove structured streaming components actors that we stopped
+        // cleanup references to now stopped component actors
+        lsComponentActors.clear() // remove all legacy streaming components actors
+        inactiveStructuredStreamingComponentNames.map(ssComponentActors.remove) // remove structured streaming components actors that we stopped
       
-      // update counter for ready components because some structured streaming components actors might have been left running
-      numberOfReadyComponents = ssComponentActors.size
+        // update counter for ready components because some structured streaming components actors might have been left running
+        numberOfReadyComponents = ssComponentActors.size
       
+        // no message sent to the MasterGuardian because we still need to startup again after this
+      
+        true
+      } else {
+        logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
+      
+        // find out which children are still running
+        val childrenSet = context.children.toSet
+        numberOfReadyComponents = childrenSet.size
+        logger.error(s"Found $numberOfReadyComponents children still running")
+      
+        // filter out component actor tracking maps
+        val filteredLSCA = lsComponentActors filter { case (name, actor) => childrenSet(actor) }
+        lsComponentActors.clear()
+        lsComponentActors ++= filteredLSCA
+        val filteredSSCA = ssComponentActors filter { case (name, actor) => childrenSet(actor) }
+        ssComponentActors.clear()
+        ssComponentActors ++= filteredSSCA
+      
+        // output info about component actors still running
+        lsComponentActors foreach {
+          case (name, actor) => logger.error(s"Legacy streaming component actor $actor for component $name is still running")
+        }
+        ssComponentActors foreach {
+          case (name, actor) => logger.error(s"Structured streaming component actor $actor for component $name is still running")
+        }
+      
+        // tell the MasterGuardian we failed
+        masterGuardian ! false
+      
+        false
+      }
+    } else {
+      // no component actors to stop
+      logger.info(s"Stopping sequence completed, no component actors to stop")
+  
       // no message sent to the MasterGuardian because we still need to startup again after this
       
       true
-    } else {
-      logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
-      
-      // find out which children are still running
-      val childrenSet = context.children.toSet
-      numberOfReadyComponents = childrenSet.size
-      logger.error(s"Found $numberOfReadyComponents children still running")
-  
-      // filter out component actor tracking maps
-      val filteredLSCA = lsComponentActors filter { case (name, actor) => childrenSet(actor) }
-      lsComponentActors.clear()
-      lsComponentActors ++= filteredLSCA
-      val filteredSSCA = ssComponentActors filter { case (name, actor) => childrenSet(actor) }
-      ssComponentActors.clear()
-      ssComponentActors ++= filteredSSCA
-      
-      // output info about component actors still running
-      lsComponentActors foreach {
-        case (name, actor) => logger.error(s"Legacy streaming component actor $actor for component $name is still running")
-      }
-      ssComponentActors foreach {
-        case (name, actor) => logger.error(s"Structured streaming component actor $actor for component $name is still running")
-      }
-  
-      // tell the MasterGuardian we failed
-      masterGuardian ! false
-      
-      false
     }
   }
 }

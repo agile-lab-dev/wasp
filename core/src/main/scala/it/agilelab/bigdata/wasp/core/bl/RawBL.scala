@@ -25,7 +25,7 @@ class RawBLImp(waspDB: WaspDB) extends RawBL  {
 	}
 	
 	def getById(id: String) = {
-		waspDB.getDocumentByID[RawModel](BsonObjectId(id)).map(factory)
+		waspDB.getDocumentByID[RawModel](id).map(factory)
 	}
 	
 	override def persist(rawModel: RawModel): Unit = waspDB.insert[RawModel](rawModel)

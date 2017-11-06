@@ -1,33 +1,45 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
+import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{
+  MlModelsBroadcastDB,
+  MlModelsDB
+}
+import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{
+  SparkReader,
+  StructuredStreamingReader
+}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, StopProcessingComponent}
+import it.agilelab.bigdata.wasp.core.messages.{
+  OutputStreamInitialized,
+  StopProcessingComponent
+}
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.{
+  ConfigManager,
+  SparkStreamingConfiguration
+}
+import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-class StructuredStreamingETLActor(env: {val topicBL: TopicBL
-                                       val indexBL: IndexBL
-                                       val rawBL: RawBL
-                                       val keyValueBL: KeyValueBL
-                                       val mlModelBL: MlModelBL},
-                                  sparkWriterFactory: SparkWriterFactory,
-                                  structuredStreamingReader: StructuredStreamingReader,
-                                  sparkSession: SparkSession,
-                                  pipegraph: PipegraphModel,
-                                  structuredStreamingETL: StructuredStreamingETLModel,
-                                  listener: ActorRef,
-                                  plugins: Map[String, WaspConsumersSparkPlugin])
+class StructuredStreamingETLActor(env: {
+  val topicBL: TopicBL
+  val indexBL: IndexBL
+  val rawBL: RawBL
+  val keyValueBL: KeyValueBL
+  val mlModelBL: MlModelBL
+}, sparkWriterFactory: SparkWriterFactory, structuredStreamingReader: StructuredStreamingReader, sparkSession: SparkSession, pipegraph: PipegraphModel, structuredStreamingETL: StructuredStreamingETLModel, listener: ActorRef, plugins: Map[String, WaspConsumersSparkPlugin])
     extends Actor
     with SparkStreamingConfiguration
     with Logging {
@@ -171,7 +183,8 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
       }
     })
     val topicReaderModelNumber =
-      structuredStreamingETL.inputs.count(_.readerType.category == TopicModel.readerType)
+      structuredStreamingETL.inputs.count(
+        _.readerType.category == TopicModel.readerType)
     if (topicReaderModelNumber == 0)
       throw new Exception(
         "There is NO topic to read data, inputs: " + structuredStreamingETL.inputs)
@@ -189,9 +202,10 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
 
         val topicModel = topicModelOpt.get
         val stream: DataFrame =
-          structuredStreamingReader.createStructuredStream(structuredStreamingETL.group,
-                                                           structuredStreamingETL.kafkaAccessType,
-                                                           topicModel)(sparkSession)
+          structuredStreamingReader.createStructuredStream(
+            structuredStreamingETL.group,
+            structuredStreamingETL.kafkaAccessType,
+            topicModel)(sparkSession)
         (ReaderKey(TopicModel.readerType, topicModel.name), stream)
       })
 
@@ -222,7 +236,8 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
         // --- Broadcast models initialization ----
         // Reading all model from DB and create broadcast
         val mlModelsBroadcast: MlModelsBroadcastDB =
-          mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(sparkSession.sparkContext)
+          mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(
+            sparkSession.sparkContext)
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
@@ -230,21 +245,31 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
         transform(topicStreamWithKey._1,
                   topicStreamWithKey._2,
                   dataStoreDFs,
-                  strategy)
+                  strategy,
+                  structuredStreamingETL.output.writerType)
       } else {
         topicStreamWithKey._2
       }
 
-    val sparkWriterOpt = sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETL.output)
-    val queryName = generateUniqueComponentName(pipegraph, structuredStreamingETL)
-    val checkpointDir = generateStructuredStreamingCheckpointDir(sparkStreamingConfig, pipegraph, structuredStreamingETL)
-  
+    val sparkWriterOpt =
+      sparkWriterFactory.createSparkWriterStructuredStreaming(
+        env,
+        sparkSession,
+        structuredStreamingETL.output)
+    val queryName =
+      generateUniqueComponentName(pipegraph, structuredStreamingETL)
+    val checkpointDir = generateStructuredStreamingCheckpointDir(
+      sparkStreamingConfig,
+      pipegraph,
+      structuredStreamingETL)
+
     sparkWriterOpt match {
       case Some(writer) => {
         writer.write(outputStream, queryName, checkpointDir)
       }
-      case None         =>
-        val error = s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}"
+      case None =>
+        val error =
+          s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}"
         logger.error(error)
         throw new Exception(error)
     }
@@ -256,38 +281,81 @@ class StructuredStreamingETLActor(env: {val topicBL: TopicBL
     self ! StreamReady
   }
 
-
   private def transform(readerKey: ReaderKey,
                         stream: DataFrame,
                         dataStoreDFs: Map[ReaderKey, DataFrame],
-                        strategy: Strategy): DataFrame = {
+                        strategy: Strategy,
+                        writerType: WriterType): DataFrame = {
 
     val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
-//    val dataframeToTransform = sparkSession.sqlContext.read.json(stream.toJSON)
 
-//    if (dataframeToTransform.schema.nonEmpty) {
-      val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> stream)
-      strategyBroadcast.value.transform(completeMapOfDFs)
-//    } else {
-//      dataframeToTransform
-//    }
+    val etlName = structuredStreamingETL.name
+
+    val updateMetadata = udf(
+      (mId: String,
+       mSourceId: String,
+       mArrivalTimestamp: Long,
+       mLastSeenTimestamp: Long,
+       mPath: Seq[Path]) => {
+
+        val now = System.currentTimeMillis()
+
+        if (mId == "")
+          Metadata(UUID.randomUUID().toString,
+                   mSourceId,
+                   now,
+                   now,
+                   Seq(Path(etlName, now)).toArray)
+        else
+          Metadata(mId,
+                   mSourceId,
+                   mArrivalTimestamp,
+                   now,
+                   (mPath :+ Path(etlName, now)).toArray)
+      })
+
+    //update values in field metadata
+    var dataframeToTransform = stream
+      .withColumn(
+        "metadata",
+        updateMetadata(col("metadata.id"),
+                       col("metadata.sourceId"),
+                       col("metadata.arrivalTimestamp"),
+                       col("metadata.lastSeenTimestamp"),
+                       col("metadata.path"))
+      )
+
+    val completeMapOfDFs
+      : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
+
+    val output = strategyBroadcast.value.transform(completeMapOfDFs)
+    writerType.getActualProduct match {
+      case "kafka" => output
+      case _ =>
+        output.select(MetadataUtils.flatMetadataSchema(stream.schema, None): _*)
+    }
   }
-  
+
   /**
     * Stops the processing component belonging to this component actor
     */
   private def stopProcessingComponent(): Unit = {
-    val queryName = generateUniqueComponentName(pipegraph, structuredStreamingETL)
+    val queryName =
+      generateUniqueComponentName(pipegraph, structuredStreamingETL)
     logger.info(s"Stopping component $queryName")
-  
-    val structuredQueryOpt = sparkSession.streams.active.find(_.name == queryName)
+
+    val structuredQueryOpt =
+      sparkSession.streams.active.find(_.name == queryName)
     structuredQueryOpt match {
       case Some(structuredQuery) =>
-        logger.info(s"Found StructuredQuery $structuredQuery corresponding to component $queryName, stopping it...")
+        logger.info(
+          s"Found StructuredQuery $structuredQuery corresponding to component $queryName, stopping it...")
         structuredQuery.stop()
-        logger.info(s"Successfully stopped StructuredQuery corresponding to component $queryName")
-      case None                  =>
-        logger.warn(s"No matching StructuredQuery found for component $queryName! Maybe it has already been stopped?")
+        logger.info(
+          s"Successfully stopped StructuredQuery corresponding to component $queryName")
+      case None =>
+        logger.warn(
+          s"No matching StructuredQuery found for component $queryName! Maybe it has already been stopped?")
     }
   }
 }
