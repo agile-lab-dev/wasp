@@ -26,6 +26,8 @@ import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, TimeFormatter}
+import spray.json.{JsNumber, JsString, JsValue}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
@@ -92,7 +94,7 @@ object InternalLogProducerGuardian {
   val name = "LoggerProducer"
 }
 
-private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[TopicModel]) extends ProducerActor[String](kafka_router, topic) {
+private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[TopicModel]) extends ProducerActor[Map[String, JsValue]](kafka_router, topic) {
 
 
   override def receive: Actor.Receive = super.receive orElse loggerReceive
@@ -117,35 +119,33 @@ private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[Top
     val causeEx = ""
     val stackEx = ""
 
-    val logFields = s"""
-	    		"log_source":"$logSource",
-	    		"log_class":"$logClass",
-          "log_level":"$logLevel",
-	    		"message":"${AvroToJsonUtil.convertToUTF8(message)}",
-	    		"cause":"$causeEx",
-	    		"stack_trace":"$stackEx"	    
-	    """
+    val myJson: Map[String, JsValue] = Map (
+      "id_event" -> JsNumber(0.0),
+      "source_name" -> JsString("LoggerPipeline"),
+      "topic_name" -> JsString(topic.get.name),
+      "metric_name" -> JsString("log"),
+      "timestamp" -> JsString(TimeFormatter.format(new Date())),
+      "latitude" -> JsNumber(0.0),
+      "longitude" -> JsNumber(0.0),
+      "value" -> JsNumber(0.0),
+      "payload" -> JsString("logPayload"),
+      //logFields
+      "log_source"-> JsString(logSource),
+      "log_class" -> JsString(logClass),
+      "log_level" -> JsString(logLevel),
+      "message" -> JsString(AvroToJsonUtil.convertToUTF8(message)),
+      "cause" -> JsString(causeEx),
+      "stack_trace" -> JsString(stackEx)
+    )
 
-    val myJson = s"""{
-	     "id_event":0.0,
-	     "source_name":"LoggerPipeline",
-	     "topic_name":"${topic.get.name}",
-	     "metric_name":"log",  
-	     "timestamp":"${TimeFormatter.format(new Date())}",
-	     "latitude":0.0,
-	     "longitude":0.0,
-	     "value":0.0,
-	     "payload":"logPayload",
-	     $logFields
-	     }"""
 
     sendMessage(myJson)
   }
 
   // For this specific logger, we by-pass the standard log duplication mechanic
-  def generateOutputJsonMessage(input: String): String = input
+  def generateOutputJsonMessage(input: Map[String, JsValue]): Map[String, JsValue] = input
 
-  def generateRawOutputJsonMessage(input: String): String = ""
+  def generateRawOutputJsonMessage(input: Map[String, JsValue]): Map[String, JsValue] = input
 
   def mainTask() = {
     /*We don't have a task here because it's a system pipeline*/

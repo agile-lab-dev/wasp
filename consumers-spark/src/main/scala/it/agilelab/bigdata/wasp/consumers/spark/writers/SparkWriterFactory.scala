@@ -74,11 +74,12 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
           None
         }
     }
+
   }
 
   override def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter] = {
     val writerType = writerModel.writerType.getActualProduct
-    
+
     val writerPlugin = plugins.get(writerType)
     if (writerPlugin.isDefined) {
       Some(writerPlugin.get.getSparkWriter(sc, writerModel))
