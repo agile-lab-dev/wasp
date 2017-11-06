@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
+import java.io.File
+
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -10,10 +12,9 @@ import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
 import org.apache.hadoop.hbase.spark.{HBaseContext, PutConverterFactory}
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
@@ -38,7 +39,8 @@ class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel,
                                      ss: SparkSession)
   extends SparkStructuredStreamingWriter {
   override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
-    val options: Map[String, String] = hbaseModel.options.getOrElse(Map())
+    val options: Map[String, String] = hbaseModel.options.getOrElse(Map()) ++
+    hbaseModel.avroSchemas.getOrElse(Map()) ++
     Seq(
       HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
       HBaseTableCatalog.newTable -> "4"
@@ -67,10 +69,11 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
     val configResources: String = hbaseModel.options.getOrElse(Map()).getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
     val config = HBaseConfiguration.create()
     configResources.split(",").foreach(r => config.addResource(r))
-    configResources.split(",").foreach(r => config.addResource(new Path(r)))
+    configResources.split(",").filter(r => (r != "") && new File(r).exists()).foreach(r => config.addResource(new Path(r)))
 
     val hBaseContext = new HBaseContext(ssc.sparkContext, config)
     val options: Map[String, String] = hbaseModel.options.getOrElse(Map()) ++
+      hbaseModel.avroSchemas.getOrElse(Map()) ++
       Seq(
         HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
         HBaseTableCatalog.newTable -> "4"
@@ -84,13 +87,12 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
           val df = sqlContext.read.json(rdd)
 
           val putConverterFactory = PutConverterFactory(options, schema)
-          val convertToPut: InternalRow => Put = putConverterFactory.convertToPut
+          val convertToPut: Row => Put = putConverterFactory.convertToPut
           hBaseContext
             .bulkPut(df.rdd,
               putConverterFactory.getTableName(),
               convertToPut
             )
-
         }
     }
   }
@@ -101,7 +103,8 @@ class HBaseWriter(hbaseModel: KeyValueModel,
   extends SparkWriter {
 
   override def write(df: DataFrame): Unit = {
-    val options: Map[String, String] = hbaseModel.options.getOrElse(Map())
+    val options: Map[String, String] = hbaseModel.options.getOrElse(Map()) ++
+    hbaseModel.avroSchemas.getOrElse(Map()) ++
     Seq(
       HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
       HBaseTableCatalog.newTable -> "4"

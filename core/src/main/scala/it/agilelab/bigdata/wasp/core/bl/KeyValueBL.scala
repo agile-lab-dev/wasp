@@ -20,7 +20,7 @@ trait KeyValueBL {
 
 class KeyValueBLImp(waspDB: WaspDB) extends KeyValueBL {
 	
-	private def factory(t: KeyValueModel) = KeyValueModel(t.name, t.schema, t.dataFrameSchema, t.options, t.avroSchemas)
+	private def factory(t: KeyValueModel) = KeyValueModel(t.name, t.tableCatalog, t.dataFrameSchema, t.options, t.avroSchemas)
 	
 	def getByName(name: String) = {
 		waspDB.getDocumentByField[KeyValueModel]("name", new BsonString(name)).map(index => {

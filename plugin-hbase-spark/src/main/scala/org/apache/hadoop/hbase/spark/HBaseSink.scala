@@ -92,8 +92,7 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
 
   def getTableName(): TableName = TableName.valueOf(catalog.name)
 
-  def convertToPut(internalRow: InternalRow): Put = {
-    val row: Row = enconder.fromRow(internalRow)
+  def convertToPut(row: Row): Put = {
     // construct bytes for row key
     val rowBytes = rkIdxedFields.map { case (x, y) =>
       Utils.toBytes(row(x), y)
@@ -115,5 +114,10 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
       put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
     }
     put
+  }
+
+  def convertToPut(internalRow: InternalRow): Put = {
+    val row: Row = enconder.fromRow(internalRow)
+    convertToPut(row)
   }
 }

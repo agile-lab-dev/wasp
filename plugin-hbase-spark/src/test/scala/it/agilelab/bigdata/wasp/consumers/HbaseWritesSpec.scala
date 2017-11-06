@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.consumers
 
 import org.apache.hadoop.hbase.spark.LatestHBaseContextCache
 import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
+import org.apache.hadoop.hbase.spark.example.datasources.AvroHBaseRecord
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
@@ -14,6 +15,14 @@ import org.scalatest.{BeforeAndAfter, _}
   * Created by mattiabertorello on 27/01/17.
   */
 
+case class Avro(
+                 name: String,
+                 favorite_number: Int,
+                 favorite_color: String,
+                 favorite_array: Array[String],
+                 favorite_map: Map[String, Int]
+               )
+
 case class HBaseRecord(
                         col0: String,
                         col1: Boolean,
@@ -23,7 +32,9 @@ case class HBaseRecord(
                         col5: Long,
                         col6: Short,
                         col7: String,
-                        col8: Byte)
+                        col8: Byte,
+                        col9: Avro
+                      )
 
 object HBaseRecord {
   def apply(i: Int): HBaseRecord = {
@@ -36,11 +47,30 @@ object HBaseRecord {
       i.toLong,
       i.toShort,
       s"String$i extra",
-      i.toByte)
+      i.toByte,
+      Avro(
+        "avro",
+        i,
+        "color1",
+        Array("color1"),
+        Map("k1" -> 1)
+      )
+    )
   }
 }
 
 class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter   {
+  val schemaString =
+    s"""{"namespace": "example.avro",
+       |   "type": "record",      "name": "User",
+       |    "fields": [
+       |        {"name": "name", "type": "string"},
+       |        {"name": "favorite_number",  "type": ["int", "null"]},
+       |        {"name": "favorite_color", "type": ["string", "null"]},
+       |        {"name": "favorite_array", "type": {"type": "array", "items": "string"}},
+       |        {"name": "favorite_map", "type": {"type": "map", "values": "int"}}
+       |      ]    }""".stripMargin
+
 
   val cat =
     s"""{
@@ -55,7 +85,8 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
        |"col5":{"cf":"cf5", "col":"col5", "type":"bigint"},
        |"col6":{"cf":"cf6", "col":"col6", "type":"smallint"},
        |"col7":{"cf":"cf7", "col":"col7", "type":"string"},
-       |"col8":{"cf":"cf8", "col":"col8", "type":"tinyint"}
+       |"col8":{"cf":"cf8", "col":"col8", "type":"tinyint"},
+       |"col9":{"cf":"cf1", "col":"col9", "avro":"avroSchema"}
        |}
        |}""".stripMargin
 
@@ -72,11 +103,22 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
 
         ss.createDataFrame(data).write.options(
           Map(HBaseTableCatalog.tableCatalog -> cat,
+            "avroSchema" -> schemaString,
             HBaseSparkConf.HBASE_CONFIG_LOCATION -> "/wasp/docker/hbase/conf_ex/hbase-site.xml",
             HBaseTableCatalog.newTable -> "5",
             HBaseSparkConf.USE_HBASECONTEXT -> "false"))
           .format("org.apache.hadoop.hbase.spark")
           .save()
+
+    val dataRead = ss
+      .read
+      .options(Map("avroSchema" -> schemaString,
+        HBaseTableCatalog.tableCatalog -> cat,
+        HBaseSparkConf.HBASE_CONFIG_LOCATION -> "/wasp/docker/hbase/conf_ex/hbase-site.xml"
+      ))
+      .format("org.apache.hadoop.hbase.spark")
+      .load()
+    dataRead.show(100, false)
     println("End normal writing")
     import ss.implicits._
     val input = new MemoryStream[HBaseRecord](42, ss.sqlContext)
@@ -88,6 +130,7 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
       ))
     val s = input.toDF().writeStream.options(
       Map(HBaseTableCatalog.tableCatalog -> cat,
+        "avroSchema" -> schemaString,
         HBaseSparkConf.HBASE_CONFIG_LOCATION -> "/wasp/docker/hbase/conf_ex/hbase-site.xml",
         HBaseTableCatalog.newTable -> "5"))
       .option("checkpointLocation", "/tmp/plugin-hbase-wasp")
@@ -105,6 +148,7 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
 
     val s1 = input.toDF().writeStream.options(
       Map(HBaseTableCatalog.tableCatalog -> cat,
+        "avroSchema" -> schemaString,
         HBaseSparkConf.HBASE_CONFIG_LOCATION -> "/wasp/docker/hbase/conf_ex/hbase-site.xml",
         HBaseTableCatalog.newTable -> "5"))
       .option("checkpointLocation", "/tmp/plugin-hbase-wasp")

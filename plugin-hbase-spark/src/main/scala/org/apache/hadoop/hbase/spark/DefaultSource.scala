@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.hbase.spark
 
+import java.io.File
 import java.util
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -117,7 +118,7 @@ class DefaultSource extends RelationProvider
         val config = HBaseConfiguration.create()
         val configResources = parameters.getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
         configResources.split(",").foreach(r => config.addResource(r))
-        configResources.split(",").foreach(r => config.addResource(new Path(r)))
+        configResources.split(",").filter(r => (r != "") && new File(r).exists()).foreach(r => config.addResource(new Path(r)))
         new HBaseContext(sparkSession.sparkContext, config)
       } else {
         LatestHBaseContextCache.latest
@@ -180,7 +181,7 @@ case class HBaseRelation(
   } else {
     val config = HBaseConfiguration.create()
     configResources.split(",").foreach(r => config.addResource(r))
-    configResources.split(",").foreach(r => config.addResource(new Path(r)))
+    configResources.split(",").filter(r => (r != "") && new File(r).exists()).foreach(r => config.addResource(new Path(r)))
     new HBaseContext(sqlContext.sparkContext, config)
   }
 
