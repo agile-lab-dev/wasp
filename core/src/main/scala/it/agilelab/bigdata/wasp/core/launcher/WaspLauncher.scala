@@ -27,9 +27,9 @@ trait WaspLauncher {
 		val commandLine = CliUtils.parseArgsList(args, WaspOptions.allOptions ++ getCustomOptions())
 
 		// handle version & help
-		if (commandLine.hasOption(WaspOptions.version.getOpt)) {
+		if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
 			printVersionAndExit()
-		} else if (commandLine.hasOption(WaspOptions.help.getOpt)) {
+		} else if (commandLine.hasOption(WaspCommandLineOptions.help.getOpt)) {
 			printHelpAndExit()
 		}
 
@@ -68,7 +68,7 @@ trait WaspLauncher {
 	}
 
 	private def printHelpAndExit(): Unit = {
-		CliUtils.printHelpForOptions(WaspOptions.allOptions ++ getCustomOptions())
+		CliUtils.printHelpForOptions(getOptions)
 		System.exit(0)
 	}
 	
