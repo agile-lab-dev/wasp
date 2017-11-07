@@ -87,7 +87,7 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
   val colsIdxedFields: Seq[(Int, Field)] = schema
     .fieldNames
     .partition(x => rkFields.map(_.colName).contains(x))
-    ._2.map(x => (schema.fieldIndex(x), catalog.getField(x)))
+    ._2.filter(catalog.sMap.exists).map(x => (schema.fieldIndex(x), catalog.getField(x)))
   val enconder: ExpressionEncoder[Row] = RowEncoder.apply(schema).resolveAndBind()
 
   def getTableName(): TableName = TableName.valueOf(catalog.name)

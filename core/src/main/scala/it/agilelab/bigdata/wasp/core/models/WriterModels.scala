@@ -19,7 +19,7 @@ object WriterModel {
 	def elasticWriter(name: String, indexId: BsonObjectId) = WriterModel(name, indexId, WriterType.elasticWriterType)
 	def solrWriter(name: String, indexId: BsonObjectId) = WriterModel(name, indexId, WriterType.solrWriterType)
 	def keyValueWriter(name: String, tableId: BsonObjectId, product: String) = WriterModel(name, tableId, WriterType(Datastores.keyValueCategory, Option(product)))
-	def hbaseWriter(name: String, tableId: BsonObjectId, product: String) = WriterModel(name, tableId, WriterType.hbaseWriterType)
+	def hbaseWriter(name: String, tableId: BsonObjectId) = WriterModel(name, tableId, WriterType.hbaseWriterType)
 	def topicWriter(name: String, topicId: BsonObjectId, product: String) = WriterModel(name, topicId, WriterType(Datastores.topicCategory, Option(product)))
 	def kafkaWriter(name: String, topicId: BsonObjectId) = WriterModel(name, topicId, WriterType.kafkaWriterType)
 	def rawWriter(name: String, rawId: BsonObjectId) = WriterModel(name, rawId, WriterType.rawWriterType)

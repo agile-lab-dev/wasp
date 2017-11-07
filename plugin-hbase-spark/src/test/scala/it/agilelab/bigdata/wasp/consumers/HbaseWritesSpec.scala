@@ -62,14 +62,15 @@ object HBaseRecord {
 class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter   {
   val schemaString =
     s"""{"namespace": "example.avro",
-       |   "type": "record",      "name": "User",
+       |   "type": "record", "name": "User",
        |    "fields": [
        |        {"name": "name", "type": "string"},
        |        {"name": "favorite_number",  "type": ["int", "null"]},
        |        {"name": "favorite_color", "type": ["string", "null"]},
        |        {"name": "favorite_array", "type": {"type": "array", "items": "string"}},
        |        {"name": "favorite_map", "type": {"type": "map", "values": "int"}}
-       |      ]    }""".stripMargin
+       |      ]
+       |}""".stripMargin
 
 
   val cat =

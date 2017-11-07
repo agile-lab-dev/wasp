@@ -246,6 +246,7 @@ object WaspDB extends Logging {
 	  createCodecProviderIgnoreNone(classOf[IndexModel]),
 	  createCodecProviderIgnoreNone(classOf[RawOptions]),
 	  createCodecProviderIgnoreNone(classOf[RawModel]),
+	  createCodecProviderIgnoreNone(classOf[KeyValueOption]),
 	  createCodecProviderIgnoreNone(classOf[KeyValueModel]),
 	  createCodecProviderIgnoreNone(classOf[BatchJobModel]),
 	  createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),

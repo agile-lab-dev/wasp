@@ -251,7 +251,7 @@ case class HBaseRelation(
     val colsIdxedFields = schema
       .fieldNames
       .partition(x => rkFields.map(_.colName).contains(x))
-      ._2.map(x => (schema.fieldIndex(x), catalog.getField(x)))
+      ._2.filter(catalog.sMap.exists).map(x => (schema.fieldIndex(x), catalog.getField(x)))
     val rdd = data.rdd
 
     def convertToPut(row: Row) = {

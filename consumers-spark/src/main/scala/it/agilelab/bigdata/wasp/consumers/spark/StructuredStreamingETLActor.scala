@@ -331,6 +331,7 @@ class StructuredStreamingETLActor(env: {
     val output = strategyBroadcast.value.transform(completeMapOfDFs)
     writerType.getActualProduct match {
       case "kafka" => output
+      case "hbase" => output
       case _ =>
         output.select(MetadataUtils.flatMetadataSchema(stream.schema, None): _*)
     }

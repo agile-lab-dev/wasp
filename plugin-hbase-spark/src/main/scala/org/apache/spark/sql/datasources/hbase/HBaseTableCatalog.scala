@@ -138,6 +138,7 @@ case class SchemaMap(map: mutable.HashMap[String, Field]) {
   def fields = map.values
 
   def getField(name: String) = map(name)
+  def exists(name: String) = map.keySet.contains(name)
 }
 
 

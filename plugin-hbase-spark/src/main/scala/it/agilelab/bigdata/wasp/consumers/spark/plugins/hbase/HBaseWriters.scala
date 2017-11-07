@@ -39,10 +39,11 @@ class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel,
                                      ss: SparkSession)
   extends SparkStructuredStreamingWriter {
   override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
-    val options: Map[String, String] = hbaseModel.options.getOrElse(Map()) ++
+    val options: Map[String, String] = hbaseModel.getOptionsMap ++
     hbaseModel.avroSchemas.getOrElse(Map()) ++
     Seq(
       HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
+      KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
       HBaseTableCatalog.newTable -> "4"
     )
     stream.writeStream
@@ -66,16 +67,17 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
     logger.info(s"Initialize DStream HBase writer: $hbaseModel")
     val dataFrameSchema = hbaseModelLocal.dataFrameSchema.get
 
-    val configResources: String = hbaseModel.options.getOrElse(Map()).getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
+    val configResources: String = hbaseModel.getOptionsMap().getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
     val config = HBaseConfiguration.create()
     configResources.split(",").foreach(r => config.addResource(r))
     configResources.split(",").filter(r => (r != "") && new File(r).exists()).foreach(r => config.addResource(new Path(r)))
 
     val hBaseContext = new HBaseContext(ssc.sparkContext, config)
-    val options: Map[String, String] = hbaseModel.options.getOrElse(Map()) ++
+    val options: Map[String, String] = hbaseModel.getOptionsMap ++
       hbaseModel.avroSchemas.getOrElse(Map()) ++
       Seq(
         HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
+        KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
         HBaseTableCatalog.newTable -> "4"
       )
     stream.foreachRDD {
@@ -103,10 +105,11 @@ class HBaseWriter(hbaseModel: KeyValueModel,
   extends SparkWriter {
 
   override def write(df: DataFrame): Unit = {
-    val options: Map[String, String] = hbaseModel.options.getOrElse(Map()) ++
+    val options: Map[String, String] = hbaseModel.getOptionsMap ++
     hbaseModel.avroSchemas.getOrElse(Map()) ++
     Seq(
       HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
+      KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
       HBaseTableCatalog.newTable -> "4"
     )
 

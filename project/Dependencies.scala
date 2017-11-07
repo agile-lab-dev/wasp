@@ -9,36 +9,44 @@ import sbt._
  * See project/Versions.scala for the versions definitions.
  */
 object Dependencies {
-	
+
 	implicit class Exclude(module: ModuleID) {
-    /*def log4jExclude: ModuleID =
-      module excludeAll ExclusionRule("log4j")
-    */
+		def log4jExclude: ModuleID =
+			module excludeAll ExclusionRule("log4j")
 
-    /*
-      def sparkExclusions: ModuleID =
-        module.log4jExclude
-          .exclude("com.google.guava", "guava")
-          .exclude("org.apache.spark", "spark-core")
-          .exclude("org.slf4j", "slf4j-log4j12")
-          .exclude("org.apache.logging.log4j", "log4j-api")
-          .exclude("org.apache.logging.log4j", "log4j-core")
-          .exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
+		def embeddedExclusions: ModuleID =
+			module.log4jExclude
+				.excludeAll(ExclusionRule("org.apache.spark"))
+				.excludeAll(ExclusionRule("com.typesafe"))
 
-      def kafkaExclusions: ModuleID =
-        module
-          .excludeAll(ExclusionRule("org.slf4j"))
-          .exclude("com.sun.jmx", "jmxri")
-          .exclude("com.sun.jdmk", "jmxtools")
-          .exclude("net.sf.jopt-simple", "jopt-simple")
+		def driverExclusions: ModuleID =
+			module.log4jExclude
+				.exclude("com.google.guava", "guava")
+				.excludeAll(ExclusionRule("org.slf4j"))
 
-      def sparkSolrExclusions: ModuleID =
-        module.excludeAll(
-          ExclusionRule(organization = "org.eclipse.jetty"),
-          ExclusionRule(organization = "javax.servlet"),
-          ExclusionRule(organization = "org.eclipse.jetty.orbit")
-        )
-    */
+		def sparkExclusions: ModuleID =
+			module.log4jExclude
+				.exclude("com.google.guava", "guava")
+				.exclude("org.apache.spark", "spark-core")
+				.exclude("org.slf4j", "slf4j-log4j12")
+				.exclude("org.apache.logging.log4j", "log4j-api")
+				.exclude("org.apache.logging.log4j", "log4j-core")
+				.exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
+
+		def kafkaExclusions: ModuleID =
+			module
+				.excludeAll(ExclusionRule("org.slf4j"))
+				.exclude("com.sun.jmx", "jmxri")
+				.exclude("com.sun.jdmk", "jmxtools")
+				.exclude("net.sf.jopt-simple", "jopt-simple")
+
+		def sparkSolrExclusions: ModuleID =
+			module.excludeAll(
+				ExclusionRule(organization = "org.eclipse.jetty"),
+				ExclusionRule(organization = "javax.servlet"),
+				ExclusionRule(organization = "org.eclipse.jetty.orbit")
+			)
+
 	}
 	
 	// ===================================================================================================================
@@ -74,9 +82,9 @@ object Dependencies {
   val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka
   val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark
   val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark
-	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional"
-	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional"
-	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional"
+	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
+	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional,test"
+	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional,test"
 	val metrics = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
 	val mongodbScala = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
 	val quartz = "org.quartz-scheduler" % "quartz" % Versions.quartz
@@ -125,13 +133,10 @@ object Dependencies {
 	val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % "test"
 	val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % "test"
 	val scalatest = "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"
-  val logger = "org.slf4j" % "slf4j-log4j12" % "1.7.25" % "test"
-  val logger2 = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.1" % "test"
-  val logger3 = "ch.qos.logback" % "logback-classic" % "1.1.3" % "test"
 
 
 	// grouped dependencies, for convenience =============================================================================
-  val test = Seq(akkaTestKit, akkaClusterTestKit, scalatest, logger, logger2, logger3)
+  val test = Seq(akkaTestKit, akkaClusterTestKit, scalatest)
 	
 	// ===================================================================================================================
 	// Module dependencies
@@ -184,7 +189,7 @@ object Dependencies {
 			elasticSearchSpark
 		)
 
-  val plugin_hbase_spark = hbase ++ Seq(scalatest, logger, logger2, logger3)
+  val plugin_hbase_spark = hbase ++ Seq(scalatest)
 
 	val plugin_solr_spark =
 		Seq(

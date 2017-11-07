@@ -10,7 +10,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
 
 case class AvroToRow(schemaAvroJson: String ) {
 
-  private lazy val userSchema: Schema = new Schema.Parser().parse(schemaAvroJson)
+  private def userSchema: Schema = new Schema.Parser().parse(schemaAvroJson)
   private lazy  val datumReader = new GenericDatumReader[GenericRecord](userSchema)
   private lazy  val requiredSchema: DataType =  getSchemaSpark()
 
