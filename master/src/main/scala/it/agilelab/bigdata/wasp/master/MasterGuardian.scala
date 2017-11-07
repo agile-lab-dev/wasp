@@ -2,6 +2,10 @@ package it.agilelab.bigdata.wasp.master
 
 import java.util.Calendar
 
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
+
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
@@ -12,10 +16,6 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
-
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
 
 
 object MasterGuardian extends WaspConfiguration with Logging {
@@ -80,9 +80,6 @@ class MasterGuardian(env: {
   import MasterGuardian._
 
   override def preStart(): Unit = {
-    // TODO just for Class Loader debug.
-    // logger.error("Framework ClassLoader"+this.getClass.getClassLoader.toString())
-
     // non-system pipegraphs and associated consumers are deactivated on startup
     logger.info("Deactivating non-system pipegraphs...")
     setPipegraphsActive(env.pipegraphBL.getNonSystemPipegraphs, isActive = false)
@@ -93,11 +90,11 @@ class MasterGuardian(env: {
     if (waspConfig.systemPipegraphsStart) {
       logger.info("Activating system pipegraphs...")
 
+      // TODO use single-restart method; setActive + dummy StartPipegraph?
       env.pipegraphBL.getSystemPipegraphs foreach {
         pipegraph => {
-          logger.info("Activating system pipegraph \"" + pipegraph.name + "\"...")
+          logger.info("Scheduling startup of system pipegraph \"" + pipegraph.name + "\"")
           self.actorRef ! StartPipegraph(pipegraph.name)
-          logger.info("Activated system pipegraph \"" + pipegraph.name + "\"")
         }
       }
 
@@ -107,15 +104,11 @@ class MasterGuardian(env: {
       setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs, isActive = false)
       logger.info("Deactivated system pipegraphs")
     }
-  }
-
   
-  private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
-    pipegraphs.foreach(pipegraph => env.pipegraphBL.setIsActive(pipegraph, isActive))
+    // start batch schedulers
+    logger.info("Starting batch schedulers...")
+    batchMasterGuardian ! StartSchedulersMessage()
   }
-  
-  logger.info("Batch schedulers initializing ...")
-  batchMasterGuardian ! StartSchedulersMessage()
   
   // TODO try without sender parenthesis
   def initialized: Actor.Receive = {
@@ -136,12 +129,16 @@ class MasterGuardian(env: {
     //case message: Any                     => logger.error("unknown message: " + message)
   }
   
-  private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]) = {
+  private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
+    pipegraphs.foreach(pipegraph => env.pipegraphBL.setIsActive(pipegraph, isActive))
+  }
+  
+  private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]): Unit = {
     logger.info(s"Call invocation: message: $message result: $result")
     sender ! result
   }
 
-  private def onPipegraph(name: String, f: PipegraphModel => Either[String, String]) = {
+  private def onPipegraph(name: String, f: PipegraphModel => Either[String, String]): Either[String, String] = {
     env.pipegraphBL.getByName(name) match {
       case None => Left("Pipegraph not retrieved")
       case Some(pipegraph) => f(pipegraph)
@@ -154,21 +151,21 @@ class MasterGuardian(env: {
     Right("Pipegraphs restart started.")
   }
 
-  private def onProducer(name: String, f: ProducerModel => Either[String, String]) = {
+  private def onProducer(name: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
     env.producerBL.getByName(name) match {
       case None => Left("Producer not retrieved")
       case Some(producer) => f(producer)
     }
   }
 
-  private def onEtl(pipegraphName: String, etlName: String, f: (PipegraphModel, String) => Either[String, String]) = {
+  private def onEtl(pipegraphName: String, etlName: String, f: (PipegraphModel, String) => Either[String, String]): Either[String, String] = {
     env.pipegraphBL.getByName(pipegraphName) match {
       case None => Left("ETL not retrieved")
       case Some(pipegraph) => f(pipegraph, etlName)
     }
   }
 
-  private def onBatchJob(name: String, f: BatchJobModel => Either[String, String]) = {
+  private def onBatchJob(name: String, f: BatchJobModel => Either[String, String]): Either[String, String] = {
     env.batchJobBL.getByName(name) match {
       case None => Left("BatchJob not retrieved")
       case Some(batchJob) => f(batchJob)
@@ -185,11 +182,11 @@ class MasterGuardian(env: {
     result
   }
 
-  private def cleanPipegraph(message: RemovePipegraph) = {
+  private def cleanPipegraph(message: RemovePipegraph): Unit = {
     //sender ! true
   }
 
-  private def startPipegraph(pipegraph: PipegraphModel) = {
+  private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
     // persist pipegraph as active
     setActiveAndRestart(pipegraph, active = true)
   }
@@ -247,17 +244,16 @@ class MasterGuardian(env: {
   }
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
-    logger.info(s"Send the message StartBatchJobMessage to batchGuardian: job to start: ${batchJob._id.get.getValue.toHexString}")
-    implicit val timeout = generalTimeout
-    val jobFut = batchMasterGuardian ? StartBatchJobMessage(batchJob._id.get.getValue.toHexString)
-    val jobRes = Await.result(jobFut, generalTimeout.duration).asInstanceOf[BatchJobResult]
+    logger.info("Starting batch job \"" + batchJob.name + "\"")
+    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob._id.get.getValue.toHexString), Some(generalTimeout.duration))
     if (jobRes.result) {
-      Right("Batch job '" + batchJob.name + "' queued or processing")
+      Right("Batch job \"" + batchJob.name + "\" accepted (queued or processing)")
     } else {
-      Left("Batch job '" + batchJob.name + "' not processing")
+      Left("Batch job \"" + batchJob.name + "\" not accepted")
     }
   }
 
+  // TODO improve logging messages
   private def startPendingBatchJobs(): Either[String, String] = {
     //TODO: delete log
     logger.info("Sending CheckJobsBucketMessage to Batch Guardian.")
@@ -266,13 +262,6 @@ class MasterGuardian(env: {
   }
 
   override def postStop() {
-    /*
-    elasticAdminActor ! PoisonPill
-    kafkaAdminActor ! PoisonPill
-    solrAdminActor ! PoisonPill
-    sparkConsumersMasterGuardian ! PoisonPill
-    batchMasterGuardian ! PoisonPill
-    */
     super.postStop()
   }
 }
