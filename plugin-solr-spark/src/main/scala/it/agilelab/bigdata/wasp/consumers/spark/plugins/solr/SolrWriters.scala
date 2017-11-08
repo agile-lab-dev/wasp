@@ -52,7 +52,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: $indexName")
@@ -109,7 +109,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: ${index.name}")
@@ -195,7 +195,7 @@ class SolrSparkWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: $indexName")

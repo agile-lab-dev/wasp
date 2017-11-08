@@ -42,12 +42,16 @@ case class IndexModel(override val name: String,
                       _id: Option[BsonObjectId] = None,
                       query: Option[String] = None,
                       numShards: Option[Int] = Some(1),
-                      replicationFactor: Option[Int] = Some(1))
+                      replicationFactor: Option[Int] = Some(1),
+                      rollingIndex: Boolean = true
+                     )
     extends Model {
 
-  def resource = s"${ConfigManager.buildTimedName(name)}/$dataType"
+  def resource = s"$eventuallyTimedName/$dataType"
 
-  def collection = s"${ConfigManager.buildTimedName(name)}"
+  def collection = eventuallyTimedName
+
+  def eventuallyTimedName = if(rollingIndex) ConfigManager.buildTimedName(name) else name
   
   /**
     * Returns a JSON representation of the schema of this index's schema.
