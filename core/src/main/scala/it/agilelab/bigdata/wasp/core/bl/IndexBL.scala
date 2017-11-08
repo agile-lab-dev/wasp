@@ -20,7 +20,8 @@ class IndexBLImp(waspDB: WaspDB) extends IndexBL {
   private def factory(t: BsonDocument): IndexModel =
     new IndexModel(t.get("name").asString().getValue, t.get("creationTime").asInt64().getValue, Option(t.get("schema").asDocument()),
       Some(t.get("_id").asObjectId()), Option(t.get("query")).map(_.asString().getValue),
-      Option(t.get("numShards")).map(_.asInt32().getValue), Option(t.get("replicationFactor")).map(_.asInt32().getValue))
+      Option(t.get("numShards")).map(_.asInt32().getValue), Option(t.get("replicationFactor")).map(_.asInt32().getValue),
+      t.get("rollingIndex").asBoolean().getValue)
 
   def getByName(name: String) = {
     waspDB

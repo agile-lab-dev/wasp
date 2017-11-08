@@ -76,7 +76,8 @@ private[wasp] object LoggerIndex {
 		name = IndexModel.normalizeName(index_name),
 		creationTime = System.currentTimeMillis,
 		schema = JsonConverter.fromString(indexSchema),
-		_id = Some(BsonObjectId())
+		_id = Some(BsonObjectId()),
+		rollingIndex = true
 	)
 
 	private def indexSchema = s"""
@@ -145,7 +146,8 @@ private[wasp] object RawIndex {
 		name = IndexModel.normalizeName(index_name),
 		creationTime = System.currentTimeMillis,
 		schema = JsonConverter.fromString(indexSchema),
-		_id = Some(BsonObjectId())
+		_id = Some(BsonObjectId()),
+		rollingIndex = true
 	)
 
 	private val indexSchema = s"""
