@@ -127,19 +127,15 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   }
 
   //TODO: identico a metodo privato in ConsumerETLActor, esternalizzare
-  private def createStrategy(etl: BatchETLModel) : Option[Strategy] = etl.strategy match {
+  private def createStrategy(etl: BatchETLModel): Option[Strategy] = etl.strategy match {
     case None => None
     case Some(strategyModel) =>
-      //val result = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
-      // classLoader.map(cl => cl.loadClass(producer.className))
-
-      println(s"************************** ${classLoader.toString()} -> strategyModel: ${strategyModel.className}")
-
-      val result = classLoader.map(cl => cl.loadClass(strategyModel.className)).get.newInstance().asInstanceOf[Strategy]
-
-      //.getOrElse(Class.forName(strategyModel.className).newInstance()).asInstanceOf[Strategy]
+      val result = Class
+        .forName(strategyModel.className)
+        .newInstance()
+        .asInstanceOf[Strategy]
       result.configuration = strategyModel.configurationConfig() match {
-        case None => ConfigFactory.empty()
+        case None                => ConfigFactory.empty()
         case Some(configuration) => configuration
       }
 
