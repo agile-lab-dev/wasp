@@ -8,6 +8,7 @@ import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 /**
 	* Default system pipegraphs: logging & raw.
 	*/
+
 object SystemPipegraphs {
 	/** Logger pipegraph & related */
 	lazy val loggerPipegraphName = "LoggerPipegraph"
@@ -38,19 +39,8 @@ private[wasp] object LoggerTopic {
 		_id = Some(BsonObjectId())
 	)
 
-	private def topicSchema = s"""
-    {"type":"record",
-    "namespace":"Logging",
-    "name":"Logging",
-    "fields":[
-      ${TopicModel.schema_base},
-      {"name":"log_source","type":"string"},
-      {"name":"log_class","type":"string"},
-      {"name":"log_level","type":"string"},
-      {"name":"message","type":"string"},
-      {"name":"cause","type":"string"},
-      {"name":"stack_trace","type":"string"}
-    ]}"""
+	private def topicSchema = s"${TopicModel.generateMetadataAndField("Logging", "Logging", None)}"
+
 }
 
 private[wasp] object LoggerProducer {

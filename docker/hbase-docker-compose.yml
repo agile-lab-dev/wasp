@@ -1,0 +1,13 @@
+version: '2'
+services:
+ hbase:
+      build: ./hbase
+      image: hbase_cdh:5.11
+      hostname: hbase
+      ports:
+          - "60010:60010"
+
+networks:
+  default:
+    external:
+      name: wasp-docker
