@@ -85,6 +85,10 @@ case class PipegraphModel(override val name: String,
                           var isActive: Boolean = true,
                           _id: Option[BsonObjectId] = None) extends Model {
   def generateStandardPipegraphName: String = s"pipegraph_$name"
+  
+  def hasSparkComponents: Boolean = legacyStreamingComponents.nonEmpty || structuredStreamingComponents.nonEmpty
+  
+  def hasRtComponents: Boolean = rtComponents.nonEmpty
 }
 
 object LegacyStreamingETLModel {

@@ -196,15 +196,26 @@ class MasterGuardian(env: {
   }
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
+    // mark the pipegraph as active
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
-    val res1 = ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
-    val res2 = ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
     
-    if (res1 && res2) {
+    // ask the guardians to restart only if the pipegraph has components that involve them
+    val resSpark = if (pipegraph.hasSparkComponents) {
+      ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+    } else { // no spark components in pipegraph => true by default
+      true
+    }
+    val resRt = if (pipegraph.hasRtComponents) {
+      ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+    } else { // no rt components in pipegraph => true by default
+      true
+    }
+    
+    if (resSpark && resRt) {
       Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped"))
     } else {
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
-      Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped"))
+      Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped")).joinLeft
     }
   }
 
