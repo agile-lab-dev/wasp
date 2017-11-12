@@ -9,11 +9,6 @@ stages:
   - compile
   - publish
 
-job:
-  only:
-    refs:
-      - develop
-
 cache:
   key: "$CI_BUILD_REF_NAME" # contains either the branch or the tag, so it's caching per branch
   untracked: true
@@ -38,6 +33,7 @@ publish:
   only:
     refs:
       - develop
+      - master
   script:
     - sbt -v publish
   artifacts:
