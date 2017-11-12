@@ -22,6 +22,10 @@ cache:
 compile:
   stage: compile
   image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
+  only:
+    refs:
+      - develop
+      - master
   script:
     - ls -lha
     - sbt -v compile
