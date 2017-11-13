@@ -10,6 +10,7 @@ import sbtbuildinfo.{BuildInfoKey, BuildInfoOption}
  *
  * See project/Versions.scala for the versions definitions.
  */
+
 object Settings {
 	// settings related to project information
 	lazy val projectSettings = Seq(
@@ -18,13 +19,20 @@ object Settings {
 		homepage := Some(url("http://www.agilelab.it")),
     licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
 		publishMavenStyle := true,
+    publishArtifact in(Compile, packageDoc) := false,
 		publishTo := {
-			val nexus = "http://localhost:8081/"
+      val nexus = "http://server01.cluster01.atscom.it:8081/"
 			if (isSnapshot.value)
 				Some("snapshots" at nexus + "repository/maven-snapshots")
 			else
 				Some("releases"  at nexus + "repository/maven-releases")
-		}
+    },
+    // Workaround for publish fails https://github.com/sbt/sbt/issues/3570
+    updateOptions := updateOptions.value.withGigahorse(false),
+    credentials ++= (for {
+      user <- Option(System.getenv().get("NEUXS_USERNAME"))
+      pw <- Option(System.getenv().get("NEUXS_PASSWORD"))
+    } yield Credentials("Sonatype Nexus Repository Manager", "server01.cluster01.atscom.it", user, pw)).toSeq
 	)
 	
 	// custom resolvers for dependencies
