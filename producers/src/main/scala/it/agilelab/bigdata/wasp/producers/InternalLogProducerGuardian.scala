@@ -119,26 +119,19 @@ private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[Top
     val causeEx = ""
     val stackEx = ""
 
-    val myJson = """
-      "id_event" -> JsNumber(0.0),
-      "source_name" -> JsString("LoggerPipeline"),
-      "topic_name" -> JsString(topic.get.name),
-      "metric_name" -> JsString("log"),
-      "timestamp" -> JsString(TimeFormatter.format(new Date())),
-      "latitude" -> JsNumber(0.0),
-      "longitude" -> JsNumber(0.0),
-      "value" -> JsNumber(0.0),
-      "payload" -> JsString("logPayload"),
-      "log_source"-> JsString(logSource),
-      "log_class" -> JsString(logClass),
-      "log_level" -> JsString(logLevel),
-      "message" -> JsString(AvroToJsonUtil.convertToUTF8(message)),
-      "cause" -> JsString(causeEx),
-      "stack_trace" -> JsString(stackEx)"""
+    val logFields = s"""{
+	    		"log_source":"$logSource",
+	    		"log_class":"$logClass",
+          "log_level":"$logLevel",
+	    		"message":"${AvroToJsonUtil.convertToUTF8(message)}",
+	    		"cause":"$causeEx",
+	    		"stack_trace":"$stackEx"}
+	    """
 
 
 
-    sendMessage(myJson)
+
+    sendMessage(logFields)
   }
 
   // For this specific logger, we by-pass the standard log duplication mechanic
