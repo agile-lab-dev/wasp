@@ -1,13 +1,10 @@
 package it.agilelab.bigdata.wasp.producers
 
 import akka.actor.{Actor, ActorRef, Cancellable}
-import it.agilelab.bigdata.wasp.core.SystemPipegraphs._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, JsonToByteArrayUtil}
-import org.mongodb.scala.bson.BsonDocument
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue}
 
 case object StopMainTask
 
@@ -17,7 +14,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   implicit val system = context.system
   var task: Option[Cancellable] = None
 
-  def generateRawOutputJsonMessage(input: T): String
+  //def generateRawOutputJsonMessage(input: T): String
 
   def generateOutputJsonMessage(input: T): String
 
@@ -28,7 +25,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   //TODO occhio che abbiamo la partition key schianatata, quindi usiamo sempre e solo una partizione
   val partitionKey = "partitionKey"
 
-  val rawTopicSchema = JsonConverter.toString(rawTopic.schema.asDocument())
+  //val rawTopicSchema = JsonConverter.toString(rawTopic.schema.asDocument())
   lazy val topicSchemaType = topic.get.topicDataType
   lazy val topicSchema = JsonConverter.toString(topic.get.schema.asDocument())
 
@@ -50,7 +47,11 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
    */
   def sendMessage(input: T) = {
 
+
+    /*
     if (topic.isEmpty) {
+
+
       val msg = generateRawOutputJsonMessage(input)
       //TODO: Add rawSchema from system raw pipeline
       try {
@@ -63,10 +64,13 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
       } catch {
         case e: Throwable => logger.error("Exception sending message to kafka", e)
       }
+
+
     }
 
+*/
+
     topic.foreach { p =>
-      //decorate with metadata field
       val msg = generateOutputJsonMessage(input)
 
       try {

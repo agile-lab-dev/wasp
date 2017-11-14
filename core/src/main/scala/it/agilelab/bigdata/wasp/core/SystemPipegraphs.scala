@@ -18,10 +18,10 @@ object SystemPipegraphs {
 	lazy val loggerPipegraph = LoggerPipegraph()
 
 	/** Raw pipegraph & related */
-	lazy val rawPipegraphName = "RawPipegraph"
-	lazy val rawTopic = RawTopic()
-	lazy val rawIndex = RawIndex()
-	lazy val rawPipegraph = RawPipegraph()
+	//lazy val rawPipegraphName = "RawPipegraph"
+	//lazy val rawTopic = RawTopic()
+	//lazy val rawIndex = RawIndex()
+	//lazy val rawPipegraph = RawPipegraph()
 }
 
 private[wasp] object LoggerTopic {
@@ -39,7 +39,7 @@ private[wasp] object LoggerTopic {
 		_id = Some(BsonObjectId())
 	)
 
-	private def topicSchema = s"${TopicModel.generateMetadataAndField("Logging", "Logging", None)}"
+	private def topicSchema = s"${TopicModel.generateField("Logging", "Logging", None)}"
 
 }
 
@@ -73,7 +73,6 @@ private[wasp] object LoggerIndex {
 	private def indexSchema = s"""
     {"log":
         {"properties":{
-          ${IndexModel.schema_base_elastic},
           "log_source":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
           "log_level":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
           "log_class":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
@@ -103,7 +102,7 @@ private[wasp] object LoggerPipegraph {
 		_id = Some(BsonObjectId())
 	)
 }
-
+/*
 private[wasp] object RawTopic {
 
 	val topic_name = "Raw"
@@ -168,3 +167,4 @@ private[wasp] object RawPipegraph {
 		_id = Some(BsonObjectId())
 	)
 }
+*/

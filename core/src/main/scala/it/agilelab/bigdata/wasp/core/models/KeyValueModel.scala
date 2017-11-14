@@ -23,7 +23,7 @@ case class KeyValueModel(override val name: String,
 
 object KeyValueModel {
 
-	/*
+
 	val metadataAvro = s"""   {"namespace": "it.agilelab.wasp.avro",
 		  |   "type": "record", "name": "metadata",
 		  |    "fields": [
@@ -48,20 +48,20 @@ object KeyValueModel {
 		  |  }""".stripMargin
 
 
-	def metdataCatalog(cf: String) = s""" "metadata":{"cf":"$cf", "col":"m", "avro":"metadataAvroSchema"} """
+	def metadataCatalog(cf: String) = s""" "metadata":{"cf":"$cf", "col":"m", "avro":"metadataAvroSchema"} """
 	val metadataAvroSchemaKey = "metadataAvroSchema"
-*/
+
 	def generateField(namespace: String, tableName: String, ownSchema: Option[String]): String = {
 		val schema = (ownSchema :: Nil).flatten.mkString(", ")
 		generate(namespace, tableName, schema)
 	}
 
-	/*
+
 	def generateMetadataAndField(namespace: String, tableName: String, cf: String, ownSchema: Option[String]): String = {
-		val schema = (Some(metdataCatalog(cf))  :: ownSchema :: Nil).flatten.mkString(", ")
+		val schema = (Some(metadataCatalog(cf))  :: ownSchema :: Nil).flatten.mkString(", ")
 		generate(namespace, tableName, schema)
 	}
-*/
+
 	private def generate(namespace: String, tableName: String, schema: String) = {
 		s"""{
 			 |"table":{"namespace":"$namespace", "name":"$tableName"},

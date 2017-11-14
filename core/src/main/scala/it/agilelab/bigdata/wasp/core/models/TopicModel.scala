@@ -23,7 +23,7 @@ object TopicModel {
   """
 */
   def name(basename: String) = s"${basename.toLowerCase}.topic"
-/*
+
   /**
     * Generate final schema for TopicModel. Use this method if you schema have a field metadata.
     * @param ownSchema
@@ -34,7 +34,7 @@ object TopicModel {
     val schema = (ownSchema :: Nil).flatten.mkString(", ")
     generate(namespace, name, schema)
   }
-
+/*
   /**
     * Generate final schema for TopicModel. Use this method if you schema not have a field metadata.
     * @param ownSchema
@@ -45,7 +45,7 @@ object TopicModel {
     val schema = (ownSchema :: Nil).flatten.mkString(", ")
     generate(namespace, name, schema)
   }
-
+*/
   private def generate(namespace: String, name: String, schema: String) = {
     s"""
     {"type":"record",
@@ -55,7 +55,7 @@ object TopicModel {
       ${schema}
     ]}"""
   }
-*/}
+}
 
 case class TopicModel(override val name: String,
                       creationTime: Long,

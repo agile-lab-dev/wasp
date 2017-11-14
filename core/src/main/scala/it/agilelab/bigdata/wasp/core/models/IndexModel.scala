@@ -15,7 +15,7 @@ object IndexModel {
         "lastSeenTimestamp": { "type": "long", "index":"not_analyzed","store":"true"},
         "path": { "type": "nested"}
   """
-
+/*
   val schema_base_elastic = """
     "id_event":{"type":"double","index":"not_analyzed","store":"true"},
     "source_name":{"type":"string","index":"not_analyzed","store":"true"},
@@ -27,7 +27,7 @@ object IndexModel {
     "value":{"type":"double","index":"not_analyzed","store":"true"},
     "payload":{"type":"string","index":"not_analyzed","store":"true"}
   """
-
+*/
   val metadata_solr = """
     {"name": "metadata.id", "type": "string", "stored":true },
     {"name": "metadata.sourceId", "type": "string", "stored":true },
@@ -35,7 +35,7 @@ object IndexModel {
     {"name": "metadata.lastSeenTimestamp", "type": "tlong", "stored":true},
     {"name": "metadata.path", "type": "string", "stored":"true", "multiValued":"true"}
   """
-
+/*
   val schema_base_solr = """
                          { "name":"id_event", "type":"tdouble", "stored":true },
                          { "name":"source_name", "type":"string", "stored":true },
@@ -47,18 +47,18 @@ object IndexModel {
                          { "name":"value", "type":"string", "stored":true },
                          { "name":"payload", "type":"string", "stored":true }
                     """
-
+*/
   def normalizeName(basename: String) = s"${basename.toLowerCase}_index"
 
   def generateField(indexType: IndexType.Type, name: Option[String], ownSchema: Option[String]): String = {
 
     indexType match {
       case IndexType.ELASTIC =>
-        val schema = (Some(IndexModel.schema_base_elastic) :: ownSchema :: Nil).flatten.mkString(", ")
+        val schema = (ownSchema :: Nil).flatten.mkString(", ")
         generateElastic(name, schema)
 
       case IndexType.SOLR =>
-        val schema = (Some(IndexModel.schema_base_solr) :: ownSchema :: Nil).flatten.mkString(", ")
+        val schema = (ownSchema :: Nil).flatten.mkString(", ")
         generateSolr(schema)
     }
 
@@ -73,11 +73,11 @@ object IndexModel {
   def generateMetadataAndField(indexType: IndexType.Type, name: Option[String], ownSchema: Option[String]): String = {
     indexType match {
       case IndexType.ELASTIC =>
-        val schema = (Some(metadata_elastic) :: Some(IndexModel.schema_base_elastic) :: ownSchema :: Nil).flatten.mkString(", ")
+        val schema = (Some(metadata_elastic) :: ownSchema :: Nil).flatten.mkString(", ")
         generateElastic(name, schema)
 
       case IndexType.SOLR =>
-        val schema = (Some(metadata_solr) :: Some(IndexModel.schema_base_solr) :: ownSchema :: Nil).flatten.mkString(", ")
+        val schema = (Some(metadata_solr) :: ownSchema :: Nil).flatten.mkString(", ")
         generateSolr(schema)
     }
   }
