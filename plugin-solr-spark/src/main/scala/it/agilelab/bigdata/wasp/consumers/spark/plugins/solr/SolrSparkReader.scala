@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SQLContext}
 
 
 /**
@@ -18,13 +18,7 @@ class SolrSparkReader(indexModel: IndexModel) extends SparkReader with SolrConfi
   val name: String = indexModel.name
   val readerType: String = IndexModel.readerType
 
-  override def read(sc: SparkContext): DataFrame = ???
-
-  /* {
-
-    ***
-    *** This implementation work only with Solr 5.5.1 and com.lucidworks.spark.spark-solr 2.0
-    ***
+  override def read(sc: SparkContext): DataFrame = {
 
     val sqlContext = new SQLContext(sc)
 
@@ -32,12 +26,12 @@ class SolrSparkReader(indexModel: IndexModel) extends SparkReader with SolrConfi
 
     val options = Map(
       "collection" -> s"${indexModel.collection}",
-      "zkhost" -> s"""${solrConfig.connections.map(_.toString).mkString("")}"""
+      "zkHost" -> solrZkHost
     )
     val df = sqlContext.read.format("solr")
       .options(options)
       .load
 
     df
-  } */
+  }
 }
