@@ -314,8 +314,7 @@ class StructuredStreamingETLActor(env: {
       })
 
     //update values in field metadata
-    var dataframeToTransform = stream
-      if(stream.columns.contains("metadata"))
+    val dataframeToTransform = if(stream.columns.contains("metadata"))
         stream
           .withColumn(
             "metadata",
@@ -335,9 +334,8 @@ class StructuredStreamingETLActor(env: {
       case "kafka" => output
       case "hbase" => output
       case "raw" => output
-      case _ =>
-        if(stream.columns.contains("metadata"))
-          output.select(MetadataUtils.flatMetadataSchema(stream.schema, None): _*) else output
+      case _ => if(output.columns.contains("metadata"))
+          output.select(MetadataUtils.flatMetadataSchema(output.schema, None): _*) else output
     }
   }
 
