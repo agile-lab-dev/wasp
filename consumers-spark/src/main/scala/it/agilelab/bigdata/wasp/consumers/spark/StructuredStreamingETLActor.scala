@@ -127,14 +127,13 @@ class StructuredStreamingETLActor(env: {
         case ReaderModel(name, endpointId, readerType) =>
           logger.info(
             s"Get raw reader plugin $readerType, plugin map: $plugins")
-          val readerPlugin = plugins.get(readerType.getActualProduct)
+          val readerPlugin: Option[WaspConsumersSparkPlugin] = plugins.get(readerType.getActualProduct)
           if (readerPlugin.isDefined) {
             Some(
-              readerPlugin.get.getSparkReader(endpointId.getValue.toHexString,
-                                              name))
+              readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
           } else {
             //TODO Check if readerType != topic
-            logger.error(
+            logger.warn(
               s"The $readerType plugin in rawReaders does not exists")
             None
           }
@@ -316,14 +315,17 @@ class StructuredStreamingETLActor(env: {
 
     //update values in field metadata
     var dataframeToTransform = stream
-      .withColumn(
-        "metadata",
-        updateMetadata(col("metadata.id"),
-                       col("metadata.sourceId"),
-                       col("metadata.arrivalTimestamp"),
-                       col("metadata.lastSeenTimestamp"),
-                       col("metadata.path"))
-      )
+      if(stream.columns.contains("metadata"))
+        stream
+          .withColumn(
+            "metadata",
+            updateMetadata(col("metadata.id"),
+                           col("metadata.sourceId"),
+                           col("metadata.arrivalTimestamp"),
+                           col("metadata.lastSeenTimestamp"),
+                           col("metadata.path"))
+          )
+    else stream
 
     val completeMapOfDFs
       : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
@@ -332,8 +334,10 @@ class StructuredStreamingETLActor(env: {
     writerType.getActualProduct match {
       case "kafka" => output
       case "hbase" => output
+      case "raw" => output
       case _ =>
-        output.select(MetadataUtils.flatMetadataSchema(stream.schema, None): _*)
+        if(stream.columns.contains("metadata"))
+          output.select(MetadataUtils.flatMetadataSchema(stream.schema, None): _*) else output
     }
   }
 
