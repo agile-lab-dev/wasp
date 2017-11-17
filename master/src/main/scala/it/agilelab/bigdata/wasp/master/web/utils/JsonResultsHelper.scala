@@ -19,6 +19,18 @@ object JsonResultsHelper extends JsonSupport with Logging {
       )
       httpResponseJson(entity = jsonResult.toString())
     }
+    def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long, lengthPage: Integer): HttpResponse  = {
+      val jsonResult = JsObject(
+        "Result" -> JsString("OK"),
+        "numFound" -> JsNumber(numFound),
+        "page" -> JsNumber(page),
+        "rows" -> JsNumber(rows),
+        "lengthPage" -> JsNumber(lengthPage),
+        "numPages" -> JsNumber(math.ceil(numFound.toDouble / rows.toDouble).toInt),
+        "data" -> js
+      )
+      httpResponseJson(entity = jsonResult.toString())
+    }
   }
 
   def angularErrorBuilder(message: String) = {
@@ -39,6 +51,7 @@ object JsonResultsHelper extends JsonSupport with Logging {
       )
     }
   }
+
   def getJsonArrayOrEmpty[T](result: Seq[T], converter: (Seq[T]) => JsValue): HttpResponse = {
     if (result.isEmpty) {
       JsArray().toAngularOkResponse
@@ -46,6 +59,16 @@ object JsonResultsHelper extends JsonSupport with Logging {
       converter(result).toAngularOkResponse
     }
   }
+
+
+  def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo)(converter: (Seq[T]) => JsValue): HttpResponse = {
+    if (result.isEmpty) {
+      JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, paginationInfo.lengthPage)
+    } else {
+      converter(result).toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, paginationInfo.lengthPage)
+    }
+  }
+
   def runIfExists(result: Option[_], func: () => Unit, id: String, resource: String, action: String): HttpResponse = {
     if (result.isDefined) {
       func()
