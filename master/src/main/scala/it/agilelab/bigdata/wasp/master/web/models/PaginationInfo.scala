@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.master.web.utils
+package it.agilelab.bigdata.wasp.master.web.models
 
 case class PaginationInfo(page: Integer,
                           rows : Integer,

@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.utils
 
 import akka.http.scaladsl.model._
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.master.web.models.PaginationInfo
 import spray.json.{JsObject, JsString, JsValue, _}
 
 import scala.collection.immutable
