@@ -71,7 +71,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
         topicModel.topicDataType match {
           case "avro" => {
             val topicSchema = JsonConverter.toString(topicModel.schema.asDocument())
-            val jsonMsg = AvroToJsonUtil.avroToJson(data, topicSchema)
+            val jsonMsg = AvroToJsonUtil.avroToJson(data/*, topicSchema*/)
             val outputJson = applyStrategy(key, jsonMsg)
             epManagerActor ! outputJson
           }

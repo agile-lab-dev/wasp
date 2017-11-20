@@ -48,7 +48,7 @@ object Dependencies {
 			)
 
 	}
-	
+
 	// ===================================================================================================================
 	// Compile dependencies
 	// ===================================================================================================================
@@ -78,10 +78,10 @@ object Dependencies {
 	val json4sCore = "org.json4s" %% "json4s-core" % Versions.json4s
 	val json4sJackson = "org.json4s" %% "json4s-jackson" % Versions.json4s
 	val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
-  val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka
-  val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka
-  val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark
-  val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark
+  val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka kafkaExclusions
+  val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka kafkaExclusions
+  val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark sparkExclusions
+  val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
 	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
 	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional,test"
 	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional,test"
@@ -93,17 +93,17 @@ object Dependencies {
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
 	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
 	val solrCore = "org.apache.solr" % "solr-core" % Versions.solr
-  val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark
-  val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark
-  val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark
-  val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark
-  val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark
+  val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark sparkExclusions
+  val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
+  val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
+  val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
+  val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
 
 
 	// grouped dependencies, for convenience =============================================================================
-	
+
 	val akka = Seq(
 		akkaActor,
 		akkaCluster,
@@ -115,18 +115,18 @@ object Dependencies {
 
 
 	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer)
-	
+
 	val json = Seq(json4sCore, json4sJackson, json4sNative)
-	
+
 	val logging = Seq(slf4jApi)
-	
+
 	val log4j = Seq(log4jApi, log4jCore, log4jSlf4jImpl)
-	
+
 	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
 
 	val time = Seq(jodaConvert, jodaTime)
 
-	
+
 	// ===================================================================================================================
 	// Test dependencies
 	// ===================================================================================================================
@@ -137,7 +137,7 @@ object Dependencies {
 
 	// grouped dependencies, for convenience =============================================================================
   val test = Seq(akkaTestKit, akkaClusterTestKit, scalatest)
-	
+
 	// ===================================================================================================================
 	// Module dependencies
 	// ===================================================================================================================
@@ -153,7 +153,7 @@ object Dependencies {
 			sparkSQL,
       typesafeConfig
 		)
-	
+
 	val producers = akka ++ log4j ++ test ++
 		Seq(
 			akkaHttp,
@@ -175,7 +175,7 @@ object Dependencies {
 			camelWebsocket,
 			kafka
 		)
-	
+
   val master = akka ++ log4j ++
 	  Seq(
 		  akkaHttp,
