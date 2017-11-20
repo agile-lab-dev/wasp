@@ -20,13 +20,12 @@ object JsonResultsHelper extends JsonSupport with Logging {
       )
       httpResponseJson(entity = jsonResult.toString())
     }
-    def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long, lengthPage: Integer): HttpResponse  = {
+    def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long): HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),
         "numFound" -> JsNumber(numFound),
         "page" -> JsNumber(page),
         "rows" -> JsNumber(rows),
-        "lengthPage" -> JsNumber(lengthPage),
         "numPages" -> JsNumber(math.ceil(numFound.toDouble / rows.toDouble).toInt),
         "data" -> js
       )
@@ -64,9 +63,9 @@ object JsonResultsHelper extends JsonSupport with Logging {
 
   def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo)(converter: (Seq[T]) => JsValue): HttpResponse = {
     if (result.isEmpty) {
-      JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, paginationInfo.lengthPage)
+      JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound)
     } else {
-      converter(result).toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, paginationInfo.lengthPage)
+      converter(result).toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound)
     }
   }
 
