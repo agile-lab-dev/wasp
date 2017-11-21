@@ -18,6 +18,8 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
 
   def generateOutputJsonMessage(input: T): String
 
+  val generateOutputMessage: Option[(T) => Array[Byte]] = None
+
   def stopMainTask() = task.map(_.cancel())
 
   def mainTask()

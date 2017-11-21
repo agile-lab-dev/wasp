@@ -66,7 +66,6 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
             val avroByteValue = r.getAs[Array[Byte]](0)
             rowConverter.read(avroByteValue)
           })(encoderForDataColumns)
-
         }
         case "json" => {
           df.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
@@ -131,13 +130,13 @@ object KafkaReader extends StreamingReader with Logging {
       val topicSchema = JsonConverter.toString(topic.schema.asDocument())
       topic.topicDataType match {
         case "avro" =>
-          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2/*, topicSchema*/))).map(_._2)
+          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)
         case "json" =>
           receiver
             .map(x => (x._1, JsonToByteArrayUtil.byteArrayToJson(x._2)))
             .map(_._2)
         case _ =>
-          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2/*, topicSchema*/))).map(_._2)
+          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)
       }
 
     } else {

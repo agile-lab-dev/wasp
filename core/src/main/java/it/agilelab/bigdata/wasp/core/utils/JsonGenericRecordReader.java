@@ -125,16 +125,33 @@ public class JsonGenericRecordReader {
 
     private Object readUnion(Schema.Field field, Schema schema, Object value, Deque<String> path) {
         List<Schema> types = schema.getTypes();
+
         for (Schema type : types) {
             try {
-                Object nestedValue = read(field, type, value, path, true);
-                if (nestedValue == INCOMPATIBLE) {
-                    continue;
-                } else {
-                    return nestedValue;
+                Object nestedValue = null;
+                if(type.getType().equals(Schema.Type.NULL)){
+                    nestedValue = read(field, type, value, path, true);
+                    if (nestedValue == INCOMPATIBLE) {
+                        continue;
+                    } else {
+                        return nestedValue;
+                    }
+                } else{
+                    if(value == null) {
+                        nestedValue = INCOMPATIBLE;
+                    } else {
+                        Map<String, Object> valueAsMap = (Map<String, Object>) value;
+                        nestedValue = read(field, type, valueAsMap.entrySet().iterator().next().getValue(), path, true);
+                    }
+                    if (nestedValue == INCOMPATIBLE) {
+                        continue;
+                    } else {
+                        return nestedValue;
+                    }
                 }
             } catch (AvroRuntimeException e) {
                 // thrown only for union of more complex types like records
+                e.printStackTrace();
                 continue;
             }
         }
