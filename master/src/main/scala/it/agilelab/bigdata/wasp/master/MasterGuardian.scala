@@ -36,24 +36,6 @@ object MasterGuardian extends WaspConfiguration with Logging {
   } else {
     logger.info("Index rollover is disabled.")
   }
-
-  def findLocallyOrCreateActor(props: Props, name: String): ActorRef = {
-    try {
-      val actorPath = "/user/" + name
-      val actorSelection = actorSystem.actorSelection(actorPath)
-      logger.info(s"Attempting actor selection: $actorSelection")
-      val actor = Await.result(actorSelection.resolveOne()(generalTimeout), generalTimeout.duration)
-      logger.info(s"Selected actor: $actor")
-      actor
-    } catch {
-      case e: Exception => {
-        logger.info("Failed actor selection! Creating actor.")
-        val actor = actorSystem.actorOf(props, name)
-        logger.info(s"Created actor: $actor")
-        actor
-      }
-    }
-  }
   
   private def ceilDayTime(time: Long): Long = {
 
