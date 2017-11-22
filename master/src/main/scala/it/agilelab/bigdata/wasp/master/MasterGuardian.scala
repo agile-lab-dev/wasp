@@ -187,7 +187,6 @@ class MasterGuardian(env: {
   }
 
   private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
-    // persist pipegraph as active
     setActiveAndRestart(pipegraph, active = true)
   }
 
@@ -196,7 +195,7 @@ class MasterGuardian(env: {
   }
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
-    // mark the pipegraph as active
+    // modify the active flag
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
     
     // ask the guardians to restart only if the pipegraph has components that involve them
@@ -211,9 +210,11 @@ class MasterGuardian(env: {
       true
     }
     
-    if (resSpark && resRt) {
+    if (resSpark && resRt) { // everything ok
       Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped"))
-    } else {
+    } else { // something broke
+      // TODO: we may be in an inconsistent state with partially started/stopped pipegraphs - see ISC-204
+      // undo active flag modification
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
       Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped")).joinLeft
     }

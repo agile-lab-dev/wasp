@@ -180,7 +180,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     // confirm startup success to MasterGuardian
     masterGuardian ! true
     
-    // enter intialized state
+    // enter initialized state
     context become initialized
     logger.info(s"SparkConsumersMasterGuardian $self is now in initialized state")
     
