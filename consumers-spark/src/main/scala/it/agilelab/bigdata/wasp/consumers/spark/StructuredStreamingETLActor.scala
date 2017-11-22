@@ -4,16 +4,10 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{
-  MlModelsBroadcastDB,
-  MlModelsDB
-}
+import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{
-  SparkReader,
-  StructuredStreamingReader
-}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
@@ -21,17 +15,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.{
-  OutputStreamInitialized,
-  StopProcessingComponent
-}
+import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, StopProcessingComponent}
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{
-  ConfigManager,
-  SparkStreamingConfiguration
-}
-import org.apache.spark.sql.functions.{col, udf}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
+import org.apache.spark.sql.functions.{col, lit, udf}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 class StructuredStreamingETLActor(env: {
   val topicBL: TopicBL
@@ -40,7 +28,7 @@ class StructuredStreamingETLActor(env: {
   val keyValueBL: KeyValueBL
   val mlModelBL: MlModelBL
 }, sparkWriterFactory: SparkWriterFactory, structuredStreamingReader: StructuredStreamingReader, sparkSession: SparkSession, pipegraph: PipegraphModel, structuredStreamingETL: StructuredStreamingETLModel, listener: ActorRef, plugins: Map[String, WaspConsumersSparkPlugin])
-    extends Actor
+  extends Actor
     with SparkStreamingConfiguration
     with Logging {
 
@@ -76,21 +64,21 @@ class StructuredStreamingETLActor(env: {
     */
   //TODO: identical to it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.createStrategy, externalize
   private lazy val createStrategy: Option[Strategy] =
-    structuredStreamingETL.strategy match {
-      case None => None
-      case Some(strategyModel) =>
-        val result = Class
-          .forName(strategyModel.className)
-          .newInstance()
-          .asInstanceOf[Strategy]
-        result.configuration = strategyModel.configurationConfig() match {
-          case None                => ConfigFactory.empty()
-          case Some(configuration) => configuration
-        }
+  structuredStreamingETL.strategy match {
+    case None => None
+    case Some(strategyModel) =>
+      val result = Class
+        .forName(strategyModel.className)
+        .newInstance()
+        .asInstanceOf[Strategy]
+      result.configuration = strategyModel.configurationConfig() match {
+        case None                => ConfigFactory.empty()
+        case Some(configuration) => configuration
+      }
 
-        logger.info("strategy: " + result)
-        Some(result)
-    }
+      logger.info("strategy: " + result)
+      Some(result)
+  }
 
   /**
     * Index readers initialization
@@ -108,7 +96,7 @@ class StructuredStreamingETLActor(env: {
         if (readerPlugin.isDefined) {
           Some(
             readerPlugin.get.getSparkReader(endpointId.getValue.toHexString,
-                                            name))
+              name))
         } else {
           //TODO Check if readerType != topic
           logger.warn(
@@ -127,14 +115,13 @@ class StructuredStreamingETLActor(env: {
         case ReaderModel(name, endpointId, readerType) =>
           logger.info(
             s"Get raw reader plugin $readerType, plugin map: $plugins")
-          val readerPlugin = plugins.get(readerType.getActualProduct)
+          val readerPlugin: Option[WaspConsumersSparkPlugin] = plugins.get(readerType.getActualProduct)
           if (readerPlugin.isDefined) {
             Some(
-              readerPlugin.get.getSparkReader(endpointId.getValue.toHexString,
-                                              name))
+              readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
           } else {
             //TODO Check if readerType != topic
-            logger.error(
+            logger.warn(
               s"The $readerType plugin in rawReaders does not exists")
             None
           }
@@ -223,30 +210,30 @@ class StructuredStreamingETLActor(env: {
         //TODO cache or reading?
         // Reading static source to DF
         val dataStoreDFs: Map[ReaderKey, DataFrame] =
-          staticReaders()
-            .map(staticReader => {
+        staticReaders()
+          .map(staticReader => {
 
-              val dataSourceDF = staticReader.read(sparkSession.sparkContext)
-              (ReaderKey(staticReader.readerType, staticReader.name),
-               dataSourceDF)
-            })
-            .toMap
+            val dataSourceDF = staticReader.read(sparkSession.sparkContext)
+            (ReaderKey(staticReader.readerType, staticReader.name),
+              dataSourceDF)
+          })
+          .toMap
 
         val mlModelsDB = new MlModelsDB(env)
         // --- Broadcast models initialization ----
         // Reading all model from DB and create broadcast
         val mlModelsBroadcast: MlModelsBroadcastDB =
-          mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(
-            sparkSession.sparkContext)
+        mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(
+          sparkSession.sparkContext)
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
 
         transform(topicStreamWithKey._1,
-                  topicStreamWithKey._2,
-                  dataStoreDFs,
-                  strategy,
-                  structuredStreamingETL.output.writerType)
+          topicStreamWithKey._2,
+          dataStoreDFs,
+          strategy,
+          structuredStreamingETL.output.writerType)
       } else {
         topicStreamWithKey._2
       }
@@ -291,49 +278,65 @@ class StructuredStreamingETLActor(env: {
 
     val etlName = structuredStreamingETL.name
 
+    logger.info(s"input stream: ${readerKey.name}. struct: ${stream.schema.treeString}")
+
+    val now = System.currentTimeMillis()
+
     val updateMetadata = udf(
       (mId: String,
        mSourceId: String,
        mArrivalTimestamp: Long,
        mLastSeenTimestamp: Long,
-       mPath: Seq[Path]) => {
+       mPath: Seq[Row]) => {
 
-        val now = System.currentTimeMillis()
-
-        if (mId == "")
-          Metadata(UUID.randomUUID().toString,
-                   mSourceId,
-                   now,
-                   now,
-                   Seq(Path(etlName, now)).toArray)
-        else
-          Metadata(mId,
-                   mSourceId,
-                   mArrivalTimestamp,
-                   now,
-                   (mPath :+ Path(etlName, now)).toArray)
+        if (mId == "") {
+            Metadata(UUID.randomUUID().toString,
+              mSourceId,
+              now,
+              now,
+              Seq(Path(etlName, now)).toArray)
+          }
+        else {
+            val oldPaths = mPath.map(r => Path(r))
+            Metadata(mId,
+              mSourceId,
+              mArrivalTimestamp,
+              now,
+              (oldPaths :+ Path(etlName, now)).toArray)
+          }
       })
 
     //update values in field metadata
-    var dataframeToTransform = stream
-      .withColumn(
-        "metadata",
-        updateMetadata(col("metadata.id"),
-                       col("metadata.sourceId"),
-                       col("metadata.arrivalTimestamp"),
-                       col("metadata.lastSeenTimestamp"),
-                       col("metadata.path"))
-      )
+    val dataframeToTransform = if(stream.columns.contains("metadata")) {
+      stream
+        .withColumn(
+          "metadata_new",
+          updateMetadata(col("metadata.id"),
+            col("metadata.sourceId"),
+            col("metadata.arrivalTimestamp"),
+            col("metadata.lastSeenTimestamp"),
+            col("metadata.path"))
+        )
+        .drop("metadata")
+        .withColumnRenamed("metadata_new", "metadata")
+    }
+    else {
+      stream
+    }
 
     val completeMapOfDFs
-      : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
+    : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
     val output = strategyBroadcast.value.transform(completeMapOfDFs)
     writerType.getActualProduct match {
       case "kafka" => output
       case "hbase" => output
-      case _ =>
-        output.select(MetadataUtils.flatMetadataSchema(stream.schema, None): _*)
+      case "raw" => output
+      case _ => if(output.columns.contains("metadata")) {
+          logger.info(s"Metadata to be flattened for writer category ${writerType.category}. original output schema: " +
+            s"${output.schema.treeString}")
+          output.select(MetadataUtils.flatMetadataSchema(output.schema, None): _*)
+        } else output
     }
   }
 

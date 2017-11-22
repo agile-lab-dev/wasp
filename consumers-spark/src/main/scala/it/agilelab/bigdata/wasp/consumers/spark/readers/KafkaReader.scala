@@ -66,7 +66,6 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
             val avroByteValue = r.getAs[Array[Byte]](0)
             rowConverter.read(avroByteValue)
           })(encoderForDataColumns)
-
         }
         case "json" => {
           df.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))

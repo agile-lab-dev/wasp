@@ -9,31 +9,7 @@ import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 object TopicModel {
   val readerType = "topic"
 
-  val metadata = """{"name": "metadata", "type": {
-    "name": "metadata_fields",
-    "type": "record",
-      "fields": [
-        {"name": "id", "type": "string"},
-        {"name": "sourceId", "type": "string"},
-        {"name": "arrivalTimestamp", "type": "long"},
-        {"name": "lastSeenTimestamp", "type": "long"},
-        {"name": "path",
-          "type": {
-            "type": "array",
-            "items": {
-              "name": "Path",
-              "type": "record",
-              "fields": [
-                {"name": "name", "type": "string"},
-                {"name": "ts", "type": "long"}
-              ]
-            }
-          }
-        }
-      ]
-    }
-  }"""
-
+/*
   val schema_base = """
       {"name":"id_event","type":"double"},
       {"name":"source_name","type":"string"},
@@ -45,7 +21,7 @@ object TopicModel {
       {"name":"value","type":"double"},
       {"name":"payload","type":"string"}
   """
-
+*/
   def name(basename: String) = s"${basename.toLowerCase}.topic"
 
   /**
@@ -55,10 +31,10 @@ object TopicModel {
     */
 
   def generateField(namespace: String, name: String, ownSchema: Option[String]): String = {
-    val schema = (Some(TopicModel.schema_base) :: ownSchema :: Nil).flatten.mkString(", ")
+    val schema = (ownSchema :: Nil).flatten.mkString(", ")
     generate(namespace, name, schema)
   }
-
+/*
   /**
     * Generate final schema for TopicModel. Use this method if you schema not have a field metadata.
     * @param ownSchema
@@ -66,10 +42,10 @@ object TopicModel {
     */
 
   def generateMetadataAndField(namespace: String, name: String, ownSchema: Option[String]): String = {
-    val schema = (Some(metadata) :: Some(TopicModel.schema_base) :: ownSchema :: Nil).flatten.mkString(", ")
+    val schema = (ownSchema :: Nil).flatten.mkString(", ")
     generate(namespace, name, schema)
   }
-
+*/
   private def generate(namespace: String, name: String, schema: String) = {
     s"""
     {"type":"record",
