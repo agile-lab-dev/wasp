@@ -332,8 +332,11 @@ class StructuredStreamingETLActor(env: {
       case "kafka" => output
       case "hbase" => output
       case "raw" => output
-      case _ => if(output.columns.contains("metadata"))
-        output.select(MetadataUtils.flatMetadataSchema(output.schema, None): _*) else output
+      case _ => if(output.columns.contains("metadata")) {
+          logger.info(s"Metadata to be flattened for writer category ${writerType.category}. original output schema: " +
+            s"${output.schema.treeString}")
+          output.select(MetadataUtils.flatMetadataSchema(output.schema, None): _*)
+        } else output
     }
   }
 
