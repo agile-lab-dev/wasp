@@ -54,9 +54,9 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
 		
 		// add raw pipegraph
-		db.insertIfNotExists[TopicModel](SystemPipegraphs.rawTopic)
-		db.insertIfNotExists[IndexModel](SystemPipegraphs.rawIndex)
-		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.rawPipegraph)
+		//db.insertIfNotExists[TopicModel](SystemPipegraphs.rawTopic)
+		//db.insertIfNotExists[IndexModel](SystemPipegraphs.rawIndex)
+		//db.insertIfNotExists[PipegraphModel](SystemPipegraphs.rawPipegraph)
 	}
 	
 	private val myExceptionHandler = ExceptionHandler {

@@ -6,7 +6,6 @@ import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.rt.readers.CamelKafkaReader
 import it.agilelab.bigdata.wasp.consumers.rt.strategies.StrategyRT
 import it.agilelab.bigdata.wasp.consumers.rt.writers.RtWritersManagerActor
-import it.agilelab.bigdata.wasp.core.SystemPipegraphs.rawTopic
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, TopicBL, WebsocketBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{RTModel, ReaderModel, TopicModel, WriterModel}

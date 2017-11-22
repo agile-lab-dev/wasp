@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import java.io.{ByteArrayInputStream, _}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import org.apache.avro.Schema

@@ -24,7 +24,8 @@ class HBaseReader(model: KeyValueModel) extends SparkReader with Logging {
     val options: Map[String, String] = model.getOptionsMap() ++
     Seq(
       HBaseTableCatalog.tableCatalog -> model.tableCatalog,
-      KeyValueModel.metadataAvroSchemaKey -> TopicModel.metadata,
+      //TODO fix me
+      KeyValueModel.metadataAvroSchemaKey -> "",
       HBaseTableCatalog.newTable -> "4"
     )
 
