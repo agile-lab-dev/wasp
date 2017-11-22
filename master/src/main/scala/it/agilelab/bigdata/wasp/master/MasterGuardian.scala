@@ -198,7 +198,7 @@ class MasterGuardian(env: {
       // TODO: we may be in an inconsistent state with partially started/stopped pipegraphs - see ISC-204
       // undo active flag modification
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
-      Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped")).joinLeft
+      Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped"))
     }
   }
 
