@@ -1,6 +1,4 @@
-image: docker:latest
-services:
-  - docker:dind
+image: alpine
 
 variables:
   SBT_VERSION: "1.0.3"
