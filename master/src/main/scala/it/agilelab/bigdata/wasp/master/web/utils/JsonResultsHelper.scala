@@ -61,7 +61,7 @@ object JsonResultsHelper extends JsonSupport with Logging {
   }
 
 
-  def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo)(converter: (Seq[T]) => JsValue): HttpResponse = {
+  def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo, converter: (Seq[T]) => JsValue): HttpResponse = {
     if (result.isEmpty) {
       JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound)
     } else {
