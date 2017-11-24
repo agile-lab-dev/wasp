@@ -121,3 +121,4 @@ project/plugins/project/
 .history
 .cache
 .lib/
+sbt-cache
