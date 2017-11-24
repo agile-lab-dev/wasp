@@ -40,7 +40,7 @@ release:
     refs:
       - master
   script:
-    - sbt -v release
+    - sbt -v release with-defaults
 
 publish:
   stage: publish
@@ -48,6 +48,5 @@ publish:
   only:
     refs:
       - develop
-      - master
   script:
     - sbt -v publish
