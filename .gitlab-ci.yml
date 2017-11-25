@@ -40,7 +40,7 @@ release:
     refs:
       - master
   script:
-    - git checkout master
+    - git checkout -B master
     - sbt -v release with-defaults
 
 publish:
