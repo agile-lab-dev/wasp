@@ -5,7 +5,6 @@ variables:
   SBT_OPTS: "-Xmx2G -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xss2M  -Duser.timezone=GMT -Dsbt.global.base=sbt-cache/.sbtboot -Dsbt.boot.directory=sbt-cache/.boot -Dsbt.repository.config=repositories -Dsbt.ivy.home=sbt-cache/.ivy"
 stages:
   - compile
-  - release
   - publish
 
 cache:
@@ -33,15 +32,16 @@ compile:
     - ls -lha
     - sbt -v compile
 
-release:
-  stage: release
-  image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
-  only:
-    refs:
-      - master
-  script:
-    - git checkout -B master
-    - sbt -v release with-defaults
+# https://gitlab.com/gitlab-org/gitlab-ce/issues/18106
+# https://github.com/IlyaSemenov/gitlab-ci-git-push
+#release:
+#  stage: release
+#  image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
+#  only:
+#    refs:
+#     - master
+#  script:
+#    - sbt -v release with-defaults
 
 publish:
   stage: publish
