@@ -32,7 +32,7 @@ object Settings {
     credentials ++= (for {
       user <- Option(System.getenv().get("NEUXS_USERNAME"))
       pw <- Option(System.getenv().get("NEUXS_PASSWORD"))
-    } yield Credentials("Sonatype Nexus Repository Manager", "server01.cluster01.atscom.it", user, pw)).toSeq
+    } yield Credentials("Sonatype Nexus Repository Manager", System.getenv().get("NEXUS_DOMAIN"), user, pw)).toSeq
 	)
 	
 	// custom resolvers for dependencies
