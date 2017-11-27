@@ -21,7 +21,7 @@ object Settings {
 		publishMavenStyle := true,
     publishArtifact in(Compile, packageDoc) := false,
 		publishTo := {
-      val nexus = "http://server01.cluster01.atscom.it:8081/"
+			val nexus = System.getenv().get("NEXUS_URL") + "/"
 			if (isSnapshot.value)
 				Some("snapshots" at nexus + "repository/maven-snapshots")
 			else
