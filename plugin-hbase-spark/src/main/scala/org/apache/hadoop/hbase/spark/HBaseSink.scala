@@ -90,7 +90,7 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
     ._2.filter(catalog.sMap.exists).map(x => (schema.fieldIndex(x), catalog.getField(x)))
   val enconder: ExpressionEncoder[Row] = RowEncoder.apply(schema).resolveAndBind()
 
-  def getTableName(): TableName = TableName.valueOf(catalog.name)
+  def getTableName(): TableName = TableName.valueOf(catalog.namespace + ":" + catalog.name)
 
   def convertToPut(row: Row): Put = {
     // construct bytes for row key
