@@ -359,6 +359,10 @@ trait ElasticConfiguration {
 
 trait SolrConfiguration {
   lazy val solrConfig: SolrConfigModel = ConfigManager.getSolrConfig
+  def solrZkHost: String = {
+    solrConfig.connections.map(conn => s"${conn.host}:${conn.port}/solr")
+      .mkString(",")
+  }
 }
 
 trait HBaseConfiguration {
