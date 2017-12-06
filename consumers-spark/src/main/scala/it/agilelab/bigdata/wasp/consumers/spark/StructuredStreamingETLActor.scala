@@ -328,10 +328,12 @@ class StructuredStreamingETLActor(env: {
     : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
     val output = strategyBroadcast.value.transform(completeMapOfDFs)
+
     writerType.getActualProduct match {
-      case "kafka" => output
-      case "hbase" => output
-      case "raw" => output
+      case Datastores.kafkaProduct => output
+      case Datastores.hbaseProduct => output
+      case Datastores.rawProduct => output
+      case Datastores.consoleProduct => output
       case _ => if(output.columns.contains("metadata")) {
           logger.info(s"Metadata to be flattened for writer category ${writerType.category}. original output schema: " +
             s"${output.schema.treeString}")

@@ -31,7 +31,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
     // Kafka isn't a plugin handle as exception.
     writerType match {
       case Datastores.kafkaProduct =>
-        Some(new KafkaSparkLegacyStreamingWriter(env, ssc, writerModel.endpointId.getValue.toHexString))
+        Some(new KafkaSparkLegacyStreamingWriter(env, ssc, writerModel.endpointId.get.getValue.toHexString))
 
       case _ =>
         val writerPlugin = plugins.get(writerType)
@@ -63,7 +63,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
     // Kafka isn't a plugin handle as exception.
     writerType match {
       case Datastores.kafkaProduct =>
-        Some(new KafkaSparkStructuredStreamingWriter(env, writerModel.endpointId.getValue.toHexString, ss))
+        Some(new KafkaSparkStructuredStreamingWriter(env, writerModel.endpointId.get.getValue.toHexString, ss))
 
       case _ =>
         val writerPlugin = plugins.get(writerType)

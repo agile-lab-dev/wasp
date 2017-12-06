@@ -29,12 +29,18 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 
 class LegacyStreamingETLActor(env: {
-  val topicBL: TopicBL
-  val indexBL: IndexBL
-  val rawBL: RawBL
-  val keyValueBL: KeyValueBL
-  val mlModelBL: MlModelBL
-}, sparkWriterFactory: SparkWriterFactory, streamingReader: StreamingReader, ssc: StreamingContext, etl: LegacyStreamingETLModel, listener: ActorRef, plugins: Map[String, WaspConsumersSparkPlugin])
+                                val topicBL: TopicBL
+                                val indexBL: IndexBL
+                                val rawBL: RawBL
+                                val keyValueBL: KeyValueBL
+                                val mlModelBL: MlModelBL
+                              },
+                              sparkWriterFactory: SparkWriterFactory,
+                              streamingReader: StreamingReader,
+                              ssc: StreamingContext,
+                              etl: LegacyStreamingETLModel,
+                              listener: ActorRef,
+                              plugins: Map[String, WaspConsumersSparkPlugin])
     extends Actor
     with Logging {
   case object StreamReady
@@ -314,10 +320,11 @@ class LegacyStreamingETLActor(env: {
 
         val output = strategyBroadcast.value.transform(completeMapOfDFs)
 
-        //if writer is kafka metadata remain struct, in other case field metadata is expanse.
         writerType.getActualProduct match {
-          case "kafka" => output.toJSON.rdd
-          case "hbase" => output.toJSON.rdd
+          case Datastores.kafkaProduct => output.toJSON.rdd
+          case Datastores.hbaseProduct => output.toJSON.rdd
+          case Datastores.rawProduct => output.toJSON.rdd
+          case Datastores.consoleProduct => output.toJSON.rdd
           case _ => {
             output
               .select(MetadataUtils.flatMetadataSchema(df.schema, None): _*)
