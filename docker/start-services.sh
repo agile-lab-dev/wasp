@@ -106,9 +106,10 @@ if [ ${HDFS} -eq 1 ]; then
     COMPOSE_FILES+=("hdfs-docker-compose.yml")
 fi
 
-# get docker-compose command
+# get docker command, init network if needed
 cd $SCRIPT_DIR
 source get-docker-compose-cmd.sh
+source create-wasp-network.sh
 
 # build string containing docker-compose compose files options
 COMPOSE_FILES_OPTIONS=""
