@@ -138,15 +138,6 @@ class SolrAdminActor
       case _: Throwable => logger.info(s"Solr NOT connected!")
     }
 
-    logger.info(s"Try to create a WASP ConfigSet.")
-
-    try {
-      manageConfigSet(SolrAdminActor.configSet, SolrAdminActor.template)
-    } catch {
-      case _: Throwable =>
-        logger.info(s"manageConfigSet NOT Created. Go forward!")
-    }
-
     true
   }
 
@@ -166,6 +157,7 @@ class SolrAdminActor
 
   private def manageConfigSet(name: String, template: String) = {
 
+
     val uri =
       s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=DELETE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
 
@@ -175,36 +167,41 @@ class SolrAdminActor
         .withHeaders(RawHeader("Accept", "application/json"))
         .withMethod(HttpMethods.GET)
     )
-    responseFuture foreach { res =>
-      res.status match {
-        case OK =>
-          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-            if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
-              logger.info("Config Set Deleted")
-              createConfigSet(name, template)
-            } else {
-              logger.error("Solr Schema API Status Code NOT recognized")
+
+    Await.result(
+      responseFuture.flatMap{ res =>
+       res.status match {
+          case OK =>
+            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+              if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
+                logger.info("Config Set Deleted")
+                createConfigSet(name, template)
+              } else {
+                logger.error("Solr Schema API Status Code NOT recognized")
+                false
+              }
             }
-          }
-        case BadRequest =>
-          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-            if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
-              logger.info("Config Set Doesn't Exists")
-              createConfigSet(name, template)
-              logger.info(s"The information for my ip is: $info")
-            } else {
-              logger.error("Solr Schema API Status Code NOT recognized")
+          case BadRequest =>
+            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+              if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
+                logger.info("Config Set Doesn't Exists")
+                logger.info(s"The information for my ip is: $info")
+                createConfigSet(name, template)
+              } else {
+                logger.error("Solr Schema API Status Code NOT recognized")
+                false
+              }
             }
-          }
-        case _ =>
-          Unmarshal(res.entity).to[String].map { body =>
-            logger.error(s"Solr Schema API Status Code NOT recognized $body")
-          }
-      }
-    }
+          case _ =>
+            Unmarshal(res.entity).to[String].map { body =>
+              logger.error(s"Solr Schema API Status Code NOT recognized $body")
+              false
+            }
+        }
+      }, timeout.duration)
   }
 
-  private def createConfigSet(name: String, template: String): Unit = {
+  private def createConfigSet(name: String, template: String): Boolean = {
     val uri =
       s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=CREATE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
 
@@ -218,31 +215,36 @@ class SolrAdminActor
         .withMethod(HttpMethods.GET)
     )
 
-    responseFuture.foreach { res =>
-      res.status match {
-        case OK =>
-          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-            if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
-              logger.info("Config Set Created")
-            } else {
-              logger.error("Solr - Config Set NOT Created")
+    Await.result(
+      responseFuture.flatMap{ res =>
+        res.status match {
+          case OK =>
+            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+              if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
+                logger.info("Config Set Created")
+                true
+              } else {
+                logger.error("Solr - Config Set NOT Created")
+                false
+              }
             }
-          }
-        case BadRequest =>
-          Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-            if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
-              logger.info("Config Set Doesn't Exists")
-            } else {
-              logger.error("Solr - Config Set NOT Created")
+          case BadRequest =>
+            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
+              if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
+                logger.info("Config Set Doesn't Exists")
+              } else {
+                logger.error("Solr - Config Set NOT Created")
+              }
+              false
             }
-          }
-        case _ =>
-          Unmarshal(res.entity).to[String].map { body =>
-            logger.error("Solr - Config Set NOT Created")
-            logger.error(s"Solr Schema API Status Code NOT recognized $body")
-          }
-      }
-    }
+          case _ =>
+            Unmarshal(res.entity).to[String].map { body =>
+              logger.error("Solr - Config Set NOT Created")
+              logger.error(s"Solr Schema API Status Code NOT recognized $body")
+              false
+            }
+        }
+      }, timeout.duration)
   }
 
   private def addCollection(message: AddCollection): Boolean = {
@@ -256,7 +258,7 @@ class SolrAdminActor
     val createRequest: CollectionAdminRequest.Create =
       new CollectionAdminRequest.Create()
 
-    createRequest.setConfigName(SolrAdminActor.configSet)
+    createRequest.setConfigName(s"${SolrAdminActor.configSet}_${message.collection}")
     createRequest.setCollectionName(message.collection)
     createRequest.setNumShards(numShards)
     createRequest.setReplicationFactor(replicationFactor)
@@ -376,15 +378,19 @@ class SolrAdminActor
     var check = checkCollection(CheckCollection(message.collection))
 
     if (!check) {
-      check = addCollection(
-        AddCollection(message.collection,
+      check =
+        manageConfigSet(s"${SolrAdminActor.configSet}_${message.collection}", SolrAdminActor.template) &&
+        addCollection(
+          AddCollection(
+                      message.collection,
                       message.numShards,
                       message.replicationFactor)) &&
         addMapping(
-          AddMapping(message.collection,
-                     message.schema,
-                     message.numShards,
-                     message.replicationFactor))
+          AddMapping(
+                    message.collection,
+                    message.schema,
+                    message.numShards,
+                    message.replicationFactor))
     }
 
     check
