@@ -12,6 +12,7 @@ object Datastores {
 	val rawCategory = "raw"
 	val topicCategory = "topic"
 	val websocketCategory = "websocket"
+	val consoleCategory = "console"
 	
 	// available products
 	val elasticProduct = "elastic"
@@ -20,4 +21,5 @@ object Datastores {
 	val rawProduct = "raw"
 	val kafkaProduct = "kafka"
 	val websocketProduct = "websocket" // TODO actual product is camel, change to "camel-websocket"?
+	val consoleProduct = "console"
 }

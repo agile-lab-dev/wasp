@@ -12,7 +12,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.WriterModel
+import it.agilelab.bigdata.wasp.core.models.{Datastores, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -44,18 +44,18 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new ElasticSparkWriter(indexBL, sc, writerModel.endpointId.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    new ElasticSparkWriter(indexBL, sc, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
@@ -89,5 +89,5 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  override def pluginType: String = "elastic"
+  override def pluginType: String = Datastores.elasticProduct
 }
