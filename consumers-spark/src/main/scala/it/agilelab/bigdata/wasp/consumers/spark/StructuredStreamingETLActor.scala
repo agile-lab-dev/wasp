@@ -278,7 +278,7 @@ class StructuredStreamingETLActor(env: {
 
     val etlName = structuredStreamingETL.name
 
-    logger.info(s"input stream: ${readerKey.name}. struct: ${stream.schema.treeString}")
+    logger.debug(s"input stream: ${readerKey.name}. struct: ${stream.schema.treeString}")
 
     val now = System.currentTimeMillis()
 

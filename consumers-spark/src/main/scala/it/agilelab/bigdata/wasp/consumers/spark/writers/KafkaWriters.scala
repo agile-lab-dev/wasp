@@ -93,8 +93,8 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
         val dswParsed = topicDataTypeB.value match {
           case "avro" => {
             val converter: RowToAvro = RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema))
-            logger.info(s"Schema DF spark, topic name ${topic.name}: " + stream.schema.treeString)
-            logger.info(s"Schema Avro, topic name ${topic.name}: " + converter.getSchema().toString(true))
+            logger.debug(s"Schema DF spark, topic name ${topic.name}: " + stream.schema.treeString)
+            logger.debug(s"Schema Avro, topic name ${topic.name}: " + converter.getSchema().toString(true))
 
             stream.map(r => {
               val key: String = pkfIndex.map(r.getString).orNull
