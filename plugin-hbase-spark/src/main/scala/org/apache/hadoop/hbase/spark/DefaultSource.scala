@@ -91,6 +91,8 @@ class DefaultSource extends RelationProvider
     relation
   }
 
+
+
   override def createSink(sqlContext: SQLContext, parameters: Map[String, String], partitionColumns: Seq[String], outputMode: OutputMode): Sink = {
     val sparkSession = sqlContext.sparkSession
 
@@ -113,6 +115,10 @@ class DefaultSource extends RelationProvider
      * in that case, we should maybe use HBaseConfiguration.create(new Configuration(false)) as base configuration
      */
     var hBaseContext: HBaseContext = null
+
+    val hBaseRelation = new HBaseRelation(parameters, None)(sqlContext)
+    hBaseRelation.createTable()
+
     this.synchronized {
       hBaseContext = if (LatestHBaseContextCache.latest == null) {
         val config = HBaseConfiguration.create()
@@ -205,7 +211,7 @@ case class HBaseRelation(
     val endKey = Bytes.toBytes(
       parameters.getOrElse(HBaseTableCatalog.regionEnd, HBaseTableCatalog.defaultRegionEnd))
     if (numReg > 3) {
-      val tName = TableName.valueOf(catalog.name)
+      val tName = TableName.valueOf(catalog.namespace, catalog.name)
       val cfs = catalog.getColumnFamilies
 
       val connection = HBaseConnectionCache.getConnection(hbaseConf)
