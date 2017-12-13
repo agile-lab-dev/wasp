@@ -33,76 +33,103 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
       lastBatchMasterRef = sender()
 
-      changeBatchState(jobModel._id.get, "PROCESSING")
+      changeBatchState(jobModel._id.get, JobStateEnum.PROCESSING)
 
-      val dfsMap = retrieveDFs(jobModel.etl.inputs)
-      logger.info(s"DFs retrieved successfully!")
+      val readers = jobModel.etl.inputs
 
-      val mlModelsDB = new MlModelsDB(env)
-      logger.info(s"Start to get the models")
-      val mlModelsBroadcast: MlModelsBroadcastDB = mlModelsDB.createModelsBroadcast(jobModel.etl.mlModels)(sc = sc)
-
-      val strategy = createStrategy(jobModel.etl).map(s => {
-        s.sparkContext = Some(sc)
-        s
-      })
-      val resDf = applyStrategy(dfsMap, mlModelsBroadcast, strategy)
-  
-      logger.info(s"Strategy for batch ${jobModel.name} applied successfully")
-  
-      logger.info(s"Saving batch job ${jobModel.name} ml models")
-  
-      var writeMlModelsSuccess = false
-      try {
-        val modelsWriteResult = mlModelsDB.write(mlModelsBroadcast.getModelsToSave)
-        writeMlModelsSuccess = true
-        logger.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
-      } catch {
-        case e: Exception => {
-          logger.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
-        }
+      // check if at least one stream reader is found
+      val existTopicCategoryReaders = readers.exists(r => r.readerType.category == Datastores.topicCategory)
+      if (existTopicCategoryReaders) {
+        // skip processing
+        logger.error(s"No stream readers are allowed in batch jobs!")
+        changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
       }
-  
-      logger.info(s"Saving batch job ${jobModel.name} output")
-  
-      var writeOutputSuccess = false
-      resDf match {
-        case Some(res) =>
+      else {
+
+        val dfsMap : Map[ReaderKey, DataFrame] =
+
+          // print a warning when no readers are defined
+          if(readers.isEmpty) {
+            logger.warn(s"Readers list empty!")
+            Map.empty
+          }
+          else
+            retrieveDFs(readers)
+
+        if(dfsMap.isEmpty && !readers.isEmpty) {
+          logger.error(s"None DF retrieved successfully!")
+          changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+        } else {
+
+          if (!dfsMap.isEmpty)
+            logger.info(s"At least one DF retrieved successfully!")
+
+          val mlModelsDB = new MlModelsDB(env)
+          logger.info(s"Start to get the models")
+          val mlModelsBroadcast: MlModelsBroadcastDB = mlModelsDB.createModelsBroadcast(jobModel.etl.mlModels)(sc = sc)
+
+          val strategy = createStrategy(jobModel.etl).map(s => {
+            s.sparkContext = Some(sc)
+            s
+          })
+          val resDf = applyStrategy(dfsMap, mlModelsBroadcast, strategy)
+
+          logger.info(s"Strategy for batch ${jobModel.name} applied successfully")
+
+          logger.info(s"Saving batch job ${jobModel.name} ml models")
+
+          var writeMlModelsSuccess = false
           try {
-            writeOutputSuccess = writeResult(res, jobModel.etl.output)
-            if (writeOutputSuccess) {
-              logger.info(s"Successfully wrote output for batch job ${jobModel.name}")
-            } else {
-              logger.error(s"Failed to write output for batch job ${jobModel.name}")
-            }
+            val modelsWriteResult = mlModelsDB.write(mlModelsBroadcast.getModelsToSave)
+            writeMlModelsSuccess = true
+            logger.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
           } catch {
             case e: Exception => {
-              logger.error(s"Failed to write output for batch job ${jobModel.name}", e)
-              writeOutputSuccess = false
+              logger.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
             }
           }
-        case None =>
-          logger.warn(s"Batch job ${jobModel.name} has no output to be written.")
-          writeOutputSuccess = true
-      }
 
-      val jobResult = if (writeMlModelsSuccess && writeOutputSuccess) {
-        JobStateEnum.SUCCESSFUL
-      } else {
-        JobStateEnum.FAILED
-      }
-      changeBatchState(jobModel._id.get, jobResult)
-      
-      lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
+          logger.info(s"Saving batch job ${jobModel.name} output")
 
-      logger.info(s"Batch Job ${jobModel.name} has been processed.")
+          var writeOutputSuccess = false
+          resDf match {
+            case Some(res) =>
+              try {
+                writeOutputSuccess = writeResult(res, jobModel.etl.output)
+                if (writeOutputSuccess) {
+                  logger.info(s"Successfully wrote output for batch job ${jobModel.name}")
+                } else {
+                  logger.error(s"Failed to write output for batch job ${jobModel.name}")
+                }
+              } catch {
+                case e: Exception => {
+                  logger.error(s"Failed to write output for batch job ${jobModel.name}", e)
+                  writeOutputSuccess = false
+                }
+              }
+            case None =>
+              logger.warn(s"Batch job ${jobModel.name} has no output to be written.")
+              writeOutputSuccess = true
+          }
+
+          val jobResult = if (writeMlModelsSuccess && writeOutputSuccess) {
+            JobStateEnum.SUCCESSFUL
+          } else {
+            JobStateEnum.FAILED
+          }
+          changeBatchState(jobModel._id.get, jobResult)
+
+          lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
+
+          logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
+        }
+      }
   }
 
   private def retrieveDFs(readerModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
     val readers = staticReaders(readerModels)
 
     readers.map(reader => (ReaderKey(reader.name,reader.readerType), reader.read(sc))).toMap
-    //TODO: check readerType : NO streams allowed
   }
 
   private def applyStrategy(dfsMap: Map[ReaderKey, DataFrame], mlModelsBroadcast: MlModelsBroadcastDB, strategy: Option[Strategy]) : Option[DataFrame] = strategy match{
