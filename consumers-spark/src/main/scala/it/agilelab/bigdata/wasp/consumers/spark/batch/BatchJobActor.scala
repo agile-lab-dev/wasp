@@ -40,8 +40,8 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       // check if at least one stream reader is found
       val existTopicCategoryReaders = readers.exists(r => r.readerType.category == Datastores.topicCategory)
       if (existTopicCategoryReaders) {
-        // skip processing
-        logger.error(s"No stream readers are allowed in batch jobs!")
+        // abort processing
+        logger.error("No stream readers are allowed in batch jobs!")
         changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
       }
       else {
@@ -50,22 +50,24 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
           // print a warning when no readers are defined
           if(readers.isEmpty) {
-            logger.warn(s"Readers list empty!")
+            logger.warn("Readers list empty!")
             Map.empty
           }
           else
             retrieveDFs(readers)
 
-        if(dfsMap.isEmpty && !readers.isEmpty) {
-          logger.error(s"None DF retrieved successfully!")
+        if(dfsMap.size != readers.size) {
+          // abort processing
+          logger.error("DFs not retrieved successfully!")
+          logger.error(dfsMap.toString())
           changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
-        } else {
-
-          if (!dfsMap.isEmpty)
-            logger.info(s"At least one DF retrieved successfully!")
+        }
+        else {
+          if(!dfsMap.isEmpty)
+            logger.info("DFs retrieved successfully!")
 
           val mlModelsDB = new MlModelsDB(env)
-          logger.info(s"Start to get the models")
+          logger.info("Start to get the models")
           val mlModelsBroadcast: MlModelsBroadcastDB = mlModelsDB.createModelsBroadcast(jobModel.etl.mlModels)(sc = sc)
 
           val strategy = createStrategy(jobModel.etl).map(s => {
