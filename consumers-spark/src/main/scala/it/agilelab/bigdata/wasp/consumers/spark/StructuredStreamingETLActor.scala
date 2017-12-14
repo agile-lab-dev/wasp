@@ -60,7 +60,7 @@ class StructuredStreamingETLActor(env: {
    */
 
   /**
-    * Strategy object initialize
+    * Strategy object initialization
     */
   private lazy val createStrategy: Option[Strategy] = structuredStreamingETL.strategy match {
     case None => None
@@ -196,7 +196,7 @@ class StructuredStreamingETLActor(env: {
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
 
-        // print a warning when no readers are defined
+          // print a warning when no readers are defined
           if(readers.isEmpty) {
             logger.warn("Readers list empty!")
             Map.empty
@@ -204,19 +204,19 @@ class StructuredStreamingETLActor(env: {
           else
             retrieveDFs(readers)
 
-        // TODO check if required (see BatchJobActor) due to already done in validationTask()
-//        val nDFrequired = readers.size
-//        val nDFretrieved = dataStoreDFs.size
-//        if(nDFretrieved != nDFrequired) {
-//          // abort processing
-//          logger.error("DFs not retrieved successfully!")
-//          logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
-//          logger.error(dataStoreDFs.toString())
-//          changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
-//        }
-//        else {
-//          if(!dataStoreDFs.isEmpty)
-//            logger.info("DFs retrieved successfully!")
+        // TODO check if require abort processing (see BatchJobActor) - NB kafka reader will not be found as plugin, so in dataStoreDFs
+        val nDFrequired = readers.size
+        val nDFretrieved = dataStoreDFs.size
+        if(nDFretrieved != nDFrequired) {
+          // abort processing
+          logger.error("DFs not retrieved successfully!")
+          logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
+          logger.error(dataStoreDFs.toString)
+          //changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+        }
+        //else {
+        //  if(!dataStoreDFs.isEmpty)
+        //    logger.info("DFs retrieved successfully!")
 
         val mlModelsDB = new MlModelsDB(env)
         // --- Broadcast models initialization ----

@@ -62,7 +62,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
           // abort processing
           logger.error("DFs not retrieved successfully!")
           logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
-          logger.error(dataStoreDFs.toString())
+          logger.error(dataStoreDFs.toString)
           changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
         }
         else {
@@ -170,7 +170,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   }
 
   /**
-    * Strategy object initialize
+    * Strategy object initialization
     */
   private def createStrategy(etl: BatchETLModel): Option[Strategy] = etl.strategy match {
     case None => None
