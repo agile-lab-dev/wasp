@@ -30,7 +30,10 @@ object SolrSparkWriter {
 
     val fieldname = r.schema.fieldNames
     fieldname.foreach { f =>
-      doc.setField(f, r.getAs(f))
+
+      if(! r.isNullAt(r.fieldIndex(f)))
+        doc.setField(f, r.getAs(f))
+
     }
 
     doc
@@ -128,6 +131,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
           solrConfig.connections.mkString(","),
           indexName,
           index.collection)
+
 
         stream.writeStream
           .option("checkpointLocation", checkpointDir)

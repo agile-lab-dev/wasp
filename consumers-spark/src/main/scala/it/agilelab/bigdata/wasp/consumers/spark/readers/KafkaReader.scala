@@ -42,7 +42,6 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
           WaspSystem.kafkaAdminActor,
           CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-      logger.info("ss.readStream")
       // create the stream
       val df: DataFrame = ss.readStream
         .format("kafka")
@@ -75,8 +74,8 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         }
         case _ => throw new Exception(s"No such topic data type ${topic.topicDataType}")
       }
-      logger.info(s"Kafka reader avro schema: ${new Schema.Parser().parse(topic.getJsonSchema).toString(true)}")
-      logger.info(s"Kafka reader spark schema: ${ret.schema.treeString}")
+      logger.debug(s"Kafka reader avro schema: ${new Schema.Parser().parse(topic.getJsonSchema).toString(true)}")
+      logger.debug(s"Kafka reader spark schema: ${ret.schema.treeString}")
       ret
 
     } else {
