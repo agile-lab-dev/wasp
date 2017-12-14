@@ -66,9 +66,8 @@ class LegacyStreamingETLActor(env: {
    */
 
   /**
-    * Strategy object initialize
+    * Strategy object initialization
     */
-  //TODO: identical to it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.createStrategy, externalize
   private lazy val createStrategy: Option[Strategy] = etl.strategy match {
     case None => None
     case Some(strategyModel) =>
@@ -88,59 +87,48 @@ class LegacyStreamingETLActor(env: {
   /**
     * Index readers initialization
     */
-  private def indexReaders(): List[SparkReader] = {
-    val defaultDataStoreIndexed =
-      ConfigManager.getWaspConfig.defaultIndexedDatastore
-    etl.inputs.flatMap({
+  private def indexReaders(readers: List[ReaderModel]): List[SparkReader] = {
+    val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
+    readers.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         val readerProduct = readerType.getActualProduct
-        logger.info(
-          s"Get index reader plugin $readerProduct before was $readerType, plugin map: $plugins")
-
+        logger.info(s"Get index reader plugin $readerProduct before was $readerType, plugin map: $plugins")
         val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
-          Some(
-            readerPlugin.get.getSparkReader(endpointId.getValue.toHexString,
-                                            name))
+          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
-          //TODO Check if readerType != topic
-          logger.warn(
-            s"The $readerProduct plugin in indexReaders does not exists")
+          logger.error(s"The $readerProduct plugin in indexReaders does not exists")
           None
         }
+      case _ => None
     })
   }
 
   /**
     * Raw readers initialization
     */
-  private def rawReaders(): List[SparkReader] =
-    etl.inputs
-      .flatMap({
-        case ReaderModel(name, endpointId, readerType) =>
-          logger.info(
-            s"Get raw reader plugin $readerType, plugin map: $plugins")
-          val readerPlugin = plugins.get(readerType.getActualProduct)
-          if (readerPlugin.isDefined) {
-            Some(
-              readerPlugin.get.getSparkReader(endpointId.getValue.toHexString,
-                                              name))
-          } else {
-            //TODO Check if readerType != topic
-            logger.error(
-              s"The $readerType plugin in rawReaders does not exists")
-            None
-          }
-      })
+  private def rawReaders(readers: List[ReaderModel]): List[SparkReader] = {
+    readers.flatMap({
+      case ReaderModel(name, endpointId, readerType) =>
+        logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
+        val readerPlugin = plugins.get(readerType.getActualProduct)
+        if (readerPlugin.isDefined) {
+          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
+        } else {
+          logger.error(s"The $readerType plugin in rawReaders does not exists")
+          None
+        }
+      case _ => None
+    })
+  }
 
-  // TODO unify readers initialization (see BatchJobActor)
+  // TODO indexReaders() and rawReaders() are equals -> to call only once
   /**
     * All static readers initialization
     *
     * @return
     */
-  private def staticReaders(): List[SparkReader] =
-    indexReaders() ++ rawReaders()
+  private def staticReaders(readers: List[ReaderModel]): List[SparkReader] = indexReaders(readers) ++ rawReaders(readers)
 
   /**
     * Topic models initialization
@@ -178,11 +166,11 @@ class LegacyStreamingETLActor(env: {
     val topicReaderModelNumber =
       etl.inputs.count(_.readerType.category == TopicModel.readerType)
     if (topicReaderModelNumber == 0)
-      throw new Exception(
-        "There is NO topic to read data, inputs: " + etl.inputs)
+      throw new Exception("There is NO topic to read data, inputs: " + etl.inputs)
     if (topicReaderModelNumber != 1)
       throw new Exception("MUST be only ONE topic, inputs: " + etl.inputs)
   }
+
   //TODO move in the extender class
   def mainTask(): Unit = {
 
@@ -209,17 +197,31 @@ class LegacyStreamingETLActor(env: {
       if (createStrategy.isDefined) {
         val strategy = createStrategy.get
 
-        //TODO cache or reading?
-        // Reading static source to DF
-        val dataStoreDFs: Map[ReaderKey, DataFrame] =
-          staticReaders()
-            .map(staticReader => {
+        val readers = etl.inputs
 
-              val dataSourceDF = staticReader.read(ssc.sparkContext)
-              (ReaderKey(staticReader.readerType, staticReader.name),
-               dataSourceDF)
-            })
-            .toMap
+        val dataStoreDFs : Map[ReaderKey, DataFrame] =
+
+          // print a warning when no readers are defined
+          if(readers.isEmpty) {
+            logger.warn("Readers list empty!")
+            Map.empty
+          }
+          else
+            retrieveDFs(readers)
+
+        // TODO check if require abort processing (see BatchJobActor) - NB kafka reader will not be found as plugin, so in dataStoreDFs
+        val nDFrequired = readers.size
+        val nDFretrieved = dataStoreDFs.size
+        if(nDFretrieved != nDFrequired) {
+          // abort processing
+          logger.error("DFs not retrieved successfully!")
+          logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
+          logger.error(dataStoreDFs.toString)
+          //changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+        }
+        //else {
+        //  if(!dataStoreDFs.isEmpty)
+        //    logger.info("DFs retrieved successfully!")
 
         val mlModelsDB = new MlModelsDB(env)
         // --- Broadcast models initialization ----
@@ -229,6 +231,7 @@ class LegacyStreamingETLActor(env: {
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
+
         transform(topicStreamWithKey._1,
                   topicStreamWithKey._2,
                   dataStoreDFs,
@@ -259,6 +262,23 @@ class LegacyStreamingETLActor(env: {
     // TODO check required
     logger.info(s"Actor is notifying the guardian that it's ready")
     self ! StreamReady
+  }
+
+  private def retrieveDFs(readerModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
+    // Reading static source to DF
+    staticReaders(readerModels)
+      .flatMap(staticReader => {
+        try {
+          val dataSourceDF = staticReader.read(ssc.sparkContext)
+          Some(ReaderKey(staticReader.readerType, staticReader.name), dataSourceDF)
+        } catch {
+          case e: Exception => {
+            logger.error(s"Error during retrieving DF: ${staticReader.name}", e)
+            None
+          }
+        }
+      })
+      .toMap
   }
 
   private def transform(readerKey: ReaderKey,
