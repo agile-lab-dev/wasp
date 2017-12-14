@@ -46,7 +46,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       }
       else {
 
-        val dfsMap : Map[ReaderKey, DataFrame] =
+        val dataStoreDFs : Map[ReaderKey, DataFrame] =
 
           // print a warning when no readers are defined
           if(readers.isEmpty) {
@@ -56,14 +56,17 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
           else
             retrieveDFs(readers)
 
-        if(dfsMap.size != readers.size) {
+        val nDFrequired = readers.size
+        val nDFretrieved = dataStoreDFs.size
+        if(nDFretrieved != nDFrequired) {
           // abort processing
           logger.error("DFs not retrieved successfully!")
-          logger.error(dfsMap.toString())
+          logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
+          logger.error(dataStoreDFs.toString())
           changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
         }
         else {
-          if(!dfsMap.isEmpty)
+          if(!dataStoreDFs.isEmpty)
             logger.info("DFs retrieved successfully!")
 
           val mlModelsDB = new MlModelsDB(env)
@@ -74,7 +77,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
             s.sparkContext = Some(sc)
             s
           })
-          val resDf = applyStrategy(dfsMap, mlModelsBroadcast, strategy)
+          val resDf = applyStrategy(dataStoreDFs, mlModelsBroadcast, strategy)
 
           logger.info(s"Strategy for batch ${jobModel.name} applied successfully")
 
@@ -129,16 +132,27 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   }
 
   private def retrieveDFs(readerModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
-    val readers = staticReaders(readerModels)
-
-    readers.map(reader => (ReaderKey(reader.name,reader.readerType), reader.read(sc))).toMap
+    // Reading static source to DF
+    staticReaders(readerModels)
+      .flatMap(staticReader => {
+        try {
+          val dataSourceDF = staticReader.read(sc)
+          Some(ReaderKey(staticReader.readerType, staticReader.name), dataSourceDF)
+        } catch {
+          case e: Exception => {
+            logger.error(s"Error during retrieving DF: ${staticReader.name}", e)
+            None
+          }
+        }
+      })
+      .toMap
   }
 
-  private def applyStrategy(dfsMap: Map[ReaderKey, DataFrame], mlModelsBroadcast: MlModelsBroadcastDB, strategy: Option[Strategy]) : Option[DataFrame] = strategy match{
+  private def applyStrategy(dataStoreDFs: Map[ReaderKey, DataFrame], mlModelsBroadcast: MlModelsBroadcastDB, strategy: Option[Strategy]) : Option[DataFrame] = strategy match{
     case None => None
     case Some(strategyModel) =>
       strategyModel.mlModelsBroadcast = mlModelsBroadcast
-      val result = strategyModel.transform(dfsMap)
+      val result = strategyModel.transform(dataStoreDFs)
       Some(result)
   }
 
@@ -155,7 +169,6 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     }
   }
 
-  //TODO: identico a metodo privato in ConsumerETLActor, esternalizzare
   private def createStrategy(etl: BatchETLModel): Option[Strategy] = etl.strategy match {
     case None => None
     case Some(strategyModel) =>
@@ -209,8 +222,8 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       case _ => None
     })
   }
-  
-  // TODO unify readers initialization (see ConsumerEtlActor)
+
+  // TODO indexReaders() and rawReaders() are equals -> to call only once
   /**
     * All static readers initialization
     *
