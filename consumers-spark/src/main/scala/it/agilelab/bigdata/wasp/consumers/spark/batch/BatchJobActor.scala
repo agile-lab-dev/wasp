@@ -169,6 +169,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     }
   }
 
+  /**
+    * Strategy object initialize
+    */
   private def createStrategy(etl: BatchETLModel): Option[Strategy] = etl.strategy match {
     case None => None
     case Some(strategyModel) =>
