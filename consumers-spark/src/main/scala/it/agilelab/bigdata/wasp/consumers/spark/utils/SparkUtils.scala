@@ -6,8 +6,11 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
+import org.apache.spark.deploy.SparkHadoopUtil
 
+import collection.JavaConverters._
 /**
 	* Utilities related to Spark.
 	*

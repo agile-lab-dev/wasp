@@ -4,10 +4,16 @@ import java.lang
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.{logger, _}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import org.apache.hadoop.fs.Path
+import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 import org.apache.spark.{SparkContext, SparkException}
+
+import collection.JavaConverters._
+
 
 /**
   * Singletons an initialization code related to Spark.
@@ -69,6 +75,14 @@ object SparkSingletons extends Logging {
           logger.info("Instantiating SparkSession...")
           sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
           logger.info("Successfully instantiated SparkSession")
+
+          if (ConfigManager.conf.hasPath("hdfs.configurationsResources")) {
+            ConfigManager.conf.getStringList("hdfs.configurationsResources").asScala.foreach(c => {
+              sparkSession.sparkContext.hadoopConfiguration.addResource(new Path(c))
+              logger.info(s"hdfs configuration file: $c")
+            })
+          }
+          logger.info(s"Hadoop configuration: ${SparkHadoopUtil.get.conf.toString}")
 
           // assign SparkContext & SQLContext
           sparkContext = sparkSession.sparkContext
