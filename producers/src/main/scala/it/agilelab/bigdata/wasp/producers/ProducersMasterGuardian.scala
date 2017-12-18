@@ -22,14 +22,15 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	  extends ClusterAwareNodeGuardian
 		with WaspConfiguration
 		with Logging {
+
 	// subscribe to producers topic using distributed publish subscribe
 	mediator ! Subscribe(WaspSystem.producersPubSubTopic, self)
 	
 	// all producers, whether they are local or remote
-	def producers: Map[String, ActorRef] = localProducers ++ remoteProducers
-	
-	// local producers, which run in the same JVM as the MasterGuardian (those with isRemote = false)
-	val localProducers: Map[String, ActorRef] = {
+	private def retrieveProducers: Map[String, ActorRef] = retrieveSystemAndLocalProducers ++ remoteProducersComponentActors
+
+	// system and local producers, for local producers also creating the related actors if they are not already created
+	private def retrieveSystemAndLocalProducers: Map[String, ActorRef] = {
 		env.producerBL
 			.getAll // grab all producers
 			.filterNot(_.isRemote) // filter only local ones
@@ -38,41 +39,54 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			if (producer.name == InternalLogProducerGuardian.name) { // logger producer is special
 				producerId -> WaspSystem.loggerActor // do not instantiate, but get the already existing one from WaspSystem
 			} else {
-				val producerClass = Class.forName(producer.className)
-				val producerActor = actorSystem.actorOf(Props(producerClass, ConfigBL, producerId), producer.name)
-				producerId -> producerActor
+				if(localProducerComponentActors.contains(producerId))
+					producerId -> localProducerComponentActors(producerId) // do not instantiate, but get the already existing one from localProducerComponentActors
+				else {
+					val producerClass = Class.forName(producer.className)
+					val producerActor = actorSystem.actorOf(Props(producerClass, ConfigBL, producerId), producer.name)
+
+					// add to component actor tracking map
+					localProducerComponentActors += (producerId -> producerActor)
+					producerId -> producerActor
+				}
 			}
 		}).toMap
 	}
 	
+	// tracking map for local producer components ( componentName -> ProducerModel )
+	// local producers, which run in the same JVM as the MasterGuardian (those with isRemote = false)
+	private val localProducerComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+
+	// tracking map for remote producer components ( componentName -> ProducerModel )
 	// remote producers, which run in a different JVM than the MasterGuardian (those with isRemote = true)
-	val remoteProducers: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
-	
-	// on startup non-system producers are deactivated
-	logger.info("Deactivating non-system producers...")
-	setProducersActive(env.producerBL.getNonSystemProducers, isActive = false)
-	logger.info("Deactivated non-system producers")
-	
-	// activate/deactivate system producers according to config on startup
-	// TODO manage error in pipegraph initialization
-	if (waspConfig.systemProducersStart) {
-		logger.info("Activating system producers...")
-		
-		env.producerBL.getSystemProducers foreach {
-			producer => {
-				logger.info("Activating system producer \"" + producer.name + "\"...")
-				WaspSystem.masterGuardian ! StartProducer(producer._id.get.getValue.toHexString)
-				logger.info("Activated system producer \"" + producer.name + "\"")
+	private val remoteProducersComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
+
+	override def preStart(): Unit = {
+		// non-system producers are deactivated on startup
+		logger.info("Deactivating non-system producers...")
+		setProducersActive(env.producerBL.getNonSystemProducers, isActive = false)
+		logger.info("Deactivated non-system producers")
+
+		// activate/deactivate system producers according to config on startup
+		// TODO manage error in producer initialization
+		if (waspConfig.systemProducersStart) {
+			logger.info("Activating system producers...")
+
+			env.producerBL.getSystemProducers foreach {
+				producer => {
+					logger.info("Activating system producer \"" + producer.name + "\"...")
+					WaspSystem.masterGuardian ! StartProducer(producer._id.get.getValue.toHexString)
+					logger.info("Activated system producer \"" + producer.name + "\"")
+				}
 			}
+
+			logger.info("Activated system producers")
+		} else {
+			logger.info("Deactivating system producers...")
+			setProducersActive(env.producerBL.getSystemProducers, isActive = false)
+			logger.info("Deactivated system producers")
 		}
-		
-		logger.info("Activated system producers")
-	} else {
-		logger.info("Deactivating system producers...")
-		setProducersActive(env.producerBL.getSystemProducers, isActive = false)
-		logger.info("Deactivated system producers")
 	}
-	
 	
 	private def setProducersActive(producers: Seq[ProducerModel], isActive: Boolean): Unit = {
 		producers.foreach(producer => env.producerBL.setIsActive(producer, isActive))
@@ -103,10 +117,10 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	
 	private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
 		val producerId = producerModel._id.get.getValue.toHexString
-		if (remoteProducers.isDefinedAt(producerId)) { // already added
+		if (remoteProducersComponentActors.isDefinedAt(producerId)) { // already added
 			Left(s"Remote producer $producerId ($producerActor) not added; already present.")
 		} else { // add to remote producers & start if needed
-			remoteProducers += producerId -> producerActor
+			remoteProducersComponentActors += producerId -> producerActor
 			if (producerModel.isActive) {
 				self ! StartProducer(producerId)
 			}
@@ -116,43 +130,55 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	
 	private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
 		val producerId = producerModel._id.get.getValue.toHexString
-		if (remoteProducers.isDefinedAt(producerId)) { // found, remove
-			val producerActor = remoteProducers(producerId)
-			remoteProducers.remove(producerId)
+		if (remoteProducersComponentActors.isDefinedAt(producerId)) { // found, remove
+			val producerActor = remoteProducersComponentActors(producerId)
+			remoteProducersComponentActors.remove(producerId)
 			Right(s"Remote producer $producerId ($producerActor) removed.")
 		} else { // not found
 			Left(s"Remote producer $producerId not found; either it was never added or it has already been removed.")
 		}
 	}
-	
+
 	private def startProducer(producer: ProducerModel): Either[String, String] = {
-		// initialise producer actor if not already present
+		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-			if (! ??[Boolean](producers(producer._id.get.getValue.toHexString), Start)) {
-				Left(s"Producer '${producer.name}' not started")
-			} else {
+			//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour (e.g. isActive flag set but the Producer remains stopped)
+			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Start)) {
 				Right(s"Producer '${producer.name}' started")
+			} else {
+				//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour
+				Left(s"Producer '${producer.name}' not started")
 			}
 		} else {
 			Left(s"Producer '${producer.name}' does not exist")
 		}
-		
 	}
-	
+
 	private def stopProducer(producer: ProducerModel): Either[String, String] = {
-		if (!producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-			Left("Producer '" + producer.name + "' not initialized")
-		} else if (! ??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
-			Left("Producer '" + producer.name + "' not stopped")
+		val producers = retrieveProducers
+		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+			//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour (e.g. isActive flag unset but the Producer remains alive)
+			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
+				Right(s"Producer '${producer.name}' stopped")
+			} else {
+				//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour
+				Left(s"Producer '${producer.name}' not stopped")
+			}
 		} else {
-			Right("Producer '" + producer.name + "' stopped")
+			Left(s"Producer '${producer.name}' does not exist")
 		}
 	}
 
 	private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
-		if(! ??[Boolean](producers(producer._id.get.getValue.toHexString),
-			RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse(""))))
+		val producers = retrieveProducers
+		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+			if (??[Boolean](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse("")))) {
+				Right(s"Producer '${producer.name}' request: ${request.data}")
+			} else {
+				Left(s"Producer '${producer.name}' request not successful")
+			}
+		} else {
 			Left(s"Producer '${producer.name}' does not exist")
-		Right("Producer '" + producer.name + "' request: " + request.data)
+		}
 	}
 }
