@@ -27,7 +27,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                     plugins: Map[String, WaspConsumersSparkPlugin]) extends Actor with Logging {
   var lastBatchMasterRef : ActorRef = _
 
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case jobModel: BatchJobModel =>
       logger.info(s"Processing Batch Job ${jobModel.name} ...")
 
@@ -35,34 +35,34 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
       changeBatchState(jobModel._id.get, JobStateEnum.PROCESSING)
 
-      val readers = jobModel.etl.inputs
-
       // check if at least one stream reader is found
-      val existTopicCategoryReaders = readers.exists(r => r.readerType.category == Datastores.topicCategory)
+      val existTopicCategoryReaders = jobModel.etl.inputs.exists(r => r.readerType.category == Datastores.topicCategory)
       if (existTopicCategoryReaders) {
         // abort processing
         logger.error("No stream readers are allowed in batch jobs!")
         changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
       }
       else {
+        // implicit filtered with the check above which blocks using stream readers
+        val staticReaders = jobModel.etl.inputs/*.filterNot(_.readerType.category == Datastores.topicCategory)*/
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
-
-          // print a warning when no readers are defined
-          if(readers.isEmpty) {
-            logger.warn("Readers list empty!")
+          if(staticReaders.isEmpty) {
+            logger.warn("Readers list empty!")  // also print a warning when no static readers are defined
             Map.empty
           }
           else
-            retrieveDFs(readers)
+            retrieveDFs(staticReaders)
 
-        val nDFrequired = readers.size
+        val nDFrequired = staticReaders.size
         val nDFretrieved = dataStoreDFs.size
         if(nDFretrieved != nDFrequired) {
+          val error = "DFs not retrieved successfully!\n" +
+            s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
+            dataStoreDFs.toString
+          logger.error(error)
+
           // abort processing
-          logger.error("DFs not retrieved successfully!")
-          logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
-          logger.error(dataStoreDFs.toString)
           changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
         }
         else {
@@ -117,11 +117,12 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
               writeOutputSuccess = true
           }
 
-          val jobResult = if (writeMlModelsSuccess && writeOutputSuccess) {
-            JobStateEnum.SUCCESSFUL
-          } else {
-            JobStateEnum.FAILED
-          }
+          val jobResult =
+            if (writeMlModelsSuccess && writeOutputSuccess)
+              JobStateEnum.SUCCESSFUL
+            else
+              JobStateEnum.FAILED
+
           changeBatchState(jobModel._id.get, jobResult)
 
           lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
@@ -131,9 +132,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       }
   }
 
-  private def retrieveDFs(readerModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
+  private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
     // Reading static source to DF
-    staticReaders(readerModels)
+    retrieveStaticReaders(staticReaderModels)
       .flatMap(staticReader => {
         try {
           val dataSourceDF = staticReader.read(sc)
@@ -189,10 +190,10 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   }
 
   /**
-    * All readers initialization
+    * All static readers initialization
     */
-  private def allReaders(readers: List[ReaderModel]): List[SparkReader] = {
-    readers.flatMap({
+  private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
+    staticReaderModels.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         val readerProduct = readerType.getActualProduct
         logger.info(s"Get reader plugin $readerProduct before was $readerType, plugin map: $plugins")
@@ -200,7 +201,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
         if (readerPlugin.isDefined) {
           Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
-          logger.error(s"The $readerProduct plugin in allReaders does not exists")
+          logger.error(s"The $readerProduct plugin in staticReaderModels does not exists")
           None
         }
       case _ => None
@@ -212,7 +213,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     *
     * @return
     */
-  private def staticReaders(readers: List[ReaderModel]): List[SparkReader] = allReaders(readers)
+  private def retrieveStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = allStaticReaders(staticReaderModels)
 
   private def changeBatchState(id: BsonObjectId, newState: String): Unit =
   {

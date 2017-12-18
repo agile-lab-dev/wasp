@@ -86,10 +86,10 @@ class StructuredStreamingETLActor(env: {
   }
 
   /**
-    * All readers initialization
+    * All static readers initialization
     */
-  private def allReaders(readers: List[ReaderModel]): List[SparkReader] = {
-    readers.flatMap({
+  private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
+    staticReaderModels.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         val readerProduct = readerType.getActualProduct
         logger.info(s"Get reader plugin $readerProduct before was $readerType, plugin map: $plugins")
@@ -97,7 +97,7 @@ class StructuredStreamingETLActor(env: {
         if (readerPlugin.isDefined) {
           Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
-          logger.error(s"The $readerProduct plugin in allReaders does not exists")
+          logger.error(s"The $readerProduct plugin in staticReaderModels does not exists")
           None
         }
       case _ => None
@@ -109,7 +109,7 @@ class StructuredStreamingETLActor(env: {
     *
     * @return
     */
-  private def staticReaders(readers: List[ReaderModel]): List[SparkReader] = allReaders(readers)
+  private def retrieveStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = allStaticReaders(staticReaderModels)
 
   /**
     * Topic models initialization
@@ -179,38 +179,35 @@ class StructuredStreamingETLActor(env: {
       if (createStrategy.isDefined) {
         val strategy = createStrategy.get
 
-        val readers = structuredStreamingETL.inputs
+        val staticReaders = structuredStreamingETL.inputs.filterNot(_.readerType.category == Datastores.topicCategory)
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
-
-          // print a warning when no readers are defined
-          if(readers.isEmpty) {
-            logger.warn("Readers list empty!")
+          if(staticReaders.isEmpty)
             Map.empty
-          }
           else
-            retrieveDFs(readers)
+            retrieveDFs(staticReaders)
 
-        // TODO check if require abort processing (see BatchJobActor) - NB kafka reader will not be found as plugin, so in dataStoreDFs
-        val nDFrequired = readers.size
+        val nDFrequired = staticReaders.size
         val nDFretrieved = dataStoreDFs.size
         if(nDFretrieved != nDFrequired) {
+          val error = "DFs not retrieved successfully!\n" +
+            s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
+            dataStoreDFs.toString
+
+          // TODO check if require abort processing (see BatchJobActor)
           // abort processing
-          logger.error("DFs not retrieved successfully!")
-          logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
-          logger.error(dataStoreDFs.toString)
-          //changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+          //throw new Exception(error)
         }
-        //else {
-        //  if(!dataStoreDFs.isEmpty)
-        //    logger.info("DFs retrieved successfully!")
+        else {
+          if (!dataStoreDFs.isEmpty)
+            logger.info("DFs retrieved successfully!")
+        }
 
         val mlModelsDB = new MlModelsDB(env)
         // --- Broadcast models initialization ----
         // Reading all model from DB and create broadcast
         val mlModelsBroadcast: MlModelsBroadcastDB =
-        mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(
-          sparkSession.sparkContext)
+        mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(sparkSession.sparkContext)
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
@@ -254,9 +251,9 @@ class StructuredStreamingETLActor(env: {
     self ! StreamReady
   }
 
-  private def retrieveDFs(readerModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
+  private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
     // Reading static source to DF
-    staticReaders(readerModels)
+    retrieveStaticReaders(staticReaderModels)
       .flatMap(staticReader => {
         try {
           val dataSourceDF = staticReader.read(sparkSession.sparkContext)
