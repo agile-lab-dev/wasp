@@ -7,5 +7,6 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 	*/
 case class HBaseConfigModel(
 	                          coreSiteXmlPath: String,
-                            hbaseSiteXmlPath: String
+                            hbaseSiteXmlPath: String,
+														name: String
                            )
