@@ -3,8 +3,10 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.RawModel
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.spark.SparkContext
+import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
@@ -30,6 +32,7 @@ class RawSparkReader(rawModel: RawModel) extends SparkReader with Logging {
       // the path is timed; find and return the most recent subdirectory
       val hdfsPath = new Path(rawModel.uri)
       val hdfs = hdfsPath.getFileSystem(sc.hadoopConfiguration)
+
       val subdirectories = hdfs.listStatus(hdfsPath)
         .toList
         .filter(_.isDirectory)

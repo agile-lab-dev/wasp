@@ -175,7 +175,8 @@ object ConfigManager {
     val hbaseSubConfig = conf.getConfig("hbase")
     HBaseConfigModel(
       hbaseSubConfig.getString("core-site-xml-path"),
-      hbaseSubConfig.getString("hbase-site-xml-path")
+      hbaseSubConfig.getString("hbase-site-xml-path"),
+      hbaseConfigName
     )
   }
 

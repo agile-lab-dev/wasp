@@ -43,6 +43,7 @@ class LegacyStreamingETLActor(env: {
                               plugins: Map[String, WaspConsumersSparkPlugin])
     extends Actor
     with Logging {
+
   case object StreamReady
 
   /*
@@ -85,50 +86,30 @@ class LegacyStreamingETLActor(env: {
   }
 
   /**
-    * Index readers initialization
+    * All readers initialization
     */
-  private def indexReaders(readers: List[ReaderModel]): List[SparkReader] = {
-    val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
+  private def allReaders(readers: List[ReaderModel]): List[SparkReader] = {
     readers.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         val readerProduct = readerType.getActualProduct
-        logger.info(s"Get index reader plugin $readerProduct before was $readerType, plugin map: $plugins")
+        logger.info(s"Get reader plugin $readerProduct before was $readerType, plugin map: $plugins")
         val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
           Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
-          logger.error(s"The $readerProduct plugin in indexReaders does not exists")
+          logger.error(s"The $readerProduct plugin in allReaders does not exists")
           None
         }
       case _ => None
     })
   }
 
-  /**
-    * Raw readers initialization
-    */
-  private def rawReaders(readers: List[ReaderModel]): List[SparkReader] = {
-    readers.flatMap({
-      case ReaderModel(name, endpointId, readerType) =>
-        logger.info(s"Get raw reader plugin $readerType, plugin map: $plugins")
-        val readerPlugin = plugins.get(readerType.getActualProduct)
-        if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
-        } else {
-          logger.error(s"The $readerType plugin in rawReaders does not exists")
-          None
-        }
-      case _ => None
-    })
-  }
-
-  // TODO indexReaders() and rawReaders() are equals -> to call only once
   /**
     * All static readers initialization
     *
     * @return
     */
-  private def staticReaders(readers: List[ReaderModel]): List[SparkReader] = indexReaders(readers) ++ rawReaders(readers)
+  private def staticReaders(readers: List[ReaderModel]): List[SparkReader] = allReaders(readers)
 
   /**
     * Topic models initialization
