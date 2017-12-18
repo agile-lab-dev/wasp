@@ -57,9 +57,11 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
         val nDFrequired = staticReaders.size
         val nDFretrieved = dataStoreDFs.size
         if(nDFretrieved != nDFrequired) {
-          logger.error("DFs not retrieved successfully!")
-          logger.error(s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!")
-          logger.error(dataStoreDFs.toString)
+          val error = "DFs not retrieved successfully!\n" +
+            s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
+            dataStoreDFs.toString
+          logger.error(error)
+
           // abort processing
           changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
         }
@@ -115,11 +117,12 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
               writeOutputSuccess = true
           }
 
-          val jobResult = if (writeMlModelsSuccess && writeOutputSuccess) {
-            JobStateEnum.SUCCESSFUL
-          } else {
-            JobStateEnum.FAILED
-          }
+          val jobResult =
+            if (writeMlModelsSuccess && writeOutputSuccess)
+              JobStateEnum.SUCCESSFUL
+            else
+              JobStateEnum.FAILED
+
           changeBatchState(jobModel._id.get, jobResult)
 
           lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
