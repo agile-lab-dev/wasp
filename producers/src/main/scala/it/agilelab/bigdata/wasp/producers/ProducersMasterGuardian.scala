@@ -142,11 +142,11 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def startProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-			//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour (e.g. isActive flag set but the Producer remains stopped)
+			//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
 			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Start)) {
 				Right(s"Producer '${producer.name}' started")
 			} else {
-				//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour
+				//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
 				Left(s"Producer '${producer.name}' not started")
 			}
 		} else {
@@ -157,11 +157,11 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def stopProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-			//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour (e.g. isActive flag unset but the Producer remains alive)
+			//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
 			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
 				Right(s"Producer '${producer.name}' stopped")
 			} else {
-				//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian) - done here (like MasterGuardian) could not be the desired behaviour
+				//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
 				Left(s"Producer '${producer.name}' not stopped")
 			}
 		} else {
