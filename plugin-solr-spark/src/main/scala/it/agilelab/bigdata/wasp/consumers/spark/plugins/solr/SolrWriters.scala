@@ -57,8 +57,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
 
-      logger.info(
-        s"Check or create the index model: '${index.toString} with this index name: $indexName")
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
       if (??[Boolean](
             solrAdminActor,
@@ -66,8 +65,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
               indexName,
               index.getJsonSchema,
               index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1))
-          )) {
+              index.replicationFactor.getOrElse(1)))) {
 
         val docs: DStream[SolrInputDocument] = stream.transform { rdd =>
           val df: Dataset[Row] = sqlContext.read.json(rdd)
@@ -83,14 +81,13 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
                                        new JavaDStream[SolrInputDocument](docs))
 
       } else {
-        logger.error(
-          s"Error creating solr index: $index with this index name $indexName")
-        throw new Exception("Error creating solr index " + indexName)
+        val error = s"Error creating solr index: $index with this index name $indexName"
+        logger.error(error)
+        throw new Exception(error)
         //TODO handle errors
       }
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 
