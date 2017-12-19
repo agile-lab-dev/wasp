@@ -9,6 +9,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -61,10 +62,37 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   override def getSparkReader(id: String, name: String): SparkReader = {
     val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {
-      new ElasticSparkReader(indexOpt.get)
+      val index = indexOpt.get
+      val indexName = index.eventuallyTimedName
+
+      logger.info(
+        s"Check or create the index model: '${index.toString} with this index name: $indexName")
+
+      if (index.schema.isEmpty) {
+        throw new Exception(
+          s"There no define schema in the index configuration: $index")
+      }
+      if (index.name.toLowerCase != index.name) {
+        throw new Exception(s"The index name must be all lowercase: $index")
+      }
+      if (??[Boolean](
+        elasticAdminActor_,
+        CheckOrCreateIndex(indexName,
+          index.name,
+          index.dataType,
+          index.getJsonSchema))) {
+
+        new ElasticSparkReader(indexOpt.get)
+      } else {
+        val error = s"Error creating elastic index: $index with this index name $indexName"
+        logger.error(error)
+        throw new Exception(error)
+        //TODO handle errors
+      }
     } else {
-      logger.error(s"Elastic spark reader not found: id: '$id, name: $name'")
-      throw new Exception(s"Elastic spark reader not found: id: '$id, name: $name'")
+      val error = s"Elastic spark reader indexOption not found: id: '$id, name: $name'"
+      logger.error(error)
+      throw new Exception(error)
     }
   }
 

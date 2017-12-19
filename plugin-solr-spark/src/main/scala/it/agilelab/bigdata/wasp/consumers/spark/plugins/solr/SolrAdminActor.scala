@@ -108,8 +108,7 @@ class SolrAdminActor
     case message: RemoveCollection => call(message, removeCollection)
     case message: RemoveAlias      => call(message, removeAlias)
     case message: Initialization   => call(message, initialization)
-    case message: CheckOrCreateCollection =>
-      call(message, checkOrCreateCollection)
+    case message: CheckOrCreateCollection => call(message, checkOrCreateCollection)
     case message: CheckCollection => call(message, checkCollection)
     case message: Any             => logger.error("unknown message: " + message)
   }
@@ -371,8 +370,7 @@ class SolrAdminActor
     ret
   }
 
-  private def checkOrCreateCollection(
-      message: CheckOrCreateCollection): Boolean = {
+  private def checkOrCreateCollection(message: CheckOrCreateCollection): Boolean = {
     logger.info(s"Check or create collection: $message")
 
     var check = checkCollection(CheckCollection(message.collection))

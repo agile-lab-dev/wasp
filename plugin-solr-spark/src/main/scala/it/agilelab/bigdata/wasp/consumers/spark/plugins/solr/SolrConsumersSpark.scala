@@ -9,6 +9,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -60,9 +61,31 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   override def getSparkReader(id: String, name: String): SparkReader = {
     val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {
-      new SolrSparkReader(indexOpt.get)
+      val index = indexOpt.get
+      val indexName = index.eventuallyTimedName
+
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
+
+      if (??[Boolean](
+          solrAdminActor_,
+          CheckOrCreateCollection(
+            indexName,
+            index.getJsonSchema,
+            index.numShards.getOrElse(1),
+            index.replicationFactor.getOrElse(1)))) {
+
+        new SolrSparkReader(indexOpt.get)
+
+      } else {
+        val error = s"Error creating solr index: $index with this index name $indexName"
+        logger.error(error)
+        throw new Exception(error)
+        //TODO handle errors
+      }
     } else {
-      throw new Exception("Solr Option not found")
+      val error = s"Solr spark reader indexOption not found - id: '$id, name: $name'"
+      logger.error(error)
+      throw new Exception(error)
     }
   }
 
