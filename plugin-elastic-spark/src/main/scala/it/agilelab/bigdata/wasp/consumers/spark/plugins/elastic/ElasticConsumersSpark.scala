@@ -75,14 +75,17 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
       if (index.name.toLowerCase != index.name) {
         throw new Exception(s"The index name must be all lowercase: $index")
       }
+
       if (??[Boolean](
         elasticAdminActor_,
-        CheckOrCreateIndex(indexName,
+        CheckOrCreateIndex(
+          indexName,
           index.name,
           index.dataType,
           index.getJsonSchema))) {
 
         new ElasticSparkReader(indexOpt.get)
+
       } else {
         val error = s"Error creating elastic index: $index with this index name $indexName"
         logger.error(error)

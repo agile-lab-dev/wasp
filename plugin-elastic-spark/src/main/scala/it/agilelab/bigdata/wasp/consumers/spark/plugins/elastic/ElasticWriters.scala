@@ -98,9 +98,11 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
       if (index.name.toLowerCase != index.name) {
         throw new Exception(s"The index name must be all lowercase: $index")
       }
+
       if (??[Boolean](
           elasticAdminActor,
-        CheckOrCreateIndex(indexName,
+        CheckOrCreateIndex(
+          indexName,
           index.name,
           index.dataType,
           index.getJsonSchema))) {
@@ -110,6 +112,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           .format("es")
           .queryName(queryName)
           .start()
+
       } else {
         val error = s"Error creating elastic index: $index with this index name $indexName"
         logger.error(error)
@@ -119,7 +122,6 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
     } else {
       logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
     }
-
   }
 
 }
