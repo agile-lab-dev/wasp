@@ -49,7 +49,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the solr spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    logger.info(s"Initialize the solr spark structured streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
     new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.get.getValue.toHexString, solrAdminActor_)
   }
 

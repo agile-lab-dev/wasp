@@ -42,8 +42,8 @@ object SolrSparkWriter {
 }
 
 class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
-                                     val ssc: StreamingContext,
-                                     val id: String,
+                                     ssc: StreamingContext,
+                                     id: String,
                                      solrAdminActor: ActorRef)
     extends SparkLegacyStreamingWriter
     with SolrConfiguration
@@ -94,8 +94,8 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
 }
 
 class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
-                                         val ss: SparkSession,
-                                         val id: String,
+                                         ss: SparkSession,
+                                         id: String,
                                          solrAdminActor: ActorRef)
     extends SparkStructuredStreamingWriter
     with SolrConfiguration
