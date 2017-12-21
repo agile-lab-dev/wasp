@@ -41,93 +41,100 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
         // abort processing
         logger.error("No stream readers are allowed in batch jobs!")
         changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
-      }
-      else {
-        // implicit filtered with the check above which blocks using stream readers
-        val staticReaders = jobModel.etl.inputs/*.filterNot(_.readerType.category == Datastores.topicCategory)*/
-
-        val dataStoreDFs : Map[ReaderKey, DataFrame] =
-          if(staticReaders.isEmpty) {
-            logger.warn("Readers list empty!")  // also print a warning when no static readers are defined
-            Map.empty
-          }
-          else
-            retrieveDFs(staticReaders)
-
-        val nDFrequired = staticReaders.size
-        val nDFretrieved = dataStoreDFs.size
-        if(nDFretrieved != nDFrequired) {
-          val error = "DFs not retrieved successfully!\n" +
-            s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
-            dataStoreDFs.toString
-          logger.error(error)
-
+      } else {
+        // check if the writer is stream
+        val isTopicCategoryWriter = jobModel.etl.output.writerType.category == Datastores.topicCategory
+        if (isTopicCategoryWriter) {
           // abort processing
+          logger.error("No stream writer is allowed in batch jobs!")
           changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
-        }
-        else {
-          if(!dataStoreDFs.isEmpty)
-            logger.info("DFs retrieved successfully!")
+        } else {
+          // implicit filtered with the check above which blocks using stream readers
+          val staticReaders = jobModel.etl.inputs /*.filterNot(_.readerType.category == Datastores.topicCategory)*/
 
-          val mlModelsDB = new MlModelsDB(env)
-          logger.info("Start to get the models")
-          val mlModelsBroadcast: MlModelsBroadcastDB = mlModelsDB.createModelsBroadcast(jobModel.etl.mlModels)(sc = sc)
-
-          val strategy = createStrategy(jobModel.etl).map(s => {
-            s.sparkContext = Some(sc)
-            s
-          })
-          val resDf = applyStrategy(dataStoreDFs, mlModelsBroadcast, strategy)
-
-          logger.info(s"Strategy for batch ${jobModel.name} applied successfully")
-
-          logger.info(s"Saving batch job ${jobModel.name} ml models")
-
-          var writeMlModelsSuccess = false
-          try {
-            val modelsWriteResult = mlModelsDB.write(mlModelsBroadcast.getModelsToSave)
-            writeMlModelsSuccess = true
-            logger.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
-          } catch {
-            case e: Exception => {
-              logger.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
+          val dataStoreDFs: Map[ReaderKey, DataFrame] =
+            if (staticReaders.isEmpty) {
+              logger.warn("Readers list empty!") // also print a warning when no static readers are defined
+              Map.empty
             }
-          }
-
-          logger.info(s"Saving batch job ${jobModel.name} output")
-
-          var writeOutputSuccess = false
-          resDf match {
-            case Some(res) =>
-              try {
-                writeOutputSuccess = writeResult(res, jobModel.etl.output)
-                if (writeOutputSuccess) {
-                  logger.info(s"Successfully wrote output for batch job ${jobModel.name}")
-                } else {
-                  logger.error(s"Failed to write output for batch job ${jobModel.name}")
-                }
-              } catch {
-                case e: Exception => {
-                  logger.error(s"Failed to write output for batch job ${jobModel.name}", e)
-                  writeOutputSuccess = false
-                }
-              }
-            case None =>
-              logger.warn(s"Batch job ${jobModel.name} has no output to be written.")
-              writeOutputSuccess = true
-          }
-
-          val jobResult =
-            if (writeMlModelsSuccess && writeOutputSuccess)
-              JobStateEnum.SUCCESSFUL
             else
-              JobStateEnum.FAILED
+              retrieveDFs(staticReaders)
 
-          changeBatchState(jobModel._id.get, jobResult)
+          val nDFrequired = staticReaders.size
+          val nDFretrieved = dataStoreDFs.size
+          if (nDFretrieved != nDFrequired) {
+            val error = "DFs not retrieved successfully!\n" +
+              s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
+              dataStoreDFs.toString
+            logger.error(error)
 
-          lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
+            // abort processing
+            changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+          }
+          else {
+            if (!dataStoreDFs.isEmpty)
+              logger.info("DFs retrieved successfully!")
 
-          logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
+            val mlModelsDB = new MlModelsDB(env)
+            logger.info("Start to get the models")
+            val mlModelsBroadcast: MlModelsBroadcastDB = mlModelsDB.createModelsBroadcast(jobModel.etl.mlModels)(sc = sc)
+
+            val strategy = createStrategy(jobModel.etl).map(s => {
+              s.sparkContext = Some(sc)
+              s
+            })
+            val resDf = applyStrategy(dataStoreDFs, mlModelsBroadcast, strategy)
+
+            logger.info(s"Strategy for batch ${jobModel.name} applied successfully")
+
+            logger.info(s"Saving batch job ${jobModel.name} ml models")
+
+            var writeMlModelsSuccess = false
+            try {
+              val modelsWriteResult = mlModelsDB.write(mlModelsBroadcast.getModelsToSave)
+              writeMlModelsSuccess = true
+              logger.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
+            } catch {
+              case e: Exception => {
+                logger.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
+              }
+            }
+
+            logger.info(s"Saving batch job ${jobModel.name} output")
+
+            var writeOutputSuccess = false
+            resDf match {
+              case Some(res) =>
+                try {
+                  writeOutputSuccess = writeResult(res, jobModel.etl.output)
+                  if (writeOutputSuccess) {
+                    logger.info(s"Successfully wrote output for batch job ${jobModel.name}")
+                  } else {
+                    logger.error(s"Failed to write output for batch job ${jobModel.name}")
+                  }
+                } catch {
+                  case e: Exception => {
+                    logger.error(s"Failed to write output for batch job ${jobModel.name}", e)
+                    writeOutputSuccess = false
+                  }
+                }
+              case None =>
+                logger.warn(s"Batch job ${jobModel.name} has no output to be written.")
+                writeOutputSuccess = true
+            }
+
+            val jobResult =
+              if (writeMlModelsSuccess && writeOutputSuccess)
+                JobStateEnum.SUCCESSFUL
+              else
+                JobStateEnum.FAILED
+
+            changeBatchState(jobModel._id.get, jobResult)
+
+            lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
+
+            logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
+          }
         }
       }
   }
