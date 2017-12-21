@@ -1,5 +1,6 @@
-package it.agilelab.bigdata.wasp.consumers.spark.readers
+package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic

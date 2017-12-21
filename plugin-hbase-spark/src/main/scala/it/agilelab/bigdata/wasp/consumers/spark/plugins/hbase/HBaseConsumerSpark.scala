@@ -26,7 +26,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   var hbaseAdminActor_ : ActorRef = _
 
   override def initialize(waspDB: WaspDB): Unit = {
-    logger.info("Initialize the index BL")
+    logger.info("Initialize the keyValue BL")
     keyValueBL = new KeyValueBLImp(waspDB)
     logger.info(s"Initialize the elastic admin actor with this name ${HBaseAdminActor.name}")
     //hbaseAdminActor_ = WaspSystem.actorSystem

@@ -12,7 +12,9 @@ import org.apache.spark.streaming.StreamingContext
 
 class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
-  override def initialize(waspDB: WaspDB): Unit = {}
+  override def initialize(waspDB: WaspDB): Unit = {
+    logger.info(s"Initialize the console BL (nothing)")
+  }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the console spark streaming writer")
@@ -20,7 +22,7 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the console spark streaming writer")
+    logger.info(s"Initialize the console spark structured streaming writer")
     new ConsoleSparkStructuredStreamingWriter()
   }
 
@@ -30,7 +32,9 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
-    throw new UnsupportedOperationException("Console spark reader NOT implemented")
+    val error = s"Invalid spark reader type: console - name: $name"
+    logger.error(error)
+    throw new UnsupportedOperationException(error)
   }
 
   override def pluginType: String = Datastores.consoleProduct

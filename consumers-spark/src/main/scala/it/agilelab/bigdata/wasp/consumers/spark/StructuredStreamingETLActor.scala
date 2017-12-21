@@ -193,6 +193,7 @@ class StructuredStreamingETLActor(env: {
           val error = "DFs not retrieved successfully!\n" +
             s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
             dataStoreDFs.toString
+          logger.error(error)
 
           // TODO check if require abort processing (see BatchJobActor)
           // abort processing

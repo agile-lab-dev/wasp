@@ -28,6 +28,7 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
     with Logging {
 
   override def write(stream: DStream[String]): Unit = {
+
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get

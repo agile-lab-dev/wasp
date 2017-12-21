@@ -4,10 +4,10 @@ import java.util.ServiceLoader
 
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchMasterGuardian
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{KafkaReader, KafkaStructuredReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.consumers.spark.SparkConsumersMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.{KafkaReader, KafkaStructuredReader}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher

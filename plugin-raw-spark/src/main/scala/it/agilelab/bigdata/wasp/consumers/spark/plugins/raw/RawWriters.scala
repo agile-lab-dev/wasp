@@ -1,19 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.logger
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.RawModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
-import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import collection.JavaConverters._
 
 class RawSparkLegacyStreamingWriter(hdfsModel: RawModel,
                                     ssc: StreamingContext)
