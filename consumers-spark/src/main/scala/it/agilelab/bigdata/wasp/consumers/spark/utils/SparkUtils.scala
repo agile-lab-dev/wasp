@@ -36,11 +36,12 @@ object SparkUtils extends Logging {
       .set("spark.driver.cores", sparkConfigModel.driverCores.toString)
       .set("spark.driver.memory", sparkConfigModel.driverMemory) // NOTE: will only work in yarn-cluster
       .set("spark.driver.host", sparkConfigModel.driverHostname)
+      .set("spark.driver.bindAddress", sparkConfigModel.driverBindAddress)
       .set("spark.executor.cores", sparkConfigModel.executorCores.toString)
       .set("spark.executor.memory", sparkConfigModel.executorMemory)
       .set("spark.executor.instances", sparkConfigModel.executorInstances.toString)
       .setJars(loadedJars)
-      .set("spark.yarn.jar", sparkConfigModel.yarnJar)
+      .set("spark.yarn.jars", sparkConfigModel.yarnJar)
       .set("spark.blockManager.port", sparkConfigModel.blockManagerPort.toString)
       .set("spark.broadcast.port", sparkConfigModel.broadcastPort.toString)
       .set("spark.fileserver.port", sparkConfigModel.fileserverPort.toString)

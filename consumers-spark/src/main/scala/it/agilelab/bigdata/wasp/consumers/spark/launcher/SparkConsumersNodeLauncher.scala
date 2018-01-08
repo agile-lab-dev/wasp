@@ -3,14 +3,15 @@ package it.agilelab.bigdata.wasp.consumers.spark.launcher
 import java.util.ServiceLoader
 
 import akka.actor.Props
-import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchMasterGuardian
-import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.consumers.spark.SparkConsumersMasterGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.{KafkaReader, KafkaStructuredReader}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
 import scala.collection.JavaConverters._
 
@@ -62,6 +63,11 @@ trait SparkConsumersNodeLauncherTrait extends MultipleClusterSingletonsLauncher 
 
 		logger.info(s"Initialized all consumers spark plugins")
 
+	}
+
+	override def initializeConfigurations(): Unit = {
+		ConfigManager.initializeSparkBatchConfig()
+		ConfigManager.initializeSparkStreamingConfig()
 	}
 
 	override def getNodeName: String = "consumers spark"
