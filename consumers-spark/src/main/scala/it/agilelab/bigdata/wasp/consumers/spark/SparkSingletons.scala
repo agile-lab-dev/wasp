@@ -76,13 +76,13 @@ object SparkSingletons extends Logging {
           sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
           logger.info("Successfully instantiated SparkSession")
 
-          if (ConfigManager.conf.hasPath("hdfs.configurationsResources")) {
-            ConfigManager.conf.getStringList("hdfs.configurationsResources").asScala.foreach(c => {
-              sparkSession.sparkContext.hadoopConfiguration.addResource(new Path(c))
-              SparkHadoopUtil.get.conf.addResource(new Path(c))
-              logger.info(s"hdfs configuration file: $c")
-            })
-          }
+//          if (ConfigManager.conf.hasPath("hdfs.configurationsResources")) {
+//            ConfigManager.conf.getStringList("hdfs.configurationsResources").asScala.foreach(c => {
+//              sparkSession.sparkContext.hadoopConfiguration.addResource(new Path(c))
+//              SparkHadoopUtil.get.conf.addResource(new Path(c))
+//              logger.info(s"hdfs configuration file: $c")
+//            })
+//          }
           
           logger.info(s"SparkContext configuration: ${sparkSession.sparkContext.hadoopConfiguration.toString}")
           logger.info(s"SparkHadoopUtil configuration: ${SparkHadoopUtil.get.conf.toString}")
