@@ -86,6 +86,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		implicit val system = actorSystem
 		implicit val materializer = ActorMaterializer()
 		val finalRoute = handleExceptions(myExceptionHandler)(route)
+		logger.info(s"start rest server and bind on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
 		val bindingFuture = Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
 	}
 	
