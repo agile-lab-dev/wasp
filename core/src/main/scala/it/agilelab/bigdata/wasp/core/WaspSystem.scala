@@ -143,9 +143,8 @@ object WaspSystem extends WaspConfiguration with Logging {
     
       // initialize indexed datastore
       val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
-      if (defaultIndexedDatastore != "elastic" || defaultIndexedDatastore != "solr") {
-        logger.error("No indexed datastore configured!")
-
+      if (defaultIndexedDatastore != "elastic" && defaultIndexedDatastore != "solr") {
+        logger.error(s"No indexed datastore configured! Value: ${defaultIndexedDatastore} is different from elastic or solr")
       }
 
       // initialize keyvalue datastore
