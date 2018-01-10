@@ -88,14 +88,24 @@ object SparkUtils extends Logging {
   }
 	
 	def generateLegacyStreamingCheckpointDir(sparkStreamingConfigModel: SparkStreamingConfigModel): String = {
-		sparkStreamingConfigModel.checkpointDir + "/" +
+
+    val environmentPrefix = ConfigManager.getWaspConfig.environmentPrefix
+
+    val prefix = if (environmentPrefix == "") "" else "/"+environmentPrefix
+
+		sparkStreamingConfigModel.checkpointDir + prefix + "/" +
 			"legacy_streaming"
 	}
 	
   def generateStructuredStreamingCheckpointDir(sparkStreamingConfigModel: SparkStreamingConfigModel,
                                                pipegraph: PipegraphModel,
                                                component: StructuredStreamingETLModel): String = {
-    sparkStreamingConfigModel.checkpointDir + "/" +
+
+    val environmentPrefix = ConfigManager.getWaspConfig.environmentPrefix
+
+    val prefix = if (environmentPrefix == "") "" else "/"+environmentPrefix
+
+    sparkStreamingConfigModel.checkpointDir + prefix + "/" +
 	    "structured_streaming" + "/" +
 	    pipegraph.generateStandardPipegraphName + "/" +
 	    component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName

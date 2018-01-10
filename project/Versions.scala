@@ -27,5 +27,5 @@ object Versions {
 	val slf4j = "1.7.12"
 	val solrSpark = "1.2.8"
 	val solr = "4.10.3-cdh5.12.1"
-	val spark = "2.2.0"
+	val spark = "2.2.1"
 }

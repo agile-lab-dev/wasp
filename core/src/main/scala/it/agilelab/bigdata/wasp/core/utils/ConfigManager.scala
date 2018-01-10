@@ -51,7 +51,8 @@ object ConfigManager {
       conf.getBoolean("systempipegraphs.start"),
       conf.getBoolean("systemproducers.start"),
       conf.getString("rest.server.hostname"),
-      conf.getInt("rest.server.port")
+      conf.getInt("rest.server.port"),
+      conf.getString("environment.prefix")
     )
   }
   
