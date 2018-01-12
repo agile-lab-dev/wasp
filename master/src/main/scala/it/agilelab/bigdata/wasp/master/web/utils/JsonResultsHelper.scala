@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.utils
 
 import akka.http.scaladsl.model._
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.master.web.models.PaginationInfo
 import spray.json.{JsObject, JsString, JsValue, _}
 
 import scala.collection.immutable
@@ -15,6 +16,17 @@ object JsonResultsHelper extends JsonSupport with Logging {
     def toAngularOkResponse: HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),
+        "data" -> js
+      )
+      httpResponseJson(entity = jsonResult.toString())
+    }
+    def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long): HttpResponse  = {
+      val jsonResult = JsObject(
+        "Result" -> JsString("OK"),
+        "numFound" -> JsNumber(numFound),
+        "page" -> JsNumber(page),
+        "rows" -> JsNumber(rows),
+        "numPages" -> JsNumber(math.ceil(numFound.toDouble / rows.toDouble).toInt),
         "data" -> js
       )
       httpResponseJson(entity = jsonResult.toString())
@@ -39,6 +51,7 @@ object JsonResultsHelper extends JsonSupport with Logging {
       )
     }
   }
+
   def getJsonArrayOrEmpty[T](result: Seq[T], converter: (Seq[T]) => JsValue): HttpResponse = {
     if (result.isEmpty) {
       JsArray().toAngularOkResponse
@@ -46,6 +59,16 @@ object JsonResultsHelper extends JsonSupport with Logging {
       converter(result).toAngularOkResponse
     }
   }
+
+
+  def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo, converter: (Seq[T]) => JsValue): HttpResponse = {
+    if (result.isEmpty) {
+      JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound)
+    } else {
+      converter(result).toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound)
+    }
+  }
+
   def runIfExists(result: Option[_], func: () => Unit, id: String, resource: String, action: String): HttpResponse = {
     if (result.isDefined) {
       func()

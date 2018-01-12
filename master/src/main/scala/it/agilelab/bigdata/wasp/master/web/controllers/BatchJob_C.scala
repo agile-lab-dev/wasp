@@ -48,7 +48,7 @@ object BatchJob_C extends Directives with JsonSupport {
       } ~
         pathPrefix(Segment) { name =>
           path("start") {
-            get {
+            post {
               complete {
                 WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name)) match {
                   case Right(s) => s.toJson.toAngularOkResponse

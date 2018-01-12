@@ -5,17 +5,17 @@ import java.nio.ByteBuffer
 import java.sql.{Date, Timestamp}
 import java.util
 
-import it.agilelab.bigdata.wasp.core.logging.Logging
-import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.Schema.Type
 import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.{DecoderFactory, EncoderFactory}
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
-import scala.collection.immutable.Map
 import scala.collection.JavaConverters._
+import scala.collection.immutable.Map
 
 /**
   * Spark Row to serialized Avro converter class.
@@ -54,11 +54,12 @@ case class RowToAvro(schema: StructType,
   def write(row: Row): Array[Byte] = {
     val output = new ByteArrayOutputStream()
     val value: GenericRecord = converter(row).asInstanceOf[GenericRecord]
-    val writer = new DataFileWriter(new GenericDatumWriter[GenericRecord]())
-    //TODO con questo metodo viene integrato lo schema avro in ogni row sarebbe meglio toglierlo
-    writer.create(actualSchema, output)
-    writer.append(value)
-    writer.flush()
+
+    val encoder = EncoderFactory.get.binaryEncoder(output, null)
+    val writer =new GenericDatumWriter[GenericRecord](actualSchema)
+    writer.write(value, encoder)
+
+    encoder.flush()
     output.toByteArray
 
   }
@@ -88,11 +89,12 @@ case class RowToAvro(schema: StructType,
       case DateType => (item: Any) =>
         if (item == null) null else item.asInstanceOf[Date].getTime
       case ArrayType(elementType, _) =>
-        val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, None)
         (item: Any) => {
           if (item == null) {
             null
           } else {
+            val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
+            val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getElementType))
             val sourceArray = item.asInstanceOf[Seq[Any]]
             val sourceArraySize = sourceArray.size
             val targetArray = new util.ArrayList[Any](sourceArraySize)
@@ -105,7 +107,8 @@ case class RowToAvro(schema: StructType,
           }
         }
       case MapType(StringType, valueType, _) =>
-        val valueConverter = createConverterToAvro(valueType, structName, recordNamespace, None, None)
+        val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
+        val valueConverter = createConverterToAvro(valueType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getValueType))
         (item: Any) => {
           if (item == null) {
             null
@@ -119,7 +122,7 @@ case class RowToAvro(schema: StructType,
         }
       case structType: StructType =>
         val builder = SchemaBuilder.record(structName).namespace(recordNamespace)
-        val schema: Schema = externalSchema.getOrElse(
+        val schema: Schema = externalSchema.map(eventualSubSchemaFromUnionWithNull).getOrElse(
           SchemaConverters.convertStructToAvro(structType, builder, recordNamespace)
         )
 
@@ -130,7 +133,8 @@ case class RowToAvro(schema: StructType,
             true
           }
         }).map(field =>
-          createConverterToAvro(field.dataType, field.name, recordNamespace, None, None))
+          createConverterToAvro(field.dataType, field.name, recordNamespace, None, Some(schema.getField(field.name).schema()))
+        )
         (item: Any) => {
           if (item == null) {
             null
@@ -149,6 +153,19 @@ case class RowToAvro(schema: StructType,
         }
     }
   }
+
+  private def eventualSubSchemaFromUnionWithNull(s: Schema): Schema = {
+    if(s.getType == Type.UNION){
+      val otherType = s.getTypes.asScala.filter(subS => subS.getType != Type.NULL)
+      if(otherType.size != 1) {
+        throw new IllegalArgumentException(s"Avro sub-schema ${s.getName} has UnionSchema which is not a simple NullSchema + primitive schema.")
+      }
+      otherType.head
+    } else {
+      s
+    }
+  }
+
 }
 
 object RowToAvro {
@@ -159,6 +176,7 @@ object RowToAvro {
   private val floatType = "float"
   private val doubleType = "double"
   private val stringType = "string"
+  private val arrayType = "array"
 
   /**
     * Ensures schemas are compatible, that is:
@@ -219,6 +237,7 @@ object RowToAvro {
     case _: FloatType => floatType
     case _: DoubleType => doubleType
     case _: StringType => stringType
+    case _: ArrayType => arrayType
   }
 
   /**
@@ -265,5 +284,6 @@ object RowToAvro {
     case Type.FLOAT => floatType
     case Type.DOUBLE => doubleType
     case Type.STRING => stringType
+    case Type.ARRAY => arrayType
   }
 }

@@ -1,0 +1,20 @@
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>hbase:2181</value>
+    </property>
+
+
+    <property>
+        <name>hbase.master.info.bindAddress</name>
+        <value>hbase</value>
+    </property>
+
+    <property>
+        <name>hbase.regionserver.info.bindAddress</name>
+        <value>hbase</value>
+    </property>
+
+</configuration>

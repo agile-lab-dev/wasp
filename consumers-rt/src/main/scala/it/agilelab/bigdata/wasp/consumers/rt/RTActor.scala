@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.rt.strategies.StrategyRT
 import it.agilelab.bigdata.wasp.consumers.rt.writers.RtWritersManagerActor
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, TopicBL, WebsocketBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{RTModel, ReaderModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.{RTModel, ReaderModel, TopicModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils._
 
 import scala.collection.mutable
@@ -43,7 +43,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
   lazy val epManagerActor: ActorRef = initializeEndpointsManager(rt.endpoint)
 
   // cache for topic data types
-  val topicDataTypes = mutable.Map.empty[String, String]
+  val topicDataTypes = mutable.Map.empty[String, TopicModel]
   
   def initializeEndpointsManager(endpointsModel: Option[WriterModel]) = {
     context.actorOf(Props(new RtWritersManagerActor(env, endpointsModel)))
@@ -66,11 +66,12 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
     case (key: String, data: Array[Byte]) => {
       rt.inputs.foreach { input =>
         
-        val topicDataType = getTopicDataType(input)
-        
-        topicDataType match {
+        val topicModel = getTopiModel(input)
+
+        topicModel.topicDataType match {
           case "avro" => {
-            val jsonMsg = AvroToJsonUtil.avroToJson(data)
+            val topicSchema = JsonConverter.toString(topicModel.schema.asDocument())
+            val jsonMsg = AvroToJsonUtil.avroToJson(data, topicSchema)
             val outputJson = applyStrategy(key, jsonMsg)
             epManagerActor ! outputJson
           }
@@ -85,19 +86,18 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
   }
   
   // returns the topic type corresponding to the input given
-  private def getTopicDataType(input: ReaderModel): String = {
-    val topicId = input.endpointId.getValue.toHexString
-    val typeOpt = topicDataTypes.get(topicId)
+  private def getTopiModel(input: ReaderModel): TopicModel = {
+    val topicId: String = input.endpointId.getValue.toHexString
+    val typeOpt: Option[TopicModel] = topicDataTypes.get(topicId)
     
     typeOpt match {
       case Some(topicDataType) => topicDataType // found in cache, simply return it
       case None => { // not found, get from db, add to cache, return it
-        val topicOpt = env.topicBL.getById(input.endpointId.getValue.toHexString)
-        val topicDataType = topicOpt.get.topicDataType
-        
-        topicDataTypes += topicId -> topicDataType
-        
-        topicDataType
+        val topicOpt: Option[TopicModel] = env.topicBL.getById(input.endpointId.getValue.toHexString)
+
+        topicDataTypes += topicId -> topicOpt.get
+
+        topicOpt.get
       }
     }
   }

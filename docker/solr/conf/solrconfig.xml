@@ -153,7 +153,10 @@
        modification REST API calls will be allowed; otherwise, error responses will be
        sent back for these requests.
   -->
-  <schemaFactory class="ClassicIndexSchemaFactory"/>
+  <schemaFactory class="ManagedIndexSchemaFactory">
+    <bool name="mutable">true</bool>
+    <str name="managedSchemaResourceName">managed-schema</str>
+  </schemaFactory>
 
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        Index Config - These settings control low-level behavior of indexing
@@ -259,6 +262,7 @@
     <!--
     <unlockOnStartup>false</unlockOnStartup>
       -->
+    <unlockOnStartup>true</unlockOnStartup>
 
     <!-- Expert: Controls how often Lucene loads terms into memory
          Default is 128 and is likely good for most everyone.

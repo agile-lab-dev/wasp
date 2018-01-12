@@ -15,10 +15,12 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 source $SCRIPT_DIR/../get-docker-cmd.sh
 
-cd base_cdh
+cd $SCRIPT_DIR
+
+cd ../base_cdh
 
 $DOCKER_CMD build --rm -t base_cdh:5.11 .
 
-cd ..
+cd ../solr
 
 $DOCKER_CMD build --rm -t solr_cdh:5.11 .

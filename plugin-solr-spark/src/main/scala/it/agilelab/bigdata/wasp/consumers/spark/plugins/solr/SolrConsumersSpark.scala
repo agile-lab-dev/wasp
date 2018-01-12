@@ -9,10 +9,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.WriterModel
+import it.agilelab.bigdata.wasp.core.models.{Datastores, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -43,26 +44,48 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the solr spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.getValue.toHexString, solrAdminActor_)
+    logger.info(s"Initialize the solr spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.get.getValue.toHexString, solrAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the solr spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.getValue.toHexString, solrAdminActor_)
+    logger.info(s"Initialize the solr spark structured streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.get.getValue.toHexString, solrAdminActor_)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
-    new SolrSparkWriter(indexBL, sc, writerModel.endpointId.getValue.toHexString, solrAdminActor_)
+    logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    new SolrSparkWriter(indexBL, sc, writerModel.endpointId.get.getValue.toHexString, solrAdminActor_)
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
     val indexOpt = indexBL.getById(id)
     if (indexOpt.isDefined) {
-      new SolrSparkReader(indexOpt.get)
+      val index = indexOpt.get
+      val indexName = index.eventuallyTimedName
+
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
+
+      if (??[Boolean](
+          solrAdminActor_,
+          CheckOrCreateCollection(
+            indexName,
+            index.getJsonSchema,
+            index.numShards.getOrElse(1),
+            index.replicationFactor.getOrElse(1)))) {
+
+        new SolrSparkReader(indexOpt.get)
+
+      } else {
+        val error = s"Error creating solr index: $index with this index name $indexName"
+        logger.error(error)
+        throw new Exception(error)
+        //TODO handle errors
+      }
     } else {
-      throw new Exception("Solr Option not found")
+      val error = s"Solr spark reader indexOption not found - id: '$id, name: $name'"
+      logger.error(error)
+      throw new Exception(error)
     }
   }
 
@@ -85,5 +108,5 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  override def pluginType: String = "solr"
+  override def pluginType: String = Datastores.solrProduct
 }

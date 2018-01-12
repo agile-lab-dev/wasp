@@ -27,6 +27,9 @@ RUN  mv /etc/default/solr.docker /etc/default/solr && \
 
 ADD conf/solr.xml /usr/lib/solr/clusterconfig/solr.xml
 ADD conf/solrconfig.xml /usr/lib/solr/coreconfig-template/solrconfig.xml
+ADD conf/solrconfig.xml /usr/lib/solr/managedTemplate/solrconfig.xml
+ADD conf/solrconfig.xml /usr/lib/solr/predefinedTemplate/solrconfig.xml
+ADD conf/solrconfig.xml /usr/lib/solr/schemalessTemplate/solrconfig.xml
 
 ####################
 # PORTS

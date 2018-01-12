@@ -22,12 +22,16 @@ HELP="Usage:
     --no-indexed-datastore      same as \"-i none\"
     --no-spark                  do not start spark master and worker
     --no-kafka                  do not start zookeeper and kafka
+    --with-hbase                start HBase
+    --with-hdfs                 start HDFS
 "
 
 # parse command line arguments
 INDEXED_DATASTORE=""
 SPARK=1
 KAFKA=1
+HBASE=0
+HDFS=0
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
     ARG=$1
@@ -53,6 +57,14 @@ while [[ $# -gt 0 ]]; do
             KAFKA=0
             shift # past argument
         ;;
+        --with-hbase)
+            HBASE=1
+            shift # past argument
+        ;;
+        --with-hdfs)
+            HDFS=1
+            shift # past argument
+        ;;
         *)
             echo "Unknown option $ARG"
             echo "$HELP"
@@ -63,7 +75,7 @@ done
 
 # decide which compose files to use
 COMPOSE_FILES=("mongodb-docker-compose.yml")
-case $INDEXED_DATASTORE in
+case ${INDEXED_DATASTORE} in
     "es"|"elastic"|"elasticsearch")
         COMPOSE_FILES+=("elastickibana-docker-compose.yml")
         ;;
@@ -81,16 +93,23 @@ case $INDEXED_DATASTORE in
         COMPOSE_FILES+=("elastickibana-docker-compose.yml")
         ;;
 esac
-if [ $SPARK -eq 1 ]; then
+if [ ${SPARK} -eq 1 ]; then
     COMPOSE_FILES+=("spark-docker-compose.yml")
 fi
-if [ $KAFKA -eq 1 ]; then
+if [ ${KAFKA} -eq 1 ]; then
     COMPOSE_FILES+=("kafka-docker-compose.yml")
 fi
+if [ ${HBASE} -eq 1 ]; then
+    COMPOSE_FILES+=("hbase-docker-compose.yml")
+fi
+if [ ${HDFS} -eq 1 ]; then
+    COMPOSE_FILES+=("hdfs-docker-compose.yml")
+fi
 
-# get docker-compose command
+# get docker command, init network if needed
 cd $SCRIPT_DIR
 source get-docker-compose-cmd.sh
+source create-wasp-network.sh
 
 # build string containing docker-compose compose files options
 COMPOSE_FILES_OPTIONS=""

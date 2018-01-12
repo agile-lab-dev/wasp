@@ -30,7 +30,10 @@ object SolrSparkWriter {
 
     val fieldname = r.schema.fieldNames
     fieldname.foreach { f =>
-      doc.setField(f, r.getAs(f))
+
+      if(! r.isNullAt(r.fieldIndex(f)))
+        doc.setField(f, r.getAs(f))
+
     }
 
     doc
@@ -39,8 +42,8 @@ object SolrSparkWriter {
 }
 
 class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
-                                     val ssc: StreamingContext,
-                                     val id: String,
+                                     ssc: StreamingContext,
+                                     id: String,
                                      solrAdminActor: ActorRef)
     extends SparkLegacyStreamingWriter
     with SolrConfiguration
@@ -52,10 +55,9 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
-      logger.info(
-        s"Check or create the index model: '${index.toString} with this index name: $indexName")
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
       if (??[Boolean](
             solrAdminActor,
@@ -63,8 +65,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
               indexName,
               index.getJsonSchema,
               index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1))
-          )) {
+              index.replicationFactor.getOrElse(1)))) {
 
         val docs: DStream[SolrInputDocument] = stream.transform { rdd =>
           val df: Dataset[Row] = sqlContext.read.json(rdd)
@@ -80,22 +81,21 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
                                        new JavaDStream[SolrInputDocument](docs))
 
       } else {
-        logger.error(
-          s"Error creating solr index: $index with this index name $indexName")
-        throw new Exception("Error creating solr index " + indexName)
+        val error = s"Error creating solr index: $index with this index name $indexName"
+        logger.error(error)
+        throw new Exception(error)
         //TODO handle errors
       }
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 
 }
 
 class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
-                                         val ss: SparkSession,
-                                         val id: String,
+                                         ss: SparkSession,
+                                         id: String,
                                          solrAdminActor: ActorRef)
     extends SparkStructuredStreamingWriter
     with SolrConfiguration
@@ -109,7 +109,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: ${index.name}")
@@ -128,6 +128,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
           solrConfig.connections.mkString(","),
           indexName,
           index.collection)
+
 
         stream.writeStream
           .option("checkpointLocation", checkpointDir)
@@ -195,7 +196,7 @@ class SolrSparkWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: $indexName")

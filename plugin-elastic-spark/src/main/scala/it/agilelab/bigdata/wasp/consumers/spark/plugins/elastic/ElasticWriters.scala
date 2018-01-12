@@ -28,10 +28,11 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
     with Logging {
 
   override def write(stream: DStream[String]): Unit = {
+
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
@@ -86,7 +87,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: $indexName")
@@ -98,8 +99,11 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
       if (index.name.toLowerCase != index.name) {
         throw new Exception(s"The index name must be all lowercase: $index")
       }
-      if (??[Boolean](elasticAdminActor,
-        CheckOrCreateIndex(indexName,
+
+      if (??[Boolean](
+          elasticAdminActor,
+        CheckOrCreateIndex(
+          indexName,
           index.name,
           index.dataType,
           index.getJsonSchema))) {
@@ -109,13 +113,16 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           .format("es")
           .queryName(queryName)
           .start()
+
+      } else {
+        val error = s"Error creating elastic index: $index with this index name $indexName"
+        logger.error(error)
+        throw new Exception(error)
+        //TODO handle errors
       }
-
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
     }
-
   }
 
 }
@@ -133,7 +140,7 @@ class ElasticSparkWriter(indexBL: IndexBL,
     val indexOpt: Option[IndexModel] = indexBL.getById(id)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
-      val indexName = ConfigManager.buildTimedName(index.name)
+      val indexName = index.eventuallyTimedName
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: $indexName")

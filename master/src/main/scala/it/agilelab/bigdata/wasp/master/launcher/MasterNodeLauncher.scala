@@ -54,9 +54,9 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
 		
 		// add raw pipegraph
-		db.insertIfNotExists[TopicModel](SystemPipegraphs.rawTopic)
-		db.insertIfNotExists[IndexModel](SystemPipegraphs.rawIndex)
-		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.rawPipegraph)
+		//db.insertIfNotExists[TopicModel](SystemPipegraphs.rawTopic)
+		//db.insertIfNotExists[IndexModel](SystemPipegraphs.rawIndex)
+		//db.insertIfNotExists[PipegraphModel](SystemPipegraphs.rawPipegraph)
 	}
 	
 	private val myExceptionHandler = ExceptionHandler {
@@ -86,6 +86,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		implicit val system = actorSystem
 		implicit val materializer = ActorMaterializer()
 		val finalRoute = handleExceptions(myExceptionHandler)(route)
+		logger.info(s"start rest server and bind on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
 		val bindingFuture = Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
 	}
 	

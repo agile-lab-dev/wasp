@@ -6,8 +6,11 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
+import org.apache.spark.deploy.SparkHadoopUtil
 
+import collection.JavaConverters._
 /**
 	* Utilities related to Spark.
 	*
@@ -33,11 +36,12 @@ object SparkUtils extends Logging {
       .set("spark.driver.cores", sparkConfigModel.driverCores.toString)
       .set("spark.driver.memory", sparkConfigModel.driverMemory) // NOTE: will only work in yarn-cluster
       .set("spark.driver.host", sparkConfigModel.driverHostname)
+      .set("spark.driver.bindAddress", sparkConfigModel.driverBindAddress)
       .set("spark.executor.cores", sparkConfigModel.executorCores.toString)
       .set("spark.executor.memory", sparkConfigModel.executorMemory)
       .set("spark.executor.instances", sparkConfigModel.executorInstances.toString)
       .setJars(loadedJars)
-      .set("spark.yarn.jar", sparkConfigModel.yarnJar)
+      .set("spark.yarn.jars", sparkConfigModel.yarnJar)
       .set("spark.blockManager.port", sparkConfigModel.blockManagerPort.toString)
       .set("spark.broadcast.port", sparkConfigModel.broadcastPort.toString)
       .set("spark.fileserver.port", sparkConfigModel.fileserverPort.toString)
@@ -84,14 +88,24 @@ object SparkUtils extends Logging {
   }
 	
 	def generateLegacyStreamingCheckpointDir(sparkStreamingConfigModel: SparkStreamingConfigModel): String = {
-		sparkStreamingConfigModel.checkpointDir + "/" +
+
+    val environmentPrefix = ConfigManager.getWaspConfig.environmentPrefix
+
+    val prefix = if (environmentPrefix == "") "" else "/"+environmentPrefix
+
+		sparkStreamingConfigModel.checkpointDir + prefix + "/" +
 			"legacy_streaming"
 	}
 	
   def generateStructuredStreamingCheckpointDir(sparkStreamingConfigModel: SparkStreamingConfigModel,
                                                pipegraph: PipegraphModel,
                                                component: StructuredStreamingETLModel): String = {
-    sparkStreamingConfigModel.checkpointDir + "/" +
+
+    val environmentPrefix = ConfigManager.getWaspConfig.environmentPrefix
+
+    val prefix = if (environmentPrefix == "") "" else "/"+environmentPrefix
+
+    sparkStreamingConfigModel.checkpointDir + prefix + "/" +
 	    "structured_streaming" + "/" +
 	    pipegraph.generateStandardPipegraphName + "/" +
 	    component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName
