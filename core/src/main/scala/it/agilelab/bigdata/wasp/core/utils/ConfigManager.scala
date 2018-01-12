@@ -6,6 +6,7 @@ import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
@@ -15,7 +16,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.{Failure, Success}
 
-object ConfigManager {
+object ConfigManager extends Logging {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   val kafkaConfigName = "Kafka"
@@ -115,7 +116,12 @@ object ConfigManager {
       sparkSubConfig.getInt("broadcast-port"),
       sparkSubConfig.getInt("fileserver-port"),
       sparkBatchConfigName,
-      sparkSubConfig.getString("driver-bind-address")
+      sparkSubConfig.getString("driver-bind-address"),
+      sparkSubConfig.getInt("retained-stages-jobs"),
+      sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-executions"),
+      sparkSubConfig.getInt("retained-batches")
+
     )
   }
 
@@ -142,6 +148,8 @@ object ConfigManager {
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
 
+    logger.info(sparkSubConfig.toString)
+
     val additionalJars = getAdditionalJars
 
     SparkStreamingConfigModel(
@@ -162,7 +170,11 @@ object ConfigManager {
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
       sparkStreamingConfigName,
-      sparkSubConfig.getString("driver-bind-address")
+      sparkSubConfig.getString("driver-bind-address"),
+      sparkSubConfig.getInt("retained-stages-jobs"),
+      sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-executions"),
+      sparkSubConfig.getInt("retained-batches")
     )
   }
 

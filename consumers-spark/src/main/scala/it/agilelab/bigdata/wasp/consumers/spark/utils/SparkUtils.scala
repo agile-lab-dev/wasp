@@ -45,6 +45,11 @@ object SparkUtils extends Logging {
       .set("spark.blockManager.port", sparkConfigModel.blockManagerPort.toString)
       .set("spark.broadcast.port", sparkConfigModel.broadcastPort.toString)
       .set("spark.fileserver.port", sparkConfigModel.fileserverPort.toString)
+      .set("spark.ui.retainedStages", sparkConfigModel.retainedStagesJobs.toString)
+      .set("spark.ui.retainedTasks", sparkConfigModel.retainedTasks.toString)
+      .set("spark.ui.retainedJobs", sparkConfigModel.retainedStagesJobs.toString)
+      .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
+      .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
 
 		if (sparkConfigModel.driverPort != 0)
 			sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driverPort.toString)
