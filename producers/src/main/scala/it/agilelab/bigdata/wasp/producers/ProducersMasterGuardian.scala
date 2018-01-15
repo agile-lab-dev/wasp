@@ -75,7 +75,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			env.producerBL.getSystemProducers foreach {
 				producer => {
 					logger.info("Activating system producer \"" + producer.name + "\"...")
-					WaspSystem.masterGuardian ! StartProducer(producer._id.get.getValue.toHexString)
+					WaspSystem.masterGuardian ! StartProducer(producer.name) // masterGuardian uses producer.name instead of producer._id.get.getValue.toHexString
 					logger.info("Activated system producer \"" + producer.name + "\"")
 				}
 			}
