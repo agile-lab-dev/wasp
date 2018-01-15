@@ -36,7 +36,6 @@ abstract class ClusterAwareNodeGuardian extends ClusterAware {
 
   override def receive: Actor.Receive = uninitialized orElse initialized orElse super.receive
 
-
   def uninitialized: Actor.Receive = {
     case OutputStreamInitialized => initialize()
   }

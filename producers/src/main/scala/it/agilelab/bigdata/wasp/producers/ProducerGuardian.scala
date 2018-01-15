@@ -5,7 +5,7 @@ import akka.pattern.gracefulStop
 import akka.routing.BalancingPool
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, generalTimeout}
 import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
+import it.agilelab.bigdata.wasp.core.cluster.ClusterAware
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{ProducerModel, TopicModel}
@@ -22,7 +22,7 @@ import scala.concurrent.Future
   * ProducerActors that actually produce the data.
   */
 abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
-    extends ClusterAwareNodeGuardian
+    extends ClusterAware
     with Logging {
   
   val name: String
@@ -33,39 +33,40 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
   var router_name: String = _
   var kafka_router: ActorRef = _ // TODO: Careful with kafka router dynamic name
 
+  override def preStart(): Unit = {
+    super.preStart()
+  }
+
   override def postStop(): Unit = {
     super.postStop()
     kafka_router ! PoisonPill
   }
 
-  override def preStart(): Unit = {
-    super.preStart()
-  }
+  override def receive: Actor.Receive = uninitialized
 
-  override def uninitialized: Actor.Receive = super.uninitialized orElse guardianUnitialized
+  def uninitialized: Actor.Receive = guardianUnitialized
 
-  override def initialized: Actor.Receive = {
+  def initialized: Actor.Receive = {
     case Start =>
       logger.info(s"Producer $producerId starting at guardian $self")
-      sender() ! true
+      sender() ! Right()
 
     case Stop =>
       logger.info(s"Producer $producerId stopping")
       stopChildActors()
-      sender() ! true
+      sender() ! Right()
   }
 
   def guardianUnitialized: Actor.Receive = {
     case Start =>
-      initialize()
-      sender() ! true
+      val result = initialize()
+      sender() ! result
 
     case Stop =>
-      sender() ! true
+      sender() ! Right()
   }
 
   def startChildActors()
-
 
   def stopChildActors(): Future[Unit] = {
 
@@ -91,7 +92,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
     }
   }
 
-  override def initialize(): Unit = {
+  def initialize(): Either[String, Unit] = {
 
     val producerOption = env.producerBL.getById(producerId)
     
@@ -99,26 +100,33 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
       producer = producerOption.get
       if (producer.hasOutput) {
         val topicOption = env.producerBL.getTopic(topicBL = env.topicBL, producer)
+
         associatedTopic = topicOption
         logger.info(s"Producer $producerId: topic found: $associatedTopic")
-        if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))) {
+        val result = ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))
+        if (result) {
           router_name = s"kafka-ingestion-router-$name-${producer._id.get.getValue.toHexString}-${System.currentTimeMillis()}"
           kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
           context become initialized
           startChildActors()
 
           env.producerBL.setIsActive(producer, isActive = true)
+
+          Right()
         } else {
-          logger.error(s"Producer $producerId: error creating topic " + topicOption.get.name)
+          val msg = s"Producer $producerId: error creating topic " + topicOption.get.name
+          logger.error(msg)
+          Left(msg)
         }
-
+      } else {
+        val msg = s"Producer $producerId: error undefined topic"
+        logger.error(msg)
+        Left(msg)
       }
-
     } else {
-      logger.warn(s"Producer $producerId: this producer doesn't have an associated topic")
+      val msg = s"Producer $producerId: error not defined"
+      logger.error(msg)
+      Left(msg)
     }
   }
-
 }
-
-

@@ -30,7 +30,7 @@ object MasterGuardian extends WaspConfiguration with Logging {
 
       WaspSystem.??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
         case Right(s) => logger.info(s"RestartPipegraphs: $s")
-        case Left(s) => logger.error(s"Failuer during the pipegraphs restarting: $s")
+        case Left(s) => logger.error(s"Failure during the pipegraphs restarting: $s")
       }
     }
   } else {
