@@ -48,11 +48,11 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
   def initialized: Actor.Receive = {
     case Start =>
-      logger.info(s"Producer $producerId starting at guardian $self")
+      logger.info(s"Producer '$producerId' starting at guardian $self")
       sender() ! Right()
 
     case Stop =>
-      logger.info(s"Producer $producerId stopping")
+      logger.info(s"Producer '$producerId' stopping")
       stopChildActors()
       sender() ! Right()
   }
@@ -71,17 +71,17 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
   def stopChildActors(): Future[Unit] = {
 
     //Stop all actors bound to this guardian and the guardian itself
-    logger.info(s"Producer $producerId: stopping actors bound to $self...")
+    logger.info(s"Producer '$producerId': stopping actors bound to $self...")
 
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeout.duration))
 
     globalStatus map { res =>
       if (res reduceLeft (_ && _)) {
 
-        logger.info(s"Producer $producerId: graceful shutdown completed.")
+        logger.info(s"Producer '$producerId': graceful shutdown completed.")
         env.producerBL.setIsActive(producer, isActive = false)
 
-        logger.info(s"Producer $producerId: transitioning from 'initialized' to 'uninitialized'")
+        logger.info(s"Producer '$producerId': transitioning from 'initialized' to 'uninitialized'")
         kafka_router ! PoisonPill
 
         context become guardianUnitialized
@@ -102,7 +102,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
         val topicOption = env.producerBL.getTopic(topicBL = env.topicBL, producer)
 
         associatedTopic = topicOption
-        logger.info(s"Producer $producerId: topic found: $associatedTopic")
+        logger.info(s"Producer '$producerId': topic found: $associatedTopic")
         val result = ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))
         if (result) {
           router_name = s"kafka-ingestion-router-$name-${producer._id.get.getValue.toHexString}-${System.currentTimeMillis()}"
@@ -114,17 +114,17 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
           Right()
         } else {
-          val msg = s"Producer $producerId: error creating topic " + topicOption.get.name
+          val msg = s"Producer '$producerId': error creating topic " + topicOption.get.name
           logger.error(msg)
           Left(msg)
         }
       } else {
-        val msg = s"Producer $producerId: error undefined topic"
+        val msg = s"Producer '$producerId': error undefined topic"
         logger.error(msg)
         Left(msg)
       }
     } else {
-      val msg = s"Producer $producerId: error not defined"
+      val msg = s"Producer '$producerId': error not defined"
       logger.error(msg)
       Left(msg)
     }

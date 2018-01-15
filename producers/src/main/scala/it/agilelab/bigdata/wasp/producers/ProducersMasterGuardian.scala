@@ -109,9 +109,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def onProducer(id: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
 		env.producerBL.getById(id) match {
 			case None => Right("Producer not retrieved")
-			case Some(producer) => {
-				f(producer)
-			}
+			case Some(producer) => f(producer)
 		}
 	}
 	
@@ -142,12 +140,18 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def startProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+
 			//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
-			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Start)) {
-				Right(s"Producer '${producer.name}' started")
-			} else {
-				//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
-				Left(s"Producer '${producer.name}' not started")
+			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Start) match {
+				case Right(_) =>
+					val msg = s"Producer '${producer.name}' started"
+					logger.info(msg)
+					Right(msg)
+				case Left(s) =>
+					//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
+					val msg = s"Producer '${producer.name}' not started - Message from ProducerGuardian: ${s}"
+					logger.error(msg)
+					Left(msg)
 			}
 		} else {
 			Left(s"Producer '${producer.name}' does not exist")
@@ -157,12 +161,18 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def stopProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+
 			//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
-			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
-				Right(s"Producer '${producer.name}' stopped")
-			} else {
-				//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
-				Left(s"Producer '${producer.name}' not stopped")
+			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Stop) match {
+				case Right(s_) =>
+					val msg = s"Producer '${producer.name}' stopped"
+					logger.info(msg)
+					Right(msg)
+				case Left(s) =>
+					//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
+					val msg = s"Producer '${producer.name}' not stopped - Message from ProducerGuardian: ${s}"
+					logger.error(msg)
+					Left(msg)
 			}
 		} else {
 			Left(s"Producer '${producer.name}' does not exist")
@@ -172,10 +182,16 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-			if (??[Boolean](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse("")))) {
-				Right(s"Producer '${producer.name}' request: ${request.data}")
-			} else {
-				Left(s"Producer '${producer.name}' request not successful")
+
+			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse(""))) match {
+				case Right(_) =>
+					val msg = s"Producer '${producer.name}' request: ${request.data}"
+					logger.info(msg)
+					Right(msg)
+				case Left(s) =>
+					val msg = s"Producer '${producer.name}' request not successful - Message from ProducerGuardian: ${s}"
+					logger.error(msg)
+					Left(msg)
 			}
 		} else {
 			Left(s"Producer '${producer.name}' does not exist")
