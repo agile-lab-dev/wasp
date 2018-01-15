@@ -48,7 +48,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
   def initialized: Actor.Receive = {
     case Start =>
-      logger.info(s"Producer '$producerId' starting at guardian $self")
+      logger.info(s"Producer '$producerId' starting at guardian $self [guardianInitialized]")
       sender() ! Right()
 
     case Stop =>
@@ -59,10 +59,12 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
   def guardianUnitialized: Actor.Receive = {
     case Start =>
+      logger.info(s"Producer '$producerId' starting at guardian $self")
       val result = initialize()
       sender() ! result
 
     case Stop =>
+      logger.info(s"Producer '$producerId' stopping [guardianUnitialized]")
       sender() ! Right()
   }
 

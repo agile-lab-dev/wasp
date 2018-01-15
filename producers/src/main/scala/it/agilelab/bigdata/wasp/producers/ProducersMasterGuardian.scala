@@ -164,7 +164,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 
 			//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
 			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Stop) match {
-				case Right(s_) =>
+				case Right(_) =>
 					val msg = s"Producer '${producer.name}' stopped"
 					logger.info(msg)
 					Right(msg)
