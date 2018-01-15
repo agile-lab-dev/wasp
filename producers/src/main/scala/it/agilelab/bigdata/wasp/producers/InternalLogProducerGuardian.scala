@@ -15,8 +15,6 @@
  */
 package it.agilelab.bigdata.wasp.producers
 
-import java.util.Date
-
 import akka.actor._
 import akka.event.Logging.{Debug, Error, Info, Warning}
 import akka.routing.BalancingPool
@@ -25,11 +23,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, TimeFormatter}
-import spray.json.{JsNumber, JsString, JsValue}
-
-import scala.concurrent.ExecutionContext.Implicits.global
-
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
 
 // producerId is an empty string because we override initialize and get the producer model by name instead of using an id
 final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
@@ -44,52 +38,53 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
     producerActor = Some(context.actorOf(Props(new InternalLogProducerActor(kafka_router, associatedTopic))))
   }
 
-  override def initialized: Actor.Receive = super.initialized orElse loggerinitialized
+  override def initialized: Actor.Receive = super.initialized orElse loggerInitialized
 
-  def loggerinitialized: Actor.Receive = {
+  def loggerInitialized: Actor.Receive = {
     case e@(Error(_, _, _, _) | Warning(_, _, _) | Info(_, _, _) | Debug(_, _, _)) =>
       if (producerActor.isDefined)
         producerActor.get forward e
   }
-  
-  override def initialize(): Unit = {
-    
+
+  override def initialize(): Either[String, Unit] = {
+
     val producerOption = env.producerBL.getByName(name)
-    
-    val kafkaConfig = ConfigManager.getKafkaConfig
-    
-      if (producerOption.isDefined) {
-          producer = producerOption.get
-          if (producer.hasOutput) {
-            val topicOption = env.producerBL.getTopic(topicBL = env.topicBL, producer)
 
-                associatedTopic = topicOption
-                logger.info(s"Topic found  $topicOption")
-                if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))) {
-                  logger.info("Before run kafka_router")
-                  router_name = s"kafka-ingestion-router-$name-${producer._id.get.asObjectId().getValue.toHexString}-${System.currentTimeMillis()}"
-                  kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
-                  logger.info("After run kafka_router")
-                  context become initialized
-                  startChildActors()
-                  
-                  env.producerBL.setIsActive(producer, isActive = true)
-                } else {
-                  logger.error("Error creating topic " + topicOption.get.name)
-                }
-                
+    if (producerOption.isDefined) {
+        producer = producerOption.get
+        if (producer.hasOutput) {
+          val topicOption = env.producerBL.getTopic(topicBL = env.topicBL, producer)
 
+          associatedTopic = topicOption
+          logger.info(s"Producer '$name': topic found: $associatedTopic")
+          val result = ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))
+          if (result) {
+            router_name = s"kafka-ingestion-router-$name-${producer._id.get.getValue.toHexString}-${System.currentTimeMillis()}"
+            kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
+            context become initialized
+            startChildActors()
+
+            env.producerBL.setIsActive(producer, isActive = true)
+
+            Right()
           } else {
-            logger.warn("This producer hasn't associated topic")
+            val msg = s"Producer '$name': error creating topic " + topicOption.get.name
+            logger.error(msg)
+            Left(msg)
           }
         } else {
-          logger.error("Unable to fecth producer")
+          val msg = s"Producer '$name': error undefined topic"
+          logger.error(msg)
+          Left(msg)
         }
-
-    
+      } else {
+        val msg = s"Producer '$name': error not defined"
+        logger.error(msg)
+        Left(msg)
+      }
   }
-
 }
+
 object InternalLogProducerGuardian {
   val name = "LoggerProducer"
 }
@@ -127,10 +122,6 @@ private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[Top
 	    		"cause":"$causeEx",
 	    		"stack_trace":"$stackEx"}
 	    """
-
-
-
-
     sendMessage(logFields)
   }
 
@@ -140,7 +131,6 @@ private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[Top
   //def generateRawOutputJsonMessage(input: Map[String, JsValue]): Map[String, JsValue] = input
 
   def mainTask() = {
-    /*We don't have a task here because it's a system pipeline*/
+    /* We don't have a task here because it's a system pipeline */
   }
-
 }
