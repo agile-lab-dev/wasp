@@ -48,13 +48,25 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
   def initialized: Actor.Receive = {
     case Start =>
-      logger.info(s"Producer '$producerId' starting at guardian $self [guardianInitialized]")
+      logger.info(s"Producer '$producerId' already started")
       sender() ! Right()
 
     case Stop =>
       logger.info(s"Producer '$producerId' stopping")
-      stopChildActors()
-      sender() ! Right()
+      val stopChildFuture = stopChildActors()
+
+      val senderTmp = sender()
+      stopChildFuture onSuccess {
+        case result =>
+          senderTmp ! result
+      }
+
+      stopChildFuture onFailure {
+        case result =>
+          val msg = s"Producer '$producerId': unknown failure"
+          logger.error(msg)
+          senderTmp ! Left(msg)
+      }
   }
 
   def guardianUnitialized: Actor.Receive = {
@@ -64,13 +76,13 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
       sender() ! result
 
     case Stop =>
-      logger.info(s"Producer '$producerId' stopping [guardianUnitialized]")
+      logger.info(s"Producer '$producerId' already stopped")
       sender() ! Right()
   }
 
   def startChildActors()
 
-  def stopChildActors(): Future[Unit] = {
+  def stopChildActors(): Future[Either[String, Unit]] = {
 
     //Stop all actors bound to this guardian and the guardian itself
     logger.info(s"Producer '$producerId': stopping actors bound to $self...")
@@ -88,8 +100,11 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
         context become guardianUnitialized
 
+        Right()
       } else {
-        logger.error(s"Producer $producerId: something went wrong! Unable to shutdown all nodes")
+        val msg = s"Producer '$producerId': something went wrong! Unable to shutdown all nodes"
+        logger.error(msg)
+        Left(msg)
       }
     }
   }
