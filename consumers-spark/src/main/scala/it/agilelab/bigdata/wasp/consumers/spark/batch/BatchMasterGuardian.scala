@@ -40,7 +40,6 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   val sc = SparkSingletons.getSparkContext
   val batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))
 
-
   context become notinitialized
 
   /** BASIC METHODS **/
@@ -84,14 +83,15 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     case message: StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
       stopGuardian()
+
     case message: CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
       logger.info(s"Checking batch jobs bucket ...")
       checkJobsBucket()
+
     case message: StartBatchJobMessage =>
       lastRestartMasterRef = sender()
       logger.info(s"Processing batch job ${message.id} .")
-
       lastRestartMasterRef ! BatchJobResult(message.id, startJob(message.id))
 
     case message: BatchJobProcessedMessage =>
@@ -157,16 +157,15 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   private def startJob(id: String): Boolean = {
-    //TODO: cambiare tutti stati stringa in enum.Value
     val job: Option[BatchJobModel] = env.batchJobBL.getById(id)
     logger.info(s"Job that will be processed, job: $job")
     job match {
       case Some(element) =>
         if (!element.state.equals(JobStateEnum.PROCESSING)) {
           changeBatchState(element._id.get, JobStateEnum.PENDING)
-            batchActor ! element
+          batchActor ! element
           true
-        } else{
+        } else {
           logger.error(s"Batch job ${element.name} is already in processing phase")
           false
         }
@@ -191,7 +190,6 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     schedules
   }
 
-  //TODO: duplicato in BatchJobActor -> Rendere utility? Check esistenza id in BL?
   private def changeBatchState(id: BsonObjectId, newState: String): Unit =
   {
     val job = env.batchJobBL.getById(id.getValue.toHexString)
@@ -199,6 +197,5 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
       case Some(jobModel) => env.batchJobBL.setJobState(jobModel, newState)
       case None => logger.error("BatchEndedMessage with invalid id found.")
     }
-
   }
 }
