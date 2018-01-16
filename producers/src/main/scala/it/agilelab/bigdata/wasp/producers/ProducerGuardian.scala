@@ -63,7 +63,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
       stopChildFuture onFailure {
         case result =>
-          val msg = s"Producer '$producerId': unknown failure"
+          val msg = s"Producer '$producerId': unknown failure: ${result.getMessage}"
           logger.error(msg)
           senderTmp ! Left(msg)
       }
