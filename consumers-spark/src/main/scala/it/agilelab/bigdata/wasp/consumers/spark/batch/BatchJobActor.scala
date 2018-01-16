@@ -229,7 +229,5 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       case Some(jobModel) => env.batchJobBL.setJobState(jobModel, newState)
       case None => logger.error("BatchEndedMessage with invalid id found.")
     }
-
   }
-
 }
