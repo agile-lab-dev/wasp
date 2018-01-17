@@ -20,7 +20,6 @@ import scala.collection.immutable
   */
 
 object Producer_C extends Directives with JsonSupport {
-  implicit val implicitTimeout = WaspSystem.generalTimeout
 
   def getRoute: Route = {
     // extract URI path element as Int

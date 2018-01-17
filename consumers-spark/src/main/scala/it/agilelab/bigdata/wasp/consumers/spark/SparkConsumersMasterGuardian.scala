@@ -109,7 +109,8 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       logger.info(s"SparkConsumersMasterGuardian $self is now in uninitialized state")
       
       // answer ok to MasterGuardian since this is normal if all pipegraphs are unactive
-      masterGuardian ! true
+      masterGuardian ! Right()
+
     } else { // we have pipegaphs/components to start
       // enter starting state so we stash restarts
       context become starting
@@ -178,7 +179,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     }
     
     // confirm startup success to MasterGuardian
-    masterGuardian ! true
+    masterGuardian ! Right()
     
     // enter initialized state
     context become initialized
@@ -254,7 +255,8 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
       
         true
       } else {
-        logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
+        val msg = "Stopping sequence failed! Unable to shutdown all components actors"
+        logger.error(msg)
       
         // find out which children are still running
         val childrenSet = context.children.toSet
@@ -278,7 +280,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
         }
       
         // tell the MasterGuardian we failed
-        masterGuardian ! false
+        masterGuardian ! Left(msg)
       
         false
       }
