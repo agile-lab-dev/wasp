@@ -2,10 +2,9 @@ package it.agilelab.bigdata.wasp.master
 
 import java.util.Calendar
 
-import scala.concurrent.Await
+import scala.concurrent.TimeoutException
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
-
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
@@ -179,26 +178,43 @@ class MasterGuardian(env: {
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
     // modify the active flag
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
-    
+
+    var msgAdditional = ""
     // ask the guardians to restart only if the pipegraph has components that involve them
     val resSpark = if (pipegraph.hasSparkComponents) {
-      ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+      try {
+        ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+      } catch {
+        case e: TimeoutException => {
+          msgAdditional = " - TimeoutException not managed"
+          false
+        }
+      }
     } else { // no spark components in pipegraph => true by default
       true
     }
     val resRt = if (pipegraph.hasRtComponents) {
-      ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+      try {
+        ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+      } catch {
+        case e: TimeoutException => {
+          msgAdditional = " - TimeoutException not managed"
+          false
+        }
+      }
     } else { // no rt components in pipegraph => true by default
       true
     }
     
     if (resSpark && resRt) { // everything ok
-      Right("Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped"))
+      val msg = "Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped")
+      Right(msg + msgAdditional)
     } else { // something broke
       // TODO: we may be in an inconsistent state with partially started/stopped pipegraphs - see ISC-204
       // undo active flag modification
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
-      Left("Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped"))
+      val msg = "Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped")
+      Left(msg + msgAdditional)
     }
   }
 

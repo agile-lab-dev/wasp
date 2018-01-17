@@ -223,8 +223,34 @@ object WaspSystem extends WaspConfiguration with Logging {
     * Synchronous ask
     */
   def ??[T](actorReference: ActorRef, message: Any, duration: Option[FiniteDuration] = None): T = {
-    implicit val implicitSynchronousActorCallTimeout = generalTimeout
-    Await.result(actorReference ? message, duration.getOrElse(generalTimeout.duration)).asInstanceOf[T]
+
+//    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(duration.getOrElse(generalTimeout.duration))
+//    Await.result(actorReference ? message, duration.getOrElse(generalTimeout.duration)).asInstanceOf[T]
+
+    val durationInit = duration.getOrElse(generalTimeout.duration)
+
+    // TODO complete
+    // Manage the timeout in several ways:
+    //  Start from initial duration (received or generalTimeout in configFile) and decrease it foreach encapsulated actor communication level
+    //    Xyz_C (AkkaHTTP Controller e.g. Pipegraph_C) => durationInit
+    //    MasterGuardian to XyzMasterGuardian => durationInit - 5s
+    //    XYZMasterGuardian to ... => durationInit - 10s
+    //    ...
+//    import scala.concurrent.duration._
+//    val newDuration:FiniteDuration = actorReference.path.name match {
+//      case WaspSystem.masterGuardianSingletonProxyName => durationInit
+//      case _ => durationInit - 5.seconds
+//    }
+
+    // Only for Debug
+    import scala.concurrent.duration._
+    val newDuration:FiniteDuration = actorReference.path.name match {
+      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
+      case _ => durationInit
+    }
+
+    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(newDuration)
+    Await.result(actorReference ? message, newDuration).asInstanceOf[T]
   }
   
   // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident
