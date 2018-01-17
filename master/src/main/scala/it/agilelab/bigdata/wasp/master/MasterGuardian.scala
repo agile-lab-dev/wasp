@@ -192,7 +192,7 @@ class MasterGuardian(env: {
         }
       } catch {
         case e: TimeoutException => {
-          msgAdditional = " - Timeout"
+          msgAdditional = " - Timeout from SparkConsumerMasterGuardian"
           false
         }
       }
@@ -210,7 +210,7 @@ class MasterGuardian(env: {
         }
       } catch {
         case e: TimeoutException => {
-          msgAdditional = " - Timeout"
+          msgAdditional = " - Timeout from RtConsumerMasterGuardian"
           false
         }
       }
