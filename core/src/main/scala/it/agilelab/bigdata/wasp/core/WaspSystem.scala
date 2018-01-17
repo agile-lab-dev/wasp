@@ -236,18 +236,17 @@ object WaspSystem extends WaspConfiguration with Logging {
     //    MasterGuardian to XyzMasterGuardian => durationInit - 5s
     //    XYZMasterGuardian to ... => durationInit - 10s
     //    ...
-//    import scala.concurrent.duration._
-//    val newDuration:FiniteDuration = actorReference.path.name match {
-//      case WaspSystem.masterGuardianSingletonProxyName => durationInit
-//      case _ => durationInit - 5.seconds
-//    }
-
-    // Only for Debug
     import scala.concurrent.duration._
     val newDuration:FiniteDuration = actorReference.path.name match {
-      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
-      case _ => durationInit
+      case WaspSystem.masterGuardianSingletonProxyName => durationInit
+      case _ => durationInit - 5.seconds
     }
+
+    // Only for Debug
+//    val newDuration:FiniteDuration = actorReference.path.name match {
+//      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
+//      case _ => durationInit
+//    }
 
     implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(newDuration)
     Await.result(actorReference ? message, newDuration).asInstanceOf[T]

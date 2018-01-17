@@ -183,10 +183,16 @@ class MasterGuardian(env: {
     // ask the guardians to restart only if the pipegraph has components that involve them
     val resSpark = if (pipegraph.hasSparkComponents) {
       try {
-        ??[Boolean](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+        ??[Either[String, String]](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration)) match {
+          case Right(_) =>
+            true
+          case Left(s) =>
+            msgAdditional = s" - Message from SparkConsumerMasterGuardian: ${s}"
+            false
+        }
       } catch {
         case e: TimeoutException => {
-          msgAdditional = " - TimeoutException not managed"
+          msgAdditional = " - Timeout"
           false
         }
       }
@@ -195,10 +201,16 @@ class MasterGuardian(env: {
     }
     val resRt = if (pipegraph.hasRtComponents) {
       try {
-        ??[Boolean](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration))
+        ??[Either[String, String]](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration)) match {
+          case Right(_) =>
+            true
+          case Left(s) =>
+            msgAdditional = s" - Message from RtConsumerMasterGuardian: ${s}"
+            false
+        }
       } catch {
         case e: TimeoutException => {
-          msgAdditional = " - TimeoutException not managed"
+          msgAdditional = " - Timeout"
           false
         }
       }
