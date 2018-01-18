@@ -105,19 +105,24 @@ class RtConsumersMasterGuardian(env: {
     }
   }
   
-  override def finishStartup(): Unit = {
-    logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
-    
-    // confirm startup success to MasterGuardian
-    masterGuardian ! Right()
-  
-    // enter intialized state
-    context become initialized
-    logger.info(s"RtConsumersMasterGuardian $self is now in initialized state")
-  
-    // unstash messages stashed while in starting state
-    logger.info("Unstashing queued messages...")
-    unstashAll()
+  override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
+    if(success) {
+      logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
+
+      // confirm startup success to MasterGuardian
+      masterGuardian ! Right()
+
+      // enter intialized state
+      context become initialized
+      logger.info(s"RtConsumersMasterGuardian $self is now in initialized state")
+
+      // unstash messages stashed while in starting state
+      logger.info("Unstashing queued messages...")
+      unstashAll()
+    } else {
+      // startup error to MasterGuardian
+      masterGuardian ! Left(errorMsg)
+    }
   }
   
   override def stop(): Boolean = {
