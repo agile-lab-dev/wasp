@@ -195,6 +195,10 @@ class MasterGuardian(env: {
           msgAdditional = " - Timeout from SparkConsumerMasterGuardian"
           false
         }
+        case e: Exception => {
+          msgAdditional = s" - Exception from RtConsumerMasterGuardian: ${e.getMessage}"
+          false
+        }
       }
     } else { // no spark components in pipegraph => true by default
       true
@@ -211,6 +215,10 @@ class MasterGuardian(env: {
       } catch {
         case e: TimeoutException => {
           msgAdditional = " - Timeout from RtConsumerMasterGuardian"
+          false
+        }
+        case e: Exception => {
+          msgAdditional = s" - Exception from RtConsumerMasterGuardian: ${e.getMessage}"
           false
         }
       }
