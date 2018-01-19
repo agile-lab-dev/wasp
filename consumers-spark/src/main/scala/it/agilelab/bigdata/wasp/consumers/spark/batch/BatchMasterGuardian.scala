@@ -30,7 +30,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
                           plugins: Map[String, WaspConsumersSparkPlugin])
   extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration with Logging {
   import BatchMasterGuardian._
-  
+
   /** STARTUP PHASE **/
   /** *****************/
 
@@ -60,31 +60,31 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   def notinitialized: Actor.Receive = {
-    case StopBatchJobsMessage =>
+    case message: StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
-      //TODO: logica di qualche tipo?
-    case CheckJobsBucketMessage =>
-      lastRestartMasterRef = sender()
-      stash()
-      initialize()
-    case StartBatchJobMessage =>
+    //TODO: logica di qualche tipo?
+    case message: CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
       stash()
       initialize()
-    case BatchJobProcessedMessage =>
+    case message: StartBatchJobMessage =>
+      lastRestartMasterRef = sender()
       stash()
       initialize()
-    case StartSchedulersMessage =>
+    case message: BatchJobProcessedMessage =>
+      stash()
+      initialize()
+    case message: StartSchedulersMessage =>
       stash()
       initialize()
   }
 
   def initialized: Actor.Receive = {
-    case StopBatchJobsMessage =>
+    case message: StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
       stopGuardian()
 
-    case CheckJobsBucketMessage =>
+    case message: CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
       logger.info(s"Checking batch jobs bucket ...")
       checkJobsBucket()
@@ -98,7 +98,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
       logger.info(s"Batch job ${message.id} processed with result ${message.jobState}")
       lastRestartMasterRef ! BatchJobProcessedMessage
 
-    case StartSchedulersMessage =>
+    case message: StartSchedulersMessage =>
       logger.info(s"Starting scheduled batches activity")
       startSchedulerActors()
   }
@@ -141,7 +141,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
 
   private def startSchedulerActors(): Unit = {
     val schedules = loadSchedules
-    
+
     if(schedules.isEmpty) {
       logger.info("There are no active batch schedulers")
     } else {
@@ -186,7 +186,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     logger.info(s"Loading all batch schedules ...")
     val schedules  = env.batchSchedulerBL.getActiveSchedulers()
     logger.info(s"Found ${schedules.length} active schedules...")
-  
+
     schedules
   }
 

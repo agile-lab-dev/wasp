@@ -9,9 +9,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.BatchJobProcessedMessage
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 import org.mongodb.scala.bson.BsonObjectId
@@ -25,6 +23,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                     sparkWriterFactory: SparkWriterFactory,
                     sc: SparkContext,
                     plugins: Map[String, WaspConsumersSparkPlugin]) extends Actor with Logging {
+
   var lastBatchMasterRef : ActorRef = _
 
   override def receive: Actor.Receive = {
@@ -40,11 +39,21 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       val existTopicCategoryReaders = jobModel.etl.inputs.exists(r => r.readerType.category == Datastores.topicCategory)
       if (existTopicCategoryReaders) {
         logger.error("No stream readers are allowed in batch jobs!")
+
+        changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+
+        // TODO BatchMasterGuardian not really wait for it
+        //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
       } else {
         // check if the writer is stream
         val isTopicCategoryWriter = jobModel.etl.output.writerType.category == Datastores.topicCategory
         if (isTopicCategoryWriter) {
           logger.error("No stream writer is allowed in batch jobs!")
+
+          changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+
+          // TODO BatchMasterGuardian not really wait for it
+          //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
         } else {
           // implicit filtered with the check above which blocks using stream readers
           val staticReaders = jobModel.etl.inputs /*.filterNot(_.readerType.category == Datastores.topicCategory)*/
@@ -63,7 +72,13 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
             val error = "DFs not retrieved successfully!\n" +
               s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
               dataStoreDFs.toString
+
             logger.error(error)
+
+            changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+
+            // TODO BatchMasterGuardian not really wait for it
+            //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
           }
           else {
             if (!dataStoreDFs.isEmpty)
@@ -117,15 +132,21 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                 writeOutputSuccess = true
             }
 
-            if (writeMlModelsSuccess && writeOutputSuccess)
-              jobResult = JobStateEnum.SUCCESSFUL
+            val jobResult =
+              if (writeMlModelsSuccess && writeOutputSuccess)
+                JobStateEnum.SUCCESSFUL
+              else
+                JobStateEnum.FAILED
+
+            logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
+
+            changeBatchState(jobModel._id.get, jobResult)
+
+            // TODO BatchMasterGuardian not really wait for it
+            //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
           }
         }
       }
-
-      logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
-      changeBatchState(jobModel._id.get, jobResult)
-      lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
   }
 
   private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
