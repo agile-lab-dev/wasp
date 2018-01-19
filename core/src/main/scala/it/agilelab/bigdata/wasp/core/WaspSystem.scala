@@ -231,9 +231,9 @@ object WaspSystem extends WaspConfiguration with Logging {
 
     // Manage the timeout in different ways:
     //  Start from initial duration (received or generalTimeout in configFile) and decrease it foreach encapsulated actor communication level
-    //    Xyz_C (AkkaHTTP Controller e.g. Pipegraph_C) to MasterGuardian => durationInit
-    //    MasterGuardian to XyzMasterGuardian => durationInit - 5s
-    //    XYZMasterGuardian to ... => durationInit - 10s
+    //    * Xyz_C (AkkaHTTP Controller e.g. Pipegraph_C) to MasterGuardian => durationInit
+    //    * MasterGuardian to XyzMasterGuardian => durationInit - 5s
+    //    * XYZMasterGuardian to ... => durationInit - 10s
     //    ... maybe to extends ...
     import scala.concurrent.duration._
     val newDuration:FiniteDuration = actorReference.path.name match {
@@ -245,7 +245,7 @@ object WaspSystem extends WaspConfiguration with Logging {
       case _ => durationInit - 10.seconds
     }
 
-    // Only for Debug
+    /* Only for Debug */
 //    val newDuration:FiniteDuration = actorReference.path.name match {
 //      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
 //      case _ => durationInit

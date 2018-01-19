@@ -100,7 +100,7 @@ class RtConsumersMasterGuardian(env: {
         }
       }
       
-      // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
+      // all component actors started; now we wait for them to send us back all the Right messages
       logger.info(s"RtConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
     }
   }

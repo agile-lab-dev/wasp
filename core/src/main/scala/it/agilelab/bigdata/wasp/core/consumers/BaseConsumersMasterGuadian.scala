@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.core.consumers
 import akka.actor.{ActorRef, Stash}
 import it.agilelab.bigdata.wasp.core.bl.PipegraphBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, RestartConsumers}
+import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models._
 
 /** Base class for consumer master guardians. Provides skeleton for behaviour and helpers.
@@ -47,7 +47,7 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 	
 	// behaviour while starting
 	def starting: Receive = {
-		case OutputStreamInitialized =>
+		case Right(_) =>
 			// register component actor
 			registerComponentActor(sender())
 			
@@ -57,8 +57,14 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 				finishStartup()
 			} else {
 				logger.info(s"Not all component actors have registered to the cluster (right now only $numberOfReadyComponents " +
-					            s"out of $getTargetNumberOfReadyComponents), waiting for more...")
+										s"out of $getTargetNumberOfReadyComponents), waiting for more...")
 			}
+
+		case Left(s) =>
+			val msg = s"Pipegraph not started - Message from ETLActor: ${s}"
+			logger.error(msg)
+			finishStartup(success = false, errorMsg = msg)
+
 		case RestartConsumers =>
 			logger.info(s"Stashing RestartConsumers from ${sender()}")
 			stash()
@@ -91,7 +97,7 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 		numberOfReadyComponents += 1
 	}
 	
-	protected def finishStartup(): Unit
+	protected def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit
 	
 	protected def stop(): Boolean
 	

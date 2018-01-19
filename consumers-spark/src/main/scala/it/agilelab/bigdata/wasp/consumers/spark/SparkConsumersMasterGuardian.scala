@@ -125,7 +125,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
           lseComponents.foreach(component => {
             // start component actor
             logger.info(s"Starting LegacyStreamingETLActor for pipegraph ${pipegraph.name}, component ${component.name}...")
-            val actor = context.actorOf(Props(new LegacyStreamingETLActor(env, sparkWriterFactory, streamingReader, ssc, component, self, plugins)))
+            val actor = context.actorOf(Props(new LegacyStreamingETLActor(env, sparkWriterFactory, streamingReader, ssc, pipegraph, component, self, plugins)))
             logger.info(s"Started LegacyStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
   
             // add to component actor tracking map
@@ -161,37 +161,42 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
         logger.info(s"All $numberOfReadyComponents consumer child actors are already running! Continuing startup sequence...")
         finishStartup()
       } else {
-        // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
+        // all component actors started; now we wait for them to send us back all the Right messages
         logger.info(s"SparkConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
       }
     }
   }
   
-  override def finishStartup(): Unit = {
-    logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
+  override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
+    if(success) {
+      logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
 
-    if (legacyStreamingETLTotal > 0) {
-      logger.info("Starting StreamingContext...")
-      SparkSingletons.getStreamingContext.start()
-      logger.info("Started StreamingContext")
+      if (legacyStreamingETLTotal > 0) {
+        logger.info("Starting StreamingContext...")
+        SparkSingletons.getStreamingContext.start()
+        logger.info("Started StreamingContext")
+      } else {
+        logger.info("Not starting StreamingContext because no legacy streaming components are present")
+      }
+
+      // confirm startup success to MasterGuardian
+      masterGuardian ! Right()
+
+      // enter initialized state
+      context become initialized
+      logger.info(s"SparkConsumersMasterGuardian $self is now in initialized state")
+
+      // unstash messages stashed while in starting state
+      logger.info("Unstashing queued messages...")
+      unstashAll()
+
+      // TODO check if this is still needed in Spark 2.x
+      // sleep to avoid quick start/stop/start of StreamingContext which breaks with timeout errors
+      Thread.sleep(5 * 1000)
     } else {
-      logger.info("Not starting StreamingContext because no legacy streaming components are present")
+      // startup error to MasterGuardian
+      masterGuardian ! Left(errorMsg)
     }
-    
-    // confirm startup success to MasterGuardian
-    masterGuardian ! Right()
-    
-    // enter initialized state
-    context become initialized
-    logger.info(s"SparkConsumersMasterGuardian $self is now in initialized state")
-    
-    // unstash messages stashed while in starting state
-    logger.info("Unstashing queued messages...")
-    unstashAll()
-    
-    // TODO check if this is still needed in Spark 2.x
-    // sleep to avoid quick star/stop/start of StreamingContext which breaks with timeout errors
-    Thread.sleep(5 * 1000)
   }
   
   override def stop(): Boolean = {
@@ -200,8 +205,7 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
     // stop all component actors bound to this guardian and the guardian itself
     logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
   
-    // stop StreamingContext and all LegacyStreamingETLActor
-    // stop streaming context if needed
+    // stop StreamingContext (if needed) and all LegacyStreamingETLActor
     if (legacyStreamingETLTotal > 0) {
       logger.info("Stopping StreamingContext...")
       SparkSingletons.getStreamingContext.stop(stopSparkContext = false, stopGracefully = true)

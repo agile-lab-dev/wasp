@@ -93,8 +93,8 @@ class SolrAdminActor
 
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
-  //TODO prendere il timeout dalla configurazione
-  //implicit val timeout = Timeout(ConfigManager.config)
+
+  // implicit timeout used below
   implicit val timeout = WaspSystem.generalTimeout
 
   implicit val materializer = ActorMaterializer()
