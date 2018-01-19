@@ -35,19 +35,16 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
       changeBatchState(jobModel._id.get, JobStateEnum.PROCESSING)
 
+      var jobResult = JobStateEnum.FAILED
       // check if at least one stream reader is found
       val existTopicCategoryReaders = jobModel.etl.inputs.exists(r => r.readerType.category == Datastores.topicCategory)
       if (existTopicCategoryReaders) {
-        // abort processing
         logger.error("No stream readers are allowed in batch jobs!")
-        changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
       } else {
         // check if the writer is stream
         val isTopicCategoryWriter = jobModel.etl.output.writerType.category == Datastores.topicCategory
         if (isTopicCategoryWriter) {
-          // abort processing
           logger.error("No stream writer is allowed in batch jobs!")
-          changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
         } else {
           // implicit filtered with the check above which blocks using stream readers
           val staticReaders = jobModel.etl.inputs /*.filterNot(_.readerType.category == Datastores.topicCategory)*/
@@ -67,9 +64,6 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
               s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
               dataStoreDFs.toString
             logger.error(error)
-
-            // abort processing
-            changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
           }
           else {
             if (!dataStoreDFs.isEmpty)
@@ -123,20 +117,15 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                 writeOutputSuccess = true
             }
 
-            val jobResult =
-              if (writeMlModelsSuccess && writeOutputSuccess)
-                JobStateEnum.SUCCESSFUL
-              else
-                JobStateEnum.FAILED
-
-            changeBatchState(jobModel._id.get, jobResult)
-
-            lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
-
-            logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
+            if (writeMlModelsSuccess && writeOutputSuccess)
+              jobResult = JobStateEnum.SUCCESSFUL
           }
         }
       }
+
+      logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
+      changeBatchState(jobModel._id.get, jobResult)
+      lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
   }
 
   private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {

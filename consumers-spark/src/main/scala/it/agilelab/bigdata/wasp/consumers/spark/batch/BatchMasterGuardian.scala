@@ -60,31 +60,31 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   def notinitialized: Actor.Receive = {
-    case message: StopBatchJobsMessage =>
+    case StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
       //TODO: logica di qualche tipo?
-    case message: CheckJobsBucketMessage =>
+    case CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
       stash()
       initialize()
-    case message: StartBatchJobMessage =>
+    case StartBatchJobMessage =>
       lastRestartMasterRef = sender()
       stash()
       initialize()
-    case message: BatchJobProcessedMessage =>
+    case BatchJobProcessedMessage =>
       stash()
       initialize()
-    case message: StartSchedulersMessage =>
+    case StartSchedulersMessage =>
       stash()
       initialize()
   }
 
   def initialized: Actor.Receive = {
-    case message: StopBatchJobsMessage =>
+    case StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
       stopGuardian()
 
-    case message: CheckJobsBucketMessage =>
+    case CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
       logger.info(s"Checking batch jobs bucket ...")
       checkJobsBucket()
@@ -98,7 +98,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
       logger.info(s"Batch job ${message.id} processed with result ${message.jobState}")
       lastRestartMasterRef ! BatchJobProcessedMessage
 
-    case message: StartSchedulersMessage =>
+    case StartSchedulersMessage =>
       logger.info(s"Starting scheduled batches activity")
       startSchedulerActors()
   }
