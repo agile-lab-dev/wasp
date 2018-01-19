@@ -2,12 +2,9 @@ package it.agilelab.bigdata.wasp.consumers.spark
 
 import java.util.UUID
 
-import akka.actor.{Actor, ActorRef, actorRef2Scala}
+import akka.actor.{Actor, ActorRef, PoisonPill, actorRef2Scala}
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{
-  MlModelsBroadcastDB,
-  MlModelsDB
-}
+import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StreamingReader}
@@ -16,14 +13,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.OutputStreamInitialized
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StructType
 
 class LegacyStreamingETLActor(env: {
                                 val topicBL: TopicBL
@@ -35,28 +29,35 @@ class LegacyStreamingETLActor(env: {
                               sparkWriterFactory: SparkWriterFactory,
                               streamingReader: StreamingReader,
                               ssc: StreamingContext,
-                              etl: LegacyStreamingETLModel,
+                              pipegraph: PipegraphModel,
+                              legacyStreamingETL: LegacyStreamingETLModel,
                               listener: ActorRef,
                               plugins: Map[String, WaspConsumersSparkPlugin])
-    extends Actor
+  extends Actor
     with Logging {
-
-  case object StreamReady
 
   /*
    * Actor methods start
    */
 
   override def receive: Actor.Receive = {
-    case StreamReady => listener ! OutputStreamInitialized
+    case PoisonPill => context stop self  // workaround to allow to not manage none Message (not required for LegacyStreamingETLActor)
   }
 
-  // TODO check if mainTask has really to be invoked here
   override def preStart(): Unit = {
     super.preStart()
     logger.info(s"Actor is transitioning from 'uninitialized' to 'initialized'")
-    validationTask()
-    mainTask()
+
+    try {
+      validationTask()
+      mainTask()
+    } catch {
+      case e: Exception => {
+        val msg = s"Pipegraph '${pipegraph.name}' - LegacyStreamingETLActor '${legacyStreamingETL.name}': Exception: ${e.getMessage}"
+        logger.error(msg)
+        listener ! Left(msg)
+      }
+    }
   }
 
   /*
@@ -66,7 +67,7 @@ class LegacyStreamingETLActor(env: {
   /**
     * Strategy object initialization
     */
-  private lazy val createStrategy: Option[Strategy] = etl.strategy match {
+  private lazy val createStrategy: Option[Strategy] = legacyStreamingETL.strategy match {
     case None => None
     case Some(strategyModel) =>
       val result = Class
@@ -112,7 +113,7 @@ class LegacyStreamingETLActor(env: {
     * Topic models initialization
     */
   private def topicModels(): List[Option[TopicModel]] =
-    etl.inputs
+    legacyStreamingETL.inputs
       .flatMap({
         case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) =>
           val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
@@ -121,11 +122,10 @@ class LegacyStreamingETLActor(env: {
       })
 
   private def validationTask(): Unit = {
-    etl.inputs.foreach({
+    legacyStreamingETL.inputs.foreach({
       case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) => {
         val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
         if (topicOpt.isEmpty) {
-          //TODO Better exception
           throw new Exception(s"There isn't this topic: $endpointId, $name")
         }
       }
@@ -134,19 +134,16 @@ class LegacyStreamingETLActor(env: {
         if (readerPlugin.isDefined) {
           readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name)
         } else {
-          //TODO Better exception
-          logger.error(
-            s"There isn't the plugin for this index: '$endpointId', '$name', readerType: '$readerType'")
-          throw new Exception(s"There isn't this index: $endpointId, $name")
+          throw new Exception(s"There isn't the plugin for this index: '$endpointId', '$name', readerType: '$readerType'")
         }
       }
     })
     val topicReaderModelNumber =
-      etl.inputs.count(_.readerType.category == TopicModel.readerType)
+      legacyStreamingETL.inputs.count(_.readerType.category == TopicModel.readerType)
     if (topicReaderModelNumber == 0)
-      throw new Exception("There is NO topic to read data, inputs: " + etl.inputs)
+      throw new Exception("There is NO topic to read data, inputs: " + legacyStreamingETL.inputs)
     if (topicReaderModelNumber != 1)
-      throw new Exception("MUST be only ONE topic, inputs: " + etl.inputs)
+      throw new Exception("MUST be only ONE topic, inputs: " + legacyStreamingETL.inputs)
   }
 
   //TODO move in the extender class
@@ -158,9 +155,10 @@ class LegacyStreamingETLActor(env: {
 
         val topicModel = topicModelOpt.get
         val stream: DStream[String] =
-          streamingReader.createStream(etl.group,
-                                       etl.kafkaAccessType,
-                                       topicModel)(ssc = ssc)
+          streamingReader.createStream(
+            legacyStreamingETL.group,
+            legacyStreamingETL.kafkaAccessType,
+            topicModel)(ssc)
         (ReaderKey(TopicModel.readerType, topicModel.name), stream)
       })
 
@@ -175,7 +173,7 @@ class LegacyStreamingETLActor(env: {
       if (createStrategy.isDefined) {
         val strategy = createStrategy.get
 
-        val staticReaders = etl.inputs.filterNot(_.readerType.category == Datastores.topicCategory)
+        val staticReaders = legacyStreamingETL.inputs.filterNot(_.readerType.category == Datastores.topicCategory)
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
           if(staticReaders.isEmpty)
@@ -204,7 +202,7 @@ class LegacyStreamingETLActor(env: {
         // --- Broadcast models initialization ----
         // Reading all model from DB and create broadcast
         val mlModelsBroadcast: MlModelsBroadcastDB =
-        mlModelsDB.createModelsBroadcast(etl.mlModels)(ssc.sparkContext)
+        mlModelsDB.createModelsBroadcast(legacyStreamingETL.mlModels)(ssc.sparkContext)
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
@@ -213,31 +211,19 @@ class LegacyStreamingETLActor(env: {
           topicStreamWithKey._2,
           dataStoreDFs,
           strategy,
-          etl.output.writerType)
+          legacyStreamingETL.output.writerType)
       } else {
         topicStreamWithKey._2
       }
 
-    val sparkWriterOpt =
-      sparkWriterFactory.createSparkWriterStreaming(env, ssc, etl.output)
-
+    val sparkWriterOpt = sparkWriterFactory.createSparkWriterStreaming(env, ssc, legacyStreamingETL.output)
     sparkWriterOpt match {
-
-      case Some(writer) =>
-        writer.write(outputStream)
-
-      case None =>
-        val error =
-          s"No Spark Streaming writer available for writer ${etl.output}"
-        logger.error(error)
-        throw new Exception(error)
+      case Some(writer) => writer.write(outputStream)
+      case None => throw new Exception(s"No Spark Streaming writer available for writer ${legacyStreamingETL.output}")
     }
 
-    // For some reason, trying to send directly a message from here to the guardian is not working ...
-    // NOTE: Maybe because mainTask is invoked in preStart ?
-    // TODO check required
     logger.info(s"Actor is notifying the guardian that it's ready")
-    self ! StreamReady
+    listener ! Right()
   }
 
   private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
@@ -262,15 +248,16 @@ class LegacyStreamingETLActor(env: {
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy,
                         writerType: WriterType): DStream[String] = {
+
     val sqlContext = SparkSingletons.getSQLContext
+
     val strategyBroadcast = ssc.sparkContext.broadcast(strategy)
 
-    val etlName = etl.name
+    val etlName = legacyStreamingETL.name
+
+    logger.debug(s"input stream: ${readerKey.name}")
 
     stream.transform(rdd => {
-
-      //TODO Verificare se questo è il comportamento che si vuole
-
       val df = sqlContext.read.json(rdd)
       if (df.schema.nonEmpty) {
 
@@ -285,16 +272,16 @@ class LegacyStreamingETLActor(env: {
 
             if (mId == "")
               Metadata(UUID.randomUUID().toString,
-                       mSourceId,
-                       now,
-                       now,
-                       Seq(Path(etlName, now)).toArray)
+                mSourceId,
+                now,
+                now,
+                Seq(Path(etlName, now)).toArray)
             else
               Metadata(mId,
-                       mSourceId,
-                       mArrivalTimestamp,
-                       now,
-                       (mPath :+ Path(etlName, now)).toArray)
+                mSourceId,
+                mArrivalTimestamp,
+                now,
+                (mPath :+ Path(etlName, now)).toArray)
           })
 
         // TODO check if metadata exists
@@ -305,14 +292,13 @@ class LegacyStreamingETLActor(env: {
           .withColumn(
             "metadata",
             updateMetadata(col("metadata.id"),
-                           col("metadata.sourceId"),
-                           col("metadata.arrivalTimestamp"),
-                           col("metadata.lastSeenTimestamp"),
-                           col("metadata.path"))
+              col("metadata.sourceId"),
+              col("metadata.arrivalTimestamp"),
+              col("metadata.lastSeenTimestamp"),
+              col("metadata.path"))
           )
 
-        val completeMapOfDFs
-          : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
+        val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
         val output = strategyBroadcast.value.transform(completeMapOfDFs)
 
@@ -334,5 +320,4 @@ class LegacyStreamingETLActor(env: {
       }
     })
   }
-
 }
