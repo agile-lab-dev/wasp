@@ -93,7 +93,7 @@ class MasterGuardian(env: {
   
   // TODO try without sender parenthesis
   def initialized: Actor.Receive = {
-    //case message: RemovePipegraph          => call(message, onPipegraph(message.id, removePipegraph))
+    //case message: RemovePipegraph => call(message, onPipegraph(message.id, removePipegraph))
     case message: StartPipegraph => call(sender(), message, onPipegraph(message.id, startPipegraph))
     case message: StopPipegraph => call(sender(), message, onPipegraph(message.id, stopPipegraph))
     case RestartPipegraphs => call(sender(), RestartPipegraphs, onRestartPipegraphs())
@@ -107,7 +107,7 @@ class MasterGuardian(env: {
     case message: StartBatchJob => call(sender(), message, onBatchJob(message.id, startBatchJob))
     case message: StartPendingBatchJobs => call(sender(), message, startPendingBatchJobs())
     case message: BatchJobProcessedMessage => //TODO gestione batchJob finito?
-    //case message: Any                     => logger.error("unknown message: " + message)
+    //case message: Any => logger.error("unknown message: " + message)
   }
   
   private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
@@ -274,12 +274,12 @@ class MasterGuardian(env: {
   }
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
-    logger.info("Starting batch job \"" + batchJob.name + "\"")
+    logger.info(s"Starting batch job '${batchJob.name}'")
     val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob._id.get.getValue.toHexString), Some(generalTimeout.duration))
     if (jobRes.result) {
-      Right("Batch job \"" + batchJob.name + "\" accepted (queued or processing)")
+      Right(s"Batch job '${batchJob.name}' accepted (queued or processing)")
     } else {
-      Left("Batch job \"" + batchJob.name + "\" not accepted")
+      Left(s"Batch job ${batchJob.name}' not accepted")
     }
   }
 
