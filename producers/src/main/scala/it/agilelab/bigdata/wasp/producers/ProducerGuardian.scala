@@ -16,13 +16,12 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
 /**
   * Base class for a WASP producer. A ProducerGuardian represents a producer and manages the lifecycle of the child
   * ProducerActors that actually produce the data.
   */
 abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
-    extends Actor
+  extends Actor
     with Logging {
   
   val name: String
@@ -36,7 +35,8 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
   val cluster = Cluster(context.system)
 
   override def preStart(): Unit = {
-    super.preStart()
+    // we start in uninitialized state
+    context become uninitialized
   }
 
   override def postStop(): Unit = {
@@ -44,9 +44,20 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
     kafka_router ! PoisonPill
   }
 
+  // standard receive
+  // NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
   override def receive: Actor.Receive = uninitialized
 
-  def uninitialized: Actor.Receive = guardianUnitialized
+  def uninitialized: Actor.Receive = {
+    case Start =>
+      logger.info(s"Producer '$producerId' starting at guardian $self")
+      val result = initialize()
+      sender() ! result
+
+    case Stop =>
+      logger.info(s"Producer '$producerId' already stopped")
+      sender() ! Right()
+  }
 
   def initialized: Actor.Receive = {
     case Start =>
@@ -71,17 +82,6 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
       }
   }
 
-  def guardianUnitialized: Actor.Receive = {
-    case Start =>
-      logger.info(s"Producer '$producerId' starting at guardian $self")
-      val result = initialize()
-      sender() ! result
-
-    case Stop =>
-      logger.info(s"Producer '$producerId' already stopped")
-      sender() ! Right()
-  }
-
   def startChildActors()
 
   def stopChildActors(): Future[Either[String, Unit]] = {
@@ -100,7 +100,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
         logger.info(s"Producer '$producerId': transitioning from 'initialized' to 'uninitialized'")
         kafka_router ! PoisonPill
 
-        context become guardianUnitialized
+        context become uninitialized
 
         Right()
       } else {

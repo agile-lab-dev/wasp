@@ -27,7 +27,7 @@ import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
 
 // producerId is an empty string because we override initialize and get the producer model by name instead of using an id
 final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
-    extends ProducerGuardian(env, "") {
+  extends ProducerGuardian(env, "") {
 
   val name = InternalLogProducerGuardian.name
 
@@ -90,7 +90,6 @@ object InternalLogProducerGuardian {
 }
 
 private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[TopicModel]) extends ProducerActor[String](kafka_router, topic) {
-
 
   override def receive: Actor.Receive = super.receive orElse loggerReceive
 

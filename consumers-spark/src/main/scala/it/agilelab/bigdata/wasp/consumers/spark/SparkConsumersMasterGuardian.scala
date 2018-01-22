@@ -30,9 +30,10 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
                                    streamingReader: StreamingReader,
                                    structuredStreamingReader: StructuredStreamingReader,
                                    plugins: Map[String, WaspConsumersSparkPlugin])
-    extends BaseConsumersMasterGuadian(env)
+  extends BaseConsumersMasterGuadian(env)
     with SparkStreamingConfiguration
     with WaspConfiguration {
+
   // counters for components
   private var legacyStreamingETLTotal = 0
   private var structuredStreamingETLTotal = 0
@@ -49,8 +50,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // actor lifecycle callbacks =========================================================================================
   
   override def preStart(): Unit = {
-    super.preStart()
-    
     // initialize Spark
     val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
     if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")

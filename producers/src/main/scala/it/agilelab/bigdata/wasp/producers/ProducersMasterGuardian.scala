@@ -18,7 +18,7 @@ import scala.collection.mutable
 	* @author Nicolò Bidotti
 	*/
 class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
-		extends Actor
+	extends Actor
 		with WaspConfiguration
 		with Logging {
 

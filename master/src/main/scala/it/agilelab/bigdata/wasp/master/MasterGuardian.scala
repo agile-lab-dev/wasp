@@ -17,7 +17,9 @@ import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, Prod
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 
 
-object MasterGuardian extends WaspConfiguration with Logging {
+object MasterGuardian
+  extends WaspConfiguration
+    with Logging {
   
   // at midnight, restart all active pipelines (this causes new timed indices creation and consumers redirection on new indices)
   if (ConfigManager.getWaspConfig.indexRollover) {

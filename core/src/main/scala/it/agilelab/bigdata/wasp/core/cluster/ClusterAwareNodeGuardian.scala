@@ -24,6 +24,7 @@ abstract class ClusterAwareNodeGuardian extends ClusterAware {
 
   override def preStart(): Unit = {
     super.preStart()
+
     log.info("Starting at {}", cluster.selfAddress)
   }
 
