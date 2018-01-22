@@ -5,7 +5,6 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, mediator}
 import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAware
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
@@ -19,7 +18,7 @@ import scala.collection.mutable
 	* @author Nicolò Bidotti
 	*/
 class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
-		extends ClusterAware
+		extends Actor
 		with WaspConfiguration
 		with Logging {
 
@@ -92,10 +91,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		producers.foreach(producer => env.producerBL.setIsActive(producer, isActive))
 	}
 
-	override def receive: Actor.Receive = initialized orElse super.receive
-	
-	// TODO try without sender parenthesis
-	def initialized: Actor.Receive = {
+	override def receive: Actor.Receive = {
 		case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
 		case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
 		case message: StartProducer => call(sender(), message, onProducer(message.id, startProducer))

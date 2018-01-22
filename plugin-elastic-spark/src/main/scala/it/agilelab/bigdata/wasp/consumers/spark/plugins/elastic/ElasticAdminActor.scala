@@ -148,7 +148,7 @@ class ElasticAdminActor extends Actor with Logging {
   private def call[T <: ElasticAdminMessage](message: T, f: T => Any): Unit = {
     val result = f(message)
     logger.info(message + ": " + result)
-    sender ! result
+    sender() ! result
   }
 
   private def checkOrCreateIndex(message: CheckOrCreateIndex): Boolean = {

@@ -1,17 +1,17 @@
 package it.agilelab.bigdata.wasp.producers
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.cluster.Cluster
 import akka.pattern.gracefulStop
 import akka.routing.BalancingPool
+import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, generalTimeout}
 import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAware
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 import it.agilelab.bigdata.wasp.core.models.{ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -22,7 +22,7 @@ import scala.concurrent.Future
   * ProducerActors that actually produce the data.
   */
 abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
-    extends ClusterAware
+    extends Actor
     with Logging {
   
   val name: String
@@ -32,6 +32,8 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
   var associatedTopic: Option[TopicModel] = _
   var router_name: String = _
   var kafka_router: ActorRef = _ // TODO: Careful with kafka router dynamic name
+
+  val cluster = Cluster(context.system)
 
   override def preStart(): Unit = {
     super.preStart()
