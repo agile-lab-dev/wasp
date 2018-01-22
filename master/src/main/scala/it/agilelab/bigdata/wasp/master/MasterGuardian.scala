@@ -29,7 +29,7 @@ object MasterGuardian extends WaspConfiguration with Logging {
 
       WaspSystem.??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
         case Right(s) => logger.info(s"RestartPipegraphs: $s")
-        case Left(s) => logger.error(s"Failuer during the pipegraphs restarting: $s")
+        case Left(s) => logger.error(s"Failure during the pipegraphs restarting: $s")
       }
     }
   } else {
@@ -91,7 +91,6 @@ class MasterGuardian(env: {
     batchMasterGuardian ! StartSchedulersMessage()
   }
   
-  // TODO try without sender parenthesis
   def initialized: Actor.Receive = {
     //case message: RemovePipegraph => call(message, onPipegraph(message.id, removePipegraph))
     case message: StartPipegraph => call(sender(), message, onPipegraph(message.id, startPipegraph))
@@ -164,7 +163,7 @@ class MasterGuardian(env: {
   }
 
   private def cleanPipegraph(message: RemovePipegraph): Unit = {
-    //sender ! true
+    //sender() ! true
   }
 
   private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {

@@ -17,7 +17,7 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 	// counter for ready components
 	protected var numberOfReadyComponents = 0
 	
-	// getter for total number of components that should be running
+	// getter for total number masterGuardianof components that should be running
 	def getTargetNumberOfReadyComponents: Int
 	
 	// ActorRef to MasterGuardian returned by the last ask - cannot be replaced with a simple ActorRef or singleton proxy!

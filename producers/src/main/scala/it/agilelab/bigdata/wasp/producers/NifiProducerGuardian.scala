@@ -45,7 +45,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
       if(nifiProducerConf.isDefined) {
         val uri = getUriFromConfiguration(nifiProducerConf.get)
         val res = httpRequest(uri, request, httpMethod)
-        sender() ! true
+        sender() ! Right()
       }
   }
 

@@ -151,7 +151,7 @@ class SolrAdminActor
   private def call[T <: SolrAdminMessage](message: T, f: T => Any) = {
     val result = f(message)
     logger.info(message + ": " + result)
-    sender ! result
+    sender() ! result
   }
 
   private def manageConfigSet(name: String, template: String) = {
