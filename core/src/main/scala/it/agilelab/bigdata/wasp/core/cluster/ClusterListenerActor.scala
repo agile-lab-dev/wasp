@@ -9,11 +9,11 @@ import it.agilelab.bigdata.wasp.core.messages.DownUnreachableMembers
 import scala.concurrent.duration._
 
 /**
- * Cluster lifecycle handling
- * - log events
+  * Cluster lifecycle handling
+  * - log events
   * - set "down" the unreachable members
   *    Custom logic: the key is if network partition happens, only cluster nodes which have majority will take down UnreachableMember after downingTimeout.
- */
+  */
 
 object ClusterListenerActor {
   val name = "CLusterListenerAdminActor"
@@ -59,12 +59,12 @@ class ClusterListenerActor extends Actor with Logging {
   }
 
   private def onReachableMember(member: Member) = {
-    logger.info(s"Member detected as unreachable: ${member}")
+    logger.info(s"Member detected as reachable: ${member}")
     unreachableMembers = unreachableMembers - member
   }
 
   private def onMemberRemoved(member: Member, previousStatus: MemberStatus) =
-    logger.info(s"Member is Removed: ${member.address} after $previousStatus")
+    logger.info(s"Member is removed: ${member.address} - previous status: $previousStatus")
 
   private def onClusterMetricsChanged(forNode: Set[NodeMetrics]) {
     forNode collectFirst {
