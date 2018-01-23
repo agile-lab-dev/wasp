@@ -8,6 +8,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.pattern.ask
 import akka.util.Timeout
+import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.plugins.WaspPlugin
@@ -66,6 +67,9 @@ object WaspSystem extends WaspConfiguration with Logging {
   
   // actor refs of admin actors
   private var kafkaAdminActor_ : ActorRef = _
+
+  // actor ref of clusterListener actor
+  private var clusterListenerActor_ : ActorRef = _
   
   // distributed publish-subscribe mediator
   private var mediator_ : ActorRef = _
@@ -106,6 +110,11 @@ object WaspSystem extends WaspConfiguration with Logging {
       logger.info("Spawning admin actors")
       kafkaAdminActor_ = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
       logger.info("Spawned admin actors")
+
+      // spawn clusterListener actor
+      logger.info("Spawning clusterListener actor")
+      clusterListenerActor_ = actorSystem.actorOf(Props(new ClusterListenerActor), ClusterListenerActor.name)
+      logger.info("Spawned clusterListener actors")
       
       logger.info("Finding WASP plugins")
       val pluginLoader: ServiceLoader[WaspPlugin] = ServiceLoader.load[WaspPlugin](classOf[WaspPlugin])
@@ -264,5 +273,6 @@ object WaspSystem extends WaspConfiguration with Logging {
   def sparkConsumersMasterGuardian: ActorRef = sparkConsumersMasterGuardian_
   def loggerActor: ActorRef = loggerActor_
   def kafkaAdminActor: ActorRef = kafkaAdminActor_
+  def clusterListenerActor: ActorRef = clusterListenerActor_
   def mediator: ActorRef = mediator_
 }
