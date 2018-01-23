@@ -45,9 +45,7 @@ class LegacyStreamingETLActor(env: {
   }
 
   override def preStart(): Unit = {
-    super.preStart()
     logger.info(s"Actor is transitioning from 'uninitialized' to 'initialized'")
-
     try {
       validationTask()
       mainTask()

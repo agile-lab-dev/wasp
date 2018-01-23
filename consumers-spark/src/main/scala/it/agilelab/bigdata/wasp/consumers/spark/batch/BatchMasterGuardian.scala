@@ -2,12 +2,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
-import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, BatchSchedulerModel, JobStateEnum}
@@ -28,7 +27,11 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
                           val classLoader: Option[ClassLoader] = None,
                           sparkWriterFactory: SparkWriterFactory,
                           plugins: Map[String, WaspConsumersSparkPlugin])
-  extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration with Logging {
+  extends Actor
+    with Stash
+    with SparkBatchConfiguration
+    with Logging {
+
   import BatchMasterGuardian._
 
   /** STARTUP PHASE **/
@@ -40,40 +43,45 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   val sc = SparkSingletons.getSparkContext
   val batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))
 
-  context become notinitialized
-
   /** BASIC METHODS **/
   /** *****************/
   var lastRestartMasterRef: ActorRef = _
 
-  override def initialize(): Unit = {
+  // standard receive
+  // NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
+  override def receive: Actor.Receive = uninitialized
+
+  override def preStart(): Unit = {
+    // we start in uninitialized state
+    context become uninitialized
+  }
+
+  def initialize(): Unit = {
     //no initialization actually, clean code
     context become initialized
     logger.info("BatchMasterGuardian Initialized")
     unstashAll()
   }
 
-  override def preStart(): Unit = {
-    super.preStart()
-    //TODO:capire joinseednodes
-    cluster.joinSeedNodes(Vector(cluster.selfAddress))
-  }
-
-  def notinitialized: Actor.Receive = {
+  def uninitialized: Actor.Receive = {
     case message: StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
+
     //TODO: logica di qualche tipo?
     case message: CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
       stash()
       initialize()
+
     case message: StartBatchJobMessage =>
       lastRestartMasterRef = sender()
       stash()
       initialize()
+
     case message: BatchJobProcessedMessage =>
       stash()
       initialize()
+
     case message: StartSchedulersMessage =>
       stash()
       initialize()

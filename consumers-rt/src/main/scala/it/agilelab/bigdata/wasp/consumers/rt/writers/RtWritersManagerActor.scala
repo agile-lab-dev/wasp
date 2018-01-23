@@ -26,7 +26,7 @@ class RtWritersManagerActor(env: {
     initializeEndpoint(writer.get)
   } else None
 
-  override def receive: Receive = {
+  override def receive: Actor.Receive = {
     case data : String => endpoint match{
       case Some(actor) =>
         actor ! data

@@ -18,7 +18,7 @@ import scala.collection.mutable
 	* @author Nicolò Bidotti
 	*/
 class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
-		extends Actor
+	extends Actor
 		with WaspConfiguration
 		with Logging {
 
@@ -73,17 +73,16 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 
 			env.producerBL.getSystemProducers foreach {
 				producer => {
-					logger.info("Activating system producer \"" + producer.name + "\"...")
+					logger.info(s"Scheduling startup of system producer '${producer.name}'")
 					WaspSystem.masterGuardian ! StartProducer(producer.name) // masterGuardian uses producer.name instead of producer._id.get.getValue.toHexString
-					logger.info("Activated system producer \"" + producer.name + "\"")
 				}
 			}
 
-			logger.info("Activated system producers")
+			logger.info("Scheduled the startup of all system producers")
 		} else {
 			logger.info("Deactivating system producers...")
 			setProducersActive(env.producerBL.getSystemProducers, isActive = false)
-			logger.info("Deactivated system producers")
+			logger.info("Deactivated all system producers")
 		}
 	}
 

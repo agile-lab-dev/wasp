@@ -2,23 +2,24 @@ package it.agilelab.bigdata.wasp.master
 
 import java.util.Calendar
 
-import scala.concurrent.TimeoutException
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
-import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
+import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import akka.pattern.ask
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.TimeoutException
+import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
 
-object MasterGuardian extends WaspConfiguration with Logging {
-  
+object MasterGuardian
+  extends WaspConfiguration
+    with Logging {
+
   // at midnight, restart all active pipelines (this causes new timed indices creation and consumers redirection on new indices)
   if (ConfigManager.getWaspConfig.indexRollover) {
     val timeToFirst = ceilDayTime(System.currentTimeMillis) - System.currentTimeMillis
@@ -35,7 +36,7 @@ object MasterGuardian extends WaspConfiguration with Logging {
   } else {
     logger.info("Index rollover is disabled.")
   }
-  
+
   private def ceilDayTime(time: Long): Long = {
 
     val cal = Calendar.getInstance()
@@ -50,14 +51,15 @@ object MasterGuardian extends WaspConfiguration with Logging {
 }
 
 class MasterGuardian(env: {
-                           val producerBL: ProducerBL
-                           val pipegraphBL: PipegraphBL
-                           val batchJobBL: BatchJobBL
-                           val batchSchedulerBL: BatchSchedulersBL
-                          },
+                      val producerBL: ProducerBL
+                      val pipegraphBL: PipegraphBL
+                      val batchJobBL: BatchJobBL
+                      val batchSchedulerBL: BatchSchedulersBL
+                     },
                      classLoader: Option[ClassLoader] = None)
-    extends ClusterAwareNodeGuardian
+  extends Actor
     with Logging {
+
   import MasterGuardian._
 
   override def preStart(): Unit = {
@@ -74,24 +76,24 @@ class MasterGuardian(env: {
       // TODO use single-restart method; setActive + dummy StartPipegraph?
       env.pipegraphBL.getSystemPipegraphs foreach {
         pipegraph => {
-          logger.info("Scheduling startup of system pipegraph \"" + pipegraph.name + "\"")
+          logger.info(s"Scheduling startup of system pipegraph '${pipegraph.name}'")
           self.actorRef ! StartPipegraph(pipegraph.name)
         }
       }
 
-      logger.info("Activated system pipegraphs")
+      logger.info("Scheduled the startup of all system pipegraphs")
     } else {
       logger.info("Deactivating system pipegraphs...")
       setPipegraphsActive(env.pipegraphBL.getSystemPipegraphs, isActive = false)
-      logger.info("Deactivated system pipegraphs")
+      logger.info("Deactivated all system pipegraphs")
     }
-  
+
     // start batch schedulers
     logger.info("Starting batch schedulers...")
     batchMasterGuardian ! StartSchedulersMessage()
   }
-  
-  def initialized: Actor.Receive = {
+
+  override def receive: Actor.Receive = {
     //case message: RemovePipegraph => call(message, onPipegraph(message.id, removePipegraph))
     case message: StartPipegraph => call(sender(), message, onPipegraph(message.id, startPipegraph))
     case message: StopPipegraph => call(sender(), message, onPipegraph(message.id, stopPipegraph))
@@ -108,11 +110,11 @@ class MasterGuardian(env: {
     case message: BatchJobProcessedMessage => //TODO gestione batchJob finito?
     //case message: Any => logger.error("unknown message: " + message)
   }
-  
+
   private def setPipegraphsActive(pipegraphs: Seq[PipegraphModel], isActive: Boolean): Unit = {
     pipegraphs.foreach(pipegraph => env.pipegraphBL.setIsActive(pipegraph, isActive))
   }
-  
+
   private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]): Unit = {
     logger.info(s"Call invocation: message: $message result: $result")
     sender ! result
@@ -124,7 +126,7 @@ class MasterGuardian(env: {
       case Some(pipegraph) => f(pipegraph)
     }
   }
-  
+
   private def onRestartPipegraphs(): Either[String, String] = {
     sparkConsumersMasterGuardian ! RestartConsumers
     rtConsumersMasterGuardian ! RestartConsumers
@@ -224,7 +226,7 @@ class MasterGuardian(env: {
     } else { // no rt components in pipegraph => true by default
       true
     }
-    
+
     if (resSpark && resRt) { // everything ok
       val msg = "Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped")
       Right(msg + msgAdditional)
@@ -246,12 +248,12 @@ class MasterGuardian(env: {
   private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
     Left("ETL '" + etlName + "' not stopped")
   }
-  
+
   private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
     val producerId = producerModel._id.get.getValue.toHexString
     ??[Either[String, String]](producersMasterGuardian, AddRemoteProducer(producerId, producerActor))
   }
-  
+
   private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
     val producerId = producerModel._id.get.getValue.toHexString
     ??[Either[String, String]](producersMasterGuardian, RemoveRemoteProducer(producerId, producerActor))

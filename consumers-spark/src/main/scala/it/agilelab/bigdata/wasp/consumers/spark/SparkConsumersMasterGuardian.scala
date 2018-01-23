@@ -18,21 +18,24 @@ import scala.concurrent.{Await, Future}
 
 
 // TODO: uninitialized/initialized/starting handle different messages; are we sure can we just let everything else go into the dead letters *safely*?
-class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
-                                         val pipegraphBL: PipegraphBL
-                                         val topicBL: TopicBL
-                                         val indexBL: IndexBL
-                                         val rawBL: RawBL
-                                         val keyValueBL: KeyValueBL
-                                         val websocketBL: WebsocketBL
-                                         val mlModelBL: MlModelBL},
-                                   sparkWriterFactory: SparkWriterFactory,
-                                   streamingReader: StreamingReader,
-                                   structuredStreamingReader: StructuredStreamingReader,
-                                   plugins: Map[String, WaspConsumersSparkPlugin])
-    extends BaseConsumersMasterGuadian(env)
+class SparkConsumersMasterGuardian(env: {
+                                      val producerBL: ProducerBL
+                                      val pipegraphBL: PipegraphBL
+                                      val topicBL: TopicBL
+                                      val indexBL: IndexBL
+                                      val rawBL: RawBL
+                                      val keyValueBL: KeyValueBL
+                                      val websocketBL: WebsocketBL
+                                      val mlModelBL: MlModelBL
+                                    },
+                                    sparkWriterFactory: SparkWriterFactory,
+                                    streamingReader: StreamingReader,
+                                    structuredStreamingReader: StructuredStreamingReader,
+                                    plugins: Map[String, WaspConsumersSparkPlugin])
+  extends BaseConsumersMasterGuadian(env)
     with SparkStreamingConfiguration
     with WaspConfiguration {
+
   // counters for components
   private var legacyStreamingETLTotal = 0
   private var structuredStreamingETLTotal = 0
@@ -49,8 +52,6 @@ class SparkConsumersMasterGuardian(env: {val producerBL: ProducerBL
   // actor lifecycle callbacks =========================================================================================
   
   override def preStart(): Unit = {
-    super.preStart()
-    
     // initialize Spark
     val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
     if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")

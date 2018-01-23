@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.consumers
 
-import akka.actor.{ActorRef, Stash}
+import akka.actor.{Actor, ActorRef, Stash}
 import it.agilelab.bigdata.wasp.core.bl.PipegraphBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
@@ -10,7 +10,10 @@ import it.agilelab.bigdata.wasp.core.models._
 	*
 	* @author Nicolò Bidotti
 	*/
-abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) extends Stash with Logging {
+abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL })
+	extends Stash
+		with Logging {
+
 	// type alias for pipegraph -> components map
 	type PipegraphsToComponentsMap = Map[PipegraphModel, (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel])]
 	
@@ -34,7 +37,7 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 	
 	// standard receive
 	// NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
-	override def receive: Receive = uninitialized
+	override def receive: Actor.Receive = uninitialized
 	
 	// behaviour when uninitialized
 	def uninitialized: Receive = {

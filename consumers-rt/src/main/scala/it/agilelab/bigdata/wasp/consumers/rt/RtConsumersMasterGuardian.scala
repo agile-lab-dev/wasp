@@ -20,8 +20,9 @@ class RtConsumersMasterGuardian(env: {
                                        val indexBL: IndexBL
                                        val websocketBL: WebsocketBL
                                      })
-    extends BaseConsumersMasterGuadian(env)
+  extends BaseConsumersMasterGuadian(env)
     with WaspConfiguration {
+
   // counters for components
   private var rtTotal = 0
   
@@ -32,8 +33,6 @@ class RtConsumersMasterGuardian(env: {
   private val rtComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
   
   // methods implementing start/stop ===================================================================================
-  
-  
   
   override def beginStartup(): Unit = {
     logger.info(s"RtConsumersMasterGuardian $self beginning startup sequence...")
@@ -199,5 +198,4 @@ class RtConsumersMasterGuardian(env: {
     
     rtComponents
   }
-
 }
