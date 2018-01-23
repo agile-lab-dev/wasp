@@ -1,14 +1,17 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import java.net.{InetAddress, InetSocketAddress}
+import java.util
 
 import akka.actor.{Actor, actorRef2Scala}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ElasticConfigModel
+import org.apache.logging.log4j.Level
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.cluster.node.DiscoveryNode
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.transport.InetSocketTransportAddress
+import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.transport.client.PreBuiltTransportClient
 
@@ -94,22 +97,22 @@ class ElasticAdminActor extends Actor with Logging {
     }
 
     elasticConfig = message.elasticConfigModel
-    val settings = Settings.builder().put("cluster.name", elasticConfig.cluster_name).build()
+//    val settings = Settings.builder().put("cluster.name", elasticConfig.cluster_name).build()
 
-    transportClient = new PreBuiltTransportClient(settings)
-    logger.info(s"New elastic client created with settings: $settings and config $elasticConfig")
+    transportClient = new PreBuiltTransportClient(Settings.EMPTY)
+    logger.info(s"New elastic client created with settings: empty settings and config $elasticConfig")
 
     logger.info(s"${transportClient.listedNodes()}")
 
     for (connection <- elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "binary")) {
-      val address = new InetSocketTransportAddress(InetAddress.getByName(connection.host), connection.port)
+      val address = new TransportAddress(InetAddress.getByName(connection.host), connection.port)
       if (address.address().isUnresolved) {
-        logger.warn(s"Impossible to resolve connection: ${connection.host}:${connection.port}")
+        logger.info(s"Impossible to resolve connection: ${connection.host}:${connection.port}")
       } else {
         try {
           transportClient.addTransportAddress(address)
           logger.info(s"${transportClient.listedNodes()}")
-          logger.debug("added elastic node '" + connection.host + ":" + connection.port + "'")
+          logger.info("added elastic node '" + connection.host + ":" + connection.port + "'")
         }
         catch {
           case e: Throwable => {
@@ -123,17 +126,17 @@ class ElasticAdminActor extends Actor with Logging {
 
     logger.info(s"${transportClient.listedNodes()}")
 
-//    if (transportClient.connectedNodes().isEmpty) {
-//      logger.error(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
-//      throw new Exception(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
-//    }
+    if (transportClient.connectedNodes().isEmpty) {
+      logger.error(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
+      throw new Exception(s"There is NO nodes in the elastic transportClient, config: $elasticConfig")
+    }
 
     true
   }
 
   override def postStop(): Unit = {
     for (connection <- elasticConfig.connections) {
-      val address = new InetSocketTransportAddress(InetAddress.getByName(connection.host), connection.port)
+      val address = new TransportAddress(InetAddress.getByName(connection.host), connection.port)
       transportClient.removeTransportAddress(address)
       logger.debug("removed elastic node '" + connection.host + ":" + connection.port + "'")
     }
@@ -201,7 +204,7 @@ class ElasticAdminActor extends Actor with Logging {
 
   private def removeMapping(message: RemoveMapping): Boolean = {
     val builder = transportClient.admin.indices.prepareDelete(message.index)
-    builder
+//    builder
     // TODO builder.setType(message.datatype)
     logger.info("Removing mapping: " + message.datatype)
     builder.execute.actionGet.isAcknowledged

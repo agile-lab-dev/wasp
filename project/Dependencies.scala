@@ -182,8 +182,7 @@ object Dependencies {
 		  akkaHttpSpray
 	  )
 
-	val plugin_elastic_spark =
-		Seq(
+	val plugin_elastic_spark = Seq(
 			elasticSearch,
 			elasticClientTransport,
 			elasticSearchSpark

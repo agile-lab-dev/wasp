@@ -43,6 +43,7 @@ lazy val plugin_elastic_spark = Project("wasp-plugin-elastic-spark", file("plugi
 	.settings(Settings.commonSettings: _*)
 	.dependsOn(consumers_spark)
 	.settings(libraryDependencies ++= Dependencies.plugin_elastic_spark)
+	.settings(excludeDependencies := Seq.empty[ExclusionRule]) // disable the global exclusion because elastic need a specific version of log4j.
 
 lazy val plugin_hbase_spark = Project("wasp-plugin-hbase-spark", file("plugin-hbase-spark"))
 	.settings(Settings.commonSettings: _*)
