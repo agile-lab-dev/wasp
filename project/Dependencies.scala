@@ -32,6 +32,9 @@ object Dependencies {
 				.exclude("org.apache.logging.log4j", "log4j-api")
 				.exclude("org.apache.logging.log4j", "log4j-core")
 				.exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
+	  		.exclude("org.apache.solr", "solr-solrj")
+				.exclude("org.apache.solr", "solr-core")
+				.exclude("org.apache.solr", "solr-test-framework")
 
 		def kafkaExclusions: ModuleID =
 			module
@@ -44,7 +47,11 @@ object Dependencies {
 			module.excludeAll(
 				ExclusionRule(organization = "org.eclipse.jetty"),
 				ExclusionRule(organization = "javax.servlet"),
-				ExclusionRule(organization = "org.eclipse.jetty.orbit")
+				ExclusionRule(organization = "org.eclipse.jetty.orbit"),
+					ExclusionRule(organization = "org.apache.solr")/*, "solr-solrj")
+					.exclude("org.apache.solr", "solr-core")
+					.exclude("org.apache.solr", "solr-test-framework")*/
+
 			)
 
 	}

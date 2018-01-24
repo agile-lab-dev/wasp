@@ -34,55 +34,7 @@ object SolrAdminActor {
   val template = "schemalessTemplate"
   val numShards = 1
   val replicationFactor = 1
-  val schema =
-    """[
-                        {
-                            "name":"id_event",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"source_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"topic_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"metric_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"timestamp",
-                            "type":"tlong",
-                            "stored":true
-                        },
-                        {
-                            "name":"latitude",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"longitude",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"value",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"payload",
-                            "type":"string",
-                            "stored":true
-                        }
-                 ]"""
-
+  val schema = ""
 }
 
 class SolrAdminActor
@@ -125,7 +77,11 @@ class SolrAdminActor
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    solrServer = new CloudSolrServer(solrConfig.connections.mkString(","))
+    logger.info("SOLR ZOOKEEPER" + solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
+      .mkString(",") + "/solr")
+
+    solrServer = new CloudSolrServer(solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
+      .mkString(",") + "/solr")
 
     try {
       solrServer.connect()
@@ -398,6 +354,8 @@ class SolrAdminActor
     logger.info(s"Check collection: $message")
 
     val zkStateReader: ZkStateReader = solrServer.getZkStateReader
+  solrServer.getZkStateReader
+    logger.info(s"\n\n zkStateReader: $zkStateReader")
     zkStateReader.updateClusterState(true)
     val clusterState: ClusterState = zkStateReader.getClusterState
 

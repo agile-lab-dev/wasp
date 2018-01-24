@@ -12,7 +12,7 @@ case class SolrConfigModel(
                             cluster_name: String
                           )
 
-
+/*
 object SolrConfigModel {
   val default = SolrConfigModel(
     connections = Seq(ConnectionConfig("", "localhost", 8983, None, Some(Map.empty[String, String]))),
@@ -22,3 +22,4 @@ object SolrConfigModel {
     "wasp"
   )
 }
+*/

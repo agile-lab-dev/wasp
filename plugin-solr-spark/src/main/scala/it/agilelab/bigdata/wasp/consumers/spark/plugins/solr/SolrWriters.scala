@@ -123,7 +123,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
               index.replicationFactor.getOrElse(1))
           )) {
 
-        val solrWriter = new SolrForeatchWriter(
+        val solrWriter = new SolrForeachWriter(
           ss,
           solrConfig.connections.mkString(","),
           indexName,
@@ -151,10 +151,10 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 }
 
-class SolrForeatchWriter(val ss: SparkSession,
-                         val connection: String,
-                         val indexName: String,
-                         val collection: String)
+class SolrForeachWriter(val ss: SparkSession,
+                        val connection: String,
+                        val indexName: String,
+                        val collection: String)
     extends ForeachWriter[Row] {
 
   var solrServer: CloudSolrServer = _
@@ -168,6 +168,8 @@ class SolrForeatchWriter(val ss: SparkSession,
   }
 
   override def process(value: Row): Unit = {
+    println(value.getAs[String]("crashId"))
+
     val docs: SolrInputDocument = SolrSparkWriter.createSolrDocument(value)
     batch.add(docs)
 
