@@ -43,6 +43,7 @@ object ConfigManager extends Logging {
   private def getDefaultWaspConfig: WaspConfigModel = {
     WaspConfigModel(
       conf.getString("actor-system-name"),
+      conf.getInt("actor-downing-timeout-millis"),
       conf.getBoolean("index-rollover"),
       conf.getInt("general-timeout-millis"),
       conf.getInt("services-timeout-millis"),

@@ -20,8 +20,9 @@ class RtConsumersMasterGuardian(env: {
                                        val indexBL: IndexBL
                                        val websocketBL: WebsocketBL
                                      })
-    extends BaseConsumersMasterGuadian(env)
+  extends BaseConsumersMasterGuadian(env)
     with WaspConfiguration {
+
   // counters for components
   private var rtTotal = 0
   
@@ -32,8 +33,6 @@ class RtConsumersMasterGuardian(env: {
   private val rtComponentActors: mutable.Map[String, ActorRef] = mutable.Map.empty[String, ActorRef]
   
   // methods implementing start/stop ===================================================================================
-  
-  
   
   override def beginStartup(): Unit = {
     logger.info(s"RtConsumersMasterGuardian $self beginning startup sequence...")
@@ -69,7 +68,8 @@ class RtConsumersMasterGuardian(env: {
       logger.info(s"RtConsumersMasterGuardian $self is now in uninitialized state")
     
       // answer ok to MasterGuardian since this is normal if all pipegraphs are unactive
-      masterGuardian ! true
+      masterGuardian ! Right()
+
     } else { // we have pipegaphs/components to start
       // enter starting state so we stash restarts
       context become starting
@@ -99,24 +99,29 @@ class RtConsumersMasterGuardian(env: {
         }
       }
       
-      // all component actors started; now we wait for them to send us back all the OutputStreamInitialized messages
+      // all component actors started; now we wait for them to send us back all the Right messages
       logger.info(s"RtConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
     }
   }
   
-  override def finishStartup(): Unit = {
-    logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
-    
-    // confirm startup success to MasterGuardian
-    masterGuardian ! true
-  
-    // enter intialized state
-    context become initialized
-    logger.info(s"RtConsumersMasterGuardian $self is now in initialized state")
-  
-    // unstash messages stashed while in starting state
-    logger.info("Unstashing queued messages...")
-    unstashAll()
+  override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
+    if(success) {
+      logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
+
+      // confirm startup success to MasterGuardian
+      masterGuardian ! Right()
+
+      // enter intialized state
+      context become initialized
+      logger.info(s"RtConsumersMasterGuardian $self is now in initialized state")
+
+      // unstash messages stashed while in starting state
+      logger.info("Unstashing queued messages...")
+      unstashAll()
+    } else {
+      // startup error to MasterGuardian
+      masterGuardian ! Left(errorMsg)
+    }
   }
   
   override def stop(): Boolean = {
@@ -158,7 +163,8 @@ class RtConsumersMasterGuardian(env: {
     
       true
     } else {
-      logger.error(s"Stopping sequence failed! Unable to shutdown all components actors")
+      val msg = "Stopping sequence failed! Unable to shutdown all components actors"
+      logger.error(msg)
     
       // find out which children are still running
       val childrenSet = context.children.toSet
@@ -176,7 +182,7 @@ class RtConsumersMasterGuardian(env: {
       }
     
       // tell the MasterGuardian we failed
-      masterGuardian ! false
+      masterGuardian ! Left(msg)
     
       false
     }
@@ -192,5 +198,4 @@ class RtConsumersMasterGuardian(env: {
     
     rtComponents
   }
-
 }

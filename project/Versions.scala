@@ -21,7 +21,6 @@ object Versions {
 	val log4j = "2.8.2"
 	val mongodbScala = "2.1.0"
 	val quartz = "2.3.0"
-	val play = "2.4.8"
 	val scala = "2.11.11"
 	val scalaTest = "3.0.4"
 	val slf4j = "1.7.12"

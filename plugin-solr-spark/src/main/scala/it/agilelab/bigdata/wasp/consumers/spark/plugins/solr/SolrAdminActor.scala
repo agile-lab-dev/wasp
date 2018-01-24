@@ -93,14 +93,14 @@ class SolrAdminActor
 
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
-  //TODO prendere il timeout dalla configurazione
-  //implicit val timeout = Timeout(ConfigManager.config)
+
+  // implicit timeout used below
   implicit val timeout = WaspSystem.generalTimeout
 
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
 
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case message: Search           => call(message, search)
     case message: AddCollection    => call(message, addCollection)
     case message: AddMapping       => call(message, addMapping)
@@ -151,7 +151,7 @@ class SolrAdminActor
   private def call[T <: SolrAdminMessage](message: T, f: T => Any) = {
     val result = f(message)
     logger.info(message + ": " + result)
-    sender ! result
+    sender() ! result
   }
 
   private def manageConfigSet(name: String, template: String) = {

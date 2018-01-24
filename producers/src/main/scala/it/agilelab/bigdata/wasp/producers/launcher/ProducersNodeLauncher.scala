@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 import it.agilelab.bigdata.wasp.producers.{InternalLogProducerGuardian, ProducersMasterGuardian}
 
 /**
-	* Launcher for the ProducersMasterGuardian and InternalLogProducerGuardian.
+	* Launcher for the ProducersMasterGuardian and InternalLogProducerGuardian (only with systemproducers.start = true).
 	* This trait is useful for who want extend the launcher
 	* @author Nicolò Bidotti
 	*/
