@@ -7,6 +7,7 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 	*/
 case class WaspConfigModel(
 	                          actorSystemName: String,
+														actorDowningTimeout: Int,
 	                          indexRollover: Boolean,
 	                          generalTimeoutMillis: Int,
 	                          servicesTimeoutMillis: Int,

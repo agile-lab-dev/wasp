@@ -34,10 +34,9 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   override def postStop() {
     logger.info(s"Stopping actor ${this.getClass.getName}")
     stopMainTask()
-    super.postStop()
   }
 
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case StopMainTask => stopMainTask()
     case StartMainTask => mainTask()
   }

@@ -27,7 +27,7 @@ class RtWritersManagerActor(env: {
   } else None
 
   override def receive: Actor.Receive = {
-    case data : String => endpoint match{
+    case data : String => endpoint match {
       case Some(actor) =>
         actor ! data
         //TODO
@@ -36,7 +36,6 @@ class RtWritersManagerActor(env: {
   }
 
   override def postStop() = {
-    super.postStop()
     if (endpoint.isDefined)
       {
         endpoint.get ! PoisonPill
@@ -149,7 +148,6 @@ class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extend
 
   override def postStop() = {
     //PROBLEMA: http://stackoverflow.com/questions/33152976/how-to-stop-the-websocketcomponent-in-apache-camel?noredirect=1
-    super.postStop()
     this.camelContext.getComponent("websocket", classOf[WebsocketComponent]).doStop()
     this.camelContext.removeComponent("websocket")
   }
