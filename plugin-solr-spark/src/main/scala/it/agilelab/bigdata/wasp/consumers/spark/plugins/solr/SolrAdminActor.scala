@@ -100,7 +100,7 @@ class SolrAdminActor
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
 
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case message: Search           => call(message, search)
     case message: AddCollection    => call(message, addCollection)
     case message: AddMapping       => call(message, addMapping)

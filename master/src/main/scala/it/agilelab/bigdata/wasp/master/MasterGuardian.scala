@@ -291,8 +291,4 @@ class MasterGuardian(env: {
     batchMasterGuardian ! CheckJobsBucketMessage()
     Right("Batch jobs checking started")
   }
-
-  override def postStop() {
-    super.postStop()
-  }
 }

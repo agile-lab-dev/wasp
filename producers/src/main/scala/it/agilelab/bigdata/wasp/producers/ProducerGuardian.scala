@@ -40,7 +40,6 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
   }
 
   override def postStop(): Unit = {
-    super.postStop()
     kafka_router ! PoisonPill
   }
 
