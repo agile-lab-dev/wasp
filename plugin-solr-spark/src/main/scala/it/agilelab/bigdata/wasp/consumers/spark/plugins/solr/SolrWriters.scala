@@ -125,7 +125,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
         val solrWriter = new SolrForeachWriter(
           ss,
-          solrConfig.connections.mkString(","),
+          solrConfig.connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + "/solr",
           indexName,
           index.collection)
 
@@ -162,6 +162,11 @@ class SolrForeachWriter(val ss: SparkSession,
   val batchSize = 100
 
   override def open(partitionId: Long, version: Long): Boolean = {
+
+    /*
+    * new CloudSolrServer(solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
+      .mkString(",") + "/solr")*/
+
     solrServer = SolrSupport.getSolrServer(connection)
     batch = new util.ArrayList[SolrInputDocument]
     true
