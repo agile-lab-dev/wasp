@@ -4,6 +4,7 @@ import akka.actor.{PoisonPill, Props}
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import org.apache.commons.cli.CommandLine
 
 /**
 	* Launcher for multiple cluster singleton actors.
@@ -11,7 +12,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 	* @author Nicolò Bidotti
 	*/
 trait MultipleClusterSingletonsLauncher extends WaspLauncher with Logging {
-	override def launch(args: Array[String]): Unit = {
+	override def launch(commandLine: CommandLine): Unit = {
 		val actorSystem = WaspSystem.actorSystem
 		
 		// helper for adding role to ClusterSingletonManagerSettings
