@@ -9,6 +9,7 @@ object Versions {
 	val avroSpark = "3.2.0"
 	val camel = "2.17.7"
 	val cdh = "cdh5.13.1"
+	val commonsCli = "1.4"
 	val elasticSearch = "5.6.2"
 //	val elasticSearchSpark = "5.6.2"
 	val elasticSearchSpark = "6.0.0-rc1"

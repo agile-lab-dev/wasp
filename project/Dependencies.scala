@@ -73,6 +73,7 @@ object Dependencies {
 	val avro = "org.apache.avro" % "avro" % Versions.avro
 	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
+	val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
   val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
   val elasticClientTransport = "org.elasticsearch.client" % "transport" % Versions.elasticSearch
   val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark
@@ -155,6 +156,7 @@ object Dependencies {
 		test ++
 		Seq(
 			avro,
+			commonsCli,
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
 			sparkSQL,

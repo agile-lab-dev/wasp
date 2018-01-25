@@ -27,7 +27,7 @@ abstract class KafkaProducerActor[K, V] extends Actor with ActorLogging {
     producer.close()
   }
 
-  def receive = {
+  override def receive = {
     case e: WaspMessageEnvelope[K, V] => producer.send(e)
   }
 }

@@ -31,8 +31,7 @@ class CamelKafkaReader(kafkaConfigModel: KafkaConfigModel, topic: String, groupI
   override def endpointUri: String = messageBusURL
 
   override def receive: Actor.Receive = {
-    case message: CamelMessage =>
-      actorHolder ! (topic, message.bodyAs[Array[Byte]])
+    case message: CamelMessage => actorHolder ! (topic, message.bodyAs[Array[Byte]])
     case _ => logger.info("Unknown message.")
   }
 

@@ -73,8 +73,7 @@ class ElasticAdminActor extends Actor with Logging {
   var elasticConfig: ElasticConfigModel = _
   var transportClient: TransportClient = _
 
-  def receive: Actor.Receive = {
-
+  override def receive: Actor.Receive = {
     case message: AddAlias => call(message, addAlias)
     case message: AddIndex => call(message, addIndex)
     case message: AddMapping => call(message, addMapping)
@@ -148,7 +147,7 @@ class ElasticAdminActor extends Actor with Logging {
   private def call[T <: ElasticAdminMessage](message: T, f: T => Any): Unit = {
     val result = f(message)
     logger.info(message + ": " + result)
-    sender ! result
+    sender() ! result
   }
 
   private def checkOrCreateIndex(message: CheckOrCreateIndex): Boolean = {

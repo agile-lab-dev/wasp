@@ -5,7 +5,6 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, mediator}
 import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
@@ -19,7 +18,7 @@ import scala.collection.mutable
 	* @author Nicolò Bidotti
 	*/
 class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
-	  extends ClusterAwareNodeGuardian
+	extends Actor
 		with WaspConfiguration
 		with Logging {
 
@@ -74,26 +73,24 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 
 			env.producerBL.getSystemProducers foreach {
 				producer => {
-					logger.info("Activating system producer \"" + producer.name + "\"...")
-					WaspSystem.masterGuardian ! StartProducer(producer._id.get.getValue.toHexString)
-					logger.info("Activated system producer \"" + producer.name + "\"")
+					logger.info(s"Scheduling startup of system producer '${producer.name}'")
+					WaspSystem.masterGuardian ! StartProducer(producer.name) // masterGuardian uses producer.name instead of producer._id.get.getValue.toHexString
 				}
 			}
 
-			logger.info("Activated system producers")
+			logger.info("Scheduled the startup of all system producers")
 		} else {
 			logger.info("Deactivating system producers...")
 			setProducersActive(env.producerBL.getSystemProducers, isActive = false)
-			logger.info("Deactivated system producers")
+			logger.info("Deactivated all system producers")
 		}
 	}
-	
+
 	private def setProducersActive(producers: Seq[ProducerModel], isActive: Boolean): Unit = {
 		producers.foreach(producer => env.producerBL.setIsActive(producer, isActive))
 	}
-	
-	// TODO try without sender parenthesis
-	def initialized: Actor.Receive = {
+
+	override def receive: Actor.Receive = {
 		case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
 		case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
 		case message: StartProducer => call(sender(), message, onProducer(message.id, startProducer))
@@ -109,9 +106,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def onProducer(id: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
 		env.producerBL.getById(id) match {
 			case None => Right("Producer not retrieved")
-			case Some(producer) => {
-				f(producer)
-			}
+			case Some(producer) => f(producer)
 		}
 	}
 	
@@ -142,12 +137,18 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def startProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+
 			//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
-			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Start)) {
-				Right(s"Producer '${producer.name}' started")
-			} else {
-				//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
-				Left(s"Producer '${producer.name}' not started")
+			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Start) match {
+				case Right(_) =>
+					val msg = s"Producer '${producer.name}' started"
+					logger.info(msg)
+					Right(msg)
+				case Left(s) =>
+					//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
+					val msg = s"Producer '${producer.name}' not started - Message from ProducerGuardian: ${s}"
+					logger.error(msg)
+					Left(msg)
 			}
 		} else {
 			Left(s"Producer '${producer.name}' does not exist")
@@ -157,12 +158,18 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def stopProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+
 			//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
-			if (??[Boolean](producers(producer._id.get.getValue.toHexString), Stop)) {
-				Right(s"Producer '${producer.name}' stopped")
-			} else {
-				//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
-				Left(s"Producer '${producer.name}' not stopped")
+			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Stop) match {
+				case Right(_) =>
+					val msg = s"Producer '${producer.name}' stopped"
+					logger.info(msg)
+					Right(msg)
+				case Left(s) =>
+					//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
+					val msg = s"Producer '${producer.name}' not stopped - Message from ProducerGuardian: ${s}"
+					logger.error(msg)
+					Left(msg)
 			}
 		} else {
 			Left(s"Producer '${producer.name}' does not exist")
@@ -172,10 +179,16 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
-			if (??[Boolean](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse("")))) {
-				Right(s"Producer '${producer.name}' request: ${request.data}")
-			} else {
-				Left(s"Producer '${producer.name}' request not successful")
+
+			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse(""))) match {
+				case Right(_) =>
+					val msg = s"Producer '${producer.name}' request: ${request.data}"
+					logger.info(msg)
+					Right(msg)
+				case Left(s) =>
+					val msg = s"Producer '${producer.name}' request not successful - Message from ProducerGuardian: ${s}"
+					logger.error(msg)
+					Left(msg)
 			}
 		} else {
 			Left(s"Producer '${producer.name}' does not exist")
