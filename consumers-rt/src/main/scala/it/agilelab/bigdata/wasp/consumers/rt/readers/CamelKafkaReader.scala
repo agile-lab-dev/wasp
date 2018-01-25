@@ -14,7 +14,7 @@ class CamelKafkaReader(kafkaConfigModel: KafkaConfigModel, topic: String, groupI
     with Logging {
   private val kafkaConnections = kafkaConfigModel.connections.mkString(",") // Why the "," https://github.com/apache/camel/blob/master/components/camel-kafka/src/test/java/org/apache/camel/component/kafka/KafkaComponentTest.java
 
-  private val zookeeperConnections = kafkaConfigModel.zookeeper
+  private val zookeeperConnections = kafkaConfigModel.zookeeperConnections.getZookeeperConnection()
 
   private val messageBusURL = s"kafka:$kafkaConnections?topic=$topic&zookeeperConnect=$zookeeperConnections&groupId=$groupId"
   //TODO: hardcoded config, esternalizzare

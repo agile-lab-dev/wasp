@@ -41,8 +41,8 @@ class KafkaAdminActor extends Actor with Logging {
 
     logger.info(s"Before create a zookeeper client with config: $kafkaConfig ")
     try {
-      val zkClient = ZkUtils.createZkClient(kafkaConfig.zookeeper.toString, KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
-      zkUtils = new ZkUtils(zkClient, new ZkConnection(kafkaConfig.zookeeper.toString), false)
+      val zkClient = ZkUtils.createZkClient(kafkaConfig.zookeeperConnections.getZookeeperConnection(), KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
+      zkUtils = new ZkUtils(zkClient, new ZkConnection(kafkaConfig.zookeeperConnections.getZookeeperConnection()), false)
       logger.info(s"New zookeeper client created $zkClient")
       true
     } catch {

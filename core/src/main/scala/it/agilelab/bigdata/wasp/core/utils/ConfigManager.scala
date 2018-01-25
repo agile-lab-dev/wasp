@@ -14,7 +14,7 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object ConfigManager extends Logging {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
@@ -79,7 +79,7 @@ object ConfigManager extends Logging {
     KafkaConfigModel(
       readConnections(kafkaSubConfig, "connections"),
       kafkaSubConfig.getString("ingest-rate"),
-      readConnection(kafkaSubConfig.getConfig("zookeeper")),
+      readZookeeperConnections(kafkaSubConfig, "zookeeperConnections", "zkChRoot"),
       kafkaSubConfig.getString("broker-id"),
       kafkaSubConfig.getString("partitioner-fqcn"),
       kafkaSubConfig.getString("default-encoder"),
@@ -199,7 +199,7 @@ object ConfigManager extends Logging {
   private def getDefaultSolrConfig: SolrConfigModel = {
     val solrSubConfig = conf.getConfig("solrcloud")
     SolrConfigModel(
-      readConnections(solrSubConfig, "connections"),
+      readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
       Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
       solrConfigName,
       None,
@@ -295,6 +295,17 @@ object ConfigManager extends Logging {
     connections map (connection => readConnection(connection)) toArray
   }
 
+
+  private def readZookeeperConnections(config: Config,
+                                       zkPath: String,
+                                       zkPathChRoot: String): ZookeeperConnection = {
+
+    val connections = config.getConfigList(zkPath).asScala
+    val chRoot = Try {config.getString(zkPathChRoot)}.toOption
+    val connectionsArray = connections.map(connection => readConnection(connection)).toArray
+    ZookeeperConnection(connectionsArray, chRoot)
+  }
+
   private def readApiEndPoint(config: Config, path: String): ConnectionConfig = {
     val connection = config.getConfig(path)
     readConnection(connection)
@@ -376,6 +387,13 @@ case class ConnectionConfig(protocol: String,
   }
 }
 
+case class ZookeeperConnection(connections: Seq[ConnectionConfig],
+                               chRoot: Option[String]) {
+  def getZookeeperConnection() = {
+    connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot.getOrElse("")}"
+  }
+}
+
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig
 }
@@ -398,10 +416,6 @@ trait ElasticConfiguration {
 
 trait SolrConfiguration {
   lazy val solrConfig: SolrConfigModel = ConfigManager.getSolrConfig
-  def solrZkHost: String = {
-    solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
-      .mkString(",") + "/solr"
-  }
 }
 
 trait HBaseConfiguration {

@@ -15,13 +15,10 @@ import it.agilelab.bigdata.wasp.core.utils.JsonOps._
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
-import org.apache.solr.client.solrj.response.{
-  CollectionAdminResponse,
-  QueryResponse
-}
+import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -77,11 +74,7 @@ class SolrAdminActor
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    logger.info("SOLR ZOOKEEPER" + solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
-      .mkString(",") + "/solr")
-
-    solrServer = new CloudSolrServer(solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
-      .mkString(",") + "/solr")
+    solrServer = new CloudSolrServer(solrConfig.zookeeperConnections.getZookeeperConnection())
 
     try {
       solrServer.connect()
