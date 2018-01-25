@@ -1,31 +1,36 @@
-package it.agilelab.bigdata.wasp.consumers.spark.writers
+package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.TinyKafkaConfig
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, RowToAvro}
+import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.sql.streaming.DataStreamWriter
 
-
-class KafkaSparkLegacyStreamingWriter(env: {val topicBL: TopicBL}, ssc: StreamingContext, id: String)
-  extends SparkLegacyStreamingWriter {
+class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
+                                      ssc: StreamingContext,
+                                      id: String)
+    extends SparkLegacyStreamingWriter {
 
   override def write(stream: DStream[String]): Unit = {
-    val kafkaConfig = ConfigManager.getKafkaConfig
 
-    val topicOpt = env.topicBL.getById(id)
+    val kafkaConfig = ConfigManager.getKafkaConfig
+    val tinyKafkaConfig = kafkaConfig.toTinyConfig()
+
+    val topicOpt: Option[TopicModel] = topicBL.getById(id)
     topicOpt.foreach(topic => {
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
         val schemaB = ssc.sparkContext.broadcast(topic.getJsonSchema)
-        val configB = ssc.sparkContext.broadcast(ConfigManager.getKafkaConfig.toTinyConfig())
+        val configB = ssc.sparkContext.broadcast(tinyKafkaConfig)
         val topicNameB = ssc.sparkContext.broadcast(topic.name)
 	      val topicDataTypeB = ssc.sparkContext.broadcast(topic.topicDataType)
 
@@ -59,17 +64,22 @@ class KafkaSparkLegacyStreamingWriter(env: {val topicBL: TopicBL}, ssc: Streamin
   }
 }
 
-class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: String, ss: SparkSession)
-  extends SparkStructuredStreamingWriter with Logging {
-  override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
+class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
+                                          id: String,
+                                          ss: SparkSession)
+    extends SparkStructuredStreamingWriter
+    with Logging {
+
+  override def write(stream: DataFrame,
+                     queryName: String,
+                     checkpointDir: String): Unit = {
+
     import ss.implicits._
 
     val kafkaConfig = ConfigManager.getKafkaConfig
-
-    val topicOpt = env.topicBL.getById(id)
-
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
+    val topicOpt: Option[TopicModel] = topicBL.getById(id)
     topicOpt.foreach(topic => {
 
       val topicDataTypeB = ss.sparkContext.broadcast(topic.topicDataType)
@@ -93,8 +103,8 @@ class KafkaSparkStructuredStreamingWriter(env: {val topicBL: TopicBL}, id: Strin
         val dswParsed = topicDataTypeB.value match {
           case "avro" => {
             val converter: RowToAvro = RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema))
-            logger.info(s"Schema DF spark, topic name ${topic.name}: " + stream.schema.treeString)
-            logger.info(s"Schema Avro, topic name ${topic.name}: " + converter.getSchema().toString(true))
+            logger.debug(s"Schema DF spark, topic name ${topic.name}: " + stream.schema.treeString)
+            logger.debug(s"Schema Avro, topic name ${topic.name}: " + converter.getSchema().toString(true))
 
             stream.map(r => {
               val key: String = pkfIndex.map(r.getString).orNull

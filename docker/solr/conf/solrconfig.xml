@@ -262,6 +262,7 @@
     <!--
     <unlockOnStartup>false</unlockOnStartup>
       -->
+    <unlockOnStartup>true</unlockOnStartup>
 
     <!-- Expert: Controls how often Lucene loads terms into memory
          Default is 128 and is likely good for most everyone.

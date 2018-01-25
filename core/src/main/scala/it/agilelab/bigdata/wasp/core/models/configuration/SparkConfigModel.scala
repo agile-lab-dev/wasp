@@ -19,6 +19,11 @@ trait SparkConfigModel {
 	def broadcastPort: Int
 	def fileserverPort: Int
 	def name: String
+	def driverBindAddress: String
+	def retainedStagesJobs: Int
+	def retainedTasks: Int
+	def retainedExecutions: Int
+	def retainedBatches: Int
 }
 case class SparkStreamingConfigModel(appName: String,
                                      master: ConnectionConfig,
@@ -36,7 +41,12 @@ case class SparkStreamingConfigModel(appName: String,
                                      fileserverPort: Int,
                                      streamingBatchIntervalMs: Int,
                                      checkpointDir: String,
-                                     name: String) extends SparkConfigModel
+                                     name: String,
+																		 driverBindAddress: String,
+																		 retainedStagesJobs:Int,
+																		 retainedTasks: Int,
+																		 retainedExecutions: Int,
+																		 retainedBatches: Int) extends SparkConfigModel
 
 case class SparkBatchConfigModel(appName: String,
                                  master: ConnectionConfig,
@@ -52,4 +62,9 @@ case class SparkBatchConfigModel(appName: String,
                                  blockManagerPort: Int,
                                  broadcastPort: Int,
                                  fileserverPort: Int,
-                                 name: String)  extends SparkConfigModel
+                                 name: String,
+																 driverBindAddress: String,
+																 retainedStagesJobs:Int,
+																 retainedTasks: Int,
+																 retainedExecutions: Int,
+																 retainedBatches: Int)  extends SparkConfigModel

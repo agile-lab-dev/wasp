@@ -30,7 +30,10 @@ object SolrSparkWriter {
 
     val fieldname = r.schema.fieldNames
     fieldname.foreach { f =>
-      doc.setField(f, r.getAs(f))
+
+      if(! r.isNullAt(r.fieldIndex(f)))
+        doc.setField(f, r.getAs(f))
+
     }
 
     doc
@@ -39,8 +42,8 @@ object SolrSparkWriter {
 }
 
 class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
-                                     val ssc: StreamingContext,
-                                     val id: String,
+                                     ssc: StreamingContext,
+                                     id: String,
                                      solrAdminActor: ActorRef)
     extends SparkLegacyStreamingWriter
     with SolrConfiguration
@@ -54,8 +57,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
 
-      logger.info(
-        s"Check or create the index model: '${index.toString} with this index name: $indexName")
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
       if (??[Boolean](
             solrAdminActor,
@@ -63,8 +65,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
               indexName,
               index.getJsonSchema,
               index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1))
-          )) {
+              index.replicationFactor.getOrElse(1)))) {
 
         val docs: DStream[SolrInputDocument] = stream.transform { rdd =>
           val df: Dataset[Row] = sqlContext.read.json(rdd)
@@ -74,28 +75,27 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
           }
         }
 
-        SolrSupport.indexDStreamOfDocs(solrConfig.connections.mkString(","),
+        SolrSupport.indexDStreamOfDocs(solrConfig.zookeeperConnections.getZookeeperConnection(),
                                        indexName,
                                        100,
                                        new JavaDStream[SolrInputDocument](docs))
 
       } else {
-        logger.error(
-          s"Error creating solr index: $index with this index name $indexName")
-        throw new Exception("Error creating solr index " + indexName)
+        val error = s"Error creating solr index: $index with this index name $indexName"
+        logger.error(error)
+        throw new Exception(error)
         //TODO handle errors
       }
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 
 }
 
 class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
-                                         val ss: SparkSession,
-                                         val id: String,
+                                         ss: SparkSession,
+                                         id: String,
                                          solrAdminActor: ActorRef)
     extends SparkStructuredStreamingWriter
     with SolrConfiguration
@@ -123,11 +123,12 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
               index.replicationFactor.getOrElse(1))
           )) {
 
-        val solrWriter = new SolrForeatchWriter(
+        val solrWriter = new SolrForeachWriter(
           ss,
-          solrConfig.connections.mkString(","),
+          solrConfig.zookeeperConnections.getZookeeperConnection(),
           indexName,
           index.collection)
+
 
         stream.writeStream
           .option("checkpointLocation", checkpointDir)
@@ -150,10 +151,10 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 }
 
-class SolrForeatchWriter(val ss: SparkSession,
-                         val connection: String,
-                         val indexName: String,
-                         val collection: String)
+class SolrForeachWriter(val ss: SparkSession,
+                        val connection: String,
+                        val indexName: String,
+                        val collection: String)
     extends ForeachWriter[Row] {
 
   var solrServer: CloudSolrServer = _
@@ -161,12 +162,19 @@ class SolrForeatchWriter(val ss: SparkSession,
   val batchSize = 100
 
   override def open(partitionId: Long, version: Long): Boolean = {
+
+    /*
+    * new CloudSolrServer(solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
+      .mkString(",") + "/solr")*/
+
     solrServer = SolrSupport.getSolrServer(connection)
     batch = new util.ArrayList[SolrInputDocument]
     true
   }
 
   override def process(value: Row): Unit = {
+    println(value.getAs[String]("crashId"))
+
     val docs: SolrInputDocument = SolrSparkWriter.createSolrDocument(value)
     batch.add(docs)
 
@@ -213,7 +221,7 @@ class SolrSparkWriter(indexBL: IndexBL,
           SolrSparkWriter.createSolrDocument(r)
         }
 
-        SolrSupport.indexDocs(solrConfig.connections.mkString(","),
+        SolrSupport.indexDocs(solrConfig.zookeeperConnections.getZookeeperConnection(),
                               indexName,
                               100,
                               new JavaRDD[SolrInputDocument](docs))

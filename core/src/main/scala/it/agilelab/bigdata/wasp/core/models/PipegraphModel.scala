@@ -18,16 +18,16 @@ trait ProcessingComponentModel {
   def name: String
   
   def generateStandardProcessingComponentName: String = this match {
-    case ss: StructuredStreamingETLModel => s"structuredstreaming_${ss.name}"
-    case ls: LegacyStreamingETLModel => s"legacystreaming_${ls.name}"
-    case rt: RTModel => s"rt_${rt.name}"
+    case ss: StructuredStreamingETLModel => s"structuredstreaming_${ss.name.replace(" ", "_")}"
+    case ls: LegacyStreamingETLModel => s"legacystreaming_${ls.name.replace(" ", "_")}"
+    case rt: RTModel => s"rt_${rt.name.replace(" ", "_")}"
   }
   
   def generateStandardWriterName: String = this match { // TODO: remove match once output member is moved into ProcessingComponentModel
-    case ss: StructuredStreamingETLModel => s"writer_${ss.output.name}"
-    case ls: LegacyStreamingETLModel => s"writer_${ls.output.name}"
+    case ss: StructuredStreamingETLModel => s"writer_${ss.output.name.replace(" ", "_")}"
+    case ls: LegacyStreamingETLModel => s"writer_${ls.output.name.replace(" ", "_")}"
     case rt: RTModel => rt.endpoint match {
-      case Some(output) => s"writer_${output.name}"
+      case Some(output) => s"writer_${output.name.replace(" ", "_")}"
       case None => "no_writer"
     }
   }
@@ -85,6 +85,10 @@ case class PipegraphModel(override val name: String,
                           var isActive: Boolean = true,
                           _id: Option[BsonObjectId] = None) extends Model {
   def generateStandardPipegraphName: String = s"pipegraph_$name"
+  
+  def hasSparkComponents: Boolean = legacyStreamingComponents.nonEmpty || structuredStreamingComponents.nonEmpty
+  
+  def hasRtComponents: Boolean = rtComponents.nonEmpty
 }
 
 object LegacyStreamingETLModel {

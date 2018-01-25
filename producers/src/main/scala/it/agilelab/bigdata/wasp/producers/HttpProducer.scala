@@ -88,7 +88,6 @@ abstract class HttpProducer(env: {val producerBL: ProducerBL; val topicBL: Topic
   override def postStop() {
     // Do we need to kill the listening server?
     //IO(Http) ! PoisonPill
-    super.postStop()
   }
 
 }

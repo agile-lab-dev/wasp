@@ -1,18 +1,22 @@
 package it.agilelab.bigdata.wasp.core.utils
 
+import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.util.{Failure, Success, Try}
 
-object ConfigManager {
+object ConfigManager extends Logging {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   val kafkaConfigName = "Kafka"
@@ -21,6 +25,7 @@ object ConfigManager {
   val elasticConfigName = "Elastic"
   val solrConfigName = "Solr"
   val hbaseConfigName = "HBase"
+  val waspConsumersSparkAdditionalJarsFileName = "wasp-consumers-spark-additional-jars-path-names"
 
   private var waspConfig : WaspConfigModel = _
   private var mongoDBConfig: MongoDBConfigModel = _
@@ -38,6 +43,7 @@ object ConfigManager {
   private def getDefaultWaspConfig: WaspConfigModel = {
     WaspConfigModel(
       conf.getString("actor-system-name"),
+      conf.getInt("actor-downing-timeout-millis"),
       conf.getBoolean("index-rollover"),
       conf.getInt("general-timeout-millis"),
       conf.getInt("services-timeout-millis"),
@@ -47,7 +53,8 @@ object ConfigManager {
       conf.getBoolean("systempipegraphs.start"),
       conf.getBoolean("systemproducers.start"),
       conf.getString("rest.server.hostname"),
-      conf.getInt("rest.server.port")
+      conf.getInt("rest.server.port"),
+      conf.getString("environment.prefix")
     )
   }
   
@@ -73,7 +80,7 @@ object ConfigManager {
     KafkaConfigModel(
       readConnections(kafkaSubConfig, "connections"),
       kafkaSubConfig.getString("ingest-rate"),
-      readConnection(kafkaSubConfig.getConfig("zookeeper")),
+      readZookeeperConnections(kafkaSubConfig, "zookeeperConnections", "zkChRoot"),
       kafkaSubConfig.getString("broker-id"),
       kafkaSubConfig.getString("partitioner-fqcn"),
       kafkaSubConfig.getString("default-encoder"),
@@ -84,13 +91,16 @@ object ConfigManager {
     )
   }
 
-  private def initializeSparkBatchConfig(): Unit = {
+  def initializeSparkBatchConfig(): Unit = {
     sparkBatchConfig =
       retrieveConf(getDefaultSparkBatchConfig, sparkBatchConfigName).get
   }
 
   private def getDefaultSparkBatchConfig: SparkBatchConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-batch")
+
+    val additionalJars = getAdditionalJars
+
     SparkBatchConfigModel(
       sparkSubConfig.getString("app-name"),
       readConnection(sparkSubConfig.getConfig("master")),
@@ -101,22 +111,48 @@ object ConfigManager {
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
       sparkSubConfig.getInt("executor-instances"),
-      None, // no sensible default; must be filled in while instantiating SparkContext
+      additionalJars,
       sparkSubConfig.getString("yarn-jar"),
       sparkSubConfig.getInt("block-manager-port"),
       sparkSubConfig.getInt("broadcast-port"),
       sparkSubConfig.getInt("fileserver-port"),
-      sparkBatchConfigName
+      sparkBatchConfigName,
+      sparkSubConfig.getString("driver-bind-address"),
+      sparkSubConfig.getInt("retained-stages-jobs"),
+      sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-executions"),
+      sparkSubConfig.getInt("retained-batches")
+
     )
   }
 
-  private def initializeSparkStreamingConfig(): Unit = {
+  private def getAdditionalJars: Option[Seq[String]] = {
+    scala.util.Try{
+      val additionalJarsPath = conf.getString("additional-jars-lib-path")
+      val additionalJars = Source.fromFile(additionalJarsPath.concat(waspConsumersSparkAdditionalJarsFileName))
+        .getLines()
+        .map(name => URLEncoder.encode(additionalJarsPath.concat(name), "UTF-8"))
+        .toSeq
+
+      additionalJars
+    } match {
+      case Success(result) => Some(result)
+      case Failure(_) => None
+    }
+  }
+
+  def initializeSparkStreamingConfig(): Unit = {
     sparkStreamingConfig = retrieveConf(getDefaultSparkStreamingConfig,
                                         sparkStreamingConfigName).get
   }
 
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
+
+    logger.info(sparkSubConfig.toString)
+
+    val additionalJars = getAdditionalJars
+
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
       readConnection(sparkSubConfig.getConfig("master")),
@@ -127,14 +163,19 @@ object ConfigManager {
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
       sparkSubConfig.getInt("executor-instances"),
-      None, // no sensible default; must be filled in while instantiating SparkContext
+      additionalJars,
       sparkSubConfig.getString("yarn-jar"),
       sparkSubConfig.getInt("block-manager-port"),
       sparkSubConfig.getInt("broadcast-port"),
       sparkSubConfig.getInt("fileserver-port"),
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
-      sparkStreamingConfigName
+      sparkStreamingConfigName,
+      sparkSubConfig.getString("driver-bind-address"),
+      sparkSubConfig.getInt("retained-stages-jobs"),
+      sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-executions"),
+      sparkSubConfig.getInt("retained-batches")
     )
   }
 
@@ -159,7 +200,7 @@ object ConfigManager {
   private def getDefaultSolrConfig: SolrConfigModel = {
     val solrSubConfig = conf.getConfig("solrcloud")
     SolrConfigModel(
-      readConnections(solrSubConfig, "connections"),
+      readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
       Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
       solrConfigName,
       None,
@@ -175,19 +216,18 @@ object ConfigManager {
     val hbaseSubConfig = conf.getConfig("hbase")
     HBaseConfigModel(
       hbaseSubConfig.getString("core-site-xml-path"),
-      hbaseSubConfig.getString("hbase-site-xml-path")
+      hbaseSubConfig.getString("hbase-site-xml-path"),
+      hbaseConfigName
     )
   }
 
   /**
     * Initialize the configurations managed by this ConfigManager.
     */
-  def initializeConfigs(): Unit = {
+  def initializeCommonConfigs(): Unit = {
     initializeWaspConfig()
     initializeMongoConfig()
     initializeKafkaConfig()
-    initializeSparkBatchConfig()
-    initializeSparkStreamingConfig()
     initializeElasticConfig()
     initializeSolrConfig()
     initializeHBaseConfig()
@@ -254,6 +294,17 @@ object ConfigManager {
                               path: String): Array[ConnectionConfig] = {
     val connections = config.getConfigList(path).asScala
     connections map (connection => readConnection(connection)) toArray
+  }
+
+
+  private def readZookeeperConnections(config: Config,
+                                       zkPath: String,
+                                       zkPathChRoot: String): ZookeeperConnection = {
+
+    val connections = config.getConfigList(zkPath).asScala
+    val chRoot = Try {config.getString(zkPathChRoot)}.toOption
+    val connectionsArray = connections.map(connection => readConnection(connection)).toArray
+    ZookeeperConnection(connectionsArray, chRoot)
   }
 
   private def readApiEndPoint(config: Config, path: String): ConnectionConfig = {
@@ -334,6 +385,13 @@ case class ConnectionConfig(protocol: String,
       result = result + ":" + port
 
     result + metadata.flatMap(_.get("zookeeperRootNode")).getOrElse("")
+  }
+}
+
+case class ZookeeperConnection(connections: Seq[ConnectionConfig],
+                               chRoot: Option[String]) {
+  def getZookeeperConnection() = {
+    connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot.getOrElse("")}"
   }
 }
 

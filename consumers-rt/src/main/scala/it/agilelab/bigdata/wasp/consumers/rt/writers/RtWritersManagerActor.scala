@@ -26,8 +26,8 @@ class RtWritersManagerActor(env: {
     initializeEndpoint(writer.get)
   } else None
 
-  override def receive: Receive = {
-    case data : String => endpoint match{
+  override def receive: Actor.Receive = {
+    case data : String => endpoint match {
       case Some(actor) =>
         actor ! data
         //TODO
@@ -36,7 +36,6 @@ class RtWritersManagerActor(env: {
   }
 
   override def postStop() = {
-    super.postStop()
     if (endpoint.isDefined)
       {
         endpoint.get ! PoisonPill
@@ -64,7 +63,7 @@ class RtWritersManagerActor(env: {
 class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
 
   //TODO: Configurazione completa?
-  val kafkaTopic: TopicModel = topicBL.getById(writer.endpointId.getValue.toHexString).get
+  val kafkaTopic: TopicModel = topicBL.getById(writer.endpointId.get.getValue.toHexString).get
   val topicSchema = kafkaTopic.getJsonSchema
   val topicDataType = kafkaTopic.topicDataType
 
@@ -74,7 +73,7 @@ class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
   def getKafkaUri(topic: String) = {
     val config = ConfigManager.getKafkaConfig
     val kafkaConnections = config.connections.mkString(",") // Why the "," https://github.com/apache/camel/blob/master/components/camel-kafka/src/test/java/org/apache/camel/component/kafka/KafkaComponentTest.java
-    val zookeeperConnections = config.zookeeper
+    val zookeeperConnections = config.zookeeperConnections.getZookeeperConnection()
 
     s"kafka:$kafkaConnections?topic=$topic&zookeeperConnect=$zookeeperConnections&groupId=${this.hashCode().toString}"
 
@@ -140,7 +139,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
 
 class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer{
 
-  val webSocketConfigOpt: Option[WebsocketModel] = websocketBL.getById(writer.endpointId.getValue.toHexString)
+  val webSocketConfigOpt: Option[WebsocketModel] = websocketBL.getById(writer.endpointId.get.getValue.toHexString)
   if (webSocketConfigOpt.isEmpty) {
     //TODO eccezione? fallisce l'attore?
   }
@@ -149,7 +148,6 @@ class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extend
 
   override def postStop() = {
     //PROBLEMA: http://stackoverflow.com/questions/33152976/how-to-stop-the-websocketcomponent-in-apache-camel?noredirect=1
-    super.postStop()
     this.camelContext.getComponent("websocket", classOf[WebsocketComponent]).doStop()
     this.camelContext.removeComponent("websocket")
   }

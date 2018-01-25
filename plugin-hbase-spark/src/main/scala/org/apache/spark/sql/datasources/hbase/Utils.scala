@@ -18,9 +18,11 @@
 
 package org.apache.spark.sql.datasources.hbase
 
+import it.agilelab.bigdata.wasp.core.utils.RowToAvro
 import org.apache.hadoop.hbase.classification.InterfaceAudience
 import org.apache.hadoop.hbase.spark.datasources.AvroSerdes
 import org.apache.hadoop.hbase.util.Bytes
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -68,8 +70,11 @@ object Utils {
   def toBytes(input: Any, field: Field): Array[Byte] = {
     if (field.schema.isDefined) {
       // Here we assume the top level type is structType
-      val record = field.catalystToAvro(input)
-      AvroSerdes.serialize(record, field.schema.get)
+//      val record = field.catalystToAvro(input)
+      //TODO think about a safer way to manage the any as Row
+      val converter = RowToAvro(input.asInstanceOf[Row].schema, field.colName, "wasp", None, field.avroSchema)
+      converter.write(input.asInstanceOf[Row])
+//      AvroSerdes.serialize(record, field.schema.get)
     } else {
       input match {
         case data: Boolean => Bytes.toBytes(data)

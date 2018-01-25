@@ -7,6 +7,7 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 	*/
 case class WaspConfigModel(
 	                          actorSystemName: String,
+														actorDowningTimeout: Int,
 	                          indexRollover: Boolean,
 	                          generalTimeoutMillis: Int,
 	                          servicesTimeoutMillis: Int,
@@ -16,5 +17,6 @@ case class WaspConfigModel(
 	                          systemPipegraphsStart: Boolean,
 	                          systemProducersStart: Boolean,
 	                          restServerHostname: String,
-	                          restServerPort: Int
+	                          restServerPort: Int,
+														environmentPrefix: String //This should not contain space or /. chars
                           )

@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{KeyValueBL, KeyValueBLImp}
 import it.agilelab.bigdata.wasp.core.exceptions.ModelNotFound
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.{Datastores, KeyValueModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -26,7 +26,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   var hbaseAdminActor_ : ActorRef = _
 
   override def initialize(waspDB: WaspDB): Unit = {
-    logger.info("Initialize the index BL")
+    logger.info("Initialize the keyValue BL")
     keyValueBL = new KeyValueBLImp(waspDB)
     logger.info(s"Initialize the elastic admin actor with this name ${HBaseAdminActor.name}")
     //hbaseAdminActor_ = WaspSystem.actorSystem
@@ -42,7 +42,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
+    logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
     HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, getKeyValueModel(writerModel))
   }
 
@@ -51,7 +51,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.getValue.toHexString}'")
+    logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
     HBaseWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
   }
 
@@ -69,7 +69,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
 
   @throws(classOf[ModelNotFound])
   private def getKeyValueModel(writerModel: WriterModel): KeyValueModel = {
-    val id = writerModel.endpointId.getValue.toHexString
+    val id = writerModel.endpointId.get.getValue.toHexString
     val hbaseModelOpt = keyValueBL.getById(id)
     if (hbaseModelOpt.isDefined) {
       hbaseModelOpt.get
@@ -78,6 +78,6 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  override def pluginType: String = "hbase"
+  override def pluginType: String = Datastores.hbaseProduct
 
 }

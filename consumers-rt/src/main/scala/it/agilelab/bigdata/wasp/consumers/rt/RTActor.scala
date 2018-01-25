@@ -49,7 +49,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
     context.actorOf(Props(new RtWritersManagerActor(env, endpointsModel)))
   }
   
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case StartRT => {
       epManagerActor
       kafkaReaders

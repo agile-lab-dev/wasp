@@ -88,7 +88,7 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
     val format = options.format
     val extraOptions = options.extraOptions.getOrElse(Map())
     val partitionBy = options.partitionBy.getOrElse(Nil)
-  
+
     // configure and start streaming
     stream.writeStream
       .format(format)
@@ -128,7 +128,7 @@ class RawSparkWriter(hdfsModel: RawModel,
     val format = options.format
     val extraOptions = options.extraOptions.getOrElse(Map())
     val partitionBy = options.partitionBy.getOrElse(Nil)
-  
+
     // setup writer
     val writer = df.write
       .mode(mode)

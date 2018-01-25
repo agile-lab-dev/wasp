@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.master.launcher
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpResponse
@@ -10,14 +12,19 @@ import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
-import it.agilelab.bigdata.wasp.core.utils.{WaspConfiguration, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, MongoDBHelper, WaspConfiguration, WaspDB}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.httpResponseJson
+import org.apache.commons.cli
+import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang3.exception.ExceptionUtils
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 /**
 	* Launcher for the MasterGuardian and REST API.
@@ -25,12 +32,23 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 	* @author Nicolò Bidotti
 	*/
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
-	override def launch(args: Array[String]): Unit = {
+	override def launch(commandLine: CommandLine): Unit = {
+		// drop db if needed
+		if (commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)) {
+			val config = ConfigManager.getMongoDBConfig
+			logger.info(s"Dropping MongoDB database ${config.databaseName}")
+			val mongoDb = MongoDBHelper.getDatabase(config)
+			val dropFuture = mongoDb.drop().toFuture()
+			Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
+			WaspDB.initializeDB() // re-initialize db so collections are recreated
+			ConfigManager.initializeCommonConfigs() // re-create configurations in mongo
+		}
+		
 		// add system pipegraphs
 		addSystemPipegraphs()
 		
 		// launch cluster singleton
-		super.launch(args)
+		super.launch(commandLine)
 
 		// launch rest server
 		startRestServer(WaspSystem.actorSystem, getRoutes)
@@ -86,10 +104,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		implicit val system = actorSystem
 		implicit val materializer = ActorMaterializer()
 		val finalRoute = handleExceptions(myExceptionHandler)(route)
+		logger.info(s"start rest server and bind on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
 		val bindingFuture = Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
 	}
 	
 	override def getNodeName: String = "master"
+	
+	override def getOptions: Seq[cli.Option] = super.getOptions ++ MasterCommandLineOptions.allOptions
 }
 
 /**

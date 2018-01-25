@@ -8,6 +8,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.pattern.ask
 import akka.util.Timeout
+import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.plugins.WaspPlugin
@@ -66,6 +67,9 @@ object WaspSystem extends WaspConfiguration with Logging {
   
   // actor refs of admin actors
   private var kafkaAdminActor_ : ActorRef = _
+
+  // actor ref of clusterListener actor
+  private var clusterListenerActor_ : ActorRef = _
   
   // distributed publish-subscribe mediator
   private var mediator_ : ActorRef = _
@@ -106,6 +110,11 @@ object WaspSystem extends WaspConfiguration with Logging {
       logger.info("Spawning admin actors")
       kafkaAdminActor_ = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
       logger.info("Spawned admin actors")
+
+      // spawn clusterListener actor
+      logger.info("Spawning clusterListener actor")
+      clusterListenerActor_ = actorSystem.actorOf(Props(new ClusterListenerActor), ClusterListenerActor.name)
+      logger.info("Spawned clusterListener actors")
       
       logger.info("Finding WASP plugins")
       val pluginLoader: ServiceLoader[WaspPlugin] = ServiceLoader.load[WaspPlugin](classOf[WaspPlugin])
@@ -143,9 +152,8 @@ object WaspSystem extends WaspConfiguration with Logging {
     
       // initialize indexed datastore
       val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
-      if (defaultIndexedDatastore != "elastic" || defaultIndexedDatastore != "solr") {
-        logger.error("No indexed datastore configured!")
-
+      if (defaultIndexedDatastore != "elastic" && defaultIndexedDatastore != "solr") {
+        logger.error(s"No indexed datastore configured! Value: ${defaultIndexedDatastore} is different from elastic or solr")
       }
 
       // initialize keyvalue datastore
@@ -224,8 +232,36 @@ object WaspSystem extends WaspConfiguration with Logging {
     * Synchronous ask
     */
   def ??[T](actorReference: ActorRef, message: Any, duration: Option[FiniteDuration] = None): T = {
-    implicit val implicitSynchronousActorCallTimeout = generalTimeout
-    Await.result(actorReference ? message, duration.getOrElse(generalTimeout.duration)).asInstanceOf[T]
+
+//    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(duration.getOrElse(generalTimeout.duration))
+//    Await.result(actorReference ? message, duration.getOrElse(generalTimeout.duration)).asInstanceOf[T]
+
+    val durationInit = duration.getOrElse(generalTimeout.duration)
+
+    // Manage the timeout in different ways:
+    //  Start from initial duration (received or generalTimeout in configFile) and decrease it foreach encapsulated actor communication level
+    //    * Xyz_C (AkkaHTTP Controller e.g. Pipegraph_C) to MasterGuardian => durationInit
+    //    * MasterGuardian to XyzMasterGuardian => durationInit - 5s
+    //    * XYZMasterGuardian to ... => durationInit - 10s
+    //    ... maybe to extends ...
+    import scala.concurrent.duration._
+    val newDuration:FiniteDuration = actorReference.path.name match {
+      case WaspSystem.masterGuardianSingletonProxyName => durationInit
+      case WaspSystem.sparkConsumersMasterGuardianSingletonProxyName  |
+           WaspSystem.rtConsumersMasterGuardianSingletonProxyName     |
+           WaspSystem.batchMasterGuardianSingletonProxyName           |
+           WaspSystem.producersMasterGuardianSingletonProxyName => durationInit - 5.seconds
+      case _ => durationInit - 10.seconds
+    }
+
+    /* Only for Debug */
+//    val newDuration:FiniteDuration = actorReference.path.name match {
+//      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
+//      case _ => durationInit
+//    }
+
+    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(newDuration)
+    Await.result(actorReference ? message, newDuration).asInstanceOf[T]
   }
   
   // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident
@@ -237,5 +273,6 @@ object WaspSystem extends WaspConfiguration with Logging {
   def sparkConsumersMasterGuardian: ActorRef = sparkConsumersMasterGuardian_
   def loggerActor: ActorRef = loggerActor_
   def kafkaAdminActor: ActorRef = kafkaAdminActor_
+  def clusterListenerActor: ActorRef = clusterListenerActor_
   def mediator: ActorRef = mediator_
 }

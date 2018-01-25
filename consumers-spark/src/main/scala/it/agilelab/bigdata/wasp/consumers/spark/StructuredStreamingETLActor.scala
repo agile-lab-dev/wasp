@@ -15,44 +15,55 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, StopProcessingComponent}
+import it.agilelab.bigdata.wasp.core.messages.StopProcessingComponent
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkStreamingConfiguration}
-import org.apache.spark.sql.functions.{col, lit, udf}
+import it.agilelab.bigdata.wasp.core.utils.SparkStreamingConfiguration
+import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 class StructuredStreamingETLActor(env: {
-  val topicBL: TopicBL
-  val indexBL: IndexBL
-  val rawBL: RawBL
-  val keyValueBL: KeyValueBL
-  val mlModelBL: MlModelBL
-}, sparkWriterFactory: SparkWriterFactory, structuredStreamingReader: StructuredStreamingReader, sparkSession: SparkSession, pipegraph: PipegraphModel, structuredStreamingETL: StructuredStreamingETLModel, listener: ActorRef, plugins: Map[String, WaspConsumersSparkPlugin])
-  extends Actor
+                                    val topicBL: TopicBL
+                                    val indexBL: IndexBL
+                                    val rawBL: RawBL
+                                    val keyValueBL: KeyValueBL
+                                    val mlModelBL: MlModelBL
+                                  },
+                                  sparkWriterFactory: SparkWriterFactory,
+                                  structuredStreamingReader: StructuredStreamingReader,
+                                  sparkSession: SparkSession,
+                                  pipegraph: PipegraphModel,
+                                  structuredStreamingETL: StructuredStreamingETLModel,
+                                  listener: ActorRef,
+                                  plugins: Map[String, WaspConsumersSparkPlugin])
+    extends Actor
     with SparkStreamingConfiguration
     with Logging {
-
-  case object StreamReady
 
   /*
    * Actor methods start
    */
 
   override def receive: Actor.Receive = {
-    case StreamReady => listener ! OutputStreamInitialized
-    case StopProcessingComponent =>
+    case StopProcessingComponent => {
       logger.info(s"Component actor $self stopping...")
       stopProcessingComponent()
       context stop self
       logger.info(s"Component actor $self stopped")
+    }
   }
 
-  // TODO check if mainTask has really to be invoked here
   override def preStart(): Unit = {
-    super.preStart()
     logger.info(s"Actor is transitioning from 'uninitialized' to 'initialized'")
-    validationTask()
-    mainTask()
+    try {
+      validationTask()
+      mainTask()
+    } catch {
+      case e: Exception => {
+        val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Exception: ${e.getMessage}"
+        logger.error(msg)
+        listener ! Left(msg)
+      }
+    }
   }
 
   /*
@@ -60,11 +71,9 @@ class StructuredStreamingETLActor(env: {
    */
 
   /**
-    * Strategy object initialize
+    * Strategy object initialization
     */
-  //TODO: identical to it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.createStrategy, externalize
-  private lazy val createStrategy: Option[Strategy] =
-  structuredStreamingETL.strategy match {
+  private lazy val createStrategy: Option[Strategy] = structuredStreamingETL.strategy match {
     case None => None
     case Some(strategyModel) =>
       val result = Class
@@ -81,60 +90,30 @@ class StructuredStreamingETLActor(env: {
   }
 
   /**
-    * Index readers initialization
+    * All static readers initialization
     */
-  private def indexReaders(): List[SparkReader] = {
-    val defaultDataStoreIndexed =
-      ConfigManager.getWaspConfig.defaultIndexedDatastore
-    structuredStreamingETL.inputs.flatMap({
+  private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
+    staticReaderModels.flatMap({
       case ReaderModel(name, endpointId, readerType) =>
         val readerProduct = readerType.getActualProduct
-        logger.info(
-          s"Get index reader plugin $readerProduct before was $readerType, plugin map: $plugins")
-
+        logger.info(s"Get reader plugin $readerProduct before was $readerType, plugin map: $plugins")
         val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
-          Some(
-            readerPlugin.get.getSparkReader(endpointId.getValue.toHexString,
-              name))
+          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
         } else {
-          //TODO Check if readerType != topic
-          logger.warn(
-            s"The $readerProduct plugin in indexReaders does not exists")
+          logger.error(s"The $readerProduct plugin in staticReaderModels does not exists")
           None
         }
+      case _ => None
     })
   }
 
-  /**
-    * Raw readers initialization
-    */
-  private def rawReaders(): List[SparkReader] =
-    structuredStreamingETL.inputs
-      .flatMap({
-        case ReaderModel(name, endpointId, readerType) =>
-          logger.info(
-            s"Get raw reader plugin $readerType, plugin map: $plugins")
-          val readerPlugin: Option[WaspConsumersSparkPlugin] = plugins.get(readerType.getActualProduct)
-          if (readerPlugin.isDefined) {
-            Some(
-              readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
-          } else {
-            //TODO Check if readerType != topic
-            logger.warn(
-              s"The $readerType plugin in rawReaders does not exists")
-            None
-          }
-      })
-
-  // TODO unify readers initialization (see BatchJobActor)
   /**
     * All static readers initialization
     *
     * @return
     */
-  private def staticReaders(): List[SparkReader] =
-    indexReaders() ++ rawReaders()
+  private def retrieveStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = allStaticReaders(staticReaderModels)
 
   /**
     * Topic models initialization
@@ -153,7 +132,6 @@ class StructuredStreamingETLActor(env: {
       case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) => {
         val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
         if (topicOpt.isEmpty) {
-          //TODO Better exception
           throw new Exception(s"There isn't this topic: $endpointId, $name")
         }
       }
@@ -162,22 +140,16 @@ class StructuredStreamingETLActor(env: {
         if (readerPlugin.isDefined) {
           readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name)
         } else {
-          //TODO Better exception
-          logger.error(
-            s"There isn't the plugin for this index: '$endpointId', '$name', readerType: '$readerType'")
-          throw new Exception(s"There isn't this index: $endpointId, $name")
+          throw new Exception(s"There isn't the plugin for this index: '$endpointId', '$name', readerType: '$readerType'")
         }
       }
     })
     val topicReaderModelNumber =
-      structuredStreamingETL.inputs.count(
-        _.readerType.category == TopicModel.readerType)
+      structuredStreamingETL.inputs.count(_.readerType.category == TopicModel.readerType)
     if (topicReaderModelNumber == 0)
-      throw new Exception(
-        "There is NO topic to read data, inputs: " + structuredStreamingETL.inputs)
+      throw new Exception("There is NO topic to read data, inputs: " + structuredStreamingETL.inputs)
     if (topicReaderModelNumber != 1)
-      throw new Exception(
-        "MUST be only ONE topic, inputs: " + structuredStreamingETL.inputs)
+      throw new Exception("MUST be only ONE topic, inputs: " + structuredStreamingETL.inputs)
   }
 
   //TODO move in the extender class
@@ -203,28 +175,38 @@ class StructuredStreamingETLActor(env: {
 
     val topicStreamWithKey: (ReaderKey, DataFrame) = topicStreams.head
 
-    val outputStream: DataFrame =
+    val outputStream =
       if (createStrategy.isDefined) {
         val strategy = createStrategy.get
 
-        //TODO cache or reading?
-        // Reading static source to DF
-        val dataStoreDFs: Map[ReaderKey, DataFrame] =
-        staticReaders()
-          .map(staticReader => {
+        val staticReaders = structuredStreamingETL.inputs.filterNot(_.readerType.category == Datastores.topicCategory)
 
-            val dataSourceDF = staticReader.read(sparkSession.sparkContext)
-            (ReaderKey(staticReader.readerType, staticReader.name),
-              dataSourceDF)
-          })
-          .toMap
+        val dataStoreDFs : Map[ReaderKey, DataFrame] =
+          if(staticReaders.isEmpty)
+            Map.empty
+          else
+            retrieveDFs(staticReaders)
+
+        val nDFrequired = staticReaders.size
+        val nDFretrieved = dataStoreDFs.size
+        if(nDFretrieved != nDFrequired) {
+          val error = "DFs not retrieved successfully!\n" +
+            s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
+            dataStoreDFs.toString
+          logger.error(error) // print here the complete error due to verbosity
+
+          throw new Exception(s"DFs not retrieved successful - $nDFrequired DFs required - $nDFretrieved DFs retrieved!")
+        }
+        else {
+          if (!dataStoreDFs.isEmpty)
+            logger.info("DFs retrieved successfully!")
+        }
 
         val mlModelsDB = new MlModelsDB(env)
         // --- Broadcast models initialization ----
         // Reading all model from DB and create broadcast
         val mlModelsBroadcast: MlModelsBroadcastDB =
-        mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(
-          sparkSession.sparkContext)
+        mlModelsDB.createModelsBroadcast(structuredStreamingETL.mlModels)(sparkSession.sparkContext)
 
         // Initialize the mlModelsBroadcast to strategy object
         strategy.mlModelsBroadcast = mlModelsBroadcast
@@ -238,34 +220,37 @@ class StructuredStreamingETLActor(env: {
         topicStreamWithKey._2
       }
 
-    val sparkWriterOpt =
-      sparkWriterFactory.createSparkWriterStructuredStreaming(
-        env,
-        sparkSession,
-        structuredStreamingETL.output)
-    val queryName =
-      generateUniqueComponentName(pipegraph, structuredStreamingETL)
+    val queryName = generateUniqueComponentName(pipegraph, structuredStreamingETL)
     val checkpointDir = generateStructuredStreamingCheckpointDir(
       sparkStreamingConfig,
       pipegraph,
       structuredStreamingETL)
 
+    val sparkWriterOpt = sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETL.output)
     sparkWriterOpt match {
-      case Some(writer) => {
-        writer.write(outputStream, queryName, checkpointDir)
-      }
-      case None =>
-        val error =
-          s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}"
-        logger.error(error)
-        throw new Exception(error)
+      case Some(writer) => writer.write(outputStream, queryName, checkpointDir)
+      case None => throw new Exception(s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}")
     }
 
-    // For some reason, trying to send directly a message from here to the guardian is not working ...
-    // NOTE: Maybe because mainTask is invoked in preStart ?
-    // TODO check required
     logger.info(s"Actor is notifying the guardian that it's ready")
-    self ! StreamReady
+    listener ! Right()
+  }
+
+  private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {
+    // Reading static source to DF
+    retrieveStaticReaders(staticReaderModels)
+      .flatMap(staticReader => {
+        try {
+          val dataSourceDF = staticReader.read(sparkSession.sparkContext)
+          Some(ReaderKey(staticReader.readerType, staticReader.name), dataSourceDF)
+        } catch {
+          case e: Exception => {
+            logger.error(s"Error during retrieving DF: ${staticReader.name}", e)
+            None
+          }
+        }
+      })
+      .toMap
   }
 
   private def transform(readerKey: ReaderKey,
@@ -278,7 +263,7 @@ class StructuredStreamingETLActor(env: {
 
     val etlName = structuredStreamingETL.name
 
-    logger.info(s"input stream: ${readerKey.name}. struct: ${stream.schema.treeString}")
+    logger.debug(s"input stream: ${readerKey.name}. struct: ${stream.schema.treeString}")
 
     val now = System.currentTimeMillis()
 
@@ -324,19 +309,22 @@ class StructuredStreamingETLActor(env: {
       stream
     }
 
-    val completeMapOfDFs
-    : Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
+    val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
     val output = strategyBroadcast.value.transform(completeMapOfDFs)
+
     writerType.getActualProduct match {
-      case "kafka" => output
-      case "hbase" => output
-      case "raw" => output
-      case _ => if(output.columns.contains("metadata")) {
-          logger.info(s"Metadata to be flattened for writer category ${writerType.category}. original output schema: " +
-            s"${output.schema.treeString}")
+      case Datastores.kafkaProduct => output
+      case Datastores.hbaseProduct => output
+      case Datastores.rawProduct => output
+      case Datastores.consoleProduct => output
+      case _ =>
+        if(output.columns.contains("metadata")) {
+          logger.info(s"Metadata to be flattened for writer category ${writerType.category}. original output schema: ${output.schema.treeString}")
           output.select(MetadataUtils.flatMetadataSchema(output.schema, None): _*)
-        } else output
+        }
+        else
+          output
     }
   }
 
@@ -344,22 +332,18 @@ class StructuredStreamingETLActor(env: {
     * Stops the processing component belonging to this component actor
     */
   private def stopProcessingComponent(): Unit = {
-    val queryName =
-      generateUniqueComponentName(pipegraph, structuredStreamingETL)
+    val queryName = generateUniqueComponentName(pipegraph, structuredStreamingETL)
     logger.info(s"Stopping component $queryName")
 
-    val structuredQueryOpt =
-      sparkSession.streams.active.find(_.name == queryName)
+    val structuredQueryOpt = sparkSession.streams.active.find(_.name == queryName)
     structuredQueryOpt match {
       case Some(structuredQuery) =>
-        logger.info(
-          s"Found StructuredQuery $structuredQuery corresponding to component $queryName, stopping it...")
-        structuredQuery.stop()
-        logger.info(
-          s"Successfully stopped StructuredQuery corresponding to component $queryName")
+        logger.info(s"Found StructuredQuery $structuredQuery corresponding to component $queryName, stopping it...")
+        structuredQuery.stop()        // TODO: may throws an exception to handle - see ISC-318
+        logger.info(s"Successfully stopped StructuredQuery corresponding to component $queryName")
+
       case None =>
-        logger.warn(
-          s"No matching StructuredQuery found for component $queryName! Maybe it has already been stopped?")
+        logger.warn(s"No matching StructuredQuery found for component $queryName! Maybe it has already been stopped?")
     }
   }
 }

@@ -16,7 +16,6 @@ import spray.json._
   * Created by Agile Lab s.r.l. on 09/08/2017.
   */
 object Pipegraph_C extends Directives with JsonSupport {
-  implicit val implicitTimeout = WaspSystem.generalTimeout
 
   def getRoute: Route = {
     // extract URI path element as Int
@@ -50,14 +49,14 @@ object Pipegraph_C extends Directives with JsonSupport {
       } ~
         pathPrefix(Segment) { name =>
           path("start") {
-            post {
-              complete {
-                WaspSystem.??[Either[String, String]](masterGuardian, StartPipegraph(name)) match {
-                  case Right(s) => s.toJson.toAngularOkResponse
-                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+              post {
+                complete {
+                  WaspSystem.??[Either[String, String]](masterGuardian, StartPipegraph(name)) match {
+                    case Right(s) => s.toJson.toAngularOkResponse
+                    case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                  }
                 }
               }
-            }
           } ~
             path("stop") {
               post {

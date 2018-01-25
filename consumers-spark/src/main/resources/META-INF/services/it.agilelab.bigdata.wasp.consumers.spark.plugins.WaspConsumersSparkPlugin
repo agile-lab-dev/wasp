@@ -1,0 +1,2 @@
+it.agilelab.bigdata.wasp.consumers.spark.plugins.console.ConsoleConsumersSpark
+it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaConsumersSpark

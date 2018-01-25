@@ -15,9 +15,9 @@ import org.apache.spark.streaming.StreamingContext
 	*/
 trait WaspConsumersSparkPlugin {
 	def initialize(waspDB: WaspDB)
-	def  getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter
-	def  getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel): SparkStructuredStreamingWriter
-	def  getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter
-	def  getSparkReader(id: String, name: String): SparkReader
-	def  pluginType: String
+	def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter
+	def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel): SparkStructuredStreamingWriter
+	def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter
+	def getSparkReader(id: String, name: String): SparkReader
+	def pluginType: String
 }

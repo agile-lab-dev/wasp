@@ -19,7 +19,8 @@ before_script:
     - >
        echo "[repositories]
             maven-proxy-snapshots: ${NEXUS_URL}/repository/maven-snapshots/
-            maven-proxy-releases: ${NEXUS_URL}/repository/maven-central/
+            maven-proxy-releases: ${NEXUS_URL}/repository/maven-releases/
+            maven-proxy-central:  ${NEXUS_URL}/repository/maven-central/
             maven-central" > repositories
 compile:
   stage: compile

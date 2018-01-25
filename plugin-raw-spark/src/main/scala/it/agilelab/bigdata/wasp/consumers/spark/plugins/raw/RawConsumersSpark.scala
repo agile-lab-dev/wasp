@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.{RawBL, RawBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{RawModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.{Datastores, RawModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -20,27 +20,27 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var rawBL: RawBL = _
 
   override def initialize(waspDB: WaspDB): Unit = {
-    logger.info(s"Initialize the RawBL")
+    logger.info(s"Initialize the raw BL")
     rawBL = new RawBLImp(waspDB)
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize HDFSSparkStreamingWriter with this model: $writerModel")
-    new RawSparkLegacyStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), ssc)
+    logger.info(s"Initialize the HDFS spark streaming writer with this model: $writerModel")
+    new RawSparkLegacyStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.get.getValue.toHexString), ssc)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize HDFSSparkStructuredStreamingWriter with this model: $writerModel")
-    new RawSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), ss)
+    logger.info(s"Initialize HDFS spark structured streaming writer with this model: $writerModel")
+    new RawSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.get.getValue.toHexString), ss)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize HDFSSparkWriter with this model: $writerModel")
-    new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.endpointId.getValue.toHexString), sc)
+    logger.info(s"Initialize HDFS spark batch writer with this model: $writerModel")
+    new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.endpointId.get.getValue.toHexString), sc)
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
-    logger.info(s"Initialize HDFSReader with this id: '$id' and name: '$name'")
+    logger.info(s"Initialize HDFS reader with this id: '$id' and name: '$name'")
     new RawSparkReader(getModelAndChekHdfsSchema(id))
   }
 
@@ -60,5 +60,5 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  override def pluginType: String = "raw"
+  override def pluginType: String = Datastores.rawProduct
 }

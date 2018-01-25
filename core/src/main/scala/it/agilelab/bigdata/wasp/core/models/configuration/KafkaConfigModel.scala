@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.core.models.configuration
 
-import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
+import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnection}
 
 case class KafkaConfigModel(connections: Seq[ConnectionConfig],
                             ingest_rate: String,
-	                          zookeeper: ConnectionConfig,
+														zookeeperConnections: ZookeeperConnection,
 	                          broker_id: String,
 	                          partitioner_fqcn: String,
 	                          default_encoder: String,
@@ -23,6 +23,7 @@ case class KafkaConfigModel(connections: Seq[ConnectionConfig],
 			case _ : Throwable => defaultIngestRate
 		}
 	}
+
 
 }
 
