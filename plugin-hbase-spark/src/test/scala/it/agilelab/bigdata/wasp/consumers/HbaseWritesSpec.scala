@@ -1,4 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers
+/*
 
 
 import org.apache.hadoop.hbase.spark.LatestHBaseContextCache
@@ -318,3 +319,4 @@ class HbaseWritesSpec  extends FlatSpec  with ScalaFutures with BeforeAndAfter  
 
 
 }
+*/
