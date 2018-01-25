@@ -122,7 +122,6 @@ object ConfigManager extends Logging {
       sparkSubConfig.getInt("retained-tasks"),
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches")
-
     )
   }
 
