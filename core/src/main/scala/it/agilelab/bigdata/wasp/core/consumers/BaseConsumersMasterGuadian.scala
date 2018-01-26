@@ -50,7 +50,11 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL })
 	
 	// behaviour while starting
 	def starting: Receive = {
-		case Right(_) =>
+		case Right(s) =>
+
+			val msg = s"ETL started - Message from ETLActor: ${s}"
+			logger.info(msg)
+
 			// register component actor
 			registerComponentActor(sender())
 			
@@ -64,7 +68,7 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL })
 			}
 
 		case Left(s) =>
-			val msg = s"Pipegraph not started - Message from ETLActor: ${s}"
+			val msg = s"ETL not started - Message from ETLActor: ${s}"
 			logger.error(msg)
 			finishStartup(success = false, errorMsg = msg)
 
