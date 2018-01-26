@@ -2,8 +2,7 @@ package it.agilelab.bigdata.wasp.core
 
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
-
+import org.mongodb.scala.bson.BsonObjectId
 
 /**
 	* Default system pipegraphs: logging & raw.
@@ -98,7 +97,7 @@ private[wasp] object LoggerPipegraph {
 		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
 		rtComponents = Nil,
 		dashboard = None,
-		isActive = true,
+		isActive = false,
 		_id = Some(BsonObjectId())
 	)
 }
@@ -163,7 +162,7 @@ private[wasp] object RawPipegraph {
 		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
 		rtComponents = Nil,
 		dashboard = None,
-		isActive = true,
+		isActive = false,
 		_id = Some(BsonObjectId())
 	)
 }

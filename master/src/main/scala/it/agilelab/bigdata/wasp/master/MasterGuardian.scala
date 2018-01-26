@@ -177,7 +177,12 @@ class MasterGuardian(env: {
   }
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
-    // modify the active flag
+
+    // TODO revise this behaviour (pre-global-modification)
+    /* modify the isActive flag
+        startPipegraph -> pipegraph and all components isActive flags = true
+        stopPipegraph -> pipegraph and all components isActive flags = false
+     */
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
 
     var msgAdditional = ""
@@ -231,20 +236,28 @@ class MasterGuardian(env: {
       val msg = s"Pipegraph '${pipegraph.name}'" + (if (active) "started" else "stopped")
       Right(msg + msgAdditional)
     } else { // something broke
-      // TODO: we may be in an inconsistent state with partially started/stopped pipegraphs - see ISC-204
-      // undo active flag modification
+      /** TODO: possible inconsistent state with partially started/stopped pipegraphs - see ISC-204
+        * Choose a recovery strategy (es. stop/start all components, restart/restop components not started/stopped, ...)
+        * */
+
+      // TODO revise this behaviour (post-global-modification)
+      /* undo isActive flag modification
+          startPipegraph -> pipegraph and all components isActive flags = false
+          stopPipegraph -> pipegraph and all components isActive flags = true
+       */
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
+
       val msg = s"Pipegraph '${pipegraph.name}' not " + (if (active) "started" else "stopped")
       Left(msg + msgAdditional)
     }
   }
 
-  //TODO  implementare questa parte
+  // TODO
   private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
     Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not started [NOT IMPLEMENTED]")
   }
 
-  //TODO  implementare questa parte
+  // TODO
   private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
     Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not stopped [NOT IMPLEMENTED]")
   }
