@@ -50,11 +50,15 @@ class LegacyStreamingETLActor(env: {
       validationTask()
       mainTask()
     } catch {
-      case e: Exception => {
+      case e: Exception =>
         val msg = s"Pipegraph '${pipegraph.name}' - LegacyStreamingETLActor '${legacyStreamingETL.name}': Exception: ${e.getMessage}"
         logger.error(msg)
         listener ! Left(msg)
-      }
+
+      case e: Error =>
+        val msg = s"Pipegraph '${pipegraph.name}' - LegacyStreamingETLActor '${legacyStreamingETL.name}': Error: ${e.getMessage}"
+        logger.error(msg)
+        listener ! Left(msg)
     }
   }
 
@@ -218,8 +222,8 @@ class LegacyStreamingETLActor(env: {
       case None => throw new Exception(s"No Spark Streaming writer available for writer ${legacyStreamingETL.output}")
     }
 
-    logger.info(s"Actor is notifying the guardian that it's ready")
-    listener ! Right()
+    val msg = s"Pipegraph '${pipegraph.name}' - LegacyStreamingETLActor '${legacyStreamingETL.name}' started"
+    listener ! Right(msg)
   }
 
   private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {

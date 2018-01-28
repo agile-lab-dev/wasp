@@ -177,7 +177,12 @@ class MasterGuardian(env: {
   }
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
-    // modify the active flag
+
+    // TODO revise this behaviour (pre-global-modification)
+    /* modify the isActive flag
+        startPipegraph -> pipegraph and all components isActive flags = true
+        stopPipegraph -> pipegraph and all components isActive flags = false
+     */
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
 
     var msgAdditional = ""
@@ -228,25 +233,33 @@ class MasterGuardian(env: {
     }
 
     if (resSpark && resRt) { // everything ok
-      val msg = "Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped")
+      val msg = s"Pipegraph '${pipegraph.name}'" + (if (active) "started" else "stopped")
       Right(msg + msgAdditional)
     } else { // something broke
-      // TODO: we may be in an inconsistent state with partially started/stopped pipegraphs - see ISC-204
-      // undo active flag modification
+      /** TODO: possible inconsistent state with partially started/stopped pipegraphs - see ISC-204
+        * Choose a recovery strategy (es. stop/start all components, restart/restop components not started/stopped, ...)
+        * */
+
+      // TODO revise this behaviour (post-global-modification)
+      /* undo isActive flag modification
+          startPipegraph -> pipegraph and all components isActive flags = false
+          stopPipegraph -> pipegraph and all components isActive flags = true
+       */
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
-      val msg = "Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped")
+
+      val msg = s"Pipegraph '${pipegraph.name}' not " + (if (active) "started" else "stopped")
       Left(msg + msgAdditional)
     }
   }
 
-  //TODO  implementare questa parte
+  // TODO
   private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
-    Left("ETL '" + etlName + "' not started")
+    Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not started [NOT IMPLEMENTED]")
   }
 
-  //TODO  implementare questa parte
+  // TODO
   private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
-    Left("ETL '" + etlName + "' not stopped")
+    Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not stopped [NOT IMPLEMENTED]")
   }
 
   private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
@@ -280,15 +293,13 @@ class MasterGuardian(env: {
     if (jobRes.result) {
       Right(s"Batch job '${batchJob.name}' accepted (queued or processing)")
     } else {
-      Left(s"Batch job ${batchJob.name}' not accepted")
+      Left(s"Batch job '${batchJob.name}' not accepted")
     }
   }
 
-  // TODO improve logging messages
   private def startPendingBatchJobs(): Either[String, String] = {
-    //TODO: delete log
-    logger.info("Sending CheckJobsBucketMessage to Batch Guardian.")
+    logger.info("Scheduling check of batch jobs bucket")
     batchMasterGuardian ! CheckJobsBucketMessage()
-    Right("Batch jobs checking started")
+    Right("Scheduled the check of batch jobs bucket")
   }
 }

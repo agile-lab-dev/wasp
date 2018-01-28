@@ -6,7 +6,6 @@ import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
 import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
 
-
 trait WaspLauncher {
 	// the actual version of WASP being ran
 	val version: String = BuildInfo.version // BuildInfo is generated at compile time by sbt-buildinfo plugin

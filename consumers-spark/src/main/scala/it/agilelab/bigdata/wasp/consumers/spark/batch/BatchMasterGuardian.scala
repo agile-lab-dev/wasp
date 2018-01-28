@@ -94,12 +94,12 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
 
     case message: CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
-      logger.info(s"Checking batch jobs bucket ...")
+      logger.info("Checking batch jobs bucket...")
       checkJobsBucket()
 
     case message: StartBatchJobMessage =>
       lastRestartMasterRef = sender()
-      logger.info(s"Processing batch job ${message.id} .")
+      logger.info(s"Processing batch job ${message.id}")
       lastRestartMasterRef ! BatchJobResult(message.id, startJob(message.id))
 
     case message: BatchJobProcessedMessage =>
@@ -117,7 +117,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   private def stopGuardian() {
 
     //Stop all actors bound to this guardian and the guardian itself
-    logger.info(s"Stopping actors bound to BatchMasterGuardian ...")
+    logger.info("Stopping actors bound to BatchMasterGuardian ...")
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, 60 seconds))
     val res = Await.result(globalStatus, 20 seconds)
 
@@ -183,7 +183,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   private def loadBatchJobs: Seq[BatchJobModel] = {
-    logger.info(s"Loading all batch jobs ...")
+    logger.info("Loading all batch jobs ...")
     val batchJobEntries  = env.batchJobBL.getPendingJobs()
     logger.info(s"Found ${batchJobEntries.length} pending batch jobs...")
 
@@ -191,7 +191,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   private def loadSchedules: Seq[BatchSchedulerModel] = {
-    logger.info(s"Loading all batch schedules ...")
+    logger.info("Loading all batch schedules ...")
     val schedules  = env.batchSchedulerBL.getActiveSchedulers()
     logger.info(s"Found ${schedules.length} active schedules...")
 
