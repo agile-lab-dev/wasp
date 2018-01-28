@@ -173,8 +173,6 @@ class SolrForeachWriter(val ss: SparkSession,
   }
 
   override def process(value: Row): Unit = {
-    println(value.getAs[String]("crashId"))
-
     val docs: SolrInputDocument = SolrSparkWriter.createSolrDocument(value)
     batch.add(docs)
 
