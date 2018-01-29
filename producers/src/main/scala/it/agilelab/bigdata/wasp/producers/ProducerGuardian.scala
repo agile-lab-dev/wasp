@@ -65,31 +65,21 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
     case Stop =>
       logger.info(s"Producer '$producerId' stopping")
-      val stopChildFuture = stopChildActors()
-
-      val senderTmp = sender()
-      stopChildFuture onSuccess {
-        case result =>
-          senderTmp ! result
-      }
-
-      stopChildFuture onFailure {
-        case result =>
-          val msg = s"Producer '$producerId': unknown failure: ${result.getMessage}"
-          logger.error(msg)
-          senderTmp ! Left(msg)
-      }
+      stopChildActors()
   }
 
   def startChildActors()
 
-  def stopChildActors(): Future[Either[String, Unit]] = {
+  def stopChildActors(): Unit = {
 
     //Stop all actors bound to this guardian and the guardian itself
     logger.info(s"Producer '$producerId': stopping actors bound to $self...")
 
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, generalTimeout.duration))
+    import scala.concurrent.duration._
+    val timeoutDuration = generalTimeout.duration - 15.seconds
+    val globalStatus = Future.traverse(context.children)(gracefulStop(_, timeoutDuration))
 
+    val senderTmp = sender()
     globalStatus map { res =>
       if (res reduceLeft (_ && _)) {
 
@@ -101,11 +91,11 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
         context become uninitialized
 
-        Right()
+        senderTmp ! Right()
       } else {
         val msg = s"Producer '$producerId': something went wrong! Unable to shutdown all nodes"
         logger.error(msg)
-        Left(msg)
+        senderTmp ! Left(msg)
       }
     }
   }

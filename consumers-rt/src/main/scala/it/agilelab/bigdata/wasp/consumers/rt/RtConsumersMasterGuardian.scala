@@ -144,11 +144,12 @@ class RtConsumersMasterGuardian(env: {
 
     // gracefully stop all component actors corresponding to now-inactive pipegraphs
     logger.info(s"Gracefully stopping ${inactiveRTComponentActors.size} rt component actors managing now-inactive components...")
-    val generalTimeoutDuration = generalTimeout.duration
-    val rtStatuses = inactiveRTComponentActors.map(gracefulStop(_, generalTimeoutDuration))
+    import scala.concurrent.duration._
+    val timeoutDuration = generalTimeout.duration - 15.seconds
+    val rtStatuses = inactiveRTComponentActors.map(gracefulStop(_, timeoutDuration - 5.seconds))
   
     // await all component actors' stopping
-    val res = Await.result(Future.sequence(rtStatuses), generalTimeoutDuration)
+    val res = Await.result(Future.sequence(rtStatuses), timeoutDuration)
   
     // check whether all components actors that had to stop actually stopped
     if (res reduceLeft (_ && _)) {
