@@ -62,7 +62,7 @@ class StructuredStreamingETLActor(env: {
         val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Exception: ${e.getMessage}"
         logger.error(msg)
         listener ! Left(msg)
-        
+
       case e: Error =>
         val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Error: ${e.getMessage}"
         logger.error(msg)
