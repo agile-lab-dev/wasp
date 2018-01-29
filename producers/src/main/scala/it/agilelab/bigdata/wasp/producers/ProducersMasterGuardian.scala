@@ -105,7 +105,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	
 	private def onProducer(id: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
 		env.producerBL.getById(id) match {
-			case None => Right("Producer not retrieved")
+			case None => Left("Producer not retrieved")
 			case Some(producer) => f(producer)
 		}
 	}
@@ -138,15 +138,22 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
 
-			//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
-			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Start) match {
-				case Right(_) =>
-					val msg = s"Producer '${producer.name}' started"
-					logger.info(msg)
-					Right(msg)
-				case Left(s) =>
-					//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
-					val msg = s"Producer '${producer.name}' not started - Message from ProducerGuardian: ${s}"
+			try {
+				//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
+				??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Start) match {
+					case Right(_) =>
+						val msg = s"Producer '${producer.name}' started"
+						logger.info(msg)
+						Right(msg)
+					case Left(s) =>
+						//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
+						val msg = s"Producer '${producer.name}' not started - Message from ProducerGuardian: ${s}"
+						logger.error(msg)
+						Left(msg)
+				}
+			} catch {
+				case e: Exception =>
+					val msg = s"Producer '${producer.name}' not started - Exception: ${e.getMessage}"
 					logger.error(msg)
 					Left(msg)
 			}
@@ -159,15 +166,22 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		val producers = retrieveProducers
 		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
 
-			//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
-			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Stop) match {
-				case Right(_) =>
-					val msg = s"Producer '${producer.name}' stopped"
-					logger.info(msg)
-					Right(msg)
-				case Left(s) =>
-					//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
-					val msg = s"Producer '${producer.name}' not stopped - Message from ProducerGuardian: ${s}"
+			try {
+				//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
+				??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Stop) match {
+					case Right(_) =>
+						val msg = s"Producer '${producer.name}' stopped"
+						logger.info(msg)
+						Right(msg)
+					case Left(s) =>
+						//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
+						val msg = s"Producer '${producer.name}' not stopped - Message from ProducerGuardian: ${s}"
+						logger.error(msg)
+						Left(msg)
+				}
+			} catch {
+				case e: Exception =>
+					val msg = s"Producer '${producer.name}' not stopped - Exception: ${e.getMessage}"
 					logger.error(msg)
 					Left(msg)
 			}

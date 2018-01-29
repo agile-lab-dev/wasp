@@ -46,9 +46,16 @@ class StructuredStreamingETLActor(env: {
   override def receive: Actor.Receive = {
     case StopProcessingComponent => {
       logger.info(s"Component actor $self stopping...")
-      stopProcessingComponent()
-      context stop self
-      logger.info(s"Component actor $self stopped")
+      try {
+        stopProcessingComponent()
+        context stop self
+        logger.info(s"Component actor $self stopped")
+      } catch {
+        case e: Exception =>
+          val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Exception: ${e.getMessage}"
+          logger.error(msg)
+          listener ! Left(msg)
+      }
     }
   }
 
@@ -156,7 +163,6 @@ class StructuredStreamingETLActor(env: {
       throw new Exception("MUST be only ONE topic, inputs: " + structuredStreamingETL.inputs)
   }
 
-  //TODO move in the extender class
   def mainTask(): Unit = {
 
     val topicStreams: List[(ReaderKey, DataFrame)] =
@@ -342,8 +348,9 @@ class StructuredStreamingETLActor(env: {
     val structuredQueryOpt = sparkSession.streams.active.find(_.name == queryName)
     structuredQueryOpt match {
       case Some(structuredQuery) =>
+
         logger.info(s"Found StructuredQuery $structuredQuery corresponding to component $queryName, stopping it...")
-        structuredQuery.stop()        // TODO: may throws an exception to handle - see ISC-318
+        structuredQuery.stop()
         logger.info(s"Successfully stopped StructuredQuery corresponding to component $queryName")
 
       case None =>
