@@ -86,7 +86,7 @@ class RtConsumersMasterGuardian(env: {
             logger.info(s"Starting RTActor for pipegraph ${pipegraph.name}, component ${component.name}...")
             val actor = context.actorOf(Props(new RTActor(env, component, self)))
             actor ! StartRT
-            logger.info(s"Started LegacyStreamingETLActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
+            logger.info(s"Started RTActor $actor for pipegraph ${pipegraph.name}, component ${component.name}")
           
             // add to component actor tracking map
             rtComponentActors += (generateUniqueComponentName(pipegraph, component) -> actor)
@@ -147,46 +147,55 @@ class RtConsumersMasterGuardian(env: {
     import scala.concurrent.duration._
     val timeoutDuration = generalTimeout.duration - 15.seconds
     val rtStatuses = inactiveRTComponentActors.map(gracefulStop(_, timeoutDuration - 5.seconds))
-  
-    // await all component actors' stopping
-    val res = Await.result(Future.sequence(rtStatuses), timeoutDuration)
-  
-    // check whether all components actors that had to stop actually stopped
-    if (res reduceLeft (_ && _)) {
-      logger.info(s"Stopping sequence completed")
-    
-      // cleanup references to now stopped component actors
-      inactiveRTComponentNames.map(rtComponentActors.remove) // remove rt components actors that we stopped
-    
-      // update counter for ready components because some rt components actors might have been left running
-      numberOfReadyComponents = rtComponentActors.size
-    
-      // no message sent to the MasterGuardian because we still need to startup again after this
-    
-      true
-    } else {
-      val msg = "Stopping sequence failed! Unable to shutdown all components actors"
-      logger.error(msg)
-    
-      // find out which children are still running
-      val childrenSet = context.children.toSet
-      numberOfReadyComponents = childrenSet.size
-      logger.error(s"Found $numberOfReadyComponents children still running")
-    
-      // filter out component actor tracking maps
-      val filteredRTCA = rtComponentActors filter { case (name, actor) => childrenSet(actor) }
-      rtComponentActors.clear()
-      rtComponentActors ++= filteredRTCA
-    
-      // output info about component actors still running
-      rtComponentActors foreach {
-        case (name, actor) => logger.error(s"RT component actor $actor for component $name is still running")
+
+    try {
+      // await all component actors' stopping
+      val res = Await.result(Future.sequence(rtStatuses), timeoutDuration)
+
+      // check whether all components actors that had to stop actually stopped
+      if (res reduceLeft (_ && _)) {
+        logger.info(s"Stopping sequence completed")
+
+        // cleanup references to now stopped component actors
+        inactiveRTComponentNames.map(rtComponentActors.remove) // remove rt components actors that we stopped
+
+        // update counter for ready components because some rt components actors might have been left running
+        numberOfReadyComponents = rtComponentActors.size
+
+        // no message sent to the MasterGuardian because we still need to startup again after this
+
+        true
+      } else {
+        val msg = "Stopping sequence failed! Unable to shutdown all components actors"
+        logger.error(msg)
+
+        // find out which children are still running
+        val childrenSet = context.children.toSet
+        numberOfReadyComponents = childrenSet.size
+        logger.error(s"Found $numberOfReadyComponents children still running")
+
+        // filter out component actor tracking maps
+        val filteredRTCA = rtComponentActors filter { case (name, actor) => childrenSet(actor) }
+        rtComponentActors.clear()
+        rtComponentActors ++= filteredRTCA
+
+        // output info about component actors still running
+        rtComponentActors foreach {
+          case (name, actor) => logger.error(s"RT component actor $actor for component $name is still running")
+        }
+
+        // tell the MasterGuardian we failed
+        masterGuardian ! Left(msg)
+
+        false
       }
-    
-      // tell the MasterGuardian we failed
-      masterGuardian ! Left(msg)
-    
-      false
+    } catch {
+      case e: Exception =>
+        val msg = s"RTActors not all stopped - Exception: ${e.getMessage}"
+        logger.error(msg)
+        masterGuardian ! Left(msg)
+
+        false
     }
   }
 

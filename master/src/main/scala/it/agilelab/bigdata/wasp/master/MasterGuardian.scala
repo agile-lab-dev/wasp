@@ -177,7 +177,7 @@ class MasterGuardian(env: {
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
 
-    // TODO revise this behaviour (pre-global-modification)
+    // TODO revise this behaviour (pre-global-modification) - required for the current behaviour of Spark/Rt-ConsumerMasterGuardian on beginStartup()
     /* modify the isActive flag
         startPipegraph -> pipegraph and all components isActive flags = true
         stopPipegraph -> pipegraph and all components isActive flags = false
@@ -239,7 +239,7 @@ class MasterGuardian(env: {
         * Choose a recovery strategy (es. stop/start all components, restart/restop components not started/stopped, ...)
         * */
 
-      // TODO revise this behaviour (post-global-modification)
+      // TODO revise this behaviour (post-global-modification) - required for the current behaviour of Spark/Rt-ConsumerMasterGuardian
       /* undo isActive flag modification
           startPipegraph -> pipegraph and all components isActive flags = false
           stopPipegraph -> pipegraph and all components isActive flags = true

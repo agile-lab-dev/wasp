@@ -148,7 +148,6 @@ class LegacyStreamingETLActor(env: {
       throw new Exception("MUST be only ONE topic, inputs: " + legacyStreamingETL.inputs)
   }
 
-  //TODO move in the extender class
   def mainTask(): Unit = {
 
     val topicStreams: List[(ReaderKey, DStream[String])] =
