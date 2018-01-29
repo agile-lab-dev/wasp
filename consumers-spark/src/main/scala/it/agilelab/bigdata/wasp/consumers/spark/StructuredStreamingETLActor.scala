@@ -58,11 +58,15 @@ class StructuredStreamingETLActor(env: {
       validationTask()
       mainTask()
     } catch {
-      case e: Exception => {
+      case e: Exception =>
         val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Exception: ${e.getMessage}"
         logger.error(msg)
         listener ! Left(msg)
-      }
+
+      case e: Error =>
+        val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Error: ${e.getMessage}"
+        logger.error(msg)
+        listener ! Left(msg)
     }
   }
 
@@ -232,8 +236,8 @@ class StructuredStreamingETLActor(env: {
       case None => throw new Exception(s"No Spark Structured Streaming writer available for writer ${structuredStreamingETL.output}")
     }
 
-    logger.info(s"Actor is notifying the guardian that it's ready")
-    listener ! Right()
+    val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}' started"
+    listener ! Right(msg)
   }
 
   private def retrieveDFs(staticReaderModels: List[ReaderModel]) : Map[ReaderKey, DataFrame] = {

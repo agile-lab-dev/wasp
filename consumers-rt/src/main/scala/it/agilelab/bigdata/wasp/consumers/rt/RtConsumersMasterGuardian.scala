@@ -141,6 +141,7 @@ class RtConsumersMasterGuardian(env: {
     val inactiveRTComponentNames = rtComponentActors.keys.toSet.diff(activeRTComponentNames)
     // grab corresponding actor refs
     val inactiveRTComponentActors = inactiveRTComponentNames.map(rtComponentActors).toSeq
+
     // gracefully stop all component actors corresponding to now-inactive pipegraphs
     logger.info(s"Gracefully stopping ${inactiveRTComponentActors.size} rt component actors managing now-inactive components...")
     val generalTimeoutDuration = generalTimeout.duration

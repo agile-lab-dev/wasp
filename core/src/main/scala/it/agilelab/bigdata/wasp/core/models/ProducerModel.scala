@@ -7,7 +7,7 @@ import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 case class ProducerModel(override val name: String,
                          className: String,
                          id_topic: Option[BsonObjectId],
-                         var isActive: Boolean,
+                         var isActive: Boolean = false,
                          configuration: Option[String] = None,
                          isRemote: Boolean,
                          isSystem: Boolean,

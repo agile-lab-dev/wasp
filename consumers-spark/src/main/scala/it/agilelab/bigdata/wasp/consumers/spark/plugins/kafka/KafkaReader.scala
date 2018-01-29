@@ -17,6 +17,8 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
+import scala.util.Try
+
 object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
   /**
@@ -97,8 +99,8 @@ object KafkaReader extends StreamingReader with Logging {
     val kafkaConfig = ConfigManager.getKafkaConfig
 
     val kafkaConfigMap: Map[String, String] = Map(
-      "zookeeper.connect" -> kafkaConfig.zookeeper.toString,
-      "zookeeper.connection.timeout.ms" -> kafkaConfig.zookeeper.timeout
+      "zookeeper.connect" -> kafkaConfig.zookeeperConnections.getZookeeperConnection(),
+      "zookeeper.connection.timeout.ms" -> Try(kafkaConfig.zookeeperConnections.connections.head.timeout.get).toOption
         .getOrElse(ConfigManager.getWaspConfig.servicesTimeoutMillis)
         .toString
     )

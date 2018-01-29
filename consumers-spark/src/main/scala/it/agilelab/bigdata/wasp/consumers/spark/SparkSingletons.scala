@@ -76,6 +76,7 @@ object SparkSingletons extends Logging {
           sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
           logger.info("Successfully instantiated SparkSession")
 
+          /* No longer required (see docker/docker-environment.conf - hdfs.configurationsResources)*/
 //          if (ConfigManager.conf.hasPath("hdfs.configurationsResources")) {
 //            ConfigManager.conf.getStringList("hdfs.configurationsResources").asScala.foreach(c => {
 //              sparkSession.sparkContext.hadoopConfiguration.addResource(new Path(c))

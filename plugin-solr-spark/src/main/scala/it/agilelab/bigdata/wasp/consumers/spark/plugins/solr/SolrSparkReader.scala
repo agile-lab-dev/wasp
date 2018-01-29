@@ -6,8 +6,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{DataFrame, SQLContext}
 
 /**
   * It read data from Solr with the configuration of SolrConfiguration.
@@ -25,6 +24,6 @@ class SolrSparkReader(indexModel: IndexModel) extends SparkReader with SolrConfi
     val sqlContext = new SQLContext(sc)
     val sparkSession = sqlContext.sparkSession
 
-    new SolrDataframe(sparkSession, solrZkHost, indexModel.name).df
+    new SolrDataframe(sparkSession, solrConfig.zookeeperConnections.getZookeeperConnection(), indexModel.name).df
   }
 }

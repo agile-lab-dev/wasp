@@ -40,7 +40,7 @@ case class LegacyStreamingETLModel(name: String,
                                    strategy: Option[StrategyModel],
                                    kafkaAccessType: String,
                                    group: String = "default",
-                                   var isActive: Boolean = true) extends ProcessingComponentModel
+                                   var isActive: Boolean = false) extends ProcessingComponentModel
 
 case class StructuredStreamingETLModel(name: String,
                                        inputs: List[ReaderModel],
@@ -49,12 +49,12 @@ case class StructuredStreamingETLModel(name: String,
                                        strategy: Option[StrategyModel],
                                        kafkaAccessType: String,
                                        group: String = "default",
-                                       var isActive: Boolean = true,
+                                       var isActive: Boolean = false,
                                        config: Map[String, String]) extends ProcessingComponentModel
 
 case class RTModel(name: String,
                    inputs: List[ReaderModel],
-                   var isActive: Boolean = true,
+                   var isActive: Boolean = false,
                    strategy: Option[StrategyModel] = None,
                    endpoint: Option[WriterModel] = None) extends ProcessingComponentModel
 
@@ -82,7 +82,7 @@ case class PipegraphModel(override val name: String,
                           structuredStreamingComponents: List[StructuredStreamingETLModel],
                           rtComponents: List[RTModel],
                           dashboard: Option[DashboardModel] = None,
-                          var isActive: Boolean = true,
+                          var isActive: Boolean = false,
                           _id: Option[BsonObjectId] = None) extends Model {
   def generateStandardPipegraphName: String = s"pipegraph_$name"
   

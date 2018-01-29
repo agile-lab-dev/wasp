@@ -6,6 +6,7 @@ import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
@@ -13,9 +14,9 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
-object ConfigManager {
+object ConfigManager extends Logging {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   val kafkaConfigName = "Kafka"
@@ -79,7 +80,7 @@ object ConfigManager {
     KafkaConfigModel(
       readConnections(kafkaSubConfig, "connections"),
       kafkaSubConfig.getString("ingest-rate"),
-      readConnection(kafkaSubConfig.getConfig("zookeeper")),
+      readZookeeperConnections(kafkaSubConfig, "zookeeperConnections", "zkChRoot"),
       kafkaSubConfig.getString("broker-id"),
       kafkaSubConfig.getString("partitioner-fqcn"),
       kafkaSubConfig.getString("default-encoder"),
@@ -116,7 +117,11 @@ object ConfigManager {
       sparkSubConfig.getInt("broadcast-port"),
       sparkSubConfig.getInt("fileserver-port"),
       sparkBatchConfigName,
-      sparkSubConfig.getString("driver-bind-address")
+      sparkSubConfig.getString("driver-bind-address"),
+      sparkSubConfig.getInt("retained-stages-jobs"),
+      sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-executions"),
+      sparkSubConfig.getInt("retained-batches")
     )
   }
 
@@ -143,6 +148,8 @@ object ConfigManager {
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
 
+    logger.info(sparkSubConfig.toString)
+
     val additionalJars = getAdditionalJars
 
     SparkStreamingConfigModel(
@@ -163,7 +170,11 @@ object ConfigManager {
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
       sparkStreamingConfigName,
-      sparkSubConfig.getString("driver-bind-address")
+      sparkSubConfig.getString("driver-bind-address"),
+      sparkSubConfig.getInt("retained-stages-jobs"),
+      sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-executions"),
+      sparkSubConfig.getInt("retained-batches")
     )
   }
 
@@ -188,7 +199,7 @@ object ConfigManager {
   private def getDefaultSolrConfig: SolrConfigModel = {
     val solrSubConfig = conf.getConfig("solrcloud")
     SolrConfigModel(
-      readConnections(solrSubConfig, "connections"),
+      readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
       Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
       solrConfigName,
       None,
@@ -284,6 +295,17 @@ object ConfigManager {
     connections map (connection => readConnection(connection)) toArray
   }
 
+
+  private def readZookeeperConnections(config: Config,
+                                       zkPath: String,
+                                       zkPathChRoot: String): ZookeeperConnection = {
+
+    val connections = config.getConfigList(zkPath).asScala
+    val chRoot = Try {config.getString(zkPathChRoot)}.toOption
+    val connectionsArray = connections.map(connection => readConnection(connection)).toArray
+    ZookeeperConnection(connectionsArray, chRoot)
+  }
+
   private def readApiEndPoint(config: Config, path: String): ConnectionConfig = {
     val connection = config.getConfig(path)
     readConnection(connection)
@@ -365,6 +387,13 @@ case class ConnectionConfig(protocol: String,
   }
 }
 
+case class ZookeeperConnection(connections: Seq[ConnectionConfig],
+                               chRoot: Option[String]) {
+  def getZookeeperConnection() = {
+    connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot.getOrElse("")}"
+  }
+}
+
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig
 }
@@ -387,10 +416,6 @@ trait ElasticConfiguration {
 
 trait SolrConfiguration {
   lazy val solrConfig: SolrConfigModel = ConfigManager.getSolrConfig
-  def solrZkHost: String = {
-    solrConfig.connections.map(conn => s"${conn.host}:${conn.port}/solr")
-      .mkString(",")
-  }
 }
 
 trait HBaseConfiguration {

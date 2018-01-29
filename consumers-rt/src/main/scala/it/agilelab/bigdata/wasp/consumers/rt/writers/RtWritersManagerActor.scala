@@ -73,7 +73,7 @@ class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
   def getKafkaUri(topic: String) = {
     val config = ConfigManager.getKafkaConfig
     val kafkaConnections = config.connections.mkString(",") // Why the "," https://github.com/apache/camel/blob/master/components/camel-kafka/src/test/java/org/apache/camel/component/kafka/KafkaComponentTest.java
-    val zookeeperConnections = config.zookeeper
+    val zookeeperConnections = config.zookeeperConnections.getZookeeperConnection()
 
     s"kafka:$kafkaConnections?topic=$topic&zookeeperConnect=$zookeeperConnections&groupId=${this.hashCode().toString}"
 

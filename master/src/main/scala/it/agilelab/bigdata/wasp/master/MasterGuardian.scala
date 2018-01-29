@@ -4,7 +4,6 @@ import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import akka.pattern.ask
-import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -28,7 +27,7 @@ object MasterGuardian
     logger.info(f"Index rollover is enabled: scheduling index rollover ${initialDelay.toUnit(HOURS)}%4.2f hours from now and then every $interval")
     actorSystem.scheduler.schedule(initialDelay, interval) {
 
-      WaspSystem.??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
+      ??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
         case Right(s) => logger.info(s"RestartPipegraphs: $s")
         case Left(s) => logger.error(s"Failure during the pipegraphs restarting: $s")
       }
@@ -177,14 +176,19 @@ class MasterGuardian(env: {
   }
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
-    // modify the active flag
+
+    // TODO revise this behaviour (pre-global-modification)
+    /* modify the isActive flag
+        startPipegraph -> pipegraph and all components isActive flags = true
+        stopPipegraph -> pipegraph and all components isActive flags = false
+     */
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
 
     var msgAdditional = ""
     // ask the guardians to restart only if the pipegraph has components that involve them
     val resSpark = if (pipegraph.hasSparkComponents) {
       try {
-        ??[Either[String, String]](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration)) match {
+        ??[Either[String, String]](sparkConsumersMasterGuardian, RestartConsumers) match {
           case Right(_) =>
             true
           case Left(s) =>
@@ -206,7 +210,7 @@ class MasterGuardian(env: {
     }
     val resRt = if (pipegraph.hasRtComponents) {
       try {
-        ??[Either[String, String]](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration)) match {
+        ??[Either[String, String]](rtConsumersMasterGuardian, RestartConsumers) match {
           case Right(_) =>
             true
           case Left(s) =>
@@ -228,25 +232,33 @@ class MasterGuardian(env: {
     }
 
     if (resSpark && resRt) { // everything ok
-      val msg = "Pipegraph '" + pipegraph.name + "' " + (if (active) "started" else "stopped")
+      val msg = s"Pipegraph '${pipegraph.name}'" + (if (active) "started" else "stopped")
       Right(msg + msgAdditional)
     } else { // something broke
-      // TODO: we may be in an inconsistent state with partially started/stopped pipegraphs - see ISC-204
-      // undo active flag modification
+      /** TODO: possible inconsistent state with partially started/stopped pipegraphs - see ISC-204
+        * Choose a recovery strategy (es. stop/start all components, restart/restop components not started/stopped, ...)
+        * */
+
+      // TODO revise this behaviour (post-global-modification)
+      /* undo isActive flag modification
+          startPipegraph -> pipegraph and all components isActive flags = false
+          stopPipegraph -> pipegraph and all components isActive flags = true
+       */
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
-      val msg = "Pipegraph '" + pipegraph.name + "' not " + (if (active) "started" else "stopped")
+
+      val msg = s"Pipegraph '${pipegraph.name}' not " + (if (active) "started" else "stopped")
       Left(msg + msgAdditional)
     }
   }
 
-  //TODO  implementare questa parte
+  // TODO
   private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
-    Left("ETL '" + etlName + "' not started")
+    Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not started [NOT IMPLEMENTED]")
   }
 
-  //TODO  implementare questa parte
+  // TODO
   private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
-    Left("ETL '" + etlName + "' not stopped")
+    Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not stopped [NOT IMPLEMENTED]")
   }
 
   private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
@@ -276,19 +288,17 @@ class MasterGuardian(env: {
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
-    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob._id.get.getValue.toHexString), Some(generalTimeout.duration))
+    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob._id.get.getValue.toHexString))
     if (jobRes.result) {
       Right(s"Batch job '${batchJob.name}' accepted (queued or processing)")
     } else {
-      Left(s"Batch job ${batchJob.name}' not accepted")
+      Left(s"Batch job '${batchJob.name}' not accepted")
     }
   }
 
-  // TODO improve logging messages
   private def startPendingBatchJobs(): Either[String, String] = {
-    //TODO: delete log
-    logger.info("Sending CheckJobsBucketMessage to Batch Guardian.")
+    logger.info("Scheduling check of batch jobs bucket")
     batchMasterGuardian ! CheckJobsBucketMessage()
-    Right("Batch jobs checking started")
+    Right("Scheduled the check of batch jobs bucket")
   }
 }

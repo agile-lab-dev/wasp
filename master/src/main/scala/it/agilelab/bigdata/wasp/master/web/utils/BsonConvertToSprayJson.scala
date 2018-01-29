@@ -3,10 +3,9 @@ package it.agilelab.bigdata.wasp.master.web.utils
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
+import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnection}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
-import spray.json.{JsValue, RootJsonFormat}
-import spray.json._
+import spray.json.{JsValue, RootJsonFormat, _}
 
 /**
   * Created by Agile Lab s.r.l. on 04/08/2017.
@@ -46,9 +45,10 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
   implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat11(PipegraphModel.apply)
   implicit val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
+  implicit val ZookeeperConnectionFormat: RootJsonFormat[ZookeeperConnection] = jsonFormat2(ZookeeperConnection.apply)
   implicit val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat10(KafkaConfigModel.apply)
-  implicit val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat16(SparkBatchConfigModel.apply)
-  implicit val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat18(SparkStreamingConfigModel.apply)
+  implicit val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat20(SparkBatchConfigModel.apply)
+  implicit val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat22(SparkStreamingConfigModel.apply)
   implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat3(ElasticConfigModel.apply)
   implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat5(SolrConfigModel.apply)
   implicit val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)

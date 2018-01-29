@@ -15,13 +15,10 @@ import it.agilelab.bigdata.wasp.core.utils.JsonOps._
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
-import org.apache.solr.client.solrj.response.{
-  CollectionAdminResponse,
-  QueryResponse
-}
+import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -34,55 +31,7 @@ object SolrAdminActor {
   val template = "schemalessTemplate"
   val numShards = 1
   val replicationFactor = 1
-  val schema =
-    """[
-                        {
-                            "name":"id_event",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"source_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"topic_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"metric_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"timestamp",
-                            "type":"tlong",
-                            "stored":true
-                        },
-                        {
-                            "name":"latitude",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"longitude",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"value",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"payload",
-                            "type":"string",
-                            "stored":true
-                        }
-                 ]"""
-
+  val schema = ""
 }
 
 class SolrAdminActor
@@ -125,7 +74,7 @@ class SolrAdminActor
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    solrServer = new CloudSolrServer(solrConfig.connections.mkString(","))
+    solrServer = new CloudSolrServer(solrConfig.zookeeperConnections.getZookeeperConnection())
 
     try {
       solrServer.connect()
@@ -398,6 +347,8 @@ class SolrAdminActor
     logger.info(s"Check collection: $message")
 
     val zkStateReader: ZkStateReader = solrServer.getZkStateReader
+  solrServer.getZkStateReader
+    logger.info(s"\n\n zkStateReader: $zkStateReader")
     zkStateReader.updateClusterState(true)
     val clusterState: ClusterState = zkStateReader.getClusterState
 

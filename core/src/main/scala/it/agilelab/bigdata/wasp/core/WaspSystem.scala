@@ -245,7 +245,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     //    * XYZMasterGuardian to ... => durationInit - 10s
     //    ... maybe to extends ...
     import scala.concurrent.duration._
-    val newDuration:FiniteDuration = actorReference.path.name match {
+    val timeoutDuration: FiniteDuration = actorReference.path.name match {
       case WaspSystem.masterGuardianSingletonProxyName => durationInit
       case WaspSystem.sparkConsumersMasterGuardianSingletonProxyName  |
            WaspSystem.rtConsumersMasterGuardianSingletonProxyName     |
@@ -255,13 +255,13 @@ object WaspSystem extends WaspConfiguration with Logging {
     }
 
     /* Only for Debug */
-//    val newDuration:FiniteDuration = actorReference.path.name match {
+//    val timeoutDuration: FiniteDuration = actorReference.path.name match {
 //      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
 //      case _ => durationInit
 //    }
 
-    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(newDuration)
-    Await.result(actorReference ? message, newDuration).asInstanceOf[T]
+    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(timeoutDuration)
+    Await.result(actorReference ? message, timeoutDuration).asInstanceOf[T]
   }
   
   // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident
