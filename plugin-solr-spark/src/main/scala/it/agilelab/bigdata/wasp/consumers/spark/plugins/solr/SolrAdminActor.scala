@@ -8,7 +8,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
 import it.agilelab.bigdata.wasp.core.utils.JsonOps._
@@ -43,8 +43,8 @@ class SolrAdminActor
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
 
-  // implicit timeout used below
-  implicit val timeout = WaspSystem.generalTimeout
+  import scala.concurrent.duration._
+  val timeoutDuration = generalTimeout.duration - 15.seconds
 
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
@@ -146,7 +146,7 @@ class SolrAdminActor
               false
             }
         }
-      }, timeout.duration)
+      }, timeoutDuration)
   }
 
   private def createConfigSet(name: String, template: String): Boolean = {
@@ -192,7 +192,7 @@ class SolrAdminActor
               false
             }
         }
-      }, timeout.duration)
+      }, timeoutDuration)
   }
 
   private def addCollection(message: AddCollection): Boolean = {
@@ -256,7 +256,7 @@ class SolrAdminActor
           }
         }
       },
-      timeout.duration
+      timeoutDuration
     )
   }
 

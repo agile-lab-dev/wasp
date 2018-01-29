@@ -4,7 +4,6 @@ import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import akka.pattern.ask
-import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -28,7 +27,7 @@ object MasterGuardian
     logger.info(f"Index rollover is enabled: scheduling index rollover ${initialDelay.toUnit(HOURS)}%4.2f hours from now and then every $interval")
     actorSystem.scheduler.schedule(initialDelay, interval) {
 
-      WaspSystem.??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
+      ??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
         case Right(s) => logger.info(s"RestartPipegraphs: $s")
         case Left(s) => logger.error(s"Failure during the pipegraphs restarting: $s")
       }
@@ -178,7 +177,7 @@ class MasterGuardian(env: {
 
   private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
 
-    // TODO revise this behaviour (pre-global-modification)
+    // TODO revise this behaviour (pre-global-modification) - required for the current behaviour of Spark/Rt-ConsumerMasterGuardian on beginStartup()
     /* modify the isActive flag
         startPipegraph -> pipegraph and all components isActive flags = true
         stopPipegraph -> pipegraph and all components isActive flags = false
@@ -189,7 +188,7 @@ class MasterGuardian(env: {
     // ask the guardians to restart only if the pipegraph has components that involve them
     val resSpark = if (pipegraph.hasSparkComponents) {
       try {
-        ??[Either[String, String]](sparkConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration)) match {
+        ??[Either[String, String]](sparkConsumersMasterGuardian, RestartConsumers) match {
           case Right(_) =>
             true
           case Left(s) =>
@@ -211,7 +210,7 @@ class MasterGuardian(env: {
     }
     val resRt = if (pipegraph.hasRtComponents) {
       try {
-        ??[Either[String, String]](rtConsumersMasterGuardian, RestartConsumers, Some(generalTimeout.duration)) match {
+        ??[Either[String, String]](rtConsumersMasterGuardian, RestartConsumers) match {
           case Right(_) =>
             true
           case Left(s) =>
@@ -240,7 +239,7 @@ class MasterGuardian(env: {
         * Choose a recovery strategy (es. stop/start all components, restart/restop components not started/stopped, ...)
         * */
 
-      // TODO revise this behaviour (post-global-modification)
+      // TODO revise this behaviour (post-global-modification) - required for the current behaviour of Spark/Rt-ConsumerMasterGuardian
       /* undo isActive flag modification
           startPipegraph -> pipegraph and all components isActive flags = false
           stopPipegraph -> pipegraph and all components isActive flags = true
@@ -289,7 +288,7 @@ class MasterGuardian(env: {
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
-    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob._id.get.getValue.toHexString), Some(generalTimeout.duration))
+    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob._id.get.getValue.toHexString))
     if (jobRes.result) {
       Right(s"Batch job '${batchJob.name}' accepted (queued or processing)")
     } else {
