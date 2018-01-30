@@ -114,14 +114,20 @@ class RtConsumersMasterGuardian(env: {
       // enter intialized state
       context become initialized
       logger.info(s"RtConsumersMasterGuardian $self is now in initialized state")
-
-      // unstash messages stashed while in starting state
-      logger.info("Unstashing queued messages...")
-      unstashAll()
     } else {
+      logger.info(s"RtConsumersMasterGuardian $self stopping startup sequence...")
+
       // startup error to MasterGuardian
       masterGuardian ! Left(errorMsg)
+
+      // enter uninitialized state
+      context become uninitialized
+      logger.info(s"RtConsumersMasterGuardian $self is now in uninitialized state")
     }
+
+    // unstash messages stashed while in starting state
+    logger.info(s"RtConsumersMasterGuardian $self unstashing queued messages...")
+    unstashAll()
   }
   
   override def stop(): Boolean = {
