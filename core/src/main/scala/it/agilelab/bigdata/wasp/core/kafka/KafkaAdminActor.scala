@@ -22,8 +22,7 @@ class KafkaAdminActor extends Actor with Logging {
 //  var zkClient: ZkClient = _
   var zkUtils: ZkUtils = _
 
-  def receive: Actor.Receive = {
-
+  override def receive: Actor.Receive = {
     case message: AddTopic => call(message, addTopic)
     case message: CheckTopic => call(message, checkTopic)
     case message: RemoveTopic => call(message, removeTopic)
@@ -41,8 +40,8 @@ class KafkaAdminActor extends Actor with Logging {
 
     logger.info(s"Before create a zookeeper client with config: $kafkaConfig ")
     try {
-      val zkClient = ZkUtils.createZkClient(kafkaConfig.zookeeper.toString, KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
-      zkUtils = new ZkUtils(zkClient, new ZkConnection(kafkaConfig.zookeeper.toString), false)
+      val zkClient = ZkUtils.createZkClient(kafkaConfig.zookeeperConnections.getZookeeperConnection(), KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
+      zkUtils = new ZkUtils(zkClient, new ZkConnection(kafkaConfig.zookeeperConnections.getZookeeperConnection()), false)
       logger.info(s"New zookeeper client created $zkClient")
       true
     } catch {
@@ -71,7 +70,7 @@ class KafkaAdminActor extends Actor with Logging {
   private def call[T <: KafkaAdminMessage](message: T, f: T => Any) = {
     val result = f(message)
     logger.info(message + ": " + result)
-    sender ! result
+    sender() ! result
   }
 
 

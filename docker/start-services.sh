@@ -32,7 +32,6 @@ SPARK=1
 KAFKA=1
 HBASE=0
 HDFS=0
-POSITIONAL=()
 while [[ $# -gt 0 ]]; do
     ARG=$1
     case $ARG in

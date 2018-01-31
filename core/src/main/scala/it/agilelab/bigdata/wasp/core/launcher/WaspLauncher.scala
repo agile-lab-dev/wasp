@@ -2,8 +2,9 @@ package it.agilelab.bigdata.wasp.core.launcher
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
-
+import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
+import org.apache.commons.cli
+import org.apache.commons.cli.CommandLine
 
 trait WaspLauncher {
 	// the actual version of WASP being ran
@@ -19,38 +20,43 @@ trait WaspLauncher {
                      /_/
 								               """.format(version)
 
-	// TODO write usage information (when command line switches are somewhat definitive)
-	val usage: String = """Usage:
-			TODO!
-		          """.stripMargin
-
 	var waspDB: WaspDB = _
 
 	def main(args: Array[String]) {
-		// TODO switch to commons-cli & make options extensible
-		val options = new WaspOptions(args)
 
-		// handle error, version & help
-		if (options.error) {
-			val value = options.errorValue
-			printErrorAndExit(s"Unrecognized option '$value'.")
-		} else if (options.version) {
-			printVersionAndExit()
-		} else if (options.help) {
-			printUsageAndExit()
+		val commandLine =
+			try {
+				// parse command line
+				CliUtils.parseArgsList(args, getOptions)
+			} catch {
+				case e: Exception => e
+			}
+
+		commandLine match {
+			case e: Exception =>
+				printErrorAndExit(e.getMessage)
+
+			case commandLine: CommandLine =>
+
+				// handle version & help
+				if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
+					printVersionAndExit()
+				} else if (commandLine.hasOption(WaspCommandLineOptions.help.getOpt)) {
+					printHelpAndExit()
+				}
+
+				// print banner and build info
+				printBannerAndBuildInfo()
+
+				// initialize stuff
+				initializeWasp()
+
+				// initialize plugins
+				initializePlugins(args)
+
+				// launch the application
+				launch(commandLine)
 		}
-
-		// print banner and build info
-		printBannerAndBuildInfo()
-
-		// initialize stuff
-		initializeWasp()
-
-		// initialize plugins
-		initializePlugins(args)
-
-		// launch the application
-		launch(args)
 	}
 
 	def initializeWasp(): Unit = {
@@ -76,8 +82,8 @@ trait WaspLauncher {
 		System.exit(0)
 	}
 
-	private def printUsageAndExit(): Unit = {
-		println(usage)
+	private def printHelpAndExit(): Unit = {
+		CliUtils.printHelpForOptions(getOptions)
 		System.exit(0)
 	}
 	
@@ -96,8 +102,9 @@ trait WaspLauncher {
 		println(s"This is WASP node $getNodeName")
 	}
 	
-	def launch(args: Array[String]): Unit
-
+	protected def launch(commadLine: CommandLine): Unit
+	
+	protected def getOptions: Seq[cli.Option] = WaspCommandLineOptions.allOptions
 
 	/**
 		* Initialize the WASP plugins, this method is called after the wasp initialization

@@ -1,4 +1,3 @@
-
 package it.agilelab.bigdata.wasp.consumers.rt
 
 import akka.actor._
@@ -13,7 +12,6 @@ import it.agilelab.bigdata.wasp.core.utils._
 
 import scala.collection.mutable
 
-
 case class StartRT()
 
 case class StopRT()
@@ -22,6 +20,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
               rt: RTModel,
               listener: ActorRef)
   extends Actor with Logging {
+
   val strategy: Option[StrategyRT] = createStrategyRT(rt)
   lazy val kafkaReaders: List[Option[ActorRef]] = {
     rt.inputs.map { input =>
@@ -49,11 +48,12 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
     context.actorOf(Props(new RtWritersManagerActor(env, endpointsModel)))
   }
   
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case StartRT => {
       epManagerActor
       kafkaReaders
     }
+
     case StopRT => {
       kafkaReaders.foreach {
         kafkaReader =>
@@ -63,6 +63,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
       }
       epManagerActor ! PoisonPill
     }
+
     case (key: String, data: Array[Byte]) => {
       rt.inputs.foreach { input =>
         
@@ -120,5 +121,4 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
       logger.info("strategyRT: " + result)
       Some(result)
   }
-
 }

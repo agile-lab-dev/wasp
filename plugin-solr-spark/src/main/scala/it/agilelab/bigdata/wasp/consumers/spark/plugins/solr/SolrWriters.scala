@@ -75,7 +75,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
           }
         }
 
-        SolrSupport.indexDStreamOfDocs(solrConfig.connections.mkString(","),
+        SolrSupport.indexDStreamOfDocs(solrConfig.zookeeperConnections.getZookeeperConnection(),
                                        indexName,
                                        100,
                                        new JavaDStream[SolrInputDocument](docs))
@@ -123,9 +123,9 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
               index.replicationFactor.getOrElse(1))
           )) {
 
-        val solrWriter = new SolrForeatchWriter(
+        val solrWriter = new SolrForeachWriter(
           ss,
-          solrConfig.connections.mkString(","),
+          solrConfig.zookeeperConnections.getZookeeperConnection(),
           indexName,
           index.collection)
 
@@ -151,10 +151,10 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 }
 
-class SolrForeatchWriter(val ss: SparkSession,
-                         val connection: String,
-                         val indexName: String,
-                         val collection: String)
+class SolrForeachWriter(val ss: SparkSession,
+                        val connection: String,
+                        val indexName: String,
+                        val collection: String)
     extends ForeachWriter[Row] {
 
   var solrServer: CloudSolrServer = _
@@ -162,6 +162,11 @@ class SolrForeatchWriter(val ss: SparkSession,
   val batchSize = 100
 
   override def open(partitionId: Long, version: Long): Boolean = {
+
+    /*
+    * new CloudSolrServer(solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
+      .mkString(",") + "/solr")*/
+
     solrServer = SolrSupport.getSolrServer(connection)
     batch = new util.ArrayList[SolrInputDocument]
     true
@@ -214,7 +219,7 @@ class SolrSparkWriter(indexBL: IndexBL,
           SolrSparkWriter.createSolrDocument(r)
         }
 
-        SolrSupport.indexDocs(solrConfig.connections.mkString(","),
+        SolrSupport.indexDocs(solrConfig.zookeeperConnections.getZookeeperConnection(),
                               indexName,
                               100,
                               new JavaRDD[SolrInputDocument](docs))

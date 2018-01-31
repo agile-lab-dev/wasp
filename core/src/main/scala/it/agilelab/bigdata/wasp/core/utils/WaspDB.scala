@@ -230,6 +230,7 @@ object WaspDB extends Logging {
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
 	  createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
+	  createCodecProviderIgnoreNone(classOf[ZookeeperConnection]),
 	  createCodecProviderIgnoreNone(classOf[DashboardModel]),
 	  createCodecProviderIgnoreNone(classOf[RTModel]),
 	  createCodecProviderIgnoreNone(classOf[LegacyStreamingETLModel]),

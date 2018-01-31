@@ -1,23 +1,26 @@
 package it.agilelab.bigdata.wasp.core.consumers
 
-import akka.actor.{ActorRef, Stash}
+import akka.actor.{Actor, ActorRef, Stash}
 import it.agilelab.bigdata.wasp.core.bl.PipegraphBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.{OutputStreamInitialized, RestartConsumers}
+import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.core.models._
 
 /** Base class for consumer master guardians. Provides skeleton for behaviour and helpers.
 	*
 	* @author Nicolò Bidotti
 	*/
-abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) extends Stash with Logging {
+abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL })
+	extends Stash
+		with Logging {
+
 	// type alias for pipegraph -> components map
 	type PipegraphsToComponentsMap = Map[PipegraphModel, (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel])]
 	
 	// counter for ready components
 	protected var numberOfReadyComponents = 0
 	
-	// getter for total number of components that should be running
+	// getter for total number masterGuardianof components that should be running
 	def getTargetNumberOfReadyComponents: Int
 	
 	// ActorRef to MasterGuardian returned by the last ask - cannot be replaced with a simple ActorRef or singleton proxy!
@@ -34,7 +37,7 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 	
 	// standard receive
 	// NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
-	override def receive: Receive = uninitialized
+	override def receive: Actor.Receive = uninitialized
 	
 	// behaviour when uninitialized
 	def uninitialized: Receive = {
@@ -47,7 +50,11 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 	
 	// behaviour while starting
 	def starting: Receive = {
-		case OutputStreamInitialized =>
+		case Right(s) =>
+
+			val msg = s"ETL started - Message from ETLActor: ${s}"
+			logger.info(msg)
+
 			// register component actor
 			registerComponentActor(sender())
 			
@@ -57,8 +64,14 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 				finishStartup()
 			} else {
 				logger.info(s"Not all component actors have registered to the cluster (right now only $numberOfReadyComponents " +
-					            s"out of $getTargetNumberOfReadyComponents), waiting for more...")
+										s"out of $getTargetNumberOfReadyComponents), waiting for more...")
 			}
+
+		case Left(s) =>
+			val msg = s"ETL not started - Message from ETLActor: ${s}"
+			logger.error(msg)
+			finishStartup(success = false, errorMsg = msg)
+
 		case RestartConsumers =>
 			logger.info(s"Stashing RestartConsumers from ${sender()}")
 			stash()
@@ -66,6 +79,11 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 	
 	// behavior once initialized
 	def initialized: Receive = {
+		case Left(s) =>
+			val msg = s"ETL not stopped - Message from ETLActor: ${s}"
+			logger.error(msg)
+			// do nothing:  leave go stop() to Timeout
+
 		case RestartConsumers =>
 			// update MasterGuardian ActorRef
 			masterGuardian = sender()
@@ -91,7 +109,7 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL }) 
 		numberOfReadyComponents += 1
 	}
 	
-	protected def finishStartup(): Unit
+	protected def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit
 	
 	protected def stop(): Boolean
 	

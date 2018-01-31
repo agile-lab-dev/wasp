@@ -8,20 +8,17 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
 import it.agilelab.bigdata.wasp.core.utils.JsonOps._
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
-import org.apache.solr.client.solrj.response.{
-  CollectionAdminResponse,
-  QueryResponse
-}
+import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -34,55 +31,7 @@ object SolrAdminActor {
   val template = "schemalessTemplate"
   val numShards = 1
   val replicationFactor = 1
-  val schema =
-    """[
-                        {
-                            "name":"id_event",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"source_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"topic_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"metric_name",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"timestamp",
-                            "type":"tlong",
-                            "stored":true
-                        },
-                        {
-                            "name":"latitude",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"longitude",
-                            "type":"tdouble",
-                            "stored":true
-                        },
-                        {
-                            "name":"value",
-                            "type":"string",
-                            "stored":true
-                        },
-                        {
-                            "name":"payload",
-                            "type":"string",
-                            "stored":true
-                        }
-                 ]"""
-
+  val schema = ""
 }
 
 class SolrAdminActor
@@ -93,14 +42,11 @@ class SolrAdminActor
 
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
-  //TODO prendere il timeout dalla configurazione
-  //implicit val timeout = Timeout(ConfigManager.config)
-  implicit val timeout = WaspSystem.generalTimeout
 
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
 
-  def receive: Actor.Receive = {
+  override def receive: Actor.Receive = {
     case message: Search           => call(message, search)
     case message: AddCollection    => call(message, addCollection)
     case message: AddMapping       => call(message, addMapping)
@@ -125,7 +71,7 @@ class SolrAdminActor
 
     logger.info(s"Solr - New client created with: config $solrConfig")
 
-    solrServer = new CloudSolrServer(solrConfig.connections.mkString(","))
+    solrServer = new CloudSolrServer(solrConfig.zookeeperConnections.getZookeeperConnection())
 
     try {
       solrServer.connect()
@@ -151,7 +97,7 @@ class SolrAdminActor
   private def call[T <: SolrAdminMessage](message: T, f: T => Any) = {
     val result = f(message)
     logger.info(message + ": " + result)
-    sender ! result
+    sender() ! result
   }
 
   private def manageConfigSet(name: String, template: String) = {
@@ -197,7 +143,7 @@ class SolrAdminActor
               false
             }
         }
-      }, timeout.duration)
+      }, servicesTimeout.duration)
   }
 
   private def createConfigSet(name: String, template: String): Boolean = {
@@ -243,7 +189,7 @@ class SolrAdminActor
               false
             }
         }
-      }, timeout.duration)
+      }, servicesTimeout.duration)
   }
 
   private def addCollection(message: AddCollection): Boolean = {
@@ -306,8 +252,7 @@ class SolrAdminActor
             false
           }
         }
-      },
-      timeout.duration
+      }, servicesTimeout.duration
     )
   }
 
@@ -398,6 +343,8 @@ class SolrAdminActor
     logger.info(s"Check collection: $message")
 
     val zkStateReader: ZkStateReader = solrServer.getZkStateReader
+  solrServer.getZkStateReader
+    logger.info(s"\n\n zkStateReader: $zkStateReader")
     zkStateReader.updateClusterState(true)
     val clusterState: ClusterState = zkStateReader.getClusterState
 

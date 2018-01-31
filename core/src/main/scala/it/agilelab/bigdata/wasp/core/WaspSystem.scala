@@ -8,6 +8,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.pattern.ask
 import akka.util.Timeout
+import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.plugins.WaspPlugin
@@ -66,12 +67,18 @@ object WaspSystem extends WaspConfiguration with Logging {
   
   // actor refs of admin actors
   private var kafkaAdminActor_ : ActorRef = _
+
+  // actor ref of clusterListener actor
+  private var clusterListenerActor_ : ActorRef = _
   
   // distributed publish-subscribe mediator
   private var mediator_ : ActorRef = _
   
   // general timeout value, eg for actor's syncronous call (i.e. 'actor ? msg')
   val generalTimeout = Timeout(waspConfig.generalTimeoutMillis, TimeUnit.MILLISECONDS)
+
+  // services timeout, used below
+  val servicesTimeout = Timeout(waspConfig.servicesTimeoutMillis, TimeUnit.MILLISECONDS)
   
   /**
     * Initializes the WASP system if needed.
@@ -106,6 +113,11 @@ object WaspSystem extends WaspConfiguration with Logging {
       logger.info("Spawning admin actors")
       kafkaAdminActor_ = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
       logger.info("Spawned admin actors")
+
+      // spawn clusterListener actor
+      logger.info("Spawning clusterListener actor")
+      clusterListenerActor_ = actorSystem.actorOf(Props(new ClusterListenerActor), ClusterListenerActor.name)
+      logger.info("Spawned clusterListener actors")
       
       logger.info("Finding WASP plugins")
       val pluginLoader: ServiceLoader[WaspPlugin] = ServiceLoader.load[WaspPlugin](classOf[WaspPlugin])
@@ -120,13 +132,10 @@ object WaspSystem extends WaspConfiguration with Logging {
       }
   
       logger.info("Connecting to services")
-  
-      // services timeout, used below
-      val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
 
       // check connectivity with kafka's zookeper
       val kafkaResult = kafkaAdminActor.ask(it.agilelab.bigdata.wasp.core.kafka.Initialization(ConfigManager.getKafkaConfig))((KafkaAdminActor.connectionTimeout + 1000).millis)
-      val zkKafka = Await.ready(kafkaResult, Duration(servicesTimeoutMillis, TimeUnit.SECONDS))
+      val zkKafka = Await.ready(kafkaResult, servicesTimeout.duration)
       zkKafka.value match {
         case Some(Failure(t)) =>
           logger.error(t.getMessage)
@@ -139,7 +148,7 @@ object WaspSystem extends WaspConfiguration with Logging {
       }
 
       // implicit timeout used below
-      implicit val implicitServicesTimeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
+      implicit val implicitServicesTimeout = servicesTimeout
     
       // initialize indexed datastore
       val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
@@ -152,7 +161,7 @@ object WaspSystem extends WaspConfiguration with Logging {
       defaultKeyvalueDatastore match {
         case "hbase" => {
           logger.info(s"Trying to connect with HBase...")
-          startupHBase(servicesTimeoutMillis)
+          startupHBase(servicesTimeout.duration.toMillis)
         }
         case _ => {
           logger.error("No keyvalue datastore configured!")
@@ -223,8 +232,36 @@ object WaspSystem extends WaspConfiguration with Logging {
     * Synchronous ask
     */
   def ??[T](actorReference: ActorRef, message: Any, duration: Option[FiniteDuration] = None): T = {
-    implicit val implicitSynchronousActorCallTimeout = generalTimeout
-    Await.result(actorReference ? message, duration.getOrElse(generalTimeout.duration)).asInstanceOf[T]
+
+//    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(duration.getOrElse(generalTimeout.duration))
+//    Await.result(actorReference ? message, duration.getOrElse(generalTimeout.duration)).asInstanceOf[T]
+
+    val durationInit = duration.getOrElse(generalTimeout.duration)
+
+    // Manage the timeout in different ways:
+    //  Start from initial duration (received or generalTimeout in configFile) and decrease it foreach encapsulated actor communication level
+    //    * Xyz_C (AkkaHTTP Controller e.g. Pipegraph_C) to MasterGuardian => durationInit
+    //    * MasterGuardian to XyzMasterGuardian => durationInit - 5s
+    //    * XYZMasterGuardian to ... => durationInit - 10s
+    //    ... maybe to extends ...
+    import scala.concurrent.duration._
+    val timeoutDuration: FiniteDuration = actorReference.path.name match {
+      case WaspSystem.masterGuardianSingletonProxyName => durationInit
+      case WaspSystem.sparkConsumersMasterGuardianSingletonProxyName  |
+           WaspSystem.rtConsumersMasterGuardianSingletonProxyName     |
+           WaspSystem.batchMasterGuardianSingletonProxyName           |
+           WaspSystem.producersMasterGuardianSingletonProxyName => durationInit - 5.seconds
+      case _ => durationInit - 10.seconds
+    }
+
+    /* Only for Debug */
+//    val timeoutDuration: FiniteDuration = actorReference.path.name match {
+//      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
+//      case _ => durationInit
+//    }
+
+    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(timeoutDuration)
+    Await.result(actorReference ? message, timeoutDuration).asInstanceOf[T]
   }
   
   // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident
@@ -236,5 +273,6 @@ object WaspSystem extends WaspConfiguration with Logging {
   def sparkConsumersMasterGuardian: ActorRef = sparkConsumersMasterGuardian_
   def loggerActor: ActorRef = loggerActor_
   def kafkaAdminActor: ActorRef = kafkaAdminActor_
+  def clusterListenerActor: ActorRef = clusterListenerActor_
   def mediator: ActorRef = mediator_
 }

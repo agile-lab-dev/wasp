@@ -16,7 +16,6 @@ import spray.json._
   * Created by Agile Lab s.r.l. on 09/08/2017.
   */
 object BatchJob_C extends Directives with JsonSupport {
-  implicit val implicitTimeout = WaspSystem.generalTimeout
 
   def getRoute: Route = {
     // extract URI path element as Int

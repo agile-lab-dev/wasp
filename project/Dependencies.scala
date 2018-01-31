@@ -32,6 +32,9 @@ object Dependencies {
 				.exclude("org.apache.logging.log4j", "log4j-api")
 				.exclude("org.apache.logging.log4j", "log4j-core")
 				.exclude("org.apache.logging.log4j", "log4j-slf4j-impl")
+	  		.exclude("org.apache.solr", "solr-solrj")
+				.exclude("org.apache.solr", "solr-core")
+				.exclude("org.apache.solr", "solr-test-framework")
 
 		def kafkaExclusions: ModuleID =
 			module
@@ -44,7 +47,11 @@ object Dependencies {
 			module.excludeAll(
 				ExclusionRule(organization = "org.eclipse.jetty"),
 				ExclusionRule(organization = "javax.servlet"),
-				ExclusionRule(organization = "org.eclipse.jetty.orbit")
+				ExclusionRule(organization = "org.eclipse.jetty.orbit"),
+					ExclusionRule(organization = "org.apache.solr")/*, "solr-solrj")
+					.exclude("org.apache.solr", "solr-core")
+					.exclude("org.apache.solr", "solr-test-framework")*/
+
 			)
 
 	}
@@ -66,6 +73,7 @@ object Dependencies {
 	val avro = "org.apache.avro" % "avro" % Versions.avro
 	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
+	val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
   val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
   val elasticClientTransport = "org.elasticsearch.client" % "transport" % Versions.elasticSearch
   val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark
@@ -148,6 +156,7 @@ object Dependencies {
 		test ++
 		Seq(
 			avro,
+			commonsCli,
 			kafka, // TODO remove when switching to plugins
 			mongodbScala,
 			sparkSQL,

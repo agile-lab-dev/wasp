@@ -2,12 +2,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.gracefulStop
-import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.cluster.ClusterAwareNodeGuardian
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, BatchSchedulerModel, JobStateEnum}
@@ -28,9 +27,13 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
                           val classLoader: Option[ClassLoader] = None,
                           sparkWriterFactory: SparkWriterFactory,
                           plugins: Map[String, WaspConsumersSparkPlugin])
-  extends ClusterAwareNodeGuardian  with Stash with SparkBatchConfiguration with Logging {
+  extends Actor
+    with Stash
+    with SparkBatchConfiguration
+    with Logging {
+
   import BatchMasterGuardian._
-  
+
   /** STARTUP PHASE **/
   /** *****************/
 
@@ -40,41 +43,45 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   val sc = SparkSingletons.getSparkContext
   val batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))
 
-
-  context become notinitialized
-
   /** BASIC METHODS **/
   /** *****************/
   var lastRestartMasterRef: ActorRef = _
 
-  override def initialize(): Unit = {
+  // standard receive
+  // NOTE: THIS IS IMMEDIATELY SWITCHED TO uninitialized DURING preStart(), DO NOT USE!
+  override def receive: Actor.Receive = uninitialized
+
+  override def preStart(): Unit = {
+    // we start in uninitialized state
+    context become uninitialized
+  }
+
+  def initialize(): Unit = {
     //no initialization actually, clean code
     context become initialized
     logger.info("BatchMasterGuardian Initialized")
     unstashAll()
   }
 
-  override def preStart(): Unit = {
-    super.preStart()
-    //TODO:capire joinseednodes
-    cluster.joinSeedNodes(Vector(cluster.selfAddress))
-  }
-
-  def notinitialized: Actor.Receive = {
+  def uninitialized: Actor.Receive = {
     case message: StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
-      //TODO: logica di qualche tipo?
+
+    //TODO: logica di qualche tipo?
     case message: CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
       stash()
       initialize()
+
     case message: StartBatchJobMessage =>
       lastRestartMasterRef = sender()
       stash()
       initialize()
+
     case message: BatchJobProcessedMessage =>
       stash()
       initialize()
+
     case message: StartSchedulersMessage =>
       stash()
       initialize()
@@ -84,14 +91,15 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     case message: StopBatchJobsMessage =>
       lastRestartMasterRef = sender()
       stopGuardian()
+
     case message: CheckJobsBucketMessage =>
       lastRestartMasterRef = sender()
-      logger.info(s"Checking batch jobs bucket ...")
+      logger.info("Checking batch jobs bucket...")
       checkJobsBucket()
+
     case message: StartBatchJobMessage =>
       lastRestartMasterRef = sender()
-      logger.info(s"Processing batch job ${message.id} .")
-
+      logger.info(s"Processing batch job ${message.id}")
       lastRestartMasterRef ! BatchJobResult(message.id, startJob(message.id))
 
     case message: BatchJobProcessedMessage =>
@@ -109,7 +117,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   private def stopGuardian() {
 
     //Stop all actors bound to this guardian and the guardian itself
-    logger.info(s"Stopping actors bound to BatchMasterGuardian ...")
+    logger.info("Stopping actors bound to BatchMasterGuardian ...")
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, 60 seconds))
     val res = Await.result(globalStatus, 20 seconds)
 
@@ -141,7 +149,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
 
   private def startSchedulerActors(): Unit = {
     val schedules = loadSchedules
-    
+
     if(schedules.isEmpty) {
       logger.info("There are no active batch schedulers")
     } else {
@@ -157,16 +165,15 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   private def startJob(id: String): Boolean = {
-    //TODO: cambiare tutti stati stringa in enum.Value
     val job: Option[BatchJobModel] = env.batchJobBL.getById(id)
     logger.info(s"Job that will be processed, job: $job")
     job match {
       case Some(element) =>
         if (!element.state.equals(JobStateEnum.PROCESSING)) {
           changeBatchState(element._id.get, JobStateEnum.PENDING)
-            batchActor ! element
+          batchActor ! element
           true
-        } else{
+        } else {
           logger.error(s"Batch job ${element.name} is already in processing phase")
           false
         }
@@ -176,7 +183,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   private def loadBatchJobs: Seq[BatchJobModel] = {
-    logger.info(s"Loading all batch jobs ...")
+    logger.info("Loading all batch jobs ...")
     val batchJobEntries  = env.batchJobBL.getPendingJobs()
     logger.info(s"Found ${batchJobEntries.length} pending batch jobs...")
 
@@ -184,14 +191,13 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   }
 
   private def loadSchedules: Seq[BatchSchedulerModel] = {
-    logger.info(s"Loading all batch schedules ...")
+    logger.info("Loading all batch schedules ...")
     val schedules  = env.batchSchedulerBL.getActiveSchedulers()
     logger.info(s"Found ${schedules.length} active schedules...")
-  
+
     schedules
   }
 
-  //TODO: duplicato in BatchJobActor -> Rendere utility? Check esistenza id in BL?
   private def changeBatchState(id: BsonObjectId, newState: String): Unit =
   {
     val job = env.batchJobBL.getById(id.getValue.toHexString)
@@ -199,6 +205,5 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
       case Some(jobModel) => env.batchJobBL.setJobState(jobModel, newState)
       case None => logger.error("BatchEndedMessage with invalid id found.")
     }
-
   }
 }
