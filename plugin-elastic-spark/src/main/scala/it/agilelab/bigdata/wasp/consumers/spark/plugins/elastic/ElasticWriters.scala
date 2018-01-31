@@ -88,6 +88,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
+      val resource = index.resource
 
       logger.info(
         s"Check or create the index model: '${index.toString} with this index name: $indexName")
@@ -112,7 +113,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           .option("checkpointLocation", checkpointDir)
           .format("es")
           .queryName(queryName)
-          .start()
+          .start(resource)
 
       } else {
         val error = s"Error creating elastic index: $index with this index name $indexName"
