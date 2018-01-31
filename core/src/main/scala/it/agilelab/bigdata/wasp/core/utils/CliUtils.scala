@@ -21,7 +21,9 @@ object CliUtils {
 			case Success(settings) => {
 				settings
 			}
-			case Failure(e) => printHelpForOptions(options); throw e
+			case Failure(e) =>
+				printHelpForOptions(options)
+				throw e
 		}
 	}
 	
@@ -29,7 +31,8 @@ object CliUtils {
 		val cliOptions = seqToCliOptions(options)
 		val sysOut = new PrintWriter(System.out)
 		new HelpFormatter().printUsage(sysOut, 100, "WASP", cliOptions)
-		sysOut.close()
+		//sysOut.close() System.out must be not closed (not polite)
+		sysOut.flush()
 	}
 	
 	private def seqToCliOptions(options: Seq[cli.Option]) = options.foldLeft(new Options)( _ addOption _ )

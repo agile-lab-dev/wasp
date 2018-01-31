@@ -23,27 +23,40 @@ trait WaspLauncher {
 	var waspDB: WaspDB = _
 
 	def main(args: Array[String]) {
-		// parse command line
-		val commandLine = CliUtils.parseArgsList(args, getOptions)
 
-		// handle version & help
-		if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
-			printVersionAndExit()
-		} else if (commandLine.hasOption(WaspCommandLineOptions.help.getOpt)) {
-			printHelpAndExit()
+		val commandLine =
+			try {
+				// parse command line
+				CliUtils.parseArgsList(args, getOptions)
+			} catch {
+				case e: Exception => e
+			}
+
+		commandLine match {
+			case e: Exception =>
+				printErrorAndExit(e.getMessage)
+
+			case commandLine: CommandLine =>
+
+				// handle version & help
+				if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
+					printVersionAndExit()
+				} else if (commandLine.hasOption(WaspCommandLineOptions.help.getOpt)) {
+					printHelpAndExit()
+				}
+
+				// print banner and build info
+				printBannerAndBuildInfo()
+
+				// initialize stuff
+				initializeWasp()
+
+				// initialize plugins
+				initializePlugins(args)
+
+				// launch the application
+				launch(commandLine)
 		}
-
-		// print banner and build info
-		printBannerAndBuildInfo()
-
-		// initialize stuff
-		initializeWasp()
-
-		// initialize plugins
-		initializePlugins(args)
-
-		// launch the application
-		launch(commandLine)
 	}
 
 	def initializeWasp(): Unit = {
