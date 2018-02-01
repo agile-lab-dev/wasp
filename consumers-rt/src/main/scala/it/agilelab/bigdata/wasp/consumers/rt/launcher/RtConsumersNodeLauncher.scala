@@ -12,7 +12,7 @@ import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 	*
 	* @author Nicolò Bidotti
 	*/
-trait RtConsumersNodeLauncherTrait extends  ClusterSingletonLauncher {
+trait RtConsumersNodeLauncherTrait extends ClusterSingletonLauncher {
 	override def getSingletonProps: Props = Props(new RtConsumersMasterGuardian(ConfigBL))
 	
 	override def getSingletonName: String = WaspSystem.rtConsumersMasterGuardianName

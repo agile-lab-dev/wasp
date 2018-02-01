@@ -98,7 +98,6 @@ object IndexModel {
       ]
     }"""
   }
-
 }
 
 case class IndexModel(override val name: String,
@@ -110,7 +109,7 @@ case class IndexModel(override val name: String,
                       replicationFactor: Option[Int] = Some(1),
                       rollingIndex: Boolean = true
                      )
-    extends Model {
+  extends Model {
 
   def resource = s"$eventuallyTimedName/$dataType"
 
