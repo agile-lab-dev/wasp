@@ -129,7 +129,7 @@ public class JsonGenericRecordReader {
         for (Schema type : types) {
             try {
                 Object nestedValue = null;
-                if(type.getType().equals(Schema.Type.NULL)){
+                if (type.getType().equals(Schema.Type.NULL)) {
                     nestedValue = read(field, type, value, path, true);
                     if (nestedValue == INCOMPATIBLE) {
                         continue;
@@ -137,7 +137,7 @@ public class JsonGenericRecordReader {
                         return nestedValue;
                     }
                 } else{
-                    if(value == null) {
+                    if (value == null) {
                         nestedValue = INCOMPATIBLE;
                     } else {
                         Map<String, Object> valueAsMap = (Map<String, Object>) value;

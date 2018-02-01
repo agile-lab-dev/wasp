@@ -116,7 +116,7 @@ case class IndexModel(override val name: String,
 
   def collection = eventuallyTimedName
 
-  def eventuallyTimedName = if(rollingIndex) ConfigManager.buildTimedName(name) else name
+  def eventuallyTimedName = if (rollingIndex) ConfigManager.buildTimedName(name) else name
   
   /**
     * Returns a JSON representation of the schema of this index's schema.

@@ -169,7 +169,7 @@ class SparkConsumersMasterGuardian(env: {
   }
   
   override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
-    if(success) {
+    if (success) {
       logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
 
       if (legacyStreamingETLTotal > 0) {
@@ -300,7 +300,7 @@ class SparkConsumersMasterGuardian(env: {
       } catch {
         case e: Exception =>
           val msg = s"Streaming component actors not all stopped - Exception: ${e.getMessage}"
-          logger.error(msg)
+          logger.error(msg, e)
           masterGuardian ! Left(msg)
 
           false

@@ -32,16 +32,16 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     // BatchJobActor cannot use kafka WriterModel
-    val error = s"Invalid spark batch writer type: kafka in writer model: $writerModel"
-    logger.error(error)
-    throw new UnsupportedOperationException(error)
+    val msg = s"Invalid spark batch writer type: kafka in writer model: $writerModel"
+    logger.error(msg)
+    throw new UnsupportedOperationException(msg)
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
     // BatchJobActor cannot use kafka ReaderModel
-    val error = s"Invalid spark reader type: kafka - name: $name"
-    logger.error(error)
-    throw new UnsupportedOperationException(error)
+    val msg = s"Invalid spark reader type: kafka - name: $name"
+    logger.error(msg)
+    throw new UnsupportedOperationException(msg)
   }
 
   override def pluginType: String = Datastores.kafkaProduct

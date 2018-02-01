@@ -170,6 +170,7 @@ class MasterGuardian(env: {
      */
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
 
+    var exception: Option[Exception] = None
     var msgAdditional = ""
     // ask the guardians to restart only if the pipegraph has components that involve them
     val resSpark = if (pipegraph.hasSparkComponents) {
@@ -182,14 +183,15 @@ class MasterGuardian(env: {
             false
         }
       } catch {
-        case e: TimeoutException => {
+        case e: TimeoutException =>
+          exception = Some(e)
           msgAdditional = " - Timeout from SparkConsumerMasterGuardian"
           false
-        }
-        case e: Exception => {
+
+        case e: Exception =>
+          exception = Some(e)
           msgAdditional = s" - Exception from SparkConsumerMasterGuardian: ${e.getMessage}"
           false
-        }
       }
     } else { // no spark components in pipegraph => true by default
       true
@@ -204,14 +206,15 @@ class MasterGuardian(env: {
             false
         }
       } catch {
-        case e: TimeoutException => {
+        case e: TimeoutException =>
+          exception = Some(e)
           msgAdditional = " - Timeout from RtConsumerMasterGuardian"
           false
-        }
-        case e: Exception => {
+
+        case e: Exception =>
+          exception = Some(e)
           msgAdditional = s" - Exception from RtConsumerMasterGuardian: ${e.getMessage}"
           false
-        }
       }
     } else { // no rt components in pipegraph => true by default
       true
@@ -233,16 +236,20 @@ class MasterGuardian(env: {
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
 
       val msg = s"Pipegraph '${pipegraph.name}' not " + (if (active) "started" else "stopped")
+      exception match {
+        case Some(e) => logger.error(msg, e)
+        case None    =>
+      }
       Left(msg + msgAdditional)
     }
   }
 
-  // TODO
+  // TODO implement
   private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
     Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not started [NOT IMPLEMENTED]")
   }
 
-  // TODO
+  // TODO implement
   private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
     Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not stopped [NOT IMPLEMENTED]")
   }

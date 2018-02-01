@@ -21,7 +21,7 @@ class RtWritersManagerActor(env: {
     extends Actor
     with Logging {
 
-  val endpoint: Option[ActorRef] = if(writer.isDefined)
+  val endpoint: Option[ActorRef] = if (writer.isDefined)
   {
     initializeEndpoint(writer.get)
   } else None
@@ -158,7 +158,7 @@ class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extend
     }
 
     val rootUri = s"websocket://${webSocketConfigOpt.get.host}:${webSocketConfigOpt.get.port}/${webSocketConfigOpt.get.resourceName}"
-    val finalUri = if(webSocketConfigOpt.get.options.isDefined) {
+    val finalUri = if (webSocketConfigOpt.get.options.isDefined) {
         rootUri + s"?${getOptions(webSocketConfigOpt.get.options.get)}"
     } else {
       rootUri

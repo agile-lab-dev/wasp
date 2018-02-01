@@ -110,7 +110,7 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
     val put = new Put(rBytes)
 
     colsIdxedFields.foreach { case (x, y) =>
-      if(!row.isNullAt(x)){
+      if (!row.isNullAt(x)) {
         val b = Utils.toBytes(row(x), y)
         put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
       }

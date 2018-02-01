@@ -220,7 +220,7 @@ class HBaseContext(@transient sc: SparkContext,
         }))
   }
 
-  def applyCreds[T] (){
+  def applyCreds[T] () {
     credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
 
     logDebug("appliedCredentials:" + appliedCredentials + ",credentials:" + credentials)

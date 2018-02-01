@@ -105,7 +105,7 @@ class RtConsumersMasterGuardian(env: {
   }
   
   override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
-    if(success) {
+    if (success) {
       logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
 
       // confirm startup success to MasterGuardian
@@ -198,7 +198,7 @@ class RtConsumersMasterGuardian(env: {
     } catch {
       case e: Exception =>
         val msg = s"RTActors not all stopped - Exception: ${e.getMessage}"
-        logger.error(msg)
+        logger.error(msg, e)
         masterGuardian ! Left(msg)
 
         false
