@@ -48,7 +48,7 @@ b=$(tput setaf 4)
 d=$(tput sgr0)
 
 # launch each module
-WASP_OPTS="-J-Xmx1g -J-Xms512m -Dlog4j.configurationFile=/root/configurations/log4j2.properties -Dconfig.file=/root/configurations/docker-environment.conf"
+WASP_OPTS="-J-Xmx1g -J-Xms512m -Dlog4j.configurationFile=/root/configurations/log4j2.properties -Dconfig.file=/root/configurations/docker-environment.conf -J-XX:+HeapDumpOnOutOfMemoryError -J-XX:HeapDumpPath=/home/"
 DOCKER_OPTS="-i -v $SCRIPT_DIR:/root/configurations --network=wasp-docker --rm "
 DOCKER_IMAGE="sgrio/java-oracle:jre_8 "
 echo "Running modules in containers..."
