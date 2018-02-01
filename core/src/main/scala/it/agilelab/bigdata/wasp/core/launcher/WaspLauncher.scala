@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
 import org.apache.commons.cli
-import org.apache.commons.cli.CommandLine
+import org.apache.commons.cli.{CommandLine, ParseException}
 
 trait WaspLauncher {
 	// the actual version of WASP being ran
@@ -23,27 +23,36 @@ trait WaspLauncher {
 	var waspDB: WaspDB = _
 
 	def main(args: Array[String]) {
-		// parse command line
-		val commandLine = CliUtils.parseArgsList(args, getOptions)
 
-		// handle version & help
-		if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
-			printVersionAndExit()
-		} else if (commandLine.hasOption(WaspCommandLineOptions.help.getOpt)) {
-			printHelpAndExit()
-		}
+			try {
+				// parse command line
+				val commandLine = CliUtils.parseArgsList(args, getOptions)
 
-		// print banner and build info
-		printBannerAndBuildInfo()
+				// handle version & help
+				if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
+					printVersionAndExit()
+				} else if (commandLine.hasOption(WaspCommandLineOptions.help.getOpt)) {
+					printHelpAndExit()
+				}
 
-		// initialize stuff
-		initializeWasp()
+				// print banner and build info
+				printBannerAndBuildInfo()
 
-		// initialize plugins
-		initializePlugins(args)
+				// initialize stuff
+				initializeWasp()
 
-		// launch the application
-		launch(commandLine)
+				// initialize plugins
+				initializePlugins(args)
+
+				// launch the application
+				launch(commandLine)
+
+			} catch {
+				case e: ParseException => // error parsing cli args (already printed usage) => print error and exit
+					printErrorAndExit(e.getMessage)
+				case e: Exception => // generic WASP error
+					throw e
+			}
 	}
 
 	def initializeWasp(): Unit = {
