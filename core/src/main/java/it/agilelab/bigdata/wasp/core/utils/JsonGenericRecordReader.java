@@ -151,7 +151,6 @@ public class JsonGenericRecordReader {
                 }
             } catch (AvroRuntimeException e) {
                 // thrown only for union of more complex types like records
-                e.printStackTrace();
                 continue;
             }
         }
