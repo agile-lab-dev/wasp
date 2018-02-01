@@ -22,7 +22,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                     val classLoader: Option[ClassLoader] = None,
                     sparkWriterFactory: SparkWriterFactory,
                     sc: SparkContext,
-                    plugins: Map[String, WaspConsumersSparkPlugin]) extends Actor with Logging {
+                    plugins: Map[String, WaspConsumersSparkPlugin])
+  extends Actor
+    with Logging {
 
   var lastBatchMasterRef : ActorRef = _
 

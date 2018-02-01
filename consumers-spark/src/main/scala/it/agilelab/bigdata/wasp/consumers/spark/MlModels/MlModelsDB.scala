@@ -126,8 +126,8 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
  * It allow to get a complete broadcasted model and keep a list of model to salve
  */
 class MlModelsBroadcastDB(val modelDatabase: Map[String, Broadcast[TransformerWithInfo]] = Map(),
-                       val timestampMap: Map[String, Long] = Map()
-                        ) extends Serializable {
+                           val timestampMap: Map[String, Long] = Map())
+  extends Serializable {
 
   /**
    * List of models to salve
