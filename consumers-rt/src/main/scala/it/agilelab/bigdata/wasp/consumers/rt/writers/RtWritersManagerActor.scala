@@ -18,7 +18,7 @@ class RtWritersManagerActor(env: {
                                   val indexBL: IndexBL
                                  },
                             writer: Option[WriterModel])
-    extends Actor
+  extends Actor
     with Logging {
 
   val endpoint: Option[ActorRef] = if (writer.isDefined)
@@ -137,7 +137,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
 }
 */
 
-class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer{
+class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer {
 
   val webSocketConfigOpt: Option[WebsocketModel] = websocketBL.getById(writer.endpointId.get.getValue.toHexString)
   if (webSocketConfigOpt.isEmpty) {

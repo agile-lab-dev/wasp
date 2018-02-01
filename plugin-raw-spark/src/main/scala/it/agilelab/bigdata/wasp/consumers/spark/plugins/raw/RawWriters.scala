@@ -104,7 +104,8 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
 
 class RawSparkWriter(hdfsModel: RawModel,
                      sc: SparkContext)
-  extends SparkWriter with Logging {
+  extends SparkWriter
+    with Logging {
 
   // TODO: validate against hdfsmodel.schema
   override def write(df: DataFrame): Unit = {

@@ -35,7 +35,7 @@ class StructuredStreamingETLActor(env: {
                                   structuredStreamingETL: StructuredStreamingETLModel,
                                   listener: ActorRef,
                                   plugins: Map[String, WaspConsumersSparkPlugin])
-    extends Actor
+  extends Actor
     with SparkStreamingConfiguration
     with Logging {
 
