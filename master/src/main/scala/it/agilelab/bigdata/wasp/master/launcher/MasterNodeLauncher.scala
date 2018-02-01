@@ -21,7 +21,7 @@ import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.httpResponseJson
 import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
-import org.apache.commons.lang3.exception.ExceptionUtils
+import org.apache.commons.lang.exception.ExceptionUtils
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

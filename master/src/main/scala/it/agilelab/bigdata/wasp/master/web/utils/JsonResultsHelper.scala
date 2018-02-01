@@ -12,7 +12,7 @@ import scala.collection.immutable
   * Created by Agile Lab s.r.l. on 10/08/2017.
   */
 object JsonResultsHelper extends JsonSupport with Logging {
-  implicit class AngularOkResponse(js: JsValue){
+  implicit class AngularOkResponse(js: JsValue) {
     def toAngularOkResponse: HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),

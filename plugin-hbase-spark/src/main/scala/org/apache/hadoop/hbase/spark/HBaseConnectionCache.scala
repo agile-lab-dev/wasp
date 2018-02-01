@@ -87,11 +87,11 @@ private[spark] object HBaseConnectionCache extends Logging {
     connectionMap.synchronized {
       connectionMap.foreach {
         x => {
-          if(x._2.refCount < 0) {
+          if (x._2.refCount < 0) {
             logError(s"Bug to be fixed: negative refCount of connection ${x._2}")
           }
 
-          if(forceClean || ((x._2.refCount <= 0) && (tsNow - x._2.timestamp > timeout))) {
+          if (forceClean || ((x._2.refCount <= 0) && (tsNow - x._2.timestamp > timeout))) {
             try{
               x._2.connection.close()
             } catch {
@@ -140,7 +140,7 @@ private[hbase] case class SmartConnection (
   def close() = {
     HBaseConnectionCache.connectionMap.synchronized {
       refCount -= 1
-      if(refCount <= 0)
+      if (refCount <= 0)
         timestamp = System.currentTimeMillis()
     }
   }
@@ -186,9 +186,7 @@ class HBaseConnectionKey(c: Configuration) extends Logging {
       }
     }
     catch {
-      case e: IOException => {
-        logWarning("Error obtaining current user, skipping username in HBaseConnectionKey", e)
-      }
+      case e: IOException => logWarning("Error obtaining current user, skipping username in HBaseConnectionKey", e)
     }
   }
 

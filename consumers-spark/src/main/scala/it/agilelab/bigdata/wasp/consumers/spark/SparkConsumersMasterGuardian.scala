@@ -169,7 +169,7 @@ class SparkConsumersMasterGuardian(env: {
   }
   
   override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
-    if(success) {
+    if (success) {
       logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
 
       if (legacyStreamingETLTotal > 0) {
@@ -186,18 +186,24 @@ class SparkConsumersMasterGuardian(env: {
       // enter initialized state
       context become initialized
       logger.info(s"SparkConsumersMasterGuardian $self is now in initialized state")
-
-      // unstash messages stashed while in starting state
-      logger.info("Unstashing queued messages...")
-      unstashAll()
-
-      // TODO check if this is still needed in Spark 2.x
-      // sleep to avoid quick start/stop/start of StreamingContext which breaks with timeout errors
-      Thread.sleep(5 * 1000)
     } else {
+      logger.info(s"SparkConsumersMasterGuardian $self stopping startup sequence...")
+
       // startup error to MasterGuardian
       masterGuardian ! Left(errorMsg)
+
+      // enter uninitialized state
+      context become uninitialized
+      logger.info(s"SparkConsumersMasterGuardian $self is now in uninitialized state")
     }
+
+    // unstash messages stashed while in starting state
+    logger.info(s"SparkConsumersMasterGuardian $self unstashing queued messages...")
+    unstashAll()
+
+    // TODO check if this is still needed in Spark 2.x
+    // sleep to avoid quick start/stop/start of StreamingContext which breaks with timeout errors
+    Thread.sleep(5 * 1000)
   }
   
   override def stop(): Boolean = {
@@ -294,7 +300,7 @@ class SparkConsumersMasterGuardian(env: {
       } catch {
         case e: Exception =>
           val msg = s"Streaming component actors not all stopped - Exception: ${e.getMessage}"
-          logger.error(msg)
+          logger.error(msg, e)
           masterGuardian ! Left(msg)
 
           false

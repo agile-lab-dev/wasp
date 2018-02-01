@@ -4,9 +4,8 @@ import akka.actor.{Actor, actorRef2Scala}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import kafka.admin.AdminUtils
 import kafka.utils.ZkUtils
-import kafka.utils.ZKStringSerializer
+import org.I0Itec.zkclient.ZkConnection
 import org.I0Itec.zkclient.exception.ZkTimeoutException
-import org.I0Itec.zkclient.{ZkClient, ZkConnection}
 
 object KafkaAdminActor {
   val name = "KafkaAdminActor"
@@ -33,12 +32,12 @@ class KafkaAdminActor extends Actor with Logging {
 
   def initialization(message: Initialization): Boolean = {
     if (zkUtils != null) {
-      logger.warn(s"Zookeeper client re-initialization, the before client will be close")
+      logger.warn("Zookeeper client re-initialization, the before client will be close")
       zkUtils.close()
     }
     val kafkaConfig = message.kafkaConfigModel
 
-    logger.info(s"Before create a zookeeper client with config: $kafkaConfig ")
+    logger.info(s"Before create a zookeeper client with config: $kafkaConfig")
     try {
       val zkClient = ZkUtils.createZkClient(kafkaConfig.zookeeperConnections.getZookeeperConnection(), KafkaAdminActor.sessionTimeout, KafkaAdminActor.connectionTimeout)
       zkUtils = new ZkUtils(zkClient, new ZkConnection(kafkaConfig.zookeeperConnections.getZookeeperConnection()), false)
@@ -92,8 +91,8 @@ class KafkaAdminActor extends Actor with Logging {
     }
     catch {
       case throwable: Throwable =>
-        logger.error("Error in topic '" + message.topic + "' creation")
-        throwable.printStackTrace()
+        val msg = s"Error in topic '${message.topic}' creation"
+        logger.error(msg, throwable)
         false
     }
 

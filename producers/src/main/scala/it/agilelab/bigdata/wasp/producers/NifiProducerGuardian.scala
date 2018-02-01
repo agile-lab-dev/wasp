@@ -42,7 +42,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
       val action = data.asJsObject.fields("action").convertTo[String]
       val request = checkActionType(action, data, mlModelId)
 
-      if(nifiProducerConf.isDefined) {
+      if (nifiProducerConf.isDefined) {
         val uri = getUriFromConfiguration(nifiProducerConf.get)
         val res = httpRequest(uri, request, httpMethod)
         sender() ! Right()

@@ -57,8 +57,8 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
         })
 
       } else {
-        throw new Exception("Error creating topic " + topic.name)
-        //TODO handle errors
+        val msg = s"Error creating topic ${topic.name}"
+        throw new Exception(msg)
       }
     })
   }
@@ -130,10 +130,9 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
         dswWithWritingConf.start()
       } else {
-      throw new Exception("Error creating topic " + topic.name)
-      //TODO handle errors
-    }
-
+        val msg = s"Error creating topic ${topic.name}"
+        throw new Exception(msg)
+      }
     })
   }
 

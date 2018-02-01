@@ -60,14 +60,12 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
         })
 
       } else {
-        logger.error(s"Error creating index $index")
-        throw new Exception(s"Error creating index $index")
-        //TODO handle errors
+        val msg = s"Error creating index $index"
+        logger.error(msg)
+        throw new Exception(msg)
       }
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION spark won't start")
-
+      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
     }
   }
 }
@@ -115,10 +113,9 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           .start()
 
       } else {
-        val error = s"Error creating elastic index: $index with this index name $indexName"
-        logger.error(error)
-        throw new Exception(error)
-        //TODO handle errors
+        val msg = s"Error creating elastic index: $index with this index name $indexName"
+        logger.error(msg)
+        throw new Exception(msg)
       }
     } else {
       logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
@@ -178,14 +175,12 @@ class ElasticSparkWriter(indexBL: IndexBL,
 
         EsSparkSQL.saveToEs(data, index.resource, options)
       } else {
-        logger.error(s"Error creating index $index")
-        throw new Exception(s"Error creating index $index")
-        //TODO handle errors
+        val msg = s"Error creating index $index"
+        logger.error(msg)
+        throw new Exception(msg)
       }
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION spark won't start")
-
+      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
     }
   }
 }
