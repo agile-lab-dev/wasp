@@ -93,10 +93,9 @@ class MasterGuardian(env: {
   }
 
   override def receive: Actor.Receive = {
-    //case message: RemovePipegraph => call(message, onPipegraph(message.id, removePipegraph))
     case message: StartPipegraph => call(sender(), message, onPipegraph(message.id, startPipegraph))
     case message: StopPipegraph => call(sender(), message, onPipegraph(message.id, stopPipegraph))
-    case RestartPipegraphs => call(sender(), RestartPipegraphs, onRestartPipegraphs())
+    case RestartPipegraphs => call(sender(), RestartPipegraphs, restartPipegraphs())
     case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
     case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
     case message: StartProducer => call(sender(), message, onProducer(message.id, startProducer))
@@ -126,12 +125,6 @@ class MasterGuardian(env: {
     }
   }
 
-  private def onRestartPipegraphs(): Either[String, String] = {
-    sparkConsumersMasterGuardian ! RestartConsumers
-    rtConsumersMasterGuardian ! RestartConsumers
-    Right("Pipegraphs restart started.")
-  }
-
   private def onProducer(name: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
     env.producerBL.getByName(name) match {
       case None => Left("Producer not retrieved")
@@ -153,29 +146,22 @@ class MasterGuardian(env: {
     }
   }
 
-  private def manageThrowable(message: String, throwable: Throwable): String = {
-    var result = message
-    logger.error(message, throwable)
-
-    if (throwable.getMessage != null && !throwable.getMessage.isEmpty)
-      result = result + " Cause: " + throwable.getMessage
-
-    result
-  }
-
-  private def cleanPipegraph(message: RemovePipegraph): Unit = {
-    //sender() ! true
+  // TODO revise
+  private def restartPipegraphs(): Either[String, String] = {
+    sparkConsumersMasterGuardian ! RestartConsumers
+    rtConsumersMasterGuardian ! RestartConsumers
+    Right("Pipegraphs restart started.")
   }
 
   private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
-    setActiveAndRestart(pipegraph, active = true)
+    setActiveAndRestartPipegraph(pipegraph, active = true)
   }
 
   private def stopPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
-    setActiveAndRestart(pipegraph, active = false)
+    setActiveAndRestartPipegraph(pipegraph, active = false)
   }
 
-  private def setActiveAndRestart(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
+  private def setActiveAndRestartPipegraph(pipegraph: PipegraphModel, active: Boolean): Either[String, String] = {
 
     // TODO revise this behaviour (pre-global-modification) - required for the current behaviour of Spark/Rt-ConsumerMasterGuardian on beginStartup()
     /* modify the isActive flag
@@ -184,6 +170,7 @@ class MasterGuardian(env: {
      */
     env.pipegraphBL.setIsActive(pipegraph, isActive = active)
 
+    var exception: Option[Exception] = None
     var msgAdditional = ""
     // ask the guardians to restart only if the pipegraph has components that involve them
     val resSpark = if (pipegraph.hasSparkComponents) {
@@ -196,14 +183,15 @@ class MasterGuardian(env: {
             false
         }
       } catch {
-        case e: TimeoutException => {
+        case e: TimeoutException =>
+          exception = Some(e)
           msgAdditional = " - Timeout from SparkConsumerMasterGuardian"
           false
-        }
-        case e: Exception => {
-          msgAdditional = s" - Exception from RtConsumerMasterGuardian: ${e.getMessage}"
+
+        case e: Exception =>
+          exception = Some(e)
+          msgAdditional = s" - Exception from SparkConsumerMasterGuardian: ${e.getMessage}"
           false
-        }
       }
     } else { // no spark components in pipegraph => true by default
       true
@@ -218,14 +206,15 @@ class MasterGuardian(env: {
             false
         }
       } catch {
-        case e: TimeoutException => {
+        case e: TimeoutException =>
+          exception = Some(e)
           msgAdditional = " - Timeout from RtConsumerMasterGuardian"
           false
-        }
-        case e: Exception => {
+
+        case e: Exception =>
+          exception = Some(e)
           msgAdditional = s" - Exception from RtConsumerMasterGuardian: ${e.getMessage}"
           false
-        }
       }
     } else { // no rt components in pipegraph => true by default
       true
@@ -247,16 +236,20 @@ class MasterGuardian(env: {
       env.pipegraphBL.setIsActive(pipegraph, isActive = !active)
 
       val msg = s"Pipegraph '${pipegraph.name}' not " + (if (active) "started" else "stopped")
+      exception match {
+        case Some(e) => logger.error(msg, e)
+        case None    =>
+      }
       Left(msg + msgAdditional)
     }
   }
 
-  // TODO
+  // TODO implement
   private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
     Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not started [NOT IMPLEMENTED]")
   }
 
-  // TODO
+  // TODO implement
   private def stopEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
     Left(s"Pipegraph '${pipegraph.name} - ETL '$etlName' not stopped [NOT IMPLEMENTED]")
   }

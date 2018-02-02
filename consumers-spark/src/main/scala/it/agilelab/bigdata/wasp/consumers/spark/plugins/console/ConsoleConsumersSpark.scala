@@ -32,9 +32,9 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
-    val error = s"Invalid spark reader type: console - name: $name"
-    logger.error(error)
-    throw new UnsupportedOperationException(error)
+    val msg = s"Invalid spark reader type: console - name: $name"
+    logger.error(msg)
+    throw new UnsupportedOperationException(msg)
   }
 
   override def pluginType: String = Datastores.consoleProduct

@@ -150,7 +150,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   private def startSchedulerActors(): Unit = {
     val schedules = loadSchedules
 
-    if(schedules.isEmpty) {
+    if (schedules.isEmpty) {
       logger.info("There are no active batch schedulers")
     } else {
       val batchMasterGuardianActorPath = self.path.toStringWithAddress(self.path.address)

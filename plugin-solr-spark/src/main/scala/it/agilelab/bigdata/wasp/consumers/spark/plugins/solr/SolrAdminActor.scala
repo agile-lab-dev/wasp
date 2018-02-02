@@ -56,14 +56,13 @@ class SolrAdminActor
     case message: Initialization   => call(message, initialization)
     case message: CheckOrCreateCollection => call(message, checkOrCreateCollection)
     case message: CheckCollection => call(message, checkCollection)
-    case message: Any             => logger.error("unknown message: " + message)
+    case message: Any             => logger.error(s"Unknown message: $message")
   }
 
   def initialization(message: Initialization): Boolean = {
 
     if (solrServer != null) {
-      logger.warn(
-        s"Solr - Client re-initialization, the before client will be close")
+      logger.warn("Solr - Client re-initialization, the before client will be close")
       solrServer.shutdown()
     }
 
@@ -76,11 +75,9 @@ class SolrAdminActor
     try {
       solrServer.connect()
     } catch {
-      case e: Exception => {
-        logger.info(s"Solr NOT connected!")
-        e.printStackTrace()
-      }
-      case _: Throwable => logger.info(s"Solr NOT connected!")
+      case e: Throwable =>
+        val msg = "Solr NOT connected!"
+        logger.error(msg, e)
     }
 
     true
@@ -247,8 +244,7 @@ class SolrAdminActor
             true
           }
           case _ => {
-            logger.error(
-              s"Solr - Schema NOT created, $message status ${res.status}")
+            logger.error(s"Solr - Schema NOT created, $message status ${res.status}")
             false
           }
         }
@@ -270,8 +266,7 @@ class SolrAdminActor
 
     val ret = createResponse.isSuccess
     if (!ret) {
-      logger.warn(
-        s"Collection Alias NOT successfully created. ${message.collection}")
+      logger.warn(s"Collection Alias NOT successfully created. ${message.collection}")
     }
 
     ret

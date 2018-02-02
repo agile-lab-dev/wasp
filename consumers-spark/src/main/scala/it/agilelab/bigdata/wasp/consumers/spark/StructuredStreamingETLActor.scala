@@ -53,7 +53,7 @@ class StructuredStreamingETLActor(env: {
       } catch {
         case e: Exception =>
           val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Exception: ${e.getMessage}"
-          logger.error(msg)
+          logger.error(msg, e)
           listener ! Left(msg)
       }
     }
@@ -67,12 +67,12 @@ class StructuredStreamingETLActor(env: {
     } catch {
       case e: Exception =>
         val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Exception: ${e.getMessage}"
-        logger.error(msg)
+        logger.error(msg, e)
         listener ! Left(msg)
 
-      case e: Error =>
+      case e: Error =>  // AssertionError from assert()
         val msg = s"Pipegraph '${pipegraph.name}' - StructuredStreamingETLActor '${structuredStreamingETL.name}': Error: ${e.getMessage}"
-        logger.error(msg)
+        logger.error(msg, e)
         listener ! Left(msg)
     }
   }
@@ -192,18 +192,18 @@ class StructuredStreamingETLActor(env: {
         val staticReaders = structuredStreamingETL.inputs.filterNot(_.readerType.category == Datastores.topicCategory)
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
-          if(staticReaders.isEmpty)
+          if (staticReaders.isEmpty)
             Map.empty
           else
             retrieveDFs(staticReaders)
 
         val nDFrequired = staticReaders.size
         val nDFretrieved = dataStoreDFs.size
-        if(nDFretrieved != nDFrequired) {
-          val error = "DFs not retrieved successfully!\n" +
+        if (nDFretrieved != nDFrequired) {
+          val msg = "DFs not retrieved successfully!\n" +
             s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
             dataStoreDFs.toString
-          logger.error(error) // print here the complete error due to verbosity
+          logger.error(msg) // print here the complete error due to verbosity
 
           throw new Exception(s"DFs not retrieved successful - $nDFrequired DFs required - $nDFretrieved DFs retrieved!")
         }
@@ -254,10 +254,9 @@ class StructuredStreamingETLActor(env: {
           val dataSourceDF = staticReader.read(sparkSession.sparkContext)
           Some(ReaderKey(staticReader.readerType, staticReader.name), dataSourceDF)
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             logger.error(s"Error during retrieving DF: ${staticReader.name}", e)
             None
-          }
         }
       })
       .toMap
@@ -302,7 +301,7 @@ class StructuredStreamingETLActor(env: {
       })
 
     //update values in field metadata
-    val dataframeToTransform = if(stream.columns.contains("metadata")) {
+    val dataframeToTransform = if (stream.columns.contains("metadata")) {
       stream
         .withColumn(
           "metadata_new",
@@ -329,7 +328,7 @@ class StructuredStreamingETLActor(env: {
       case Datastores.rawProduct => output
       case Datastores.consoleProduct => output
       case _ =>
-        if(output.columns.contains("metadata")) {
+        if (output.columns.contains("metadata")) {
           logger.info(s"Metadata to be flattened for writer category ${writerType.category}. original output schema: ${output.schema.treeString}")
           output.select(MetadataUtils.flatMetadataSchema(output.schema, None): _*)
         }

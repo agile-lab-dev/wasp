@@ -10,7 +10,7 @@ import scala.collection.immutable
 object ContentResultsHelper extends Logging {
 
   def getBinaryContentOrNotFound(result: Option[Array[Byte]], id: String, resource: String): HttpResponse = {
-    if (result.isDefined){
+    if (result.isDefined) {
       val body = ByteString(result.get)
       val byteArrayEntity = HttpEntity.Strict(MediaTypes.`application/octet-stream`, body)
       httpResponseBinaryContent(status = StatusCodes.OK, entity = byteArrayEntity)

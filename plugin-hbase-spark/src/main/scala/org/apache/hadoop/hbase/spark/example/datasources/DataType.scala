@@ -73,7 +73,7 @@ object DataType {
                 |}
                 |}""".stripMargin
 
-  def main(args: Array[String]){
+  def main(args: Array[String]) {
     val sparkConf = new SparkConf().setAppName("DataTypeExample")
     val sc = new SparkContext(sparkConf)
     val sqlContext = new SQLContext(sc)
@@ -101,7 +101,7 @@ object DataType {
     val df = withCatalog(cat)
     val s = df.filter($"col0" < 0)
     s.show()
-    if(s.count() != 16){
+    if (s.count() != 16) {
       throw new UserCustomizedSampleException("value invalid")
     }
 
@@ -158,7 +158,7 @@ object DataType {
     df1.show()
     val c_df = df1.count()
     println(s"df count should be 32: $c_df")
-    if(c_df != 32){
+    if (c_df != 32) {
       throw new UserCustomizedSampleException("value invalid")
     }
   }

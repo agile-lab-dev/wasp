@@ -91,7 +91,7 @@ class ElasticAdminActor extends Actor with Logging {
 
   def initialization(message: Initialization): Boolean = {
     if (transportClient != null) {
-      logger.warn(s"Elastic client re-initialization, the before client will be close")
+      logger.warn("Elastic client re-initialization, the before client will be close")
       transportClient.close()
     }
 

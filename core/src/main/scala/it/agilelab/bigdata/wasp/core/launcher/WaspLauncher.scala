@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
 import org.apache.commons.cli
-import org.apache.commons.cli.CommandLine
+import org.apache.commons.cli.{CommandLine, ParseException}
 
 trait WaspLauncher {
 	// the actual version of WASP being ran
@@ -24,19 +24,9 @@ trait WaspLauncher {
 
 	def main(args: Array[String]) {
 
-		val commandLine =
 			try {
 				// parse command line
-				CliUtils.parseArgsList(args, getOptions)
-			} catch {
-				case e: Exception => e
-			}
-
-		commandLine match {
-			case e: Exception =>
-				printErrorAndExit(e.getMessage)
-
-			case commandLine: CommandLine =>
+				val commandLine = CliUtils.parseArgsList(args, getOptions)
 
 				// handle version & help
 				if (commandLine.hasOption(WaspCommandLineOptions.version.getOpt)) {
@@ -56,7 +46,13 @@ trait WaspLauncher {
 
 				// launch the application
 				launch(commandLine)
-		}
+
+			} catch {
+				case e: ParseException => // error parsing cli args (already printed usage) => print error and exit
+					printErrorAndExit(e.getMessage)
+				case e: Exception => // generic WASP error
+					throw e
+			}
 	}
 
 	def initializeWasp(): Unit = {

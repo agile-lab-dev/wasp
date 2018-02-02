@@ -105,7 +105,7 @@ class RtConsumersMasterGuardian(env: {
   }
   
   override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
-    if(success) {
+    if (success) {
       logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
 
       // confirm startup success to MasterGuardian
@@ -114,14 +114,20 @@ class RtConsumersMasterGuardian(env: {
       // enter intialized state
       context become initialized
       logger.info(s"RtConsumersMasterGuardian $self is now in initialized state")
-
-      // unstash messages stashed while in starting state
-      logger.info("Unstashing queued messages...")
-      unstashAll()
     } else {
+      logger.info(s"RtConsumersMasterGuardian $self stopping startup sequence...")
+
       // startup error to MasterGuardian
       masterGuardian ! Left(errorMsg)
+
+      // enter uninitialized state
+      context become uninitialized
+      logger.info(s"RtConsumersMasterGuardian $self is now in uninitialized state")
     }
+
+    // unstash messages stashed while in starting state
+    logger.info(s"RtConsumersMasterGuardian $self unstashing queued messages...")
+    unstashAll()
   }
   
   override def stop(): Boolean = {
@@ -192,7 +198,7 @@ class RtConsumersMasterGuardian(env: {
     } catch {
       case e: Exception =>
         val msg = s"RTActors not all stopped - Exception: ${e.getMessage}"
-        logger.error(msg)
+        logger.error(msg, e)
         masterGuardian ! Left(msg)
 
         false

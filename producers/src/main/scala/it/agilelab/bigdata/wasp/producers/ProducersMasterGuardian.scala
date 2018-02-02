@@ -38,7 +38,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			if (producer.name == InternalLogProducerGuardian.name) { // logger producer is special
 				producerId -> WaspSystem.loggerActor // do not instantiate, but get the already existing one from WaspSystem
 			} else {
-				if(localProducerComponentActors.contains(producerId))
+				if (localProducerComponentActors.contains(producerId))
 					producerId -> localProducerComponentActors(producerId) // do not instantiate, but get the already existing one from localProducerComponentActors
 				else {
 					val producerClass = Class.forName(producer.className)
@@ -154,7 +154,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			} catch {
 				case e: Exception =>
 					val msg = s"Producer '${producer.name}' not started - Exception: ${e.getMessage}"
-					logger.error(msg)
+					logger.error(msg, e)
 					Left(msg)
 			}
 		} else {
@@ -182,7 +182,7 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			} catch {
 				case e: Exception =>
 					val msg = s"Producer '${producer.name}' not stopped - Exception: ${e.getMessage}"
-					logger.error(msg)
+					logger.error(msg, e)
 					Left(msg)
 			}
 		} else {

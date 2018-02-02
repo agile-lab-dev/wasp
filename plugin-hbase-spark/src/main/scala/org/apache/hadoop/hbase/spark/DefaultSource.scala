@@ -220,7 +220,7 @@ case class HBaseRelation(
 
       try {
 
-        if(!createNamespaceIfNotExist(admin, catalog.namespace)) {
+        if (!createNamespaceIfNotExist(admin, catalog.namespace)) {
           admin.createNamespace(NamespaceDescriptor.create(catalog.namespace).build())
           logDebug(s"create namespace ${catalog.namespace}")
         }

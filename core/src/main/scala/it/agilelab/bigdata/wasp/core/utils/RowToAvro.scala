@@ -155,9 +155,9 @@ case class RowToAvro(schema: StructType,
   }
 
   private def eventualSubSchemaFromUnionWithNull(s: Schema): Schema = {
-    if(s.getType == Type.UNION){
+    if (s.getType == Type.UNION) {
       val otherType = s.getTypes.asScala.filter(subS => subS.getType != Type.NULL)
-      if(otherType.size != 1) {
+      if (otherType.size != 1) {
         throw new IllegalArgumentException(s"Avro sub-schema ${s.getName} has UnionSchema which is not a simple NullSchema + primitive schema.")
       }
       otherType.head

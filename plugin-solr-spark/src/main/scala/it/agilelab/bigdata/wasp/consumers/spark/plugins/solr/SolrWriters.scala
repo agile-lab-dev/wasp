@@ -31,7 +31,7 @@ object SolrSparkWriter {
     val fieldname = r.schema.fieldNames
     fieldname.foreach { f =>
 
-      if(! r.isNullAt(r.fieldIndex(f)))
+      if (!r.isNullAt(r.fieldIndex(f)))
         doc.setField(f, r.getAs(f))
 
     }
@@ -81,10 +81,9 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
                                        new JavaDStream[SolrInputDocument](docs))
 
       } else {
-        val error = s"Error creating solr index: $index with this index name $indexName"
-        logger.error(error)
-        throw new Exception(error)
-        //TODO handle errors
+        val msg = s"Error creating solr index: $index with this index name $indexName"
+        logger.error(msg)
+        throw new Exception(msg)
       }
     } else {
       logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
@@ -137,14 +136,12 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
           .start()
 
       } else {
-        logger.error(
-          s"Error creating solr index: $index with this index name ${indexName}")
-        throw new Exception("Error creating solr index " + indexName)
-        //TODO handle errors
+        val msg = s"Error creating solr index: $index with this index name ${indexName}"
+        logger.error(msg)
+        throw new Exception(msg)
       }
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
     }
 
   }
@@ -225,14 +222,12 @@ class SolrSparkWriter(indexBL: IndexBL,
                               new JavaRDD[SolrInputDocument](docs))
 
       } else {
-        throw new Exception("Error creating solr index " + indexName)
-        //TODO handle errors
+        val msg = s"Error creating solr index ${indexName}"
+        throw new Exception(msg)
       }
 
     } else {
-      logger.warn(
-        s"The index '$id' does not exits pay ATTENTION spark won't start")
-
+      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
     }
 
   }

@@ -24,6 +24,7 @@ import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
+import org.apache.commons.lang.exception.ExceptionUtils
 
 // producerId is an empty string because we override initialize and get the producer model by name instead of using an id
 final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
@@ -94,7 +95,7 @@ private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[Top
   override def receive: Actor.Receive = super.receive orElse loggerReceive
 
   def loggerReceive(): Actor.Receive = {
-    case Error(cause, logSource, logClass, message: Any) => sendLog(logSource, logClass.getName, "ERROR", message.toString, Some(cause.getMessage), Some(cause.getStackTraceString))
+    case Error(cause, logSource, logClass, message: Any) => sendLog(logSource, logClass.getName, "ERROR", message.toString, Some(cause.getMessage), Some(ExceptionUtils.getStackTrace(cause)))
     case Warning(logSource, logClass, message: String) => sendLog(logSource, logClass.getName, "WARNING", message.toString)
     case Info(logSource, logClass, message: String) => sendLog(logSource, logClass.getName, "INFO", message.toString)
     case Debug(logSource, logClass, message: String) => sendLog(logSource, logClass.getName, "DEBUG", message.toString)
