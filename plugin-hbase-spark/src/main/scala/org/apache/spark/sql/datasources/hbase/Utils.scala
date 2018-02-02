@@ -66,6 +66,21 @@ object Utils {
     }
   }
 
+  def toBytesPrimitiveType(input: Any, dt: DataType) = input match {
+    case data: Boolean => Bytes.toBytes(data)
+    case data: Byte => Array(data)
+    case data: Array[Byte] => data
+    case data: Double => Bytes.toBytes(data)
+    case data: Float => Bytes.toBytes(data)
+    case data: Int => Bytes.toBytes(data)
+    case data: Long => Bytes.toBytes(data)
+    case data: Short => Bytes.toBytes(data)
+    case data: UTF8String => data.getBytes
+    case data: String => Bytes.toBytes(data)
+    // TODO: add more data type support
+    case _ => throw new Exception(s"unsupported data type $dt, $input, ${input.getClass.toString}")
+  }
+
   // convert input to data type
   def toBytes(input: Any, field: Field): Array[Byte] = {
     if (field.schema.isDefined) {
@@ -76,20 +91,7 @@ object Utils {
       converter.write(input.asInstanceOf[Row])
 //      AvroSerdes.serialize(record, field.schema.get)
     } else {
-      input match {
-        case data: Boolean => Bytes.toBytes(data)
-        case data: Byte => Array(data)
-        case data: Array[Byte] => data
-        case data: Double => Bytes.toBytes(data)
-        case data: Float => Bytes.toBytes(data)
-        case data: Int => Bytes.toBytes(data)
-        case data: Long => Bytes.toBytes(data)
-        case data: Short => Bytes.toBytes(data)
-        case data: UTF8String => data.getBytes
-        case data: String => Bytes.toBytes(data)
-        // TODO: add more data type support
-        case _ => throw new Exception(s"unsupported data type ${field.dt}, $input, ${input.getClass.toString}")
-      }
+      toBytesPrimitiveType(input, field.dt)
     }
   }
 

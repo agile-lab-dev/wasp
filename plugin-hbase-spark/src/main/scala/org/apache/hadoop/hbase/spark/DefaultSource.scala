@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase._
 import org.apache.hadoop.mapred.JobConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.{`type`, cf, col, rowKey}
 import org.apache.spark.sql.datasources.hbase.{Field, HBaseTableCatalog, Utils}
 import org.apache.spark.sql.execution.streaming.Sink
 import org.apache.spark.sql.sources._
@@ -181,6 +182,12 @@ case class HBaseRelation(
     .getOrElse(sqlContext.sparkContext.getConf.getInt(
       HBaseSparkConf.BULKGET_SIZE, HBaseSparkConf.DEFAULT_BULKGET_SIZE))
 
+  // Retrieve fields that are treated as dynamic. They will be denormalized over multiple columns in write operations
+  val dynamicFields: Set[String] = parameters
+    .get(HBaseSparkConf.DYNAMIC_FIELDS)
+    .map(x => x.split("-", -1).toSet)
+    .getOrElse(Set.empty[String])
+
   //create or get latest HBaseContext
   val hbaseContext: HBaseContext = if (useHBaseContext) {
     LatestHBaseContextCache.latest
@@ -279,7 +286,7 @@ case class HBaseRelation(
       ._2.filter(catalog.sMap.exists).map(x => (schema.fieldIndex(x), catalog.getField(x)))
     val rdd = data.rdd
 
-    def convertToPut(row: Row) = {
+    def convertToPut(row: Row): (ImmutableBytesWritable, Put) = {
       // construct bytes for row key
       val rowBytes = rkIdxedFields.map { case (x, y) =>
         Utils.toBytes(row(x), y)
@@ -296,8 +303,46 @@ case class HBaseRelation(
       val put = timestamp.fold(new Put(rBytes))(new Put(rBytes, _))
 
       colsIdxedFields.foreach { case (x, y) =>
-        val b = Utils.toBytes(row(x), y)
-        put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
+        if(dynamicFields.contains(y.colName)){
+          // Dynamic field case. Denormalize content in multiple columns
+          val data = row(x)
+          // Verify expected type matching
+          val dataArray: Seq[Row] = data match {
+            case x: Seq[Row] => x
+            case _ => throw new Exception(s"Unsupported data type for dynamic Fields. Array of StructType Expected. " +
+              s"Field ${y.colName} - ${y.dt}")
+          }
+
+          dataArray.foreach{
+            dynRow =>
+              val rowSchema = dynRow.schema
+              val indexedFields = rowSchema
+                .fieldNames
+                .map(x => (x, rowSchema.fieldIndex(x))).toMap
+
+              // Extract dynamic cq and payload to be written
+              if(!indexedFields.contains("cq") || !indexedFields.contains("payload")){
+                throw new Exception(s"Structures in dynamic fields array must contains keys: \"cq\" and \"payload\" ")
+              }
+              val cqIndex: Int = indexedFields("cq")
+              val dataIndex: Int = indexedFields("payload")
+              val cqName = dynRow.getAs[String](cqIndex)
+              val cq = Utils.toBytesPrimitiveType(cqName, rowSchema.fields(cqIndex).dataType)
+              //TODO verify this Field init
+              val dynamicFieldStruct = Field(cqName, y.cf,
+                cqName,
+                None,
+                y.avroSchema, None, -1)
+              val data = Utils.toBytes(dynRow.get(dataIndex), dynamicFieldStruct)
+
+              // Update hbase put
+              put.addColumn(Bytes.toBytes(y.cf), cq, data)
+          }
+        } else {
+          // Standard case
+          val b = Utils.toBytes(row(x), y)
+          put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
+        }
       }
       count += 1
       (new ImmutableBytesWritable, put)
@@ -349,19 +394,22 @@ case class HBaseRelation(
   def buildRow(fields: Seq[Field], result: Result): Row = {
     val r = result.getRow
     val keySeq = parseRowKey(r, catalog.getRowKey)
-    val valueSeq = fields.filter(!_.isRowKey).map { x =>
-      val kv = result.getColumnLatestCell(Bytes.toBytes(x.cf), Bytes.toBytes(x.col))
-      if (kv == null || kv.getValueLength == 0) {
-        (x, null)
-      } else {
-        val v = CellUtil.cloneValue(kv)
-        (x, x.dt match {
-          // Here, to avoid arraycopy, return v directly instead of calling hbaseFieldToScalaType
-          case BinaryType => v
-          case _ => Utils.hbaseFieldToScalaType(x, v, 0, v.length)
-        })
-      }
-    }.toMap
+    //TODO dynamic fields not reconstructed. We should
+    val valueSeq = fields
+      .filter(f => !f.isRowKey && !dynamicFields.contains(f.colName))
+      .map { x =>
+        val kv = result.getColumnLatestCell(Bytes.toBytes(x.cf), Bytes.toBytes(x.col))
+        if (kv == null || kv.getValueLength == 0) {
+          (x, null)
+        } else {
+          val v = CellUtil.cloneValue(kv)
+          (x, x.dt match {
+            // Here, to avoid arraycopy, return v directly instead of calling hbaseFieldToScalaType
+            case BinaryType => v
+            case _ => Utils.hbaseFieldToScalaType(x, v, 0, v.length)
+          })
+        }
+      }.toMap
     val unionedRow = keySeq ++ valueSeq
     // Return the row ordered by the requested order
     Row.fromSeq(fields.map(unionedRow.get(_).getOrElse(null)))
