@@ -2,24 +2,32 @@ version: '2'
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.1.2
     container_name: elasticsearch
+    # execute    sudo sysctl -w vm.max_map_count=262144
     environment:
-      - "transport.host=localhost"
-      - "bootstrap.system_call_filter=false"
+      # put in configurations
+      - network.host=elasticsearch
+      - network.bind_host=elasticsearch
+      - network.publish_host=elasticsearch
+      - cluster.name=elasticsearch
+      - transport.host=elasticsearch
+      - bootstrap.system_call_filter=false
+      - bootstrap.memory_lock=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m -Des.enforce.bootstrap.checks=true"
     ports:
       - "9200:9200"
       - "9300:9300"
-    volumes:
-      - "./elasticsearch:/opt/elasticsearch/config"
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:5.6.2
+    image: docker.elastic.co/kibana/kibana:6.1.2
     container_name: kibana
     ports:
       - "5601:5601"
-    volumes:
-      - "./kibana:/opt/kibana/config"
+    mem_limit: 200m
+    depends_on:
+      - elasticsearch
+
 
 networks:
   default:
