@@ -108,7 +108,7 @@ fi
 # get docker command, init network if needed
 cd $SCRIPT_DIR
 source get-docker-compose-cmd.sh
-# source create-wasp-network.sh
+source create-wasp-network.sh
 
 # build string containing docker-compose compose files options
 COMPOSE_FILES_OPTIONS=""

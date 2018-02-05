@@ -5,7 +5,7 @@ import java.io.File
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ConnectionConfig, ElasticConfiguration, WaspConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
@@ -16,7 +16,7 @@ import collection.JavaConverters._
 	*
 	* @author Nicolò Bidotti
 	*/
-object SparkUtils extends Logging with WaspConfiguration with ElasticConfiguration {
+object SparkUtils extends Logging {
 	/**
     * Builds a SparkConf from the supplied SparkConfigModel
     */
@@ -50,19 +50,6 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.ui.retainedJobs", sparkConfigModel.retainedStagesJobs.toString)
       .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
-
-    if (waspConfig.defaultIndexedDatastore == "elastic") {
-      logger.info("Adding specific elastic configurations.")
-      // Add Elastic settings.
-      val conns = elasticConfig.connections
-        .filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
-      val address = conns.map(e => e.host).mkString(",")
-      val port = conns.map(e => e.port).mkString(",")
-
-      sparkConf = sparkConf
-        .set("es.nodes", address)
-        .set("es.port", port)
-    }
 
 		if (sparkConfigModel.driverPort != 0)
 			sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driverPort.toString)
