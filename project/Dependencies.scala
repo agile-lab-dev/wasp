@@ -55,6 +55,14 @@ object Dependencies {
 			)
 
 	}
+	
+	val excludeLog4j: (sbt.ModuleID) => ModuleID = (module: ModuleID) =>
+		module.excludeAll(
+			sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-api"),
+			sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-core"),
+			sbt.ExclusionRule(organization = "org.apache.logging.log4j", name = "log4j-slf4j-impl"),
+			sbt.ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
+		)
 
 	// ===================================================================================================================
 	// Compile dependencies
@@ -111,7 +119,6 @@ object Dependencies {
 
 
 	// grouped dependencies, for convenience =============================================================================
-
 	val akka = Seq(
 		akkaActor,
 		akkaCluster,
@@ -120,7 +127,6 @@ object Dependencies {
 		akkaRemote,
 		akkaSlf4j
 	)
-
 
 	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer)
 
@@ -141,67 +147,70 @@ object Dependencies {
 	val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % "test"
 	val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % "test"
 	val scalatest = "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"
-
-
+	
 	// grouped dependencies, for convenience =============================================================================
   val test = Seq(akkaTestKit, akkaClusterTestKit, scalatest)
 
 	// ===================================================================================================================
 	// Module dependencies
 	// ===================================================================================================================
-	val core = akka ++
-		Seq(akkaHttp, akkaHttpSpray) ++ //TODO remove when move SolrAdminActor to the own plugin
+	val core = (akka ++
 		logging ++
 		time ++
+		test :+
+		akkaHttp :+
+		akkaHttpSpray :+
+		avro :+
+		commonsCli :+
+		kafka :+ // TODO remove when switching to plugins
+		mongodbScala :+
+		sparkSQL :+
+    typesafeConfig
+	).map(excludeLog4j)
+
+	val producers = (
+		akka ++
+		test :+
+		akkaHttp :+
+		akkaStream
+	).map(excludeLog4j) ++ log4j
+
+	val consumers_spark = (
+		akka ++
+		json ++
 		test ++
-		Seq(
-			avro,
-			commonsCli,
-			kafka, // TODO remove when switching to plugins
-			mongodbScala,
-			sparkSQL,
-      typesafeConfig
-		)
+		spark ++
+		hbase :+
+		kafka :+
+		kafkaStreaming :+
+		kafkaSparkSql :+
+    quartz
+	).map(excludeLog4j) ++ log4j
 
-	val producers = akka ++ log4j ++ test ++
-		Seq(
-			akkaHttp,
-			akkaStream
-		)
+	val consumers_rt = (
+		akka :+
+		akkaCamel :+
+		camelKafka :+
+		camelWebsocket :+
+		kafka
+	).map(excludeLog4j) ++ log4j
 
-	val consumers_spark = akka ++ json ++ log4j ++ test ++ spark ++ hbase ++
-		Seq(
-			kafka,
-			kafkaStreaming,
-			kafkaSparkSql,
-      quartz
-		)
-
-	val consumers_rt = akka ++ log4j ++
-		Seq(
-			akkaCamel,
-			camelKafka,
-			camelWebsocket,
-			kafka
-		)
-
-  val master = akka ++ log4j ++
-	  Seq(
-		  akkaHttp,
-		  akkaHttpSpray
-	  )
+  val master = (
+	  akka :+
+		akkaHttp :+
+		akkaHttpSpray
+  ).map(excludeLog4j) ++ log4j
 
 	val plugin_elastic_spark = Seq(
-			elasticSearch,
-			elasticClientTransport,
-			elasticSearchSpark
-		)
+		elasticSearch,
+		elasticClientTransport,
+		elasticSearchSpark
+	)
 
-  val plugin_hbase_spark = hbase ++ Seq(scalatest)
+  val plugin_hbase_spark = hbase :+ scalatest
 
-	val plugin_solr_spark =
-		Seq(
-			solr,
-			sparkSolr
-		)
+	val plugin_solr_spark = Seq(
+		solr,
+		sparkSolr
+	)
 }
