@@ -2,17 +2,19 @@ version: '2'
 services:
 
   solr:
-    build: .
+    build: ./solr/
     image: solr_cdh:5.11
     container_name: solr
     hostname: solr
     environment:
       SOLR_ZK_ENSEMBLE: zookeeper:2181/solr
       dataDir: /data
+      CATALINA_OPTS: "-Xmx256m -Xms256m"
     ports:
       - "8983:8983"
     volumes:
       - "./data/solr:/data"
+    mem_limit: 500m
     links:
       - zookeeper
     depends_on:

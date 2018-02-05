@@ -4,6 +4,7 @@ services:
   mongo:
     image: mongo:3.4.9
     container_name: mongo
+    mem_limit: 100m
     ports:
      - "27017:27017"
 
