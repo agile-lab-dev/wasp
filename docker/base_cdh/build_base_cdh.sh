@@ -17,4 +17,4 @@ source $SCRIPT_DIR/../get-docker-cmd.sh
 
 cd $SCRIPT_DIR
 
-docker build --rm -t base_cdh:5.11 .
+$DOCKER_CMD build --rm -t base_cdh:5.11 .

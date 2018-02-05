@@ -9,7 +9,7 @@ EXIT_CODE=$?
 set -e
 
 # check exit code; if 1, assume permission error
-if [ $EXIT_CODE -eq 0 ]; then
+if [ ${EXIT_CODE} -eq 0 ]; then
     echo "Command \"docker ps\" succeeded, using \"docker\" as command"
     DOCKER_CMD="docker"
 else

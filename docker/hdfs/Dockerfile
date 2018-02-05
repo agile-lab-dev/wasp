@@ -12,9 +12,6 @@ ADD docker-entrypoint.sh /root/docker-entrypoint.sh
 
 COPY conf  /etc/hadoop/conf/
 
-# Formatting HDFS
-RUN mkdir -p /data/dfs/data /data/dfs/name /data/dfs/namesecondary && \
-    touch /tmp/namenodeformat
 VOLUME /data
 
 ####################
@@ -41,5 +38,5 @@ VOLUME /data
 #	50090 = dfs.secondary.http.address	(HTTP / Checkpoint for NameNode metadata)
 EXPOSE 9000 50070 50010 50020 50075 50090
 
-ENTRYPOINT ["/root/docker-entrypoint.sh"]
-CMD ["hdfs"]
+ENTRYPOINT ["/bin/bash", "/root/docker-entrypoint.sh"]
+CMD ["/bin/bash", "hdfs"]
