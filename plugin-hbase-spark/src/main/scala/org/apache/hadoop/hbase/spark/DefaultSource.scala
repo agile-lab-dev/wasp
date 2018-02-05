@@ -185,7 +185,7 @@ case class HBaseRelation(
   // Retrieve fields that are treated as dynamic. They will be denormalized over multiple columns in write operations
   val dynamicFields: Set[String] = parameters
     .get(HBaseSparkConf.DYNAMIC_FIELDS)
-    .map(x => x.split("-", -1).toSet)
+    .map(x => x.split(":", -1).toSet)
     .getOrElse(Set.empty[String])
 
   //create or get latest HBaseContext
@@ -322,16 +322,17 @@ case class HBaseRelation(
 
               // Extract dynamic cq and payload to be written
               if(!indexedFields.contains("cq") || !indexedFields.contains("payload")){
-                throw new Exception(s"Structures in dynamic fields array must contains keys: \"cq\" and \"payload\" ")
+                throw new Exception(s"Structures in dynamic fields array must contains keys cq and payload ")
               }
               val cqIndex: Int = indexedFields("cq")
               val dataIndex: Int = indexedFields("payload")
               val cqName = dynRow.getAs[String](cqIndex)
               val cq = Utils.toBytesPrimitiveType(cqName, rowSchema.fields(cqIndex).dataType)
+              val dataType = dynRow.schema.fields(dataIndex).dataType.typeName
               //TODO verify this Field init
               val dynamicFieldStruct = Field(cqName, y.cf,
                 cqName,
-                None,
+                Some(dataType),
                 y.avroSchema, None, -1)
               val data = Utils.toBytes(dynRow.get(dataIndex), dynamicFieldStruct)
 

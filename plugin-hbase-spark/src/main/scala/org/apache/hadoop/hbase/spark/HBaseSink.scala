@@ -2,6 +2,7 @@ package org.apache.hadoop.hbase.spark
 
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.Put
+import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
@@ -16,6 +17,11 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
   * Created by Agile Lab s.r.l. on 04/11/2017.
   */
 class HBaseSink(sparkSession: SparkSession, parameters: Map[String, String], hBaseContext: HBaseContext) extends Sink with Logging {
+
+  val dynamicFields: Set[String] = parameters
+    .get(HBaseSparkConf.DYNAMIC_FIELDS)
+    .map(x => x.split("-", -1).toSet)
+    .getOrElse(Set.empty[String])
   /**
     * Non è gestito il commit log quindi un task può essere inserito due volte
     * Per creare questo metodo ho seguito il codice della libreria
@@ -80,6 +86,11 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
                                @transient schema: StructType) {
   @transient val catalog = HBaseTableCatalog(parameters)
 
+  val dynamicFields: Set[String] = parameters
+    .get(HBaseSparkConf.DYNAMIC_FIELDS)
+    .map(x => x.split(":", -1).toSet)
+    .getOrElse(Set.empty[String])
+
   @transient val rkFields: Seq[Field] = catalog.getRowKey
   val rkIdxedFields: Seq[(Int, Field)] = rkFields.map { case x =>
     (schema.fieldIndex(x.colName), x)
@@ -110,9 +121,47 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
     val put = new Put(rBytes)
 
     colsIdxedFields.foreach { case (x, y) =>
-      if (!row.isNullAt(x)) {
-        val b = Utils.toBytes(row(x), y)
-        put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
+      if(dynamicFields.contains(y.colName)){
+        // Dynamic field case. Denormalize content in multiple columns
+        val data = row(x)
+        // Verify expected type matching
+        val dataArray: Seq[Row] = data match {
+          case x: Seq[Row] => x
+          case _ => throw new Exception(s"Unsupported data type for dynamic Fields. Array of StructType Expected. " +
+            s"Field ${y.colName} - ${y.dt}")
+        }
+
+        dataArray.foreach{
+          dynRow =>
+            val rowSchema = dynRow.schema
+            val indexedFields = rowSchema
+              .fieldNames
+              .map(x => (x, rowSchema.fieldIndex(x))).toMap
+
+            // Extract dynamic cq and payload to be written
+            if(!indexedFields.contains("cq") || !indexedFields.contains("payload")){
+              throw new Exception(s"Structures in dynamic fields array must contains keys cq and payload ")
+            }
+            val cqIndex: Int = indexedFields("cq")
+            val dataIndex: Int = indexedFields("payload")
+            val cqName = dynRow.getAs[String](cqIndex)
+            val cq = Utils.toBytesPrimitiveType(cqName, rowSchema.fields(cqIndex).dataType)
+            val dataType = dynRow.schema.fields(dataIndex).dataType.typeName
+            //TODO verify this Field init
+            val dynamicFieldStruct = Field(cqName, y.cf,
+              cqName,
+              Some(dataType),
+              y.avroSchema, None, -1)
+            val data = Utils.toBytes(dynRow.get(dataIndex), dynamicFieldStruct)
+
+            // Update hbase put
+            put.addColumn(Bytes.toBytes(y.cf), cq, data)
+        }
+      } else {
+        if (!row.isNullAt(x)) {
+          val b = Utils.toBytes(row(x), y)
+          put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
+        }
       }
     }
     put

@@ -77,11 +77,17 @@ case class Field(
   }
 
   val dt: DataType = {
-    //TODO Prima era così DataTypeParser.parse(_)) da testare
-    sType.map(CatalystSqlParser.parseDataType).getOrElse {
-      schema.map { x =>
-        SchemaConverters.toSqlType(x).dataType
-      }.get
+    // TODO Adding support for "array" for dynamicField. To be tested and refactored in a better way
+    if(sType.exists(x => x == "array")){
+      //TODO empty structtype of course is wrong.... we have to find a better way to formalize the behavior
+      ArrayType(StructType(Seq()), false)
+    } else {
+      //TODO Prima era così DataTypeParser.parse(_)) da testare
+      sType.map(CatalystSqlParser.parseDataType).getOrElse {
+        schema.map { x =>
+          SchemaConverters.toSqlType(x).dataType
+        }.get
+      }
     }
   }
 
