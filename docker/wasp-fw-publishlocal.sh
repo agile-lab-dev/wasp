@@ -2,7 +2,7 @@
 
 cd ../..
 cd Agile.Wasp2/
-#git pull
+git pull
 sbt clean publishLocal
 
 cd ../Agile.Wasp2.Whitelabel/docker
