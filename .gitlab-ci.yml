@@ -50,5 +50,6 @@ publish:
   only:
     refs:
       - develop
+      - master
   script:
     - sbt -v publish
