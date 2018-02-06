@@ -30,8 +30,8 @@ object Settings {
     // Workaround for publish fails https://github.com/sbt/sbt/issues/3570
     updateOptions := updateOptions.value.withGigahorse(false),
     credentials ++= (for {
-      user <- Option(System.getenv().get("NEUXS_USERNAME"))
-      pw <- Option(System.getenv().get("NEUXS_PASSWORD"))
+      user <- Option(System.getenv().get("NEXUS_USERNAME"))
+      pw <- Option(System.getenv().get("NEXUS_PASSWORD"))
     } yield Credentials("Sonatype Nexus Repository Manager", System.getenv().get("NEXUS_DOMAIN"), user, pw)).toSeq
 	)
 	
