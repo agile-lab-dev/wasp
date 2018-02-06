@@ -37,5 +37,5 @@ ADD conf/solrconfig.xml /usr/lib/solr/schemalessTemplate/solrconfig.xml
 EXPOSE 8983
 
 WORKDIR /opt/docker-solr/
-ENTRYPOINT ["/opt/docker-solr/docker-entrypoint.sh"]
-CMD ["/opt/docker-solr/solr-foreground"]
+ENTRYPOINT ["/bin/bash", "/opt/docker-solr/docker-entrypoint.sh"]
+CMD ["/bin/bash", "/opt/docker-solr/solr-foreground"]

@@ -87,15 +87,14 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
         new ElasticSparkReader(indexOpt.get)
 
       } else {
-        val error = s"Error creating elastic index: $index with this index name $indexName"
-        logger.error(error)
-        throw new Exception(error)
-        //TODO handle errors
+        val msg = s"Error creating elastic index: $index with this index name $indexName"
+        logger.error(msg)
+        throw new Exception(msg)
       }
     } else {
-      val error = s"Elastic spark reader indexOption not found: id: '$id, name: $name'"
-      logger.error(error)
-      throw new Exception(error)
+      val msg = s"Elastic spark reader indexOption not found: id: '$id, name: $name'"
+      logger.error(msg)
+      throw new Exception(msg)
     }
   }
 

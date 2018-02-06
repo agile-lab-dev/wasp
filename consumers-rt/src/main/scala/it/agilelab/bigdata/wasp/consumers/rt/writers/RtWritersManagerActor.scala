@@ -18,10 +18,10 @@ class RtWritersManagerActor(env: {
                                   val indexBL: IndexBL
                                  },
                             writer: Option[WriterModel])
-    extends Actor
+  extends Actor
     with Logging {
 
-  val endpoint: Option[ActorRef] = if(writer.isDefined)
+  val endpoint: Option[ActorRef] = if (writer.isDefined)
   {
     initializeEndpoint(writer.get)
   } else None
@@ -137,7 +137,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
 }
 */
 
-class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer{
+class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer {
 
   val webSocketConfigOpt: Option[WebsocketModel] = websocketBL.getById(writer.endpointId.get.getValue.toHexString)
   if (webSocketConfigOpt.isEmpty) {
@@ -158,7 +158,7 @@ class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extend
     }
 
     val rootUri = s"websocket://${webSocketConfigOpt.get.host}:${webSocketConfigOpt.get.port}/${webSocketConfigOpt.get.resourceName}"
-    val finalUri = if(webSocketConfigOpt.get.options.isDefined) {
+    val finalUri = if (webSocketConfigOpt.get.options.isDefined) {
         rootUri + s"?${getOptions(webSocketConfigOpt.get.options.get)}"
     } else {
       rootUri

@@ -79,6 +79,11 @@ abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL })
 	
 	// behavior once initialized
 	def initialized: Receive = {
+		case Left(s) =>
+			val msg = s"ETL not stopped - Message from ETLActor: ${s}"
+			logger.error(msg)
+			// do nothing:  leave go stop() to Timeout
+
 		case RestartConsumers =>
 			// update MasterGuardian ActorRef
 			masterGuardian = sender()

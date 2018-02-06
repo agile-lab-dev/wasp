@@ -22,7 +22,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                     val classLoader: Option[ClassLoader] = None,
                     sparkWriterFactory: SparkWriterFactory,
                     sc: SparkContext,
-                    plugins: Map[String, WaspConsumersSparkPlugin]) extends Actor with Logging {
+                    plugins: Map[String, WaspConsumersSparkPlugin])
+  extends Actor
+    with Logging {
 
   var lastBatchMasterRef : ActorRef = _
 
@@ -69,11 +71,10 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
           val nDFrequired = staticReaders.size
           val nDFretrieved = dataStoreDFs.size
           if (nDFretrieved != nDFrequired) {
-            val error = "DFs not retrieved successfully!\n" +
+            val msg = "DFs not retrieved successfully!\n" +
               s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
               dataStoreDFs.toString
-
-            logger.error(error)
+            logger.error(msg) // print here the complete error due to verbosity
 
             changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
 
@@ -104,9 +105,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
               writeMlModelsSuccess = true
               logger.info(s"Successfully wrote ${modelsWriteResult.size} ml models for batch ${jobModel.name} to MongoDB")
             } catch {
-              case e: Exception => {
-                logger.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
-              }
+              case e: Exception => logger.error(s"MongoDB error saving the ml models for atch ${jobModel.name}", e)
             }
 
             logger.info(s"Saving batch job ${jobModel.name} output")
@@ -122,10 +121,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
                     logger.error(s"Failed to write output for batch job ${jobModel.name}")
                   }
                 } catch {
-                  case e: Exception => {
+                  case e: Exception =>
                     logger.error(s"Failed to write output for batch job ${jobModel.name}", e)
                     writeOutputSuccess = false
-                  }
                 }
               case None =>
                 logger.warn(s"Batch job ${jobModel.name} has no output to be written.")
@@ -157,10 +155,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
           val dataSourceDF = staticReader.read(sc)
           Some(ReaderKey(staticReader.readerType, staticReader.name), dataSourceDF)
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             logger.error(s"Error during retrieving DF: ${staticReader.name}", e)
             None
-          }
         }
       })
       .toMap
@@ -178,7 +175,7 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
     val spakWriterOpt: Option[SparkWriter] = sparkWriterFactory.createSparkWriterBatch(env, sc, writerModel = writerModel)
 
-    if(spakWriterOpt.isDefined) {
+    if (spakWriterOpt.isDefined) {
       spakWriterOpt.get.write(dataFrame)
       true
     } else {

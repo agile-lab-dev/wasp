@@ -78,7 +78,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
       val rs = Ranges.and(Range(x), ranges)
       val ps = Points.and(Range(x), points)
       if (rs.size > 0 || ps.size > 0) {
-        if(log.isDebugEnabled) {
+        if (log.isDebugEnabled) {
           rs.foreach(x => logDebug(x.toString))
         }
         idx += 1
@@ -228,7 +228,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
       rddResources.addResource(scanner)
       scanner
     }.map(toResultIterator(_))
-      .fold(Iterator.empty: Iterator[Result]){ case (x, y) =>
+      .fold(Iterator.empty: Iterator[Result]) { case (x, y) =>
       x ++ y
     } ++ gIt
     ShutdownHookManager.affixShutdownHook( new Thread() {

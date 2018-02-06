@@ -8,7 +8,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
 import it.agilelab.bigdata.wasp.core.utils.JsonOps._
@@ -43,9 +43,6 @@ class SolrAdminActor
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
 
-  // implicit timeout used below
-  implicit val timeout = WaspSystem.generalTimeout
-
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
 
@@ -59,14 +56,13 @@ class SolrAdminActor
     case message: Initialization   => call(message, initialization)
     case message: CheckOrCreateCollection => call(message, checkOrCreateCollection)
     case message: CheckCollection => call(message, checkCollection)
-    case message: Any             => logger.error("unknown message: " + message)
+    case message: Any             => logger.error(s"Unknown message: $message")
   }
 
   def initialization(message: Initialization): Boolean = {
 
     if (solrServer != null) {
-      logger.warn(
-        s"Solr - Client re-initialization, the before client will be close")
+      logger.warn("Solr - Client re-initialization, the before client will be close")
       solrServer.shutdown()
     }
 
@@ -79,11 +75,9 @@ class SolrAdminActor
     try {
       solrServer.connect()
     } catch {
-      case e: Exception => {
-        logger.info(s"Solr NOT connected!")
-        e.printStackTrace()
-      }
-      case _: Throwable => logger.info(s"Solr NOT connected!")
+      case e: Throwable =>
+        val msg = "Solr NOT connected!"
+        logger.error(msg, e)
     }
 
     true
@@ -146,7 +140,7 @@ class SolrAdminActor
               false
             }
         }
-      }, timeout.duration)
+      }, servicesTimeout.duration)
   }
 
   private def createConfigSet(name: String, template: String): Boolean = {
@@ -192,7 +186,7 @@ class SolrAdminActor
               false
             }
         }
-      }, timeout.duration)
+      }, servicesTimeout.duration)
   }
 
   private def addCollection(message: AddCollection): Boolean = {
@@ -250,13 +244,11 @@ class SolrAdminActor
             true
           }
           case _ => {
-            logger.error(
-              s"Solr - Schema NOT created, $message status ${res.status}")
+            logger.error(s"Solr - Schema NOT created, $message status ${res.status}")
             false
           }
         }
-      },
-      timeout.duration
+      }, servicesTimeout.duration
     )
   }
 
@@ -274,8 +266,7 @@ class SolrAdminActor
 
     val ret = createResponse.isSuccess
     if (!ret) {
-      logger.warn(
-        s"Collection Alias NOT successfully created. ${message.collection}")
+      logger.warn(s"Collection Alias NOT successfully created. ${message.collection}")
     }
 
     ret

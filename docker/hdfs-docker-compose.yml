@@ -4,9 +4,13 @@ services:
       build: ./hdfs/
       image: hdfs_cdh:5.11
       command: hdfs namenode
+      environment:
+        - HADOOP_NAMENODE_OPTS=-Xms200m -Xmx200m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:+PrintTenuringDistribution
       ports:
-          - "50070:50070"
+          - "50071:50070"
+          - "9000:9000"
       hostname: hdfs-namenode
+      mem_limit: 400m
       volumes:
         - "./data/namenode:/data"
 
@@ -14,11 +18,15 @@ services:
       build: ./hdfs/
       image: hdfs_cdh:5.11
       command: hdfs datanode
+      environment:
+        - HADOOP_DATANODE_OPTS=-Xms200m -Xmx200m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:+PrintTenuringDistribution
       ports:
-      # The host port is randomly assigned by Docker, to allow scaling to multiple DataNodes on the same host
-          - "50075"
+          - "50075:50075"
       links:
           - namenode:hdfs-namenode
+      depends_on:
+          - namenode
+      mem_limit: 400m
       volumes:
         - "./data/datanode/:/data"
 

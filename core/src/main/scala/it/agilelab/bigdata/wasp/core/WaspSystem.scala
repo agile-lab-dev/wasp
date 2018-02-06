@@ -76,6 +76,9 @@ object WaspSystem extends WaspConfiguration with Logging {
   
   // general timeout value, eg for actor's syncronous call (i.e. 'actor ? msg')
   val generalTimeout = Timeout(waspConfig.generalTimeoutMillis, TimeUnit.MILLISECONDS)
+
+  // services timeout, used below
+  val servicesTimeout = Timeout(waspConfig.servicesTimeoutMillis, TimeUnit.MILLISECONDS)
   
   /**
     * Initializes the WASP system if needed.
@@ -129,13 +132,10 @@ object WaspSystem extends WaspConfiguration with Logging {
       }
   
       logger.info("Connecting to services")
-  
-      // services timeout, used below
-      val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
 
       // check connectivity with kafka's zookeper
       val kafkaResult = kafkaAdminActor.ask(it.agilelab.bigdata.wasp.core.kafka.Initialization(ConfigManager.getKafkaConfig))((KafkaAdminActor.connectionTimeout + 1000).millis)
-      val zkKafka = Await.ready(kafkaResult, Duration(servicesTimeoutMillis, TimeUnit.SECONDS))
+      val zkKafka = Await.ready(kafkaResult, servicesTimeout.duration)
       zkKafka.value match {
         case Some(Failure(t)) =>
           logger.error(t.getMessage)
@@ -148,7 +148,7 @@ object WaspSystem extends WaspConfiguration with Logging {
       }
 
       // implicit timeout used below
-      implicit val implicitServicesTimeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
+      implicit val implicitServicesTimeout = servicesTimeout
     
       // initialize indexed datastore
       val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
@@ -161,7 +161,7 @@ object WaspSystem extends WaspConfiguration with Logging {
       defaultKeyvalueDatastore match {
         case "hbase" => {
           logger.info(s"Trying to connect with HBase...")
-          startupHBase(servicesTimeoutMillis)
+          startupHBase(servicesTimeout.duration.toMillis)
         }
         case _ => {
           logger.error("No keyvalue datastore configured!")
@@ -245,7 +245,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     //    * XYZMasterGuardian to ... => durationInit - 10s
     //    ... maybe to extends ...
     import scala.concurrent.duration._
-    val newDuration:FiniteDuration = actorReference.path.name match {
+    val timeoutDuration: FiniteDuration = actorReference.path.name match {
       case WaspSystem.masterGuardianSingletonProxyName => durationInit
       case WaspSystem.sparkConsumersMasterGuardianSingletonProxyName  |
            WaspSystem.rtConsumersMasterGuardianSingletonProxyName     |
@@ -255,13 +255,13 @@ object WaspSystem extends WaspConfiguration with Logging {
     }
 
     /* Only for Debug */
-//    val newDuration:FiniteDuration = actorReference.path.name match {
+//    val timeoutDuration: FiniteDuration = actorReference.path.name match {
 //      case WaspSystem.masterGuardianSingletonProxyName => durationInit * 2
 //      case _ => durationInit
 //    }
 
-    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(newDuration)
-    Await.result(actorReference ? message, newDuration).asInstanceOf[T]
+    implicit val implicitSynchronousActorCallTimeout: Timeout = Timeout(timeoutDuration)
+    Await.result(actorReference ? message, timeoutDuration).asInstanceOf[T]
   }
   
   // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident

@@ -17,7 +17,7 @@ import org.apache.spark.streaming.dstream.DStream
 class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
                                       ssc: StreamingContext,
                                       id: String)
-    extends SparkLegacyStreamingWriter {
+  extends SparkLegacyStreamingWriter {
 
   override def write(stream: DStream[String]): Unit = {
 
@@ -57,8 +57,8 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
         })
 
       } else {
-        throw new Exception("Error creating topic " + topic.name)
-        //TODO handle errors
+        val msg = s"Error creating topic ${topic.name}"
+        throw new Exception(msg)
       }
     })
   }
@@ -67,7 +67,7 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
 class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                           id: String,
                                           ss: SparkSession)
-    extends SparkStructuredStreamingWriter
+  extends SparkStructuredStreamingWriter
     with Logging {
 
   override def write(stream: DataFrame,
@@ -130,10 +130,9 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
         dswWithWritingConf.start()
       } else {
-      throw new Exception("Error creating topic " + topic.name)
-      //TODO handle errors
-    }
-
+        val msg = s"Error creating topic ${topic.name}"
+        throw new Exception(msg)
+      }
     })
   }
 

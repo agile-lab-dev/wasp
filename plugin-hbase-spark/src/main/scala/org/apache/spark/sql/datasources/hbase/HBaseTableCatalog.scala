@@ -122,7 +122,7 @@ case class RowKey(k: String) {
     if (varLength) {
       -1
     } else {
-      fields.foldLeft(0){case (x, y) =>
+      fields.foldLeft(0) {case (x, y) =>
         x + y.length
       }
     }
@@ -163,7 +163,7 @@ case class HBaseTableCatalog(
   // Setup the start and length for each dimension of row key at runtime.
   def dynSetupRowKey(rowKey: Array[Byte]) {
     logDebug(s"length: ${rowKey.length}")
-    if(row.varLength) {
+    if (row.varLength) {
       var start = 0
       row.fields.foreach { f =>
         logDebug(s"start: $start")
@@ -354,8 +354,8 @@ object HBaseTableCatalog {
       })
       resultingMap
     } catch {
-      case e:Exception => throw
-        new IllegalArgumentException("Invalid value for " + SCHEMA_COLUMNS_MAPPING_KEY +
+      case e: Exception =>
+        throw new IllegalArgumentException("Invalid value for " + SCHEMA_COLUMNS_MAPPING_KEY +
           " '" +
           schemaMappingString + "'", e )
     }

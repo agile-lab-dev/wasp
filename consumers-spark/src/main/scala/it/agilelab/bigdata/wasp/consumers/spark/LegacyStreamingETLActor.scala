@@ -52,12 +52,12 @@ class LegacyStreamingETLActor(env: {
     } catch {
       case e: Exception =>
         val msg = s"Pipegraph '${pipegraph.name}' - LegacyStreamingETLActor '${legacyStreamingETL.name}': Exception: ${e.getMessage}"
-        logger.error(msg)
+        logger.error(msg, e)
         listener ! Left(msg)
 
       case e: Error =>
         val msg = s"Pipegraph '${pipegraph.name}' - LegacyStreamingETLActor '${legacyStreamingETL.name}': Error: ${e.getMessage}"
-        logger.error(msg)
+        logger.error(msg, e)
         listener ! Left(msg)
     }
   }
@@ -148,7 +148,6 @@ class LegacyStreamingETLActor(env: {
       throw new Exception("MUST be only ONE topic, inputs: " + legacyStreamingETL.inputs)
   }
 
-  //TODO move in the extender class
   def mainTask(): Unit = {
 
     val topicStreams: List[(ReaderKey, DStream[String])] =
@@ -178,18 +177,18 @@ class LegacyStreamingETLActor(env: {
         val staticReaders = legacyStreamingETL.inputs.filterNot(_.readerType.category == Datastores.topicCategory)
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
-          if(staticReaders.isEmpty)
+          if (staticReaders.isEmpty)
             Map.empty
           else
             retrieveDFs(staticReaders)
 
         val nDFrequired = staticReaders.size
         val nDFretrieved = dataStoreDFs.size
-        if(nDFretrieved != nDFrequired) {
-          val error = "DFs not retrieved successfully!\n" +
+        if (nDFretrieved != nDFrequired) {
+          val msg = "DFs not retrieved successfully!\n" +
             s"$nDFrequired DFs required - $nDFretrieved DFs retrieved!\n" +
             dataStoreDFs.toString
-          logger.error(error) // print here the complete error due to verbosity
+          logger.error(msg) // print here the complete error due to verbosity
 
           throw new Exception(s"DFs not retrieved successful - $nDFrequired DFs required - $nDFretrieved DFs retrieved!")
         }
@@ -234,10 +233,9 @@ class LegacyStreamingETLActor(env: {
           val dataSourceDF = staticReader.read(ssc.sparkContext)
           Some(ReaderKey(staticReader.readerType, staticReader.name), dataSourceDF)
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             logger.error(s"Error during retrieving DF: ${staticReader.name}", e)
             None
-          }
         }
       })
       .toMap

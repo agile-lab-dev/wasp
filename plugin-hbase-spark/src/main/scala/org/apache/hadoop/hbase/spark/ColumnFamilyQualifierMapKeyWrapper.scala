@@ -38,7 +38,7 @@ class ColumnFamilyQualifierMapKeyWrapper(val columnFamily:Array[Byte],
                                          val qualifier:Array[Byte],
                                          val qualifierOffSet:Int,
                                          val qualifierLength:Int)
-  extends Serializable{
+  extends Serializable {
 
   override def equals(other:Any): Boolean = {
     val otherWrapper = other.asInstanceOf[ColumnFamilyQualifierMapKeyWrapper]

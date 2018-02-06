@@ -30,7 +30,7 @@ services:
     environment:
       SPARK_CONF_DIR: /etc/spark
       SPARK_WORKER_CORES: 4
-      SPARK_WORKER_MEMORY: 2g
+      SPARK_WORKER_MEMORY: 2048m
       SPARK_WORKER_PORT: 8881
     expose:
       - "7012"

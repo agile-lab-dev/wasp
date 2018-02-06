@@ -143,7 +143,7 @@ object AvroSource {
     val newDF = withCatalog(avroCatalogInsert)
     newDF.show()
     newDF.printSchema()
-    if(newDF.count() != 256) {
+    if (newDF.count() != 256) {
       throw new UserCustomizedSampleException("value invalid")
     }
 

@@ -172,7 +172,7 @@ class MlModelBLImp(waspDB: WaspDB) extends MlModelBL {
     //TODO Enforce the not deleted model logging
     val infoOptFuture: Option[MlModelOnlyInfo] = waspDB.getDocumentByID[MlModelOnlyInfo](BsonObjectId(id))
       infoOptFuture.foreach(info => {
-        if(info.modelFileId.isDefined) {
+        if (info.modelFileId.isDefined) {
           waspDB.deleteById[MlModelOnlyInfo](info._id.get)
           waspDB.deleteFileById(info.modelFileId.get)
         }
@@ -185,7 +185,7 @@ class MlModelBLImp(waspDB: WaspDB) extends MlModelBL {
   override def delete(name: String, version: String, timestamp: Long): Unit = {
     val infoOptFuture: Option[MlModelOnlyInfo] = getMlModelOnlyInfo(name, version, timestamp)
     infoOptFuture.foreach(info => {
-      if(info.modelFileId.isDefined) {
+      if (info.modelFileId.isDefined) {
         waspDB.deleteById[MlModelOnlyInfo](info._id.get)
         waspDB.deleteFileById(info.modelFileId.get)
       }

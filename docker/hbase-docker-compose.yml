@@ -6,6 +6,7 @@ services:
       hostname: hbase
       ports:
           - "60010:60010"
+      mem_limit: 800m
 
 networks:
   default:

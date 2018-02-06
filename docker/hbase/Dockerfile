@@ -13,6 +13,7 @@ RUN yum -y  install hbase hbase-thrift hbase-master hbase-regionserver && \
 ADD ./replace-hostname /opt/replace-hostname
 COPY conf  /etc/hadoop/conf/
 ADD ./hbase-site.xml /etc/hbase/conf/hbase-site.xml
+ADD ./hbase-env.sh /etc/hbase/conf/hbase-env.sh
 ADD ./zoo.cfg /etc/hbase/conf/zoo.cfg
 
 
@@ -30,4 +31,4 @@ VOLUME /data
 
 EXPOSE 8080 8085 9090 9095 2181 60010
 
-CMD ["/opt/hbase-server"]
+CMD ["/bin/bash", "/opt/hbase-server"]
