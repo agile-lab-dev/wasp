@@ -8,7 +8,6 @@ object JobStateEnum extends Enumeration {
   val PROCESSING = "PROCESSING"
   val SUCCESSFUL = "SUCCESSFUL"
   val FAILED = "FAILED"
-
 }
 
 case class BatchJobModel(override val name: String,
@@ -19,7 +18,7 @@ case class BatchJobModel(override val name: String,
                          etl: BatchETLModel,
                          var state: String,
                          _id: Option[BsonObjectId] = None)
-	  extends Model
+  extends Model
 
 case class BatchETLModel(name: String,
                          inputs: List[ReaderModel],

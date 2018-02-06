@@ -107,7 +107,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
       lastRestartMasterRef ! BatchJobProcessedMessage
 
     case message: StartSchedulersMessage =>
-      logger.info(s"Starting scheduled batches activity")
+      logger.info("Starting scheduled batches activity")
       startSchedulerActors()
   }
 
@@ -115,19 +115,17 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   /** ******************/
 
   private def stopGuardian() {
-
     //Stop all actors bound to this guardian and the guardian itself
-    logger.info("Stopping actors bound to BatchMasterGuardian ...")
+    logger.info("Stopping actors bound to BatchMasterGuardian...")
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, 60 seconds))
     val res = Await.result(globalStatus, 20 seconds)
 
     if (res reduceLeft (_ && _)) {
-      logger.info(s"Graceful shutdown completed.")
+      logger.info("Graceful shutdown completed.")
     }
     else {
-      logger.error(s"Something went wrong! Unable to shutdown all nodes")
+      logger.error("Something went wrong! Unable to shutdown all nodes")
     }
-
   }
 
   private def checkJobsBucket() {

@@ -7,7 +7,6 @@ import org.mongodb.scala.bson.BsonObjectId
 
 trait BatchJobBL {
 
-
   def getPendingJobs (state: String = JobStateEnum.PENDING): Seq[BatchJobModel]
 
   def getById(id: String):  Option[BatchJobModel]
@@ -33,11 +32,9 @@ trait BatchJobBL {
   def deleteById(id_string: String): Unit
 
   def deleteByName(name: String): Unit
-
-
 }
 
-class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
+class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL {
 
   private def factory(p: BatchJobModel) = new BatchJobModel(p.name, p.description, p.owner, p.system, p.creationTime, p.etl, p.state, p._id)
 
@@ -89,4 +86,3 @@ class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
     })
   }
 }
-
