@@ -77,9 +77,9 @@ case class Field(
   }
 
   val dt: DataType = {
-    // TODO Adding support for "array" for dynamicField. To be tested and refactored in a better way
-    if(sType.exists(x => x == "array")){
-      //TODO empty structtype of course is wrong.... we have to find a better way to formalize the behavior
+    // Adding support for "array" for dynamicField
+    if(sType.contains("array")){
+      //TODO empty structtype is wrong but it should not have impacts on other functionalities....
       ArrayType(StructType(Seq()), false)
     } else {
       //TODO Prima era così DataTypeParser.parse(_)) da testare

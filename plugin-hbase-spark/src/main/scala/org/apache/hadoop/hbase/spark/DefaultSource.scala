@@ -321,18 +321,17 @@ case class HBaseRelation(
                 .map(x => (x, rowSchema.fieldIndex(x))).toMap
 
               // Extract dynamic cq and payload to be written
-              if(!indexedFields.contains("cq") || !indexedFields.contains("payload")){
+              if(!indexedFields.contains(DynamicFieldStructure.COLUMN_QUALIFIER) || !indexedFields.contains(DynamicFieldStructure.PAYLOAD)){
                 throw new Exception(s"Structures in dynamic fields array must contains keys cq and payload ")
               }
-              val cqIndex: Int = indexedFields("cq")
-              val dataIndex: Int = indexedFields("payload")
+              val cqIndex: Int = indexedFields(DynamicFieldStructure.COLUMN_QUALIFIER)
+              val dataIndex: Int = indexedFields(DynamicFieldStructure.PAYLOAD)
               val cqName = dynRow.getAs[String](cqIndex)
               val cq = Utils.toBytesPrimitiveType(cqName, rowSchema.fields(cqIndex).dataType)
-              val dataType = dynRow.schema.fields(dataIndex).dataType.typeName
-              //TODO verify this Field init
+              val dataType = if(y.avroSchema.isDefined) None else Some(dynRow.schema.fields(dataIndex).dataType.typeName)
               val dynamicFieldStruct = Field(cqName, y.cf,
                 cqName,
-                Some(dataType),
+                dataType,
                 y.avroSchema, None, -1)
               val data = Utils.toBytes(dynRow.get(dataIndex), dynamicFieldStruct)
 
