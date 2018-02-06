@@ -9,12 +9,12 @@ if [[ "$VERBOSE" = "yes" ]]; then
 fi
 
 # when invoked with e.g.: docker run solr -help
-if [ -f /tmp/namenodeformat ]; then
+if [ ! -f /data/dfs/namenode/current/VERSION ]; then
     echo "$2"
     if [[ "$2" = "namenode" ]]; then
-        hdfs namenode -format
+        mkdir -p /data/dfs/namenode /data/dfs/checkpoint
+        hdfs namenode -format  -force -nonInteractive -clusterid CID-8bf63244-0510-4db6-a949-8f74b50f2be9
     fi
-    rm -f /tmp/namenodeformat
 fi
 
 # execute command passed in as arguments.

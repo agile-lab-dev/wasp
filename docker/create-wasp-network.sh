@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 echo "Setting up docker network \"wasp-docker\""
+source get-docker-cmd.sh
+
 
 # check if network exists
 if [ $($DOCKER_CMD network ls | grep "wasp-docker" | wc -l) -eq 0 ]; then

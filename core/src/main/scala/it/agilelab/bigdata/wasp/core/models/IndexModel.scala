@@ -107,8 +107,8 @@ case class IndexModel(override val name: String,
                       query: Option[String] = None,
                       numShards: Option[Int] = Some(1),
                       replicationFactor: Option[Int] = Some(1),
-                      rollingIndex: Boolean = true
-                     )
+                      rollingIndex: Boolean = true,
+                      idField: Option[String] = None)
   extends Model {
 
   def resource = s"$eventuallyTimedName/$dataType"
