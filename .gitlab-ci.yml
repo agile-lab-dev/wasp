@@ -7,28 +7,30 @@ stages:
   - compile
   - publish
 
-cache:
-  key: "$CI_BUILD_REF_NAME" # contains either the branch or the tag, so it's caching per branch
-  paths:
-    - "sbt-cache/.ivy/cache"
-    - "sbt-cache/.boot"
-    - "sbt-cache/.sbtboot"
-    - "*/target/streams"
-
-before_script:
-    - >
-       echo "[repositories]
-            maven-proxy-snapshots: ${NEXUS_URL}/repository/maven-snapshots/
-            maven-proxy-releases: ${NEXUS_URL}/repository/maven-releases/
-            maven-proxy-central:  ${NEXUS_URL}/repository/maven-central/
-            maven-central" > repositories
-compile:
+# jobs for internal uses
+compile_internal:
+  tags:
+    - criticalcase
   stage: compile
   image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
   only:
     refs:
       - develop
       - master
+  cache:
+    key: "$CI_BUILD_REF_NAME" # contains either the branch or the tag, so it's caching per branch
+    paths:
+      - "sbt-cache/.ivy/cache"
+      - "sbt-cache/.boot"
+      - "sbt-cache/.sbtboot"
+      - "*/target/streams"
+  before_script:
+      - >
+         echo "[repositories]
+              maven-proxy-snapshots: ${NEXUS_URL}/repository/maven-snapshots/
+              maven-proxy-releases: ${NEXUS_URL}/repository/maven-releases/
+              maven-proxy-central:  ${NEXUS_URL}/repository/maven-central/
+              maven-central" > repositories
   script:
     - ls -lha
     - sbt -v compile
@@ -44,12 +46,42 @@ compile:
 #  script:
 #    - sbt -v release with-defaults
 
-publish:
+publish_internal:
+  tags:
+  - criticalcase
   stage: publish
   image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
   only:
     refs:
       - develop
       - master
+  cache:
+    key: "$CI_BUILD_REF_NAME" # contains either the branch or the tag, so it's caching per branch
+    paths:
+      - "sbt-cache/.ivy/cache"
+      - "sbt-cache/.boot"
+      - "sbt-cache/.sbtboot"
+      - "*/target/streams"
+  before_script:
+      - >
+         echo "[repositories]
+              maven-proxy-snapshots: ${NEXUS_URL}/repository/maven-snapshots/
+              maven-proxy-releases: ${NEXUS_URL}/repository/maven-releases/
+              maven-proxy-central:  ${NEXUS_URL}/repository/maven-central/
+              maven-central" > repositories
   script:
+    - sbt -v publish
+
+# jobs for public uses
+compile_publish_public:
+  tags:
+    - cluster01
+  stage: compile
+  image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
+  only:
+    refs:
+      - develop
+      - master
+  script:
+    - ls -lha
     - sbt -v publish
