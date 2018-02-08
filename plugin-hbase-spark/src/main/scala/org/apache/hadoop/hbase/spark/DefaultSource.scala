@@ -182,11 +182,7 @@ case class HBaseRelation(
     .getOrElse(sqlContext.sparkContext.getConf.getInt(
       HBaseSparkConf.BULKGET_SIZE, HBaseSparkConf.DEFAULT_BULKGET_SIZE))
 
-  // Retrieve fields that are treated as dynamic. They will be denormalized over multiple columns in write operations
-  val dynamicFields: Set[String] = parameters
-    .get(HBaseSparkConf.DYNAMIC_FIELDS)
-    .map(x => x.split(":", -1).toSet)
-    .getOrElse(Set.empty[String])
+  val clusteringCfColumnsMap: Map[String, Seq[String]] = catalog.clusteringMap
 
   //create or get latest HBaseContext
   val hbaseContext: HBaseContext = if (useHBaseContext) {
@@ -302,47 +298,46 @@ case class HBaseRelation(
       }
       val put = timestamp.fold(new Put(rBytes))(new Put(rBytes, _))
 
-      colsIdxedFields.foreach { case (x, y) =>
-        if(dynamicFields.contains(y.colName)){
-          // Dynamic field case. Denormalize content in multiple columns
-          val data = row(x)
-          // Verify expected type matching
-          val dataArray: Seq[Row] = data match {
-            case x: Seq[Row] => x
-            case _ => throw new Exception(s"Unsupported data type for dynamic Fields. Array of StructType Expected. " +
-              s"Field ${y.colName} - ${y.dt}")
-          }
+      def isClusteringColumnFamily: Field => Boolean = (f: Field) => clusteringCfColumnsMap.contains(f.cf)
+      def isStandardColumnFamily: Field => Boolean = (f: Field) => !isClusteringColumnFamily(f)
 
-          dataArray.foreach{
-            dynRow =>
-              val rowSchema = dynRow.schema
-              val indexedFields = rowSchema
-                .fieldNames
-                .map(x => (x, rowSchema.fieldIndex(x))).toMap
-
-              // Extract dynamic cq and payload to be written
-              if(!indexedFields.contains(DynamicFieldStructure.COLUMN_QUALIFIER) || !indexedFields.contains(DynamicFieldStructure.PAYLOAD)){
-                throw new Exception(s"Structures in dynamic fields array must contains keys cq and payload ")
-              }
-              val cqIndex: Int = indexedFields(DynamicFieldStructure.COLUMN_QUALIFIER)
-              val dataIndex: Int = indexedFields(DynamicFieldStructure.PAYLOAD)
-              val cqName = dynRow.getAs[String](cqIndex)
-              val cq = Utils.toBytesPrimitiveType(cqName, rowSchema.fields(cqIndex).dataType)
-              val dataType = if(y.avroSchema.isDefined) None else Some(dynRow.schema.fields(dataIndex).dataType.typeName)
-              val dynamicFieldStruct = Field(cqName, y.cf,
-                cqName,
-                dataType,
-                y.avroSchema, None, -1)
-              val data = Utils.toBytes(dynRow.get(dataIndex), dynamicFieldStruct)
-
-              // Update hbase put
-              put.addColumn(Bytes.toBytes(y.cf), cq, data)
-          }
-        } else {
-          // Standard case
-          val b = Utils.toBytes(row(x), y)
-          put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
+      // We generate put in 2 phase.
+      // One for standard cf and static cells
+      // One for cf with "clustering" feature (i.e. denormalization)
+      colsIdxedFields.filter{
+        case (_, f) => isStandardColumnFamily(f)
+      }.foreach { case (colIndex, field) =>
+        if (!row.isNullAt(colIndex)) {
+          val b = Utils.toBytes(row(colIndex), field)
+          put.addColumn(Bytes.toBytes(field.cf), Bytes.toBytes(field.col), b)
         }
+      }
+
+      // Build a map to retrieve for the specific row the column qualifier prefix for cf with "clustering"
+      val clusteringQualifierPrefixMap = clusteringCfColumnsMap.map{
+        case (cf: String, clustFields: Seq[String]) =>
+          val rowSchema = row.schema
+          val cqPrefix = clustFields.map{
+            fieldName =>
+              row.getAs[String](rowSchema.fieldIndex(fieldName))
+          }.mkString(":")
+          cf -> cqPrefix
+      }
+
+      // Process denormalized columns
+      colsIdxedFields.filter{
+        // Take only field of clustering column family that are not in clustering fields
+        case (_, f) => isClusteringColumnFamily(f) && !clusteringCfColumnsMap(f.cf).contains(f.col)
+      }.foreach{
+        case (colIndex, field) =>
+          if (!row.isNullAt(colIndex)) {
+            val cf = Bytes.toBytes(field.cf)
+            // Compose final denormalized cq
+            val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}:${field.col}")
+            val data = Utils.toBytes(row(colIndex), field)
+
+            put.addColumn(cf, finalCq, data)
+          }
       }
       count += 1
       (new ImmutableBytesWritable, put)
@@ -394,9 +389,9 @@ case class HBaseRelation(
   def buildRow(fields: Seq[Field], result: Result): Row = {
     val r = result.getRow
     val keySeq = parseRowKey(r, catalog.getRowKey)
-    //TODO dynamic fields not reconstructed. We should
+    //TODO denormalized fields not reconstructed. We should
     val valueSeq = fields
-      .filter(f => !f.isRowKey && !dynamicFields.contains(f.colName))
+      .filter(f => !f.isRowKey)
       .map { x =>
         val kv = result.getColumnLatestCell(Bytes.toBytes(x.cf), Bytes.toBytes(x.col))
         if (kv == null || kv.getValueLength == 0) {

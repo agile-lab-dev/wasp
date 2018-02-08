@@ -59,7 +59,4 @@ object HBaseSparkConf{
   val MAX_VERSIONS = "hbase.spark.query.maxVersions"
   /** Delayed time to close hbase-spark connection when no reference to this connection, in milliseconds. */
   val DEFAULT_CONNECTION_CLOSE_DELAY = 10 * 60 * 1000
-
-  // Custom field
-  val DYNAMIC_FIELDS = "dynamicFields"
 }

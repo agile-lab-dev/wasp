@@ -77,17 +77,11 @@ case class Field(
   }
 
   val dt: DataType = {
-    // Adding support for "array" for dynamicField
-    if(sType.contains("array")){
-      //TODO empty structtype is wrong but it should not have impacts on other functionalities....
-      ArrayType(StructType(Seq()), false)
-    } else {
-      //TODO Prima era così DataTypeParser.parse(_)) da testare
-      sType.map(CatalystSqlParser.parseDataType).getOrElse {
-        schema.map { x =>
-          SchemaConverters.toSqlType(x).dataType
-        }.get
-      }
+    //TODO Prima era così DataTypeParser.parse(_)) da testare
+    sType.map(CatalystSqlParser.parseDataType).getOrElse {
+      schema.map { x =>
+        SchemaConverters.toSqlType(x).dataType
+      }.get
     }
   }
 
@@ -151,11 +145,12 @@ case class SchemaMap(map: mutable.HashMap[String, Field]) {
 // The definition of HBase and Relation relation schema
 @InterfaceAudience.Private
 case class HBaseTableCatalog(
-     namespace: String,
-     name: String,
-     row: RowKey,
-     sMap: SchemaMap,
-     @transient params: Map[String, String]) extends Logging {
+                              namespace: String,
+                              name: String,
+                              row: RowKey,
+                              sMap: SchemaMap,
+                              clusteringMap: Map[String, Seq[String]],
+                              @transient params: Map[String, String]) extends Logging {
   def toDataType = StructType(sMap.toFields)
   def getField(name: String) = sMap.getField(name)
   def getRowKey: Seq[Field] = row.fields
@@ -242,6 +237,7 @@ object HBaseTableCatalog {
   val delimiter: Byte = 0
   val serdes = "serdes"
   val length = "length"
+  val clustering = "clustering"
 
   /**
     * User provide table schema definition
@@ -260,22 +256,39 @@ object HBaseTableCatalog {
     val tName = tableMeta.get(tableName).get.asInstanceOf[String]
     val cIter = map.get(columns).get.asInstanceOf[Map[String, Map[String, String]]].toIterator
     val schemaMap = mutable.HashMap.empty[String, Field]
+    val clusteringFieldsMap = mutable.HashMap.empty[String, Seq[String]]
     cIter.foreach { case (name, column) =>
-      val sd = {
-        column.get(serdes).asInstanceOf[Option[String]].map(n =>
-          Class.forName(n).newInstance().asInstanceOf[SerDes]
-        )
+      if(name == clustering){
+        //Save clustering informations
+        if(column.get(cf).isEmpty){
+          throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
+        }
+        val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
+        if(clusteringColumns.isEmpty){
+          throw new IllegalArgumentException(
+            """column "clustering" must have columns parameter defined with
+              |at least one element. Elements are splitted by colons (e.g. "col1:col2:col3")
+              |""".stripMargin)
+        }
+        clusteringFieldsMap.+=((column(cf), clusteringColumns))
+      } else {
+        val sd = {
+          column.get(serdes).asInstanceOf[Option[String]].map(n =>
+            Class.forName(n).newInstance().asInstanceOf[SerDes]
+          )
+        }
+        val len = column.get(length).map(_.toInt).getOrElse(-1)
+        val sAvro = column.get(avro).map(parameters(_))
+        val f = Field(name, column.getOrElse(cf, rowKey),
+          column.get(col).get,
+          column.get(`type`),
+          sAvro, sd, len)
+        schemaMap.+=((name, f))
       }
-      val len = column.get(length).map(_.toInt).getOrElse(-1)
-      val sAvro = column.get(avro).map(parameters(_))
-      val f = Field(name, column.getOrElse(cf, rowKey),
-        column.get(col).get,
-        column.get(`type`),
-        sAvro, sd, len)
-      schemaMap.+=((name, f))
     }
     val rKey = RowKey(map.get(rowKey).get.asInstanceOf[String])
-    HBaseTableCatalog(nSpace, tName, rKey, SchemaMap(schemaMap), parameters)
+
+    HBaseTableCatalog(nSpace, tName, rKey, SchemaMap(schemaMap), clusteringFieldsMap.toMap, parameters)
   }
 
   val TABLE_KEY: String = "hbase.table"
@@ -378,6 +391,6 @@ object HBaseTableCatalog {
   */
 @InterfaceAudience.Private
 case class SchemaQualifierDefinition(columnName:String,
-    colType:String,
-    columnFamily:String,
-    qualifier:String)
+                                     colType:String,
+                                     columnFamily:String,
+                                     qualifier:String)
