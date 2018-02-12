@@ -26,7 +26,6 @@ compile_publish_internal:
   only:
     refs:
       - develop
-      - master
   cache:
     key: "$CI_BUILD_REF_NAME" # contains either the branch or the tag, so it's caching per branch
     paths:
@@ -53,7 +52,6 @@ compile_publish_public:
   only:
     refs:
       - develop
-      - master
   script:
     - ls -lha
     - sbt -v publish
