@@ -41,18 +41,24 @@ object MlModels_C extends Directives with JsonSupport {
             }
           }
       } ~
-        path(Segment) { id =>
-          get {
-            complete {
-              getJsonOrNotFound[MlModelOnlyInfo](ConfigBL.mlModelBL.getById(id), id, "Machine learning model", _.toJson)
-            }
-          } ~
-            delete {
+        path(Segment) { name =>
+          path(Segment) { version =>
+            get {
               complete {
-                val result = ConfigBL.mlModelBL.getById(id)
-                runIfExists(result, () => ConfigBL.mlModelBL.delete(id), id, "Machine learning model", "delete")
+                getJsonOrNotFound[MlModelOnlyInfo](ConfigBL.mlModelBL.getMlModelOnlyInfo(name,version), s"${name}/${version}", "Machine learning model", _.toJson)
               }
-            }
+            } ~
+              delete {
+                complete {
+                  val result = ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version)
+
+
+                  runIfExists(result,
+                              () => ConfigBL.mlModelBL.delete(result.get.name, result.get.version, result.get.timestamp.getOrElse(0l)),
+                              s"${name}/${version}", "Machine learning model", "delete")
+                }
+              }
+          }
         }
     }
   }

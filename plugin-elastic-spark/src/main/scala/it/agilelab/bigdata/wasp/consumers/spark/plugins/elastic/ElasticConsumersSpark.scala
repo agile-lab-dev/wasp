@@ -45,22 +45,22 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
+    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointName.get, elasticAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model name '${writerModel.name}'")
+    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointName.get, elasticAdminActor_)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new ElasticSparkWriter(indexBL, sc, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark batch writer with this writer model name '${writerModel.name}'")
+    new ElasticSparkWriter(indexBL, sc, writerModel.name, elasticAdminActor_)
   }
 
-  override def getSparkReader(id: String, name: String): SparkReader = {
-    val indexOpt = indexBL.getById(id)
+  override def getSparkReader(endpointName: String, name: String): SparkReader = {
+    val indexOpt = indexBL.getByName(endpointName)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -92,7 +92,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
         throw new Exception(msg)
       }
     } else {
-      val msg = s"Elastic spark reader indexOption not found: id: '$id, name: $name'"
+      val msg = s"Elastic spark reader indexOption not found: id: '$endpointName, name: $name'"
       logger.error(msg)
       throw new Exception(msg)
     }

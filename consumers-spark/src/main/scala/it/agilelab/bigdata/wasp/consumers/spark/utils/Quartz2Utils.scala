@@ -28,12 +28,12 @@ object Quartz2Utils {
 	}
 	
 	implicit class BatchSchedulerModelQuartz2Support(schedulerModel: BatchSchedulerModel) {
-		private val batchJobModel = ConfigBL.batchJobBL.getById(schedulerModel.batchJob.get.getValue.toHexString).get
+		private val batchJobModel = ConfigBL.batchJobBL.getByName(schedulerModel.batchJob.get).get
 		
 		def getQuartzJob(batchMasterGuardianActorPath: String): JobDetail = {
 			val job = newJob(classOf[StartBatchJobSender])
 				.withIdentity(batchJobModel.name, batchJobModel.owner)
-				.usingJobData("jobId", batchJobModel._id.get.getValue.toHexString)
+				.usingJobData("jobName", batchJobModel.name)
 				.usingJobData("batchMasterGuardianActorPath", batchMasterGuardianActorPath)
 				.build()
 			

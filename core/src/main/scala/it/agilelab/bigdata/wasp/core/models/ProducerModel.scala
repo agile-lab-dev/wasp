@@ -6,13 +6,12 @@ import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 /** DataSource class. The fields must be the same as the ones inside the MongoDB document associated with this model **/
 case class ProducerModel(override val name: String,
                          className: String,
-                         id_topic: Option[BsonObjectId],
+                         topicName: Option[String],
                          var isActive: Boolean = false,
                          configuration: Option[String] = None,
                          isRemote: Boolean,
-                         isSystem: Boolean,
-                         _id: Option[BsonObjectId] = None) extends Model {
+                         isSystem: Boolean) extends Model {
 
-  def hasOutput: Boolean = id_topic.isDefined
+  def hasOutput: Boolean = topicName.isDefined
 
 }

@@ -34,8 +34,7 @@ private[wasp] object LoggerTopic {
 		replicas = 1,
 		topicDataType = "avro",
 		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
-		_id = Some(BsonObjectId())
+		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
 	)
 
 	private def topicSchema = s"${TopicModel.generateField("Logging", "Logging", None)}"
@@ -48,13 +47,11 @@ private[wasp] object LoggerProducer {
 	def apply() = ProducerModel(
 		name = "LoggerProducer",
 		className = "it.agilelab.bigdata.wasp.producers.InternalLogProducerGuardian",
-		id_topic = Some(loggerTopic._id.get),
+		topicName = Some(loggerTopic.name),
 		isActive = false,
 		None,
 		isRemote = false,
-		isSystem = true,
-		Some(BsonObjectId())
-	)
+		isSystem = true)
 }
 
 private[wasp] object LoggerIndex {
@@ -65,7 +62,6 @@ private[wasp] object LoggerIndex {
 		name = IndexModel.normalizeName(index_name),
 		creationTime = System.currentTimeMillis,
 		schema = JsonConverter.fromString(indexSchema),
-		_id = Some(BsonObjectId()),
 		rollingIndex = true
 	)
 
@@ -78,7 +74,8 @@ private[wasp] object LoggerIndex {
           "message":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
           "cause":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
           "stack_trace":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"}
-        }}}"""
+        }}}
+		"""
 }
 
 private[wasp] object LoggerPipegraph {
@@ -91,15 +88,13 @@ private[wasp] object LoggerPipegraph {
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
 		legacyStreamingComponents = List(LegacyStreamingETLModel(
-			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic._id.get)),
-			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic.name)),
+			WriterModel.elasticWriter(loggerIndex.name, loggerIndex.name), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
 		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
 		rtComponents = Nil,
 		dashboard = None,
-		isActive = false,
-		_id = Some(BsonObjectId())
-	)
+		isActive = false)
 }
 /*
 private[wasp] object RawTopic {

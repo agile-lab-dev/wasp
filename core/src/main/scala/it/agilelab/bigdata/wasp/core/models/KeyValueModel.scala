@@ -10,8 +10,7 @@ case class KeyValueModel(override val name: String,
                          tableCatalog: String,
                          dataFrameSchema: Option[String],
                          options: Option[Seq[KeyValueOption]],
-                         avroSchemas: Option[Map[String, String]],
-                         _id: Option[BsonObjectId] = None) extends Model {
+                         avroSchemas: Option[Map[String, String]]) extends Model {
 	def getOptionsMap(): Map[String, String] = {
 		options.map(sOpts => {
 			sOpts.map(o => {

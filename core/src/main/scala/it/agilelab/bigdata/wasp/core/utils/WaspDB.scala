@@ -23,15 +23,14 @@ import org.mongodb.scala.gridfs.GridFSBucket
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 trait WaspDB extends MongoDBHelper {
 
+  def upsert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T])
+
   def getAll[T]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T]
-
-  def getDocumentByID[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
-
-  def getDocumentByID[T](id: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
   def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
@@ -53,9 +52,9 @@ trait WaspDB extends MongoDBHelper {
 
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
-  def deleteById[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
+  def deleteByName[T](name: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
-  def updateById[T](id: BsonObjectId, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
+  def updateByName[T](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
 
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId
 
@@ -83,14 +82,6 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
 
   def getAll[T]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T] = {
     getAllDocuments[T](lookupTable(typeTag.tpe))
-  }
-
-  def getDocumentByID[T](id: BsonObjectId)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    getDocumentByField[T]("_id", id)
-  }
-
-  def getDocumentByID[T](id: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    getDocumentByField[T]("_id", BsonString(id))
   }
 
   def getDocumentByField[T](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
@@ -128,6 +119,21 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
 
   def insert[T](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
     addDocumentToCollection(lookupTable(typeTag.tpe), doc)
+  }
+
+  def upsert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
+
+
+    val exits = exitsDocumentByKey("name", BsonString(doc.name), lookupTable(typeTag.tpe))
+    if (exits) {
+      logger.info(s"Model '${doc.name}' already present, updating")
+      replaceDocumentToCollection("name", BsonString(doc.name),doc, lookupTable(typeTag.tpe))
+    } else {
+      logger.info(s"Model '${doc.name}' not present, inserting")
+      insert(doc)
+    }
+
+    Unit
   }
 
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
@@ -189,6 +195,13 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
     gridFile.read(resultFile).headResult()
     resultFile.array()
   }
+
+  override def deleteByName[T](name: String)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): Unit =
+    removeDocumentFromCollection[T]("name", BsonString(name), lookupTable(typeTag.tpe))
+
+  override def updateByName[T](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
+    replaceDocumentToCollection[T]("name", BsonString(name), doc, lookupTable(typeTag.tpe))
+
 }
 
 object WaspDB extends Logging {

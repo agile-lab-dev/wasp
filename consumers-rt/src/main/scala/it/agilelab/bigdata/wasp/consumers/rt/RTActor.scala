@@ -24,7 +24,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
   val strategy: Option[StrategyRT] = createStrategyRT(rt)
   lazy val kafkaReaders: List[Option[ActorRef]] = {
     rt.inputs.map { input =>
-      val topicOpt = env.topicBL.getById(input.endpointId.getValue.toHexString)
+      val topicOpt = env.topicBL.getByName(input.endpointName)
       val ref = topicOpt match {
         case Some(topic) => {
           //subscribe(topic.name, self)
@@ -32,7 +32,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
           Some(context.actorOf(Props(new CamelKafkaReader(ConfigManager.getKafkaConfig, topic.name, groupId = this.hashCode().toString, self))))
         }
         case None =>
-          logger.warn(s"RT ${rt.name} has the input id ${input.endpointId.getValue.toHexString} which does not identify a topic")
+          logger.warn(s"RT ${rt.name} has the input name ${input.endpointName} which does not identify a topic")
           None // Should never happen
       }
       ref
@@ -43,11 +43,11 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
 
   // cache for topic data types
   val topicDataTypes = mutable.Map.empty[String, TopicModel]
-  
+
   def initializeEndpointsManager(endpointsModel: Option[WriterModel]) = {
     context.actorOf(Props(new RtWritersManagerActor(env, endpointsModel)))
   }
-  
+
   override def receive: Actor.Receive = {
     case StartRT => {
       epManagerActor
@@ -66,7 +66,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
 
     case (key: String, data: Array[Byte]) => {
       rt.inputs.foreach { input =>
-        
+
         val topicModel = getTopiModel(input)
 
         topicModel.topicDataType match {
@@ -85,18 +85,18 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
       }
     }
   }
-  
+
   // returns the topic type corresponding to the input given
   private def getTopiModel(input: ReaderModel): TopicModel = {
-    val topicId: String = input.endpointId.getValue.toHexString
-    val typeOpt: Option[TopicModel] = topicDataTypes.get(topicId)
-    
+    val topicName: String = input.endpointName
+    val typeOpt: Option[TopicModel] = topicDataTypes.get(topicName)
+
     typeOpt match {
       case Some(topicDataType) => topicDataType // found in cache, simply return it
       case None => { // not found, get from db, add to cache, return it
-        val topicOpt: Option[TopicModel] = env.topicBL.getById(input.endpointId.getValue.toHexString)
+        val topicOpt: Option[TopicModel] = env.topicBL.getByName(input.endpointName)
 
-        topicDataTypes += topicId -> topicOpt.get
+        topicDataTypes += topicName -> topicOpt.get
 
         topicOpt.get
       }

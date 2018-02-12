@@ -44,22 +44,22 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the solr spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.get.getValue.toHexString, solrAdminActor_)
+    logger.info(s"Initialize the solr spark streaming writer with this writer model name '${writerModel.endpointName}'")
+    new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointName.get, solrAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the solr spark structured streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.get.getValue.toHexString, solrAdminActor_)
+    logger.info(s"Initialize the solr spark structured streaming writer with this writer model endpointName '${writerModel.endpointName}'")
+    new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointName.get, solrAdminActor_)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new SolrSparkWriter(indexBL, sc, writerModel.endpointId.get.getValue.toHexString, solrAdminActor_)
+    logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.endpointName}'")
+    new SolrSparkWriter(indexBL, sc, writerModel.endpointName.get, solrAdminActor_)
   }
 
-  override def getSparkReader(id: String, name: String): SparkReader = {
-    val indexOpt = indexBL.getById(id)
+  override def getSparkReader(endpointId: String, name: String): SparkReader = {
+    val indexOpt = indexBL.getByName(endpointId)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -82,7 +82,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
         throw new Exception(msg)
       }
     } else {
-      val msg = s"Solr spark reader indexOption not found - id: '$id, name: $name'"
+      val msg = s"Solr spark reader indexOption not found - id: '$endpointId, name: $name'"
       logger.error(msg)
       throw new Exception(msg)
     }
