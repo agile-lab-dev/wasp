@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase._
 import org.apache.hadoop.mapred.JobConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.{`type`, cf, col, rowKey}
 import org.apache.spark.sql.datasources.hbase.{Field, HBaseTableCatalog, Utils}
 import org.apache.spark.sql.execution.streaming.Sink
 import org.apache.spark.sql.sources._
@@ -181,6 +182,8 @@ case class HBaseRelation(
     .getOrElse(sqlContext.sparkContext.getConf.getInt(
       HBaseSparkConf.BULKGET_SIZE, HBaseSparkConf.DEFAULT_BULKGET_SIZE))
 
+  val clusteringCfColumnsMap: Map[String, Seq[String]] = catalog.clusteringMap
+
   //create or get latest HBaseContext
   val hbaseContext: HBaseContext = if (useHBaseContext) {
     LatestHBaseContextCache.latest
@@ -279,7 +282,7 @@ case class HBaseRelation(
       ._2.filter(catalog.sMap.exists).map(x => (schema.fieldIndex(x), catalog.getField(x)))
     val rdd = data.rdd
 
-    def convertToPut(row: Row) = {
+    def convertToPut(row: Row): (ImmutableBytesWritable, Put) = {
       // construct bytes for row key
       val rowBytes = rkIdxedFields.map { case (x, y) =>
         Utils.toBytes(row(x), y)
@@ -295,9 +298,46 @@ case class HBaseRelation(
       }
       val put = timestamp.fold(new Put(rBytes))(new Put(rBytes, _))
 
-      colsIdxedFields.foreach { case (x, y) =>
-        val b = Utils.toBytes(row(x), y)
-        put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
+      def isClusteringColumnFamily: Field => Boolean = (f: Field) => clusteringCfColumnsMap.contains(f.cf)
+      def isStandardColumnFamily: Field => Boolean = (f: Field) => !isClusteringColumnFamily(f)
+
+      // We generate put in 2 phase.
+      // One for standard cf and static cells
+      // One for cf with "clustering" feature (i.e. denormalization)
+      colsIdxedFields.filter{
+        case (_, f) => isStandardColumnFamily(f)
+      }.foreach { case (colIndex, field) =>
+        if (!row.isNullAt(colIndex)) {
+          val b = Utils.toBytes(row(colIndex), field)
+          put.addColumn(Bytes.toBytes(field.cf), Bytes.toBytes(field.col), b)
+        }
+      }
+
+      // Build a map to retrieve for the specific row the column qualifier prefix for cf with "clustering"
+      val clusteringQualifierPrefixMap = clusteringCfColumnsMap.map{
+        case (cf: String, clustFields: Seq[String]) =>
+          val rowSchema = row.schema
+          val cqPrefix = clustFields.map{
+            fieldName =>
+              row.getAs[String](rowSchema.fieldIndex(fieldName))
+          }.mkString(":")
+          cf -> cqPrefix
+      }
+
+      // Process denormalized columns
+      colsIdxedFields.filter{
+        // Take only field of clustering column family that are not in clustering fields
+        case (_, f) => isClusteringColumnFamily(f) && !clusteringCfColumnsMap(f.cf).contains(f.col)
+      }.foreach{
+        case (colIndex, field) =>
+          if (!row.isNullAt(colIndex)) {
+            val cf = Bytes.toBytes(field.cf)
+            // Compose final denormalized cq
+            val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}:${field.col}")
+            val data = Utils.toBytes(row(colIndex), field)
+
+            put.addColumn(cf, finalCq, data)
+          }
       }
       count += 1
       (new ImmutableBytesWritable, put)
@@ -349,19 +389,22 @@ case class HBaseRelation(
   def buildRow(fields: Seq[Field], result: Result): Row = {
     val r = result.getRow
     val keySeq = parseRowKey(r, catalog.getRowKey)
-    val valueSeq = fields.filter(!_.isRowKey).map { x =>
-      val kv = result.getColumnLatestCell(Bytes.toBytes(x.cf), Bytes.toBytes(x.col))
-      if (kv == null || kv.getValueLength == 0) {
-        (x, null)
-      } else {
-        val v = CellUtil.cloneValue(kv)
-        (x, x.dt match {
-          // Here, to avoid arraycopy, return v directly instead of calling hbaseFieldToScalaType
-          case BinaryType => v
-          case _ => Utils.hbaseFieldToScalaType(x, v, 0, v.length)
-        })
-      }
-    }.toMap
+    //TODO denormalized fields not reconstructed. We should
+    val valueSeq = fields
+      .filter(f => !f.isRowKey)
+      .map { x =>
+        val kv = result.getColumnLatestCell(Bytes.toBytes(x.cf), Bytes.toBytes(x.col))
+        if (kv == null || kv.getValueLength == 0) {
+          (x, null)
+        } else {
+          val v = CellUtil.cloneValue(kv)
+          (x, x.dt match {
+            // Here, to avoid arraycopy, return v directly instead of calling hbaseFieldToScalaType
+            case BinaryType => v
+            case _ => Utils.hbaseFieldToScalaType(x, v, 0, v.length)
+          })
+        }
+      }.toMap
     val unionedRow = keySeq ++ valueSeq
     // Return the row ordered by the requested order
     Row.fromSeq(fields.map(unionedRow.get(_).getOrElse(null)))
