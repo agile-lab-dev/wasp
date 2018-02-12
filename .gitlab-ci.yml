@@ -4,36 +4,7 @@ variables:
   SBT_VERSION: "1.0.3"
   SBT_OPTS: "-Xmx2G -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xss2M  -Duser.timezone=GMT -Dsbt.global.base=sbt-cache/.sbtboot -Dsbt.boot.directory=sbt-cache/.boot -Dsbt.repository.config=repositories -Dsbt.ivy.home=sbt-cache/.ivy"
 stages:
-  - compile
-  - publish
-
-# jobs for internal uses
-compile_internal:
-  tags:
-    - criticalcase
-  stage: compile
-  image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
-  only:
-    refs:
-      - develop
-      - master
-  cache:
-    key: "$CI_BUILD_REF_NAME" # contains either the branch or the tag, so it's caching per branch
-    paths:
-      - "sbt-cache/.ivy/cache"
-      - "sbt-cache/.boot"
-      - "sbt-cache/.sbtboot"
-      - "*/target/streams"
-  before_script:
-      - >
-         echo "[repositories]
-              maven-proxy-snapshots: ${NEXUS_URL}/repository/maven-snapshots/
-              maven-proxy-releases: ${NEXUS_URL}/repository/maven-releases/
-              maven-proxy-central:  ${NEXUS_URL}/repository/maven-central/
-              maven-central" > repositories
-  script:
-    - ls -lha
-    - sbt -v compile
+  - compile_publish
 
 # https://gitlab.com/gitlab-org/gitlab-ce/issues/18106
 # https://github.com/IlyaSemenov/gitlab-ci-git-push
@@ -46,10 +17,11 @@ compile_internal:
 #  script:
 #    - sbt -v release with-defaults
 
-publish_internal:
+# jobs for internal uses
+compile_publish_internal:
   tags:
-  - criticalcase
-  stage: publish
+    - criticalcase
+  stage: compile_publish
   image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
   only:
     refs:
@@ -76,7 +48,7 @@ publish_internal:
 compile_publish_public:
   tags:
     - cluster01
-  stage: compile
+  stage: compile_publish
   image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
   only:
     refs:
