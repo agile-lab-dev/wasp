@@ -320,7 +320,7 @@ case class HBaseRelation(
           val cqPrefix = clustFields.map{
             fieldName =>
               row.getAs[String](rowSchema.fieldIndex(fieldName))
-          }.mkString(":")
+          }.mkString("|")
           cf -> cqPrefix
       }
 
@@ -333,7 +333,7 @@ case class HBaseRelation(
           if (!row.isNullAt(colIndex)) {
             val cf = Bytes.toBytes(field.cf)
             // Compose final denormalized cq
-            val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}:${field.col}")
+            val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}|${field.col}")
             val data = Utils.toBytes(row(colIndex), field)
 
             put.addColumn(cf, finalCq, data)
