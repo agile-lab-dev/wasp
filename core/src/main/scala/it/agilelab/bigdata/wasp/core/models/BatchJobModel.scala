@@ -17,8 +17,7 @@ case class BatchJobModel(override val name: String,
                          system: Boolean,
                          creationTime: Long,
                          etl: BatchETLModel,
-                         var state: String,
-                         _id: Option[BsonObjectId] = None)
+                         var state: String)
 	  extends Model
 
 case class BatchETLModel(name: String,

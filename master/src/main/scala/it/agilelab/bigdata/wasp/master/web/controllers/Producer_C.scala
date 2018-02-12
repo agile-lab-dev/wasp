@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.messages.{RestProducerRequest, StartProducer, StopProducer}
+import it.agilelab.bigdata.wasp.core.messages.{ModelKey, RestProducerRequest, StartProducer, StopProducer}
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.master.web.models.RestProducerModel
 import it.agilelab.bigdata.wasp.master.web.models.RestProducerModelJsonProtocol._
@@ -79,8 +79,9 @@ object Producer_C extends Directives with JsonSupport {
                   val request = json.convertTo[RestProducerModel]
                   val httpMethod = HttpMethod.custom(request.httpMethod)
                   val data = request.data
-                  val mlModelId = request.mlmodel
-                  WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, httpMethod, data, mlModelId)) match {
+
+                  ModelKey
+                  WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, httpMethod, data, request.mlModel)) match {
                     case Right(s) => s.toJson.toAngularOkResponse
                     case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                   }

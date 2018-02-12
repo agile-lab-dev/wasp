@@ -63,8 +63,7 @@ case class TopicModel(override val name: String,
                       replicas: Int,
                       topicDataType: String, // avro, json, xml
                       partitionKeyField: Option[String],
-                      schema: BsonDocument,
-                      _id: Option[BsonObjectId] = None)
+                      schema: BsonDocument)
     extends Model {
   def getJsonSchema: String = schema.toJson
   def getDataType: DataType = {

@@ -12,8 +12,6 @@ trait PipegraphBL  {
 
   def getByName(name: String): Option[PipegraphModel]
 
-  def getById(id: String): Option[PipegraphModel]
-
   def getAll : Seq[PipegraphModel]
   
   def getSystemPipegraphs: Seq[PipegraphModel]
@@ -26,7 +24,7 @@ trait PipegraphBL  {
 
   def update(pipegraphModel: PipegraphModel): Unit
 
-  def deleteById(id_string: String): Unit
+  def deleteByName(id_string: String): Unit
 
   def setIsActive(pipegraphModel: PipegraphModel, isActive: Boolean): Unit = {
     pipegraphModel.isActive = isActive
@@ -40,7 +38,7 @@ trait PipegraphBL  {
 
 class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
 
-  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.legacyStreamingComponents, p.structuredStreamingComponents, p.rtComponents, p.dashboard, p.isActive, p._id)
+  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.legacyStreamingComponents, p.structuredStreamingComponents, p.rtComponents, p.dashboard, p.isActive)
 
   def getByName(name: String): Option[PipegraphModel] = {
     waspDB.getDocumentByField[PipegraphModel]("name", new BsonString(name)).map(pipegraph => {
@@ -52,11 +50,7 @@ class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
     waspDB.getAll[PipegraphModel]
   }
 
-  def getById(id: String): Option[PipegraphModel] = {
-    waspDB.getDocumentByID[PipegraphModel](BsonObjectId(id)).map(pipegraph => {
-      factory(pipegraph)
-    })
-  }
+
 
   def getSystemPipegraphs: Seq[PipegraphModel] = {
     waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(true)).map(factory)
@@ -70,15 +64,15 @@ class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
     waspDB.getAllDocumentsByField[PipegraphModel]("isActive", new BsonBoolean(isActive)).map(factory)
   }
   def update(pipegraphModel: PipegraphModel): Unit = {
-    waspDB.updateById[PipegraphModel](pipegraphModel._id.get, pipegraphModel)
+    waspDB.updateByName[PipegraphModel](pipegraphModel.name, pipegraphModel)
   }
 
   def insert(pipegraph: PipegraphModel): Unit = {
     waspDB.insertIfNotExists[PipegraphModel](pipegraph)
   }
 
-  def deleteById(id_string: String): Unit = {
-    waspDB.deleteById[PipegraphModel](BsonObjectId(id_string))
+  def deleteByName(name: String): Unit = {
+    waspDB.deleteByName[PipegraphModel](name)
   }
 
 }

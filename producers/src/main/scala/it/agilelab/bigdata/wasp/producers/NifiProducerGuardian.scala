@@ -13,14 +13,13 @@ import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, ProducerBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.messages.RestRequest
+import it.agilelab.bigdata.wasp.core.messages.{ModelKey, RestRequest}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 
 import scala.concurrent.Future
 import spray.json._
 import NifiRquestJsonProtocol._
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.SerializationUtils
 
 /**
   * NiFi Producer.
@@ -28,19 +27,19 @@ import org.apache.commons.lang3.SerializationUtils
   * @author Alessandro Marino
   */
 
-class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlModelBL}, producerId: String)
+class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlModelBL}, producerName: String)
   extends Actor
     with Logging {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()(WaspSystem.actorSystem)
-  val nifiProducerConf: Option[ProducerModel] = env.producerBL.getById(producerId)
+  val nifiProducerConf: Option[ProducerModel] = env.producerBL.getByName(producerName)
 
   override def receive: Actor.Receive = {
 
-    case RestRequest(httpMethod, data, mlModelId) =>
+    case RestRequest(httpMethod, data, modelKey) =>
 
       val action = data.asJsObject.fields("action").convertTo[String]
-      val request = checkActionType(action, data, mlModelId)
+      val request = checkActionType(action, data, modelKey)
 
       if (nifiProducerConf.isDefined) {
         val uri = getUriFromConfiguration(nifiProducerConf.get)
@@ -49,13 +48,13 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
       }
   }
 
-  def checkActionType(action: String, data: JsValue, mlModelId: String): JsValue = {
+  def checkActionType(action: String, data: JsValue, modelKey: ModelKey): JsValue = {
 
     val conf = data.convertTo[NifiRequest]
 
     action.toUpperCase() match {
       case "UPDATE" =>
-        val mlModel = env.mlModelBL.getById(mlModelId)
+        val mlModel = env.mlModelBL.getMlModelOnlyInfo(modelKey.name, modelKey.version, modelKey.timestamp)
         if (mlModel.isDefined) {
           val modelFile = Some(WaspDB.getDB.getFileByID(mlModel.get.modelFileId.get))
           val encodedModel: Option[String] = Some(Base64.getEncoder().encodeToString(modelFile.get))

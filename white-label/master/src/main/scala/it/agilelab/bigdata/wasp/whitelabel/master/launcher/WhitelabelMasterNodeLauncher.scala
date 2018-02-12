@@ -18,8 +18,8 @@ object WhitelabelMasterNodeLauncher extends MasterNodeLauncherTrait {
   def addExamplePipegraph(): Unit = {
     val db = WaspDB.getDB
 
-    db.insertIfNotExists(ExamplePipegraphs.exampleTopic)
-    db.insertIfNotExists(ExamplePipegraphs.examplePipegraph)
+    db.upsert(ExamplePipegraphs.exampleTopic)
+    db.upsert(ExamplePipegraphs.examplePipegraph)
   }
 
 }

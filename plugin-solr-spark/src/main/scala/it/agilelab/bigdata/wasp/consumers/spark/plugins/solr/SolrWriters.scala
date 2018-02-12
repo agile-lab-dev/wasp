@@ -57,7 +57,7 @@ object SolrSparkWriter {
 
 class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
                                      ssc: StreamingContext,
-                                     id: String,
+                                     name: String,
                                      solrAdminActor: ActorRef)
   extends SparkLegacyStreamingWriter
     with SolrConfiguration
@@ -66,7 +66,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
   override def write(stream: DStream[String]): Unit = {
 
     val sqlContext = SQLContext.getOrCreate(ssc.sparkContext)
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -108,14 +108,14 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 }
 
 class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
                                          ss: SparkSession,
-                                         id: String,
+                                         name: String,
                                          solrAdminActor: ActorRef)
   extends SparkStructuredStreamingWriter
     with SolrConfiguration
@@ -126,7 +126,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
                      checkpointDir: String): Unit = {
 
     // get index model from BL
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -160,7 +160,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 }
@@ -212,7 +212,7 @@ class SolrForeachWriter(ss: SparkSession,
 
 class SolrSparkWriter(indexBL: IndexBL,
                       sc: SparkContext,
-                      id: String,
+                      name: String,
                       solrAdminActor: ActorRef)
   extends SparkWriter
     with SolrConfiguration
@@ -220,7 +220,7 @@ class SolrSparkWriter(indexBL: IndexBL,
 
   override def write(data: DataFrame): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -260,7 +260,7 @@ class SolrSparkWriter(indexBL: IndexBL,
       }
 
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 }

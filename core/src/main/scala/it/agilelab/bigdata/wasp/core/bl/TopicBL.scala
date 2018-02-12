@@ -9,8 +9,6 @@ trait TopicBL {
 
   def getByName(name: String): Option[TopicModel]
 
-  def getById(id: String): Option[TopicModel]
-
   def getAll : Seq[TopicModel]
 
   def persist(topicModel: TopicModel): Unit
@@ -24,7 +22,7 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
     t.get("topicDataType").asString().getValue ,
       if (t.containsKey("partitionKeyField")) Some(t.get("partitionKeyField").asString().getValue)
       else None
-    , t.get("schema").asDocument(), Some(t.get("_id").asObjectId()))
+    , t.get("schema").asDocument())
 
   def getByName(name: String): Option[TopicModel] = {
     waspDB.getDocumentByFieldRaw[TopicModel]("name", new BsonString(name)).map(topic => {

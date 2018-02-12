@@ -62,15 +62,13 @@ object RawModel{
 	* @param timed whether the uri must be augmented with time information
 	* @param schema the schema of the data
 	* @param options the options for the datastore
-	* @param _id the MongoDB id for this model
 	*/
 
 case class RawModel(override val name: String,
                     uri: String,
                     timed: Boolean = true,
                     schema: String,
-                    options: RawOptions = RawOptions.default,
-                    _id: Option[String] = None) extends Model
+                    options: RawOptions = RawOptions.default) extends Model
 
 // TODO external scaladocs links
 /**

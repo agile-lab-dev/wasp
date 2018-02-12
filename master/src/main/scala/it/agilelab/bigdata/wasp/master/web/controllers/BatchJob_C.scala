@@ -68,7 +68,7 @@ object BatchJob_C extends Directives with JsonSupport {
                   complete {
                     val batchJob = ConfigBL.batchJobBL.getByName(name)
                     runIfExists(batchJob,
-                      () => ConfigBL.batchJobBL.deleteById(batchJob.get._id.get.asObjectId().getValue.toHexString),
+                      () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name),
                       name,
                       "Machine learning model",
                       "delete")

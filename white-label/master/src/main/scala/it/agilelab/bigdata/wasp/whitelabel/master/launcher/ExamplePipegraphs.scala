@@ -25,19 +25,18 @@ private object ExampleTopic {
     topicDataType = "json",
     partitionKeyField = None,
     schema = JsonConverter.fromString(topicSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()),
-    _id = Some(BsonObjectId())
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
   val topicSchema = s"${
     TopicModel.generateField("example", "example", Some(
       """{
-        |            "name": "first_name",
+        |            "name": "banana",
         |            "type": "string",
         |            "doc": "First Name of Customer"
         |        },
         |        {
-        |            "name": "last_name",
+        |            "name": "pigiama",
         |            "type": "string",
         |            "doc": "Last Name of Customer"
         |        }""".stripMargin))
@@ -58,7 +57,7 @@ private object ExamplePipegraph {
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
         name = "write on console",
-        inputs = List(ReaderModel.kafkaReader(ExamplePipegraphs.exampleTopic.name, ExamplePipegraphs.exampleTopic._id.get)),
+        inputs = List(ReaderModel.kafkaReader(ExamplePipegraphs.exampleTopic.name, ExamplePipegraphs.exampleTopic.name)),
         output = WriterModel.consoleWriter("console-writer"),
         mlModels = List.empty,
         strategy = None,
@@ -68,7 +67,5 @@ private object ExamplePipegraph {
     ),
     rtComponents = Nil,
     dashboard = None,
-    isActive = false,
-    _id = Some(BsonObjectId())
-  )
+    isActive = false)
 }

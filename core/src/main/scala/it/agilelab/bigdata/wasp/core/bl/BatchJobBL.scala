@@ -10,8 +10,6 @@ trait BatchJobBL {
 
   def getPendingJobs (state: String = JobStateEnum.PENDING): Seq[BatchJobModel]
 
-  def getById(id: String):  Option[BatchJobModel]
-
   def getByName(name: String): Option[BatchJobModel]
 
   def getAll: Seq[BatchJobModel]
@@ -30,8 +28,6 @@ trait BatchJobBL {
 
   def persist(batchJobModel: BatchJobModel): Unit
 
-  def deleteById(id_string: String): Unit
-
   def deleteByName(name: String): Unit
 
 
@@ -39,7 +35,7 @@ trait BatchJobBL {
 
 class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
 
-  private def factory(p: BatchJobModel) = new BatchJobModel(p.name, p.description, p.owner, p.system, p.creationTime, p.etl, p.state, p._id)
+  private def factory(p: BatchJobModel) = new BatchJobModel(p.name, p.description, p.owner, p.system, p.creationTime, p.etl, p.state)
 
   def getPendingJobs (state: String = JobStateEnum.PENDING): Seq[BatchJobModel] = {
     waspDB.getAllDocumentsByField[BatchJobModel]("state",  new BsonString(state)).map(job => {
@@ -47,19 +43,8 @@ class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
     })
   }
 
-  def getById(id: String): Option[BatchJobModel] = {
-    waspDB.getDocumentByID[BatchJobModel](BsonObjectId(id)).map(batchJob => {
-      factory(batchJob)
-    })
-  }
-
   def deleteByName(name: String): Unit = {
-    val batchJobBL = getByName(name)
-    if (batchJobBL.isDefined) {
-      waspDB.deleteById[BatchJobModel](batchJobBL.get._id.get)
-    } else {
-      throw new Exception(s"Batch Job with name $name NOT FOUND")
-    }
+    waspDB.deleteByName(name)
   }
 
   def getAll: Seq[BatchJobModel] = {
@@ -67,7 +52,7 @@ class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
   }
 
   def update(batchJobModel: BatchJobModel): Unit = {
-    waspDB.updateById[BatchJobModel](batchJobModel._id.get, batchJobModel)
+    waspDB.updateByName[BatchJobModel](batchJobModel.name, batchJobModel)
   }
 
   def insert(batchJobModel : BatchJobModel): Unit =
@@ -79,9 +64,6 @@ class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL  {
     waspDB.insert[BatchJobModel](batchJobModel)
   }
 
-  def deleteById(id_string: String): Unit = {
-    waspDB.deleteById[BatchJobModel](BsonObjectId(id_string))
-  }
 
   def getByName(name: String): Option[BatchJobModel] = {
     waspDB.getDocumentByField[BatchJobModel]("name", new BsonString(name)).map(batchJob => {

@@ -13,7 +13,6 @@ trait KeyValueBL {
 
 	def getByName(name: String): Option[KeyValueModel]
 
-	def getById(id: String): Option[KeyValueModel]
 
 	def persist(rawModel: KeyValueModel): Unit
 }
@@ -27,12 +26,7 @@ class KeyValueBLImp(waspDB: WaspDB) extends KeyValueBL {
 			factory(index)
 		})
 	}
-	
-	def getById(id: String) = {
-		waspDB.getDocumentByID[KeyValueModel](BsonObjectId(id)).map(index => {
-			factory(index)
-		})
-	}
+
 	
 	override def persist(rawModel: KeyValueModel): Unit = waspDB.insert[KeyValueModel](rawModel)
 }

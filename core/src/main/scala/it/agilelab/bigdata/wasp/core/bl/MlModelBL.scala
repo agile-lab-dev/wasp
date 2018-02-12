@@ -10,13 +10,7 @@ import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString
  * This class allow to read and persist the machine learning models
  */
 trait MlModelBL {
-  /**
-   * Get a model by Id
-    *
-    * @param id BSON Object Id of the model
-   * @return info of the model
-   */
-  def getById(id: String): Option[MlModelOnlyInfo]
+
 
   /**
    * Find the most recent model with this name and version
@@ -71,14 +65,6 @@ trait MlModelBL {
    * @return the id of the model
    */
   def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId
-
-  /**
-   * Delete the metadata and the transformer model
-    *
-    * @param id The id of the metadata document content
-   * @return
-   */
-  def delete(id: String): Unit
 
   /**
    * Delete the metadata and the transformer model in base to name, version, timestamp
@@ -164,38 +150,22 @@ class MlModelBLImp(waspDB: WaspDB) extends MlModelBL {
   private def factory(p: MlModelOnlyInfo) = MlModelOnlyInfo(p.name, p.version, p.className,
     p.timestamp, p.modelFileId, p.favorite, p.description, p._id)
 
-  override def getById(id: String): Option[MlModelOnlyInfo] =
-    waspDB.getDocumentByID[MlModelOnlyInfo](BsonObjectId(id)).map(factory)
 
-
-  override def delete(id: String): Unit = {
-    //TODO Enforce the not deleted model logging
-    val infoOptFuture: Option[MlModelOnlyInfo] = waspDB.getDocumentByID[MlModelOnlyInfo](BsonObjectId(id))
-      infoOptFuture.foreach(info => {
-        if (info.modelFileId.isDefined) {
-          waspDB.deleteById[MlModelOnlyInfo](info._id.get)
-          waspDB.deleteFileById(info.modelFileId.get)
-        }
-        else{
-          waspDB.deleteById[MlModelOnlyInfo](info._id.get)
-        }
-      })
-  }
 
   override def delete(name: String, version: String, timestamp: Long): Unit = {
     val infoOptFuture: Option[MlModelOnlyInfo] = getMlModelOnlyInfo(name, version, timestamp)
     infoOptFuture.foreach(info => {
       if (info.modelFileId.isDefined) {
-        waspDB.deleteById[MlModelOnlyInfo](info._id.get)
+        waspDB.deleteByName[MlModelOnlyInfo](info.name)
         waspDB.deleteFileById(info.modelFileId.get)
       }
       else{
-        waspDB.deleteById[MlModelOnlyInfo](info._id.get)
+        waspDB.deleteByName[MlModelOnlyInfo](info.name)
       }
     })
   }
 
   def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo) = {
-    waspDB.updateById[MlModelOnlyInfo](mlModelOnlyInfo._id.get, mlModelOnlyInfo)
+    waspDB.updateByName[MlModelOnlyInfo](mlModelOnlyInfo.name, mlModelOnlyInfo)
   }
 }

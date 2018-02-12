@@ -8,22 +8,22 @@ import org.mongodb.scala.bson.BsonObjectId
 	* A model for a writer, composed by a name, an endpoint to write to, and a writer type defining the datastore to use.
 	*
 	* @param name the name of this writer model
-	* @param endpointId (optional) the id of the endpoint to write to
+	* @param endpointName (optional) the name of the endpoint to write to
 	* @param writerType the type of the datastore to write to
 	*/
-case class WriterModel(name: String, endpointId: Option[BsonObjectId], writerType: WriterType)
+case class WriterModel(name: String, endpointName: Option[String], writerType: WriterType)
 
 object WriterModel {
 	// helpers to create writer models for supported datastores
-	def indexWriter(name: String, indexId: BsonObjectId, product: String) = WriterModel(name, Some(indexId), WriterType(Datastores.indexCategory, Option(product)))
-	def elasticWriter(name: String, indexId: BsonObjectId) = WriterModel(name, Some(indexId), WriterType.elasticWriterType)
-	def solrWriter(name: String, indexId: BsonObjectId) = WriterModel(name, Some(indexId), WriterType.solrWriterType)
-	def keyValueWriter(name: String, tableId: BsonObjectId, product: String) = WriterModel(name, Some(tableId), WriterType(Datastores.keyValueCategory, Option(product)))
-	def hbaseWriter(name: String, tableId: BsonObjectId) = WriterModel(name, Some(tableId), WriterType.hbaseWriterType)
-	def topicWriter(name: String, topicId: BsonObjectId, product: String) = WriterModel(name, Some(topicId), WriterType(Datastores.topicCategory, Option(product)))
-	def kafkaWriter(name: String, topicId: BsonObjectId) = WriterModel(name, Some(topicId), WriterType.kafkaWriterType)
-	def rawWriter(name: String, rawId: BsonObjectId) = WriterModel(name, Some(rawId), WriterType.rawWriterType)
-	def websocketWriter(name: String, websocketId: BsonObjectId) = WriterModel(name, Some(websocketId), WriterType.websocketWriterType)
+	def indexWriter(name: String, indexName: String, product: String) = WriterModel(name, Some(indexName), WriterType(Datastores.indexCategory, Option(product)))
+	def elasticWriter(name: String, indexName: String) = WriterModel(name, Some(indexName), WriterType.elasticWriterType)
+	def solrWriter(name: String, indexName: String) = WriterModel(name, Some(indexName), WriterType.solrWriterType)
+	def keyValueWriter(name: String, tableName: String, product: String) = WriterModel(name, Some(tableName), WriterType(Datastores.keyValueCategory, Option(product)))
+	def hbaseWriter(name: String, tableName: String) = WriterModel(name, Some(tableName), WriterType.hbaseWriterType)
+	def topicWriter(name: String, topicName: String, product: String) = WriterModel(name, Some(topicName), WriterType(Datastores.topicCategory, Option(product)))
+	def kafkaWriter(name: String, topicName: String) = WriterModel(name, Some(topicName), WriterType.kafkaWriterType)
+	def rawWriter(name: String, rawName: String) = WriterModel(name, Some(rawName), WriterType.rawWriterType)
+	def websocketWriter(name: String, websocketName: String) = WriterModel(name, Some(websocketName), WriterType.websocketWriterType)
 	def consoleWriter(name: String) = WriterModel(name, None, WriterType.consoleWriterType)
 }
 

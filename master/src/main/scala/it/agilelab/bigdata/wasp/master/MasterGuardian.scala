@@ -93,17 +93,17 @@ class MasterGuardian(env: {
   }
 
   override def receive: Actor.Receive = {
-    case message: StartPipegraph => call(sender(), message, onPipegraph(message.id, startPipegraph))
-    case message: StopPipegraph => call(sender(), message, onPipegraph(message.id, stopPipegraph))
+    case message: StartPipegraph => call(sender(), message, onPipegraph(message.name, startPipegraph))
+    case message: StopPipegraph => call(sender(), message, onPipegraph(message.name, stopPipegraph))
     case RestartPipegraphs => call(sender(), RestartPipegraphs, restartPipegraphs())
-    case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
-    case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
-    case message: StartProducer => call(sender(), message, onProducer(message.id, startProducer))
-    case message: StopProducer => call(sender(), message, onProducer(message.id, stopProducer))
-    case message: RestProducerRequest => call(sender(), message, onProducer(message.id, restProducerRequest(message, _)))
-    case message: StartETL => call(sender(), message, onEtl(message.id, message.etlName, startEtl))
-    case message: StopETL => call(sender(), message, onEtl(message.id, message.etlName, stopEtl))
-    case message: StartBatchJob => call(sender(), message, onBatchJob(message.id, startBatchJob))
+    case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.name, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
+    case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.name, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
+    case message: StartProducer => call(sender(), message, onProducer(message.name, startProducer))
+    case message: StopProducer => call(sender(), message, onProducer(message.name, stopProducer))
+    case message: RestProducerRequest => call(sender(), message, onProducer(message.name, restProducerRequest(message, _)))
+    case message: StartETL => call(sender(), message, onEtl(message.name, message.etlName, startEtl))
+    case message: StopETL => call(sender(), message, onEtl(message.name, message.etlName, stopEtl))
+    case message: StartBatchJob => call(sender(), message, onBatchJob(message.name, startBatchJob))
     case message: StartPendingBatchJobs => call(sender(), message, startPendingBatchJobs())
     case message: BatchJobProcessedMessage => //TODO gestione batchJob finito?
     //case message: Any => logger.error("unknown message: " + message)
@@ -255,33 +255,28 @@ class MasterGuardian(env: {
   }
 
   private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
-    val producerId = producerModel._id.get.getValue.toHexString
-    ??[Either[String, String]](producersMasterGuardian, AddRemoteProducer(producerId, producerActor))
+    ??[Either[String, String]](producersMasterGuardian, AddRemoteProducer(producerModel.name, producerActor))
   }
 
   private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
-    val producerId = producerModel._id.get.getValue.toHexString
-    ??[Either[String, String]](producersMasterGuardian, RemoveRemoteProducer(producerId, producerActor))
+    ??[Either[String, String]](producersMasterGuardian, RemoveRemoteProducer(producerModel.name, producerActor))
   }
 
   private def startProducer(producer: ProducerModel): Either[String, String] = {
-    val producerId = producer._id.get.getValue.toHexString
-    ??[Either[String, String]](producersMasterGuardian, StartProducer(producerId))
+    ??[Either[String, String]](producersMasterGuardian, StartProducer(producer.name))
   }
 
   private def stopProducer(producer: ProducerModel): Either[String, String] = {
-    val producerId = producer._id.get.getValue.toHexString
-    ??[Either[String, String]](producersMasterGuardian, StopProducer(producerId))
+    ??[Either[String, String]](producersMasterGuardian, StopProducer(producer.name))
   }
 
   private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
-    val producerId = producer._id.get.getValue.toHexString
-    ??[Either[String, String]](producersMasterGuardian, request.copy(id = producerId))
+    ??[Either[String, String]](producersMasterGuardian, request.copy(name = producer.name))
   }
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
-    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob._id.get.getValue.toHexString))
+    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob.name))
     if (jobRes.result) {
       Right(s"Batch job '${batchJob.name}' accepted (queued or processing)")
     } else {

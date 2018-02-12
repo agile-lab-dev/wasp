@@ -42,7 +42,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
     HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, getKeyValueModel(writerModel))
   }
 
@@ -51,13 +51,13 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
+    logger.info(s"Initialize the elastic spark batch writer with this writer model name '${writerModel.name}'")
     HBaseWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
     logger.info(s"Initialize HBaseReader with this id: '$id' and name: '$name'")
-    val hbaseModelOpt = keyValueBL.getById(id)
+    val hbaseModelOpt = keyValueBL.getByName(id)
     val model = if (hbaseModelOpt.isDefined) {
       hbaseModelOpt.get
     } else {
@@ -69,12 +69,13 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
 
   @throws(classOf[ModelNotFound])
   private def getKeyValueModel(writerModel: WriterModel): KeyValueModel = {
-    val id = writerModel.endpointId.get.getValue.toHexString
-    val hbaseModelOpt = keyValueBL.getById(id)
+
+    val endpointName = writerModel.endpointName.get
+    val hbaseModelOpt = keyValueBL.getByName(endpointName)
     if (hbaseModelOpt.isDefined) {
       hbaseModelOpt.get
     } else {
-      throw new ModelNotFound(s"The KeyValueModel with this id $id was not found")
+      throw new ModelNotFound(s"The KeyValueModel with this name $endpointName not found")
     }
   }
 
