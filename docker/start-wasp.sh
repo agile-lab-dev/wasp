@@ -43,7 +43,7 @@ done
 # prepare binaries for running
 cd $SCRIPT_DIR/..
 echo "Running sbt stage task..."
-sbt stage
+sbt -mem 2048 stage
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR
