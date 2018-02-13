@@ -122,8 +122,6 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   }
 
   def upsert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) = {
-
-
     val exits = exitsDocumentByKey("name", BsonString(doc.name), lookupTable(typeTag.tpe))
     if (exits) {
       logger.info(s"Model '${doc.name}' already present, updating")
@@ -144,6 +142,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
       logger.info("Model '" + doc.name + "' not found. It will be created.")
       insert(doc)
     }
+
     Unit
   }
   
