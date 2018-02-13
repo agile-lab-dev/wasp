@@ -8,7 +8,6 @@ object JobStateEnum extends Enumeration {
   val PROCESSING = "PROCESSING"
   val SUCCESSFUL = "SUCCESSFUL"
   val FAILED = "FAILED"
-
 }
 
 case class BatchJobModel(override val name: String,

@@ -59,6 +59,10 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
   .dependsOn(consumers_spark)
   .settings(libraryDependencies ++= Dependencies.plugin_solr_spark)
 
+lazy val plugin_console_spark = Project("wasp-plugin-console-spark", file("plugin-console-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+
 
 /* WhiteLabel */
 
@@ -81,6 +85,7 @@ lazy val whiteLabelConsumersSpark = Project("white-label-consumers-spark", file(
   .dependsOn(plugin_elastic_spark)
   .dependsOn(plugin_hbase_spark)
   .dependsOn(plugin_solr_spark)
+	.dependsOn(plugin_console_spark)
   .settings(libraryDependencies ++= Dependencies.log4j)
   .enablePlugins(JavaAppPackaging)
 
@@ -99,4 +104,4 @@ lazy val whiteLabel = Project("white-label", file("white-label"))
 
 lazy val wasp = Project("wasp", file("."))
   .settings(Settings.commonSettings: _*)
-  .aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, whiteLabel)
+	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, whiteLabel)

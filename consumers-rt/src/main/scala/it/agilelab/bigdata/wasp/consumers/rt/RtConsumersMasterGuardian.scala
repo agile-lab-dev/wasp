@@ -93,9 +93,8 @@ class RtConsumersMasterGuardian(env: {
           })
         
           // do not do anything for legacy streaming/structured streaming components
-          logger.info(s"Ignoring ${lseComponents.size} legacy streaming components and ${sseComponents.size} structured " +
-                      s"streaming components for pipegraph ${pipegraph.name} as they are handled by " +
-                      s"SparkConsumersMasterGuardian")
+          logger.info(s"Ignoring ${lseComponents.size} legacy streaming components and ${sseComponents.size} structured streaming components " +
+                      s"for pipegraph ${pipegraph.name} as they are handled by SparkConsumersMasterGuardian")
         }
       }
       

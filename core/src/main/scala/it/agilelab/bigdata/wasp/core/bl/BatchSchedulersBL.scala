@@ -6,12 +6,13 @@ import org.bson.BsonBoolean
 import org.mongodb.scala.bson.BsonObjectId
 
 trait BatchSchedulersBL {
+
   def getActiveSchedulers(isActive: Boolean = true): Seq[BatchSchedulerModel]
 
   def persist(schedulerModel: BatchSchedulerModel): Unit
-
 }
-class BatchSchedulersBLImp(waspDB: WaspDB) extends BatchSchedulersBL  {
+
+class BatchSchedulersBLImp(waspDB: WaspDB) extends BatchSchedulersBL {
   private def factory(t: BatchSchedulerModel) = new BatchSchedulerModel(t.name, t.cronExpression, t.batchJob,
                                                                         t.options, t.isActive)
 
@@ -20,5 +21,7 @@ class BatchSchedulersBLImp(waspDB: WaspDB) extends BatchSchedulersBL  {
   }
 
 
-  override def persist(schedulerModel: BatchSchedulerModel): Unit = waspDB.insert[BatchSchedulerModel](schedulerModel)
+  override def persist(schedulerModel: BatchSchedulerModel) = {
+    waspDB.insert[BatchSchedulerModel](schedulerModel)
+  }
 }
