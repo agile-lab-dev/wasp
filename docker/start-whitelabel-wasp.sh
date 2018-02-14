@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 MASTER_PROJECT_DIRECTORY="/../whitelabel/master/" \
+PRODUCERS_PROJECT_DIRECTORY="/../whitelabel/producers/" \
 CONSUMERS_SPARK_PROJECT_DIRECTORY="/../whitelabel/consumers-spark/" \
 CONSUMERS_RT_PROJECT_DIRECTORY="/../whitelabel/consumers-rt/" \
-PRODUCERS_PROJECT_DIRECTORY="/../whitelabel/producers/" \
-MASTER_PROJECT_COMMAND="/root/wasp/bin/whitelabel-master" \
-CONSUMERS_SPARK_PROJECT_COMMAND="/root/wasp/bin/whitelabel-consumers-spark" \
-CONSUMERS_RT_PROJECT_COMMAND="/root/wasp/bin/whitelabel-consumers-rt" \
-PRODUCERS_PROJECT_COMMAND="/root/wasp/bin/whitelabel-producers" \
+MASTER_PROJECT_COMMAND="/root/wasp/bin/wasp-whitelabel-master" \
+PRODUCERS_PROJECT_COMMAND="/root/wasp/bin/wasp-whitelabel-producers" \
+CONSUMERS_SPARK_PROJECT_COMMAND="/root/wasp/bin/wasp-whitelabel-consumers-spark" \
+CONSUMERS_RT_PROJECT_COMMAND="/root/wasp/bin/wasp-whitelabel-consumers-rt" \
 ./start-wasp.sh $@

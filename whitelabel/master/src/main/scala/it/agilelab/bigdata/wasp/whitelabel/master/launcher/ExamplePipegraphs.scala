@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 
 object ExamplePipegraphs {
 
-  lazy val examplePipegraphName = "example-pipegraph"
+  lazy val examplePipegraphName = "ExamplePipegraph"
   lazy val exampleTopic = ExampleTopic()
   lazy val examplePipegraph = ExamplePipegraph()
 }
