@@ -38,7 +38,7 @@ lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
   .settings(libraryDependencies ++= Dependencies.consumers_rt)
   .enablePlugins(JavaAppPackaging)
 
-/* Framework plugins */
+/* Plugins */
 
 lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
   .settings(Settings.commonSettings: _*)
@@ -63,23 +63,37 @@ lazy val plugin_console_spark = Project("wasp-plugin-console-spark", file("plugi
 	.settings(Settings.commonSettings: _*)
 	.dependsOn(consumers_spark)
 
+/* Framework + Plugins */
+
+lazy val wasp = Project("wasp", file("."))
+	.settings(Settings.commonSettings: _*)
+	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark)
+
 
 /* WhiteLabel */
 
+lazy val whiteLabelModels = Project("wasp-whitelabel-models", file("whitelabel/models"))
+	.settings(Settings.commonSettings:_*)
+	.dependsOn(core)
+	.settings(libraryDependencies ++= Dependencies.log4j)
+
 lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/master"))
   .settings(Settings.commonSettings: _*)
+	.dependsOn(whiteLabelModels)
   .dependsOn(master)
   .settings(libraryDependencies ++= Dependencies.log4j)
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelProducers = Project("wasp-whitelabel-producers", file("whitelabel/producers"))
   .settings(Settings.commonSettings: _*)
+	.dependsOn(whiteLabelModels)
   .dependsOn(producers)
   .settings(libraryDependencies ++= Dependencies.log4j)
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", file("whitelabel/consumers-spark"))
   .settings(Settings.commonSettings: _*)
+	.dependsOn(whiteLabelModels)
   .dependsOn(consumers_spark)
   .dependsOn(plugin_raw_spark)
   .dependsOn(plugin_elastic_spark)
@@ -91,17 +105,11 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
 
 lazy val whiteLabelConsumersRt= Project("wasp-whitelabel-consumers-rt", file("whitelabel/consumers-rt"))
   .settings(Settings.commonSettings: _*)
+	.dependsOn(whiteLabelModels)
   .dependsOn(consumers_rt)
   .settings(libraryDependencies ++= Dependencies.log4j)
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabel = Project("wasp-whitelabel", file("whitelabel"))
   .settings(Settings.commonSettings: _*)
-  .aggregate(whiteLabelMaster, whiteLabelProducers, whiteLabelConsumersSpark, whiteLabelConsumersRt)
-
-
-/* Framework + Whitelabel */
-
-lazy val wasp = Project("wasp", file("."))
-  .settings(Settings.commonSettings: _*)
-	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, whiteLabel)
+  .aggregate(whiteLabelModels, whiteLabelMaster, whiteLabelProducers, whiteLabelConsumersSpark, whiteLabelConsumersRt)

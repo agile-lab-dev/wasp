@@ -13,11 +13,12 @@ done
 # this variable contains the directory of the script
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-MASTER_PROJECT_DIRECTORY="$SCRIPT_DIR${MASTER_PROJECT_DIRECTORY:-"/../master/"}"
-PRODUCERS_PROJECT_DIRECTORY="$SCRIPT_DIR${PRODUCERS_PROJECT_DIRECTORY:-"/../producers/"}"
-CONSUMERS_SPARK_PROJECT_DIRECTORY="$SCRIPT_DIR${CONSUMERS_SPARK_PROJECT_DIRECTORY:-"/../consumers-spark/"}"
-CONSUMERS_RT_PROJECT_DIRECTORY="$SCRIPT_DIR${CONSUMERS_RT_PROJECT_DIRECTORY:-"/../consumers-rt/"}"
-
+# !!! standalone applications have to comment the following default settings !!! #
+SBT_STAGE_COMMAND_PROJECTID="${SBT_STAGE_COMMAND_PROJECTID:-""}"
+MASTER_PROJECT_DIRECTORY="$SCRIPT_DIR${MASTER_PROJECT_DIRECTORY:-"/../../master/"}"
+PRODUCERS_PROJECT_DIRECTORY="$SCRIPT_DIR${PRODUCERS_PROJECT_DIRECTORY:-"/../../producers/"}"
+CONSUMERS_SPARK_PROJECT_DIRECTORY="$SCRIPT_DIR${CONSUMERS_SPARK_PROJECT_DIRECTORY:-"/../../consumers-spark/"}"
+CONSUMERS_RT_PROJECT_DIRECTORY="$SCRIPT_DIR${CONSUMERS_RT_PROJECT_DIRECTORY:-"/../../consumers-rt/"}"
 MASTER_PROJECT_COMMAND=${MASTER_PROJECT_COMMAND:-"/root/wasp/bin/wasp-master"}
 PRODUCERS_PROJECT_COMMAND=${PRODUCERS_PROJECT_COMMAND:-"/root/wasp/bin/wasp-producers"}
 CONSUMERS_SPARK_PROJECT_COMMAND=${CONSUMERS_SPARK_PROJECT_COMMAND:-"/root/wasp/bin/wasp-consumers-spark"}
@@ -41,9 +42,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 # prepare binaries for running
-cd $SCRIPT_DIR/..
+cd $SCRIPT_DIR/../..
+# cd $SCRIPT_DIR/.. # !!! standalone applications have to use this !!! #
+
 echo "Running sbt stage task..."
-sbt -mem 2048 stage
+sbt -mem 2048 ${SBT_STAGE_COMMAND_PROJECTID}stage
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR
