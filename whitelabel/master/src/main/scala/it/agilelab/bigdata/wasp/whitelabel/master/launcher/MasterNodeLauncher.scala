@@ -1,8 +1,9 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
+import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, TopicModel}
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import org.apache.commons.cli.CommandLine
+import it.agilelab.bigdata.wasp.whitelabel.models.example._
 
 object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
@@ -12,9 +13,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   }
 
   private def addExamplePipegraphs(): Unit = {
-    val db = WaspDB.getDB
-
-    db.upsert(ExamplePipegraphs.exampleTopic)
-    db.upsert(ExamplePipegraphs.examplePipegraph)
+    waspDB.upsert[TopicModel](ExampleTopicModel.exampleTopic)
+    waspDB.upsert[PipegraphModel](ExamplePipegraphModel.examplePipegraph)
   }
 }

@@ -2,7 +2,6 @@ package it.agilelab.bigdata.wasp.core
 
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import org.mongodb.scala.bson.BsonObjectId
 
 /**
 	* Default system pipegraphs: logging & raw.
@@ -10,17 +9,15 @@ import org.mongodb.scala.bson.BsonObjectId
 
 object SystemPipegraphs {
 	/** Logger pipegraph & related */
-	lazy val loggerPipegraphName = "LoggerPipegraph"
 	lazy val loggerTopic = LoggerTopic()
 	lazy val loggerProducer = LoggerProducer()
 	lazy val loggerIndex = LoggerIndex()
 	lazy val loggerPipegraph = LoggerPipegraph()
 
 	/** Raw pipegraph & related */
-	//lazy val rawPipegraphName = "RawPipegraph"
-	//lazy val rawTopic = RawTopic()
-	//lazy val rawIndex = RawIndex()
-	//lazy val rawPipegraph = RawPipegraph()
+//	lazy val rawTopic = RawTopic()
+//	lazy val rawIndex = RawIndex()
+//	lazy val rawPipegraph = RawPipegraph()
 }
 
 private[wasp] object LoggerTopic {
@@ -42,12 +39,11 @@ private[wasp] object LoggerTopic {
 }
 
 private[wasp] object LoggerProducer {
-	import SystemPipegraphs._
 
 	def apply() = ProducerModel(
 		name = "LoggerProducer",
 		className = "it.agilelab.bigdata.wasp.producers.InternalLogProducerGuardian",
-		topicName = Some(loggerTopic.name),
+		topicName = Some(SystemPipegraphs.loggerTopic.name),
 		isActive = false,
 		None,
 		isRemote = false,
@@ -81,21 +77,30 @@ private[wasp] object LoggerIndex {
 private[wasp] object LoggerPipegraph {
 	import SystemPipegraphs._
 
+	val loggerPipegraphName = "LoggerPipegraph"
+
 	def apply() = PipegraphModel(
-		name = SystemPipegraphs.loggerPipegraphName,
+		name = loggerPipegraphName,
 		description = "System Logger Pipegraph",
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
-		legacyStreamingComponents = List(LegacyStreamingETLModel(
-			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic.name)),
-			WriterModel.elasticWriter(loggerIndex.name, loggerIndex.name), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+		legacyStreamingComponents = List(
+			LegacyStreamingETLModel(
+				name = "write on index",
+				inputs = List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic.name)),
+				output = WriterModel.elasticWriter(loggerIndex.name, loggerIndex.name),
+				mlModels = List(),
+				strategy = None,
+				kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
+			)
 		),
-		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
+		structuredStreamingComponents = List.empty,
 		rtComponents = Nil,
 		dashboard = None,
 		isActive = false)
 }
+
 /*
 private[wasp] object RawTopic {
 
@@ -108,8 +113,7 @@ private[wasp] object RawTopic {
 		replicas = 1,
 		topicDataType = "avro",
 		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
-		_id = Some(BsonObjectId())
+		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
 	)
 
 	private def topicSchema = s"""
@@ -129,7 +133,6 @@ private[wasp] object RawIndex {
 		name = IndexModel.normalizeName(index_name),
 		creationTime = System.currentTimeMillis,
 		schema = JsonConverter.fromString(indexSchema),
-		_id = Some(BsonObjectId()),
 		rollingIndex = true
 	)
 
@@ -143,22 +146,32 @@ private[wasp] object RawIndex {
 private[wasp] object RawPipegraph {
 	import SystemPipegraphs._
 
+	val rawPipegraphName = "RawPipegraph"
+
 	def apply() = PipegraphModel(
-		name = SystemPipegraphs.rawPipegraphName,
+		name = rawPipegraphName,
 		description = "System Raw Pipegraph",
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
-		legacyStreamingComponents = List(LegacyStreamingETLModel(
-			"write on index",
-			List(ReaderModel.kafkaReader(rawTopic.name, rawTopic._id.get)),
-			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
+		legacyStreamingComponents = List(
+			LegacyStreamingETLModel(
+				name = "write on index",
+				inputs = List(
+					ReaderModel.kafkaReader(
+						rawTopic.name,
+						rawTopic.name
+					)
+				),
+				output = WriterModel.elasticWriter(rawIndex.name, rawIndex.name),
+				mlModels = List(),
+				strategy = None,
+				kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
-		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
+		structuredStreamingComponents = List.empty,
 		rtComponents = Nil,
 		dashboard = None,
-		isActive = false,
-		_id = Some(BsonObjectId())
+		isActive = false
 	)
 }
 */
