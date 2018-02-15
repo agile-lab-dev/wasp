@@ -40,7 +40,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     // services timeout, used below
     val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
     // implicit timeout used below
-    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
+    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS - 1000)
     startupElastic(servicesTimeoutMillis)
   }
 
@@ -98,14 +98,13 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  private def startupElastic(wasptimeout: Long)(implicit timeout: Timeout): Unit = {
+  private def startupElastic(servicesTimeoutMillis: Long)(implicit timeout: Timeout): Unit = {
     logger.info(s"Trying to connect with Elastic...")
 
     //TODO if elasticConfig are not initialized skip the initialization
     val elasticResult = elasticAdminActor_ ? Initialization(ConfigManager.getElasticConfig)
 
-    //TODO remove infinite waiting and enable index swapping
-    val elasticConnectionResult = Await.ready(elasticResult, Duration(wasptimeout, TimeUnit.SECONDS))
+    val elasticConnectionResult = Await.ready(elasticResult, Duration(servicesTimeoutMillis, TimeUnit.MILLISECONDS))
 
     elasticConnectionResult.value match {
       case Some(Failure(t)) =>

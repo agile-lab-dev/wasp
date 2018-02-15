@@ -39,7 +39,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     // services timeout, used below
     val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
     // implicit timeout used below
-    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
+    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS -1000)
     startupSolr(servicesTimeoutMillis)
   }
 
@@ -88,12 +88,13 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  private def startupSolr(wasptimeout: Long)(implicit timeout: Timeout): Unit = {
+  private def startupSolr(servicesTimeoutMillis: Long)(implicit timeout: Timeout): Unit = {
     logger.info(s"Trying to connect with Sol...")
 
     //TODO if solrConfig are not initialized skip the initialization
     val solrResult = solrAdminActor_ ? Initialization(ConfigManager.getSolrConfig)
-    val solrConnectionResult = Await.ready(solrResult, Duration(wasptimeout, TimeUnit.SECONDS))
+
+    val solrConnectionResult = Await.ready(solrResult, Duration(servicesTimeoutMillis, TimeUnit.MILLISECONDS))
 
     solrConnectionResult.value match {
       case Some(Failure(t)) =>

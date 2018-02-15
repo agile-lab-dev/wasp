@@ -163,12 +163,12 @@ object MongoDBHelper extends Logging {
     val settings =
       MongoClientSettings.builder().clusterSettings(clusterSettings).heartbeatSocketSettings(
         SocketSettings.builder().
-          connectTimeout(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
-          .readTimeout(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
+          connectTimeout(mongoDBConfig.millisecondsTimeoutConnection, TimeUnit.MILLISECONDS)
+          .readTimeout(mongoDBConfig.millisecondsTimeoutConnection, TimeUnit.MILLISECONDS)
           .build())
         .build()
 
-    resultTimeout = Duration(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
+    resultTimeout = Duration(mongoDBConfig.millisecondsTimeoutConnection, TimeUnit.MILLISECONDS)
 
     mongoClient = MongoClient(settings)
     //sys.addShutdownHook(() -> {
