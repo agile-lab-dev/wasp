@@ -40,7 +40,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     // services timeout, used below
     val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
     // implicit timeout used below
-    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS - 1000)
+    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis - 1000, TimeUnit.MILLISECONDS)
     startupElastic(servicesTimeoutMillis)
   }
 
