@@ -230,6 +230,8 @@ object ConfigManager extends Logging {
     initializeElasticConfig()
     initializeSolrConfig()
     initializeHBaseConfig()
+    initializeSparkBatchConfig()
+    initializeSparkStreamingConfig()
   }
   
   def getWaspConfig: WaspConfigModel = {

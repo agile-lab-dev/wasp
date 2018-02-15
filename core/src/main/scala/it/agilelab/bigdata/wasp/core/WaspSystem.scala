@@ -16,9 +16,8 @@ import it.agilelab.bigdata.wasp.core.utils._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.{Failure, Success}
-
 
 object WaspSystem extends WaspConfiguration with Logging {
   // actor/singleton manager/proxy for master guardians
