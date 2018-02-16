@@ -8,8 +8,8 @@ private[wasp] object ExamplePipegraphModel {
 
   lazy val examplePipegraph = PipegraphModel(
     name = examplePipegraphName,
-    description = "System Example Pipegraph",
-    owner = "system",
+    description = "Example Pipegraph",
+    owner = "user",
     isSystem = false,
     creationTime = System.currentTimeMillis,
     legacyStreamingComponents = List.empty,
