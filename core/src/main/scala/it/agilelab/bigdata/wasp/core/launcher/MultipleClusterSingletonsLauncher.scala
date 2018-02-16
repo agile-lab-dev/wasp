@@ -12,6 +12,7 @@ import org.apache.commons.cli.CommandLine
 	* @author Nicolò Bidotti
 	*/
 trait MultipleClusterSingletonsLauncher extends WaspLauncher with Logging {
+
 	override def launch(commandLine: CommandLine): Unit = {
 		val actorSystem = WaspSystem.actorSystem
 		

@@ -80,7 +80,7 @@ object Pipegraph_C extends Directives with JsonSupport {
                   complete {
                     // complete with serialized Future result
                     val result = ConfigBL.pipegraphBL.getByName(name)
-                    runIfExists(result, () => ConfigBL.pipegraphBL.deleteById(name), name, "Pipegraph", "delete")
+                    runIfExists(result, () => ConfigBL.pipegraphBL.deleteByName(name), name, "Pipegraph", "delete")
                   }
 
                 }

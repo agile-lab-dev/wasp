@@ -21,7 +21,7 @@ import org.elasticsearch.spark.sql.EsSparkSQL
 
 class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
                                         ssc: StreamingContext,
-                                        id: String,
+                                        name: String,
                                         elasticAdminActor: ActorRef)
     extends SparkLegacyStreamingWriter
     with ElasticConfiguration
@@ -29,7 +29,7 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
 
   override def write(stream: DStream[String]): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -65,14 +65,14 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 }
 
 class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
                                             ss: SparkSession,
-                                            id: String,
+                                            name: String,
                                             elasticAdminActor: ActorRef)
     extends SparkStructuredStreamingWriter
     with ElasticConfiguration
@@ -82,7 +82,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
                      queryName: String,
                      checkpointDir: String): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -119,7 +119,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 
@@ -127,7 +127,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 class ElasticSparkWriter(indexBL: IndexBL,
                          sc: SparkContext,
-                         id: String,
+                         name: String,
                          elasticAdminActor: ActorRef)
     extends SparkWriter
     with ElasticConfiguration
@@ -135,7 +135,7 @@ class ElasticSparkWriter(indexBL: IndexBL,
 
   override def write(data: DataFrame): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -181,7 +181,7 @@ class ElasticSparkWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 }

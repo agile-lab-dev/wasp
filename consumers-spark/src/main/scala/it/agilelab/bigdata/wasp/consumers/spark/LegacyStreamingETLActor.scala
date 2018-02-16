@@ -90,12 +90,12 @@ class LegacyStreamingETLActor(env: {
     */
   private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
     staticReaderModels.flatMap({
-      case ReaderModel(name, endpointId, readerType) =>
+      case ReaderModel(name, endpointName, readerType) =>
         val readerProduct = readerType.getActualProduct
         logger.info(s"Get reader plugin $readerProduct before was $readerType, plugin map: $plugins")
         val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
+          Some(readerPlugin.get.getSparkReader(endpointName, name))
         } else {
           logger.error(s"The $readerProduct plugin in staticReaderModels does not exists")
           None
@@ -117,26 +117,26 @@ class LegacyStreamingETLActor(env: {
   private def topicModels(): List[Option[TopicModel]] =
     legacyStreamingETL.inputs
       .flatMap({
-        case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) =>
-          val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
+        case ReaderModel(name, topicName, ReaderType.kafkaReaderType) =>
+          val topicOpt = env.topicBL.getByName(topicName)
           Some(topicOpt)
         case _ => None
       })
 
   private def validationTask(): Unit = {
     legacyStreamingETL.inputs.foreach({
-      case ReaderModel(name, endpointId, ReaderType.kafkaReaderType) => {
-        val topicOpt = env.topicBL.getById(endpointId.getValue.toHexString)
+      case ReaderModel(name, endpointName, ReaderType.kafkaReaderType) => {
+        val topicOpt = env.topicBL.getByName(endpointName)
         if (topicOpt.isEmpty) {
-          throw new Exception(s"There isn't this topic: $endpointId, $name")
+          throw new Exception(s"There isn't this topic: $endpointName, $name")
         }
       }
-      case ReaderModel(name, endpointId, readerType) => {
+      case ReaderModel(name, endpointName, readerType) => {
         val readerPlugin = plugins.get(readerType.getActualProduct)
         if (readerPlugin.isDefined) {
-          readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name)
+          readerPlugin.get.getSparkReader(endpointName, name)
         } else {
-          throw new Exception(s"There isn't the plugin for this index: '$endpointId', '$name', readerType: '$readerType'")
+          throw new Exception(s"There isn't the plugin for this index: '$endpointName', '$name', readerType: '$readerType'")
         }
       }
     })

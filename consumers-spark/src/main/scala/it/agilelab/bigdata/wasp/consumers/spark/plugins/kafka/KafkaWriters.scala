@@ -16,7 +16,7 @@ import org.apache.spark.streaming.dstream.DStream
 
 class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
                                       ssc: StreamingContext,
-                                      id: String)
+                                      name: String)
   extends SparkLegacyStreamingWriter {
 
   override def write(stream: DStream[String]): Unit = {
@@ -24,7 +24,7 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
     val kafkaConfig = ConfigManager.getKafkaConfig
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
-    val topicOpt: Option[TopicModel] = topicBL.getById(id)
+    val topicOpt: Option[TopicModel] = topicBL.getByName(name)
     topicOpt.foreach(topic => {
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
@@ -65,7 +65,7 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
 }
 
 class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
-                                          id: String,
+                                          name: String,
                                           ss: SparkSession)
   extends SparkStructuredStreamingWriter
     with Logging {
@@ -79,7 +79,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val kafkaConfig = ConfigManager.getKafkaConfig
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
-    val topicOpt: Option[TopicModel] = topicBL.getById(id)
+    val topicOpt: Option[TopicModel] = topicBL.getByName(name)
     topicOpt.foreach(topic => {
 
       val topicDataTypeB = ss.sparkContext.broadcast(topic.topicDataType)

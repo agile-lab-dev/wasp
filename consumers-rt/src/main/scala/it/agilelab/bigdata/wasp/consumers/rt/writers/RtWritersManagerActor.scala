@@ -63,7 +63,7 @@ class RtWritersManagerActor(env: {
 class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
 
   //TODO: Configurazione completa?
-  val kafkaTopic: TopicModel = topicBL.getById(writer.endpointId.get.getValue.toHexString).get
+  val kafkaTopic: TopicModel = topicBL.getByName(writer.endpointName.get).get
   val topicSchema = kafkaTopic.getJsonSchema
   val topicDataType = kafkaTopic.topicDataType
 
@@ -139,7 +139,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
 
 class CamelWebsocketWriter(websocketBL: WebsocketBL, writer: WriterModel) extends Producer {
 
-  val webSocketConfigOpt: Option[WebsocketModel] = websocketBL.getById(writer.endpointId.get.getValue.toHexString)
+  val webSocketConfigOpt: Option[WebsocketModel] = websocketBL.getByName(writer.endpointName.get)
   if (webSocketConfigOpt.isEmpty) {
     //TODO eccezione? fallisce l'attore?
   }

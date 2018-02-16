@@ -157,18 +157,23 @@ object MongoDBHelper extends Logging {
   }
   def getDatabase(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {
     //return a connection pool
-    val clusterSettings: ClusterSettings = ClusterSettings.builder()
-      .applyConnectionString(new ConnectionString(mongoDBConfig.address))
-      .build()
-    val settings =
-      MongoClientSettings.builder().clusterSettings(clusterSettings).heartbeatSocketSettings(
-        SocketSettings.builder().
-          connectTimeout(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
-          .readTimeout(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
-          .build())
-        .build()
 
-    resultTimeout = Duration(mongoDBConfig.secondsTimeoutConnection, TimeUnit.SECONDS)
+    val settings = MongoClientSettings.builder()
+                         .clusterSettings(ClusterSettings.builder()
+                                                         .applyConnectionString(new ConnectionString(mongoDBConfig.address))
+                                                         .build())
+                         //we need full consistency so we consider a write on mongo as successful when it lands on disk
+                         .writeConcern(WriteConcern.ACKNOWLEDGED.withFsync(true))
+                         .heartbeatSocketSettings(SocketSettings.builder()
+                                                                .connectTimeout(mongoDBConfig.millisecondsTimeoutConnection,
+                                                                                TimeUnit.MILLISECONDS)
+                                                                .readTimeout(mongoDBConfig.millisecondsTimeoutConnection,
+                                                                             TimeUnit.MILLISECONDS)
+                                                                .build())
+                         .build()
+
+
+    resultTimeout = Duration(mongoDBConfig.millisecondsTimeoutConnection, TimeUnit.MILLISECONDS)
 
     mongoClient = MongoClient(settings)
     //sys.addShutdownHook(() -> {

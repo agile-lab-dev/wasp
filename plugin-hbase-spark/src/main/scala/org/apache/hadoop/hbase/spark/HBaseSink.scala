@@ -2,6 +2,7 @@ package org.apache.hadoop.hbase.spark
 
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.Put
+import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
@@ -16,6 +17,7 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
   * Created by Agile Lab s.r.l. on 04/11/2017.
   */
 class HBaseSink(sparkSession: SparkSession, parameters: Map[String, String], hBaseContext: HBaseContext) extends Sink with Logging {
+
   /**
     * Non è gestito il commit log quindi un task può essere inserito due volte
     * Per creare questo metodo ho seguito il codice della libreria
@@ -88,6 +90,9 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
     .fieldNames
     .partition(x => rkFields.map(_.colName).contains(x))
     ._2.filter(catalog.sMap.exists).map(x => (schema.fieldIndex(x), catalog.getField(x)))
+
+  val clusteringCfColumnsMap: Map[String, Seq[String]] = catalog.clusteringMap
+
   val enconder: ExpressionEncoder[Row] = RowEncoder.apply(schema).resolveAndBind()
 
   def getTableName(): TableName = TableName.valueOf(catalog.namespace + ":" + catalog.name)
@@ -109,11 +114,46 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
     // Removed timestamp.fold(new Put(rBytes))(new Put(rBytes, _))
     val put = new Put(rBytes)
 
-    colsIdxedFields.foreach { case (x, y) =>
-      if (!row.isNullAt(x)) {
-        val b = Utils.toBytes(row(x), y)
-        put.addColumn(Bytes.toBytes(y.cf), Bytes.toBytes(y.col), b)
+    def isClusteringColumnFamily: Field => Boolean = (f: Field) => clusteringCfColumnsMap.contains(f.cf)
+    def isStandardColumnFamily: Field => Boolean = (f: Field) => !isClusteringColumnFamily(f)
+
+    // We generate put in 2 phase.
+    // One for standard cf and static cells
+    // One for cf with "clustering" feature (i.e. denormalization)
+    colsIdxedFields.filter{
+      case (_, f) => isStandardColumnFamily(f)
+    }.foreach { case (colIndex, field) =>
+      if (!row.isNullAt(colIndex)) {
+        val b = Utils.toBytes(row(colIndex), field)
+        put.addColumn(Bytes.toBytes(field.cf), Bytes.toBytes(field.col), b)
       }
+    }
+
+    // Build a map to retrieve for the specific row the column qualifier prefix for cf with "clustering"
+    val clusteringQualifierPrefixMap = clusteringCfColumnsMap.map{
+      case (cf: String, clustFields: Seq[String]) =>
+        val rowSchema = row.schema
+        val cqPrefix = clustFields.map{
+          fieldName =>
+            row.getAs[String](rowSchema.fieldIndex(fieldName))
+        }.mkString("|")
+        cf -> cqPrefix
+    }
+
+    // Process denormalized columns
+    colsIdxedFields.filter{
+      // Take only field of clustering column family that are not in clustering fields
+      case (_, f) => isClusteringColumnFamily(f) && !clusteringCfColumnsMap(f.cf).contains(f.col)
+    }.foreach{
+      case (colIndex, field) =>
+        if (!row.isNullAt(colIndex)) {
+          val cf = Bytes.toBytes(field.cf)
+          // Compose final denormalized cq
+          val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}|${field.col}")
+          val data = Utils.toBytes(row(colIndex), field)
+
+          put.addColumn(cf, finalCq, data)
+        }
     }
     put
   }

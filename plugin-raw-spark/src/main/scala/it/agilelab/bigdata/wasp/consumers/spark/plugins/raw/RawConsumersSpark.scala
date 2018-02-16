@@ -26,17 +26,17 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the HDFS spark streaming writer with this model: $writerModel")
-    new RawSparkLegacyStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.get.getValue.toHexString), ssc)
+    new RawSparkLegacyStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointName.get), ssc)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
     logger.info(s"Initialize HDFS spark structured streaming writer with this model: $writerModel")
-    new RawSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointId.get.getValue.toHexString), ss)
+    new RawSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.endpointName.get), ss)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     logger.info(s"Initialize HDFS spark batch writer with this model: $writerModel")
-    new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.endpointId.get.getValue.toHexString), sc)
+    new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.endpointName.get), sc)
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {
@@ -44,9 +44,9 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     new RawSparkReader(getModelAndChekHdfsSchema(id))
   }
 
-  private def getModelAndChekHdfsSchema(id: String): RawModel = {
+  private def getModelAndChekHdfsSchema(name: String): RawModel = {
     // get the raw model using the provided id & bl
-    val rawModelOpt = rawBL.getById(id)
+    val rawModelOpt = rawBL.getByName(name)
     // if we found a model, try to return the correct reader
     if (rawModelOpt.isDefined) {
       val rawModel = rawModelOpt.get
@@ -56,7 +56,7 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
         case _ => throw new Exception(s"Raw scheme not found $scheme, raw model: $rawModel")
       }
     } else {
-      throw new Exception(s"Raw model not found: $id")
+      throw new Exception(s"Raw model not found: $name")
     }
   }
 

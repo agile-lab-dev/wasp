@@ -76,9 +76,9 @@ object Status_C extends Directives with JsonSupport {
         "GET" -> "Get all the ML models in the system.",
         "PUT" -> "Update an existing ML models."
       ),
-      "/mlmodels/{id}" -> Map(
-        "GET" -> "Get the ML models with the specified id.",
-        "DELETE" -> "Delete the ML models with the specified id."
+      "/mlmodels/{name}/{version}" -> Map(
+        "GET" -> "Get the ML models with the specified name and version.",
+        "DELETE" -> "Delete the ML models with the specified name and version."
       ),
       "/configs/kafka" -> Map(
         "GET" -> "Get the Kakfa configuration."

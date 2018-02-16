@@ -8,22 +8,22 @@ import org.mongodb.scala.bson.BsonObjectId
 	* A model for a reader, composed by a name, an endpoint to read from, and a reader type defining the datastore to use.
 	*
 	* @param name the name of this reader model
-	* @param endpointId the id of the endpoint to read from
+	* @param endpointName the id of the endpoint to read from
 	* @param readerType the type of the datastore to read from
 	*/
-case class ReaderModel(name: String, endpointId: BsonObjectId, readerType: ReaderType)
+case class ReaderModel(name: String, endpointName: String, readerType: ReaderType)
 
 object ReaderModel {
 	// helpers to create writer models for supported datastores
-	def indexReader(name: String, indexId: BsonObjectId, product: String) = ReaderModel(name, indexId, ReaderType(Datastores.indexCategory, Option(product)))
-	def elasticReader(name: String, indexId: BsonObjectId) = ReaderModel(name, indexId, ReaderType.elasticReaderType)
-	def solrReader(name: String, indexId: BsonObjectId) = ReaderModel(name, indexId, ReaderType.solrReaderType)
-	def keyValueReader(name: String, tableId: BsonObjectId, product: String) = ReaderModel(name, tableId, ReaderType(Datastores.keyValueCategory, Option(product)))
-	def hbaseReader(name: String, tableId: BsonObjectId, product: String) = ReaderModel(name, tableId, ReaderType.hbaseReaderType)
-	def topicReader(name: String, topicId: BsonObjectId, product: String) = ReaderModel(name, topicId, ReaderType(Datastores.topicCategory, Option(product)))
-	def kafkaReader(name: String, topicId: BsonObjectId) = ReaderModel(name, topicId, ReaderType.kafkaReaderType)
-	def rawReader(name: String, rawId: BsonObjectId) = ReaderModel(name, rawId, ReaderType.rawReaderType)
-	def websocketReader(name: String, websocketId: BsonObjectId) = ReaderModel(name, websocketId, ReaderType.websocketReaderType)
+	def indexReader(name: String, indexName: String, product: String) = ReaderModel(name, indexName, ReaderType(Datastores.indexCategory, Option(product)))
+	def elasticReader(name: String, indexName: String) = ReaderModel(name, indexName, ReaderType.elasticReaderType)
+	def solrReader(name: String, indexName: String) = ReaderModel(name, indexName, ReaderType.solrReaderType)
+	def keyValueReader(name: String, tableName: String, product: String) = ReaderModel(name, tableName, ReaderType(Datastores.keyValueCategory, Option(product)))
+	def hbaseReader(name: String, tableName: String, product: String) = ReaderModel(name, tableName, ReaderType.hbaseReaderType)
+	def topicReader(name: String, topicName: String, product: String) = ReaderModel(name, topicName, ReaderType(Datastores.topicCategory, Option(product)))
+	def kafkaReader(name: String, topicName: String) = ReaderModel(name, topicName, ReaderType.kafkaReaderType)
+	def rawReader(name: String, rawName: String) = ReaderModel(name, rawName, ReaderType.rawReaderType)
+	def websocketReader(name: String, websocketName: String) = ReaderModel(name, websocketName, ReaderType.websocketReaderType)
 }
 
 /**

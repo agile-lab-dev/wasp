@@ -8,4 +8,6 @@ case object Start extends WaspMessage
 
 case object Stop extends WaspMessage
 
-case class RestRequest(httpMethod: HttpMethod, data: JsValue, mlModelId: String) extends WaspMessage
+case class ModelKey(name: String, version: String, timestamp: Long)
+
+case class RestRequest(httpMethod: HttpMethod, data: JsValue, model: ModelKey) extends WaspMessage

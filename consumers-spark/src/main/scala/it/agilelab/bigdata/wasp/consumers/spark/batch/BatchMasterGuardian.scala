@@ -162,20 +162,20 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     }
   }
 
-  private def startJob(id: String): Boolean = {
-    val job: Option[BatchJobModel] = env.batchJobBL.getById(id)
+  private def startJob(name: String): Boolean = {
+    val job: Option[BatchJobModel] = env.batchJobBL.getByName(name)
     logger.info(s"Job that will be processed, job: $job")
     job match {
       case Some(element) =>
         if (!element.state.equals(JobStateEnum.PROCESSING)) {
-          changeBatchState(element._id.get, JobStateEnum.PENDING)
+          changeBatchState(element.name, JobStateEnum.PENDING)
           batchActor ! element
           true
         } else {
           logger.error(s"Batch job ${element.name} is already in processing phase")
           false
         }
-      case None => logger.error("BatchEndedMessage with invalid id found.")
+      case None => logger.error("BatchEndedMessage with invalid name found.")
         false
     }
   }
@@ -196,12 +196,12 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     schedules
   }
 
-  private def changeBatchState(id: BsonObjectId, newState: String): Unit =
+  private def changeBatchState(name: String, newState: String): Unit =
   {
-    val job = env.batchJobBL.getById(id.getValue.toHexString)
+    val job = env.batchJobBL.getByName(name)
     job match {
       case Some(jobModel) => env.batchJobBL.setJobState(jobModel, newState)
-      case None => logger.error("BatchEndedMessage with invalid id found.")
+      case None => logger.error("BatchEndedMessage with invalid name found.")
     }
   }
 }

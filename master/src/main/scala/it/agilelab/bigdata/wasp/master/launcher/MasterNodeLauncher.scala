@@ -32,16 +32,26 @@ import scala.concurrent.duration.Duration
 	* @author Nicolò Bidotti
 	*/
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
+
 	override def launch(commandLine: CommandLine): Unit = {
-		// drop db if needed
+
 		if (commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)) {
-			val config = ConfigManager.getMongoDBConfig
-			logger.info(s"Dropping MongoDB database ${config.databaseName}")
-			val mongoDb = MongoDBHelper.getDatabase(config)
-			val dropFuture = mongoDb.drop().toFuture()
+			// drop db
+			val mongoDBConfig = ConfigManager.getMongoDBConfig
+
+			logger.info(s"Dropping MongoDB database '${mongoDBConfig.databaseName}'")
+			val mongoDBDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
+			val dropFuture = mongoDBDatabase.drop().toFuture()
 			Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
-			WaspDB.initializeDB() // re-initialize db so collections are recreated
-			ConfigManager.initializeCommonConfigs() // re-create configurations in mongo
+			logger.info(s"Dropped MongoDB database '${mongoDBConfig.databaseName}'")
+			System.exit(0)
+
+			// re-initialize mongoDB and continue (instead of exit) -> not safe due to all process write on mongoDB
+//			// db
+//			WaspDB.initializeDB()
+//			waspDB = WaspDB.getDB
+//			// configs
+//			ConfigManager.initializeCommonConfigs()
 		}
 		
 		// add system pipegraphs

@@ -61,8 +61,7 @@ trait WaspLauncher {
 		waspDB = WaspDB.getDB
 		// configs
 		ConfigManager.initializeCommonConfigs()
-		// "special" configs (if needed)
-		initializeConfigurations()
+
 		// waspsystem
 		WaspSystem.initializeSystem()
 	}
@@ -107,10 +106,6 @@ trait WaspLauncher {
 		* @param args command line arguments
 		*/
 	def initializePlugins(args: Array[String]): Unit = {
-		Unit
-	}
-
-	def initializeConfigurations(): Unit = {
 		Unit
 	}
 
