@@ -153,7 +153,8 @@ class SparkConsumersMasterGuardian(env: {
           })
           
           // do not do anything for rt components
-          logger.info(s"Ignoring ${rtComponents.size} rt components for pipegraph ${pipegraph.name} as they are handled by RtConsumersMasterGuardian")
+          logger.info(s"Ignoring ${rtComponents.size} rt components " +
+                      s"for pipegraph ${pipegraph.name} as they are handled by RtConsumersMasterGuardian")
         }
       }
   

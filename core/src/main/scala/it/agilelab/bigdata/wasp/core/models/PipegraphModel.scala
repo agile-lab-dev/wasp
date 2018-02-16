@@ -71,7 +71,6 @@ case class RTModel(name: String,
   * @param rtComponents components describing processing built on Akka actors
   * @param dashboard dashboard of the pipegraph
   * @param isActive whether the pipegraph is currently active
-  * @param _id id of the pipegraph
   */
 case class PipegraphModel(override val name: String,
                           description: String,
@@ -82,8 +81,7 @@ case class PipegraphModel(override val name: String,
                           structuredStreamingComponents: List[StructuredStreamingETLModel],
                           rtComponents: List[RTModel],
                           dashboard: Option[DashboardModel] = None,
-                          var isActive: Boolean = false,
-                          _id: Option[BsonObjectId] = None) extends Model {
+                          var isActive: Boolean = false) extends Model {
   def generateStandardPipegraphName: String = s"pipegraph_$name"
   
   def hasSparkComponents: Boolean = legacyStreamingComponents.nonEmpty || structuredStreamingComponents.nonEmpty

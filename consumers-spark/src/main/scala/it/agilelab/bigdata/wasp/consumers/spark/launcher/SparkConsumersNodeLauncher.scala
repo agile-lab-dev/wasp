@@ -62,12 +62,6 @@ trait SparkConsumersNodeLauncherTrait extends MultipleClusterSingletonsLauncher 
 		}).toMap
 
 		logger.info(s"Initialized all consumers spark plugins")
-
-	}
-
-	override def initializeConfigurations(): Unit = {
-		ConfigManager.initializeSparkBatchConfig()
-		ConfigManager.initializeSparkStreamingConfig()
 	}
 
 	override def getNodeName: String = "consumers spark"

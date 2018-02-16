@@ -9,15 +9,13 @@ trait ProducerBL {
 
   def getByName(name: String): Option[ProducerModel]
 
-  def getById(id: String): Option[ProducerModel]
-
   def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel]
   
   def getSystemProducers: Seq[ProducerModel]
   
   def getNonSystemProducers: Seq[ProducerModel]
   
-  def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel]
+  def getByTopicName(name: String): Seq[ProducerModel]
 
   def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel]
 
@@ -35,15 +33,12 @@ trait ProducerBL {
 
 class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
 
-  private def factory(p: ProducerModel) = ProducerModel(p.name, p.className, p.id_topic, p.isActive, p.configuration, p.isRemote, p.isSystem, p._id)
+  private def factory(p: ProducerModel) = ProducerModel(p.name, p.className, p.topicName, p.isActive, p.configuration, p.isRemote, p.isSystem)
 
   def getByName(name: String): Option[ProducerModel] = {
     waspDB.getDocumentByField[ProducerModel]("name", new BsonString(name)).map(factory)
   }
 
-  def getById(id: String): Option[ProducerModel] = {
-    waspDB.getDocumentByID[ProducerModel](BsonObjectId(id)).map(factory)
-  }
 
   def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel] = {
     waspDB.getAllDocumentsByField[ProducerModel]("isActive", new BsonBoolean(isActive)).map(factory)
@@ -57,13 +52,13 @@ class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
     waspDB.getAllDocumentsByField[ProducerModel]("isSystem", new BsonBoolean(false)).map(factory)
   }
 
-  def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerModel]("id_topic", id_topic).map(factory)
+  def getByTopicName(topicName: String): Seq[ProducerModel] = {
+    waspDB.getAllDocumentsByField[ProducerModel]("topicName", BsonString(topicName)).map(factory)
   }
 
   def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
     if (producerModel.hasOutput)
-      topicBL.getById(producerModel.id_topic.get.asObjectId().getValue.toHexString)
+      topicBL.getByName(producerModel.topicName.get)
     else
         None
   }
@@ -73,7 +68,7 @@ class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
   }
 
   def update(producerModel: ProducerModel): Unit = {
-    waspDB.updateById[ProducerModel](producerModel._id.get, producerModel)
+    waspDB.updateByName[ProducerModel](producerModel.name, producerModel)
   }
 
   override def persist(producerModel: ProducerModel): Unit = waspDB.insert[ProducerModel](producerModel)

@@ -1,8 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies
 
-import java.util.{Calendar, Date}
-
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.MlModelsBroadcastDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
@@ -10,7 +8,7 @@ import org.apache.spark.streaming.dstream.DStream
 
 case class ReaderKey(sourceTypeName: String, name: String)
 
-trait Strategy {
+trait Strategy extends Serializable {
 
   val ALTER_DATE_DAY = "alter_date_day"
 

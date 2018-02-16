@@ -103,7 +103,6 @@ object IndexModel {
 case class IndexModel(override val name: String,
                       creationTime: Long,
                       schema: Option[BsonDocument],
-                      _id: Option[BsonObjectId] = None,
                       query: Option[String] = None,
                       numShards: Option[Int] = Some(1),
                       replicationFactor: Option[Int] = Some(1),

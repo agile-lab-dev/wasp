@@ -7,5 +7,4 @@ case class WebsocketModel (override val name: String,
                            port: String,
                            resourceName: String,
                            //var isActive: Boolean,
-                           options: Option[BsonDocument] = None,
-                           _id: Option[BsonObjectId] = None) extends Model
+                           options: Option[BsonDocument] = None) extends Model

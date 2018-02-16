@@ -14,12 +14,8 @@ class AllBLsTestWrapper {
     val database = new ListBuffer[BatchJobModel]
 
     override def update(batchJobModel: BatchJobModel): Unit = {
-      val index = database.indexWhere(b => b._id == batchJobModel._id)
+      val index = database.indexWhere(b => b.name == (batchJobModel.name))
       database.update(index, batchJobModel)
-    }
-
-    override def getById(id: String): Option[BatchJobModel] = {
-      database.find(p => p._id.get.asString().getValue == id)
     }
 
     override def getByName(name: String): Option[BatchJobModel] = {
@@ -40,10 +36,6 @@ class AllBLsTestWrapper {
 
     override def insert(batchJobModel: BatchJobModel): Unit = persist(batchJobModel)
 
-    override def deleteById(id_string: String): Unit = {
-      val index = database.filter(_._id.isDefined).indexWhere(b => b._id.get.asString().getValue == id_string)
-      database.remove(index)
-    }
 
     override def deleteByName(name: String): Unit = {
       val index = database.indexWhere(b => b.name == name)
@@ -55,8 +47,6 @@ class AllBLsTestWrapper {
     val database = new ListBuffer[IndexModel]
 
     override def getByName(name: String): Option[IndexModel] = ???
-
-    override def getById(id: String): Option[IndexModel] =database.find(_._id.get.asString().getValue == id)
 
     override def persist(indexModel: IndexModel): Unit = {
       database.+=(indexModel)
@@ -100,10 +90,6 @@ class AllBLsTestWrapper {
 
     override def getAll: Seq[MlModelOnlyInfo] = database
 
-    override def getById(id: String): Option[MlModelOnlyInfo] = ???
-
-    override def delete(id: String): Unit = ???
-
     /**
      * Delete the metadata and the transformer model in base to name, version, timestamp
      * @param name
@@ -125,8 +111,6 @@ class AllBLsTestWrapper {
     val database = new ListBuffer[TopicModel]
     override def getByName(name: String): Option[TopicModel] = database.find(_.name == name)
 
-    override def getById(id: String): Option[TopicModel] = database.find(_._id.get.asString().getValue == id)
-
     override def persist(topicModel: TopicModel): Unit = {
       database.+=(topicModel)
     }
@@ -145,10 +129,6 @@ class AllBLsTestWrapper {
 
     override def getByName(name: String): Option[ProducerModel] = database.find(_.name == name)
 
-    override def getByTopicId(id_topic: BsonObjectId): Seq[ProducerModel] = database.filter(_.id_topic.isDefined).filter(_.id_topic.get == id_topic).toList
-
-    override def getById(id: String): Option[ProducerModel] = database.find(p => p._id.isDefined && p._id.get.asString().getValue == id)
-
     override def getActiveProducers(isActive: Boolean): Seq[ProducerModel] = database.filter(_.isActive == isActive)
   
     override def getSystemProducers: Seq[ProducerModel] = database.filter(_.isSystem == true)
@@ -159,7 +139,7 @@ class AllBLsTestWrapper {
 
     override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
       if (producerModel.hasOutput)
-        topicBL.getById(producerModel.id_topic.get.asString().getValue)
+        topicBL.getByName(producerModel.topicName.get)
       else
         None
     }
@@ -168,14 +148,15 @@ class AllBLsTestWrapper {
       database.+=(producerModel)
     }
 
+    override def getByTopicName(name: String): Seq[ProducerModel] = {
+      database.filter(_.topicName == name)
+    }
   }
   
   // TODO implement this
   val rawBL = new RawBL {
     override def getByName(name: String): Option[RawModel] = ???
-  
-    override def getById(id: String): Option[RawModel] = ???
-  
+
     override def persist(rawModel: RawModel): Unit = ???
   }
 
@@ -183,7 +164,6 @@ class AllBLsTestWrapper {
 
     override def persist(rawModel: KeyValueModel) = ???
 
-    override def getById(id: String) = ???
   }
 }
 

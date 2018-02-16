@@ -8,8 +8,6 @@ import org.mongodb.scala.bson.BsonObjectId
 trait WebsocketBL {
   def getByName(name: String): Option[WebsocketModel]
 
-  def getById(id: String): Option[WebsocketModel]
-
   def persist(topicModel: WebsocketModel): Unit
 }
 
@@ -17,7 +15,7 @@ trait WebsocketBL {
 class WebsocketBLImp(waspDB: WaspDB) extends WebsocketBL  {
 
 
-  private def factory(ws: WebsocketModel) = new WebsocketModel(ws.name, ws.host, ws.port, ws.resourceName, ws.options, ws._id)
+  private def factory(ws: WebsocketModel) = new WebsocketModel(ws.name, ws.host, ws.port, ws.resourceName, ws.options)
 
   def getByName(name: String): Option[WebsocketModel] = {
     waspDB.getDocumentByField[WebsocketModel]("name", new BsonString(name)).map(ws => {
@@ -25,11 +23,7 @@ class WebsocketBLImp(waspDB: WaspDB) extends WebsocketBL  {
     })
   }
 
-  def getById(id: String): Option[WebsocketModel] = {
-    waspDB.getDocumentByID[WebsocketModel](BsonObjectId(id)).map(ws => {
-      factory(ws)
-    })
-  }
+
 
   override def persist(wsModel: WebsocketModel): Unit = waspDB.insert[WebsocketModel](wsModel)
 }
