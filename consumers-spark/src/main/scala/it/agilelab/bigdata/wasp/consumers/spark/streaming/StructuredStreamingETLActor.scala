@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.consumers.spark
+package it.agilelab.bigdata.wasp.consumers.spark.streaming
 
 import java.util.UUID
 

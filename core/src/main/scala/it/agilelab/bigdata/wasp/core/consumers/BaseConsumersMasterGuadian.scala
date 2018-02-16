@@ -11,7 +11,8 @@ import it.agilelab.bigdata.wasp.core.models._
 	* @author Nicolò Bidotti
 	*/
 abstract class BaseConsumersMasterGuadian(env: {val pipegraphBL: PipegraphBL })
-	extends Stash
+	extends Actor
+		with Stash
 		with Logging {
 
 	// type alias for pipegraph -> components map
