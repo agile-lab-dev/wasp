@@ -12,16 +12,14 @@ import scala.concurrent.ExecutionContext
 
 final class TestProducerGuardian (env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
   extends ProducerGuardian(env, producerId) {
+
   override val name: String = "testProducerGuardian"
 
   override def startChildActors(): Unit = {
-    logger.info(s"Starting get data on ${cluster.selfAddress}")
-
 
     val aRef = context.actorOf(Props(new TestActor(kafka_router, associatedTopic)))
-    println("created actor")
+    logger.info("Created actor")
     aRef ! StartMainTask
-    println("told actor to start main task")
   }
 }
 
@@ -38,13 +36,12 @@ private[producers] class TestActor(kafka_router: ActorRef, topic: Option[TopicMo
   var documentId = 0
 
   def mainTask() = {
-    println("in main task")
     logger.info(s"Starting main task for actor: ${this.getClass.getName}")
 
     val doc = createTestDocument(documentId)
-    println("TestDocument CREATED!")
-
+    logger.info("TestDocument CREATED!")
     sendMessage(doc)
+
     documentId += 1
     import scala.concurrent.duration._
     implicit val executor: ExecutionContext = context.dispatcher
