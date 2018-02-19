@@ -1,7 +1,8 @@
-package it.agilelab.bigdata.wasp.consumers.spark
+package it.agilelab.bigdata.wasp.consumers.spark.streaming
 
 import akka.actor.{ActorRef, Props}
 import akka.pattern.gracefulStop
+import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
@@ -18,7 +19,7 @@ import scala.concurrent.{Await, Future}
 
 
 // TODO: uninitialized/initialized/starting handle different messages; are we sure can we just let everything else go into the dead letters *safely*?
-class SparkConsumersMasterGuardian(env: {
+class SparkConsumersStreamingMasterGuardian(env: {
                                       val producerBL: ProducerBL
                                       val pipegraphBL: PipegraphBL
                                       val topicBL: TopicBL
@@ -28,10 +29,10 @@ class SparkConsumersMasterGuardian(env: {
                                       val websocketBL: WebsocketBL
                                       val mlModelBL: MlModelBL
                                     },
-                                    sparkWriterFactory: SparkWriterFactory,
-                                    streamingReader: StreamingReader,
-                                    structuredStreamingReader: StructuredStreamingReader,
-                                    plugins: Map[String, WaspConsumersSparkPlugin])
+                                            sparkWriterFactory: SparkWriterFactory,
+                                            streamingReader: StreamingReader,
+                                            structuredStreamingReader: StructuredStreamingReader,
+                                            plugins: Map[String, WaspConsumersSparkPlugin])
   extends BaseConsumersMasterGuadian(env)
     with SparkStreamingConfiguration
     with WaspConfiguration {
@@ -68,7 +69,7 @@ class SparkConsumersMasterGuardian(env: {
   // methods implementing start/stop ===================================================================================
 
   override def beginStartup(): Unit = {
-    logger.info(s"SparkConsumersMasterGuardian $self beginning startup sequence...")
+    logger.info(s"SparkConsumersStreamingMasterGuardian $self beginning startup sequence...")
 
     SparkSingletons.initializeSparkStreaming(sparkStreamingConfig)
     val ssc = SparkSingletons.getStreamingContext
@@ -107,7 +108,7 @@ class SparkConsumersMasterGuardian(env: {
       
       // enter unitizialized state because we don't have anything to do
       context become uninitialized
-      logger.info(s"SparkConsumersMasterGuardian $self is now in uninitialized state")
+      logger.info(s"SparkConsumersStreamingMasterGuardian $self is now in uninitialized state")
       
       // answer ok to MasterGuardian since this is normal if all pipegraphs are unactive
       masterGuardian ! Right()
@@ -115,7 +116,7 @@ class SparkConsumersMasterGuardian(env: {
     } else { // we have pipegaphs/components to start
       // enter starting state so we stash restarts
       context become starting
-      logger.info(s"SparkConsumersMasterGuardian $self is now in starting state")
+      logger.info(s"SparkConsumersStreamingMasterGuardian $self is now in starting state")
       
       // loop over pipegraph -> components map spawning the appropriate actors for each component
       pipegraphsToComponentsMap foreach {
@@ -164,14 +165,14 @@ class SparkConsumersMasterGuardian(env: {
         finishStartup()
       } else {
         // all component actors started; now we wait for them to send us back all the Right messages
-        logger.info(s"SparkConsumersMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
+        logger.info(s"SparkConsumersStreamingMasterGuardian $self pausing startup sequence, waiting for all component actors to register...")
       }
     }
   }
   
   override def finishStartup(success: Boolean = true, errorMsg: String = ""): Unit = {
     if (success) {
-      logger.info(s"SparkConsumersMasterGuardian $self continuing startup sequence...")
+      logger.info(s"SparkConsumersStreamingMasterGuardian $self continuing startup sequence...")
 
       if (legacyStreamingETLTotal > 0) {
         logger.info("Starting StreamingContext...")
@@ -186,20 +187,20 @@ class SparkConsumersMasterGuardian(env: {
 
       // enter initialized state
       context become initialized
-      logger.info(s"SparkConsumersMasterGuardian $self is now in initialized state")
+      logger.info(s"SparkConsumersStreamingMasterGuardian $self is now in initialized state")
     } else {
-      logger.info(s"SparkConsumersMasterGuardian $self stopping startup sequence...")
+      logger.info(s"SparkConsumersStreamingMasterGuardian $self stopping startup sequence...")
 
       // startup error to MasterGuardian
       masterGuardian ! Left(errorMsg)
 
       // enter uninitialized state
       context become uninitialized
-      logger.info(s"SparkConsumersMasterGuardian $self is now in uninitialized state")
+      logger.info(s"SparkConsumersStreamingMasterGuardian $self is now in uninitialized state")
     }
 
     // unstash messages stashed while in starting state
-    logger.info(s"SparkConsumersMasterGuardian $self unstashing queued messages...")
+    logger.info(s"SparkConsumersStreamingMasterGuardian $self unstashing queued messages...")
     unstashAll()
 
     // TODO check if this is still needed in Spark 2.x
@@ -208,10 +209,10 @@ class SparkConsumersMasterGuardian(env: {
   }
   
   override def stop(): Boolean = {
-    logger.info(s"SparkConsumersMasterGuardian $self stopping...")
+    logger.info(s"SparkConsumersStreamingMasterGuardian $self stopping...")
   
     // stop all component actors bound to this guardian and the guardian itself
-    logger.info(s"Stopping component actors bound to SparkConsumersMasterGuardian $self...")
+    logger.info(s"Stopping component actors bound to SparkConsumersStreamingMasterGuardian $self...")
   
     // stop StreamingContext (if needed) and all LegacyStreamingETLActor
     if (legacyStreamingETLTotal > 0) {

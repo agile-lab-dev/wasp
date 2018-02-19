@@ -21,10 +21,10 @@ import scala.util.{Failure, Success}
 
 object WaspSystem extends WaspConfiguration with Logging {
   // actor/singleton manager/proxy for master guardians
-  val batchMasterGuardianName = "BatchMasterGuardian"
-  val batchMasterGuardianSingletonManagerName = "BatchMasterGuardianSingletonManager"
-  val batchMasterGuardianSingletonProxyName = "BatchMasterGuardianSingletonProxy"
-  val batchMasterGuardianRole = "batch"
+  val sparkConsumersBatchMasterGuardianName = "SparkConsumersBatchMasterGuardian"
+  val sparkConsumersBatchMasterGuardianSingletonManagerName = "SparkConsumersBatchMasterGuardianSingletonManager"
+  val sparkConsumersBatchMasterGuardianSingletonProxyName = "SparkConsumersBatchMasterGuardianSingletonProxy"
+  val sparkConsumersBatchMasterGuardianRole = "consumers-spark-batch"
   val masterGuardianName = "MasterGuardian"
   val masterGuardianSingletonManagerName = "MasterGuardianSingletonManager"
   val masterGuardianSingletonProxyName = "MasterGuardianSingletonProxy"
@@ -37,10 +37,10 @@ object WaspSystem extends WaspConfiguration with Logging {
   val rtConsumersMasterGuardianSingletonManagerName = "RtConsumersMasterGuardianSingletonManager"
   val rtConsumersMasterGuardianSingletonProxyName = "RtConsumersMasterGuardianSingletonProxy"
   val rtConsumersMasterGuardianRole = "consumers-rt"
-  val sparkConsumersMasterGuardianName = "SparkConsumersMasterGuardian"
-  val sparkConsumersMasterGuardianSingletonManagerName = "SparkConsumersMasterGuardianSingletonManager"
-  val sparkConsumersMasterGuardianSingletonProxyName = "SparkConsumersMasterGuardianSingletonProxy"
-  val sparkConsumersMasterGuardianRole = "consumers-spark"
+  val sparkConsumersStreamingMasterGuardianName = "SparkConsumersStreamingMasterGuardian"
+  val sparkConsumersStreamingMasterGuardianSingletonManagerName = "SparkConsumersStreamingMasterGuardianSingletonManager"
+  val sparkConsumersStreamingMasterGuardianSingletonProxyName = "SparkConsumersStreamingMasterGuardianSingletonProxy"
+  val sparkConsumersStreamingMasterGuardianRole = "consumers-spark-streaming"
   
   // actor/singleton manager/proxy names/roles for logger
   val loggerActorName = "LoggerActor"
@@ -55,11 +55,11 @@ object WaspSystem extends WaspConfiguration with Logging {
   private var actorSystem_ : ActorSystem = _
   
   // proxies to cluster singletons of master guardians
-  private var batchMasterGuardian_ : ActorRef = _
+  private var sparkConsumersBatchMasterGuardian_ : ActorRef = _
   private var masterGuardian_ : ActorRef = _
   private var producersMasterGuardian_ : ActorRef = _
   private var rtConsumersMasterGuardian_ : ActorRef = _
-  private var sparkConsumersMasterGuardian_ : ActorRef = _
+  private var sparkConsumersStreamingMasterGuardian_ : ActorRef = _
   
   // proxy to singleton of logger actor
   private var loggerActor_ : ActorRef = _
@@ -96,11 +96,11 @@ object WaspSystem extends WaspConfiguration with Logging {
       
       // create cluster singleton proxies to master guardians
       logger.info("Initializing proxies for master guardians")
-      batchMasterGuardian_ = createSingletonProxy(batchMasterGuardianName, batchMasterGuardianSingletonProxyName, batchMasterGuardianSingletonManagerName, Seq(batchMasterGuardianRole))
+      sparkConsumersBatchMasterGuardian_ = createSingletonProxy(sparkConsumersBatchMasterGuardianName, sparkConsumersBatchMasterGuardianSingletonProxyName, sparkConsumersBatchMasterGuardianSingletonManagerName, Seq(sparkConsumersBatchMasterGuardianRole))
       masterGuardian_ = createSingletonProxy(masterGuardianName, masterGuardianSingletonProxyName, masterGuardianSingletonManagerName, Seq(masterGuardianRole))
       producersMasterGuardian_ = createSingletonProxy(producersMasterGuardianName, producersMasterGuardianSingletonProxyName, producersMasterGuardianSingletonManagerName, Seq(producersMasterGuardianRole))
       rtConsumersMasterGuardian_ = createSingletonProxy(rtConsumersMasterGuardianName, rtConsumersMasterGuardianSingletonProxyName, rtConsumersMasterGuardianSingletonManagerName, Seq(rtConsumersMasterGuardianRole))
-      sparkConsumersMasterGuardian_ = createSingletonProxy(sparkConsumersMasterGuardianName, sparkConsumersMasterGuardianSingletonProxyName, sparkConsumersMasterGuardianSingletonManagerName, Seq(sparkConsumersMasterGuardianRole))
+      sparkConsumersStreamingMasterGuardian_ = createSingletonProxy(sparkConsumersStreamingMasterGuardianName, sparkConsumersStreamingMasterGuardianSingletonProxyName, sparkConsumersStreamingMasterGuardianSingletonManagerName, Seq(sparkConsumersStreamingMasterGuardianRole))
       logger.info("Initialized proxies for master guardians")
   
       // create cluster singleton proxy to logger actor
@@ -246,9 +246,9 @@ object WaspSystem extends WaspConfiguration with Logging {
     import scala.concurrent.duration._
     val timeoutDuration: FiniteDuration = actorReference.path.name match {
       case WaspSystem.masterGuardianSingletonProxyName => durationInit
-      case WaspSystem.sparkConsumersMasterGuardianSingletonProxyName  |
-           WaspSystem.rtConsumersMasterGuardianSingletonProxyName     |
-           WaspSystem.batchMasterGuardianSingletonProxyName           |
+      case WaspSystem.sparkConsumersStreamingMasterGuardianSingletonProxyName |
+           WaspSystem.rtConsumersMasterGuardianSingletonProxyName             |
+           WaspSystem.sparkConsumersBatchMasterGuardianSingletonProxyName     |
            WaspSystem.producersMasterGuardianSingletonProxyName => durationInit - 5.seconds
       case _ => durationInit - 10.seconds
     }
@@ -265,11 +265,11 @@ object WaspSystem extends WaspConfiguration with Logging {
   
   // accessors for actor system/refs, so we don't need public vars which may introduce bugs if someone reassigns stuff by accident
   implicit def actorSystem: ActorSystem = actorSystem_
-  def batchMasterGuardian: ActorRef = batchMasterGuardian_
+  def sparkConsumersBatchMasterGuardian: ActorRef = sparkConsumersBatchMasterGuardian_
   def masterGuardian: ActorRef = masterGuardian_
   def producersMasterGuardian: ActorRef = producersMasterGuardian_
   def rtConsumersMasterGuardian: ActorRef = rtConsumersMasterGuardian_
-  def sparkConsumersMasterGuardian: ActorRef = sparkConsumersMasterGuardian_
+  def sparkConsumersStreamingMasterGuardian: ActorRef = sparkConsumersStreamingMasterGuardian_
   def loggerActor: ActorRef = loggerActor_
   def kafkaAdminActor: ActorRef = kafkaAdminActor_
   def clusterListenerActor: ActorRef = clusterListenerActor_

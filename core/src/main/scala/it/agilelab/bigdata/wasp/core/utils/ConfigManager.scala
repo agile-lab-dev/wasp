@@ -93,8 +93,8 @@ object ConfigManager extends Logging {
   }
 
   def initializeSparkBatchConfig(): Unit = {
-    sparkBatchConfig =
-      retrieveConf[SparkBatchConfigModel](getDefaultSparkBatchConfig, sparkBatchConfigName).get
+    sparkBatchConfig = retrieveConf(getDefaultSparkBatchConfig,
+                                    sparkBatchConfigName).get
   }
 
   private def getDefaultSparkBatchConfig: SparkBatchConfigModel = {
@@ -230,8 +230,8 @@ object ConfigManager extends Logging {
     initializeElasticConfig()
     initializeSolrConfig()
     initializeHBaseConfig()
-    initializeSparkBatchConfig()
     initializeSparkStreamingConfig()
+    initializeSparkBatchConfig()
   }
   
   def getWaspConfig: WaspConfigModel = {

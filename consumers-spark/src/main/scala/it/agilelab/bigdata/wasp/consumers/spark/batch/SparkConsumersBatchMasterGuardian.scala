@@ -18,30 +18,30 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-object BatchMasterGuardian {
+object SparkConsumersBatchMasterGuardian {
   // quartz2 scheduler for batch jobs
   val scheduler: Scheduler = buildScheduler()
 }
 
-class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL;  val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL; val batchSchedulerBL: BatchSchedulersBL},
-                          val classLoader: Option[ClassLoader] = None,
-                          sparkWriterFactory: SparkWriterFactory,
-                          plugins: Map[String, WaspConsumersSparkPlugin])
+class SparkConsumersBatchMasterGuardian(env: {
+                                          val batchJobBL: BatchJobBL
+                                          val indexBL: IndexBL
+                                          val rawBL: RawBL
+                                          val keyValueBL: KeyValueBL
+                                          val mlModelBL: MlModelBL
+                                          val batchSchedulerBL: BatchSchedulersBL
+                                        },
+                                        classLoader: Option[ClassLoader] = None,
+                                        sparkWriterFactory: SparkWriterFactory,
+                                        plugins: Map[String, WaspConsumersSparkPlugin])
   extends Actor
     with Stash
     with SparkBatchConfiguration
     with Logging {
 
-  import BatchMasterGuardian._
+  import SparkConsumersBatchMasterGuardian._
 
-  /** STARTUP PHASE **/
-  /** *****************/
-
-  /** Initialize and retrieve the SparkContext */
-  val scCreated = SparkSingletons.initializeSpark(sparkBatchConfig)
-  if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark batch configuration!")
-  val sc = SparkSingletons.getSparkContext
-  val batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))
+  var batchActor: ActorRef =_
 
   /** BASIC METHODS **/
   /** *****************/
@@ -54,12 +54,19 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
   override def preStart(): Unit = {
     // we start in uninitialized state
     context become uninitialized
+
+    // initialize Spark
+    val scCreated = SparkSingletons.initializeSpark(sparkBatchConfig)
+    if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark batch configuration!")
+
+    val sc = SparkSingletons.getSparkContext
+    batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))
   }
 
   def initialize(): Unit = {
     //no initialization actually, clean code
     context become initialized
-    logger.info("BatchMasterGuardian Initialized")
+    logger.info("SparkConsumersBatchMasterGuardian Initialized")
     unstashAll()
   }
 
@@ -116,7 +123,7 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
 
   private def stopGuardian() {
     //Stop all actors bound to this guardian and the guardian itself
-    logger.info("Stopping actors bound to BatchMasterGuardian...")
+    logger.info("Stopping actors bound to SparkConsumersBatchMasterGuardian...")
     val globalStatus = Future.traverse(context.children)(gracefulStop(_, 60 seconds))
     val res = Await.result(globalStatus, 20 seconds)
 
@@ -151,12 +158,12 @@ class BatchMasterGuardian(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL
     if (schedules.isEmpty) {
       logger.info("There are no active batch schedulers")
     } else {
-      val batchMasterGuardianActorPath = self.path.toStringWithAddress(self.path.address)
+      val sparkConsumersBatchMasterGuardianActorPath = self.path.toStringWithAddress(self.path.address)
       logger.info(s"Found ${schedules.length} batch schedules to be activated")
       //TODO salvo una lista degli scheduler per gestioni successive? (e.g. stop scheduling...?)
       schedules foreach {
         schedule => {
-          scheduler.scheduleJob(schedule.getQuartzJob(batchMasterGuardianActorPath), schedule.getQuartzTrigger)
+          scheduler.scheduleJob(schedule.getQuartzJob(sparkConsumersBatchMasterGuardianActorPath), schedule.getQuartzTrigger)
         }
       }
     }

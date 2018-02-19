@@ -17,12 +17,12 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 SBT_STAGE_COMMAND_PROJECTID="${SBT_STAGE_COMMAND_PROJECTID:-""}"
 MASTER_PROJECT_DIRECTORY="$SCRIPT_DIR${MASTER_PROJECT_DIRECTORY:-"/../../master/"}"
 PRODUCERS_PROJECT_DIRECTORY="$SCRIPT_DIR${PRODUCERS_PROJECT_DIRECTORY:-"/../../producers/"}"
-CONSUMERS_SPARK_PROJECT_DIRECTORY="$SCRIPT_DIR${CONSUMERS_SPARK_PROJECT_DIRECTORY:-"/../../consumers-spark/"}"
 CONSUMERS_RT_PROJECT_DIRECTORY="$SCRIPT_DIR${CONSUMERS_RT_PROJECT_DIRECTORY:-"/../../consumers-rt/"}"
+CONSUMERS_SPARK_PROJECT_DIRECTORY="$SCRIPT_DIR${CONSUMERS_SPARK_PROJECT_DIRECTORY:-"/../../consumers-spark/"}"
 MASTER_PROJECT_COMMAND=${MASTER_PROJECT_COMMAND:-"/root/wasp/bin/wasp-master"}
 PRODUCERS_PROJECT_COMMAND=${PRODUCERS_PROJECT_COMMAND:-"/root/wasp/bin/wasp-producers"}
-CONSUMERS_SPARK_PROJECT_COMMAND=${CONSUMERS_SPARK_PROJECT_COMMAND:-"/root/wasp/bin/wasp-consumers-spark"}
 CONSUMERS_RT_PROJECT_COMMAND=${CONSUMERS_RT_PROJECT_COMMAND:-"/root/wasp/bin/wasp-consumers-rt"}
+CONSUMERS_SPARK_PROJECT_COMMAND=${CONSUMERS_SPARK_PROJECT_COMMAND:-"/root/wasp/bin/wasp-consumers-spark"}
 
 # parse command line arguments
 DROP_MONGODB_OPT=""
@@ -57,6 +57,7 @@ r=$(tput setaf 1)
 g=$(tput setaf 2)
 y=$(tput setaf 3)
 b=$(tput setaf 4)
+p=$(tput setaf 5)
 a=$(tput setaf 6)
 d=$(tput sgr0)
 
@@ -68,15 +69,16 @@ DOCKER_IMAGE="sgrio/java-oracle:jre_8"
 
 if [ -n "$DROP_MONGODB_OPT" ]; then
     echo "Running module 'master' in container in order to drop MongoDB database"
-    $DOCKER_CMD run ${DOCKER_OPTS} --name master -p 2891:2891 -p 5005:5005 -v "$MASTER_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${MASTER_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5005 -Dwasp.akka.remote.netty.tcp.hostname="master" ${WASP_LAUNCHER_OPTS} ${DROP_MONGODB_OPT} 2>&1                                                                                                                                                                     | sed "s/.*/$a master-dropMongoDB    |$d &/" &
+    $DOCKER_CMD run ${DOCKER_OPTS} --name master -p 2891:2891 -p 5005:5005 -v "$MASTER_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${MASTER_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5005 -Dwasp.akka.remote.netty.tcp.hostname="master" ${WASP_LAUNCHER_OPTS} ${DROP_MONGODB_OPT} 2>&1                                                                                                                                                                                                                                                                                                                                                          | sed "s/.*/$a master-dropMongoDB           |$d &/" &
     wait
 fi
 
 echo "Running modules in containers..."
-$DOCKER_CMD run ${DOCKER_OPTS} --name master -p 2891:2891 -p 5005:5005 -v "$MASTER_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${MASTER_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5005 -Dwasp.akka.remote.netty.tcp.hostname="master" ${WASP_LAUNCHER_OPTS} 2>&1                                                                                                                                                                                             | sed "s/.*/$r master                |$d &/" &
-$DOCKER_CMD run ${DOCKER_OPTS} --name producers -p 5006:5006 -v "$PRODUCERS_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${PRODUCERS_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5006 -Dwasp.akka.remote.netty.tcp.hostname="producers" ${WASP_LAUNCHER_OPTS} 2>&1                                                                                                                                                                                              | sed "s/.*/$g producers             |$d &/" &
-$DOCKER_CMD run ${DOCKER_OPTS} --name consumers-rt -p 5007:5007 -v "$SCRIPT_DIR/docker-service-configuration/hdfs":/etc/hadoop/conf/ -v "$SCRIPT_DIR/docker-service-configuration/hbase":/etc/hbase/conf/ -v "$CONSUMERS_RT_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${CONSUMERS_RT_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5007 -Dwasp.akka.remote.netty.tcp.hostname="consumers-rt" ${WASP_LAUNCHER_OPTS} 2>&1                                        | sed "s/.*/$y consumers-rt          |$d &/" &
-$DOCKER_CMD run ${DOCKER_OPTS} --name consumers-spark -p 4040:4040 -p 5008:5008 -p 9010:9010 -v "$SCRIPT_DIR/docker-service-configuration/hdfs":/etc/hadoop/conf/ -v "$SCRIPT_DIR/docker-service-configuration/hbase":/etc/hbase/conf/ -v "$CONSUMERS_SPARK_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${CONSUMERS_SPARK_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5008 -Dwasp.akka.remote.netty.tcp.hostname="consumers-spark" ${WASP_LAUNCHER_OPTS} 2>&1  | sed "s/.*/$b consumers-spark       |$d &/" &
+$DOCKER_CMD run ${DOCKER_OPTS} --name master -p 2891:2891 -p 5005:5005 -v "$MASTER_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${MASTER_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5005 -Dwasp.akka.remote.netty.tcp.hostname="master" ${WASP_LAUNCHER_OPTS} 2>&1                                                                                                                                                                                                                                                                                                                                                                                  | sed "s/.*/$r master                       |$d &/" &
+$DOCKER_CMD run ${DOCKER_OPTS} --name producers -p 5006:5006 -v "$PRODUCERS_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${PRODUCERS_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5006 -Dwasp.akka.remote.netty.tcp.hostname="producers" ${WASP_LAUNCHER_OPTS} 2>&1                                                                                                                                                                                                                                                                                                                                                                                   | sed "s/.*/$g producers                    |$d &/" &
+$DOCKER_CMD run ${DOCKER_OPTS} --name consumers-rt -p 5007:5007 -v "$SCRIPT_DIR/docker-service-configuration/hdfs":/etc/hadoop/conf/ -v "$SCRIPT_DIR/docker-service-configuration/hbase":/etc/hbase/conf/ -v "$CONSUMERS_RT_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${CONSUMERS_RT_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5007 -Dwasp.akka.remote.netty.tcp.hostname="consumers-rt" ${WASP_LAUNCHER_OPTS} 2>&1                                                                                                                                                                                                                             | sed "s/.*/$y consumers-rt                 |$d &/" &
+$DOCKER_CMD run ${DOCKER_OPTS} --name consumers-spark-streaming -p 4040:4040 -p 5008:5008 -p 9010:9010 -v "$SCRIPT_DIR/docker-service-configuration/hdfs":/etc/hadoop/conf/ -v "$SCRIPT_DIR/docker-service-configuration/hbase":/etc/hbase/conf/ -v "$CONSUMERS_SPARK_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${CONSUMERS_SPARK_PROJECT_COMMAND} -main it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersStreamingNodeLauncher ${WASP_OPTS} -jvm-debug 5008 -Dwasp.akka.remote.netty.tcp.hostname="consumers-spark-streaming" -Dwasp.akka.cluster.roles.0="consumers-spark-streaming" ${WASP_LAUNCHER_OPTS} 2>&1    | sed "s/.*/$b consumers-spark-streaming    |$d &/" &
+$DOCKER_CMD run ${DOCKER_OPTS} --name consumers-spark-batch -p 4039:4040 -p 5009:5009 -v "$SCRIPT_DIR/docker-service-configuration/hdfs":/etc/hadoop/conf/ -v "$SCRIPT_DIR/docker-service-configuration/hbase":/etc/hbase/conf/ -v "$CONSUMERS_SPARK_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${CONSUMERS_SPARK_PROJECT_COMMAND} -main it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersBatchNodeLauncher ${WASP_OPTS} -jvm-debug 5009 -Dwasp.akka.remote.netty.tcp.hostname="consumers-spark-batch" -Dwasp.akka.cluster.roles.0="consumers-spark-batch" ${WASP_LAUNCHER_OPTS} 2>&1                                 | sed "s/.*/$p consumers-spark-batch        |$d &/" &
 
 # wait for all children to end or SIGINT/SIGTERM
 wait
