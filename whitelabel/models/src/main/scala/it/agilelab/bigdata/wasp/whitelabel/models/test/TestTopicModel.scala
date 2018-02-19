@@ -7,12 +7,22 @@ private[wasp] object TestTopicModel {
 
   val topic_name = "test"
 
-  lazy val testTopic = TopicModel(
-    name = TopicModel.name(topic_name),
+  lazy val testJsonTopic = TopicModel(
+    name = TopicModel.name(topic_name + "_json"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
     topicDataType = "json",
+    partitionKeyField = None,
+    schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
+
+  lazy val testAvroTopic = TopicModel(
+    name = TopicModel.name(topic_name + "_avro"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "avro",
     partitionKeyField = None,
     schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )

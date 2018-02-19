@@ -4,22 +4,21 @@ import it.agilelab.bigdata.wasp.core.models._
 
 private[wasp] object ExamplePipegraphModel {
 
-  val examplePipegraphName = "ExamplePipegraph"
-
-  lazy val examplePipegraph = PipegraphModel(
-    name = examplePipegraphName,
-    description = "Example Pipegraph",
+  def apply() = PipegraphModel(
+    name = "ExamplePipegraph",
+    description = "Description of Example Pipegraph",
     owner = "user",
     isSystem = false,
     creationTime = System.currentTimeMillis,
+
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
-        name = "write on console",
+        name = "Write on console",
         inputs = List(
           ReaderModel.kafkaReader(
-            ExampleTopicModel.exampleTopic.name,
-            ExampleTopicModel.exampleTopic.name
+            ExampleTopicModel.topic_name,
+            ExampleTopicModel.topic_name
           )
         ),
         output = WriterModel.consoleWriter("console-writer"),
@@ -30,6 +29,7 @@ private[wasp] object ExamplePipegraphModel {
       )
     ),
     rtComponents = Nil,
+
     dashboard = None,
     isActive = false)
 }

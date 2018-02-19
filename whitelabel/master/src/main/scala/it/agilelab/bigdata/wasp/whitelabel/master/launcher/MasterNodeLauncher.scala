@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import org.apache.commons.cli.CommandLine
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
-import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestProducerModel, TestTopicModel}
+import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestIndexModel, TestPipegraphs, TestProducerModel, TestTopicModel}
 
 object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
@@ -14,11 +14,28 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   }
 
   private def addExamplePipegraphs(): Unit = {
-    waspDB.upsert[TopicModel](ExampleTopicModel.exampleTopic)
-    waspDB.upsert[PipegraphModel](ExamplePipegraphModel.examplePipegraph)
+
+    /* Example */
+    waspDB.upsert[TopicModel](ExampleTopicModel())
+    waspDB.upsert[PipegraphModel](ExamplePipegraphModel())
 
 
-    waspDB.upsert[TopicModel](TestTopicModel.testTopic)
-    waspDB.upsert[ProducerModel](TestProducerModel())
+    /* Test */
+    waspDB.upsert[TopicModel](TestTopicModel.testJsonTopic)
+    waspDB.upsert[TopicModel](TestTopicModel.testAvroTopic)
+    waspDB.upsert[IndexModel](TestIndexModel())
+
+    waspDB.upsert[ProducerModel](TestProducerModel.JSON())
+    waspDB.upsert[ProducerModel](TestProducerModel.AVRO())
+
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.solr)
+
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
   }
 }
