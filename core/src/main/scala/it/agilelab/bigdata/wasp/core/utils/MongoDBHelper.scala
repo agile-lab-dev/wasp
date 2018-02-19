@@ -3,11 +3,12 @@ package it.agilelab.bigdata.wasp.core.utils
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.ConnectionString
-import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.{CreateCollectionOptions, UpdateOptions}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.MongoDBConfigModel
 import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 import org.mongodb.scala.connection.{ClusterSettings, SocketSettings}
+import org.mongodb.scala.model.UpdateOptions
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{MongoClient, MongoClientSettings, MongoDatabase, _}
 
@@ -106,17 +107,19 @@ private[utils] trait MongoDBHelper extends Logging {
     }
   }
 
-  protected def replaceDocumentToCollection[T](key: String, value: BsonValue, updateValue: T, collection: String)(implicit ct: ClassTag[T]): UpdateResult = {
+  protected def replaceDocumentToCollection[T](key: String, value: BsonValue, updateValue: T, collection: String, upsert:Boolean = false)(implicit ct: ClassTag[T]): UpdateResult = {
+
+    val updateOptions = model.UpdateOptions().upsert(upsert)
 
     val selector = BsonDocument(key -> value)
     val result =
       try {
-      val result1 = mongoDatabase.getCollection[T](collection).replaceOne(selector, updateValue).headResult()
+      val result1 = mongoDatabase.getCollection[T](collection).replaceOne(selector, updateValue, updateOptions).headResult()
       logger.info(s"Replaced success for field $key with value $value, updateValue: $updateValue, collection: $collection, result: $result1")
       result1
     } catch {
       case e: Exception =>
-        logger.error(s"Unable to delete document. Error message: ${e.getMessage}, field $key with value $value, updateValue: $updateValue, collection: $collection ")
+        logger.error(s"Unable to replace document. Error message: ${e.getMessage}, field $key with value $value, updateValue: $updateValue, collection: $collection ")
         throw e
     }
     result

@@ -1,30 +1,31 @@
 package it.agilelab.bigdata.wasp.core.models.configuration
 
+import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
 
 
-trait SparkConfigModel {
-	def appName: String
-	def master: ConnectionConfig
-	def driverCores: Int
-	def driverMemory: String
-	def driverHostname: String
-	def driverPort: Int
-	def executorCores: Int
-	def executorMemory: String
-	def executorInstances: Int
-	def additionalJars: Option[Seq[String]]
-	def yarnJar: String
-	def blockManagerPort: Int
-	def broadcastPort: Int
-	def fileserverPort: Int
-	def name: String
-	def driverBindAddress: String
-	def retainedStagesJobs: Int
-	def retainedTasks: Int
-	def retainedExecutions: Int
-	def retainedBatches: Int
+trait SparkConfigModel  extends Model {
+	val appName: String
+	val master: ConnectionConfig
+	val driverCores: Int
+	val driverMemory: String
+	val driverHostname: String
+	val driverPort: Int
+	val executorCores: Int
+	val executorMemory: String
+	val executorInstances: Int
+	val additionalJars: Option[Seq[String]]
+	val yarnJar: String
+	val blockManagerPort: Int
+	val broadcastPort: Int
+	val fileserverPort: Int
+	val driverBindAddress: String
+	val retainedStagesJobs: Int
+	val retainedTasks: Int
+	val retainedExecutions: Int
+	val retainedBatches: Int
 }
+
 case class SparkStreamingConfigModel(appName: String,
                                      master: ConnectionConfig,
                                      driverCores: Int,

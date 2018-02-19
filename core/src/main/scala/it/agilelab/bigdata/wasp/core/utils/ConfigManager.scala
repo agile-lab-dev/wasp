@@ -7,6 +7,7 @@ import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
@@ -72,7 +73,7 @@ object ConfigManager extends Logging {
   }
 
   private def initializeKafkaConfig(): Unit = {
-    kafkaConfig = retrieveConf(getDefaultKafkaConfig, kafkaConfigName).get
+    kafkaConfig = retrieveConf[KafkaConfigModel](getDefaultKafkaConfig, kafkaConfigName).get
   }
 
   private def getDefaultKafkaConfig: KafkaConfigModel = {
@@ -93,7 +94,7 @@ object ConfigManager extends Logging {
 
   def initializeSparkBatchConfig(): Unit = {
     sparkBatchConfig =
-      retrieveConf(getDefaultSparkBatchConfig, sparkBatchConfigName).get
+      retrieveConf[SparkBatchConfigModel](getDefaultSparkBatchConfig, sparkBatchConfigName).get
   }
 
   private def getDefaultSparkBatchConfig: SparkBatchConfigModel = {
@@ -141,7 +142,7 @@ object ConfigManager extends Logging {
   }
 
   def initializeSparkStreamingConfig(): Unit = {
-    sparkStreamingConfig = retrieveConf(getDefaultSparkStreamingConfig,
+    sparkStreamingConfig = retrieveConf[SparkStreamingConfigModel](getDefaultSparkStreamingConfig,
                                         sparkStreamingConfigName).get
   }
 
@@ -180,11 +181,11 @@ object ConfigManager extends Logging {
 
   private def initializeElasticConfig(): Unit = {
     elasticConfig =
-      retrieveConf(getDefaultElasticConfig, elasticConfigName).get
+      retrieveConf[ElasticConfigModel](getDefaultElasticConfig, elasticConfigName).get
   }
 
   private def initializeSolrConfig(): Unit = {
-    solrConfig = retrieveConf(getDefaultSolrConfig, solrConfigName).get
+    solrConfig = retrieveConf[SolrConfigModel](getDefaultSolrConfig, solrConfigName).get
   }
 
   private def getDefaultElasticConfig: ElasticConfigModel = {
@@ -202,13 +203,12 @@ object ConfigManager extends Logging {
       readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
       Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
       solrConfigName,
-      None,
       "wasp"
     )
   }
   
   private def initializeHBaseConfig(): Unit = {
-    hbaseConfig = retrieveConf(getDefaultHBaseConfig, hbaseConfigName).get
+    hbaseConfig = retrieveConf[HBaseConfigModel](getDefaultHBaseConfig, hbaseConfigName).get
   }
   
   private def getDefaultHBaseConfig: HBaseConfigModel = {
@@ -347,17 +347,10 @@ object ConfigManager extends Logging {
     * Read the configuration with the specified name from MongoDB or, if it is not present, initialize
     * it with the provided defaults.
 		*/
-  private def retrieveConf[T](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    val document = WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
+  private def retrieveConf[T <: Model](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+    WaspDB.getDB.insertIfNotExists[T](default)
 
-    //val result = document.flatMap(x => if (x.isEmpty) insert[T](default).map { x => Some(default) } else future { Some(default) })
-    // A few more line of code but now is working as intended.
-    if (document.isEmpty) {
-      WaspDB.getDB.insert[T](default)
-      Some(default)
-    } else {
-      document
-    }
+    return WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
   }
 
   def buildTimedName(prefix: String): String = {
