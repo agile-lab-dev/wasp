@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
-import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import org.apache.commons.cli.CommandLine
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
-import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestIndexModel, TestPipegraphs, TestProducerModel, TestTopicModel}
+import it.agilelab.bigdata.wasp.whitelabel.models.test._
 
 object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
@@ -37,5 +37,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
+
+    waspDB.upsert[RawModel](TestRawModel())
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfs)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.toConsole)
   }
 }

@@ -24,7 +24,7 @@ private[wasp] object TestIndexModel {
     """
       { "properties":
         [
-          { "name":"number", "type":"tdouble", "stored":true },
+          { "name":"number", "type":"tint", "stored":true },
           { "name":"nested.field1", "type" : "string", "stored" : true },
           { "name":"nested.field2", "type":"tlong", "stored":true },
           { "name":"nested.field3", "type" : "string", "stored" : true, "required":false }
