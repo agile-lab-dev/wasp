@@ -20,26 +20,37 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](ExamplePipegraphModel())
 
 
-    /* Test */
+    /** Test */
+
+    /* Topic, Index, Raw fpr Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.testJsonTopic)
     waspDB.upsert[TopicModel](TestTopicModel.testAvroTopic)
     waspDB.upsert[IndexModel](TestIndexModel())
+    waspDB.upsert[RawModel](TestRawModel.nestedSchemaRawModel)  // TestPipegraphs.JSON.XYZ.hdfs
+    waspDB.upsert[RawModel](TestRawModel.flatSchemaRawModel)    // TestBatchJobModels.FromHdfs.toConsole
 
+    /* Producers */
     waspDB.upsert[ProducerModel](TestProducerModel.JSON())
     waspDB.upsert[ProducerModel](TestProducerModel.AVRO())
 
+    /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.solr)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.hdfs)
 
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hdfs)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.hdfs)
 
-    waspDB.upsert[RawModel](TestRawModel())
+    /* BatchJobs */
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfs)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.toConsole)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.flatToConsole)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToConsole)
   }
 }

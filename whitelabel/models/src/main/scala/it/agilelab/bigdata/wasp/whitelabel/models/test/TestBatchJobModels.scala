@@ -18,7 +18,7 @@ private[wasp] object TestBatchJobModels {
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromSolr",
         inputs = List(ReaderModel.solrReader("Solr Reader", TestIndexModel().name)),
-        output = WriterModel.rawWriter("Raw Writer", TestRawModel().name),
+        output = WriterModel.rawWriter("Raw Writer", TestRawModel.flatSchemaRawModel.name),
         mlModels = Nil,
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
@@ -28,29 +28,38 @@ private[wasp] object TestBatchJobModels {
 
   object FromHdfs {
 
-    lazy val toConsole = BatchJobModel(
-      name = "TestBatchJobFromHdfsToConsole",
-      description = "Description pf TestBatchJobFromHdfsToConsole",
+    lazy val flatToConsole = BatchJobModel(
+      name = "TestBatchJobFlatFromHdfsToConsole",
+      description = "Description pf TestBatchJobFlatFromHdfsToConsole",
       owner = "user",
       system = false,
       creationTime = System.currentTimeMillis(),
       state = JobStateEnum.PENDING,
       etl = BatchETLModel(
-        name = "EtlModel for TestBatchJobFromHdfsToConsole",
-        inputs = List(ReaderModel.rawReader("Raw Reader", TestRawModel().name)),
+        name = "EtlModel for TestBatchJobFlatFromHdfsToConsole",
+        inputs = List(ReaderModel.rawReader("Raw Reader", TestRawModel.flatSchemaRawModel.name)),
         output = WriterModel.consoleWriter("Console"),
         mlModels = Nil,
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
-  }
 
-  def main(args: Array[String]): Unit = {
-    val nested = StructType(Seq(StructField("pippo", IntegerType)))
-
-    val dt = StructType(Seq(StructField("name", LongType), StructField("nested", nested)))
-
-    println(dt.prettyJson)
+    lazy val nestedToConsole = BatchJobModel(
+      name = "TestBatchJobNestedFromHdfsToConsole",
+      description = "Description pf TestBatchJobNestedFromHdfsToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      state = JobStateEnum.PENDING,
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobNestedFromHdfsToConsole",
+        inputs = List(ReaderModel.rawReader("Raw Reader", TestRawModel.nestedSchemaRawModel.name)),
+        output = WriterModel.consoleWriter("Console"),
+        mlModels = Nil,
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
   }
 }

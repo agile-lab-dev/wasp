@@ -70,6 +70,39 @@ private[wasp] object TestPipegraphs {
         dashboard = None,
         isActive = false
       )
+
+      lazy val hdfs = PipegraphModel(
+        name = "TestHdfsWriterStructuredJSONPipegraph",
+        description = "Description of TestHdfsWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHdfsWriterStructuredJSONPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.testJsonTopic.name,
+                TestTopicModel.testJsonTopic.name
+              )
+            ),
+            output = WriterModel.rawWriter(
+              TestRawModel.nestedSchemaRawModel.name,
+              TestRawModel.nestedSchemaRawModel.name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map.empty
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
     }
 
     object Legacy {
@@ -121,6 +154,38 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.solrWriter(
               TestIndexModel.index_name,
               TestIndexModel.index_name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
+          )
+        ),
+        structuredStreamingComponents = Nil,
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val hdfs = PipegraphModel(
+        name = "TestHdfsWriterLegacyJSONPipegraph",
+        description = "Description of TestHdfsWriterLegacyJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(
+          LegacyStreamingETLModel(
+            name = "ETL TestHdfsrWriterLegacyJSONPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.testJsonTopic.name,
+                TestTopicModel.testJsonTopic.name
+              )
+            ),
+            output = WriterModel.rawWriter(
+              TestRawModel.nestedSchemaRawModel.name,
+              TestRawModel.nestedSchemaRawModel.name
             ),
             mlModels = List(),
             strategy = None,
@@ -202,6 +267,39 @@ private[wasp] object TestPipegraphs {
         dashboard = None,
         isActive = false
       )
+
+      lazy val hdfs = PipegraphModel(
+        name = "TestHdfsWriterStructuredAVROPipegraph",
+        description = "Description of TestHdfsWriterStructuredAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHdfsWriterStructuredAVROPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.testAvroTopic.name,
+                TestTopicModel.testAvroTopic.name
+              )
+            ),
+            output = WriterModel.rawWriter(
+              TestRawModel.nestedSchemaRawModel.name,
+              TestRawModel.nestedSchemaRawModel.name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map.empty
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
     }
 
     object Legacy {
@@ -254,6 +352,38 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.solrWriter(
               TestIndexModel.index_name,
               TestIndexModel.index_name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
+          )
+        ),
+        structuredStreamingComponents = Nil,
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val hdfs = PipegraphModel(
+        name = "TestHdfsWriterLegacyAVROPipegraph",
+        description = "Description of TestHdfsWriterLegacyAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(
+          LegacyStreamingETLModel(
+            name = "ETL TestHdfsrWriterLegacyAVROPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.testAvroTopic.name,
+                TestTopicModel.testAvroTopic.name
+              )
+            ),
+            output = WriterModel.rawWriter(
+              TestRawModel.nestedSchemaRawModel.name,
+              TestRawModel.nestedSchemaRawModel.name
             ),
             mlModels = List(),
             strategy = None,

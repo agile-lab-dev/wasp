@@ -39,7 +39,7 @@ private[producers] class TestActor(kafka_router: ActorRef, topic: Option[TopicMo
     logger.info(s"Starting main task for actor: ${this.getClass.getName}")
 
     val doc = createTestDocument(documentId)
-    logger.info("TestDocument CREATED!")
+    logger.info(s"TestDocument ${documentId} CREATED!")
     sendMessage(doc)
 
     documentId += 1

@@ -20,7 +20,7 @@ private[wasp] object TestIndexModel {
     rollingIndex = false
   )
 
-  val indexSchemaSolr =
+  private lazy val indexSchemaSolr =
     """
       { "properties":
         [
