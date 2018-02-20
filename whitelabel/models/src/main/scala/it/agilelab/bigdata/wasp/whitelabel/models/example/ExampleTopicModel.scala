@@ -7,7 +7,7 @@ private[wasp] object ExampleTopicModel {
 
   val topic_name = "example"
 
-  lazy val exampleTopic = TopicModel(
+  def apply() = TopicModel(
     name = TopicModel.name(topic_name),
     creationTime = System.currentTimeMillis,
     partitions = 3,
@@ -17,7 +17,7 @@ private[wasp] object ExampleTopicModel {
     schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
-  val topicSchema = s"${
+  val topicSchema =
     TopicModel.generateField("example", "example", Some(
       """{
         |            "name": "banana",
@@ -28,6 +28,6 @@ private[wasp] object ExampleTopicModel {
         |            "name": "pigiama",
         |            "type": "string",
         |            "doc": "Last Name of Customer"
-        |        }""".stripMargin))
-  }"
+        |        }
+        |""".stripMargin))
 }
