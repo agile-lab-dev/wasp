@@ -85,3 +85,11 @@ Update
 - Modulo consolePlugin separato da modulo consumers-spark
 
 - Migrazione totale cross-reference da byId a byName delle collection MongoDB
+
+
+### WASP 2.3.0 ###
+Update
+- Consistenza/atomicità su waspDB.insertIfNotExist: permette che non avvengano scritture contemporanee/duplicate
+- Supporto Solr per nested document
+- Whitelabel manual test case
+- Batch separato da streaming (container apposito) ma in stesso modulo consumers-spark

@@ -13,7 +13,7 @@ done
 # this variable contains the directory of the script
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-# !!! standalone applications have to comment the following default settings !!! #
+# !!! standalone applications have to remove the following default settings !!! #
 SBT_STAGE_COMMAND_PROJECTID="${SBT_STAGE_COMMAND_PROJECTID:-""}"
 MASTER_PROJECT_DIRECTORY="$SCRIPT_DIR${MASTER_PROJECT_DIRECTORY:-"/../../master/"}"
 PRODUCERS_PROJECT_DIRECTORY="$SCRIPT_DIR${PRODUCERS_PROJECT_DIRECTORY:-"/../../producers/"}"
