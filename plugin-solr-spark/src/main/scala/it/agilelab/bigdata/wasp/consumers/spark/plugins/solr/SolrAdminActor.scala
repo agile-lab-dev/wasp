@@ -1,24 +1,27 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
+import java.util
+import java.util.Properties
+
 import akka.actor.Actor
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
-import it.agilelab.bigdata.wasp.core.utils.JsonOps._
+import org.apache.http.client.HttpClient
 import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.SolrRequest.METHOD
 import org.apache.solr.client.solrj.impl.CloudSolrServer
-import org.apache.solr.client.solrj.request.CollectionAdminRequest
-import org.apache.solr.client.solrj.response.{CollectionAdminResponse, QueryResponse}
+import org.apache.solr.client.solrj.request.{CollectionAdminRequest, ConfigSetAdminRequest}
+import org.apache.solr.client.solrj.response.{CollectionAdminResponse, ConfigSetAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
-import spray.json.{DefaultJsonProtocol, JsNumber, JsValue}
+import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -35,7 +38,7 @@ object SolrAdminActor {
 }
 
 class SolrAdminActor
-    extends Actor
+  extends Actor
     with SprayJsonSupport
     with DefaultJsonProtocol
     with Logging {
@@ -99,94 +102,78 @@ class SolrAdminActor
 
   private def manageConfigSet(name: String, template: String) = {
 
+    val listConfigSetRequest = new ConfigSetAdminRequest.List()
 
-    val uri =
-      s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=DELETE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
+    val listConfigSetResponse = listConfigSetRequest.process(solrServer)
 
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(
-      HttpRequest(uri = uri)
-        .withHeaders(RawHeader("Content-Type", "application/json"))
-        .withHeaders(RawHeader("Accept", "application/json"))
-        .withMethod(HttpMethods.GET)
-    )
+    val retErrors = listConfigSetResponse.getErrorMessages()
 
-    Await.result(
-      responseFuture.flatMap{ res =>
-       res.status match {
-          case OK =>
-            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-              if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
-                logger.info("Config Set Deleted")
-                createConfigSet(name, template)
-              } else {
-                logger.error("Solr Schema API Status Code NOT recognized")
-                false
-              }
-            }
-          case BadRequest =>
-            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-              if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
-                logger.info("Config Set Doesn't Exists")
-                logger.info(s"The information for my ip is: $info")
-                createConfigSet(name, template)
-              } else {
-                logger.error("Solr Schema API Status Code NOT recognized")
-                false
-              }
-            }
-          case _ =>
-            Unmarshal(res.entity).to[String].map { body =>
-              logger.error(s"Solr Schema API Status Code NOT recognized $body")
-              false
-            }
+    if(retErrors != null && retErrors.size() > 0) {
+      logger.error(s"Error listing config sets. ${retErrors.toString}")
+      false}
+    else {
+      listConfigSetResponse.getConfigSets().contains(name) match {
+
+        case true => {
+          deleteConfigSet(name, template) match {
+            case true => createConfigSet(name, template)
+            case false => false
+          }
         }
-      }, servicesTimeout.duration)
+
+        case false => createConfigSet(name, template)
+      }
+    }
+  }
+
+  private def deleteConfigSet(name: String, template: String) = {
+
+    val deleteConfigSetRequest = new ConfigSetAdminRequest.Delete()
+
+    deleteConfigSetRequest.setConfigSetName(name)
+
+    val deleteConfigSetResponse = deleteConfigSetRequest.process(solrServer)
+
+    logger.info(s"Delete config set with name $name, template $template")
+
+    val retErrors = deleteConfigSetResponse.getErrorMessages
+
+    if (retErrors != null && retErrors.size() > 0) {
+      logger.error(s"Collection NOT successfully created. ${retErrors.toString}")
+      false}
+
+    else {
+      logger.info("Config Set Created.")
+      true}
+
   }
 
   private def createConfigSet(name: String, template: String): Boolean = {
-    val uri =
-      s"${solrConfig.apiEndPoint.get.toString()}/admin/configs?action=CREATE&name=$name&baseConfigSet=$template&configSetProp.immutable=false&wt=json"
 
-    logger.info(
-      s"Create config set with name $name, template $template, uri: '$uri'")
+    val createConfigSetRequest = new ConfigSetAdminRequest.Create()
 
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(
-      HttpRequest(uri = uri)
-        .withHeaders(RawHeader("Content-Type", "application/json"))
-        .withHeaders(RawHeader("Accept", "application/json"))
-        .withMethod(HttpMethods.GET)
-    )
+    createConfigSetRequest.setConfigSetName(name)
+    createConfigSetRequest.setBaseConfigSetName(template)
 
-    Await.result(
-      responseFuture.flatMap{ res =>
-        res.status match {
-          case OK =>
-            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-              if ((info \ "responseHeader" \ "status").===(JsNumber(0))) {
-                logger.info("Config Set Created")
-                true
-              } else {
-                logger.error("Solr - Config Set NOT Created")
-                false
-              }
-            }
-          case BadRequest =>
-            Unmarshal(res.entity).to[JsValue].map { info: JsValue =>
-              if ((info \ "responseHeader" \ "status").===(JsNumber(400))) {
-                logger.info("Config Set Doesn't Exists")
-              } else {
-                logger.error("Solr - Config Set NOT Created")
-              }
-              false
-            }
-          case _ =>
-            Unmarshal(res.entity).to[String].map { body =>
-              logger.error("Solr - Config Set NOT Created")
-              logger.error(s"Solr Schema API Status Code NOT recognized $body")
-              false
-            }
-        }
-      }, servicesTimeout.duration)
+    val prop = new Properties()
+
+    prop.setProperty("immutable", "false")
+    createConfigSetRequest.setNewConfigSetProperties(prop)
+
+    val createConfigSetResponse: ConfigSetAdminResponse = createConfigSetRequest.process(solrServer)
+
+    logger.info(s"Create config set with name $name, template $template")
+
+    val retErrors = createConfigSetResponse.getErrorMessages
+
+    if (retErrors != null && retErrors.size() > 0) {
+      logger.error(s"Collection NOT successfully created. ${retErrors.toString}")
+      false}
+
+    else {
+      logger.info("Config Set Created.")
+      true}
+
   }
 
   private def addCollection(message: AddCollection): Boolean = {
@@ -205,6 +192,8 @@ class SolrAdminActor
     createRequest.setNumShards(numShards)
     createRequest.setReplicationFactor(replicationFactor)
 
+
+
     val createResponse: CollectionAdminResponse =
       createRequest.process(solrServer)
 
@@ -222,8 +211,18 @@ class SolrAdminActor
 
   private def addMapping(message: AddMapping): Boolean = {
 
+
+    val zkStateReader = solrServer.getZkStateReader
+
+    import collection.JavaConverters._
+
+    val liveNodes = zkStateReader.getClusterState.getLiveNodes.asScala.toSeq
+
+    val liveNodeHead = zkStateReader.getBaseUrlForNodeName(liveNodes.head)
+
     val uri =
-      s"${solrConfig.apiEndPoint.get.toString()}/${collectionNameWShardsAndReplica(message.collection, message.numShards, message.replicationFactor)}/schema/fields"
+      s"$liveNodeHead/${collectionNameWShardsAndReplica(message.collection, message.numShards, message.replicationFactor)}/schema/fields"
+
 
     logger.info(s"$message, uri: '$uri'")
 
@@ -318,17 +317,17 @@ class SolrAdminActor
     if (!check) {
       check =
         manageConfigSet(s"${SolrAdminActor.configSet}_${message.collection}", SolrAdminActor.template) &&
-        addCollection(
-          AddCollection(
-                      message.collection,
-                      message.numShards,
-                      message.replicationFactor)) &&
-        addMapping(
-          AddMapping(
-                    message.collection,
-                    message.schema,
-                    message.numShards,
-                    message.replicationFactor))
+          addCollection(
+            AddCollection(
+              message.collection,
+              message.numShards,
+              message.replicationFactor)) &&
+          addMapping(
+            AddMapping(
+              message.collection,
+              message.schema,
+              message.numShards,
+              message.replicationFactor))
     }
 
     check
@@ -338,7 +337,7 @@ class SolrAdminActor
     logger.info(s"Check collection: $message")
 
     val zkStateReader: ZkStateReader = solrServer.getZkStateReader
-  solrServer.getZkStateReader
+    solrServer.getZkStateReader
     logger.info(s"\n\n zkStateReader: $zkStateReader")
     zkStateReader.updateClusterState(true)
     val clusterState: ClusterState = zkStateReader.getClusterState
