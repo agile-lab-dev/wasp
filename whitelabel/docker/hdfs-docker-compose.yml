@@ -9,6 +9,7 @@ services:
       ports:
           - "50071:50070"
           - "9000:9000"
+          - "50070:50070"
       hostname: hdfs-namenode
       mem_limit: 400m
       volumes:
