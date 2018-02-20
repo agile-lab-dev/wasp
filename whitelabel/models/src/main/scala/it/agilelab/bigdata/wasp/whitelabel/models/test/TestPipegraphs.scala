@@ -300,6 +300,24 @@ private[wasp] object TestPipegraphs {
         dashboard = None,
         isActive = false
       )
+
+      lazy val multiETL = PipegraphModel(
+        name = "TestMultiEtlAVROPipegraph",
+        description = "Description of TestMultiEtlAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents =
+          console.structuredStreamingComponents :::
+          solr.structuredStreamingComponents :::
+          hdfs.structuredStreamingComponents,
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
     }
 
     object Legacy {
@@ -397,5 +415,28 @@ private[wasp] object TestPipegraphs {
         isActive = false
       )
     }
+  }
+
+  object ERROR {
+
+    lazy val multiETL = PipegraphModel(
+      name = "TestErrorMultiEtlPipegraph",
+      description = "Description of TestErrorMultiEtlAVROPipegraph",
+      owner = "user",
+      isSystem = false,
+      creationTime = System.currentTimeMillis,
+
+      legacyStreamingComponents = List(),
+      structuredStreamingComponents =
+        TestPipegraphs.AVRO.Structured.console.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.hdfs.structuredStreamingComponents.map(
+          _.copy(strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.ErrorStrategy", None)))),
+      rtComponents = List(),
+
+      dashboard = None,
+      isActive = false
+    )
+
   }
 }

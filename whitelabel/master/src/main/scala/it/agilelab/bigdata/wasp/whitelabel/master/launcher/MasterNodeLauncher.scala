@@ -26,8 +26,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[TopicModel](TestTopicModel.testJsonTopic)
     waspDB.upsert[TopicModel](TestTopicModel.testAvroTopic)
     waspDB.upsert[IndexModel](TestIndexModel())
-    waspDB.upsert[RawModel](TestRawModel.nestedSchemaRawModel)  // TestPipegraphs.JSON.XYZ.hdfs
-    waspDB.upsert[RawModel](TestRawModel.flatSchemaRawModel)    // TestBatchJobModels.FromHdfs.toConsole
+    waspDB.upsert[RawModel](TestRawModel.nestedSchemaRawModel)  // used by TestPipegraphs.JSON.XYZ.hdfs
+    waspDB.upsert[RawModel](TestRawModel.flatSchemaRawModel)    // used by TestBatchJobModels.FromHdfs.toConsole
 
     /* Producers */
     waspDB.upsert[ProducerModel](TestProducerModel.JSON())
@@ -47,6 +47,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.hdfs)
+
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.multiETL)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.ERROR.multiETL)
 
     /* BatchJobs */
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfs)

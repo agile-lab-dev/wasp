@@ -8,6 +8,9 @@ private[wasp] object TestBatchJobModels {
 
   object FromSolr {
 
+    /**
+      *  Fail if HDFS folder already exists
+      */
     lazy val toHdfs = BatchJobModel(
       name = "TestBatchJobFromSolrToHdfs",
       description = "Description pf TestBatchJobFromSolr",
@@ -28,6 +31,9 @@ private[wasp] object TestBatchJobModels {
 
   object FromHdfs {
 
+    /**
+      *  Fail if HDFS folder does not exist
+      */
     lazy val flatToConsole = BatchJobModel(
       name = "TestBatchJobFlatFromHdfsToConsole",
       description = "Description pf TestBatchJobFlatFromHdfsToConsole",
@@ -45,6 +51,9 @@ private[wasp] object TestBatchJobModels {
       )
     )
 
+    /**
+      *  Fail if HDFS folder does not exist
+      */
     lazy val nestedToConsole = BatchJobModel(
       name = "TestBatchJobNestedFromHdfsToConsole",
       description = "Description pf TestBatchJobNestedFromHdfsToConsole",
