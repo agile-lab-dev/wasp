@@ -90,6 +90,13 @@ Update
 ### WASP 2.3.0 ###
 Update
 - Consistenza/atomicità su waspDB.insertIfNotExist: permette che non avvengano scritture contemporanee/duplicate
+
 - Supporto Solr per nested document
+
 - Whitelabel manual/auto-test per Console, Solr, HDFS, ElasticSearch
+
+- LoggerPipegraph su Solr tramite StructuredStreaming 
+
+- Aggiunto 'banana' per Solr service in 'whitelabel/docker/solrcloud-docker-compose.yml'
+
 - Batch separato da streaming (container apposito) ma in stesso modulo consumers-spark

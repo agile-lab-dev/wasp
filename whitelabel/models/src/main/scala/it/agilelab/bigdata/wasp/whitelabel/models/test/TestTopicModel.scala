@@ -29,7 +29,8 @@ private[wasp] object TestTopicModel {
 
   private val topicSchema =
     TopicModel.generateField("test", "test", Some(
-      """{
+      """
+        |        {
         |            "name": "id",
         |            "type": "string",
         |            "doc": ""
@@ -38,7 +39,6 @@ private[wasp] object TestTopicModel {
         |            "name": "number",
         |            "type": "int",
         |            "doc": ""
-        |
         |        },
         |        {
         |            "name": "nested",
@@ -57,5 +57,5 @@ private[wasp] object TestTopicModel {
         |                          ]
         |                      }
         |        }
-        |""".stripMargin))
+      """.stripMargin))
 }

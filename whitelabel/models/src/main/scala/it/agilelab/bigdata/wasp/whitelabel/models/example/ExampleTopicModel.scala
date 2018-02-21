@@ -19,7 +19,8 @@ private[wasp] object ExampleTopicModel {
 
   private val topicSchema =
     TopicModel.generateField("example", "example", Some(
-      """{
+      """
+        |        {
         |            "name": "banana",
         |            "type": "string",
         |            "doc": "First Name of Customer"
@@ -29,5 +30,5 @@ private[wasp] object ExampleTopicModel {
         |            "type": "string",
         |            "doc": "Last Name of Customer"
         |        }
-        |""".stripMargin))
+      """.stripMargin))
 }

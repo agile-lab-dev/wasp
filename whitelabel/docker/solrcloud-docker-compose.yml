@@ -20,6 +20,17 @@ services:
     depends_on:
       - zookeeper
 
+  banana:
+    image: pschatzmann/banana
+    container_name: banana
+    hostname: banana
+    ports:
+      - "80"
+    links:
+      - solr
+    depends_on:
+      - solr
+
 networks:
   default:
     external:
