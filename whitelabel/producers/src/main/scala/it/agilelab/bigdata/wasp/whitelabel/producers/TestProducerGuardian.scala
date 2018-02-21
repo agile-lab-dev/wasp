@@ -10,8 +10,8 @@ import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext
 
-final class TestProducerGuardian (env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
-  extends ProducerGuardian(env, producerId) {
+final class TestProducerGuardian (env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
+  extends ProducerGuardian(env, producerName) {
 
   override val name: String = "testProducerGuardian"
 
@@ -35,7 +35,7 @@ private[producers] class TestActor(kafka_router: ActorRef, topic: Option[TopicMo
 
   var documentId = 0
 
-  def mainTask() = {
+  override def mainTask() = {
     logger.info(s"Starting main task for actor: ${this.getClass.getName}")
 
     val doc = createTestDocument(documentId)

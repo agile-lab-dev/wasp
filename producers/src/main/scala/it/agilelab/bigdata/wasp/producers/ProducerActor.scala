@@ -10,11 +10,12 @@ case object StopMainTask
 
 case object StartMainTask
 
-abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel]) extends Actor  with Logging {
+abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[TopicModel])
+  extends Actor
+    with Logging {
+
   implicit val system = context.system
   var task: Option[Cancellable] = None
-
-  //def generateRawOutputJsonMessage(input: T): String
 
   def generateOutputJsonMessage(input: T): String
 
@@ -27,7 +28,6 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   //TODO occhio che abbiamo la partition key schianatata, quindi usiamo sempre e solo una partizione
   val partitionKey = "partitionKey"
 
-  //val rawTopicSchema = JsonConverter.toString(rawTopic.schema.asDocument())
   lazy val topicSchemaType = topic.get.topicDataType
   lazy val topicSchema = JsonConverter.toString(topic.get.schema.asDocument())
 
@@ -43,34 +43,8 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
 
   /**
    * Method to send to Kafka a specific message to be added to the raw topic and eventually to a custom topic.
-   *
-   * System pipelines won't write to the raw topic.
    */
   def sendMessage(input: T) = {
-
-
-    /*
-    if (topic.isEmpty) {
-
-
-      val msg = generateRawOutputJsonMessage(input)
-      //TODO: Add rawSchema from system raw pipeline
-      try {
-        topicSchemaType match {
-          case "avro" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](rawTopic.name, partitionKey, AvroToJsonUtil.jsonToAvro(msg, rawTopicSchema))
-          case "json" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](rawTopic.name, partitionKey, JsonToByteArrayUtil.jsonToByteArray(msg))
-          case _ => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](rawTopic.name, partitionKey, AvroToJsonUtil.jsonToAvro(msg, rawTopicSchema))
-        }
-
-      } catch {
-        case e: Throwable => logger.error("Exception sending message to kafka", e)
-      }
-
-
-    }
-
-*/
-
     topic.foreach { p =>
       val msg = generateOutputJsonMessage(input)
 

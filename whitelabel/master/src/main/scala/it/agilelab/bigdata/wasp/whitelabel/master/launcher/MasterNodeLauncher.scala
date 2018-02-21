@@ -26,7 +26,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /** Test */
 
-    /* Topic, Index, Raw fpr Producers, Pipegraphs, BatchJobs */
+    /* Topic, Index, Raw for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
