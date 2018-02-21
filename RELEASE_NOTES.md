@@ -91,5 +91,5 @@ Update
 Update
 - Consistenza/atomicità su waspDB.insertIfNotExist: permette che non avvengano scritture contemporanee/duplicate
 - Supporto Solr per nested document
-- Whitelabel manual test case
+- Whitelabel manual/auto-test per Console, Solr, HDFS, ElasticSearch
 - Batch separato da streaming (container apposito) ma in stesso modulo consumers-spark

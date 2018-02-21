@@ -16,22 +16,26 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   private def addExamplePipegraphs(): Unit = {
 
     /* Example */
-    waspDB.upsert[TopicModel](ExampleTopicModel())
-    waspDB.upsert[PipegraphModel](ExamplePipegraphModel())
+
+    /* Topic for Producers, Pipegraphs */
+    waspDB.upsert[TopicModel](ExampleTopicModel.topic)
+
+    /* Pipegraphs */
+    waspDB.upsert[PipegraphModel](ExamplePipegraphModel.pipegraph)
 
 
     /** Test */
 
     /* Topic, Index, Raw fpr Producers, Pipegraphs, BatchJobs */
-    waspDB.upsert[TopicModel](TestTopicModel.testJsonTopic)
-    waspDB.upsert[TopicModel](TestTopicModel.testAvroTopic)
-    waspDB.upsert[IndexModel](TestIndexModel())
-    waspDB.upsert[RawModel](TestRawModel.nestedSchemaRawModel)  // used by TestPipegraphs.JSON.XYZ.hdfs
-    waspDB.upsert[RawModel](TestRawModel.flatSchemaRawModel)    // used by TestBatchJobModels.FromHdfs.toConsole
+    waspDB.upsert[TopicModel](TestTopicModel.json)
+    waspDB.upsert[TopicModel](TestTopicModel.avro)
+    waspDB.upsert[IndexModel](TestIndexModel.solr)
+    waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
+    waspDB.upsert[RawModel](TestRawModel.flat)    // used by TestBatchJobModels.FromHdfs.toConsole
 
     /* Producers */
-    waspDB.upsert[ProducerModel](TestProducerModel.JSON())
-    waspDB.upsert[ProducerModel](TestProducerModel.AVRO())
+    waspDB.upsert[ProducerModel](TestProducerModel.json)
+    waspDB.upsert[ProducerModel](TestProducerModel.avro)
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)

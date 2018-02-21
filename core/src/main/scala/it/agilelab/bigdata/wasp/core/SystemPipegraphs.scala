@@ -95,8 +95,8 @@ private[wasp] object LoggerPipegraph {
 				kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
 			)
 		),
-		structuredStreamingComponents = List.empty,
-		rtComponents = Nil,
+		structuredStreamingComponents = List(),
+		rtComponents = List(),
 		dashboard = None,
 		isActive = false)
 }
@@ -169,7 +169,7 @@ private[wasp] object RawPipegraph {
 				kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
 		),
 		structuredStreamingComponents = List.empty,
-		rtComponents = Nil,
+		rtComponents = List(),
 		dashboard = None,
 		isActive = false
 	)

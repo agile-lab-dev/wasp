@@ -17,15 +17,15 @@ private[wasp] object TestBatchJobModels {
       owner = "user",
       system = false,
       creationTime = System.currentTimeMillis(),
-      state = JobStateEnum.PENDING,
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromSolr",
-        inputs = List(ReaderModel.solrReader("Solr Reader", TestIndexModel().name)),
-        output = WriterModel.rawWriter("Raw Writer", TestRawModel.flatSchemaRawModel.name),
-        mlModels = Nil,
+        inputs = List(ReaderModel.solrReader("Solr Reader", TestIndexModel.solr.name)),
+        output = WriterModel.rawWriter("Raw Writer", TestRawModel.flat.name),
+        mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
-      )
+      ),
+      state = JobStateEnum.PENDING
     )
   }
 
@@ -35,40 +35,40 @@ private[wasp] object TestBatchJobModels {
       *  Fail if HDFS folder does not exist
       */
     lazy val flatToConsole = BatchJobModel(
-      name = "TestBatchJobFlatFromHdfsToConsole",
-      description = "Description pf TestBatchJobFlatFromHdfsToConsole",
+      name = "TestBatchJobFromHdfsFlatToConsole",
+      description = "Description of TestBatchJobFromHdfsFlatToConsole",
       owner = "user",
       system = false,
       creationTime = System.currentTimeMillis(),
-      state = JobStateEnum.PENDING,
       etl = BatchETLModel(
-        name = "EtlModel for TestBatchJobFlatFromHdfsToConsole",
-        inputs = List(ReaderModel.rawReader("Raw Reader", TestRawModel.flatSchemaRawModel.name)),
+        name = "EtlModel for TestBatchJobFromHdfsFlatToConsole",
+        inputs = List(ReaderModel.rawReader("Raw Reader", TestRawModel.flat.name)),
         output = WriterModel.consoleWriter("Console"),
-        mlModels = Nil,
+        mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
-      )
+      ),
+      state = JobStateEnum.PENDING
     )
 
     /**
       *  Fail if HDFS folder does not exist
       */
     lazy val nestedToConsole = BatchJobModel(
-      name = "TestBatchJobNestedFromHdfsToConsole",
-      description = "Description pf TestBatchJobNestedFromHdfsToConsole",
+      name = "TestBatchJobFromHdfsNestedToConsole",
+      description = "Description of TestBatchJobFromHdfsNestedToConsole",
       owner = "user",
       system = false,
       creationTime = System.currentTimeMillis(),
-      state = JobStateEnum.PENDING,
       etl = BatchETLModel(
-        name = "EtlModel for TestBatchJobNestedFromHdfsToConsole",
-        inputs = List(ReaderModel.rawReader("Raw Reader", TestRawModel.nestedSchemaRawModel.name)),
+        name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
+        inputs = List(ReaderModel.rawReader("Raw Reader", TestRawModel.nested.name)),
         output = WriterModel.consoleWriter("Console"),
-        mlModels = Nil,
+        mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
-      )
+      ),
+      state = JobStateEnum.PENDING
     )
   }
 }

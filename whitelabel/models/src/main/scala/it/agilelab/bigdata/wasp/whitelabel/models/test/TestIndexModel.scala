@@ -5,10 +5,10 @@ import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 
 private[wasp] object TestIndexModel {
 
-  val index_name = IndexModel.normalizeName("test")
+  private val index_name = "test"
 
-  def apply() = IndexModel(
-    name = index_name,
+  lazy val solr = IndexModel(
+    name = IndexModel.normalizeName(index_name),
     creationTime = System.currentTimeMillis,
     // Solr
     schema = JsonConverter.fromString(indexSchemaSolr),

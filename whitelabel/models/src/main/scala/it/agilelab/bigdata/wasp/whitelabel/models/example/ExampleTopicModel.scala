@@ -5,9 +5,9 @@ import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 
 private[wasp] object ExampleTopicModel {
 
-  val topic_name = "example"
+  private val topic_name = "example"
 
-  def apply() = TopicModel(
+  lazy val topic = TopicModel(
     name = TopicModel.name(topic_name),
     creationTime = System.currentTimeMillis,
     partitions = 3,
@@ -17,7 +17,7 @@ private[wasp] object ExampleTopicModel {
     schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
-  val topicSchema =
+  private val topicSchema =
     TopicModel.generateField("example", "example", Some(
       """{
         |            "name": "banana",
