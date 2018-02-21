@@ -224,7 +224,7 @@ class MasterGuardian(env: {
       val msg = s"Pipegraph '${pipegraph.name}'" + (if (active) "started" else "stopped")
       Right(msg + msgAdditional)
     } else { // something broke
-      /** TODO: possible inconsistent state with partially started/stopped pipegraphs - see ISC-204
+      /** TODO: possible inconsistent state with partially started/stopped pipegraphs - see GL-13
         * Choose a recovery strategy (es. stop/start all components, restart/restop components not started/stopped, ...)
         * */
 
