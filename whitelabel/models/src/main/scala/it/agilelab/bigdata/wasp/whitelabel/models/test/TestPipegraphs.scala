@@ -552,7 +552,7 @@ private[wasp] object TestPipegraphs {
 
     lazy val multiETL = PipegraphModel(
       name = "TestErrorMultiEtlPipegraph",
-      description = "Description of TestErrorMultiEtlAVROPipegraph",
+      description = "Description of TestErrorMultiEtlPipegraph",
       owner = "user",
       isSystem = false,
       creationTime = System.currentTimeMillis,
