@@ -83,7 +83,6 @@ object Dependencies {
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
 	val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
   val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
-  val elasticClientTransport = "org.elasticsearch.client" % "transport" % Versions.elasticSearch
   val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase
@@ -202,8 +201,6 @@ object Dependencies {
   ).map(excludeLog4j) ++ log4j
 
 	val plugin_elastic_spark = Seq(
-		elasticSearch,
-		elasticClientTransport,
 		elasticSearchSpark
 	)
 
