@@ -22,10 +22,15 @@ class ElasticSparkReader(indexModel: IndexModel) extends SparkReader with Elasti
 
   override def read(sc: SparkContext): DataFrame = {
 
+    val address = elasticConfig.connections
+      .filter(
+        _.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
+      .mkString(",")
+
     val sqlContext = new SQLContext(sc)
     val options = Map(
       "pushdown" -> "true",
-      ConfigurationOptions.ES_NODES -> elasticConfig.connections.map(_.toString).mkString(" "),
+      ConfigurationOptions.ES_NODES -> address,
       ConfigurationOptions.ES_RESOURCE_READ -> indexModel.resource
     )
 
