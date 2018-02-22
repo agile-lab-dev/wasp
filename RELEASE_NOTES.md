@@ -88,6 +88,9 @@ Update
 
 
 ### WASP 2.3.0 ###
+Fix 
+- Corrette dipendenze ElasticSearch 
+
 Update
 - Consistenza/atomicità su waspDB.insertIfNotExist: permette che non avvengano scritture contemporanee/duplicate
 
@@ -97,6 +100,6 @@ Update
 
 - LoggerPipegraph su Solr tramite StructuredStreaming 
 
-- Aggiunto 'banana' per Solr service in 'whitelabel/docker/solrcloud-docker-compose.yml'
+- Aggiunto service 'banana' (UI per Solr) su porta 32770 con template di default per 'logger_index_shard1_replica1': 'whitelabel/docker/solrcloud-docker-compose.yml' -> 'whitelabel/docker/solrcloudbanana-docker-compose.yml'
 
 - Batch separato da streaming (container apposito) ma in stesso modulo consumers-spark
