@@ -156,6 +156,7 @@ object Dependencies {
 	val core = (akka ++
 		logging ++
 		time ++
+		json ++
 		test :+
 		akkaHttp :+
 		akkaHttpSpray :+
