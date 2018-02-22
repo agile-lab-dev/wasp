@@ -71,6 +71,39 @@ private[wasp] object TestPipegraphs {
         isActive = false
       )
 
+      lazy val elastic = PipegraphModel(
+        name = "TestElasticWriterStructuredJSONPipegraph",
+        description = "Description of TestElasticWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestElasticWriterStructuredJSONPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.json.name,
+                TestTopicModel.json.name
+              )
+            ),
+            output = WriterModel.elasticWriter(
+              TestIndexModel.elastic.name,
+              TestIndexModel.elastic.name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
       lazy val hdfs = PipegraphModel(
         name = "TestHdfsWriterStructuredJSONPipegraph",
         description = "Description of TestHdfsWriterStructuredJSONPipegraph",
@@ -154,6 +187,38 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.solrWriter(
               TestIndexModel.solr.name,
               TestIndexModel.solr.name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
+          )
+        ),
+        structuredStreamingComponents = List(),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val elastic = PipegraphModel(
+        name = "TestElasticWriterLegacyJSONPipegraph",
+        description = "Description of TestElasticWriterLegacyJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(
+          LegacyStreamingETLModel(
+            name = "ETL TestElasticWriterLegacyJSONPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.json.name,
+                TestTopicModel.json.name
+              )
+            ),
+            output = WriterModel.elasticWriter(
+              TestIndexModel.elastic.name,
+              TestIndexModel.elastic.name
             ),
             mlModels = List(),
             strategy = None,
@@ -255,6 +320,39 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.solrWriter(
               TestIndexModel.solr.name,
               TestIndexModel.solr.name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val elastic = PipegraphModel(
+        name = "TestElasticWriterStructuredAVROPipegraph",
+        description = "Description of TestElasticWriterStructuredAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestElasticWriterStructuredAVROPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.avro.name,
+                TestTopicModel.avro.name
+              )
+            ),
+            output = WriterModel.elasticWriter(
+              TestIndexModel.elastic.name,
+              TestIndexModel.elastic.name
             ),
             mlModels = List(),
             strategy = None,
@@ -370,6 +468,38 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.solrWriter(
               TestIndexModel.solr.name,
               TestIndexModel.solr.name
+            ),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
+          )
+        ),
+        structuredStreamingComponents = List(),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val elastic = PipegraphModel(
+        name = "TestElasticWriterLegacyAVROPipegraph",
+        description = "Description of TestElasticWriterLegacyAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(
+          LegacyStreamingETLModel(
+            name = "ETL TestElasticWriterLegacyAVROPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader(
+                TestTopicModel.avro.name,
+                TestTopicModel.avro.name
+              )
+            ),
+            output = WriterModel.elasticWriter(
+              TestIndexModel.elastic.name,
+              TestIndexModel.elastic.name
             ),
             mlModels = List(),
             strategy = None,
