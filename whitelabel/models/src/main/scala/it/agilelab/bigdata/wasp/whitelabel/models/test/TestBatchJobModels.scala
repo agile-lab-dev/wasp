@@ -11,7 +11,7 @@ private[wasp] object TestBatchJobModels {
     /**
       *  Fail if HDFS folder already exists
       */
-    lazy val toHdfs = BatchJobModel(
+    lazy val toHdfsFlat = BatchJobModel(
       name = "TestBatchJobFromSolrToHdfs",
       description = "Description pf TestBatchJobFromSolr",
       owner = "user",
@@ -21,6 +21,30 @@ private[wasp] object TestBatchJobModels {
         name = "EtlModel for TestBatchJobFromSolr",
         inputs = List(ReaderModel.solrReader("Solr Reader", TestIndexModel.solr.name)),
         output = WriterModel.rawWriter("Raw Writer", TestRawModel.flat.name),
+        mlModels = List(),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      ),
+      state = JobStateEnum.PENDING
+    )
+  }
+
+
+  object FromElastic {
+
+    /**
+      *  Fail if HDFS folder already exists
+      */
+    lazy val toHdfsNested = BatchJobModel(
+      name = "TestBatchJobFromElasticToHdfs",
+      description = "Description pf TestBatchJobFromElasticToHdfs",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromElasticToHdfs",
+        inputs = List(ReaderModel.elasticReader("Elastic Reader", TestIndexModel.elastic.name)),
+        output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested.name),
         mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
