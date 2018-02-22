@@ -51,18 +51,15 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
 
-    if (waspConfig.defaultIndexedDatastore == "elastic") {
-      logger.info("Adding specific elastic configurations.")
-      // Add Elastic settings.
-      val conns = elasticConfig.connections
-        .filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
-      val address = conns.map(e => e.host).mkString(",")
-      val port = conns.map(e => e.port).mkString(",")
+    logger.info("Adding specific elastic configurations.")
+    // Add Elastic settings.
+    val conns = elasticConfig.connections
+      .filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
+    val address = conns.map(e => s"${e.host}:${e.port}").mkString(",")
 
-      sparkConf = sparkConf
-        .set("es.nodes", address)
-        .set("es.port", port)
-    }
+    sparkConf = sparkConf
+      .set("es.nodes", address)
+
 
 		if (sparkConfigModel.driverPort != 0)
 			sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driverPort.toString)
