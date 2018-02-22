@@ -15,19 +15,7 @@ object IndexModel {
         "lastSeenTimestamp": { "type": "long", "index":"not_analyzed","store":"true"},
         "path": { "type": "nested"}
   """
-/*
-  val schema_base_elastic = """
-    "id_event":{"type":"double","index":"not_analyzed","store":"true"},
-    "source_name":{"type":"string","index":"not_analyzed","store":"true"},
-    "Index_name":{"type":"string","index":"not_analyzed","store":"true"},
-    "metric_name":{"type":"string","index":"not_analyzed","store":"true"},
-    "timestamp":{"type":"date","format":"date_time","index":"not_analyzed","store":"true"},
-    "latitude":{"type":"double","index":"not_analyzed","store":"true"},
-    "longitude":{"type":"double","index":"not_analyzed","store":"true"},
-    "value":{"type":"double","index":"not_analyzed","store":"true"},
-    "payload":{"type":"string","index":"not_analyzed","store":"true"}
-  """
-*/
+
   val metadata_solr = """
     {"name": "metadata.id", "type": "string", "stored":true },
     {"name": "metadata.sourceId", "type": "string", "stored":true },
@@ -35,19 +23,7 @@ object IndexModel {
     {"name": "metadata.lastSeenTimestamp", "type": "tlong", "stored":true},
     {"name": "metadata.path", "type": "string", "stored":"true", "multiValued":"true"}
   """
-/*
-  val schema_base_solr = """
-                         { "name":"id_event", "type":"tdouble", "stored":true },
-                         { "name":"source_name", "type":"string", "stored":true },
-                         { "name":"topic_name", "type":"string","stored":true },
-                         { "name":"metric_name", "type":"string","stored":true },
-                         { "name":"timestamp", "type":"string","stored":true },
-                         { "name":"latitude", "type":"tdouble", "stored":true },
-                         { "name":"longitude", "type":"tdouble", "stored":true },
-                         { "name":"value", "type":"string", "stored":true },
-                         { "name":"payload", "type":"string", "stored":true }
-                    """
-*/
+
   def normalizeName(basename: String) = s"${basename.toLowerCase}_index"
 
   def generateField(indexType: IndexType.Type, name: Option[String], ownSchema: Option[String]): String = {
@@ -121,36 +97,10 @@ case class IndexModel(override val name: String,
     * @return
     */
   def getJsonSchema: String = {
-    if (ConfigManager.getWaspConfig.defaultIndexedDatastore == "solr") {
-      val solrProperties = this
-        .schema
-        .get
-        .get("properties")
-        .asArray()
-        .getValues
-        .asScala
-        .map(e => e.asDocument().toJson)
-        .mkString(",")
+    schema.getOrElse(new BsonDocument).toJson
+  }
 
-      s"[${solrProperties}]"
-    } else {
-      schema.getOrElse(new BsonDocument).toJson
-    }
-  }
-  
-  /**
-    * Returns the data type of the contents of this index.
-    */
-  def dataType: String = {
-    schema
-      .map(bson => {
-        bson
-          .keySet() // grab keys; order should be right as it is backed by a LinkedHashMap
-          .asScala
-          .headOption
-          .getOrElse("undefined") // TODO default in case the schema is wrong? does it even make sense?
-      })
-      .getOrElse("undefined") // TODO default in case the schema is absent? does it even make sense?
-  }
+
+  def dataType: String = name
 
 }
