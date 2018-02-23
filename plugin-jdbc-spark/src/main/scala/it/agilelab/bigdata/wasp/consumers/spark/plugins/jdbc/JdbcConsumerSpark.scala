@@ -38,7 +38,7 @@ class JdbcConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     val sqlModel: SqlSourceModel = if (sqlModelOpt.isDefined) {
       sqlModelOpt.get
     } else {
-      throw new Exception(s"Raw model not found: $name")
+      throw new Exception(s"SqlSource model not found: $name")
     }
     new JdbcSparkReader(sqlModel)
   }
