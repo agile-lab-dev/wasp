@@ -1,35 +1,36 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.io.File
+import java.net.URLEncoder
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ConnectionConfig, ElasticConfiguration, WaspConfiguration}
-import org.apache.hadoop.fs.Path
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration, WaspConfiguration}
 import org.apache.spark.SparkConf
-import org.apache.spark.deploy.SparkHadoopUtil
 
-import collection.JavaConverters._
+import scala.io.Source
+import scala.util.{Failure, Success, Try}
+
 /**
 	* Utilities related to Spark.
 	*
 	* @author Nicolò Bidotti
 	*/
 object SparkUtils extends Logging with WaspConfiguration with ElasticConfiguration {
-	/**
+  val jarsListFileName = "jars.list"
+
+  /**
     * Builds a SparkConf from the supplied SparkConfigModel
     */
   def buildSparkConfFromSparkConfigModel(sparkConfigModel: SparkConfigModel): SparkConf = {
     logger.info("Building Spark configuration from configuration model")
     
-    // validate config & log it
+    // validate SparkConfigModel & log it
     validateConfig(sparkConfigModel)
-    logger.info("Starting from SparkConfigModel:\n" + sparkConfigModel)
+    logger.info(s"Starting from SparkConfigModel:\n\t$sparkConfigModel")
   
-    // build SparkConf from spark configuration model & log it
-    val loadedJars = sparkConfigModel.additionalJars.getOrElse(getAdditionalJar(Set(sparkConfigModel.yarnJar)))
-    //TODO: gestire appName in maniera dinamica (e.g. batchGuardian, consumerGuardian..)
+    // build SparkConf from SparkConfigModel & log it
     var sparkConf = new SparkConf()
       .setAppName(sparkConfigModel.appName)
       .setMaster(sparkConfigModel.master.toString)
@@ -40,7 +41,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.executor.cores", sparkConfigModel.executorCores.toString)
       .set("spark.executor.memory", sparkConfigModel.executorMemory)
       .set("spark.executor.instances", sparkConfigModel.executorInstances.toString)
-      .setJars(loadedJars)
+      .setJars(getAdditionalJars(sparkConfigModel.additionalJarsPath))
       .set("spark.yarn.jars", sparkConfigModel.yarnJar)
       .set("spark.blockManager.port", sparkConfigModel.blockManagerPort.toString)
       .set("spark.broadcast.port", sparkConfigModel.broadcastPort.toString)
@@ -51,48 +52,34 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
 
-    logger.info("Adding specific elastic configurations.")
-    // Add Elastic settings.
-    val conns = elasticConfig.connections
-      .filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
+    if (sparkConfigModel.driverPort != 0)
+      sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driverPort.toString)
+
+    // add specific Elastic configurations
+    val conns = elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
     val address = conns.map(e => s"${e.host}:${e.port}").mkString(",")
 
-    sparkConf = sparkConf
-      .set("es.nodes", address)
+    sparkConf = sparkConf.set("es.nodes", address)
+
+    logger.info(s"Resulting SparkConf:\n\t${sparkConf.toDebugString.replace("\n", "\n\t")}")
 
 
-		if (sparkConfigModel.driverPort != 0)
-			sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driverPort.toString)
-
-    logger.info("Resulting SparkConf:\n\t" + sparkConf.toDebugString.replace("\n", "\n\t"))
-    
     sparkConf
   }
-  
-  def getAdditionalJar(skipJars: Set[String]): Seq[String] = {
 
-    val additionalJarsPath = ConfigManager.getWaspConfig.additionalJarsPath
+  private def getAdditionalJars(additionalJarsPath: String): Seq[String] = {
+    try {
+      val additionalJars = Source.fromFile(additionalJarsPath + File.separator + jarsListFileName)
+        .getLines()
+        .map(name => URLEncoder.encode(additionalJarsPath  + File.separator + name, "UTF-8"))
+        .toSeq
 
-    val fm = getListOfFiles(s"${additionalJarsPath}/managed/")
-    val f = getListOfFiles(s"${additionalJarsPath}/")
-
-    val allFilesSet = fm
-        .map(f => s"${additionalJarsPath}/managed/${f}")
-        .toSet[String] ++ f.map(f => s"${additionalJarsPath}/${f}").toSet[String]
-
-    val realFiles = allFilesSet.diff(skipJars)
-
-    realFiles.toSeq
-  }
-
-  def getListOfFiles(dir: String): List[String] = {
-
-    val d = new File(dir)
-
-    if (d.exists && d.isDirectory) {
-      d.listFiles.filter(_.isFile).map(_.getName).toList
-    } else {
-      List[String]()
+      additionalJars
+    } catch {
+      case e : Throwable =>
+        val msg = s"Unable to completely generate the additional jars list - Exception: ${e.getMessage}"
+        logger.error(msg, e)
+        throw e
     }
   }
   

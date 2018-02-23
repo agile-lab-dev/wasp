@@ -1,4 +1,7 @@
-### WASP 2.0.5 ###
+# ChangeLog
+
+## WASP 2.0.5
+25/01/2018
 
 - Miglioramento complessivo error/exception-handling dai seguenti punti di vista:
 	- log in console dei vari componenti
@@ -13,7 +16,8 @@
 - Gestione launcher tramite CommanLine invece che lista argomenti
 
 
-### WASP 2.1.0 ###
+## WASP 2.1.0
+06/02/2018
 
 Fix
 - A seguito di failure di StartPipegraph, SparkConsumersMasterGuardian e RtConsumersMasterGuardian non rimangono più in stato "starting" ma ritornano in "unitialized", evitando quindi lo stash() di RestartConsumers durante StartPipegraph successivi
@@ -45,12 +49,16 @@ Update
 	N.B. per mantenere scalabile la soluzione, i VALUE di default presenti in 'reference.conf' non sono anche riportati in 'docker/docker-environment.conf'
 
 
-### WASP 2.1.1 ###
+## WASP 2.1.1
+07/02/2018
+
 Fix
 - GitLab CI to compile and publish on internal (nexus) and public (criticalcase)
 
 
-### WASP 2.1.2 ###
+## WASP 2.1.2
+12/02/2018
+
 Fix
 - GitLab CI rimossa da master
 - Scommentate le KEY 'driver-hostname' della "template-whitelabel" 'docker/docker-environment.conf' di 'spark-streaming' 'spark-batch'
@@ -59,12 +67,16 @@ Update
 - HBASE Writer - gestione celle create dinamicamente in stile Cassandra
 
 
-### WASP 2.1.3 ###
+## WASP 2.1.3
+16/02/2018
+
 Update
 - MongoDB fullwriteConsistency
 
 
-### WASP 2.2.0 ###
+## WASP 2.2.0
+16/02/2018
+
 Fix
 - Corretta la KEY 'driver-hostname' della "template-whitelabel" 'docker/docker-environment.conf' di 'spark-batch'
 - MongoDB, Elastic, Solr considerano ora il timeout di configuration espresso in millis
@@ -87,9 +99,11 @@ Update
 - Migrazione totale cross-reference da byId a byName delle collection MongoDB
 
 
-### WASP 2.3.0 ###
-Fix 
-- Corrette dipendenze ElasticSearch 
+## WASP 2.3.0
+...
+
+Fix
+- Corrette dipendenze ElasticSearch
 
 Update
 - Consistenza/atomicità su waspDB.insertIfNotExist: permette che non avvengano scritture contemporanee/duplicate
@@ -98,8 +112,10 @@ Update
 
 - Whitelabel manual/auto-test per Console, Solr, HDFS, ElasticSearch
 
-- LoggerPipegraph su Solr tramite StructuredStreaming 
+- LoggerPipegraph su Solr tramite StructuredStreaming
 
 - Aggiunto service 'banana' (UI per Solr) su porta 32770 con template di default per 'logger_index_shard1_replica1': 'whitelabel/docker/solrcloud-docker-compose.yml' -> 'whitelabel/docker/solrcloudbanana-docker-compose.yml'
+
+- Revisione uso additionalJars
 
 - Batch separato da streaming (container apposito) ma in stesso modulo consumers-spark

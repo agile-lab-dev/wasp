@@ -11,6 +11,7 @@ import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.Datastores
 import it.agilelab.bigdata.wasp.core.plugins.WaspPlugin
 import it.agilelab.bigdata.wasp.core.utils._
 
@@ -151,7 +152,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     
       // initialize indexed datastore
       val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
-      if (defaultIndexedDatastore != "elastic" && defaultIndexedDatastore != "solr") {
+      if (defaultIndexedDatastore != Datastores.elasticProduct && defaultIndexedDatastore != Datastores.solrProduct) {
         logger.error(s"No indexed datastore configured! Value: ${defaultIndexedDatastore} is different from elastic or solr")
       }
 

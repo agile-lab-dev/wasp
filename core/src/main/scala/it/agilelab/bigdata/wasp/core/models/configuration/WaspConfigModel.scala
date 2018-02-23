@@ -11,7 +11,6 @@ case class WaspConfigModel(
 	                          indexRollover: Boolean,
 	                          generalTimeoutMillis: Int,
 	                          servicesTimeoutMillis: Int,
-	                          additionalJarsPath: String,
 	                          defaultIndexedDatastore: String,
 	                          defaultKeyvalueDatastore: String,
 	                          systemPipegraphsStart: Boolean,
