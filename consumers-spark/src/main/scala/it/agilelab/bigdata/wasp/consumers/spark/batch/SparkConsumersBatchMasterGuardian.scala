@@ -57,7 +57,7 @@ class SparkConsumersBatchMasterGuardian(env: {
 
     // initialize Spark
     val scCreated = SparkSingletons.initializeSpark(sparkBatchConfig)
-    if (!scCreated) logger.warn("The spark context was already intialized: it might not be using the spark batch configuration!")
+    if (!scCreated) logger.warn("The spark context was already initialized: it might not be using the spark batch configuration!")
 
     val sc = SparkSingletons.getSparkContext
     batchActor = context.actorOf(Props(new BatchJobActor(env, classLoader, sparkWriterFactory, sc, plugins)))

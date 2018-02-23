@@ -25,7 +25,7 @@ private[wasp] object TestPipegraphs {
                 TestTopicModel.json.name
               )
             ),
-            output = WriterModel.consoleWriter("myConsoleWriter"),
+            output = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
@@ -155,7 +155,7 @@ private[wasp] object TestPipegraphs {
                 TestTopicModel.json.name
               )
             ),
-            output = WriterModel.consoleWriter("myConsoleWriter"),
+            output = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
@@ -287,7 +287,7 @@ private[wasp] object TestPipegraphs {
                 TestTopicModel.avro.name
               )
             ),
-            output = WriterModel.consoleWriter("myConsoleWriter"),
+            output = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
@@ -437,7 +437,7 @@ private[wasp] object TestPipegraphs {
                 TestTopicModel.avro.name
               )
             ),
-            output = WriterModel.consoleWriter("myConsoleWriter"),
+            output = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED

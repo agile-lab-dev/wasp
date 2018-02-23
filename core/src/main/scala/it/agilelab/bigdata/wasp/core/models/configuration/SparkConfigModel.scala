@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
 
 
-trait SparkConfigModel  extends Model {
+trait SparkConfigModel extends Model {
 	val appName: String
 	val master: ConnectionConfig
 	val driverCores: Int
@@ -68,4 +68,4 @@ case class SparkBatchConfigModel(appName: String,
 																 retainedStagesJobs:Int,
 																 retainedTasks: Int,
 																 retainedExecutions: Int,
-																 retainedBatches: Int)  extends SparkConfigModel
+																 retainedBatches: Int) extends SparkConfigModel
