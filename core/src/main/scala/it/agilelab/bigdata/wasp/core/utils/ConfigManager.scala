@@ -26,6 +26,7 @@ object ConfigManager extends Logging {
   val elasticConfigName = "Elastic"
   val solrConfigName = "Solr"
   val hbaseConfigName = "HBase"
+  val jdbcConfigName = "Jdbc"
   val waspConsumersSparkAdditionalJarsFileName = "wasp-consumers-spark-additional-jars-path-names"
 
   private var waspConfig : WaspConfigModel = _
@@ -36,6 +37,7 @@ object ConfigManager extends Logging {
   private var elasticConfig: ElasticConfigModel = _
   private var solrConfig: SolrConfigModel = _
   private var hbaseConfig: HBaseConfigModel = _
+  private var jdbcConfig: JdbcConfigModel = _
   
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
@@ -220,6 +222,40 @@ object ConfigManager extends Logging {
     )
   }
 
+  private def initializeJdbcConfig(): Unit = {
+    jdbcConfig = retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
+  }
+
+  private def getDefaultJdbcConfig: JdbcConfigModel = {
+    val jdbcSubConfig = conf.getConfig("jdbc")
+    JdbcConfigModel(
+      jdbcConfigName,//name
+      jdbcSubConfig.getString("dbType"),
+      jdbcSubConfig.getString("host"),
+      jdbcSubConfig.getInt("port"),
+      jdbcSubConfig.getString("user"),//user
+      jdbcSubConfig.getString("password"),//password
+      jdbcSubConfig.getString("driverName"),//driverName
+      readJdbcPartitioningInfo(jdbcSubConfig, "partitioningInfo"), //partitioningInfo
+      if(jdbcSubConfig.hasPath("numPartitions")) Some(jdbcSubConfig.getInt("numPartitions")) else None,//numPartitions
+      if(jdbcSubConfig.hasPath("fetchSize")) Some(jdbcSubConfig.getInt("fetchSize")) else None//fetchSize
+    )
+  }
+
+  private def readJdbcPartitioningInfo(jdbcConf: Config, path: String): Option[JdbcPartitioningInfo] = {
+    if(jdbcConf.hasPath(path)) {
+      val partInfoConf = jdbcConf.getConfig(path)
+      Some(
+        JdbcPartitioningInfo(
+            partInfoConf.getString("partitionColumn"),
+            partInfoConf.getString("lowerBound"),
+            partInfoConf.getString("upperBound")
+          )
+      )
+    }
+    else None
+  }
+
   /**
     * Initialize the configurations managed by this ConfigManager.
     */
@@ -230,6 +266,7 @@ object ConfigManager extends Logging {
     initializeElasticConfig()
     initializeSolrConfig()
     initializeHBaseConfig()
+    initializeJdbcConfig()
     initializeSparkStreamingConfig()
     initializeSparkBatchConfig()
   }
@@ -289,6 +326,13 @@ object ConfigManager extends Logging {
       throw new Exception("The hbase configuration was not initialized")
     }
     hbaseConfig
+  }
+
+  def getJdbcConfig: JdbcConfigModel = {
+    if (jdbcConfig == null) {
+      throw new Exception("The jdbc configuration was not initialized")
+    }
+    jdbcConfig
   }
 
   private def readConnections(config: Config,
@@ -415,4 +459,8 @@ trait SolrConfiguration {
 
 trait HBaseConfiguration {
   lazy val hbaseConfig: HBaseConfigModel = ConfigManager.getHBaseConfig
+}
+
+trait JdbcConfiguration {
+  lazy val jdbcConfig: JdbcConfigModel = ConfigManager.getJdbcConfig
 }

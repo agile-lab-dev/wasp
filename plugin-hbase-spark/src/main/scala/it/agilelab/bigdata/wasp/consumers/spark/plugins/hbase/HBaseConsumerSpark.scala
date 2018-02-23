@@ -28,7 +28,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info("Initialize the keyValue BL")
     keyValueBL = new KeyValueBLImp(waspDB)
-    logger.info(s"Initialize the elastic admin actor with this name ${HBaseAdminActor.name}")
+    logger.info(s"Initialize the hbase admin actor with this name ${HBaseAdminActor.name}")
     //hbaseAdminActor_ = WaspSystem.actorSystem
     //  .actorOf(Props(new HBaseAdminActor), HBaseAdminActor.name)
     // services timeout, used below
@@ -42,7 +42,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
+    logger.info(s"Initialize the hbase spark streaming writer with this writer model name '${writerModel.name}'")
     HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, getKeyValueModel(writerModel))
   }
 
@@ -51,7 +51,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the elastic spark batch writer with this writer model name '${writerModel.name}'")
+    logger.info(s"Initialize the hbase spark batch writer with this writer model name '${writerModel.name}'")
     HBaseWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
   }
 
