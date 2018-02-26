@@ -90,7 +90,7 @@ Update
 
 - Impostazione WhiteLabel (per usarla: 'whitelabel/docker/start-whitelabel-wasp.sh')
 
-- Riportata scrittura di tutte le configurazioni MongoDB fatta da tutti (in WaspSystem)
+- Riportata in WaspSystem la creazione della collection MongoDB 'configurations' (in modo venga eseguita da tutti i container nello stesso modo)
 
 - Revisione della gestione "dropDB" tramite commandlineOption '-d' di 'start_wasp.sh': Master fa solo drop ed esce (senza reinizializzare)
 
@@ -100,7 +100,7 @@ Update
 
 
 ## WASP 2.3.0
-...
+26/02/2018
 
 Fix
 - Corrette dipendenze ElasticSearch
