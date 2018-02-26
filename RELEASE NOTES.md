@@ -119,3 +119,8 @@ Update
 - Revisione uso additionalJars
 
 - Batch separato da streaming (container apposito) ma in stesso modulo consumers-spark
+
+
+## WASP 2.4.0
+...
+
