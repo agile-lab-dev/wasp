@@ -17,7 +17,7 @@ import scala.concurrent.duration._
   */
 
 object ClusterListenerActor {
-  val name = "CLusterListenerAdminActor"
+  val name = "ClusterListenerAdminActor"
   val downingTimeout = ConfigManager.getWaspConfig.actorDowningTimeout millisecond
 }
 

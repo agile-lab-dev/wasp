@@ -1,10 +1,11 @@
-package it.agilelab.bigdata.wasp.consumers.spark
+package it.agilelab.bigdata.wasp.consumers.spark.streaming
 
 import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, PoisonPill, actorRef2Scala}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
+import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StreamingReader}

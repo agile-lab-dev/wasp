@@ -27,7 +27,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 /**
-	* Launcher for the MasterGuardian and REST API.
+	* Launcher for the MasterGuardian and REST Server.
 	* This trait is useful for who want extend the launcher
 	* @author Nicolò Bidotti
 	*/

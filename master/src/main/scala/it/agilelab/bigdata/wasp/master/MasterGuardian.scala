@@ -89,7 +89,7 @@ class MasterGuardian(env: {
 
     // start batch schedulers
     logger.info("Starting batch schedulers...")
-    batchMasterGuardian ! StartSchedulersMessage()
+    sparkConsumersBatchMasterGuardian ! StartSchedulersMessage()
   }
 
   override def receive: Actor.Receive = {
@@ -148,7 +148,7 @@ class MasterGuardian(env: {
 
   // TODO revise
   private def restartPipegraphs(): Either[String, String] = {
-    sparkConsumersMasterGuardian ! RestartConsumers
+    sparkConsumersStreamingMasterGuardian ! RestartConsumers
     rtConsumersMasterGuardian ! RestartConsumers
     Right("Pipegraphs restart started.")
   }
@@ -175,7 +175,7 @@ class MasterGuardian(env: {
     // ask the guardians to restart only if the pipegraph has components that involve them
     val resSpark = if (pipegraph.hasSparkComponents) {
       try {
-        ??[Either[String, String]](sparkConsumersMasterGuardian, RestartConsumers) match {
+        ??[Either[String, String]](sparkConsumersStreamingMasterGuardian, RestartConsumers) match {
           case Right(_) =>
             true
           case Left(s) =>
@@ -224,7 +224,7 @@ class MasterGuardian(env: {
       val msg = s"Pipegraph '${pipegraph.name}'" + (if (active) "started" else "stopped")
       Right(msg + msgAdditional)
     } else { // something broke
-      /** TODO: possible inconsistent state with partially started/stopped pipegraphs - see ISC-204
+      /** TODO: possible inconsistent state with partially started/stopped pipegraphs - see GL-13
         * Choose a recovery strategy (es. stop/start all components, restart/restop components not started/stopped, ...)
         * */
 
@@ -276,7 +276,7 @@ class MasterGuardian(env: {
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
-    val jobRes = ??[BatchJobResult](batchMasterGuardian, StartBatchJobMessage(batchJob.name))
+    val jobRes = ??[BatchJobResult](sparkConsumersBatchMasterGuardian, StartBatchJobMessage(batchJob.name))
     if (jobRes.result) {
       Right(s"Batch job '${batchJob.name}' accepted (queued or processing)")
     } else {
@@ -286,7 +286,7 @@ class MasterGuardian(env: {
 
   private def startPendingBatchJobs(): Either[String, String] = {
     logger.info("Scheduling check of batch jobs bucket")
-    batchMasterGuardian ! CheckJobsBucketMessage()
+    sparkConsumersBatchMasterGuardian ! CheckJobsBucketMessage()
     Right("Scheduled the check of batch jobs bucket")
   }
 }

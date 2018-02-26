@@ -26,13 +26,13 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   extends Actor
     with Logging {
 
-  var lastBatchMasterRef : ActorRef = _
+  var lastSparkConsumersBatchMasterRef : ActorRef = _
 
   override def receive: Actor.Receive = {
     case jobModel: BatchJobModel =>
       logger.info(s"Processing Batch Job ${jobModel.name} ...")
 
-      lastBatchMasterRef = sender()
+      lastSparkConsumersBatchMasterRef = sender()
 
       changeBatchState(jobModel.name, JobStateEnum.PROCESSING)
 
@@ -44,8 +44,8 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
         changeBatchState(jobModel.name, JobStateEnum.FAILED)
 
-        // TODO BatchMasterGuardian not really wait for it
-        //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
+        // TODO SparkConsumersBatchMasterGuardian not really wait for it
+        //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
       } else {
         // check if the writer is stream
         val isTopicCategoryWriter = jobModel.etl.output.writerType.category == Datastores.topicCategory
@@ -54,8 +54,8 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
           changeBatchState(jobModel.name, JobStateEnum.FAILED)
 
-          // TODO BatchMasterGuardian not really wait for it
-          //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
+          // TODO SparkConsumersBatchMasterGuardian not really wait for it
+          //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
         } else {
           // implicit filtered with the check above which blocks using stream readers
           val staticReaders = jobModel.etl.inputs /*.filterNot(_.readerType.category == Datastores.topicCategory)*/
@@ -78,8 +78,8 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
             changeBatchState(jobModel.name, JobStateEnum.FAILED)
 
-            // TODO BatchMasterGuardian not really wait for it
-            //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
+            // TODO SparkConsumersBatchMasterGuardian not really wait for it
+            //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
           }
           else {
             if (!dataStoreDFs.isEmpty)
@@ -140,8 +140,8 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
             changeBatchState(jobModel.name, jobResult)
 
-            // TODO BatchMasterGuardian not really wait for it
-            //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
+            // TODO SparkConsumersBatchMasterGuardian not really wait for it
+            //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
           }
         }
       }

@@ -44,17 +44,17 @@ class RtWritersManagerActor(env: {
 
   def initializeEndpoint(writer: WriterModel): Option[ActorRef] = {
     writer.writerType.category match {
-      case "topic" => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
-      case "index" => writer.writerType.getActualProduct match {
-        case "elastic" => ???
+      case Datastores.topicCategory => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
+      case Datastores.indexCategory => writer.writerType.getActualProduct match {
+        case Datastores.elasticProduct => ???
         //TODO Migrate to the RT plugin
         //logger.debug("Starting a CamelElasticWriter")
         //Some(context.actorOf(Props(new CamelElasticWriter(env.indexBL, writer))))
 
-        case "solr" => ??? // TODO
+        case Datastores.solrProduct => ??? // TODO
         case _ => ??? // TODO exception?
       }
-      case "websocket" => Some(context.actorOf(Props(new CamelWebsocketWriter(env.websocketBL, writer))))
+      case Datastores.websocketCategory => Some(context.actorOf(Props(new CamelWebsocketWriter(env.websocketBL, writer))))
       case _ => None //TODO gestire writer inaspettato
     }
   }

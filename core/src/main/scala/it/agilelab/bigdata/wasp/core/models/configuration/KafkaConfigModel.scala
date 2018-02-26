@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models.configuration
 
+import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnection}
 
 case class KafkaConfigModel(connections: Seq[ConnectionConfig],
@@ -11,7 +12,7 @@ case class KafkaConfigModel(connections: Seq[ConnectionConfig],
 	                          encoder_fqcn: String,
 	                          decoder_fqcn: String,
 	                          batch_send_size: Int,
-	                          name: String) {
+	                          name: String) extends Model {
 
 	def toTinyConfig() = TinyKafkaConfig(connections, batch_send_size, default_encoder, encoder_fqcn, partitioner_fqcn)
 

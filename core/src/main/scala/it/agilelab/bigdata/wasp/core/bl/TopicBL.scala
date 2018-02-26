@@ -30,11 +30,6 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
     })
   }
 
-  def getById(id: String): Option[TopicModel] = {
-    waspDB.getDocumentByIDRaw[TopicModel](BsonObjectId(id)).map(topic => {
-      factory(topic)
-    })
-  }
 
   def getAll: Seq[TopicModel] = {
     waspDB.getAllRaw[TopicModel]().map(factory)

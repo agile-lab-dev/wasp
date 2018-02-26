@@ -20,6 +20,19 @@ services:
     depends_on:
       - zookeeper
 
+  banana:
+    image: pschatzmann/banana
+    container_name: banana
+    hostname: banana
+    ports:
+      - "32770:80"
+    volumes:
+      - ./banana/dashboards/:/usr/share/nginx/html/app/dashboards
+    links:
+      - solr
+    depends_on:
+      - solr
+
 networks:
   default:
     external:
