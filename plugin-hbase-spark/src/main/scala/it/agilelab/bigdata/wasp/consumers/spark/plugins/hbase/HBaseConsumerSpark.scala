@@ -64,7 +64,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
       throw new ModelNotFound(s"The KeyValueModel with this id $id was not found")
     }
 
-    HBaseReaders.createHBaseReader(model, name)
+    HBaseReaders.createHBaseReader(model)
   }
 
   @throws(classOf[ModelNotFound])

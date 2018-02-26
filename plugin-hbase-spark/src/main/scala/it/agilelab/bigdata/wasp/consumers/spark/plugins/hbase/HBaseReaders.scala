@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 
 
 object HBaseReaders {
-  def createHBaseReader(model: KeyValueModel, name: String): SparkReader = {
+  def createHBaseReader(model: KeyValueModel): SparkReader = {
     new HBaseReader(model)
   }
 }

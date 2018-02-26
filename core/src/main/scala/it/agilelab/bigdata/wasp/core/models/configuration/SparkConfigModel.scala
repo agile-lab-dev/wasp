@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
 
 
-trait SparkConfigModel  extends Model {
+trait SparkConfigModel extends Model {
 	val appName: String
 	val master: ConnectionConfig
 	val driverCores: Int
@@ -14,7 +14,7 @@ trait SparkConfigModel  extends Model {
 	val executorCores: Int
 	val executorMemory: String
 	val executorInstances: Int
-	val additionalJars: Option[Seq[String]]
+	val additionalJarsPath: String
 	val yarnJar: String
 	val blockManagerPort: Int
 	val broadcastPort: Int
@@ -35,7 +35,7 @@ case class SparkStreamingConfigModel(appName: String,
                                      executorCores: Int,
                                      executorMemory: String,
                                      executorInstances: Int,
-                                     additionalJars: Option[Seq[String]],
+																		 additionalJarsPath: String,
                                      yarnJar: String,
                                      blockManagerPort: Int,
                                      broadcastPort: Int,
@@ -58,7 +58,7 @@ case class SparkBatchConfigModel(appName: String,
                                  executorCores: Int,
                                  executorMemory: String,
                                  executorInstances: Int,
-                                 additionalJars: Option[Seq[String]],
+																 additionalJarsPath: String,
                                  yarnJar: String,
                                  blockManagerPort: Int,
                                  broadcastPort: Int,
@@ -68,4 +68,4 @@ case class SparkBatchConfigModel(appName: String,
 																 retainedStagesJobs:Int,
 																 retainedTasks: Int,
 																 retainedExecutions: Int,
-																 retainedBatches: Int)  extends SparkConfigModel
+																 retainedBatches: Int) extends SparkConfigModel

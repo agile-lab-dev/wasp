@@ -79,11 +79,11 @@ case ${INDEXED_DATASTORE} in
         COMPOSE_FILES+=("elastickibana-docker-compose.yml")
         ;;
     "solr")
-        COMPOSE_FILES+=("solrcloud-docker-compose.yml")
+        COMPOSE_FILES+=("solrcloudbanana-docker-compose.yml")
         ;;
     "both")
         COMPOSE_FILES+=("elastickibana-docker-compose.yml")
-        COMPOSE_FILES+=("solrcloud-docker-compose.yml")
+        COMPOSE_FILES+=("solrcloudbanana-docker-compose.yml")
         ;;
     "none")
         ;;

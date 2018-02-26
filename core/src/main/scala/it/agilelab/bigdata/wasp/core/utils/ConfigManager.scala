@@ -1,23 +1,20 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
-import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
-import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
-object ConfigManager extends Logging {
+object ConfigManager {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   val kafkaConfigName = "Kafka"
@@ -27,7 +24,6 @@ object ConfigManager extends Logging {
   val solrConfigName = "Solr"
   val hbaseConfigName = "HBase"
   val jdbcConfigName = "Jdbc"
-  val waspConsumersSparkAdditionalJarsFileName = "wasp-consumers-spark-additional-jars-path-names"
 
   private var waspConfig : WaspConfigModel = _
   private var mongoDBConfig: MongoDBConfigModel = _
@@ -38,7 +34,7 @@ object ConfigManager extends Logging {
   private var solrConfig: SolrConfigModel = _
   private var hbaseConfig: HBaseConfigModel = _
   private var jdbcConfig: JdbcConfigModel = _
-  
+
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
   }
@@ -50,7 +46,6 @@ object ConfigManager extends Logging {
       conf.getBoolean("index-rollover"),
       conf.getInt("general-timeout-millis"),
       conf.getInt("services-timeout-millis"),
-      conf.getString("additional-jars-path"),
       conf.getString("datastore.indexed"),
       conf.getString("datastore.keyvalue"),
       conf.getBoolean("systempipegraphs.start"),
@@ -94,66 +89,13 @@ object ConfigManager extends Logging {
     )
   }
 
-  def initializeSparkBatchConfig(): Unit = {
-    sparkBatchConfig = retrieveConf(getDefaultSparkBatchConfig,
-                                    sparkBatchConfigName).get
-  }
-
-  private def getDefaultSparkBatchConfig: SparkBatchConfigModel = {
-    val sparkSubConfig = conf.getConfig("spark-batch")
-
-    val additionalJars = getAdditionalJars
-
-    SparkBatchConfigModel(
-      sparkSubConfig.getString("app-name"),
-      readConnection(sparkSubConfig.getConfig("master")),
-      sparkSubConfig.getInt("driver-cores"),
-      sparkSubConfig.getString("driver-memory"),
-      sparkSubConfig.getString("driver-hostname"),
-      sparkSubConfig.getInt("driver-port"),
-      sparkSubConfig.getInt("executor-cores"),
-      sparkSubConfig.getString("executor-memory"),
-      sparkSubConfig.getInt("executor-instances"),
-      additionalJars,
-      sparkSubConfig.getString("yarn-jar"),
-      sparkSubConfig.getInt("block-manager-port"),
-      sparkSubConfig.getInt("broadcast-port"),
-      sparkSubConfig.getInt("fileserver-port"),
-      sparkBatchConfigName,
-      sparkSubConfig.getString("driver-bind-address"),
-      sparkSubConfig.getInt("retained-stages-jobs"),
-      sparkSubConfig.getInt("retained-tasks"),
-      sparkSubConfig.getInt("retained-executions"),
-      sparkSubConfig.getInt("retained-batches")
-    )
-  }
-
-  private def getAdditionalJars: Option[Seq[String]] = {
-    scala.util.Try{
-      val additionalJarsPath = conf.getString("additional-jars-lib-path")
-      val additionalJars = Source.fromFile(additionalJarsPath.concat(waspConsumersSparkAdditionalJarsFileName))
-        .getLines()
-        .map(name => URLEncoder.encode(additionalJarsPath.concat(name), "UTF-8"))
-        .toSeq
-
-      additionalJars
-    } match {
-      case Success(result) => Some(result)
-      case Failure(_) => None
-    }
-  }
-
   def initializeSparkStreamingConfig(): Unit = {
     sparkStreamingConfig = retrieveConf[SparkStreamingConfigModel](getDefaultSparkStreamingConfig,
-                                        sparkStreamingConfigName).get
+      sparkStreamingConfigName).get
   }
 
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
-
-    logger.info(sparkSubConfig.toString)
-
-    val additionalJars = getAdditionalJars
 
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
@@ -165,7 +107,7 @@ object ConfigManager extends Logging {
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
       sparkSubConfig.getInt("executor-instances"),
-      additionalJars,
+      sparkSubConfig.getString("additional-jars-path"),
       sparkSubConfig.getString("yarn-jar"),
       sparkSubConfig.getInt("block-manager-port"),
       sparkSubConfig.getInt("broadcast-port"),
@@ -173,6 +115,38 @@ object ConfigManager extends Logging {
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
       sparkStreamingConfigName,
+      sparkSubConfig.getString("driver-bind-address"),
+      sparkSubConfig.getInt("retained-stages-jobs"),
+      sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-executions"),
+      sparkSubConfig.getInt("retained-batches")
+    )
+  }
+
+  def initializeSparkBatchConfig(): Unit = {
+    sparkBatchConfig = retrieveConf(getDefaultSparkBatchConfig,
+                                    sparkBatchConfigName).get
+  }
+
+  private def getDefaultSparkBatchConfig: SparkBatchConfigModel = {
+    val sparkSubConfig = conf.getConfig("spark-batch")
+
+    SparkBatchConfigModel(
+      sparkSubConfig.getString("app-name"),
+      readConnection(sparkSubConfig.getConfig("master")),
+      sparkSubConfig.getInt("driver-cores"),
+      sparkSubConfig.getString("driver-memory"),
+      sparkSubConfig.getString("driver-hostname"),
+      sparkSubConfig.getInt("driver-port"),
+      sparkSubConfig.getInt("executor-cores"),
+      sparkSubConfig.getString("executor-memory"),
+      sparkSubConfig.getInt("executor-instances"),
+      sparkSubConfig.getString("additional-jars-path"),
+      sparkSubConfig.getString("yarn-jar"),
+      sparkSubConfig.getInt("block-manager-port"),
+      sparkSubConfig.getInt("broadcast-port"),
+      sparkSubConfig.getInt("fileserver-port"),
+      sparkBatchConfigName,
       sparkSubConfig.getString("driver-bind-address"),
       sparkSubConfig.getInt("retained-stages-jobs"),
       sparkSubConfig.getInt("retained-tasks"),

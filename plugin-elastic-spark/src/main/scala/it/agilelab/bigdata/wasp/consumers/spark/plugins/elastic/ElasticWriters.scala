@@ -47,10 +47,11 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
             _.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
           .mkString(",")
 
-        val optionsBroadcasted = ssc.sparkContext.broadcast(
-          Map("es.nodes" -> address,
-              "es.input.json" -> "true",
-              "es.batch.size.entries" -> "1"))
+        val options = Map("es.nodes" -> address,
+                          "es.input.json" -> "true",
+                          "es.batch.size.entries" -> "1") ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
+
+        val optionsBroadcasted = ssc.sparkContext.broadcast(options)
 
         logger.info(
           s"Write to elastic with spark streaming. Configuration passed: options: ${optionsBroadcasted.value}, resource: ${resourceBroadcast.value}")
@@ -99,6 +100,11 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(s"The index name must be all lowercase: $index")
       }
 
+
+
+      val options = Map("checkpointLocation" -> checkpointDir) ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
+
+
       if (??[Boolean](
           elasticAdminActor,
         CheckOrCreateIndex(
@@ -108,7 +114,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           index.getJsonSchema))) {
 
         stream.writeStream
-          .option("checkpointLocation", checkpointDir)
+          .options(options)
           .format("es")
           .queryName(queryName)
           .start(resource)
@@ -166,10 +172,13 @@ class ElasticSparkWriter(indexBL: IndexBL,
                 .getOrElse("") == "binary")
             .mkString(","))
 
+
         //TODO perchè togliendo la parte commentata la scrittura fallisce?
         val options = Map(
           "es.nodes" -> addressBroadcast.value,
-          /* "es.input.json" -> "true",*/ "es.batch.size.entries" -> "1")
+          /* "es.input.json" -> "true",*/
+          "es.batch.size.entries" -> "1") ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
+
         logger.info(s"Data schema: ${data.schema}")
         logger.info(
           s"Write to elastic with this configuration: options: $options, resource: ${index.resource}")

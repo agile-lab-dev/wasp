@@ -55,7 +55,7 @@ class SparkConsumersStreamingMasterGuardian(env: {
   override def preStart(): Unit = {
     // initialize Spark
     val scCreated = SparkSingletons.initializeSpark(sparkStreamingConfig)
-    if (!scCreated) logger.warn("Spark was already initialized: it might not be using the spark streaming configuration!")
+    if (!scCreated) logger.warn("The spark context was already initialized: it might not be using the spark streaming configuration!")
   }
   
   override def postStop(): Unit = {

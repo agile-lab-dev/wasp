@@ -81,7 +81,6 @@ private[logging] final class WaspLogger(protected val slf4jLogger: Logger) {
     if (slf4jLogger.isTraceEnabled) {
       slf4jLogger.trace(msg, t)
       remoteLog(LogLevel.Trace, msg, Option(t))
-
     }
   }
 
