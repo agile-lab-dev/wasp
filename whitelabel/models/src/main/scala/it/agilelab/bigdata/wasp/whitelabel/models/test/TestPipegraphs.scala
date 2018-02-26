@@ -115,7 +115,34 @@ private[wasp] object TestPipegraphs {
         dashboard = None,
         isActive = false
       )
-    }
+
+    lazy val hbase = PipegraphModel(
+      name = "TestHBaseWriterStructuredJSONPipegraph",
+      description = "Description of TestHBaseWriterStructuredJSONPipegraph",
+      owner = "user",
+      isSystem = false,
+      creationTime = System.currentTimeMillis,
+
+      legacyStreamingComponents = List(),
+      structuredStreamingComponents = List(
+        StructuredStreamingETLModel(
+          name = "ETL TestHBaseWriterStructuredJSONPipegraph",
+          inputs = List(
+            ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json.name)
+          ),
+          output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.simple.name),
+          mlModels = List(),
+          strategy = None,
+          kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+          config = Map()
+        )
+      ),
+      rtComponents = List(),
+
+      dashboard = None,
+      isActive = false
+    )
+  }
 
     object Legacy {
       lazy val console = PipegraphModel(
@@ -254,6 +281,34 @@ private[wasp] object TestPipegraphs {
         dashboard = None,
         isActive = false
       )
+
+      lazy val kafka = PipegraphModel(
+        name = "TestKafkaWriterStructuredAVROPipegraph",
+        description = "Description of TestKafkaWriterStructuredAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestKafkaWriterStructuredAVROPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro.name)
+            ),
+            output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.avro2.name),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
 
       lazy val solr = PipegraphModel(
         name = "TestSolrWriterStructuredAVROPipegraph",

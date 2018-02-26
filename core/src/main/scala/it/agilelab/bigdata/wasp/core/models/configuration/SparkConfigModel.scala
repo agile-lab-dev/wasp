@@ -13,14 +13,13 @@ trait SparkConfigModel extends Model {
 	val additionalJarsPath: String
 	val yarnJar: String
 	val blockManagerPort: Int
-	val broadcastPort: Int
-	val fileserverPort: Int
 	val retainedStagesJobs: Int
 	val retainedJobs: Int
 	val retainedTasks: Int
 	val retainedExecutions: Int
 	val retainedBatches: Int
-	val kryoSerializer: KryoSerializerConfig
+  val kryoSerializer: KryoSerializerConfig
+  val others: Seq[SparkEntryConfigModel]
 }
 
 case class SparkStreamingConfigModel(
@@ -33,8 +32,6 @@ case class SparkStreamingConfigModel(
 																			additionalJarsPath: String,
 																			yarnJar: String,
 																			blockManagerPort: Int,
-																			broadcastPort: Int,
-																			fileserverPort: Int,
 																			retainedStagesJobs: Int,
 																			retainedTasks: Int,
 																			retainedJobs: Int,
@@ -44,6 +41,7 @@ case class SparkStreamingConfigModel(
 
 																			streamingBatchIntervalMs: Int,
 																			checkpointDir: String,
+                                      others: Seq[SparkEntryConfigModel],
 
 																			name: String
 																		) extends SparkConfigModel
@@ -58,14 +56,17 @@ case class SparkBatchConfigModel(
 																	additionalJarsPath: String,
 																	yarnJar: String,
 																	blockManagerPort: Int,
-																	broadcastPort: Int,
-																	fileserverPort: Int,
 																	retainedStagesJobs: Int,
 																	retainedTasks: Int,
 																	retainedJobs: Int,
 																	retainedExecutions: Int,
 																	retainedBatches: Int,
 																	kryoSerializer: KryoSerializerConfig,
-
+                                  others: Seq[SparkEntryConfigModel],
 																	name: String
 																) extends SparkConfigModel
+
+case class SparkEntryConfigModel(
+																key: String,
+																value: String
+																)

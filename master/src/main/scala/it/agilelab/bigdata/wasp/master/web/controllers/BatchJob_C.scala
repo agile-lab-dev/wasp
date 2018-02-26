@@ -30,7 +30,7 @@ object BatchJob_C extends Directives with JsonSupport {
             entity(as[BatchJobModel]) { batchJobModel =>
               complete {
                 ConfigBL.batchJobBL.insert(batchJobModel)
-                "OK".toJson.toAngularOkResponse
+                "OK".toJson.toAngularOkResponse()
               }
             }
           } ~
@@ -39,7 +39,7 @@ object BatchJob_C extends Directives with JsonSupport {
             entity(as[BatchJobModel]) { batchJobModel =>
               complete {
                 ConfigBL.batchJobBL.update(batchJobModel)
-                "OK".toJson.toAngularOkResponse
+                "OK".toJson.toAngularOkResponse()
               }
             }
           }
@@ -49,7 +49,7 @@ object BatchJob_C extends Directives with JsonSupport {
             post {
               complete {
                 WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name)) match {
-                  case Right(s) => s.toJson.toAngularOkResponse
+                  case Right(s) => s.toJson.toAngularOkResponse()
                   case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                 }
               }

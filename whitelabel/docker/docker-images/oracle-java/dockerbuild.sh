@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# exit on any error
+set -e
+
 # absolute path to this script. /home/user/bin/foo.sh
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -9,11 +12,9 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 # this variable contains the directory of the script
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+cd ${SCRIPT_DIR}
 
-# get docker command
-cd $SCRIPT_DIR
-source get-docker-cmd.sh
+source ../../get-docker-cmd.sh
 
-# stop containers
-echo "Stopping containers running the modules..."
-$DOCKER_CMD stop master producers consumers-rt consumers-spark-streaming consumers-spark-batch
+${DOCKER_CMD} build -t agilefactory/oracle-java:jdk-8u162 .
+${DOCKER_CMD} tag agilefactory/oracle-java:jdk-8u162 agilefactory/oracle-java:jdk-8

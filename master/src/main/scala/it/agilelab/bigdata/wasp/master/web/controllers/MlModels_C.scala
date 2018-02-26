@@ -27,7 +27,7 @@ object MlModels_C extends Directives with JsonSupport {
               result.toJson
             }
 
-            finalResult.toAngularOkResponse
+            finalResult.toAngularOkResponse()
           }
         } ~
           put {

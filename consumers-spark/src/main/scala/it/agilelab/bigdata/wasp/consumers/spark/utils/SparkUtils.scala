@@ -48,13 +48,45 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .setJars(getAdditionalJars(sparkConfigModel.additionalJarsPath))
       .set("spark.yarn.jars", sparkConfigModel.yarnJar)
       .set("spark.blockManager.port", sparkConfigModel.blockManagerPort.toString)
-      .set("spark.broadcast.port", sparkConfigModel.broadcastPort.toString)
-      .set("spark.fileserver.port", sparkConfigModel.fileserverPort.toString)
       .set("spark.ui.retainedStages", sparkConfigModel.retainedStagesJobs.toString)
       .set("spark.ui.retainedTasks", sparkConfigModel.retainedTasks.toString)
       .set("spark.ui.retainedJobs", sparkConfigModel.retainedJobs.toString)
       .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
+      .setAll(sparkConfigModel.others.map(v => (v.key, v.value)))
+
+    if (sparkConfigModel.kryoSerializer.enabled) {
+      // This setting configures the serializer used for not only shuffling data between worker nodes but also when serializing RDDs to disk.
+      // N.B. The only reason Kryo is not the default is because of the custom registration requirement
+      sparkConf = sparkConf
+        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+        //.set("spark.kryoserializer.buffer", "64k")  // default: 64k
+        //.set("spark.kryoserializer.buffer.max", "64m") // default: 64m
+
+      /* Registering classes: for best performance */
+      // * wasp-internal class registrations
+      sparkConf = sparkConf.registerKryoClasses(
+        Array(
+//          classOf[Array[Array[Byte]]],
+//          classOf[scala.collection.mutable.WrappedArray.ofRef[_]], // see https://stackoverflow.com/questions/34736587/kryo-serializer-causing-exception-on-underlying-scala-class-wrappedarray
+//          classOf[Array[org.apache.spark.sql.Row]] // required by 'metadata' usage of LegacyStreamingETLActor/StructuredStreamingETLActor
+        )
+      )
+      // * standalone application class registrations (through custom-KryoRegistrators)
+      sparkConf = sparkConf.set("spark.kryo.registrator", sparkConfigModel.kryoSerializer.registrators)
+
+      /* strict-mode*/
+      // If set to false (the default), Kryo will write unregistered class names along with each object.
+      // Writing class names can cause significant performance overhead, so enabling this option can enforce strictly
+      // that a user has not omitted classes from registration (i.e. will throw errors with unregistered classes).
+      sparkConf = sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
+
+      sparkConf = sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
+
+      // Only for Debug - NotSerializableException: NOT REALLY USEFUL (also adding it to WASP_OPT in start-wasp.sh)
+      //sparkConf = sparkConf.set("spark.executor.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
+      //sparkConf = sparkConf.set("spark.driver.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
+    }
 
     if (sparkConfigModel.kryoSerializer.enabled) {
       // This setting configures the serializer used for not only shuffling data between worker nodes but also when serializing RDDs to disk.

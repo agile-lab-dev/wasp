@@ -36,7 +36,7 @@ object Producer_C extends Directives with JsonSupport {
               complete {
                 // complete with serialized Future result
                 ConfigBL.producerBL.update(producerModel)
-                "OK".toJson.toAngularOkResponse
+                "OK".toJson.toAngularOkResponse()
               }
             }
           }
@@ -55,7 +55,7 @@ object Producer_C extends Directives with JsonSupport {
           post {
             complete {
               WaspSystem.??[Either[String, String]](masterGuardian, StartProducer(name)) match {
-                case Right(s) => s.toJson.toAngularOkResponse
+                case Right(s) => s.toJson.toAngularOkResponse()
                 case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
               }
             }
@@ -65,7 +65,7 @@ object Producer_C extends Directives with JsonSupport {
           post {
             complete {
               WaspSystem.??[Either[String, String]](masterGuardian, StopProducer(name)) match {
-                case Right(s) => s.toJson.toAngularOkResponse
+                case Right(s) => s.toJson.toAngularOkResponse()
                 case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
               }
             }
@@ -82,7 +82,7 @@ object Producer_C extends Directives with JsonSupport {
 
                   ModelKey
                   WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, httpMethod, data, request.mlModel)) match {
-                    case Right(s) => s.toJson.toAngularOkResponse
+                    case Right(s) => s.toJson.toAngularOkResponse()
                     case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                   }
                 }

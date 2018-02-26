@@ -12,15 +12,20 @@ import scala.collection.immutable
   * Created by Agile Lab s.r.l. on 10/08/2017.
   */
 object JsonResultsHelper extends JsonSupport with Logging {
+
   implicit class AngularOkResponse(js: JsValue) {
-    def toAngularOkResponse: HttpResponse  = {
+    def toAngularOkResponse(pretty: Boolean = false): HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),
         "data" -> js
       )
-      httpResponseJson(entity = jsonResult.toString())
+      if (pretty) {
+        httpResponseJson(entity = jsonResult.prettyPrint)
+      } else {
+        httpResponseJson(entity = jsonResult.toString())
+      }
     }
-    def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long): HttpResponse  = {
+    def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long, pretty: Boolean = false): HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),
         "numFound" -> JsNumber(numFound),
@@ -29,8 +34,11 @@ object JsonResultsHelper extends JsonSupport with Logging {
         "numPages" -> JsNumber(math.ceil(numFound.toDouble / rows.toDouble).toInt),
         "data" -> js
       )
-      httpResponseJson(entity = jsonResult.toString())
-    }
+      if (pretty) {
+        httpResponseJson(entity = jsonResult.prettyPrint)
+      } else {
+        httpResponseJson(entity = jsonResult.toString())
+      }    }
   }
 
   def angularErrorBuilder(message: String) = {
@@ -40,9 +48,9 @@ object JsonResultsHelper extends JsonSupport with Logging {
     )
   }
 
-  def getJsonOrNotFound[T](result: Option[T], id: String, resource: String, converter: (T) => JsValue): HttpResponse = {
+  def getJsonOrNotFound[T](result: Option[T], id: String, resource: String, converter: (T) => JsValue, pretty: Boolean = false): HttpResponse = {
     if (result.isDefined) {
-      converter(result.get).toAngularOkResponse
+      converter(result.get).toAngularOkResponse(pretty)
     } else {
       logger.info(s"$resource $id not found")
       httpResponseJson(
@@ -52,27 +60,27 @@ object JsonResultsHelper extends JsonSupport with Logging {
     }
   }
 
-  def getJsonArrayOrEmpty[T](result: Seq[T], converter: (Seq[T]) => JsValue): HttpResponse = {
+  def getJsonArrayOrEmpty[T](result: Seq[T], converter: (Seq[T]) => JsValue, pretty: Boolean = false): HttpResponse = {
     if (result.isEmpty) {
-      JsArray().toAngularOkResponse
+      JsArray().toAngularOkResponse(pretty)
     } else {
-      converter(result).toAngularOkResponse
+      converter(result).toAngularOkResponse(pretty)
     }
   }
 
 
-  def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo, converter: (Seq[T]) => JsValue): HttpResponse = {
+  def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo, converter: (Seq[T]) => JsValue, pretty: Boolean = false): HttpResponse = {
     if (result.isEmpty) {
-      JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound)
+      JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, pretty)
     } else {
-      converter(result).toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound)
+      converter(result).toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, pretty)
     }
   }
 
-  def runIfExists(result: Option[_], func: () => Unit, id: String, resource: String, action: String): HttpResponse = {
+  def runIfExists(result: Option[_], func: () => Unit, id: String, resource: String, action: String, pretty: Boolean = false): HttpResponse = {
     if (result.isDefined) {
       func()
-      "OK".toJson.toAngularOkResponse
+      "OK".toJson.toAngularOkResponse(pretty)
     } else {
       logger.info(s"$resource $id not found isn't possible $action")
       httpResponseJson(

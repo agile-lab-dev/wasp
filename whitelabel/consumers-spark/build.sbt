@@ -21,16 +21,23 @@ mappings in Universal += {
       case Some(module) =>
         if (module.organization.equalsIgnoreCase("it.agilelab")) {
           //for some reason, the snapshot version is not appended correctly. Must do it manually
-          s"${module.organization}.${module.name}-${module.revision}.jar"
+          (module.organization, s"${module.name}-${module.revision}.jar")
         } else
-          s"${module.organization}.${dep.data.getName}"
+          (module.organization, dep.data.getName)
 
       case None =>
         log.warn(s"Dependency $dep does not have a valid ModuleID associated.")
-        dep.data.getName
+        ("", dep.data.getName)
     }
+  }).filter({
+    case (_, moduleName: String) => {
+      !SparkDependecies.excludedJarsSpark2.contains(moduleName)
+    }
+  }).map({
+    case (organization: String, moduleName: String) =>
+      log.info(moduleName)
+      Seq(organization, moduleName).mkString(".")
   }).mkString("\n")
-
   val jarsListFileName = "jars.list"
 
   val file = new File(IO.createTemporaryDirectory.getAbsolutePath + File.separator + jarsListFileName)

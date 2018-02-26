@@ -123,3 +123,6 @@ project/plugins/project/
 .lib/
 sbt-cache
 repositories
+whitelabel/docker/sasl.jaas.config
+whitelabel/docker/*.keytab
+whitelabel/docker/krb5.conf

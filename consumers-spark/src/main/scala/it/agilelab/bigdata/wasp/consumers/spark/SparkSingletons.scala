@@ -2,17 +2,13 @@ package it.agilelab.bigdata.wasp.consumers.spark
 
 import java.lang
 
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.{logger, _}
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.apache.hadoop.fs.Path
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 import org.apache.spark.{SparkContext, SparkException}
-
-import collection.JavaConverters._
 
 
 /**

@@ -24,10 +24,36 @@ object Dependencies {
 				.exclude("com.google.guava", "guava")
 				.excludeAll(ExclusionRule("org.slf4j"))
 
+		def hbaseExclusion: ModuleID =
+			module.log4jExclude
+				.exclude("io.netty", "netty")
+				.exclude("io.netty", "netty-all")
+				.exclude("com.google.guava", "guava")
+				.exclude("org.mortbay.jetty", "jetty-util")
+				.exclude("org.mortbay.jetty", "jetty")
+				.exclude("org.apache.zookeeper", "zookeeper")
+
+		def solrExclusion: ModuleID =
+			module.log4jExclude
+				.exclude("org.objenesis", "objenesis")
+				.exclude("org.apache.zookeeper", "zookeeper")
+		/*
+		.excludeAll(
+      ExclusionRule(organization = "org.eclipse.jetty"),
+      ExclusionRule(organization = "javax.servlet"),
+      ExclusionRule(organization = "org.eclipse.jetty.orbit"),
+      ExclusionRule(organization = "org.apache.solr"), "solr-solrj")
+     .exclude("org.apache.solr", "solr-core")
+     .exclude("org.apache.solr", "solr-test-framework")
+				)
+		*/
+
 		def sparkExclusions: ModuleID =
 			module.log4jExclude
+				.exclude("io.netty", "netty")
 				.exclude("com.google.guava", "guava")
 				.exclude("org.apache.spark", "spark-core")
+				.exclude("org.apache.kafka", "kafka-clients")
 				.exclude("org.slf4j", "slf4j-log4j12")
 				.exclude("org.apache.logging.log4j", "log4j-api")
 				.exclude("org.apache.logging.log4j", "log4j-core")
@@ -36,6 +62,10 @@ object Dependencies {
 				.exclude("org.apache.solr", "solr-core")
 				.exclude("org.apache.solr", "solr-test-framework")
 
+		def conflictSparkExclusions: ModuleID =
+			module
+				.exclude("com.google.guava", "guava")
+
 		def kafkaExclusions: ModuleID =
 			module
 				.excludeAll(ExclusionRule("org.slf4j"))
@@ -43,17 +73,13 @@ object Dependencies {
 				.exclude("com.sun.jdmk", "jmxtools")
 				.exclude("net.sf.jopt-simple", "jopt-simple")
 
-		def sparkSolrExclusions: ModuleID =
-			module.excludeAll(
-				ExclusionRule(organization = "org.eclipse.jetty"),
-				ExclusionRule(organization = "javax.servlet"),
-				ExclusionRule(organization = "org.eclipse.jetty.orbit"),
-					ExclusionRule(organization = "org.apache.solr")/*, "solr-solrj")
-					.exclude("org.apache.solr", "solr-core")
-					.exclude("org.apache.solr", "solr-test-framework")*/
+		def kafka8Exclusions: ModuleID =
+			module
+				.exclude("org.apache.kafka", "kafka_2.11")
 
-			)
-
+		def camelKafkaExclusions: ModuleID =
+			module
+				.exclude("org.apache.kafka", "kafka-clients")
 	}
 	
 	val excludeLog4j: (sbt.ModuleID) => ModuleID = (module: ModuleID) =>
@@ -64,6 +90,12 @@ object Dependencies {
 			sbt.ExclusionRule(organization = "org.slf4j", name = "slf4j-log4j12")
 		)
 
+	val excludeNetty: (sbt.ModuleID) => ModuleID = (module: ModuleID) =>
+		module.excludeAll(
+			sbt.ExclusionRule(organization = "io.netty", name = "netty"),
+			sbt.ExclusionRule(organization = "io.netty", name = "netty-all"),
+			//sbt.ExclusionRule(organization = "com.google.guava", name = "guava")
+		)
 	// ===================================================================================================================
 	// Compile dependencies
 	// ===================================================================================================================
@@ -79,14 +111,15 @@ object Dependencies {
 	val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
 	val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
 	val avro = "org.apache.avro" % "avro" % Versions.avro
-	val camelKafka = "org.apache.camel" % "camel-kafka" % Versions.camel
+	val camelKafka = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
 	val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
   val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
   val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark
-	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase
-	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase
-	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase
+	val guava = "com.google.guava" % "guava" % Versions.guava
+	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase hbaseExclusion
+	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase hbaseExclusion
+	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase hbaseExclusion
 	val httpmime = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
 	val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
 	val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
@@ -95,20 +128,23 @@ object Dependencies {
 	val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
   val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka kafkaExclusions
   val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka kafkaExclusions
-  val kafkaStreaming = "org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark sparkExclusions
+  val kafkaStreaming = ("org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark).sparkExclusions.kafka8Exclusions
   val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
 	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
 	val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional,test"
 	val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional,test"
 	val metrics = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
 	val mongodbScala = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
+	val netty = "io.netty" % "netty" % Versions.netty
+	val nettySpark = "io.netty" % "netty" % Versions.nettySpark
+	val nettyAll = "io.netty" % "netty-all" % Versions.nettyAllSpark
 	val quartz = "org.quartz-scheduler" % "quartz" % Versions.quartz
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
-	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr
-	val solrCore = "org.apache.solr" % "solr-core" % Versions.solr
-  val sparkSolr = "it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark /*classifier "spark-2.2-scala-2.11"*/ sparkExclusions
+	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
+	val solrCore = "org.apache.solr" % "solr-core" % Versions.solr solrExclusion
+  val sparkSolr = ("it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark).sparkExclusions.solrExclusion /*classifier "spark-2.2-scala-2.11"*/
   val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
   val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
   val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
@@ -135,7 +171,7 @@ object Dependencies {
 
 	val log4j = Seq(log4jApi, log4jCore, log4jSlf4jImpl)
 
-	val spark = Seq(sparkCore, sparkMLlib, sparkSQL)
+	val spark = Seq(sparkCore, sparkMLlib, sparkSQL, sparkYarn)
 
 	val time = Seq(jodaConvert, jodaTime)
 
@@ -166,49 +202,58 @@ object Dependencies {
 		mongodbScala :+
 		sparkSQL :+
     typesafeConfig
-	).map(excludeLog4j)
+	).map(excludeLog4j).map(excludeNetty)
 
 	val producers = (
 		akka ++
 		test :+
 		akkaHttp :+
-		akkaStream
+		akkaStream :+
+		netty
 	).map(excludeLog4j) ++ log4j
 
 	val consumers_spark = (
 		akka ++
 		json ++
 		test ++
-		spark ++
-		hbase :+
+		spark :+
 		kafka :+
 		kafkaStreaming :+
 		kafkaSparkSql :+
     quartz
-	).map(excludeLog4j) ++ log4j
+	).map(excludeNetty).map(excludeLog4j) ++
+		log4j :+
+		nettySpark :+
+		nettyAll :+
+		guava
 
 	val consumers_rt = (
 		akka :+
 		akkaCamel :+
 		camelKafka :+
 		camelWebsocket :+
-		kafka
+		kafka  :+
+		netty
 	).map(excludeLog4j) ++ log4j
 
   val master = (
 	  akka :+
 		akkaHttp :+
-		akkaHttpSpray
+		akkaHttpSpray :+
+		netty
   ).map(excludeLog4j) ++ log4j
 
 	val plugin_elastic_spark = Seq(
 		elasticSearchSpark
 	)
 
-  val plugin_hbase_spark = hbase :+ scalatest
+  val plugin_hbase_spark = (
+		hbase :+
+		scalatest
+	).map(excludeNetty)
 
 	val plugin_solr_spark = Seq(
 		solr,
 		sparkSolr
-	)
+	).map(excludeNetty)
 }

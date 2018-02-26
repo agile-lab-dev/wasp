@@ -12,12 +12,12 @@ import JsonResultsHelper._
 object Configuration_C extends Directives with JsonSupport {
   def getRoute: Route = {
     // extract URI path element as Int
-    pathPrefix("configs") {
+    pathPrefix("configs") { parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
       path("kafka") {
         get {
           complete {
             // complete with serialized Future result
-            ConfigManager.getKafkaConfig.toJson.toAngularOkResponse
+            ConfigManager.getKafkaConfig.toJson.toAngularOkResponse(pretty)
           }
         }
       } ~
@@ -25,7 +25,7 @@ object Configuration_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              ConfigManager.getSparkBatchConfig.toJson.toAngularOkResponse
+              ConfigManager.getSparkBatchConfig.toJson.toAngularOkResponse(pretty)
             }
           }
         } ~
@@ -33,7 +33,7 @@ object Configuration_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              ConfigManager.getSparkStreamingConfig.toJson.toAngularOkResponse
+              ConfigManager.getSparkStreamingConfig.toJson.toAngularOkResponse(pretty)
             }
           }
         } ~
@@ -41,7 +41,7 @@ object Configuration_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              ConfigManager.getElasticConfig.toJson.toAngularOkResponse
+              ConfigManager.getElasticConfig.toJson.toAngularOkResponse(pretty)
             }
           }
         } ~
@@ -49,10 +49,11 @@ object Configuration_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              ConfigManager.getSolrConfig.toJson.toAngularOkResponse
+              ConfigManager.getSolrConfig.toJson.toAngularOkResponse(pretty)
             }
           }
         }
+      }
     }
   }
 }

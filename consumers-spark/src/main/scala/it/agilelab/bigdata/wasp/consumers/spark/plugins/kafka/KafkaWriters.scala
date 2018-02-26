@@ -122,7 +122,6 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
-          .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
           .option("checkpointLocation", checkpointDir)
           .queryName(queryName)
 
@@ -142,14 +141,20 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       conn => s"${conn.host}:${conn.port}"
     }.mkString(",")
 
+    val otherrConfigs = tkc.otherConfigs.map(_.toTupla).toMap
+    val kafkaConfigMap: Map[String, String] = Map[String, String](
+      // Added for backwards compatibility
+      "acks" -> "1"
+    ) ++
+      tkc.otherConfigs.map(_.toTupla)
+
     dsw
       .option("kafka.bootstrap.servers", connectionString)
       .option("serializer.class", tkc.default_encoder)
       .option("key.serializer.class", tkc.encoder_fqcn)
       .option("partitioner.class", tkc.partitioner_fqcn)
-      .option("producer.type", "async")
-      .option("request.required.acks", "1")
-      .option("batch.num.messages", tkc.batch_send_size.toString)
+      .option("batch.size", tkc.batch_send_size.toString)
+      .options(kafkaConfigMap)
   }
 }
 

@@ -1,28 +1,28 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
+import java.net.URI
+import java.util
 import java.util.Properties
 
 import akka.actor.Actor
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
-import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
+import org.apache.http.client.HttpClient
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
+import org.apache.http.util.EntityUtils
 import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.client.solrj.impl.CloudSolrServer
+import org.apache.solr.client.solrj.impl.{CloudSolrServer, HttpClientUtil, Krb5HttpClientConfigurer}
 import org.apache.solr.client.solrj.request.{CollectionAdminRequest, ConfigSetAdminRequest}
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, ConfigSetAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
+import org.apache.solr.common.params.MapSolrParams
 import spray.json.DefaultJsonProtocol
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 
 object SolrAdminActor {
   val name = "SolrAdminActor"
@@ -43,6 +43,7 @@ class SolrAdminActor
 
   var solrConfig: SolrConfigModel = _
   var solrServer: CloudSolrServer = _
+  var httpClient: HttpClient = _
 
   implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
@@ -70,6 +71,13 @@ class SolrAdminActor
     solrConfig = message.solrConfigModel
 
     logger.info(s"Solr - New client created with: config $solrConfig")
+    val jaasPath = System.getenv("java.security.auth.login.config")
+    logger.info(s"Solr Kerberos is enabled with Jaas Path -> ${System.getProperty("java.security.auth.login.config")}")
+
+    if (jaasPath != null) {
+      HttpClientUtil.setConfigurer(new Krb5HttpClientConfigurer())
+    }
+    httpClient = HttpClientUtil.createClient(new MapSolrParams(new util.HashMap[String, String]()))
 
     solrServer = new CloudSolrServer(solrConfig.zookeeperConnections.toString)
 
@@ -203,7 +211,7 @@ class SolrAdminActor
   private def collectionNameWShardsAndReplica(collectionName: String,
                                               numShards: Int,
                                               replicationFactor: Int) =
-    s"${collectionName}_shard${numShards}_replica${replicationFactor}"
+    s"${collectionName}_shard${numShards}_replica$replicationFactor"
 
   private def addMapping(message: AddMapping): Boolean = {
 
@@ -225,30 +233,24 @@ class SolrAdminActor
       s"$liveNodeHead/${collectionNameWShardsAndReplica(message.collection, message.numShards, message.replicationFactor)}/schema/fields"
 
     logger.info(s"$message, uri: '$uri'")
+    val httpRequest = new HttpPost(new URI(uri))
+    httpRequest.addHeader("Content-Type", "application/json")
+    httpRequest.addHeader("Accept", "application/json")
+    httpRequest.setEntity(new StringEntity(message.schema, org.apache.http.entity.ContentType.APPLICATION_JSON))
+    val httpResponse = httpClient.execute(httpRequest)
 
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(
-      HttpRequest(uri = uri)
-        .withHeaders(RawHeader("Content-Type", "application/json"))
-        .withHeaders(RawHeader("Accept", "application/json"))
-        .withMethod(HttpMethods.POST)
-        .withEntity(ContentTypes.`application/json`, message.schema)
-    )
-
-    Await.result(
-      responseFuture.map { res =>
-        res.status match {
-          case OK => {
-            logger.info(
-              s"Solr - Add Mapping response status ${res.status}, $message")
-            true
-          }
-          case _ => {
-            logger.error(s"Solr - Schema NOT created, $message status ${res.status}")
-            false
-          }
-        }
-      }, servicesTimeout.duration
-    )
+    val res = httpResponse.getStatusLine.getStatusCode
+    res match {
+      case 200 =>
+        logger.info(
+          s"Solr - Add Mapping response status $res, $message")
+        true
+      case _ =>
+        val entityString = EntityUtils.toString(httpResponse.getEntity)
+        EntityUtils.consume(httpResponse.getEntity)
+        logger.error(s"Solr - Schema NOT created, $message status $res. entity $entityString")
+        false
+    }
   }
 
   private def addAlias(message: AddAlias): Boolean = {

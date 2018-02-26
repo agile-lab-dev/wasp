@@ -27,6 +27,16 @@ private[wasp] object TestTopicModel {
     schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
+  lazy val avro2 = TopicModel(
+    name = TopicModel.name(topic_name + "2_avro"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "avro",
+    partitionKeyField = None,
+    schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
+
   private val topicSchema =
     TopicModel.generateField("test", "test", Some(
       """
