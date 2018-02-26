@@ -8,7 +8,7 @@ In `docker/start-wasp.sh`, check everything marked as:
     # !!! standalone applications have to ... !!! #
 
 
-## Distributed Spark usage
+## Spark distributed-mode usage
 
 (see `consumers-spark/build.sbt`)
 
@@ -45,7 +45,7 @@ Add this in standalone applications:
     }
 
 
-## YARN usage
+### Hadoop YARN usage
 
 (see `consumers-spark/build.sbt`)
 
