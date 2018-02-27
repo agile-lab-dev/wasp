@@ -5,6 +5,7 @@ object SqlSourceModel{
 }
 case class SqlSourceModel(
                            name: String,
+                           connectionName: String,
                            database: String,
                            dbtable: String
                          ) extends Model

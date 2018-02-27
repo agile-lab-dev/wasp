@@ -15,6 +15,7 @@ class SqlSourceBlImpl(waspDB: WaspDB) extends SqlSourceBl {
 
   private def factory(s: SqlSourceModel) = SqlSourceModel(
     s.name,
+    s.connectionName,
     s.database,
     s.dbtable
   )

@@ -10,10 +10,11 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcConfiguration with Logging {
   override val name: String = sqlModel.name
   override val readerType: String = "jdbc"
+  val jdbcConf = jdbcConfigList.connections(sqlModel.connectionName)
 
   override def read(sc: SparkContext): DataFrame = {
     logger.info(s"Initialize Spark JDBCReader with " +
-      s"\n\tconfig: $jdbcConfig" +
+      s"\n\tconfig: $jdbcConf" +
       s"\n\tmodel: $sqlModel"
       )
 
@@ -36,19 +37,19 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
 
     def getJdbcUrl(dbType: String): String = dbType match {
         // Different db have different connection url structure. List to be updated
-      case "oracle" => s"jdbc:oracle:thin://@${jdbcConfig.connectionString}/${sqlModel.database}"
+      case "oracle" => s"jdbc:oracle:thin://@${jdbcConf.connectionString}/${sqlModel.database}"
       case _ => throw new UnsupportedOperationException(s"jdbc db type '$dbType' not supported in jdbc reader")
     }
 
     //jdbc:oracle:thin://@<hostname>:1521/<db>
     val mandatoryOpts = Map(
-      "url" -> getJdbcUrl(jdbcConfig.dbType),
+      "url" -> getJdbcUrl(jdbcConf.dbType),
       "dbtable" -> sqlModel.dbtable,
-      "user" -> jdbcConfig.user,
-      "password" -> jdbcConfig.password,
-      "driver" -> jdbcConfig.driverName
+      "user" -> jdbcConf.user,
+      "password" -> jdbcConf.password,
+      "driver" -> jdbcConf.driverName
     )
-    val optPartitioningInfo = jdbcConfig.partitioningInfo.map(
+    val optPartitioningInfo = jdbcConf.partitioningInfo.map(
       pi =>
         Map(
           "partitionColumn" -> pi.partitionColumn,
@@ -56,11 +57,11 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
           "upperBound" -> pi.upperBound
         )
     ).getOrElse(Map.empty[String, String])
-    val optNumPartitions = jdbcConfig.numPartitions.map(
+    val optNumPartitions = jdbcConf.numPartitions.map(
       np =>
         "numPartitions" -> np.toString
     ).toMap
-    val optFetchSize = jdbcConfig.fetchSize.map(
+    val optFetchSize = jdbcConf.fetchSize.map(
       fs =>
         "fetchsize" -> fs.toString
     ).toMap

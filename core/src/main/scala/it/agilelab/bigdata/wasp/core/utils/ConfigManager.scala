@@ -33,7 +33,7 @@ object ConfigManager {
   private var elasticConfig: ElasticConfigModel = _
   private var solrConfig: SolrConfigModel = _
   private var hbaseConfig: HBaseConfigModel = _
-  private var jdbcConfig: JdbcConfigModel = _
+  private var jdbcConfigs: JdbcConfigModel = _
 
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
@@ -197,22 +197,21 @@ object ConfigManager {
   }
 
   private def initializeJdbcConfig(): Unit = {
-    jdbcConfig = retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
+    jdbcConfigs = retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
   }
 
   private def getDefaultJdbcConfig: JdbcConfigModel = {
-    val jdbcSubConfig = conf.getConfig("jdbc")
+    val jdbcSubConfig = conf.getConfig("jdbc").getConfigList("connections").asScala
+
+    val connectionsMap = jdbcSubConfig.map{
+      subConf =>
+        val jdbcConf = readJdbcConfig(subConf)
+        jdbcConf.name -> jdbcConf
+    }.toMap
+
     JdbcConfigModel(
-      jdbcConfigName,//name
-      jdbcSubConfig.getString("dbType"),
-      jdbcSubConfig.getString("host"),
-      jdbcSubConfig.getInt("port"),
-      jdbcSubConfig.getString("user"),//user
-      jdbcSubConfig.getString("password"),//password
-      jdbcSubConfig.getString("driverName"),//driverName
-      readJdbcPartitioningInfo(jdbcSubConfig, "partitioningInfo"), //partitioningInfo
-      if(jdbcSubConfig.hasPath("numPartitions")) Some(jdbcSubConfig.getInt("numPartitions")) else None,//numPartitions
-      if(jdbcSubConfig.hasPath("fetchSize")) Some(jdbcSubConfig.getInt("fetchSize")) else None//fetchSize
+      jdbcConfigName,
+      connectionsMap
     )
   }
 
@@ -303,10 +302,25 @@ object ConfigManager {
   }
 
   def getJdbcConfig: JdbcConfigModel = {
-    if (jdbcConfig == null) {
+    if (jdbcConfigs == null) {
       throw new Exception("The jdbc configuration was not initialized")
     }
-    jdbcConfig
+    jdbcConfigs
+  }
+
+  private def readJdbcConfig(config: Config): JdbcConnectionConfig = {
+    JdbcConnectionConfig(
+      config.getString("name"),//name
+      config.getString("dbType"),
+      config.getString("host"),
+      config.getInt("port"),
+      config.getString("user"),//user
+      config.getString("password"),//password
+      config.getString("driverName"),//driverName
+      readJdbcPartitioningInfo(config, "partitioningInfo"), //partitioningInfo
+      if(config.hasPath("numPartitions")) Some(config.getInt("numPartitions")) else None,//numPartitions
+      if(config.hasPath("fetchSize")) Some(config.getInt("fetchSize")) else None//fetchSize
+    )
   }
 
   private def readConnections(config: Config,
@@ -436,5 +450,5 @@ trait HBaseConfiguration {
 }
 
 trait JdbcConfiguration {
-  lazy val jdbcConfig: JdbcConfigModel = ConfigManager.getJdbcConfig
+  lazy val jdbcConfigList: JdbcConfigModel = ConfigManager.getJdbcConfig
 }
