@@ -1,15 +1,16 @@
-# README
+# Whitelabel - Application example
 
-## START-WASP.SH usage
+## General usage
+(see `docker/start-whitelabel-wasp.sh`, `docker/start-wasp.sh`)
 
-Pay attention to check everything marked as
+In `docker/start-wasp.sh`, check everything marked as:
 
     # !!! standalone applications have to ... !!! #
 
 
-## Distributed Spark usage
+## Spark distributed-mode usage
 
-(see "consumers-spark/build.sbt")
+(see `consumers-spark/build.sbt`)
 
 Add this in standalone applications:
     
@@ -44,9 +45,9 @@ Add this in standalone applications:
     }
 
 
-## YARN usage
+### Hadoop YARN usage
 
-(see "consumers-spark/build.sbt")
+(see `consumers-spark/build.sbt`)
 
 Add this in standalone applications:
 
