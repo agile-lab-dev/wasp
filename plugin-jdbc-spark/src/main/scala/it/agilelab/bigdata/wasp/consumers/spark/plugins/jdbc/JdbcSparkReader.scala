@@ -19,6 +19,8 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
 
     val readerOptions = getReaderOptions
 
+    logger.info(s"Initialize Spark JDBCReader with options: $readerOptions")
+
     //Workaround SparkSession retrieval
     val ss: SparkSession = new SQLContext(sc).sparkSession
 
@@ -31,12 +33,20 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
   }
 
   private def getReaderOptions = {
+
+    def getJdbcUrl(dbType: String): String = dbType match {
+        // Different db have different connection url structure. List to be updated
+      case "oracle" => s"jdbc:oracle:thin://@${jdbcConfig.connectionString}/${sqlModel.database}"
+      case _ => throw new UnsupportedOperationException(s"jdbc db type '$dbType' not supported in jdbc reader")
+    }
+
+    //jdbc:oracle:thin://@<hostname>:1521/<db>
     val mandatoryOpts = Map(
-      "url" -> s"jdbc:${jdbcConfig.dbType}:${jdbcConfig.connectionString}/${sqlModel.database}",
+      "url" -> getJdbcUrl(jdbcConfig.dbType),
       "dbtable" -> sqlModel.dbtable,
       "user" -> jdbcConfig.user,
       "password" -> jdbcConfig.password,
-      "driverName" -> jdbcConfig.driverName
+      "driver" -> jdbcConfig.driverName
     )
     val optPartitioningInfo = jdbcConfig.partitioningInfo.map(
       pi =>
