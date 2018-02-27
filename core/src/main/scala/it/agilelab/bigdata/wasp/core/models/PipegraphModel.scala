@@ -82,6 +82,7 @@ case class PipegraphModel(override val name: String,
                           rtComponents: List[RTModel],
                           dashboard: Option[DashboardModel] = None,
                           var isActive: Boolean = false) extends Model {
+
   def generateStandardPipegraphName: String = s"pipegraph_$name"
   
   def hasSparkComponents: Boolean = legacyStreamingComponents.nonEmpty || structuredStreamingComponents.nonEmpty

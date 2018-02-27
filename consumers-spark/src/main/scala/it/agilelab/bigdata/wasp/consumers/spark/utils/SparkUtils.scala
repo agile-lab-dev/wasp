@@ -10,7 +10,6 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration,
 import org.apache.spark.SparkConf
 
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
 
 /**
 	* Utilities related to Spark.
@@ -34,10 +33,15 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
     var sparkConf = new SparkConf()
       .setAppName(sparkConfigModel.appName)
       .setMaster(sparkConfigModel.master.toString)
-      .set("spark.driver.cores", sparkConfigModel.driverCores.toString)
-      .set("spark.driver.memory", sparkConfigModel.driverMemory) // NOTE: will only work in yarn-cluster
-      .set("spark.driver.host", sparkConfigModel.driverHostname)
-      .set("spark.driver.bindAddress", sparkConfigModel.driverBindAddress)
+      .set("spark.submit.deployMode", sparkConfigModel.driver.submitDeployMode)  // where the driver have to be executed (client or cluster)
+      .set("spark.driver.cores", sparkConfigModel.driver.cores.toString)
+      .set("spark.driver.memory", sparkConfigModel.driver.memory) // NOTE: will only work in yarn-cluster
+      .set("spark.driver.host", sparkConfigModel.driver.host)
+      .set("spark.driver.bindAddress", sparkConfigModel.driver.bindAddress)
+    if (sparkConfigModel.driver.port != 0)
+      sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driver.port.toString)
+
+    sparkConf
       .set("spark.executor.cores", sparkConfigModel.executorCores.toString)
       .set("spark.executor.memory", sparkConfigModel.executorMemory)
       .set("spark.executor.instances", sparkConfigModel.executorInstances.toString)
@@ -52,17 +56,13 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
 
-    if (sparkConfigModel.driverPort != 0)
-      sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driverPort.toString)
-
     // add specific Elastic configurations
     val conns = elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
     val address = conns.map(e => s"${e.host}:${e.port}").mkString(",")
-
     sparkConf = sparkConf.set("es.nodes", address)
 
-    logger.info(s"Resulting SparkConf:\n\t${sparkConf.toDebugString.replace("\n", "\n\t")}")
 
+    logger.info(s"Resulting SparkConf:\n\t${sparkConf.toDebugString.replace("\n", "\n\t")}")
 
     sparkConf
   }
