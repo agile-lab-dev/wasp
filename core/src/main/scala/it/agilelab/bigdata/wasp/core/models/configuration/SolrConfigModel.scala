@@ -10,6 +10,5 @@ import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnectio
 case class SolrConfigModel(
                             zookeeperConnections: ZookeeperConnection,
                             apiEndPoint: Option[ConnectionConfig],
-                            name: String,
-                            cluster_name: String
+                            name: String
                           ) extends Model

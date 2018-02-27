@@ -115,7 +115,7 @@ class CamelElasticWriter(indexBL: IndexBL, writer: WriterModel) extends Producer
     if (??[Boolean](WaspSystem.elasticAdminActor, CheckOrCreateIndex(indexName, index.name, index.dataType, index.getJsonSchema))) {
       //
     }
-    val clusterName = ConfigManager.getElasticConfig.cluster_name
+    val clusterName = ConfigManager.getElasticConfig.cluster_name // cluster_name was removed due to not used anymore
     //TODO se ci sono più connections assegnare così 'ips' va bene?
     s"elasticsearch://$clusterName?operation=INDEX&indexName=${indexName}&indexType=${index.dataType}&ip=${ips}"
   }

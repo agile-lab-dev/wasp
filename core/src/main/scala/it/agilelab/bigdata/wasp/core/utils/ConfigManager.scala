@@ -162,7 +162,6 @@ object ConfigManager {
     val elasticSubConfig = conf.getConfig("elastic")
     ElasticConfigModel(
       readConnections(elasticSubConfig, "connections"),
-      elasticSubConfig.getString("cluster-name"),
       elasticConfigName
     )
   }
@@ -172,8 +171,7 @@ object ConfigManager {
     SolrConfigModel(
       readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
       Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
-      solrConfigName,
-      "wasp"
+      solrConfigName
     )
   }
   
