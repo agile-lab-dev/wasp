@@ -52,7 +52,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.fileserver.port", sparkConfigModel.fileserverPort.toString)
       .set("spark.ui.retainedStages", sparkConfigModel.retainedStagesJobs.toString)
       .set("spark.ui.retainedTasks", sparkConfigModel.retainedTasks.toString)
-      .set("spark.ui.retainedJobs", sparkConfigModel.retainedStagesJobs.toString)
+      .set("spark.ui.retainedJobs", sparkConfigModel.retainedJobs.toString)
       .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
 

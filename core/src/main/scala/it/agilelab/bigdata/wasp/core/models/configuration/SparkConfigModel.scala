@@ -16,6 +16,7 @@ trait SparkConfigModel extends Model {
 	val broadcastPort: Int
 	val fileserverPort: Int
 	val retainedStagesJobs: Int
+	val retainedJobs: Int
 	val retainedTasks: Int
 	val retainedExecutions: Int
 	val retainedBatches: Int
@@ -35,6 +36,7 @@ case class SparkStreamingConfigModel(
 																			fileserverPort: Int,
 																			retainedStagesJobs: Int,
 																			retainedTasks: Int,
+																			retainedJobs: Int,
 																			retainedExecutions: Int,
 																			retainedBatches: Int,
 
@@ -58,6 +60,7 @@ case class SparkBatchConfigModel(
 																	fileserverPort: Int,
 																	retainedStagesJobs: Int,
 																	retainedTasks: Int,
+																	retainedJobs: Int,
 																	retainedExecutions: Int,
 																	retainedBatches: Int,
 

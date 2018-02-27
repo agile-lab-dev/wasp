@@ -110,6 +110,7 @@ object ConfigManager {
       sparkSubConfig.getInt("fileserver-port"),
       sparkSubConfig.getInt("retained-stages-jobs"),
       sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-jobs"),
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches"),
 
@@ -142,6 +143,7 @@ object ConfigManager {
       sparkSubConfig.getInt("fileserver-port"),
       sparkSubConfig.getInt("retained-stages-jobs"),
       sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-jobs"),
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches"),
       sparkBatchConfigName
