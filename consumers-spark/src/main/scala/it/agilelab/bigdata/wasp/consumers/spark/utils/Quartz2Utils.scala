@@ -3,12 +3,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 import it.agilelab.bigdata.wasp.consumers.spark.batch.StartBatchJobSender
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.models.BatchSchedulerModel
-import org.quartz.{JobDetail, Scheduler, Trigger}
+import org.quartz.CronScheduleBuilder._
 import org.quartz.JobBuilder._
 import org.quartz.TriggerBuilder._
-import org.quartz.CronScheduleBuilder._
 import org.quartz.impl.StdSchedulerFactory
-
+import org.quartz.{JobDetail, Scheduler, Trigger}
 
 /**
 	* Utilities for Quartz 2 scheduler.
@@ -28,13 +27,13 @@ object Quartz2Utils {
 	}
 	
 	implicit class BatchSchedulerModelQuartz2Support(schedulerModel: BatchSchedulerModel) {
-		private val batchJobModel = ConfigBL.batchJobBL.getById(schedulerModel.batchJob.get.getValue.toHexString).get
+		private val batchJobModel = ConfigBL.batchJobBL.getByName(schedulerModel.batchJob.get).get
 		
-		def getQuartzJob(batchMasterGuardianActorPath: String): JobDetail = {
+		def getQuartzJob(sparkConsumersBatchMasterGuardianActorPath: String): JobDetail = {
 			val job = newJob(classOf[StartBatchJobSender])
 				.withIdentity(batchJobModel.name, batchJobModel.owner)
-				.usingJobData("jobId", batchJobModel._id.get.getValue.toHexString)
-				.usingJobData("batchMasterGuardianActorPath", batchMasterGuardianActorPath)
+				.usingJobData("jobName", batchJobModel.name)
+				.usingJobData("sparkConsumersBatchMasterGuardianActorPath", sparkConsumersBatchMasterGuardianActorPath)
 				.build()
 			
 			job

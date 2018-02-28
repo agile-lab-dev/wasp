@@ -2,30 +2,29 @@ package it.agilelab.bigdata.wasp.core
 
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import org.mongodb.scala.bson.BsonObjectId
 
 /**
-	* Default system pipegraphs: logging & raw.
+	* Default system pipegraphs.
 	*/
 
 object SystemPipegraphs {
-	/** Logger pipegraph & related */
-	lazy val loggerPipegraphName = "LoggerPipegraph"
-	lazy val loggerTopic = LoggerTopic()
-	lazy val loggerProducer = LoggerProducer()
-	lazy val loggerIndex = LoggerIndex()
-	lazy val loggerPipegraph = LoggerPipegraph()
 
-	/** Raw pipegraph & related */
-	//lazy val rawPipegraphName = "RawPipegraph"
-	//lazy val rawTopic = RawTopic()
-	//lazy val rawIndex = RawIndex()
-	//lazy val rawPipegraph = RawPipegraph()
+	/** Logger  */
+
+	/* Topic, Index, Raw for Producer, Pipegraph */
+	lazy val loggerTopic = LoggerTopicModel()
+	lazy val loggerIndex = LoggerIndex()
+
+	/* Producer */
+	lazy val loggerProducer = LoggerProducer()
+
+	/* Pipegraph */
+	lazy val loggerPipegraph = LoggerPipegraph()
 }
 
-private[wasp] object LoggerTopic {
+private[wasp] object LoggerTopicModel {
 
-	val topic_name = "Logger"
+	private val topic_name = "logger"
 
 	def apply() = TopicModel(
 		name = TopicModel.name(topic_name),
@@ -34,136 +33,118 @@ private[wasp] object LoggerTopic {
 		replicas = 1,
 		topicDataType = "avro",
 		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
-		_id = Some(BsonObjectId())
+		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
 	)
 
-	private def topicSchema = s"${TopicModel.generateField("Logging", "Logging", None)}"
-
+	private val topicSchema =
+		TopicModel.generateField("logging", "logging", Some(
+			"""
+				|				 {
+				|            "name": "log_source",
+				|            "type": "string",
+				|            "doc": "Class that logged this message"
+				|        },
+				|        {
+				|            "name": "log_level",
+				|            "type": "string",
+				|            "doc": "Logged message level"
+				|        },
+				|        {
+				|            "name": "message",
+				|            "type": "string",
+				|            "doc": "Logged message"
+				|        },
+				|        {
+				|            "name": "timestamp",
+				|            "type": "string",
+				|            "doc": "Logged message timestamp in  ISO-8601 format"
+				|        },
+				|        {
+				|            "name": "thread",
+				|            "type": "string",
+				|            "doc": "Thread that logged this message"
+				|        },
+				|        {
+				|            "name": "cause",
+				|            "type": "string",
+				|            "doc": "Message of the logged exception attached to this logged message",
+				|        },
+				|        {
+				|            "name": "stack_trace",
+				|            "type": "string",
+				|            "doc": "Stacktrace of the logged exception attached to this logged message",
+				|        },
+			""".stripMargin))
 }
 
 private[wasp] object LoggerProducer {
-	import SystemPipegraphs._
 
 	def apply() = ProducerModel(
 		name = "LoggerProducer",
 		className = "it.agilelab.bigdata.wasp.producers.InternalLogProducerGuardian",
-		id_topic = Some(loggerTopic._id.get),
+		topicName = Some(SystemPipegraphs.loggerTopic.name),
 		isActive = false,
-		None,
+    configuration = None,
 		isRemote = false,
-		isSystem = true,
-		Some(BsonObjectId())
-	)
+		isSystem = true)
 }
 
 private[wasp] object LoggerIndex {
 
-	val index_name = "Logger"
+	val index_name = "logger"
 
 	def apply() = IndexModel(
 		name = IndexModel.normalizeName(index_name),
 		creationTime = System.currentTimeMillis,
 		schema = JsonConverter.fromString(indexSchema),
-		_id = Some(BsonObjectId()),
-		rollingIndex = true
+		rollingIndex = false
 	)
 
-	private def indexSchema = s"""
-    {"log":
-        {"properties":{
-          "log_source":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-          "log_level":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-          "log_class":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-          "message":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-          "cause":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"},
-          "stack_trace":{"type":"string","index":"not_analyzed","store":"true","enabled":"true"}
-        }}}"""
+	private def indexSchema =
+		"""
+    	{ "properties":
+        [
+          { "name":"log_source", "type":"string", "stored":true },
+          { "name":"log_level", "type" : "string", "stored":true },
+          { "name":"message", "type":"string", "stored":true },
+          { "name":"timestamp", "type" : "date", "stored":true },
+          { "name":"thread", "type":"string", "stored":true },
+          { "name":"cause", "type":"string", "stored":true, "required":false },
+          { "name":"stack_trace", "type":"string", "stored":true, "required":false }
+        ]
+      }
+		"""
 }
 
 private[wasp] object LoggerPipegraph {
 	import SystemPipegraphs._
 
+	val loggerPipegraphName = "LoggerPipegraph"
+
 	def apply() = PipegraphModel(
-		name = SystemPipegraphs.loggerPipegraphName,
+		name = loggerPipegraphName,
 		description = "System Logger Pipegraph",
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
-		legacyStreamingComponents = List(LegacyStreamingETLModel(
-			"write on index", List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic._id.get)),
-			WriterModel.elasticWriter(loggerIndex.name, loggerIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
-		),
-		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
-		rtComponents = Nil,
+
+		legacyStreamingComponents = List(),
+		structuredStreamingComponents = List(
+      StructuredStreamingETLModel(
+        name = "write on index",
+        inputs = List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic.name)),
+        output = WriterModel.solrWriter(
+          loggerIndex.name,
+          loggerIndex.name
+        ),
+        mlModels = List(),
+        strategy = None,
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+        config = Map())
+    ),
+
+		rtComponents = List(),
 		dashboard = None,
-		isActive = false,
-		_id = Some(BsonObjectId())
-	)
+		isActive = false
+  )
 }
-/*
-private[wasp] object RawTopic {
-
-	val topic_name = "Raw"
-
-	def apply() = TopicModel(
-		name = TopicModel.name(topic_name),
-		creationTime = System.currentTimeMillis,
-		partitions = 3,
-		replicas = 1,
-		topicDataType = "avro",
-		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
-		_id = Some(BsonObjectId())
-	)
-
-	private def topicSchema = s"""
-    {"type":"record",
-    "namespace":"Raw",
-    "name":"Raw",
-    "fields":[
-      ${TopicModel.schema_base}
-    ]}"""
-}
-
-private[wasp] object RawIndex {
-
-	val index_name = "Raw"
-
-	def apply() = IndexModel(
-		name = IndexModel.normalizeName(index_name),
-		creationTime = System.currentTimeMillis,
-		schema = JsonConverter.fromString(indexSchema),
-		_id = Some(BsonObjectId()),
-		rollingIndex = true
-	)
-
-	private val indexSchema = s"""
-    {"raw":
-        {"properties":{
-          ${IndexModel.schema_base_elastic}
-        }}}"""
-}
-
-private[wasp] object RawPipegraph {
-	import SystemPipegraphs._
-
-	def apply() = PipegraphModel(
-		name = SystemPipegraphs.rawPipegraphName,
-		description = "System Raw Pipegraph",
-		owner = "system",
-		isSystem = true,
-		creationTime = System.currentTimeMillis,
-		legacyStreamingComponents = List(LegacyStreamingETLModel(
-			"write on index",
-			List(ReaderModel.kafkaReader(rawTopic.name, rawTopic._id.get)),
-			WriterModel.elasticWriter(rawIndex.name, rawIndex._id.get), List(), None, LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED)
-		),
-		structuredStreamingComponents = List.empty[StructuredStreamingETLModel],
-		rtComponents = Nil,
-		dashboard = None,
-		isActive = false,
-		_id = Some(BsonObjectId())
-	)
-}
-*/

@@ -1,9 +1,12 @@
 package it.agilelab.bigdata.wasp.core.logging
 
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import org.slf4j.spi.LocationAwareLogger._
-import org.slf4j.{Logger, LoggerFactory}
+import java.time.Instant
 
+import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.logging.LogLevel.LogLevel
+import it.agilelab.bigdata.wasp.core.logging.Logging.LogEvent
+import org.apache.commons.lang3.exception.ExceptionUtils
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * SLF4J logger wrapper that also logs to the logger actor at `WaspSystem.loggerActor`
@@ -14,82 +17,84 @@ private[logging] final class WaspLogger(protected val slf4jLogger: Logger) {
   def error(msg: => String) {
     if (slf4jLogger.isErrorEnabled) {
       slf4jLogger.error(msg)
-      remoteLog(ERROR_INT, msg)
+      remoteLog(LogLevel.Error, msg)
     }
   }
-  
+
   def error(msg: => String, t: Throwable) {
     if (slf4jLogger.isErrorEnabled) {
       slf4jLogger.error(msg, t)
-      remoteLog(ERROR_INT, msg, t)
+      remoteLog(LogLevel.Error, msg, Option(t))
     }
   }
-  
+
   def warn(msg: => String) {
     if (slf4jLogger.isWarnEnabled) {
       slf4jLogger.warn(msg)
-      remoteLog(WARN_INT, msg)
+      remoteLog(LogLevel.Warn, msg)
     }
   }
-  
+
   def warn(msg: => String, t: Throwable) {
     if (slf4jLogger.isWarnEnabled) {
       slf4jLogger.warn(msg, t)
-      remoteLog(WARN_INT, msg, t)
+      remoteLog(LogLevel.Warn, msg, Option(t))
     }
   }
-  
+
   def info(msg: => String) {
     if (slf4jLogger.isInfoEnabled) {
       slf4jLogger.info(msg)
-      remoteLog(INFO_INT, msg)
+      remoteLog(LogLevel.Info, msg)
     }
   }
-  
+
   def info(msg: => String, t: Throwable) {
     if (slf4jLogger.isInfoEnabled) {
       slf4jLogger.info(msg, t)
-      remoteLog(INFO_INT, msg, t)
+      remoteLog(LogLevel.Info, msg, Option(t))
     }
   }
-  
+
   def debug(msg: => String) {
     if (slf4jLogger.isDebugEnabled) {
       slf4jLogger.debug(msg)
-      remoteLog(DEBUG_INT, msg)
+      remoteLog(LogLevel.Debug, msg)
     }
   }
-  
+
   def debug(msg: => String, t: Throwable) {
     if (slf4jLogger.isDebugEnabled) {
       slf4jLogger.debug(msg, t)
-      remoteLog(DEBUG_INT, msg, t)
+      remoteLog(LogLevel.Debug, msg, Option(t))
     }
   }
-  
+
   def trace(msg: => String) {
     if (slf4jLogger.isTraceEnabled) {
       slf4jLogger.trace(msg)
-      remoteLog(TRACE_INT, msg)
+      remoteLog(LogLevel.Trace, msg)
     }
   }
-  
+
   def trace(msg: => String, t: Throwable) {
     if (slf4jLogger.isTraceEnabled) {
       slf4jLogger.trace(msg, t)
-      remoteLog(TRACE_INT, msg, t)
+      remoteLog(LogLevel.Trace, msg, Option(t))
     }
   }
-  
-  protected def remoteLog(level: Int, msg: String, throwable: Throwable = null): Unit = {
-    if (WaspSystem.loggerActor != null) {
-      level match {
-        case DEBUG_INT => WaspSystem.loggerActor ! akka.event.Logging.Debug(loggerName, classOf[WaspLogger], msg)
-        case INFO_INT => WaspSystem.loggerActor ! akka.event.Logging.Info(loggerName, classOf[WaspLogger], msg)
-        case WARN_INT => WaspSystem.loggerActor ! akka.event.Logging.Warning(loggerName, classOf[WaspLogger], msg)
-        case ERROR_INT => WaspSystem.loggerActor ! akka.event.Logging.Error(loggerName, classOf[WaspLogger], msg)
-      }
-    }
+
+  def remoteLog(logLevel: LogLevel, msg:String, maybeThrowable: Option[Throwable] = None): Unit = {
+    val maybeCause = maybeThrowable.map(_.getMessage)
+    val maybeStackTrace = maybeThrowable.map(ExceptionUtils.getStackTrace)
+    remoteLog(logLevel,msg,maybeCause,maybeStackTrace)
+  }
+
+  def remoteLog(logLevel: LogLevel, msg:String, maybeCause: Option[String], maybeStackTrace: Option[String]): Unit =
+    remoteLog(LogEvent(logLevel, Instant.now(), Thread.currentThread().getName, loggerName, msg, maybeCause, maybeStackTrace))
+
+  def remoteLog(event: LogEvent): Unit = if(WaspSystem.loggerActor != null) {
+    WaspSystem.loggerActor ! event
   }
 }
 

@@ -336,7 +336,7 @@ An example of a Pipegraph definition:
                                Some(StrategyModel("it.agilelab.bigdata.wasp.pipegraph.metro.strategies.MetroStrategy", None))
                       )
                   ),
-                  rt = Nil,
+                  rt = List(),
                   dashboard = None,
                   isActive = false,
                   _id = Some(BSONObjectID.generate))

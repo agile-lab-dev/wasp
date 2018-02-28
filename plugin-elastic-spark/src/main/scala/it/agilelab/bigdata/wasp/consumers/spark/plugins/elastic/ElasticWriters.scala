@@ -21,7 +21,7 @@ import org.elasticsearch.spark.sql.EsSparkSQL
 
 class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
                                         ssc: StreamingContext,
-                                        id: String,
+                                        name: String,
                                         elasticAdminActor: ActorRef)
     extends SparkLegacyStreamingWriter
     with ElasticConfiguration
@@ -29,7 +29,7 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
 
   override def write(stream: DStream[String]): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -47,10 +47,11 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
             _.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
           .mkString(",")
 
-        val optionsBroadcasted = ssc.sparkContext.broadcast(
-          Map("es.nodes" -> address,
-              "es.input.json" -> "true",
-              "es.batch.size.entries" -> "1"))
+        val options = Map("es.nodes" -> address,
+                          "es.input.json" -> "true",
+                          "es.batch.size.entries" -> "1") ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
+
+        val optionsBroadcasted = ssc.sparkContext.broadcast(options)
 
         logger.info(
           s"Write to elastic with spark streaming. Configuration passed: options: ${optionsBroadcasted.value}, resource: ${resourceBroadcast.value}")
@@ -65,14 +66,14 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 }
 
 class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
                                             ss: SparkSession,
-                                            id: String,
+                                            name: String,
                                             elasticAdminActor: ActorRef)
     extends SparkStructuredStreamingWriter
     with ElasticConfiguration
@@ -82,7 +83,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
                      queryName: String,
                      checkpointDir: String): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -99,6 +100,11 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(s"The index name must be all lowercase: $index")
       }
 
+
+
+      val options = Map("checkpointLocation" -> checkpointDir) ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
+
+
       if (??[Boolean](
           elasticAdminActor,
         CheckOrCreateIndex(
@@ -108,7 +114,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           index.getJsonSchema))) {
 
         stream.writeStream
-          .option("checkpointLocation", checkpointDir)
+          .options(options)
           .format("es")
           .queryName(queryName)
           .start(resource)
@@ -119,7 +125,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 
@@ -127,7 +133,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 class ElasticSparkWriter(indexBL: IndexBL,
                          sc: SparkContext,
-                         id: String,
+                         name: String,
                          elasticAdminActor: ActorRef)
     extends SparkWriter
     with ElasticConfiguration
@@ -135,7 +141,7 @@ class ElasticSparkWriter(indexBL: IndexBL,
 
   override def write(data: DataFrame): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -166,10 +172,13 @@ class ElasticSparkWriter(indexBL: IndexBL,
                 .getOrElse("") == "binary")
             .mkString(","))
 
+
         //TODO perchè togliendo la parte commentata la scrittura fallisce?
         val options = Map(
           "es.nodes" -> addressBroadcast.value,
-          /* "es.input.json" -> "true",*/ "es.batch.size.entries" -> "1")
+          /* "es.input.json" -> "true",*/
+          "es.batch.size.entries" -> "1") ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
+
         logger.info(s"Data schema: ${data.schema}")
         logger.info(
           s"Write to elastic with this configuration: options: $options, resource: ${index.resource}")
@@ -181,7 +190,7 @@ class ElasticSparkWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 }

@@ -100,7 +100,7 @@ object KafkaReader extends StreamingReader with Logging {
 
     val kafkaConfigMap: Map[String, String] = Map(
       "zookeeper.connect" -> kafkaConfig.zookeeperConnections.getZookeeperConnection(),
-      "zookeeper.connection.timeout.ms" -> kafkaConfig.zookeeperConnections.connections.headOption.map(_.timeout)
+      "zookeeper.connection.timeout.ms" -> kafkaConfig.zookeeperConnections.connections.headOption.flatMap(_.timeout)
         .getOrElse(ConfigManager.getWaspConfig.servicesTimeoutMillis)
         .toString
     )

@@ -15,9 +15,11 @@ import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql._
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
+import shapeless.labelled.FieldType
 
 /**
   * Created by matbovet on 02/09/2016.
@@ -44,12 +46,25 @@ object SolrSparkWriter {
     }
     doc.setField("id", id)
 
-    val fieldname = r.schema.fieldNames
-    fieldname.foreach { f =>
 
-      if (!r.isNullAt(r.fieldIndex(f)))
-        doc.setField(f, r.getAs(f))
+    def convert(doc: SolrInputDocument, fieldType: StructType, row: Row, parentPath: Option[String] = None): Unit = {
+      fieldType.foreach { structField =>
+        if (!row.isNullAt(row.fieldIndex(structField.name))) {
+          structField.dataType match {
+            case f: StructType => {
+              val path = parentPath.map(p => p + "." + structField.name).orElse(Some(structField.name))
+              convert(doc, f, row.getStruct(row.fieldIndex(structField.name)), path)
+            }
+            case f => {
+              val path = parentPath.map(p => p + "." + structField.name).getOrElse(structField.name)
+              doc.setField(path, row.getAs(structField.name))
+            }
+          }
+        }
+      }
     }
+
+    convert(doc, r.schema, r)
 
     doc
   }
@@ -57,7 +72,7 @@ object SolrSparkWriter {
 
 class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
                                      ssc: StreamingContext,
-                                     id: String,
+                                     name: String,
                                      solrAdminActor: ActorRef)
   extends SparkLegacyStreamingWriter
     with SolrConfiguration
@@ -66,7 +81,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
   override def write(stream: DStream[String]): Unit = {
 
     val sqlContext = SQLContext.getOrCreate(ssc.sparkContext)
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -91,7 +106,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
             } catch {
               case e: Exception =>
                 val msg = s"Unable to create Solr document. Error message: ${e.getMessage}"
-                logger.error(msg)
+                //logger.error(msg) executed in Spark workers-> the closure have to be serializable
                 throw new Exception(msg, e)
             }
           }
@@ -108,14 +123,14 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 }
 
 class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
                                          ss: SparkSession,
-                                         id: String,
+                                         name: String,
                                          solrAdminActor: ActorRef)
   extends SparkStructuredStreamingWriter
     with SolrConfiguration
@@ -126,7 +141,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
                      checkpointDir: String): Unit = {
 
     // get index model from BL
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -160,7 +175,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION the spark stream won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION the spark stream won't start")
     }
   }
 }
@@ -212,7 +227,7 @@ class SolrForeachWriter(ss: SparkSession,
 
 class SolrSparkWriter(indexBL: IndexBL,
                       sc: SparkContext,
-                      id: String,
+                      name: String,
                       solrAdminActor: ActorRef)
   extends SparkWriter
     with SolrConfiguration
@@ -220,7 +235,7 @@ class SolrSparkWriter(indexBL: IndexBL,
 
   override def write(data: DataFrame): Unit = {
 
-    val indexOpt: Option[IndexModel] = indexBL.getById(id)
+    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -243,7 +258,7 @@ class SolrSparkWriter(indexBL: IndexBL,
           } catch {
             case e: Exception =>
               val msg = s"Unable to create Solr document. Error message: ${e.getMessage}"
-              logger.error(msg)
+              //logger.error(msg) executed in Spark workers-> the closure have to be serializable
               throw new Exception(msg, e)
           }
         }
@@ -260,7 +275,7 @@ class SolrSparkWriter(indexBL: IndexBL,
       }
 
     } else {
-      logger.warn(s"The index '$id' does not exits pay ATTENTION spark won't start")
+      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
     }
   }
 }

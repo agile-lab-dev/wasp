@@ -11,6 +11,7 @@ import org.apache.commons.cli.CommandLine
   */
 
 object NifiProducersNodeLauncher extends ProducersNodeLauncherTrait {
+
   override def launch(commandLine: CommandLine): Unit = {
     super.launch(commandLine)
     waspDB.insertIfNotExists[ProducerModel](NifiProducerModel.nifiProducer)

@@ -40,27 +40,27 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     // services timeout, used below
     val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
     // implicit timeout used below
-    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis, TimeUnit.MILLISECONDS)
+    implicit val timeout: Timeout = new Timeout(servicesTimeoutMillis - 1000, TimeUnit.MILLISECONDS)
     startupElastic(servicesTimeoutMillis)
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
+    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointName.get, elasticAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model name '${writerModel.name}'")
+    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointName.get, elasticAdminActor_)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the elastic spark batch writer with this writer model id '${writerModel.endpointId.get.getValue.toHexString}'")
-    new ElasticSparkWriter(indexBL, sc, writerModel.endpointId.get.getValue.toHexString, elasticAdminActor_)
+    logger.info(s"Initialize the elastic spark batch writer with this writer model name '${writerModel.name}'")
+    new ElasticSparkWriter(indexBL, sc, writerModel.name, elasticAdminActor_)
   }
 
-  override def getSparkReader(id: String, name: String): SparkReader = {
-    val indexOpt = indexBL.getById(id)
+  override def getSparkReader(endpointName: String, name: String): SparkReader = {
+    val indexOpt = indexBL.getByName(endpointName)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -92,20 +92,19 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
         throw new Exception(msg)
       }
     } else {
-      val msg = s"Elastic spark reader indexOption not found: id: '$id, name: $name'"
+      val msg = s"Elastic spark reader indexOption not found: id: '$endpointName, name: $name'"
       logger.error(msg)
       throw new Exception(msg)
     }
   }
 
-  private def startupElastic(wasptimeout: Long)(implicit timeout: Timeout): Unit = {
+  private def startupElastic(servicesTimeoutMillis: Long)(implicit timeout: Timeout): Unit = {
     logger.info(s"Trying to connect with Elastic...")
 
     //TODO if elasticConfig are not initialized skip the initialization
     val elasticResult = elasticAdminActor_ ? Initialization(ConfigManager.getElasticConfig)
 
-    //TODO remove infinite waiting and enable index swapping
-    val elasticConnectionResult = Await.ready(elasticResult, Duration(wasptimeout, TimeUnit.SECONDS))
+    val elasticConnectionResult = Await.ready(elasticResult, Duration(servicesTimeoutMillis, TimeUnit.MILLISECONDS))
 
     elasticConnectionResult.value match {
       case Some(Failure(t)) =>

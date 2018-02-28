@@ -18,8 +18,6 @@ trait SparkWriterFactory {
 
 case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlugin]) extends SparkWriterFactory with Logging {
 
-  private val defaultDataStoreIndexed = ConfigManager.getWaspConfig.defaultIndexedDatastore
-
   override def createSparkWriterStreaming(env: {
     val topicBL: TopicBL
     val indexBL: IndexBL

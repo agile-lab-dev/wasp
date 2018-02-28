@@ -15,18 +15,21 @@
  */
 package it.agilelab.bigdata.wasp.producers
 
+import java.time.format.DateTimeFormatter
+
 import akka.actor._
-import akka.event.Logging.{Debug, Error, Info, Warning}
 import akka.routing.BalancingPool
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
+import it.agilelab.bigdata.wasp.core.logging.Logging.LogEvent
 import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
-import org.apache.commons.lang.exception.ExceptionUtils
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
-// producerId is an empty string because we override initialize and get the producer model by name instead of using an id
+import scala.util.parsing.json.{JSONFormat, JSONObject}
+
+// producerName is an empty string because we override initialize
 final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL})
   extends ProducerGuardian(env, "") {
 
@@ -42,7 +45,7 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
   override def initialized: Actor.Receive = super.initialized orElse loggerInitialized
 
   def loggerInitialized: Actor.Receive = {
-    case e@(Error(_, _, _, _) | Warning(_, _, _) | Info(_, _, _) | Debug(_, _, _)) =>
+    case e: LogEvent =>
       if (producerActor.isDefined)
         producerActor.get forward e
   }
@@ -60,7 +63,7 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
           logger.info(s"Producer '$name': topic found: $associatedTopic")
           val result = ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))
           if (result) {
-            router_name = s"kafka-ingestion-router-$name-${producer._id.get.getValue.toHexString}-${System.currentTimeMillis()}"
+            router_name = s"kafka-ingestion-router-$name-${producer.name}-${System.currentTimeMillis()}"
             kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))), router_name)
             context become initialized
             startChildActors()
@@ -87,50 +90,27 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
 }
 
 object InternalLogProducerGuardian {
-  val name = "LoggerProducer"
+  val name = SystemPipegraphs.loggerProducer.name
 }
 
-private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[TopicModel]) extends ProducerActor[String](kafka_router, topic) {
+private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[TopicModel]) extends ProducerActor[LogEvent](kafka_router, topic) {
 
   override def receive: Actor.Receive = super.receive orElse loggerReceive
 
   def loggerReceive(): Actor.Receive = {
-    case Error(cause, logSource, logClass, message: Any) => sendLog(logSource, logClass.getName, "ERROR", message.toString, Some(cause.getMessage), Some(ExceptionUtils.getStackTrace(cause)))
-    case Warning(logSource, logClass, message: String) => sendLog(logSource, logClass.getName, "WARNING", message.toString)
-    case Info(logSource, logClass, message: String) => sendLog(logSource, logClass.getName, "INFO", message.toString)
-    case Debug(logSource, logClass, message: String) => sendLog(logSource, logClass.getName, "DEBUG", message.toString)
-    case e: Any => println(e.toString)
+    case event : LogEvent => sendMessage(event)
   }
 
-  def sendLog(logSource: String, logClass: String, logLevel: String, message: String, cause: Option[String] = None, stackTrace: Option[String] = None) {
-
-    //logger.info(message)
-
-    // TODO: This is broken for some reason. Got JSON parsing exception. Using a placeholder until fixed
-    // Do NOT mark it as fixed without testing
-    //val causeEx = cause.getOrElse("empty")
-    //val stackEx = stackTrace.getOrElse("empty")
-
-    val causeEx = ""
-    val stackEx = ""
-
-    val logFields = s"""{
-	    		"log_source":"$logSource",
-	    		"log_class":"$logClass",
-          "log_level":"$logLevel",
-	    		"message":"${AvroToJsonUtil.convertToUTF8(message)}",
-	    		"cause":"$causeEx",
-	    		"stack_trace":"$stackEx"}
-	    """
-    sendMessage(logFields)
-  }
-
-  // For this specific logger, we by-pass the standard log duplication mechanic
-  def generateOutputJsonMessage(input: String) = input
-
-  //def generateRawOutputJsonMessage(input: Map[String, JsValue]): Map[String, JsValue] = input
-
-  def mainTask() = {
+  override def mainTask() = {
     /* We don't have a task here because it's a system pipeline */
   }
+
+  override def generateOutputJsonMessage(event: LogEvent) =
+    JSONObject(Map( "log_source" -> event.loggerName,
+                    "log_level" -> event.level.toString,
+                    "message" -> event.message,
+                    "timestamp" -> DateTimeFormatter.ISO_INSTANT.format(event.timestamp),
+                    "thread" -> event.thread,
+                    "cause" -> event.maybeCause.getOrElse(""),
+                    "stack_trace" ->  event.maybeStackTrace.getOrElse(""))).toString(JSONFormat.defaultFormatter)
 }

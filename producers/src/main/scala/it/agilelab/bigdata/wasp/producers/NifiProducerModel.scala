@@ -24,11 +24,9 @@ object NifiProducerModel {
   lazy val nifiProducer = ProducerModel(
     name = "NifiProducerGuardian",
     className = "it.agilelab.bigdata.wasp.producers.NifiProducerGuardian",
-    id_topic = None,
+    topicName = None,
     isActive = false,
     configuration = Some(nifiRequest),
     isRemote = false,
-    isSystem = false,
-    _id = Some(BsonObjectId())
-  )
+    isSystem = false)
 }

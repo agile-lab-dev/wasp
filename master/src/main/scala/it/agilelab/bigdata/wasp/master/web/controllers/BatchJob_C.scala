@@ -8,9 +8,8 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.StartBatchJob
 import it.agilelab.bigdata.wasp.core.models.BatchJobModel
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
-
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
@@ -68,7 +67,7 @@ object BatchJob_C extends Directives with JsonSupport {
                   complete {
                     val batchJob = ConfigBL.batchJobBL.getByName(name)
                     runIfExists(batchJob,
-                      () => ConfigBL.batchJobBL.deleteById(batchJob.get._id.get.asObjectId().getValue.toHexString),
+                      () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name),
                       name,
                       "Machine learning model",
                       "delete")
@@ -76,7 +75,6 @@ object BatchJob_C extends Directives with JsonSupport {
                 }
             }
         }
-
     }
   }
 }

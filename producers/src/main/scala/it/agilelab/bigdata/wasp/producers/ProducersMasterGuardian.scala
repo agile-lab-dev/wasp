@@ -34,19 +34,19 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 			.getAll // grab all producers
 			.filterNot(_.isRemote) // filter only local ones
 			.map(producer => {
-			val producerId = producer._id.get.getValue.toHexString
+			val producerName = producer.name
 			if (producer.name == InternalLogProducerGuardian.name) { // logger producer is special
-				producerId -> WaspSystem.loggerActor // do not instantiate, but get the already existing one from WaspSystem
+				producerName -> WaspSystem.loggerActor // do not instantiate, but get the already existing one from WaspSystem
 			} else {
-				if (localProducerComponentActors.contains(producerId))
-					producerId -> localProducerComponentActors(producerId) // do not instantiate, but get the already existing one from localProducerComponentActors
+				if (localProducerComponentActors.contains(producerName))
+					producerName -> localProducerComponentActors(producerName) // do not instantiate, but get the already existing one from localProducerComponentActors
 				else {
 					val producerClass = Class.forName(producer.className)
-					val producerActor = actorSystem.actorOf(Props(producerClass, ConfigBL, producerId), producer.name)
+					val producerActor = actorSystem.actorOf(Props(producerClass, ConfigBL, producerName), producer.name)
 
 					// add to component actor tracking map
-					localProducerComponentActors += (producerId -> producerActor)
-					producerId -> producerActor
+					localProducerComponentActors += (producerName -> producerActor)
+					producerName -> producerActor
 				}
 			}
 		}).toMap
@@ -91,11 +91,11 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 	}
 
 	override def receive: Actor.Receive = {
-		case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
-		case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.id, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
-		case message: StartProducer => call(sender(), message, onProducer(message.id, startProducer))
-		case message: StopProducer => call(sender(), message, onProducer(message.id, stopProducer))
-    case message: RestProducerRequest => call(sender(), message, onProducer(message.id, restProducerRequest(message, _)))
+		case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.name, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
+		case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.name, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
+		case message: StartProducer => call(sender(), message, onProducer(message.name, startProducer))
+		case message: StopProducer => call(sender(), message, onProducer(message.name, stopProducer))
+    case message: RestProducerRequest => call(sender(), message, onProducer(message.name, restProducerRequest(message, _)))
 	}
 	
 	private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]): Unit = {
@@ -103,44 +103,44 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 		sender ! result
 	}
 	
-	private def onProducer(id: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
-		env.producerBL.getById(id) match {
+	private def onProducer(name: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
+		env.producerBL.getByName(name) match {
 			case None => Left("Producer not retrieved")
 			case Some(producer) => f(producer)
 		}
 	}
 	
 	private def addRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
-		val producerId = producerModel._id.get.getValue.toHexString
-		if (remoteProducersComponentActors.isDefinedAt(producerId)) { // already added
-			Left(s"Remote producer $producerId ($producerActor) not added; already present.")
+		val producerName = producerModel.name
+		if (remoteProducersComponentActors.isDefinedAt(producerName)) { // already added
+			Left(s"Remote producer $producerName ($producerActor) not added; already present.")
 		} else { // add to remote producers & start if needed
-			remoteProducersComponentActors += producerId -> producerActor
+			remoteProducersComponentActors += producerName -> producerActor
 			if (producerModel.isActive) {
-				self ! StartProducer(producerId)
+				self ! StartProducer(producerName)
 			}
-			Right(s"Remote producer $producerId ($producerActor) added.")
+			Right(s"Remote producer $producerName ($producerActor) added.")
 		}
 	}
 	
 	private def removeRemoteProducer(producerActor: ActorRef, producerModel: ProducerModel): Either[String, String] = {
-		val producerId = producerModel._id.get.getValue.toHexString
-		if (remoteProducersComponentActors.isDefinedAt(producerId)) { // found, remove
-			val producerActor = remoteProducersComponentActors(producerId)
-			remoteProducersComponentActors.remove(producerId)
-			Right(s"Remote producer $producerId ($producerActor) removed.")
+		val producerName = producerModel.name
+		if (remoteProducersComponentActors.isDefinedAt(producerName)) { // found, remove
+			val producerActor = remoteProducersComponentActors(producerName)
+			remoteProducersComponentActors.remove(producerName)
+			Right(s"Remote producer $producerName ($producerActor) removed.")
 		} else { // not found
-			Left(s"Remote producer $producerId not found; either it was never added or it has already been removed.")
+			Left(s"Remote producer $producerName not found; either it was never added or it has already been removed.")
 		}
 	}
 
 	private def startProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
-		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+		if (producers.isDefinedAt(producer.name)) {
 
 			try {
 				//env.producerBL.setIsActive(producer, true)	// managed internally (ProducerGuardian)
-				??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Start) match {
+				??[Either[String, Unit]](producers(producer.name), Start) match {
 					case Right(_) =>
 						val msg = s"Producer '${producer.name}' started"
 						logger.info(msg)
@@ -164,11 +164,11 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 
 	private def stopProducer(producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
-		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+		if (producers.isDefinedAt(producer.name)) {
 
 			try {
 				//env.producerBL.setIsActive(producer, false)	// managed internally (ProducerGuardian)
-				??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), Stop) match {
+				??[Either[String, Unit]](producers(producer.name), Stop) match {
 					case Right(_) =>
 						val msg = s"Producer '${producer.name}' stopped"
 						logger.info(msg)
@@ -192,9 +192,9 @@ class ProducersMasterGuardian(env: {val producerBL: ProducerBL; val topicBL: Top
 
 	private def restProducerRequest(request: RestProducerRequest, producer: ProducerModel): Either[String, String] = {
 		val producers = retrieveProducers
-		if (producers.isDefinedAt(producer._id.get.getValue.toHexString)) {
+		if (producers.isDefinedAt(producer.name)) {
 
-			??[Either[String, Unit]](producers(producer._id.get.getValue.toHexString), RestRequest(request.httpMethod, request.data, request.mlModelId.getOrElse(""))) match {
+			??[Either[String, Unit]](producers(producer.name), RestRequest(request.httpMethod, request.data, request.modelKey)) match {
 				case Right(_) =>
 					val msg = s"Producer '${producer.name}' request: ${request.data}"
 					logger.info(msg)

@@ -1,7 +1,10 @@
 package it.agilelab.bigdata.wasp.core.launcher
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
+import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
+import it.agilelab.bigdata.wasp.core.messages.DownUnreachableMembers
 import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
 import org.apache.commons.cli
 import org.apache.commons.cli.{CommandLine, ParseException}
@@ -61,10 +64,37 @@ trait WaspLauncher {
 		waspDB = WaspDB.getDB
 		// configs
 		ConfigManager.initializeCommonConfigs()
-		// "special" configs (if needed)
-		initializeConfigurations()
+
 		// waspsystem
 		WaspSystem.initializeSystem()
+
+		/* Only for Debug: print Akka actor system tree
+		implicit val dispatcher = actorSystem.dispatcher
+		import scala.concurrent.duration._
+		actorSystem.scheduler.scheduleOnce(100 seconds)  {
+			val res = new PrivateMethodExposer(actorSystem)('printTree)()
+			println(res)
+		}
+
+
+		class PrivateMethodCaller(x: AnyRef, methodName: String) {
+			def apply(_args: Any*): Any = {
+				val args = _args.map(_.asInstanceOf[AnyRef])
+
+				def _parents: Stream[Class[_]] = Stream(x.getClass) #::: _parents.map(_.getSuperclass)
+
+				val parents = _parents.takeWhile(_ != null).toList
+				val methods = parents.flatMap(_.getDeclaredMethods)
+				val method = methods.find(_.getName == methodName).getOrElse(throw new IllegalArgumentException("Method " + methodName + " not found"))
+				method.setAccessible(true)
+				method.invoke(x, args: _*)
+			}
+		}
+
+		class PrivateMethodExposer(x: AnyRef) {
+			def apply(method: scala.Symbol): PrivateMethodCaller = new PrivateMethodCaller(x, method.name)
+		}
+		*/
 	}
 	
 	private def printErrorAndExit(message: String): Unit = {
@@ -107,10 +137,6 @@ trait WaspLauncher {
 		* @param args command line arguments
 		*/
 	def initializePlugins(args: Array[String]): Unit = {
-		Unit
-	}
-
-	def initializeConfigurations(): Unit = {
 		Unit
 	}
 

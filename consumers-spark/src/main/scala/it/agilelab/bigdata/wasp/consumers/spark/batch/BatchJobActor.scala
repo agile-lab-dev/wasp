@@ -26,15 +26,15 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
   extends Actor
     with Logging {
 
-  var lastBatchMasterRef : ActorRef = _
+  var lastSparkConsumersBatchMasterRef : ActorRef = _
 
   override def receive: Actor.Receive = {
     case jobModel: BatchJobModel =>
       logger.info(s"Processing Batch Job ${jobModel.name} ...")
 
-      lastBatchMasterRef = sender()
+      lastSparkConsumersBatchMasterRef = sender()
 
-      changeBatchState(jobModel._id.get, JobStateEnum.PROCESSING)
+      changeBatchState(jobModel.name, JobStateEnum.PROCESSING)
 
       var jobResult = JobStateEnum.FAILED
       // check if at least one stream reader is found
@@ -42,20 +42,20 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
       if (existTopicCategoryReaders) {
         logger.error("No stream readers are allowed in batch jobs!")
 
-        changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+        changeBatchState(jobModel.name, JobStateEnum.FAILED)
 
-        // TODO BatchMasterGuardian not really wait for it
-        //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
+        // TODO SparkConsumersBatchMasterGuardian not really wait for it
+        //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
       } else {
         // check if the writer is stream
         val isTopicCategoryWriter = jobModel.etl.output.writerType.category == Datastores.topicCategory
         if (isTopicCategoryWriter) {
           logger.error("No stream writer is allowed in batch jobs!")
 
-          changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+          changeBatchState(jobModel.name, JobStateEnum.FAILED)
 
-          // TODO BatchMasterGuardian not really wait for it
-          //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
+          // TODO SparkConsumersBatchMasterGuardian not really wait for it
+          //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
         } else {
           // implicit filtered with the check above which blocks using stream readers
           val staticReaders = jobModel.etl.inputs /*.filterNot(_.readerType.category == Datastores.topicCategory)*/
@@ -76,10 +76,10 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
               dataStoreDFs.toString
             logger.error(msg) // print here the complete error due to verbosity
 
-            changeBatchState(jobModel._id.get, JobStateEnum.FAILED)
+            changeBatchState(jobModel.name, JobStateEnum.FAILED)
 
-            // TODO BatchMasterGuardian not really wait for it
-            //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
+            // TODO SparkConsumersBatchMasterGuardian not really wait for it
+            //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, JobStateEnum.FAILED)
           }
           else {
             if (!dataStoreDFs.isEmpty)
@@ -138,10 +138,10 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
 
             logger.info(s"Batch Job ${jobModel.name} has been processed. Result: $jobResult")
 
-            changeBatchState(jobModel._id.get, jobResult)
+            changeBatchState(jobModel.name, jobResult)
 
-            // TODO BatchMasterGuardian not really wait for it
-            //lastBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
+            // TODO SparkConsumersBatchMasterGuardian not really wait for it
+            //lastSparkConsumersBatchMasterRef ! BatchJobProcessedMessage(jobModel._id.get.getValue.toHexString, jobResult)
           }
         }
       }
@@ -208,12 +208,12 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     */
   private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
     staticReaderModels.flatMap({
-      case ReaderModel(name, endpointId, readerType) =>
+      case ReaderModel(name, endpointName, readerType) =>
         val readerProduct = readerType.getActualProduct
         logger.info(s"Get reader plugin $readerProduct before was $readerType, plugin map: $plugins")
         val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(endpointId.getValue.toHexString, name))
+          Some(readerPlugin.get.getSparkReader(endpointName, name))
         } else {
           logger.error(s"The $readerProduct plugin in staticReaderModels does not exists")
           None
@@ -229,9 +229,9 @@ class BatchJobActor(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val 
     */
   private def retrieveStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = allStaticReaders(staticReaderModels)
 
-  private def changeBatchState(id: BsonObjectId, newState: String): Unit =
+  private def changeBatchState(name: String, newState: String): Unit =
   {
-    val job = env.batchJobBL.getById(id.getValue.toHexString)
+    val job = env.batchJobBL.getByName(name)
     job match {
       case Some(jobModel) => env.batchJobBL.setJobState(jobModel, newState)
       case None => logger.error("BatchEndedMessage with invalid id found.")
