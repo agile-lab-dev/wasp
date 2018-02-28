@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.utils
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import it.agilelab.bigdata.wasp.core.models.JobStatus.JobStatus
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, SparkDriverConfig, ZookeeperConnection}
@@ -24,6 +25,24 @@ object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol 
     def read(value: JsValue): BsonObjectId = value match {
       case JsString(objectId) => BsonObjectId(objectId)
       case _ => deserializationError("Color expected")
+    }
+  }
+}
+
+
+/**
+  * Based on the code found: https://groups.google.com/forum/#!topic/spray-user/RkIwRIXzDDc
+  */
+class EnumJsonConverter[T <: scala.Enumeration](enu: T) extends RootJsonFormat[T#Value] {
+
+  import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
+
+  override def write(obj: T#Value): JsValue = JsString(obj.toString)
+
+  override def read(json: JsValue): T#Value = {
+    json match {
+      case JsString(txt) => enu.withName(txt)
+      case somethingElse => throw DeserializationException(s"Expected a value from enum $enu instead of $somethingElse")
     }
   }
 }
@@ -53,8 +72,9 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat2(ElasticConfigModel.apply)
   implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat3(SolrConfigModel.apply)
   implicit val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)
-  implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat7(BatchJobModel.apply)
+  implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat6(BatchJobModel.apply)
   implicit val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat7(ProducerModel.apply)
-
+  implicit val jobStatusFormat: RootJsonFormat[JobStatus.JobStatus] = new EnumJsonConverter(JobStatus)
+  implicit val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat6(BatchJobInstanceModel.apply)
 }
 

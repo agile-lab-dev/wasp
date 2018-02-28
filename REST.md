@@ -220,6 +220,7 @@ Batchjobs
 | /batchjobs |  Get all the batchjobs in the system. | Insert a new batchjobs.  | Update an existing batchjobs. |   |
 | /batchjobs/{id} |  Get the batchjobs with the specified id. |   |   | Delete the batchjobs with the specified id.  |
 | /batchjobs/{id}/start |   | Start the batchjobs with the specified id.  |   |   |
+| /batchjobs/{id}/instances|Retrieve instances of specified job ordered newest to latest   | |   |   |
 
 Batchjobs Sample
 

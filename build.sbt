@@ -11,7 +11,7 @@
 lazy val core = Project("wasp-core", file("core"))
   .settings(Settings.commonSettings: _*)
   .settings(Settings.sbtBuildInfoSettings: _*)
-  .settings(libraryDependencies ++= Dependencies.core)
+  .settings(libraryDependencies ++= Dependencies.core ++ Dependencies.test)
   .enablePlugins(BuildInfoPlugin)
 
 lazy val master = Project("wasp-master", file("master"))

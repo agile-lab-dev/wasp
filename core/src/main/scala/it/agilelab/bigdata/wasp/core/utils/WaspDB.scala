@@ -18,7 +18,7 @@ import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistr
 import org.bson.types.ObjectId
 import org.mongodb.scala.{Completed, MongoCommandException, MongoDatabase, MongoWriteException}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.bson.codecs.Macros._
+import org.mongodb.scala.bson.codecs.Macros.{createCodecProviderIgnoreNone, _}
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
 import org.mongodb.scala.result.UpdateResult
@@ -53,11 +53,15 @@ trait WaspDB extends MongoDBHelper {
 
   def insert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
+  def insertRaw[T<:Model](doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) : Unit
+
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
   def deleteByName[T <: Model](name: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
   def updateByName[T <: Model](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
+
+  def updateByNameRaw[T <: Model](name: String, doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
 
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId
 
@@ -252,6 +256,24 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   override def updateByName[T <: Model](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
     replaceDocumentToCollection[T]("name", BsonString(name), doc, lookupTable(typeTag.tpe))
 
+  override def insertRaw[T<:Model](doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit = {
+
+    val collection = lookupTable(typeTag.tpe)
+    logger.info(s"Adding document to collection $collection")
+
+    try {
+      getCollection(collection).insertOne(doc).headResult()
+      logger.info(s"Document correctly added $doc")
+    } catch {
+      case e: Exception =>
+        logger.error(s"Unable to add document. Error message: ${e.getMessage}")
+        throw e
+    }
+  }
+
+  override def updateByNameRaw[T <: Model](name: String, doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
+    replaceDocumentToCollection("name", BsonString(name), doc, lookupTable(typeTag.tpe))
+
 }
 
 object WaspDB extends Logging {
@@ -265,6 +287,7 @@ object WaspDB extends Logging {
   val rawName = "raw"
   val keyValueName = "keyvalues"
   val batchjobName = "batchjobs"
+  val batchjobInstanceName = "batchjobinstances"
   val configurationsName = "configurations"
   val mlModelsName = "mlmodels"
   val websocketsName = "websockets"
@@ -289,13 +312,15 @@ object WaspDB extends Logging {
     typeTag[ElasticConfigModel].tpe -> configurationsName,
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[SolrConfigModel].tpe -> configurationsName,
-    typeTag[HBaseConfigModel].tpe -> configurationsName
+    typeTag[HBaseConfigModel].tpe -> configurationsName,
+    typeTag[BatchJobInstanceModel].tpe -> batchjobInstanceName
   )
 
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
 	  createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
-	  createCodecProviderIgnoreNone(classOf[ZookeeperConnection]),
+    createCodecProviderIgnoreNone(classOf[BatchJobInstanceModel]),
+    createCodecProviderIgnoreNone(classOf[ZookeeperConnection]),
 	  createCodecProviderIgnoreNone(classOf[DashboardModel]),
 	  createCodecProviderIgnoreNone(classOf[RTModel]),
 	  createCodecProviderIgnoreNone(classOf[LegacyStreamingETLModel]),

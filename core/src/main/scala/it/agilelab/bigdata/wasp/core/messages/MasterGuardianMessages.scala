@@ -27,4 +27,3 @@ case class StartETL(override val name: String, override val etlName: String) ext
 case class StopETL(override val name: String, override val etlName: String) extends ETLMessage
 
 case class StartBatchJob(override val name: String) extends BatchJobMessage
-case class StartPendingBatchJobs(override val name: String) extends MasterGuardianMessage

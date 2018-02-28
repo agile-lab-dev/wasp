@@ -26,8 +26,7 @@ private[wasp] object TestBatchJobModels {
         mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
-      ),
-      state = JobStateEnum.PENDING
+      )
     )
   }
 
@@ -51,8 +50,7 @@ private[wasp] object TestBatchJobModels {
         mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
-      ),
-      state = JobStateEnum.PENDING
+      )
     )
   }
 
@@ -76,8 +74,7 @@ private[wasp] object TestBatchJobModels {
         mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
-      ),
-      state = JobStateEnum.PENDING
+      )
     )
 
     /**
@@ -98,8 +95,7 @@ private[wasp] object TestBatchJobModels {
         mlModels = List(),
         strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
-      ),
-      state = JobStateEnum.PENDING
+      )
     )
   }
 }

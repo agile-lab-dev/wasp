@@ -24,7 +24,7 @@ trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLaun
 
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val sparkConsumersBatchMasterGuardianSingletonInfo = (
-			Props(new SparkConsumersBatchMasterGuardian(ConfigBL, None, SparkWriterFactoryDefault(plugins), plugins)),
+			SparkConsumersBatchMasterGuardian.props(ConfigBL , SparkWriterFactoryDefault(plugins), plugins),
 			WaspSystem.sparkConsumersBatchMasterGuardianName,
 			WaspSystem.sparkConsumersBatchMasterGuardianSingletonManagerName,
 			Seq(WaspSystem.sparkConsumersBatchMasterGuardianRole)

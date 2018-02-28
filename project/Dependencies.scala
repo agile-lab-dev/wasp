@@ -143,10 +143,10 @@ object Dependencies {
 	// ===================================================================================================================
 	// Test dependencies
 	// ===================================================================================================================
-	val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % "test"
-	val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % "test"
-	val scalatest = "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"
-	
+	val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % Test
+	val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test
+	val scalatest = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
+
 	// grouped dependencies, for convenience =============================================================================
   val test = Seq(akkaTestKit, akkaClusterTestKit, scalatest)
 

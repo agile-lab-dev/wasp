@@ -87,9 +87,6 @@ class MasterGuardian(env: {
       logger.info("Deactivated all system pipegraphs")
     }
 
-    // start batch schedulers
-    logger.info("Starting batch schedulers...")
-    sparkConsumersBatchMasterGuardian ! StartSchedulersMessage()
   }
 
   override def receive: Actor.Receive = {
@@ -104,8 +101,6 @@ class MasterGuardian(env: {
     case message: StartETL => call(sender(), message, onEtl(message.name, message.etlName, startEtl))
     case message: StopETL => call(sender(), message, onEtl(message.name, message.etlName, stopEtl))
     case message: StartBatchJob => call(sender(), message, onBatchJob(message.name, startBatchJob))
-    case message: StartPendingBatchJobs => call(sender(), message, startPendingBatchJobs())
-    case message: BatchJobProcessedMessage => //TODO gestione batchJob finito?
     //case message: Any => logger.error("unknown message: " + message)
   }
 
@@ -276,17 +271,10 @@ class MasterGuardian(env: {
 
   private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
-    val jobRes = ??[BatchJobResult](sparkConsumersBatchMasterGuardian, StartBatchJobMessage(batchJob.name))
-    if (jobRes.result) {
-      Right(s"Batch job '${batchJob.name}' accepted (queued or processing)")
-    } else {
-      Left(s"Batch job '${batchJob.name}' not accepted")
+    ??[BatchMessages.StartBatchJobResult](sparkConsumersBatchMasterGuardian, BatchMessages.StartBatchJob(batchJob.name)) match {
+      case BatchMessages.StartBatchJobResultSuccess(name) => Right(s"Batch job '${name}' accepted (queued or processing)")
+      case BatchMessages.StartBatchJobResultFailure(name, error) => Left(s"Batch job '${batchJob.name}' not accepted $error")
     }
   }
 
-  private def startPendingBatchJobs(): Either[String, String] = {
-    logger.info("Scheduling check of batch jobs bucket")
-    sparkConsumersBatchMasterGuardian ! CheckJobsBucketMessage()
-    Right("Scheduled the check of batch jobs bucket")
-  }
 }
