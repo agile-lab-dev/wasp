@@ -151,11 +151,11 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
     }
   }
 
-  def run(batchJobModel: BatchJobModel, batchJobInstanceModel: BatchJobInstanceModel) = {
+  def run(batchJobModel: BatchJobModel, batchJobInstanceModel: BatchJobInstanceModel): Try[Any] = {
 
     val mlModelsDB = new MlModelsDB(env)
 
-    val result = for {
+    for {
       readerModels <- stepEnsureReadersAreNotTopicBased(batchJobModel.etl.inputs).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to retrieve reader models for job ${batchJobModel.name}", e))
       }
@@ -186,19 +186,6 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
           case e: Throwable => Failure(new Exception(s"Failed to write output for job ${batchJobModel.name}", e))
         }
     } yield result
-
-
-    result match {
-      case Success(_) => {
-        logger.info(s"SUCCESS: jobInstance: [${batchJobInstanceModel.name}] jobModel: [${batchJobModel.name}] ")
-        sender() ! SparkConsumersBatchMasterGuardian.JobSucceeded(batchJobModel, batchJobInstanceModel)
-      }
-      case Failure(e) => {
-        logger.error(s"FAILED: jobInstance: [${batchJobInstanceModel.name}] jobModel: [${batchJobModel.name}] ", e)
-        sender() ! SparkConsumersBatchMasterGuardian.JobFailed(batchJobModel, batchJobInstanceModel, e)
-      }
-    }
-
   }
 
   override def receive: Actor.Receive = {
@@ -215,7 +202,17 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
     }
 
     case SparkConsumersBatchMasterGuardian.Job(jobModel, jobInstance) => {
-      run(jobModel, jobInstance)
+      run(jobModel, jobInstance) match {
+        case Success(_) => {
+          logger.info(s"SUCCESS: jobInstance: [${jobInstance.name}] jobModel: [${jobModel.name}] ")
+          sender() ! SparkConsumersBatchMasterGuardian.JobSucceeded(jobModel, jobInstance)
+        }
+        case Failure(e) => {
+          logger.error(s"FAILED: jobInstance: [${jobInstance.name}] jobModel: [${jobModel.name}] ", e)
+          sender() ! SparkConsumersBatchMasterGuardian.JobFailed(jobModel, jobInstance, e)
+        }
+      }
+
       context.system.scheduler.scheduleOnce(checkInterval, self, BatchJobActor.Tick)(context.system.dispatcher)
     }
   }
