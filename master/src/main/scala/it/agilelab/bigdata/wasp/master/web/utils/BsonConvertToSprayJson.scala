@@ -3,31 +3,31 @@ package it.agilelab.bigdata.wasp.master.web.utils
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnection}
+import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, SparkDriverConfig, ZookeeperConnection}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat, _}
 
 /**
   * Created by Agile Lab s.r.l. on 04/08/2017.
   */
-object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol{
+object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol {
+
   implicit object JsonFormatDocument extends RootJsonFormat[BsonDocument] {
     def write(c: BsonDocument): JsValue =  c.toJson.parseJson
 
-
     def read(value: JsValue): BsonDocument = BsonDocument(value.toString())
   }
+
   implicit object JsonFormatObjectId extends RootJsonFormat[BsonObjectId] {
     def write(c: BsonObjectId): JsValue =  c.getValue.toHexString.toJson
-
 
     def read(value: JsValue): BsonObjectId = value match {
       case JsString(objectId) => BsonObjectId(objectId)
       case _ => deserializationError("Color expected")
     }
   }
-
 }
+
 // collect your json format instances into a support trait:
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
@@ -45,12 +45,13 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
   implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat10(PipegraphModel.apply)
   implicit val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
-  implicit val ZookeeperConnectionFormat: RootJsonFormat[ZookeeperConnection] = jsonFormat2(ZookeeperConnection.apply)
+  implicit val zookeeperConnectionFormat: RootJsonFormat[ZookeeperConnection] = jsonFormat2(ZookeeperConnection.apply)
   implicit val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat10(KafkaConfigModel.apply)
-  implicit val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat20(SparkBatchConfigModel.apply)
-  implicit val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat22(SparkStreamingConfigModel.apply)
-  implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat3(ElasticConfigModel.apply)
-  implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat4(SolrConfigModel.apply)
+  implicit val sparkDriverConfigFormat: RootJsonFormat[SparkDriverConfig] = jsonFormat6(SparkDriverConfig.apply)
+  implicit val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat19(SparkStreamingConfigModel.apply)
+  implicit val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat17(SparkBatchConfigModel.apply)
+  implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat2(ElasticConfigModel.apply)
+  implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat3(SolrConfigModel.apply)
   implicit val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)
   implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat7(BatchJobModel.apply)
   implicit val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat7(ProducerModel.apply)

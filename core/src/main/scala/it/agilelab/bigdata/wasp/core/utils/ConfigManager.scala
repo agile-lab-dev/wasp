@@ -68,7 +68,8 @@ object ConfigManager {
   }
 
   private def initializeKafkaConfig(): Unit = {
-    kafkaConfig = retrieveConf[KafkaConfigModel](getDefaultKafkaConfig, kafkaConfigName).get
+    kafkaConfig =
+      retrieveConf[KafkaConfigModel](getDefaultKafkaConfig, kafkaConfigName).get
   }
 
   private def getDefaultKafkaConfig: KafkaConfigModel = {
@@ -88,8 +89,8 @@ object ConfigManager {
   }
 
   def initializeSparkStreamingConfig(): Unit = {
-    sparkStreamingConfig = retrieveConf[SparkStreamingConfigModel](getDefaultSparkStreamingConfig,
-      sparkStreamingConfigName).get
+    sparkStreamingConfig =
+      retrieveConf[SparkStreamingConfigModel](getDefaultSparkStreamingConfig, sparkStreamingConfigName).get
   }
 
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
@@ -98,10 +99,7 @@ object ConfigManager {
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
       readConnection(sparkSubConfig.getConfig("master")),
-      sparkSubConfig.getInt("driver-cores"),
-      sparkSubConfig.getString("driver-memory"),
-      sparkSubConfig.getString("driver-hostname"),
-      sparkSubConfig.getInt("driver-port"),
+      readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
       sparkSubConfig.getInt("executor-instances"),
@@ -110,20 +108,22 @@ object ConfigManager {
       sparkSubConfig.getInt("block-manager-port"),
       sparkSubConfig.getInt("broadcast-port"),
       sparkSubConfig.getInt("fileserver-port"),
-      sparkSubConfig.getInt("streaming-batch-interval-ms"),
-      sparkSubConfig.getString("checkpoint-dir"),
-      sparkStreamingConfigName,
-      sparkSubConfig.getString("driver-bind-address"),
       sparkSubConfig.getInt("retained-stages-jobs"),
       sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-jobs"),
       sparkSubConfig.getInt("retained-executions"),
-      sparkSubConfig.getInt("retained-batches")
+      sparkSubConfig.getInt("retained-batches"),
+
+      sparkSubConfig.getInt("streaming-batch-interval-ms"),
+      sparkSubConfig.getString("checkpoint-dir"),
+
+      sparkStreamingConfigName
     )
   }
 
   def initializeSparkBatchConfig(): Unit = {
-    sparkBatchConfig = retrieveConf(getDefaultSparkBatchConfig,
-                                    sparkBatchConfigName).get
+    sparkBatchConfig =
+      retrieveConf[SparkBatchConfigModel](getDefaultSparkBatchConfig, sparkBatchConfigName).get
   }
 
   private def getDefaultSparkBatchConfig: SparkBatchConfigModel = {
@@ -132,10 +132,7 @@ object ConfigManager {
     SparkBatchConfigModel(
       sparkSubConfig.getString("app-name"),
       readConnection(sparkSubConfig.getConfig("master")),
-      sparkSubConfig.getInt("driver-cores"),
-      sparkSubConfig.getString("driver-memory"),
-      sparkSubConfig.getString("driver-hostname"),
-      sparkSubConfig.getInt("driver-port"),
+      readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
       sparkSubConfig.getInt("executor-instances"),
@@ -144,12 +141,12 @@ object ConfigManager {
       sparkSubConfig.getInt("block-manager-port"),
       sparkSubConfig.getInt("broadcast-port"),
       sparkSubConfig.getInt("fileserver-port"),
-      sparkBatchConfigName,
-      sparkSubConfig.getString("driver-bind-address"),
       sparkSubConfig.getInt("retained-stages-jobs"),
       sparkSubConfig.getInt("retained-tasks"),
+      sparkSubConfig.getInt("retained-jobs"),
       sparkSubConfig.getInt("retained-executions"),
-      sparkSubConfig.getInt("retained-batches")
+      sparkSubConfig.getInt("retained-batches"),
+      sparkBatchConfigName
     )
   }
 
@@ -159,14 +156,14 @@ object ConfigManager {
   }
 
   private def initializeSolrConfig(): Unit = {
-    solrConfig = retrieveConf[SolrConfigModel](getDefaultSolrConfig, solrConfigName).get
+    solrConfig =
+      retrieveConf[SolrConfigModel](getDefaultSolrConfig, solrConfigName).get
   }
 
   private def getDefaultElasticConfig: ElasticConfigModel = {
     val elasticSubConfig = conf.getConfig("elastic")
     ElasticConfigModel(
       readConnections(elasticSubConfig, "connections"),
-      elasticSubConfig.getString("cluster-name"),
       elasticConfigName
     )
   }
@@ -176,13 +173,13 @@ object ConfigManager {
     SolrConfigModel(
       readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
       Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
-      solrConfigName,
-      "wasp"
+      solrConfigName
     )
   }
   
   private def initializeHBaseConfig(): Unit = {
-    hbaseConfig = retrieveConf[HBaseConfigModel](getDefaultHBaseConfig, hbaseConfigName).get
+    hbaseConfig =
+      retrieveConf[HBaseConfigModel](getDefaultHBaseConfig, hbaseConfigName).get
   }
   
   private def getDefaultHBaseConfig: HBaseConfigModel = {
@@ -271,7 +268,6 @@ object ConfigManager {
     connections map (connection => readConnection(connection)) toArray
   }
 
-
   private def readZookeeperConnections(config: Config,
                                        zkPath: String,
                                        zkPathChRoot: String): ZookeeperConnection = {
@@ -287,7 +283,7 @@ object ConfigManager {
     readConnection(connection)
   }
 
-  private def readConnection(config: Config) = {
+  private def readConnection(config: Config): ConnectionConfig = {
     val timeout = if (config.hasPath("timeout")) {
       Some(config.getLong("timeout"))
     } else {
@@ -314,6 +310,18 @@ object ConfigManager {
       config.getInt("port"),
       timeout,
       metadata
+    )
+  }
+
+  private def readSparkDriverConf(config: Config): SparkDriverConfig = {
+
+    SparkDriverConfig(
+      config.getString("submit-deploy-mode"),
+      config.getInt("driver-cores"),
+      config.getString("driver-memory"),
+      config.getString("driver-hostname"),
+      config.getString("driver-bind-address"),
+      config.getInt("driver-port")
     )
   }
 
@@ -362,6 +370,13 @@ case class ZookeeperConnection(connections: Seq[ConnectionConfig],
     connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot.getOrElse("")}"
   }
 }
+
+case class SparkDriverConfig(submitDeployMode: String,
+                             cores: Int,
+                             memory: String,
+                             host: String,
+                             bindAddress: String,
+                             port: Int)
 
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig

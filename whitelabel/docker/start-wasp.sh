@@ -75,9 +75,6 @@ if [ -n "$DROP_MONGODB_OPT" ]; then
     wait
 fi
 
-echo ${CONSUMERS_SPARK_STREAMING_MAIN_CLASS}
-echo ${CONSUMERS_SPARK_BATCH_MAIN_CLASS}
-
 echo "Running modules in containers..."
 $DOCKER_CMD run ${DOCKER_OPTS} --name master -p 2891:2891 -p 5005:5005 -v "$MASTER_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${MASTER_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5005 -Dwasp.akka.remote.netty.tcp.hostname="master" ${WASP_LAUNCHER_OPTS} 2>&1                                                                                                                                                                                                                                                                                                                                                                                  | sed "s/.*/$r master                       |$d &/" &
 $DOCKER_CMD run ${DOCKER_OPTS} --name producers -p 5006:5006 -v "$PRODUCERS_PROJECT_DIRECTORY/target/universal/stage/":/root/wasp/ ${DOCKER_IMAGE} ${PRODUCERS_PROJECT_COMMAND} ${WASP_OPTS} -jvm-debug 5006 -Dwasp.akka.remote.netty.tcp.hostname="producers" ${WASP_LAUNCHER_OPTS} 2>&1                                                                                                                                                                                                                                                                                                                                                                                   | sed "s/.*/$g producers                    |$d &/" &
