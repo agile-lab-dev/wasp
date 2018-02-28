@@ -175,7 +175,6 @@ object ConfigManager {
     val solrSubConfig = conf.getConfig("solrcloud")
     SolrConfigModel(
       readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
-      Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
       solrConfigName,
       "wasp"
     )

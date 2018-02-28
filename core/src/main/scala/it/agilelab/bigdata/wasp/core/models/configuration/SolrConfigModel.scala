@@ -7,7 +7,6 @@ import org.mongodb.scala.bson.BsonObjectId
 
 case class SolrConfigModel(
                             zookeeperConnections: ZookeeperConnection,
-                            apiEndPoint: Option[ConnectionConfig],
                             name: String,
                             cluster_name: String
                           ) extends Model
