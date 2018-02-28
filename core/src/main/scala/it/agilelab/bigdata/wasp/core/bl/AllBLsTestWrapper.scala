@@ -22,24 +22,29 @@ class AllBLsTestWrapper {
       database.find(p => p.name == name)
     }
 
-    override def getPendingJobs(state: String): Seq[BatchJobModel] = {
-      database.filter(p => p.state == state)
-    }
+
 
     override def getAll: Seq[BatchJobModel] = {
       database.toList
     }
 
-    override def persist(batchJobModel: BatchJobModel): Unit = {
-      database.+=(batchJobModel)
-    }
-
-    override def insert(batchJobModel: BatchJobModel): Unit = persist(batchJobModel)
-
 
     override def deleteByName(name: String): Unit = {
       val index = database.indexWhere(b => b.name == name)
       database.remove(index)
+    }
+
+    override def insert(batchJobModel: BatchJobModel): Unit = database :+ batchJobModel
+
+    override def instances(): BatchJobInstanceBL = new BatchJobInstanceBL {
+
+      override def all(): Seq[BatchJobInstanceModel] = ???
+
+      override def instancesOf(name: String): Seq[BatchJobInstanceModel] = ???
+
+      override def update(instance: BatchJobInstanceModel): BatchJobInstanceModel = ???
+
+      override def insert(instance: BatchJobInstanceModel): BatchJobInstanceModel = ???
     }
   }
 

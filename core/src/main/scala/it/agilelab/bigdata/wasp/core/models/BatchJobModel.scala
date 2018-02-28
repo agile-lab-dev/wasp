@@ -1,22 +1,32 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import org.mongodb.scala.bson.BsonObjectId
+import it.agilelab.bigdata.wasp.core.models.JobStatus.JobStatus
 
-object JobStateEnum extends Enumeration {
-  type JobState = Value
-  val PENDING = "PENDING"
-  val PROCESSING = "PROCESSING"
-  val SUCCESSFUL = "SUCCESSFUL"
-  val FAILED = "FAILED"
+
+object JobStatus extends Enumeration {
+  type JobStatus = Value
+
+  val PENDING, PROCESSING, SUCCESSFUL, FAILED, STOPPED = Value
 }
+
 
 case class BatchJobModel(override val name: String,
                          description: String,
                          owner: String,
                          system: Boolean,
                          creationTime: Long,
-                         etl: BatchETLModel,
-                         var state: String) extends Model
+                         etl: BatchETLModel)
+	  extends Model
+
+
+
+case class BatchJobInstanceModel(override val name:String,
+                                 instanceOf: String,
+                                 startTimestamp: Long,
+                                 currentStatusTimestamp: Long,
+                                 status: JobStatus,
+                                 error: Option[String] = None
+                                ) extends Model
 
 case class BatchETLModel(name: String,
                          inputs: List[ReaderModel],

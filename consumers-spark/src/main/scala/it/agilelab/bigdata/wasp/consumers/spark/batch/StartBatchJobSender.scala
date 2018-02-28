@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.messages.StartBatchJobMessage
+import it.agilelab.bigdata.wasp.core.messages.BatchMessages.StartBatchJob
 import org.quartz.{Job, JobExecutionContext, JobExecutionException}
 
 import scala.beans.BeanProperty
@@ -13,14 +13,16 @@ import scala.beans.BeanProperty
 	* @author Nicolò Bidotti
 	*/
 class StartBatchJobSender() extends Job {
+
 	@BeanProperty
 	var jobId: String = _ // automatically populated by quartz with the corresponding JobDataMap key-value
+
 	@BeanProperty
 	var sparkConsumersBatchMasterGuardianActorPath: String = _ // automatically populated by quartz with the corresponding JobDataMap key-value
 	
 	@throws[JobExecutionException]
 	def execute(context: JobExecutionContext): Unit = {
 		val batchJobActorRef = WaspSystem.actorSystem.actorSelection(getSparkConsumersBatchMasterGuardianActorPath)
-		batchJobActorRef ! StartBatchJobMessage(getJobId)
+		batchJobActorRef ! StartBatchJob(getJobId)
 	}
 }

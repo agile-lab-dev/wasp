@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.StartBatchJob
-import it.agilelab.bigdata.wasp.core.models.BatchJobModel
+import it.agilelab.bigdata.wasp.core.models.{BatchJobInstanceModel, BatchJobModel}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
@@ -56,7 +56,14 @@ object BatchJob_C extends Directives with JsonSupport {
 
             }
           } ~
-            pathEnd {
+          path("instances") {
+            get {
+              complete {
+                getJsonArrayOrEmpty[BatchJobInstanceModel](ConfigBL.batchJobBL.instances().instancesOf(name).sortBy{ instance => -instance.startTimestamp }, _.toJson)
+              }
+            }
+          } ~
+          pathEnd {
               get {
                 complete {
                   getJsonOrNotFound[BatchJobModel](ConfigBL.batchJobBL.getByName(name), name, "Batch job model", _.toJson)

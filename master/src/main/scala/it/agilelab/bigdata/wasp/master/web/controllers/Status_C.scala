@@ -63,6 +63,9 @@ object Status_C extends Directives with JsonSupport {
       "/batchjobs/{name}/start" -> Map(
         "POST" -> "Start the batchjobs with the specified name."
       ),
+      "/batchjobs/{name}/instances" -> Map(
+        "GET" -> "Get instances of job with the specified name ordered newest to oldest"
+      ),
       "/index/{name}" -> Map(
         "GET" -> "Get the index with the specified name."
       ),
