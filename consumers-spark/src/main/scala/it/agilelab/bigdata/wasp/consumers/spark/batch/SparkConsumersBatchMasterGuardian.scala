@@ -469,7 +469,7 @@ class SparkConsumersBatchMasterGuardian private(val batchJobBL: BatchJobBL,
       updateToStatus(instance, JobStatus.SUCCESSFUL) match {
         case Failure(error) => {
           logger.warn(s"Could not update status, retrying in $retryDuration", error)
-          context.system.scheduler.scheduleOnce(retryDuration, self, JobSucceeded(model, instance))(context.dispatcher)
+          context.system.scheduler.scheduleOnce(retryDuration, self, JobSucceeded(model, instance))(context.dispatcher, originalSender)
         }
         case Success(_) => {
           context become behavior(pendingJobs, runningJobs - instance, children)
@@ -487,7 +487,7 @@ class SparkConsumersBatchMasterGuardian private(val batchJobBL: BatchJobBL,
       updateToStatus(instance, JobStatus.FAILED, Some(error)) match {
         case Failure(e) => {
           logger.warn(s"Could not update status, retrying in $retryDuration", e)
-          context.system.scheduler.scheduleOnce(retryDuration, self, JobFailed(model, instance, e))(context.dispatcher)
+          context.system.scheduler.scheduleOnce(retryDuration, self, JobFailed(model, instance, e))(context.dispatcher, originalSender)
         }
         case Success(_) => {
           context become behavior(pendingJobs, runningJobs - instance, children)
