@@ -14,10 +14,7 @@ case class JdbcConnectionConfig(
                             port: Int,
                             user: String,
                             password: String,
-                            driverName: String,
-                            partitioningInfo: Option[JdbcPartitioningInfo],
-                            numPartitions: Option[Int],
-                            fetchSize: Option[Int]
+                            driverName: String
                           ) {
   def connectionString: String = s"$host:$port"
 }

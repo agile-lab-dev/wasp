@@ -215,20 +215,6 @@ object ConfigManager {
     )
   }
 
-  private def readJdbcPartitioningInfo(jdbcConf: Config, path: String): Option[JdbcPartitioningInfo] = {
-    if(jdbcConf.hasPath(path)) {
-      val partInfoConf = jdbcConf.getConfig(path)
-      Some(
-        JdbcPartitioningInfo(
-            partInfoConf.getString("partitionColumn"),
-            partInfoConf.getString("lowerBound"),
-            partInfoConf.getString("upperBound")
-          )
-      )
-    }
-    else None
-  }
-
   /**
     * Initialize the configurations managed by this ConfigManager.
     */
@@ -316,10 +302,7 @@ object ConfigManager {
       config.getInt("port"),
       config.getString("user"),//user
       config.getString("password"),//password
-      config.getString("driverName"),//driverName
-      readJdbcPartitioningInfo(config, "partitioningInfo"), //partitioningInfo
-      if(config.hasPath("numPartitions")) Some(config.getInt("numPartitions")) else None,//numPartitions
-      if(config.hasPath("fetchSize")) Some(config.getInt("fetchSize")) else None//fetchSize
+      config.getString("driverName")//driverName
     )
   }
 

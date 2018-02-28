@@ -17,7 +17,10 @@ class SqlSourceBlImpl(waspDB: WaspDB) extends SqlSourceBl {
     s.name,
     s.connectionName,
     s.database,
-    s.dbtable
+    s.dbtable,
+    s.partitioningInfo,
+    s.numPartitions,
+    s.fetchSize
   )
 
   def getByName(name: String): Option[SqlSourceModel] = {

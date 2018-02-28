@@ -49,7 +49,7 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
       "password" -> jdbcConf.password,
       "driver" -> jdbcConf.driverName
     )
-    val optPartitioningInfo = jdbcConf.partitioningInfo.map(
+    val optPartitioningInfo = sqlModel.partitioningInfo.map(
       pi =>
         Map(
           "partitionColumn" -> pi.partitionColumn,
@@ -57,11 +57,11 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
           "upperBound" -> pi.upperBound
         )
     ).getOrElse(Map.empty[String, String])
-    val optNumPartitions = jdbcConf.numPartitions.map(
+    val optNumPartitions = sqlModel.numPartitions.map(
       np =>
         "numPartitions" -> np.toString
     ).toMap
-    val optFetchSize = jdbcConf.fetchSize.map(
+    val optFetchSize = sqlModel.fetchSize.map(
       fs =>
         "fetchsize" -> fs.toString
     ).toMap
