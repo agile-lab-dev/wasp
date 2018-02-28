@@ -127,3 +127,5 @@
 **Update**
 - Aggiornamento di `reference.conf` e `whitelabel/docker/docker-environment.conf`
 	- `spark-streaming` e `spark-batch`: riordinate le KEY, aggiunta KEY `driver-conf` che incapsula le configurazioni relative al driver (nuovo `submit-deploy-mode` con default "client"), aggiunta KEY `retained-jobs` (default 100)
+	- `solrcloud`: rimossa KEY `cluster_name`
+	- `elastic`: rimossa KEY `cluster-name`
