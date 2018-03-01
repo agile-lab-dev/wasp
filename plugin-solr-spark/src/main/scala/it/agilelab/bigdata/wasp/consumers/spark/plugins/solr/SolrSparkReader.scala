@@ -24,6 +24,6 @@ class SolrSparkReader(indexModel: IndexModel) extends SparkReader with SolrConfi
     val sqlContext = new SQLContext(sc)
     val sparkSession = sqlContext.sparkSession
 
-    new SolrDataframe(sparkSession, solrConfig.zookeeperConnections.getZookeeperConnection(), indexModel.name).df
+    new SolrDataframe(sparkSession, solrConfig.zookeeperConnections.toString, indexModel.name).df
   }
 }

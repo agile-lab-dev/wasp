@@ -75,9 +75,9 @@ object ConfigManager {
   private def getDefaultKafkaConfig: KafkaConfigModel = {
     val kafkaSubConfig = conf.getConfig("kafka")
     KafkaConfigModel(
-      readConnections(kafkaSubConfig, "connections"),
+      readConnectionsConfig(kafkaSubConfig, "connections"),
       kafkaSubConfig.getString("ingest-rate"),
-      readZookeeperConnections(kafkaSubConfig, "zookeeperConnections", "zkChRoot"),
+      readZookeeperConnectionsConfig(kafkaSubConfig),
       kafkaSubConfig.getString("broker-id"),
       kafkaSubConfig.getString("partitioner-fqcn"),
       kafkaSubConfig.getString("default-encoder"),
@@ -98,7 +98,7 @@ object ConfigManager {
 
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
-      readConnection(sparkSubConfig.getConfig("master")),
+      readConnectionConfig(sparkSubConfig.getConfig("master")),
       readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
@@ -131,7 +131,7 @@ object ConfigManager {
 
     SparkBatchConfigModel(
       sparkSubConfig.getString("app-name"),
-      readConnection(sparkSubConfig.getConfig("master")),
+      readConnectionConfig(sparkSubConfig.getConfig("master")),
       readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
@@ -163,7 +163,7 @@ object ConfigManager {
   private def getDefaultElasticConfig: ElasticConfigModel = {
     val elasticSubConfig = conf.getConfig("elastic")
     ElasticConfigModel(
-      readConnections(elasticSubConfig, "connections"),
+      readConnectionsConfig(elasticSubConfig, "connections"),
       elasticConfigName
     )
   }
@@ -171,8 +171,7 @@ object ConfigManager {
   private def getDefaultSolrConfig: SolrConfigModel = {
     val solrSubConfig = conf.getConfig("solrcloud")
     SolrConfigModel(
-      readZookeeperConnections(solrSubConfig, "zookeeperConnections", "zkChRoot"),
-      Some(readApiEndPoint(solrSubConfig, "apiEndPoint")),
+      readZookeeperConnectionsConfig(solrSubConfig),
       solrConfigName
     )
   }
@@ -262,28 +261,18 @@ object ConfigManager {
     hbaseConfig
   }
 
-  private def readConnections(config: Config,
-                              path: String): Array[ConnectionConfig] = {
+  private def readConnectionsConfig(config: Config, path: String): Array[ConnectionConfig] = {
     val connections = config.getConfigList(path).asScala
-    connections map (connection => readConnection(connection)) toArray
+    connections.map(connection => readConnectionConfig(connection)).toArray
   }
 
-  private def readZookeeperConnections(config: Config,
-                                       zkPath: String,
-                                       zkPathChRoot: String): ZookeeperConnection = {
-
-    val connections = config.getConfigList(zkPath).asScala
-    val chRoot = Try {config.getString(zkPathChRoot)}.toOption
-    val connectionsArray = connections.map(connection => readConnection(connection)).toArray
-    ZookeeperConnection(connectionsArray, chRoot)
+  private def readZookeeperConnectionsConfig(config: Config): ZookeeperConnectionsConfig = {
+    val connectionsArray = readConnectionsConfig(config, "zookeeperConnections")
+    val chRoot = config.getString("zkChRoot")
+    ZookeeperConnectionsConfig(connectionsArray, chRoot)
   }
 
-  private def readApiEndPoint(config: Config, path: String): ConnectionConfig = {
-    val connection = config.getConfig(path)
-    readConnection(connection)
-  }
-
-  private def readConnection(config: Config): ConnectionConfig = {
+  private def readConnectionConfig(config: Config): ConnectionConfig = {
     val timeout = if (config.hasPath("timeout")) {
       Some(config.getLong("timeout"))
     } else {
@@ -360,15 +349,14 @@ case class ConnectionConfig(protocol: String,
     if (port != 0)
       result = result + ":" + port
 
-    result + metadata.flatMap(_.get("zookeeperRootNode")).getOrElse("")
+    result
   }
 }
 
-case class ZookeeperConnection(connections: Seq[ConnectionConfig],
-                               chRoot: Option[String]) {
-  def getZookeeperConnection() = {
-    connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot.getOrElse("")}"
-  }
+case class ZookeeperConnectionsConfig(connections: Seq[ConnectionConfig],
+                                      chRoot: String) {
+
+  override def toString = connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot}"
 }
 
 case class SparkDriverConfig(submitDeployMode: String,

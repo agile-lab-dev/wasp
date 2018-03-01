@@ -1,14 +1,13 @@
 package it.agilelab.bigdata.wasp.core.models.configuration
 
 import it.agilelab.bigdata.wasp.core.models.Model
-import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnection}
+import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnectionsConfig}
 
 /**
   * Configuration model for Solr.
   *
   */
 case class SolrConfigModel(
-                            zookeeperConnections: ZookeeperConnection,
-                            apiEndPoint: Option[ConnectionConfig],
+                            zookeeperConnections: ZookeeperConnectionsConfig,
                             name: String
                           ) extends Model

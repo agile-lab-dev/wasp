@@ -97,7 +97,8 @@ case class IndexModel(override val name: String,
     * @return
     */
   def getJsonSchema: String = {
-    if (ConfigManager.getWaspConfig.defaultIndexedDatastore == "solr") {
+    // TODO check: this if not allow to correctly work with Elastic (see GL-69)
+    if (ConfigManager.getWaspConfig.defaultIndexedDatastore == Datastores.solrProduct) {
       val solrProperties = this
         .schema
         .get
@@ -110,11 +111,10 @@ case class IndexModel(override val name: String,
 
       s"[${solrProperties}]"
     } else {
+      //ConfigManager.getWaspConfig.defaultIndexedDatastore == Datastores.elasticProduct
       schema.getOrElse(new BsonDocument).toJson
     }
   }
 
-
   def dataType: String = name
-
 }

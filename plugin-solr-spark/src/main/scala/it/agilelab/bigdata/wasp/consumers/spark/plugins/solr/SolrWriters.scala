@@ -112,7 +112,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
           }
         }
 
-        SolrSupport.indexDStreamOfDocs(solrConfig.zookeeperConnections.getZookeeperConnection(),
+        SolrSupport.indexDStreamOfDocs(solrConfig.zookeeperConnections.toString,
                                        indexName,
                                        100,
                                        new JavaDStream[SolrInputDocument](docs))
@@ -159,7 +159,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
         val solrWriter = new SolrForeachWriter(
           ss,
-          solrConfig.zookeeperConnections.getZookeeperConnection(),
+          solrConfig.zookeeperConnections.toString,
           index.collection,
           index.idField)
 
@@ -263,7 +263,7 @@ class SolrSparkWriter(indexBL: IndexBL,
           }
         }
 
-        SolrSupport.indexDocs(solrConfig.zookeeperConnections.getZookeeperConnection(),
+        SolrSupport.indexDocs(solrConfig.zookeeperConnections.toString,
                               indexName,
                               100,
                               new JavaRDD[SolrInputDocument](docs))
