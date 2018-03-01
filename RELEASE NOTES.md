@@ -124,8 +124,13 @@
 ## WASP 2.4.0
 ...
 
+**Fix**
+- Solr JsonSchema: rollback a gestione "estrapola/invia a Solr solo il contenuto del campo `properties`" (gestione ad-hoc rispetto ElasticSearch)
+
 **Update**
 - Aggiornamento di `reference.conf` e `whitelabel/docker/docker-environment.conf`
 	- `spark-streaming` e `spark-batch`: riordinate le KEY, aggiunta KEY `driver-conf` che incapsula le configurazioni relative al driver (nuovo `submit-deploy-mode` con default "client"), aggiunta KEY `retained-jobs` (default 100)
 	- `solrcloud`: rimossa KEY `cluster_name`
 	- `elastic`: rimossa KEY `cluster-name`
+- Solr: uso di `zookeeperConnections` al posto di `apiEndPoint`
+- Revisione batch: gestione in parallelo

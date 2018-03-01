@@ -7,7 +7,8 @@ import org.apache.spark.sql.types._
 private[wasp] object TestRawModel {
 
   /* for Pipegraph */
-  lazy val nested = RawModel(name = "TestRawNestedSchemaModel",
+  lazy val nested = RawModel(
+    name = "TestRawNestedSchemaModel",
     uri="hdfs://namenode:9000/user/test_nested/",
     timed = true,
     schema = StructType(Seq(
@@ -21,7 +22,8 @@ private[wasp] object TestRawModel {
     )).json)
 
   /* for BatchJob */
-  lazy val flat = RawModel(name = "TestRawFlatSchemaModel",
+  lazy val flat = RawModel(
+    name = "TestRawFlatSchemaModel",
     uri="hdfs://namenode:9000/user/test_flat/",
     timed = true,
     schema = StructType(Seq(

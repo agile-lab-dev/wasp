@@ -1,18 +1,43 @@
-# Whitelabel - Application example
+# Whitelabel - Standalone application example
 
-## General usage
+## Start scripts usage
 (see `docker/start-whitelabel-wasp.sh`, `docker/start-wasp.sh`)
 
 In `docker/start-wasp.sh`, check everything marked as:
 
     # !!! standalone applications have to ... !!! #
 
+## Custom Node Launcher usage
+(see `*/build.sbt`)
+
+Add these in standalone applications:
+
+`master/build.sbt`
+
+    mainClass in Compile := Some("it.agilelab.bigdata.wasp.APPLICATION_NAME.producers.launcher.ProducersNodeLauncher")
+
+`producers/build.sbt`
+
+    mainClass in Compile := Some("it.agilelab.bigdata.wasp.APPLICATION_NAME.producers.launcher.ProducersNodeLauncher")
+
+`consumers-rt/build.sbt`
+
+    mainClass in Compile := Some("it.agilelab.bigdata.wasp.APPLICATION_NAME.consumers.rt.launcher.RtConsumersNodeLauncher")
+
+`consumers-spark/build.sbt`
+
+    mainClass in Compile := Some("thisClassNotExist")
+    //mainClass in Compile := Some("it.agilelab.bigdata.wasp.APPLICATION_NAME.consumers.spark.launcher.SparkConsumersStreamingNodeLauncher")
+    //mainClass in Compile := Some("it.agilelab.bigdata.wasp.APPLICATION_NAME.consumers.spark.launcher.SparkConsumersBatchNodeLauncher")
+
+    // to use within "docker run" in start-wasp.sh using -main FULLY_QUALIFIED_NAME
 
 ## Spark distributed-mode usage
-
 (see `consumers-spark/build.sbt`)
 
 Add this in standalone applications:
+    
+    import java.io.File
     
     mappings in Universal += {
       val log = streams.value.log
@@ -45,8 +70,7 @@ Add this in standalone applications:
     }
 
 
-### Hadoop YARN usage
-
+## Hadoop YARN usage
 (see `consumers-spark/build.sbt`)
 
 Add this in standalone applications:

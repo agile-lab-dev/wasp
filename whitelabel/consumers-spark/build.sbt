@@ -1,5 +1,4 @@
-import java.io.File
-
+/* !!! Custom Node Launcher usage: Add this in standalone applications !!! */
 mainClass in Compile := Some("thisClassNotExist")
 //mainClass in Compile := Some("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersStreamingNodeLauncher")
 //mainClass in Compile := Some("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersBatchNodeLauncher")
@@ -7,7 +6,9 @@ mainClass in Compile := Some("thisClassNotExist")
 // to use within "docker run" in start-wasp.sh using -main FULLY_QUALIFIED_NAME
 
 
-/* !!! Distributed Spark usage: Add this in standalone applications !!! */
+/* !!! Spark distributed-mode usage: Add this in standalone applications !!! */
+import java.io.File
+
 mappings in Universal += {
   val log = streams.value.log
 
@@ -39,5 +40,5 @@ mappings in Universal += {
 }
 
 
-/* !!! YARN usage: Add this in standalone applications !!! */
+/* !!! Hadoop YARN usage: Add this in standalone applications !!! */
 scriptClasspath += ":$HADOOP_CONF_DIR:$YARN_CONF_DIR"
