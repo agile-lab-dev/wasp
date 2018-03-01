@@ -14,7 +14,7 @@ Add these in standalone applications:
 
 `master/build.sbt`
 
-    mainClass in Compile := Some("it.agilelab.bigdata.wasp.APPLICATION_NAME.producers.launcher.ProducersNodeLauncher")
+    mainClass in Compile := Some("it.agilelab.bigdata.wasp.APPLICATION_NAME.master.launcher.MasterNodeLauncher")
 
 `producers/build.sbt`
 
