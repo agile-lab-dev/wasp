@@ -97,7 +97,21 @@ case class IndexModel(override val name: String,
     * @return
     */
   def getJsonSchema: String = {
-    schema.getOrElse(new BsonDocument).toJson
+    if (ConfigManager.getWaspConfig.defaultIndexedDatastore == "solr") {
+      val solrProperties = this
+        .schema
+        .get
+        .get("properties")
+        .asArray()
+        .getValues
+        .asScala
+        .map(e => e.asDocument().toJson)
+        .mkString(",")
+
+      s"[${solrProperties}]"
+    } else {
+      schema.getOrElse(new BsonDocument).toJson
+    }
   }
 
 
