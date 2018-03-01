@@ -73,7 +73,7 @@ For development purposes, WASP comes with two ways to handle the service depende
 - **Producer**: Producers are independent from pipegraphs. They ingest data from different sources and write data to a Kafka topic, after formatting it according to a the schema.
 
 #### Services
-![components](diagrams/components.PNG)
+![components](diagrams/components.png)
 
 ##### Kafka
 Kafka is the central element of this architecture blue print.
@@ -90,7 +90,7 @@ WASP supports running Spark in three different ways:
 
 ##### Akka
 Akka is our middleware: each component of WASP is an actor and relies on a clustered Actor System. In this way each component can be a separate process, and even run on different machines, and we can handle fault tolerance in a trasparent way to the whole application.
-This is a general overview of the [ActorSystem](diagrams/actor_system.PNG)
+This is a general overview of the [ActorSystem](diagrams/actor_system.png)
 
 ##### MongoDB
 MongoDB is the central repository for all configurations, ML models, and entities. It is fault tolerant and it simplifies the deployment in a distributed environment because each node just needs the MongoDB address to be ready to go.
@@ -278,11 +278,11 @@ An example of an extended WaspProducerActor:
 
 The following diagrams represent a pipegraph overview diagram:
 
-![pipegraph](diagrams/pipegraph.PNG)
+![pipegraph](diagrams/pipegraph.png)
 
 while this is  a more specific model representation of it:
 
-![pipegraph_model](diagrams/pipegraph_model.PNG)
+![pipegraph_model](diagrams/pipegraph_model.png)
 
 The pipegraph is the core of WASP, because it allows to abstract a pipeline with no coupling between components. It's really easy to change a pipegraph in order to add a datastore or more transformation steps.
 The structure of a Pipegraph forces you to implement in the right direction to avoid architectural mistakes. It forces you to have just one single output for each stream, so if you need to write your data into two datastore you are obliged to redirect the stream to Kafka topic and to consume it with two indipendent consumers.
