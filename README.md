@@ -13,7 +13,7 @@
   - [Glossary](#glossary)
   - [Services](#services)
   - [Using WASP](#using-wasp)
-- [RESTful APIs](REST.md)
+- [WASP RESTful APIs](REST.md)
 - [Whitelabel - Application example](whitelabel/README.md)
 
 
@@ -351,13 +351,15 @@ To run your application, you have to change the entry point to be your new Launc
 
 Then, start as WASP as you did above in the environment setup part.
 
-Your new Pipegraphs, Producers and associated models should now be laoded into MongoDB. You can check it by connecting to the WASP MongoDB instance, on `localhost:27017`, or using the REST API, by doing a `GET localhost:9000/pipegraphs` and `GET localhost:9000/producers`.
+Your new Pipegraphs, Producers and associated models should now be laoded into MongoDB. You can check it by connecting to the WASP MongoDB instance, on `localhost:27017`, or using the REST API, by doing a `GET localhost:2891/pipegraphs` and `GET localhost:2891/producers`.
 
-Now you can start your Producer and Pipegraphs, using the respective IDs, with the REST API by doing `POST localhost:9000/producers/$ID/start` and `POST localhost:9000/pipegraphs/$ID/start`.
+Now you can start your Producer and Pipegraphs, using the respective IDs, with the REST API by doing `POST localhost:2891/producers/$ID/start` and `POST localhost:2891/pipegraphs/$ID/start`.
 
 Then, you can have a look at what's going on:
 - <http://localhost:2891/pipegraphs>, <http://localhost:2891/producers>, <http://localhost:2891/batchjobs> for the current state of your Pipegraphs / Producers / BatchJobs
 - <http://localhost:4040> for Spark WebUI
-- <http://localhost:9200> for ElasticSearch
-- <http://localhost:50071> for Kibana (Data visualization plugin for ElasticSearch)
+- <http://localhost:50071> for HDFS
+- <http://localhost:8983>  for Solr
 - <http://localhost:32770> for Banana (Data visualization plugin for Solr)
+- <http://localhost:9200> for ElasticSearch
+- <http://localhost:5601> for Kibana (Data visualization plugin for ElasticSearch)

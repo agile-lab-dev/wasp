@@ -1,12 +1,9 @@
-WASP RESTful API
-=============
-
+# WASP RESTful APIs
 This documentation explain all the exposed services of WASP system. Via the APIs is possible to access and manage every element of the system. All the APIs return a response using JSON format, like below. At the moment is the only supported format.
 This is the first version of this documentation and the APIs are currently work in progress. In the next future we will make improvements at the system and consequently at the APIs.
 Below you can find all the APIs associated with the supported HTTP verbs.
 
-Pipegraphs
-----------
+## Pipegraphs
 
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
@@ -18,7 +15,7 @@ Pipegraphs
 
 Pipegraphs Sample
 
-`GET http://localhost:9000/pipegraphs`
+`GET http://localhost:2891/pipegraphs`
 
 ```javascript
 {
@@ -72,7 +69,7 @@ Pipegraphs Sample
 
 Start a producer with the system id `57ebbbe3010000010083528b`. 
 
-`POST http://localhost:9000/producers/57ebbbe3010000010083528b/start`
+`POST http://localhost:2891/producers/57ebbbe3010000010083528b/start`
 ```javascript
 {
   "Result": "OK",
@@ -80,8 +77,7 @@ Start a producer with the system id `57ebbbe3010000010083528b`.
 }
 ```
 
-Producers
-----------
+## Producers
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
 | /producers |  Get all the procuders in the system. |   | Update an existing pipegraph.  |   |
@@ -91,7 +87,7 @@ Producers
 
 Producers Sample
 
-`GET http://localhost:9000/producers`
+`GET http://localhost:2891/producers`
 
 ```javascript
 {
@@ -112,9 +108,7 @@ Producers Sample
 }
 ```
 
-
-Topics
-----------
+## Topics
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
 | /topics |  Get all the topics in the system. |   |   |   |
@@ -123,7 +117,7 @@ Topics
 
 Topics Sample
 
-`GET http://localhost:9000/producers`
+`GET http://localhost:2891/producers`
 
 ```javascript
 {
@@ -213,8 +207,7 @@ Topics Sample
 }
 ```
 
-Batchjobs
-----------
+## Batchjobs
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
 | /batchjobs |  Get all the batchjobs in the system. | Insert a new batchjobs.  | Update an existing batchjobs. |   |
@@ -224,7 +217,7 @@ Batchjobs
 
 Batchjobs Sample
 
-`GET http://localhost:9000/batchjobs`
+`GET http://localhost:2891/batchjobs`
 
 ```javascript
 {
@@ -304,15 +297,14 @@ Batchjobs Sample
 }
 ```
 
-Indices
--------
+## Indices
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
 | /index/{name} | Get the pipegraph with the specified name. |   |   |   |
 
 Indices Sample
 
-`GET http://localhost:9000/index/metro_index`
+`GET http://localhost:2891/index/metro_index`
 
 ```javascript
 {
@@ -417,15 +409,13 @@ Indices Sample
 }
 ```
 
-ML Models
-----------
+## ML Models
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
 | /mlmodels | Get all the ML models in the system. |   | Update an existing ML models.  |   |
 | /mlmodels/{id} | Get the ML models with the specified id. |   |   | Delete the ML models with the specified id. |
 
-Configurations
-----------
+## Configurations
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
 | /configs/kafka  | Get the Kakfa configuration. |   |   |   |
@@ -436,7 +426,7 @@ Configurations
 
 Configurations Sample
 
-`GET http://localhost:9000/configs/kafka`
+`GET http://localhost:2891/configs/kafka`
 
 ```javascript
 {
@@ -467,8 +457,3 @@ Configurations Sample
   }
 }
 ```
-
-Future improvements
-----------
-* APIs versioning like `http://localhost:9000/api/v1/pipegraphs`
-* Add new verbs for all entities.
