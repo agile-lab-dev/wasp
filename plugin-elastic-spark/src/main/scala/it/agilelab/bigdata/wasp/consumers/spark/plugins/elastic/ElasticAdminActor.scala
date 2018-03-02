@@ -42,15 +42,14 @@ class ElasticAdminActor extends Actor with Logging {
 
     val nodesAddress = connections.map(c => new InetSocketAddress(InetAddress.getByName(c.host), c.port))
 
-
     val unresolvedNodesAddress = nodesAddress.filter(_.isUnresolved)
     val resolvedNodesAddress = nodesAddress.filterNot(_.isUnresolved)
 
-    logger.info(s"resolved nodes $resolvedNodesAddress")
-    logger.info(s"un resolved nodes $unresolvedNodesAddress")
+    logger.info(s"Resolved nodes: $resolvedNodesAddress")
+    logger.info(s"Unresolved nodes: $unresolvedNodesAddress")
 
     if (resolvedNodesAddress.isEmpty) {
-      val message = s"No nodes resolved $nodesAddress"
+      val message = s"No nodes resolved from nodesAddress: $nodesAddress"
       logger.error(message)
       throw new Exception(message)
     }
@@ -74,33 +73,42 @@ class ElasticAdminActor extends Actor with Logging {
   }
 
   private def checkOrCreateIndex(message: CheckOrCreateIndex): Boolean = {
+    logger.info(s"Check or create index: $message")
+
     var check = checkIndex(CheckIndex(message.index))
 
     if (!check)
-      check = addIndex(AddIndex(message.index)) && addAlias(AddAlias(message.index, message.alias)) && addMapping(AddMapping(message.index, message.datatype, message.schema))
+      check =
+        addIndex(AddIndex(message.index)) &&
+        addAlias(AddAlias(message.index, message.alias)) &&
+        addMapping(AddMapping(message.index, message.datatype, message.schema))
 
     check
   }
 
-  private def addMapping(message: AddMapping): Boolean = {
-    restClient.addMapping(message.index, message.datatype, message.schema)
-  }
-
-  private def addIndex(message: AddIndex): Boolean = {
-    restClient.addIndex(message.index, None)
-  }
-
   private def checkIndex(message: CheckIndex): Boolean = {
+    logger.info(s"Check index: $message")
+
     restClient.checkIndex(message.index)
   }
 
-  private def addAlias(message: AddAlias): Boolean = if (message.index == message.alias) {
-    logger.info("received request to create index alias with same name as index")
-    true
-  } else {
-    restClient.addAlias(message.index, message.alias)
+  private def addIndex(message: AddIndex): Boolean = {
+    logger.info(s"Add index with name ${message.index}")
+
+    restClient.addIndex(message.index, None)
   }
 
+  private def addAlias(message: AddAlias): Boolean =
+    if (message.index == message.alias) {
+      logger.info(s"Received request to create index alias with same name as index: ${message.index}")
+      true
+    } else {
+      restClient.addAlias(message.index, message.alias)
+    }
+
+  private def addMapping(message: AddMapping): Boolean = {
+    restClient.addMapping(message.index, message.datatype, message.schema)
+  }
 
   private def removeAlias(message: RemoveAlias): Boolean = {
     restClient.removeAlias(message.index, message.alias)
