@@ -192,10 +192,6 @@ class SolrForeachWriter(ss: SparkSession,
 
   override def open(partitionId: Long, version: Long): Boolean = {
 
-    /*
-    * new CloudSolrServer(solrConfig.connections.map(conn => s"${conn.host}:${conn.port}")
-      .mkString(",") + "/solr")*/
-
     solrServer = SolrSupport.getSolrServer(connection)
     batch = new util.ArrayList[SolrInputDocument]
     true

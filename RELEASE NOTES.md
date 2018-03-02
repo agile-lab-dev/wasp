@@ -138,3 +138,6 @@
 
 ## WASP 2.5.0
 ...
+
+**Update**
+1- Modificato chroot_path di zookeeper per Kafka: da "" a "/kafka" (allineamento con Solr per cui è "/solr")
