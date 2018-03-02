@@ -93,27 +93,22 @@ private[wasp] object LoggerIndex {
 
 	val index_name = "logger"
 
-	def apply() = IndexModel(
-		name = IndexModel.normalizeName(index_name),
-		creationTime = System.currentTimeMillis,
-		schema = JsonConverter.fromString(indexSchema),
-		rollingIndex = false
-	)
+	import IndexModelBuilder._
 
-	private def indexSchema =
-		"""
-    	{ "properties":
-        [
-          { "name":"log_source", "type":"string", "stored":true },
-          { "name":"log_level", "type" : "string", "stored":true },
-          { "name":"message", "type":"string", "stored":true },
-          { "name":"timestamp", "type" : "date", "stored":true },
-          { "name":"thread", "type":"string", "stored":true },
-          { "name":"cause", "type":"string", "stored":true, "required":false },
-          { "name":"stack_trace", "type":"string", "stored":true, "required":false }
-        ]
-      }
-		"""
+	def apply(): IndexModel = IndexModelBuilder.forSolr
+		                             						 .named(index_name)
+																						 .config(Solr.Config(shards = 1,
+																							 									 replica = 1))
+	  																				 .schema(Solr.Schema(
+																							 				Solr.Field("log_source", Solr.Type.String),
+																							 				Solr.Field("log_level", Solr.Type.String),
+																							 				Solr.Field("message", Solr.Type.String),
+																							 				Solr.Field("timestamp", Solr.Type.TrieDate),
+																							 				Solr.Field("thread", Solr.Type.String),
+																							 				Solr.Field("cause", Solr.Type.String),
+																							 				Solr.Field("stack_trace", Solr.Type.String)))
+																 						 .build
+
 }
 
 private[wasp] object LoggerPipegraph {
