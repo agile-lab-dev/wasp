@@ -134,3 +134,7 @@
 	- `elastic`: rimossa KEY `cluster-name`
 - Solr: uso di `zookeeperConnections` al posto di `apiEndPoint`
 - Revisione gestione batchJobs: avvio parallelo di istanze di batchJobs diversi (vedi nuova collection MongoDB batchjobinstances)
+
+
+## WASP 2.5.0
+...
