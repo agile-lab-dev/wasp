@@ -177,7 +177,7 @@ class SolrAdminActor
   private def addCollection(message: AddCollection): Boolean = {
 
     logger.info(
-      s"AddCollection with name ${message.collection}, numShards ${message.numShards} and replica factor ${message.replicationFactor}.")
+      s"Add collection with name ${message.collection}, numShards ${message.numShards} and replica factor ${message.replicationFactor}")
 
     val numShards = message.numShards
     val replicationFactor = message.replicationFactor
@@ -211,7 +211,14 @@ class SolrAdminActor
 
     val liveNodes = zkStateReader.getClusterState.getLiveNodes.asScala.toSeq
 
-    // TODO check: it could be empty from ZooKeeper (see GL-67)
+    logger.info(s"Retrieved live-nodes from ZooKeeper: $liveNodes")
+
+    if (liveNodes.isEmpty) {
+      val message = "No live-nodes retrieved from ZooKeeper"
+      logger.error(message)
+      throw new Exception(message)
+    }
+
     val liveNodeHead = zkStateReader.getBaseUrlForNodeName(liveNodes.head)
 
     val uri =
@@ -307,21 +314,22 @@ class SolrAdminActor
 
     var check = checkCollection(CheckCollection(message.collection))
 
-    if (!check) {
+    if (!check)
       check =
         manageConfigSet(s"${SolrAdminActor.configSet}_${message.collection}", SolrAdminActor.template) &&
         addCollection(
           AddCollection(
             message.collection,
             message.numShards,
-            message.replicationFactor)) &&
+            message.replicationFactor)
+        ) &&
         addMapping(
           AddMapping(
             message.collection,
             message.schema,
             message.numShards,
-            message.replicationFactor))
-    }
+            message.replicationFactor)
+        )
 
     check
   }
