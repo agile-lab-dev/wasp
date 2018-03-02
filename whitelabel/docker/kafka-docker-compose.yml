@@ -18,7 +18,7 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181/kafka
       KAFKA_BROKER_ID: 1
       KAFKA_SESSION_TIMEOUT_MS: 5000
       KAFKA_HEAP_OPTS: "-Xmx150m -Xms150m"
