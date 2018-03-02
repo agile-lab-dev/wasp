@@ -122,7 +122,7 @@
 
 
 ## WASP 2.4.0
-...
+02/03/2018
 
 **Fix**
 - Solr JsonSchema: rollback a gestione "estrapola/invia a Solr solo il contenuto del campo `properties`" (gestione ad-hoc rispetto ElasticSearch)
@@ -133,4 +133,4 @@
 	- `solrcloud`: rimossa KEY `cluster_name`
 	- `elastic`: rimossa KEY `cluster-name`
 - Solr: uso di `zookeeperConnections` al posto di `apiEndPoint`
-- Revisione batch: gestione in parallelo
+- Revisione gestione batchJobs: avvio parallelo di istanze di batchJobs diversi (vedi nuova collection MongoDB batchjobinstances)
