@@ -16,7 +16,7 @@ object Versions {
 	val jdk = "1.8"
 	val jodaConvert = "1.8.1"
 	val jodaTime = "2.8.2"
-	val json4s = "3.2.10"
+	val json4s = "3.2.11"
 	val kafka = "0.10.2.1"
 	val kryo = "3.0.0"
 	val log4j = "2.9.1"  // keep compatible with elastic
