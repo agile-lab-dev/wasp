@@ -84,7 +84,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
           index.dataType,
           index.getJsonSchema))) {
 
-        new ElasticSparkReader(indexOpt.get)
+        new ElasticSparkReader(index)
 
       } else {
         val msg = s"Error creating elastic index: $index with this index name $indexName"

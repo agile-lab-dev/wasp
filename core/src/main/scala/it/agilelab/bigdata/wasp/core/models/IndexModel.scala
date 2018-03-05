@@ -1,13 +1,9 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
-
-import scala.collection.JavaConverters._
 
 object IndexModel {
-  val readerType = "index"
-
+  val readerType = Datastores.indexCategory
 }
 
 case class IndexModel private[core] (override val name: String,
@@ -36,5 +32,4 @@ case class IndexModel private[core] (override val name: String,
 
 
   def dataType: String = name
-
 }

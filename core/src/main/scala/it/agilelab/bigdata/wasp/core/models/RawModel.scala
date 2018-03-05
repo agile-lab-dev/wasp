@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import org.mongodb.scala.bson.BsonObjectId
-
 object RawModel{
 	val metadata = """
     {"name": "id", "type":"string", "nullable":false, "metadata":{}},

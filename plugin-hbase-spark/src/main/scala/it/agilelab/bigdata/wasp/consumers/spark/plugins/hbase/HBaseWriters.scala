@@ -18,7 +18,6 @@ import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
-
 object HBaseWriter {
   def createSparkStructuredStreamingWriter(keyValueBL: KeyValueBL, ss: SparkSession, hbaseModel: KeyValueModel): SparkStructuredStreamingWriter = {
     new HBaseStructuredStreamingWriter(hbaseModel, ss)
@@ -31,8 +30,6 @@ object HBaseWriter {
   def createSparkWriter(keyValueBL: KeyValueBL, sc: SparkContext, hbaseModel: KeyValueModel): SparkWriter = {
     new HBaseWriter(hbaseModel, sc)
   }
-
-
 }
 
 class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel,

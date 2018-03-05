@@ -1,27 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import org.mongodb.scala.bson.BsonObjectId
-
-// TODO external scaladocs links
-/**
-	*
-	*/
-case class KeyValueModel(override val name: String,
-                         tableCatalog: String,
-                         dataFrameSchema: Option[String],
-                         options: Option[Seq[KeyValueOption]],
-                         avroSchemas: Option[Map[String, String]]) extends Model {
-	def getOptionsMap(): Map[String, String] = {
-		options.map(sOpts => {
-			sOpts.map(o => {
-				(o.key, o.value)
-			}).toMap
-		}).getOrElse(Map())
-	}
-}
-
 object KeyValueModel {
-
+	val readerType = Datastores.keyValueCategory
 
 	val metadataAvro = s"""   {"namespace": "it.agilelab.wasp.avro",
 		  |   "type": "record", "name": "metadata",
@@ -46,7 +26,6 @@ object KeyValueModel {
 			|      ]
 		  |  }""".stripMargin
 
-
 	def metadataCatalog(cf: String) = s""" "metadata":{"cf":"$cf", "col":"m", "avro":"metadataAvroSchema"} """
 	val metadataAvroSchemaKey = "metadataAvroSchema"
 
@@ -54,7 +33,6 @@ object KeyValueModel {
 		val schema = (ownSchema :: Nil).flatten.mkString(", ")
 		generate(namespace, tableName, schema)
 	}
-
 
 	def generateMetadataAndField(namespace: String, tableName: String, cf: String, ownSchema: Option[String]): String = {
 		val schema = (Some(metadataCatalog(cf))  :: ownSchema :: Nil).flatten.mkString(", ")
@@ -71,6 +49,21 @@ object KeyValueModel {
 			 |}""".stripMargin
 	}
 
+}
+
+case class KeyValueModel(override val name: String,
+												 tableCatalog: String,
+												 dataFrameSchema: Option[String],
+												 options: Option[Seq[KeyValueOption]],
+												 avroSchemas: Option[Map[String, String]]) extends Model {
+
+	def getOptionsMap(): Map[String, String] = {
+		options.map(sOpts => {
+			sOpts.map(o => {
+				(o.key, o.value)
+			}).toMap
+		}).getOrElse(Map())
+	}
 }
 
 case class KeyValueOption(key: String, value: String)

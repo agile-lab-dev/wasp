@@ -305,6 +305,7 @@ object WaspDB extends Logging {
     typeTag[MlModelOnlyInfo].tpe -> mlModelsName,
     typeTag[WebsocketModel].tpe -> websocketsName,
     typeTag[BatchSchedulerModel].tpe -> batchSchedulersName,
+    typeTag[BatchJobInstanceModel].tpe -> batchjobInstanceName,
 
     typeTag[KafkaConfigModel].tpe -> configurationsName,
     typeTag[SparkBatchConfigModel].tpe -> configurationsName,
@@ -313,7 +314,6 @@ object WaspDB extends Logging {
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[HBaseConfigModel].tpe -> configurationsName,
-    typeTag[BatchJobInstanceModel].tpe -> batchjobInstanceName
   )
 
 

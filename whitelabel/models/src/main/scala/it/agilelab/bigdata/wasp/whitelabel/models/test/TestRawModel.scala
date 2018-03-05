@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-
 import it.agilelab.bigdata.wasp.core.models.{RawModel, RawOptions}
 import org.apache.spark.sql.types._
 

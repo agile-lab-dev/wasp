@@ -2,28 +2,22 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{Datastores, KeyValueModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
-
-object HBaseReaders {
-  def createHBaseReader(model: KeyValueModel): SparkReader = {
-    new HBaseReader(model)
-  }
-}
-
-class HBaseReader(model: KeyValueModel) extends SparkReader with Logging {
-  override val name = model.name
-  override val readerType = "hbase"
+class HBaseSparkReader(keyValueModel: KeyValueModel) extends SparkReader with Logging {
+  val name: String = keyValueModel.name
+  val readerType: String = Datastores.hbaseProduct
 
   override def read(sc: SparkContext): DataFrame = {
-    logger.info(s"Initialize Spark HBaseReader with this model: $model")
+
+    logger.info(s"Initialize Spark HBaseReader with this model: $keyValueModel")
     val sqlContext = SQLContext.getOrCreate(sc)
-    val options: Map[String, String] = model.getOptionsMap() ++
+    val options: Map[String, String] = keyValueModel.getOptionsMap() ++
     Seq(
-      HBaseTableCatalog.tableCatalog -> model.tableCatalog,
+      HBaseTableCatalog.tableCatalog -> keyValueModel.tableCatalog,
       //TODO fix me
       KeyValueModel.metadataAvroSchemaKey -> "",
       HBaseTableCatalog.newTable -> "4"

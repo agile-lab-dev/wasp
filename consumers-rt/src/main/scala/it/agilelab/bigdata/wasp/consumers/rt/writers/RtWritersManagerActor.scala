@@ -11,7 +11,6 @@ import org.mongodb.scala.bson.BsonDocument
 
 import scala.collection.JavaConverters._
 
-
 class RtWritersManagerActor(env: {
                                   val topicBL: TopicBL
                                   val websocketBL: WebsocketBL
@@ -46,13 +45,10 @@ class RtWritersManagerActor(env: {
     writer.writerType.category match {
       case Datastores.topicCategory => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
       case Datastores.indexCategory => writer.writerType.getActualProduct match {
+        // TODO
         case Datastores.elasticProduct => ???
-        //TODO Migrate to the RT plugin
-        //logger.debug("Starting a CamelElasticWriter")
-        //Some(context.actorOf(Props(new CamelElasticWriter(env.indexBL, writer))))
-
-        case Datastores.solrProduct => ??? // TODO
-        case _ => ??? // TODO exception?
+        case Datastores.solrProduct => ???
+        case _ => ???
       }
       case Datastores.websocketCategory => Some(context.actorOf(Props(new CamelWebsocketWriter(env.websocketBL, writer))))
       case _ => None //TODO gestire writer inaspettato

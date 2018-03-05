@@ -2,17 +2,15 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.RawModel
-import org.apache.hadoop.conf.Configuration
+import it.agilelab.bigdata.wasp.core.models.{Datastores, RawModel}
 import org.apache.hadoop.fs.Path
-import org.apache.spark.deploy.SparkHadoopUtil
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
 class RawSparkReader(rawModel: RawModel) extends SparkReader with Logging {
-  override val name: String = rawModel.name
-  override val readerType: String = "hdfs"
+  val name: String = rawModel.name
+  val readerType: String = Datastores.rawProduct
 
   override def read(sc: SparkContext): DataFrame = {
     logger.info(s"Initialize Spark HDFSReader with this model: $rawModel")

@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.DataType
 import org.mongodb.scala.bson.BsonDocument
 
 object TopicModel {
-  val readerType = "topic"
+  val readerType: String = Datastores.topicCategory
 
   def name(basename: String) = s"${basename.toLowerCase}.topic"
 

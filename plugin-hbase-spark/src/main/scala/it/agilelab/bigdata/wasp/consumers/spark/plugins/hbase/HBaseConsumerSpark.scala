@@ -28,7 +28,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info("Initialize the keyValue BL")
     keyValueBL = new KeyValueBLImp(waspDB)
-    logger.info(s"Initialize the elastic admin actor with this name ${HBaseAdminActor.name}")
+    logger.info(s"Initialize the hbase admin actor with this name ${HBaseAdminActor.name}")
     //hbaseAdminActor_ = WaspSystem.actorSystem
     //  .actorOf(Props(new HBaseAdminActor), HBaseAdminActor.name)
     // services timeout, used below
@@ -42,7 +42,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
+    logger.info(s"Initialize the hbase spark streaming writer with this writer model name '${writerModel.name}'")
     HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, getKeyValueModel(writerModel))
   }
 
@@ -51,20 +51,23 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the elastic spark batch writer with this writer model name '${writerModel.name}'")
+    logger.info(s"Initialize the hbase spark batch writer with this writer model name '${writerModel.name}'")
     HBaseWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
   }
 
-  override def getSparkReader(id: String, name: String): SparkReader = {
-    logger.info(s"Initialize HBaseReader with this id: '$id' and name: '$name'")
-    val hbaseModelOpt = keyValueBL.getByName(id)
-    val model = if (hbaseModelOpt.isDefined) {
-      hbaseModelOpt.get
-    } else {
-      throw new ModelNotFound(s"The KeyValueModel with this id $id was not found")
-    }
+  override def getSparkReader(endpointId: String, name: String): SparkReader = {
+    logger.info(s"Initialize HBaseReader with this id: '$endpointId' and name: '$name'")
+    val hbaseOpt = keyValueBL.getByName(endpointId)
+    val keyValue =
+      if (hbaseOpt.isDefined) {
+        hbaseOpt.get
+      } else {
+        val msg = s"HBase spark reader hbaseOpt not found - id: '$endpointId, name: $name'"
+        logger.error(msg)
+        throw new Exception(msg)
+      }
 
-    HBaseReaders.createHBaseReader(model)
+    new HBaseSparkReader(keyValue)
   }
 
   @throws(classOf[ModelNotFound])
@@ -80,5 +83,4 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def pluginType: String = Datastores.hbaseProduct
-
 }

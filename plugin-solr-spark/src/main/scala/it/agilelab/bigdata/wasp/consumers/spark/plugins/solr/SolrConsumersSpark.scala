@@ -74,7 +74,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
             index.numShards.getOrElse(1),
             index.replicationFactor.getOrElse(1)))) {
 
-        new SolrSparkReader(indexOpt.get)
+        new SolrSparkReader(index)
 
       } else {
         val msg = s"Error creating solr index: $index with this index name $indexName"

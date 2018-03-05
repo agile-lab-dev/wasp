@@ -4,7 +4,6 @@ import it.agilelab.bigdata.wasp.core.models.{IndexModel, IndexModelBuilder}
 
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 
-
 private[wasp] object TestIndexModel {
 
   import org.json4s._
