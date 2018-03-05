@@ -2,79 +2,172 @@ package it.agilelab.bigdata.wasp.core.models
 
 import java.time.Instant
 
-import com.google.gson.reflect.TypeToken
-import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.json4s.JsonAST.JObject
-
-import scala.util.parsing.json.JSONObject
-import scala.reflect.runtime.universe._
+import org.json4s.{CustomSerializer, Formats}
 
 
-class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuilder.DataStoreKind : TypeTag] private
+/**
+  * A builder able to create instances of [[IndexModel]].
+  *
+  * @param name The current index name
+  * @param schema The current index schema
+  * @param config The current index config
+  * @param isRolling Whether the index should be rolling
+  * @param id Wether the index has an id field
+  * @tparam Stage The current [[Stage]] of the builder.
+  * @tparam Kind The kind of DataStore whose index is being built.
+  */
+class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuilder.DataStoreKind] private
 (name: String, schema: IndexModelBuilder.UntypedSchema, config: IndexModelBuilder.UntypedConfig, isRolling: Boolean,
- idField: Option[String]) {
+ id: Option[String]) {
 
 
+  /**
+    * Assigns a name to the index
+    * @param name The name of the index
+    * @return An instance of builder with Name stage completed
+    */
   def named(name: String): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Name, Kind] =
-    new IndexModelBuilder(name, schema, config, isRolling, idField)
+    new IndexModelBuilder(name, schema, config, isRolling, id)
 
+  /**
+    * Assigns a schema to the index
+    * @param schema The schema of the index
+    * @return An instance of builder with Schema stage completed
+    */
   def schema(schema: IndexModelBuilder.Schema[Kind]): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Schema[Kind], Kind] =
-    new IndexModelBuilder(name, schema, config, isRolling, idField)
+    new IndexModelBuilder(name, schema, config, isRolling, id)
 
+  /**
+    * Assigns a config to the index
+    * @param config The config of the index
+    * @return An instance of builder with Config stage completed
+    */
   def config(config: IndexModelBuilder.Config[Kind]): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Config[Kind], Kind] =
-    new IndexModelBuilder(name, schema, config, isRolling, idField)
+    new IndexModelBuilder(name, schema, config, isRolling, id)
 
-  def rolling: IndexModelBuilder[Stage, Kind] = new IndexModelBuilder(name, schema, config, true, idField)
+  /**
+    * Mark the index as rolling
+    * @return An instance of builder with Rolling stage completed
+    */
+  def rolling:  IndexModelBuilder[Stage with IndexModelBuilder.Stage.Rolling, Kind] = new IndexModelBuilder(name,
+    schema, config, true, id)
 
-  def id(id: String): IndexModelBuilder[Stage, Kind] = new IndexModelBuilder(name, schema, config, true, Some(id))
+  /**
+    * Assings an id field to the index
+    * @return An instance of builder with Id stage completed
+    */
+  def id(id: String): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Id, Kind] =
+    new IndexModelBuilder(name, schema, config, isRolling, Some(id))
 
-  def build(implicit evidence: Stage <:< IndexModelBuilder.Stage.Complete[Kind]): IndexModel = {
-
-
+  /**
+    * Builds an index model, this method is callable only when Stage is a subclass of [[IndexModelBuilder.Stage.Complete]]
+    * (has more trait mixed but not less).
+    *
+    * @param evidence The evidence that the current Stage is a subclass of [[IndexModelBuilder.Stage.Complete]]
+    * @return The built [[IndexModel]]
+    */
+  def build(implicit evidence: Stage <:< IndexModelBuilder.Stage.Complete[Kind]): IndexModel =
     schema.augment(
       config.augment(
         IndexModel(
           name = if (name.toLowerCase().endsWith("_index")) name else s"${name.toLowerCase}_index",
           creationTime = System.currentTimeMillis(),
-          schema = None)))
-
-
-  }
+          rollingIndex = isRolling,
+          idField = id,
+          schema = None)
+      )
+    )
 
 
 }
 
 
+/**
+  * Companion object of [[IndexModelBuilder]], contains the syntax.
+  *
+  * import IndexModelBuilder._ when you want to construct an [[IndexModel]].
+  */
 object IndexModelBuilder {
 
+  /**
+    * Creates an [[IndexModelBuilder]] setup to create Solr Indices
+    * @return The builder preconfigured for Solr indices building
+    */
   def forSolr: IndexModelBuilder[Stage.DataStore[DataStoreKind.Solr], DataStoreKind.Solr] = new IndexModelBuilder("",
     Solr.Schema(), Solr.Config(), false, None)
 
+  /**
+    * creates an [[IndexModelBuilder]] setup to create Elastic Indices
+    * @return The builder preconfigured for Elastic indices building
+    */
   def forElastic: IndexModelBuilder[Stage.DataStore[DataStoreKind.Elastic], DataStoreKind.Elastic] = new
       IndexModelBuilder("", Elastic.Schema(JObject()), Elastic.Config(), false, None)
 
+
+  /**
+    * A trait marking stages of the building.
+    */
   sealed trait Stage {}
 
+  /**
+    * A trait marking the type of index being built.
+    */
   sealed trait DataStoreKind {}
 
+  /**
+    * A trait Definining how a schema should augment the IndexModel.
+    */
   sealed trait UntypedSchema {
+    /**
+      * Implementor of Untyped schema should augment the supplied model parameter and return the augmented version.
+      *
+      * @param model THe model to augment
+      * @return The augmented model
+      */
     def augment(model: IndexModel): IndexModel
   }
 
+  /**
+    * A trait marking schemas as having a target DataStore [[Kind]]
+    * @tparam Kind The target datastore Kind
+    */
   sealed trait Schema[Kind <: DataStoreKind] extends UntypedSchema
 
+  /**
+    * A trait defining how a config should augment the indexModel
+    */
   sealed trait UntypedConfig {
     def augment(model: IndexModel): IndexModel
   }
 
+  /**
+    * A trait marking configs as having a target DataStore [[Kind]]
+    * @tparam Kind The target datastore Kind
+    */
   sealed trait Config[Kind <: DataStoreKind] extends UntypedConfig {
 
   }
 
 
+  /**
+    * Object grouping Elastic customization
+    */
   object Elastic {
 
+    /**
+      * An elastic Schema.
+      *
+      * @param jsonSchema The schema as a [[JObject]]
+      */
     case class Schema(jsonSchema: JObject) extends IndexModelBuilder.Schema[DataStoreKind.Elastic] {
+
+      /**
+        * Augments the index model with the serialized json schema as string.
+        *
+        * @param model THe model to augment
+        * @return The augmented model
+        */
       override def augment(model: IndexModel): IndexModel = {
 
         import org.json4s.NoTypeHints
@@ -87,6 +180,12 @@ object IndexModelBuilder {
       }
     }
 
+    /**
+      * An elastic config.
+      * @param shards The number of index shards
+      * @param replica The number of index replicas
+      * @param pushdownQuery The query to use in spark query pushdown
+      */
     case class Config(shards: Int = 1, replica: Int = 1, pushdownQuery: Option[String] = None) extends
       IndexModelBuilder.Config[DataStoreKind.Elastic] {
       override def augment(model: IndexModel): IndexModel = {
@@ -94,14 +193,28 @@ object IndexModelBuilder {
       }
     }
 
+    /**
+      * Object grouping factories for [[Config]]
+      */
     object Config {
+
+      /**
+        * A default configuration for [[Elastic]]
+        * @return The default configuration.
+        */
       def default = Config()
     }
 
   }
 
+  /**
+    * Object grouping Solr customization
+    */
   object Solr {
 
+    /**
+      * Trait marking SolrMissingFieldSort alternatives
+      */
     sealed trait SolrMissingFieldSort
 
     /**
@@ -116,17 +229,33 @@ object IndexModelBuilder {
 
     }
 
+    /**
+      * A Solr configuration.
+      *
+      * @param shards The number of index shards
+      * @param replica The number of index replicas
+      */
     case class Config(shards: Int = 1, replica: Int = 1) extends IndexModelBuilder.Config[DataStoreKind.Solr] {
       override def augment(model: IndexModel): IndexModel = {
         model.copy(numShards = Some(shards), replicationFactor = Some(replica))
       }
     }
 
-    case class Schema(solrFields: Solr.FieldData[_]*) extends IndexModelBuilder.Schema[DataStoreKind.Solr] {
+    /**
+      * A Solr schema.
+      * @param solrFields A sequence of [[Solr.Field]]
+      */
+    case class Schema(solrFields: Solr.Field[_]*) extends IndexModelBuilder.Schema[DataStoreKind.Solr] {
+
+      /**
+        * Augments the index model with the serialized json schema as string.
+        * @param model The model to augment
+        * @return The augmented model
+        */
       override def augment(model: IndexModel): IndexModel = {
 
-        import org.json4s.NoTypeHints
         import org.json4s.JsonAST._
+        import org.json4s.NoTypeHints
         import org.json4s.native.Serialization
 
 
@@ -186,120 +315,65 @@ object IndexModelBuilder {
       * @tparam A The type contained in this solr field
       *
       */
-    case class FieldData[+A] private(name: String,
-                                     `type`: Type[A],
-                                     defaultValue: Option[A] = None,
-                                     indexed: Boolean = true,
-                                     stored: Boolean = true,
-                                     docValues: Option[Boolean] = None,
-                                     sortMissing: Option[SolrMissingFieldSort] = None,
-                                     multiValued: Option[Boolean] = None,
-                                     omitNorms: Option[Boolean] = None,
-                                     omitTermFreqAndPositions: Option[Boolean] = None,
-                                     omitPositions: Option[Boolean] = None,
-                                     termVectors: Option[Boolean] = None,
-                                     termPositions: Option[Boolean] = None,
-                                     termOffsets: Option[Boolean] = None,
-                                     termPayloads: Option[Boolean] = None,
-                                     required: Boolean = false,
-                                     useDocValuesAsStored: Option[Boolean] = None,
-                                     large: Option[Boolean] = None)
+    case class Field[+A] private(name: String,
+                                 `type`: Type[A],
+                                 defaultValue: Option[A] = None,
+                                 indexed: Boolean = true,
+                                 stored: Boolean = true,
+                                 docValues: Option[Boolean] = None,
+                                 sortMissing: Option[SolrMissingFieldSort] = None,
+                                 multiValued: Option[Boolean] = None,
+                                 omitNorms: Option[Boolean] = None,
+                                 omitTermFreqAndPositions: Option[Boolean] = None,
+                                 omitPositions: Option[Boolean] = None,
+                                 termVectors: Option[Boolean] = None,
+                                 termPositions: Option[Boolean] = None,
+                                 termOffsets: Option[Boolean] = None,
+                                 termPayloads: Option[Boolean] = None,
+                                 required: Boolean = false,
+                                 useDocValuesAsStored: Option[Boolean] = None,
+                                 large: Option[Boolean] = None)
 
+    /**
+      * objects grouping factories for [[Config]]
+      */
     object Config {
+      /**
+        * A default configuration.
+        * @return A default configuration.
+        */
       def default = Config()
     }
 
-    object Field {
 
-      /**
-        *
-        * Class representing a Field of Solr Index.
-        *
-        * @param name                     The name of the field. Field names should consist of alphanumeric or underscore characters only and not
-        *                                 start with a digit. This is not currently strictly enforced, but other field names will not have first
-        *                                 class support from all components and back compatibility is not guaranteed. Names with both leading and
-        *                                 trailing underscores (e.g., _version_) are reserved. Every field must have a name.
-        * @param solrType                 The type of the field.
-        * @param defaultValue             The default value for the field if ingested document does not contain it.
-        * @param indexed                  If true, the value of the field can be used in queries to retrieve matching documents.
-        * @param stored                   If true, the actual value of the field can be retrieved by queries.
-        * @param docValues                If true, the value of the field will be put in a column-oriented DocValues structure.
-        * @param sortMissing              Control the placement of documents when a sort field is not present.
-        * @param multiValued              If true, indicates that a single document might contain multiple values for this field type.
-        * @param omitNorms                If true, omits the norms associated with this field (this disables length normalization for the
-        *                                 field, and saves some memory). Defaults to true for all primitive (non-analyzed) field types,
-        *                                 such as int, float, data, bool, and string. Only full-text fields or fields need norms.
-        * @param omitTermFreqAndPositions if true, omits term frequency, positions, and payloads from postings for this field.
-        *                                 This can be a performance boost for fields that don’t require that information.
-        *                                 It also reduces the storage space required for the index.
-        *                                 Queries that rely on position that are issued on a field with this option will
-        *                                 silently fail to find documents.
-        *                                 This property defaults to true for all field types that are not text fields.
-        * @param omitPositions            Similar to omitTermFreqAndPositions but preserves term frequency information.
-        * @param termVectors              instruct Solr to maintain full term vectors for each document
-        * @param termPositions            instruct Solr to include position of term occurrence in term vectors
-        * @param termOffsets              instruct Solr to include  offset of term occurrence in term vectors
-        * @param termPayloads             instruct Solr to include payload of term occurrence in term vectors
-        * @param required                 Instructs Solr to reject any attempts to add a document which does not have a value for this field.
-        *                                 This property defaults to false.
-        * @param useDocValuesAsStored     If the field has docValues enabled, setting this to true would allow the field to be
-        *                                 returned as if it were a stored field (even if it has stored=false) when matching
-        *                                 “*” in an fl parameter.
-        * @param large                    Large fields are always lazy loaded and will only take up space in the document cache if the actual
-        *                                 value is < 512KB. This option requires stored="true" and multiValued="false".
-        *                                 It’s intended for fields that might have very large values so that they don’t get cached in memory.
-        * @tparam A The type contained in this solr field
-        *
-        */
-      def apply[A, B](name: String,
-                      solrType: Type[A],
-                      defaultValue: Option[A] = None,
-                      indexed: Boolean = true,
-                      stored: Boolean = true,
-                      docValues: Option[Boolean] = None,
-                      sortMissing: Option[SolrMissingFieldSort] = None,
-                      multiValued: Option[Boolean] = None,
-                      omitNorms: Option[Boolean] = None,
-                      omitTermFreqAndPositions: Option[Boolean] = None,
-                      omitPositions: Option[Boolean] = None,
-                      termVectors: Option[Boolean] = None,
-                      termPositions: Option[Boolean] = None,
-                      termOffsets: Option[Boolean] = None,
-                      termPayloads: Option[Boolean] = None,
-                      required: Boolean = false,
-                      useDocValuesAsStored: Option[Boolean] = None,
-                      large: Option[Boolean] = None)(implicit evidence: B <:< A): FieldData[A] = FieldData[A](
-        name,
-        solrType,
-        defaultValue,
-        indexed,
-        stored,
-        docValues,
-        sortMissing,
-        multiValued,
-        omitNorms,
-        omitTermFreqAndPositions,
-        omitPositions,
-        termVectors,
-        termPositions,
-        termOffsets,
-        termPayloads,
-        required,
-        useDocValuesAsStored,
-        large)
-    }
-
-
+    /**
+      * Object grouping alternatives for [[SolrMissingFieldSort]]
+      */
     object SolrMissingFieldSort {
 
+      /**
+        * Sort documents having missing field last.
+        */
       case object SortMissingLast extends SolrMissingFieldSort
 
+      /**
+        * Sort documents having missing field first.
+        */
       case object SortMissingFirst extends SolrMissingFieldSort
 
     }
 
+
+    /**
+      * Object grouping Solr field types, use Custom if you want to use a custom type.
+      */
     object Type {
 
+      /**
+        * A custom type.
+        * @param name     The name of the fieldType for this field. This will be found in the name attribute on the fieldType
+        *                 definition. Every field must have a type.
+        */
       case class Custom(override val name: String) extends Type[Any](name)
 
       /**
@@ -378,57 +452,71 @@ object IndexModelBuilder {
 
   }
 
+  /**
+    * Object grouping defined [[DataStoreKind]]
+    */
   object DataStoreKind {
 
+    /**
+      * Elastic [[DataStoreKind]]
+      */
     sealed trait Elastic extends DataStoreKind {}
 
+    /**
+      * Solr [[DataStoreKind]]
+      */
     sealed trait Solr extends DataStoreKind {}
 
   }
 
+  /**
+    * Objects grouping Builder Stages.
+    */
   object Stage {
 
+
+    /**
+      * Describe the target type of [[IndexModelBuilder]] seek before build method can be called.
+      * @tparam Kind The [[DataStoreKind]]
+      */
     type Complete[Kind <: DataStoreKind] = Name with DataStore[Kind] with Schema[Kind] with Config[Kind]
 
+    /**
+      * Index has a name
+      */
     sealed trait Name extends Stage
 
+    /**
+      * Index has an assigned [[DataStoreKind]].
+      *
+      * @tparam Kind The kind of [[DataStoreKind]]
+      */
     sealed trait DataStore[Kind <: DataStoreKind] extends Stage
 
+    /**
+      * Index has an assigned schema for [[DataStoreKind]].
+      *
+      * @tparam Kind The kind of [[DataStoreKind]]
+      */
     sealed trait Schema[Kind <: DataStoreKind] extends Stage
 
+    /**
+      * Index has an assigned config for [[DataStoreKind]].
+      *
+      * @tparam Kind The kind of [[DataStoreKind]]
+      */
     sealed trait Config[Kind <: DataStoreKind] extends Stage
 
+    /**
+      * Index has been configured as Rolling
+      */
     sealed trait Rolling extends Stage
 
+    /**
+      * Index has been assigned an Id
+      */
+    sealed trait Id extends Stage
+
   }
-
-}
-
-
-object Runner extends App {
-
-  import IndexModelBuilder._
-
-  val elastic = IndexModelBuilder.forElastic
-                                  .named("pippo_index")
-                                  .schema(Elastic.Schema(JObject()))
-                                  .config(Elastic.Config(shards = 3, replica = 4))
-                                  .build
-
-
-  val solr = IndexModelBuilder.forSolr
-                              .named("pippo")
-                              .schema(Solr.Schema(
-                                  Solr.Field("ciccio", Solr.Type.Binary),
-                                  Solr.Field("ciccio1", Solr.Type.Bool),
-                                  Solr.Field("ciccio2", Solr.Type.Text, Some("default")),
-                                  Solr.Field("ciccio3", Solr.Type.TrieInt, Some(1)),
-                                  Solr.Field("ciccio5", Solr.Type.TrieInt, Some(2))))
-                              .config(Solr.Config(shards = 3, replica = 4))
-                              .build
-
-
-  println(elastic)
-  println(solr)
 
 }
