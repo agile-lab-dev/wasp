@@ -12,7 +12,6 @@ import org.bson.BsonString
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.Try
 
 object ConfigManager {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
@@ -23,6 +22,7 @@ object ConfigManager {
   val elasticConfigName = "Elastic"
   val solrConfigName = "Solr"
   val hbaseConfigName = "HBase"
+  val jdbcConfigName = "Jdbc"
 
   private var waspConfig : WaspConfigModel = _
   private var mongoDBConfig: MongoDBConfigModel = _
@@ -32,7 +32,8 @@ object ConfigManager {
   private var elasticConfig: ElasticConfigModel = _
   private var solrConfig: SolrConfigModel = _
   private var hbaseConfig: HBaseConfigModel = _
-  
+  private var jdbcConfig: JdbcConfigModel = _
+
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
   }
@@ -155,17 +156,17 @@ object ConfigManager {
       retrieveConf[ElasticConfigModel](getDefaultElasticConfig, elasticConfigName).get
   }
 
-  private def initializeSolrConfig(): Unit = {
-    solrConfig =
-      retrieveConf[SolrConfigModel](getDefaultSolrConfig, solrConfigName).get
-  }
-
   private def getDefaultElasticConfig: ElasticConfigModel = {
     val elasticSubConfig = conf.getConfig("elastic")
     ElasticConfigModel(
       readConnectionsConfig(elasticSubConfig, "connections"),
       elasticConfigName
     )
+  }
+
+  private def initializeSolrConfig(): Unit = {
+    solrConfig =
+      retrieveConf[SolrConfigModel](getDefaultSolrConfig, solrConfigName).get
   }
 
   private def getDefaultSolrConfig: SolrConfigModel = {
@@ -190,6 +191,28 @@ object ConfigManager {
     )
   }
 
+  private def initializeJdbcConfig(): Unit = {
+    jdbcConfig =
+      retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
+  }
+
+  private def getDefaultJdbcConfig: JdbcConfigModel = {
+    val jdbcSubConfig = conf.getConfig("jdbc")
+    val connectionsMap = jdbcSubConfig
+                            .getObject("connections")
+                            .entrySet()
+                            .asScala
+                            .toSeq
+                            .filter(entry => entry.getValue.isInstanceOf[ConfigObject])
+                            .map(entry => (entry.getKey, entry.getValue.asInstanceOf[ConfigObject].toConfig))
+                            .map(t => (t._1, readJdbcConfig(t._1, t._2)))
+                            .toMap
+    JdbcConfigModel(
+      connectionsMap,
+      jdbcConfigName
+    )
+  }
+
   /**
     * Initialize the configurations managed by this ConfigManager.
     */
@@ -200,6 +223,7 @@ object ConfigManager {
     initializeElasticConfig()
     initializeSolrConfig()
     initializeHBaseConfig()
+    initializeJdbcConfig()
     initializeSparkStreamingConfig()
     initializeSparkBatchConfig()
   }
@@ -259,6 +283,23 @@ object ConfigManager {
       throw new Exception("The hbase configuration was not initialized")
     }
     hbaseConfig
+  }
+
+  def getJdbcConfig: JdbcConfigModel = {
+    if (jdbcConfig == null) {
+      throw new Exception("The jdbc configuration was not initialized")
+    }
+    jdbcConfig
+  }
+
+  private def readJdbcConfig(name: String, config: Config): JdbcConnectionConfig = {
+    JdbcConnectionConfig(
+      name,
+      config.getString("url"),
+      config.getString("user"),
+      config.getString("password"),
+      config.getString("driverName")
+    )
   }
 
   private def readConnectionsConfig(config: Config, path: String): Array[ConnectionConfig] = {
@@ -392,4 +433,8 @@ trait SolrConfiguration {
 
 trait HBaseConfiguration {
   lazy val hbaseConfig: HBaseConfigModel = ConfigManager.getHBaseConfig
+}
+
+trait JdbcConfiguration {
+  lazy val jdbcConfig: JdbcConfigModel = ConfigManager.getJdbcConfig
 }

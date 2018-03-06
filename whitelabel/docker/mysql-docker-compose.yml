@@ -1,0 +1,20 @@
+version: '2'
+services:
+
+  mysql:
+    image: mysql:5.7.21
+    container_name: mysql
+    hostname: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: psw
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./data/mysql:/var/lib/mysql"
+      - "./mysql:/docker-entrypoint-initdb.d"
+    mem_limit: 500m
+
+networks:
+  default:
+    external:
+      name: wasp-docker

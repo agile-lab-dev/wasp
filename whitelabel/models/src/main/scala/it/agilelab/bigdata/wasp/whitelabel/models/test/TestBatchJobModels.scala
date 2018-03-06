@@ -1,8 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models._
-import org.apache.avro.generic.GenericData.StringType
-import org.apache.spark.sql.types.{IntegerType, LongType, StructField, StructType}
+import it.agilelab.bigdata.wasp.core.models.{ReaderModel, _}
 
 private[wasp] object TestBatchJobModels {
 
@@ -90,6 +88,27 @@ private[wasp] object TestBatchJobModels {
         name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
         inputs = List(
           ReaderModel.rawReader("Raw Reader", TestRawModel.nested.name)
+        ),
+        output = WriterModel.consoleWriter("Console Writer"),
+        mlModels = List(),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
+  }
+
+  object FromJdbc {
+
+    lazy val mySqlToConsole = BatchJobModel(
+      name = "TestBatchJobFromJdbcMySqlToConsole",
+      description = "Description of TestBatchJobFromJdbcMySqlToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromJdbcMySqlToConsole",
+        inputs = List(
+          ReaderModel.jdbcReader("JDBC Reader", TestSqlSouceModel.mySql.name)
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),

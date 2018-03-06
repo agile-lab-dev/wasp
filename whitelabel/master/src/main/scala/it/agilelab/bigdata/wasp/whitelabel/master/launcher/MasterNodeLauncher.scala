@@ -26,13 +26,14 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /** Test */
 
-    /* Topic, Index, Raw for Producers, Pipegraphs, BatchJobs */
+    /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
     waspDB.upsert[RawModel](TestRawModel.flat)    // used by TestBatchJobModels.FromHdfs.toConsole
+    waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
 
     /* Producers */
     waspDB.upsert[ProducerModel](TestProducerModel.json)
@@ -65,5 +66,6 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfsFlat)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.flatToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToConsole)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromJdbc.mySqlToConsole)
   }
 }

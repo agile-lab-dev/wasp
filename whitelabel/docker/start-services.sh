@@ -32,6 +32,7 @@ SPARK=1
 KAFKA=1
 HBASE=0
 HDFS=0
+MYSQL=0
 while [[ $# -gt 0 ]]; do
     ARG=$1
     case $ARG in
@@ -62,6 +63,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         --with-hdfs)
             HDFS=1
+            shift # past argument
+        ;;
+        --with-mysql)
+            MYSQL=1
             shift # past argument
         ;;
         *)
@@ -103,6 +108,9 @@ if [ ${HBASE} -eq 1 ]; then
 fi
 if [ ${HDFS} -eq 1 ]; then
     COMPOSE_FILES+=("hdfs-docker-compose.yml")
+fi
+if [ ${MYSQL} -eq 1 ]; then
+    COMPOSE_FILES+=("mysql-docker-compose.yml")
 fi
 
 # get docker command, init network if needed

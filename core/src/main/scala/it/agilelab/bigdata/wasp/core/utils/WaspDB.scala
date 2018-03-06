@@ -286,6 +286,7 @@ object WaspDB extends Logging {
   val indexesName = "indexes"
   val rawName = "raw"
   val keyValueName = "keyvalues"
+  val sqlSourceName = "sqlsource"
   val batchjobName = "batchjobs"
   val batchjobInstanceName = "batchjobinstances"
   val configurationsName = "configurations"
@@ -301,6 +302,7 @@ object WaspDB extends Logging {
     typeTag[IndexModel].tpe -> indexesName,
     typeTag[RawModel].tpe -> rawName,
     typeTag[KeyValueModel].tpe -> keyValueName,
+    typeTag[SqlSourceModel].tpe -> sqlSourceName,
     typeTag[BatchJobModel].tpe -> batchjobName,
     typeTag[MlModelOnlyInfo].tpe -> mlModelsName,
     typeTag[WebsocketModel].tpe -> websocketsName,
@@ -314,6 +316,7 @@ object WaspDB extends Logging {
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[HBaseConfigModel].tpe -> configurationsName,
+    typeTag[JdbcConfigModel].tpe -> configurationsName
   )
 
 
@@ -339,6 +342,7 @@ object WaspDB extends Logging {
 	  createCodecProviderIgnoreNone(classOf[RawModel]),
 	  createCodecProviderIgnoreNone(classOf[KeyValueOption]),
 	  createCodecProviderIgnoreNone(classOf[KeyValueModel]),
+    createCodecProviderIgnoreNone(classOf[SqlSourceModel]),
 	  createCodecProviderIgnoreNone(classOf[BatchETLModel]),
 	  createCodecProviderIgnoreNone(classOf[BatchJobModel]),
 	  createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
@@ -348,6 +352,8 @@ object WaspDB extends Logging {
 	  createCodecProviderIgnoreNone(classOf[ElasticConfigModel]),
 	  createCodecProviderIgnoreNone(classOf[SolrConfigModel]),
 	  createCodecProviderIgnoreNone(classOf[HBaseConfigModel]),
+    createCodecProviderIgnoreNone(classOf[JdbcConnectionConfig]),
+    createCodecProviderIgnoreNone(classOf[JdbcConfigModel]),
 	  createCodecProviderIgnoreNone(classOf[WebsocketModel]),
 	  createCodecProviderIgnoreNone(classOf[BatchSchedulerModel])
   ).asJava

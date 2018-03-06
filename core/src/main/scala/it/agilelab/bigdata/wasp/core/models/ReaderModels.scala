@@ -24,6 +24,7 @@ object ReaderModel {
 	def kafkaReader(name: String, topicName: String) = ReaderModel(name, topicName, ReaderType.kafkaReaderType)
 	def rawReader(name: String, rawName: String) = ReaderModel(name, rawName, ReaderType.rawReaderType)
 	def websocketReader(name: String, websocketName: String) = ReaderModel(name, websocketName, ReaderType.websocketReaderType)
+	def jdbcReader(name: String, jdbcName: String) = ReaderModel(name, jdbcName, ReaderType.jdbcReaderType)
 }
 
 /**
@@ -46,6 +47,7 @@ case class ReaderType(category: String, product: Option[String]) {
 			case Datastores.rawCategory => product.getOrElse(Datastores.rawProduct) // TODO support default product like with index category
 			case Datastores.topicCategory => product.getOrElse(Datastores.kafkaProduct) // TODO support default product like with index category
 			case Datastores.websocketCategory => product.getOrElse(Datastores.websocketProduct) // TODO support default product like with index category
+			case Datastores.databaseCategory => product.getOrElse(Datastores.jdbcProduct)
 			case unknownCategory => throw new IllegalArgumentException("Unknown reader category \"" + unknownCategory + "\" in reader type \"" + this + "\"")
 		}
 	}
@@ -59,4 +61,5 @@ object ReaderType {
 	val rawReaderType = ReaderType(Datastores.rawCategory, Some(Datastores.rawProduct))
 	val kafkaReaderType = ReaderType(Datastores.topicCategory, Some(Datastores.kafkaProduct))
 	val websocketReaderType = ReaderType(Datastores.websocketCategory, Some(Datastores.websocketProduct))
+	val jdbcReaderType = ReaderType(Datastores.databaseCategory, Some(Datastores.jdbcProduct))
 }
