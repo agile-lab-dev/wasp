@@ -51,17 +51,31 @@ object Settings {
 			"-Xlint:unchecked"),
 		scalaVersion := Versions.scala
 	)
-	
-  // target repo & credentials for publishing to bintray
-  val bintrayRepoHostname = "api.bintray.com"
-	val bintrayRepo = "Agile Lab WASP Bintray" at s"https://$bintrayRepoHostname/maven/agile-lab-dev/WASP/wasp/;publish=1"
-	val bintrayCredentials = Credentials("Bintray API Realm", bintrayRepoHostname, System.getenv().get("BINTRAY_USERNAME"), System.getenv().get("BINTRAY_API_KEY"))
-	// publishing settings
+
+	val jfrogOssReleaseRepo = "Agile Lab JFrog Releases OSS" at "https://oss.jfrog.org/artifactory/oss-release-local"
+	val jfrogOssSnapshotRepo = "Agile Lab JFrog Snapshots OSS" at "https://oss.jfrog.org/artifactory/oss-snapshot-local"
+
+	val jfrogOssCredentials = Credentials("Artifactory Realm", "oss.jfrog.org", System.getenv().get
+	("BINTRAY_USERNAME"), System.getenv().get("BINTRAY_API_KEY"))
+
+
+
+
+
+
+
 	lazy val publishingSettings = Seq(
 		publishMavenStyle := true,
 		updateOptions := updateOptions.value.withGigahorse(false), // workaround for publish fails https://github.com/sbt/sbt/issues/3570
-		publishTo := Some(bintrayRepo),
-		credentials := Seq(bintrayCredentials)
+		publishTo := {
+			if (isSnapshot.value){
+				Some(jfrogOssSnapshotRepo)
+			}else{
+				Some(jfrogOssReleaseRepo)
+
+			}
+		},
+		credentials := Seq(jfrogOssCredentials)
 	)
 	
 	// common settings for all modules
