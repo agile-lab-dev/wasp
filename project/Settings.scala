@@ -1,4 +1,3 @@
-//import bintray.BintrayKeys._
 import sbt.Keys._
 import sbt._
 import sbtbuildinfo.BuildInfoKeys._
@@ -17,22 +16,7 @@ object Settings {
 		organization := "it.agilelab",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
-    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
-		publishMavenStyle := true,
-    publishArtifact in(Compile, packageDoc) := false,
-		publishTo := {
-			val nexus = System.getenv().get("NEXUS_URL") + "/"
-			if (isSnapshot.value)
-				Some("snapshots" at nexus + "repository/maven-snapshots")
-			else
-				Some("releases"  at nexus + "repository/maven-releases")
-    },
-    // Workaround for publish fails https://github.com/sbt/sbt/issues/3570
-    updateOptions := updateOptions.value.withGigahorse(false),
-    credentials ++= (for {
-      user <- Option(System.getenv().get("NEXUS_USERNAME"))
-      pw <- Option(System.getenv().get("NEXUS_PASSWORD"))
-    } yield Credentials("Sonatype Nexus Repository Manager", System.getenv().get("NEXUS_DOMAIN"), user, pw)).toSeq
+    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 	)
 	
 	// custom resolvers for dependencies
@@ -40,9 +24,9 @@ object Settings {
 		Resolver.mavenLocal,
 		"gphat" at "https://raw.github.com/gphat/mvn-repo/master/releases/",
     "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
-    "Bintray" at "https://dl.bintray.com/agile-lab-dev/Spark-Solr/",
+    "Agile Lab Spark-Solr Bintray" at "https://dl.bintray.com/agile-lab-dev/Spark-Solr/",
     "Restlet Maven repository" at "https://maven.restlet.com/",
-    "Hadoop Releases" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
+    "Cloudera Hadoop Releases" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
     Resolver.sonatypeRepo("releases")
 	)
 	
@@ -67,18 +51,21 @@ object Settings {
 			"-Xlint:unchecked"),
 		scalaVersion := Versions.scala
 	)
-
-  // settings for the bintray-sbt plugin used to publish to Bintray
-  // set here because "in ThisBuild" scoping doesn't work!
-/*  lazy val bintraySettings = Seq(
-    bintrayOrganization := Some("agile-lab-dev"),
-    bintrayRepository := "WASP", // target repo
-    bintrayPackage := "wasp", // target package
-    bintrayReleaseOnPublish := false // do not automatically release, instead do sbt publish, then sbt bintrayRelease
-  )
-*/
+	
+  // target repo & credentials for publishing to bintray
+  val bintrayRepoHostname = "api.bintray.com"
+	val bintrayRepo = "Agile Lab WASP Bintray" at s"https://$bintrayRepoHostname/maven/agile-lab-dev/WASP/wasp/;publish=1"
+	val bintrayCredentials = Credentials("Bintray API Realm", bintrayRepoHostname, System.getenv().get("BINTRAY_USERNAME"), System.getenv().get("BINTRAY_API_KEY"))
+	// publishing settings
+	lazy val publishingSettings = Seq(
+		publishMavenStyle := true,
+		updateOptions := updateOptions.value.withGigahorse(false), // workaround for publish fails https://github.com/sbt/sbt/issues/3570
+		publishTo := Some(bintrayRepo),
+		credentials := Seq(bintrayCredentials)
+	)
+	
 	// common settings for all modules
-	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings //++ bintraySettings
+	lazy val commonSettings: Seq[Def.SettingsDefinition] = projectSettings ++ buildSettings ++ publishingSettings
 	
 	// sbt-buildinfo action to get current git commit
 	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") {
