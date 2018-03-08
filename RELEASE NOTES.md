@@ -132,7 +132,9 @@
 	- `spark-streaming` e `spark-batch`: riordinate le KEY, aggiunta KEY `driver-conf` che incapsula le configurazioni relative al driver (nuovo `submit-deploy-mode` con default "client"), aggiunta KEY `retained-jobs` (default 100)
 	- `solrcloud`: rimossa KEY `cluster_name`
 	- `elastic`: rimossa KEY `cluster-name`
+
 - Solr: uso di `zookeeperConnections` al posto di `apiEndPoint`
+
 - Revisione gestione batchJobs: avvio parallelo di istanze di batchJobs diversi (vedi nuova collection MongoDB batchjobinstances)
 
 
@@ -140,6 +142,14 @@
 ...
 
 **Update**
-- Modificato `chroot_path` di zookeeper per Kafka: da "" a "/kafka" (allineamento con Solr per cui è "/solr")
+- Modificato `chroot_path` di zookeeper per Kafka: da `""` a `"/kafka"` (allineamento con Solr per cui è `"/solr"`)
 
-- JDBCReader plugin
+- Aggiunto JDBCReader plugin
+
+- Aggiunto uso di kryoSerializator tramite `kryo-serializer` in`reference.conf` e `whitelabel/docker/docker-environment.conf` (default: `enabled = true, registrators = "", strict = false`)
+
+- Rimozione `broadcast()` nei seguenti punti:
+    - `strategy` in `LegacyStreamingETLActor` / `StructuredStreamingETLActor`
+    - `topic.getDataType` in `KafkaReader`
+
+- Aggiunto IndexModelBuilder per gestire Solr/Elastic in modo distinto
