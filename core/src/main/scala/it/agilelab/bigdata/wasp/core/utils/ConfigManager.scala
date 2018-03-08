@@ -114,6 +114,7 @@ object ConfigManager {
       sparkSubConfig.getInt("retained-jobs"),
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches"),
+      readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
 
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
@@ -147,6 +148,7 @@ object ConfigManager {
       sparkSubConfig.getInt("retained-jobs"),
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches"),
+      readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
       sparkBatchConfigName
     )
   }
@@ -355,6 +357,17 @@ object ConfigManager {
     )
   }
 
+  private def readKryoSerializerConfig(config: Config): KryoSerializerConfig = {
+
+    val aaa =
+    KryoSerializerConfig(
+      config.getBoolean("enabled"),
+      config.getString("registrators"),
+      config.getBoolean("strict")
+    )
+    aaa
+  }
+
   /**
     * Read the configuration with the specified name from MongoDB or, if it is not present, initialize
     * it with the provided defaults.
@@ -406,6 +419,10 @@ case class SparkDriverConfig(submitDeployMode: String,
                              host: String,
                              bindAddress: String,
                              port: Int)
+
+case class KryoSerializerConfig(enabled: Boolean,
+                                registrators: String,
+                                strict: Boolean)
 
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig

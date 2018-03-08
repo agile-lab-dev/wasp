@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models.configuration
 
 import it.agilelab.bigdata.wasp.core.models.Model
-import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, SparkDriverConfig}
+import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, KryoSerializerConfig, SparkDriverConfig}
 
 trait SparkConfigModel extends Model {
 	val appName: String
@@ -20,6 +20,7 @@ trait SparkConfigModel extends Model {
 	val retainedTasks: Int
 	val retainedExecutions: Int
 	val retainedBatches: Int
+	val kryoSerializer: KryoSerializerConfig
 }
 
 case class SparkStreamingConfigModel(
@@ -39,6 +40,7 @@ case class SparkStreamingConfigModel(
 																			retainedJobs: Int,
 																			retainedExecutions: Int,
 																			retainedBatches: Int,
+																			kryoSerializer: KryoSerializerConfig,
 
 																			streamingBatchIntervalMs: Int,
 																			checkpointDir: String,
@@ -63,6 +65,7 @@ case class SparkBatchConfigModel(
 																	retainedJobs: Int,
 																	retainedExecutions: Int,
 																	retainedBatches: Int,
+																	kryoSerializer: KryoSerializerConfig,
 
 																	name: String
 																) extends SparkConfigModel

@@ -268,8 +268,6 @@ class StructuredStreamingETLActor(env: {
                         strategy: Strategy,
                         writerType: WriterType): DataFrame = {
 
-    val strategyBroadcast = sparkSession.sparkContext.broadcast(strategy)
-
     val etlName = structuredStreamingETL.name
 
     logger.debug(s"input stream: ${readerKey.name}. struct: ${stream.schema.treeString}")
@@ -320,7 +318,7 @@ class StructuredStreamingETLActor(env: {
 
     val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
-    val output = strategyBroadcast.value.transform(completeMapOfDFs)
+    val output = strategy.transform(completeMapOfDFs)
 
     writerType.getActualProduct match {
       case Datastores.kafkaProduct => output

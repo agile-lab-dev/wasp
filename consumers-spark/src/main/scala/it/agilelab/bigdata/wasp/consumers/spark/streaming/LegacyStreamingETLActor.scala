@@ -250,8 +250,6 @@ class LegacyStreamingETLActor(env: {
 
     val sqlContext = SparkSingletons.getSQLContext
 
-    val strategyBroadcast = ssc.sparkContext.broadcast(strategy)
-
     val etlName = legacyStreamingETL.name
 
     logger.debug(s"input stream: ${readerKey.name}")
@@ -299,7 +297,7 @@ class LegacyStreamingETLActor(env: {
 
         val completeMapOfDFs: Map[ReaderKey, DataFrame] = dataStoreDFs + (readerKey -> dataframeToTransform)
 
-        val output = strategyBroadcast.value.transform(completeMapOfDFs)
+        val output = strategy.transform(completeMapOfDFs)
 
         writerType.getActualProduct match {
           case Datastores.kafkaProduct => output.toJSON.rdd

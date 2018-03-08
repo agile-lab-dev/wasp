@@ -347,6 +347,7 @@ object WaspDB extends Logging {
 	  createCodecProviderIgnoreNone(classOf[BatchJobModel]),
 	  createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
     createCodecProviderIgnoreNone(classOf[SparkDriverConfig]),
+    createCodecProviderIgnoreNone(classOf[KryoSerializerConfig]),
     createCodecProviderIgnoreNone(classOf[SparkStreamingConfigModel]),
     createCodecProviderIgnoreNone(classOf[SparkBatchConfigModel]),
 	  createCodecProviderIgnoreNone(classOf[ElasticConfigModel]),

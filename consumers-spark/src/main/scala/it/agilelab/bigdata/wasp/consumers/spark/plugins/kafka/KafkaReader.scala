@@ -38,7 +38,6 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
     // get the config
     val kafkaConfig = ConfigManager.getKafkaConfig
-    val schemaB = ss.sparkContext.broadcast(topic.getDataType)
 
     // check or create
     if (??[Boolean](
@@ -72,7 +71,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         case "json" => {
           df.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
             .drop("value")
-            .select(from_json(col("value_parsed"), schemaB.value).alias("value"))
+            .select(from_json(col("value_parsed"), topic.getDataType).alias("value"))
             .select(col("value.*"))
         }
         case _ => throw new Exception(s"No such topic data type ${topic.topicDataType}")
