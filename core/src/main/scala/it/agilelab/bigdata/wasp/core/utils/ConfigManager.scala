@@ -359,13 +359,11 @@ object ConfigManager {
 
   private def readKryoSerializerConfig(config: Config): KryoSerializerConfig = {
 
-    val aaa =
     KryoSerializerConfig(
       config.getBoolean("enabled"),
       config.getString("registrators"),
       config.getBoolean("strict")
     )
-    aaa
   }
 
   /**
