@@ -139,9 +139,9 @@
 
 
 ## WASP 2.5.0
-...
+09/03/2018
 
-**Update**
+### Update
 - Modificato `chroot_path` di zookeeper per Kafka: da `""` a `"/kafka"` (allineamento con Solr per cui è `"/solr"`)
 
 - Aggiunto JDBCReader plugin
@@ -153,3 +153,93 @@
     - `topic.getDataType` in `KafkaReader`
 
 - Aggiunto IndexModelBuilder per gestire Solr/Elastic in modo distinto
+
+### Resolve "Release note generator tool"
+
+[Merge request 22](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/22)
+
+Updated at: 2018-03-09T15:03:26.784Z
+
+Branch: feature/85-release-note-generator-tool
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #85 
+
+```
+cd tools/release-note-generator
+python setup.py install
+wasp-release-note-generator --token 'YOUR GITLAB AUTHENTICATION TOKEN' --sprint 'Sprint 2.5' > file.md
+
+```
+
+### Resolve "[plugin] jdbReader improvement"
+
+[Merge request 20](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/20)
+
+Updated at: 2018-03-09T14:40:28.653Z
+
+Branch: feature/83-plugin-jdbreader-improvement
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #83
+
+### Resolve "[kryo-config] Set new configs for Spark streaming/batch"
+
+[Merge request 17](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/17)
+
+Updated at: 2018-03-09T11:14:44.422Z
+
+Branch: feature/73-kryo-config-set-new-configs-for-spark-streaming-batch
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #73
+
+The config `kryo-serializer.strict` within `wasp.spark-streaming` / `wasp.spark-batch` are mapped to spark `spark.kryo.registrationRequired` in `Agile.Wasp2/consumers-spark/src/main/scala/it/agilelab/bigdata/wasp/consumers/spark/utils/SparkUtils.scala`)
+
+**Note**: This config have to be "false" in order to correctly work without N class registrations (see https://spark.apache.org/docs/2.2.1/configuration.html#compression-and-serialization and https://github.com/EsotericSoftware/kryo#registration)
+
+### Resolve "[gitlab-ci] organize branching model and deployment model"
+
+[Merge request 18](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/18)
+
+Updated at: 2018-03-08T16:23:37.998Z
+
+Branch: feature/66-gitlab-ci-organize-branching-model-and-deployment-model
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #66 
+
+Branching model now follows the rules described in [BranchingModelSupport](project/BranchingModelSupport.scala)
+
+BaseVersion(2.5.0)
+
+* if branch name is develop -> 2.5.0-SNAPSHOT
+* if branch name is release/v2.5 -> 2.5.0-SNAPSHOT
+* if branch name is feature/issue-issue-text -> 2.5.0-issue-issue-text-SNAPSHOT
+* if branch name is hotfix/hotfix -> 2.5.0-hotfix-SNAPSHOT
+* if tag name is v2.5.0 -> 2.5.0
+* if branch name is not release/v2.5 -> exception
+* if tag name is not v2.5.0 -> exception
+
+
+To use the branching model
+
+```scala
+import BranchingModelSupport._
+
+val baseVersion = BaseVersion(2,5,0)
+
+//retrieves branch name from gitlab ci environment or from current repository as fallback
+version in ThisBuild := versionForContainingRepositoryOrGitlabCi(baseVersion)
+
+//retrieves branch name from current repository
+version in ThisBuild := versionForContainingRepository(baseVersion)
+
+//retrieves branch name from constant
+version in ThisBuild := versionForConstant("develop")(baseVersion)
+
+```
