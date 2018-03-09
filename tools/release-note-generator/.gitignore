@@ -1,0 +1,4 @@
+build/
+dist/
+wasprng.egg-info/
+.vscode/
