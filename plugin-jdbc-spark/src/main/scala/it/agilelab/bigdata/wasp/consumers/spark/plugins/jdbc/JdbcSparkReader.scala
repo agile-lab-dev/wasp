@@ -25,13 +25,16 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
   val connection = jdbcConfig.connections(sqlModel.connectionName)
 
   override def read(sc: SparkContext): DataFrame = {
+    val connectionObfuscated = connection.copy(user = "***", password = "***")
     logger.info(s"Initialize Spark JDBCReader with " +
-                s"\n\tconfig: $connection" +
+                s"\n\tconfig (obfuscated): $connectionObfuscated" +
                 s"\n\tmodel: $sqlModel")
 
-    val readerOptions = getReaderOptions
-
-    logger.info(s"Initialize Spark JDBCReader with options: $readerOptions")
+    val readerOptions: Map[String, String] = getReaderOptions
+    val readerOptionsObfuscated = readerOptions.map(
+      ro => if((ro._1 =="user") || (ro._1 =="password")) ro._1 -> "***" else ro
+    )
+    logger.info(s"Initialize Spark JDBCReader with options (obfuscated): $readerOptionsObfuscated")
 
     //Workaround SparkSession retrieval
     val ss: SparkSession = new SQLContext(sc).sparkSession
@@ -49,11 +52,11 @@ class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcCon
 
     /* All retrieved from config except "dbtable" */
     val mandatoryOpts = Map(
-      "url" -> connection.url, //e.g. "jdbc:oracle:thin://@<hostname>:<port>/<db>"
-      "dbtable" -> sqlModel.dbtable,  // retrieved from SqlSourceModel
+      "url" -> connection.url,            // e.g. "jdbc:mysql://mysql:<port>/<db>", "jdbc:oracle:thin://@<hostname>:<port>/<db>"
       "user" -> connection.user,
       "password" -> connection.password,
-      "driver" -> connection.driverName //e.g. "oracle.jdbc.driver.OracleDriver"
+      "driver" -> connection.driverName,  // e.g. "com.mysql.jdbc.Driver", "oracle.jdbc.driver.OracleDriver"
+      "dbtable" -> sqlModel.dbtable       // retrieved from SqlSourceModel
     )
 
     val optPartitioningInfo = sqlModel.partitioningInfo.map(

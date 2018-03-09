@@ -112,7 +112,7 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.JdbcMySqlStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
