@@ -8,6 +8,7 @@
 - [General](#general)
   - [Gitter](#gitter)
   - [Overview](#overview)
+  - [WASP in the wild](wasp-in-the-wild)
   - [Background](#background)
   - [Architecture](#architecture)
   - [Glossary](#glossary)
@@ -37,6 +38,12 @@ WASP is a big data framework that allows you to not waste time with devops archi
 - applying schemas to unstructured data
 - feeding different datastores from the same data flow in a safe way
 - etc.
+
+#### WASP in the wild
+WASP has been added to Cloudera Solution Gallery as an Open Source tool to simplify streaming workflows.
+
+__You can see it [here](https://www.cloudera.com/solutions/gallery/agilelab-wide-streaming-analytics-platform.html)!__
+
 
 #### Background
 Handling huge streams of data in near real time is a hard task. So we want to build a reference architecture to speed up fast data application development and to avoid common mistakes about fault tolerance and reliability.
