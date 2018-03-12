@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.whitelabel.producers
+package it.agilelab.bigdata.wasp.whitelabel.producers.test
 
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -10,7 +10,7 @@ import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext
 
-final class TestProducerGuardian (env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
+final class TestProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
   extends ProducerGuardian(env, producerName) {
 
   override val name: String = "testProducerGuardian"

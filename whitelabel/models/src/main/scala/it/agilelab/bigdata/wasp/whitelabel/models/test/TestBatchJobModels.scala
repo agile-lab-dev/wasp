@@ -22,7 +22,7 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.rawWriter("Raw Writer", TestRawModel.flat.name),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -46,7 +46,7 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested.name),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -70,7 +70,7 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -91,7 +91,7 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.IdentityStrategy")),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -112,7 +112,7 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.JdbcMySqlStrategy")),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestJdbcMySqlStrategy")),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )

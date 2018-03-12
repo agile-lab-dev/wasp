@@ -479,7 +479,7 @@ private[wasp] object TestPipegraphs {
         TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
         TestPipegraphs.AVRO.Structured.elastic.structuredStreamingComponents :::
         TestPipegraphs.AVRO.Structured.hdfs.structuredStreamingComponents.map(
-          _.copy(strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.test.ErrorStrategy", None)))),
+          _.copy(strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy", None)))),
       rtComponents = List(),
 
       dashboard = None,

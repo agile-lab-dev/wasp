@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.whitelabel.test
+package it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.whitelabel.models.test.TestSqlSouceModel
 import org.apache.spark.sql.DataFrame
 
-class JdbcMySqlStrategy extends Strategy with Logging {
+class TestJdbcMySqlStrategy extends Strategy with Logging {
 
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
 
