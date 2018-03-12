@@ -3,7 +3,6 @@ import sbt._
 import sbtbuildinfo.BuildInfoKeys._
 import sbtbuildinfo.{BuildInfoKey, BuildInfoOption}
 
-
 /*
  * Common settings for all the modules.
  *
@@ -16,20 +15,27 @@ object Settings {
 		organization := "it.agilelab",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
 		homepage := Some(url("http://www.agilelab.it")),
-    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
+		licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 	)
 	
 	// custom resolvers for dependencies
-	lazy val customResolvers = Seq(
-		Resolver.mavenLocal,
-		"gphat" at "https://raw.github.com/gphat/mvn-repo/master/releases/",
-    "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
-    "Agile Lab Spark-Solr Bintray" at "https://dl.bintray.com/agile-lab-dev/Spark-Solr/",
-    "Restlet Maven repository" at "https://maven.restlet.com/",
-    "Cloudera Hadoop Releases" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
-    Resolver.sonatypeRepo("releases")
+	lazy val customResolvers: Seq[MavenRepository] = Seq(
+		mavenLocal,
+		Resolver.sonatypeRepo("releases"),
+		Resolver.bintrayRepo("agile-lab-dev", "Spark-Solr"),
+		"Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
+		"Restlet Maven repository" at "https://maven.restlet.com/",
+		"Cloudera Hadoop Releases" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
 	)
-	
+
+	/** Return the local Maven resolver
+		*
+		* To use in order to resolve dependecies in Maven local repository (e.g. during the test of new versions of Spark-Solr lib)
+		*
+		* */
+	def mavenLocal: MavenRepository = Resolver.mavenLocal
+
+
 	// base build settings
 	lazy val buildSettings = Seq(
 		resolvers ++= customResolvers,
@@ -52,17 +58,12 @@ object Settings {
 		scalaVersion := Versions.scala
 	)
 
+
 	val jfrogOssReleaseRepo = "Agile Lab JFrog Releases OSS" at "https://oss.jfrog.org/artifactory/oss-release-local"
 	val jfrogOssSnapshotRepo = "Agile Lab JFrog Snapshots OSS" at "https://oss.jfrog.org/artifactory/oss-snapshot-local"
 
 	val jfrogOssCredentials = Credentials("Artifactory Realm", "oss.jfrog.org", System.getenv().get
 	("BINTRAY_USERNAME"), System.getenv().get("BINTRAY_API_KEY"))
-
-
-
-
-
-
 
 	lazy val publishingSettings = Seq(
 		publishMavenStyle := true,
