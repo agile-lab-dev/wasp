@@ -6,7 +6,7 @@ private[wasp] object TestProducerModel {
 
   lazy val json = ProducerModel(
       name = "TestJSONProducer",
-      className = "it.agilelab.bigdata.wasp.whitelabel.producers.TestProducerGuardian",
+      className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
       topicName = Some(TestTopicModel.json.name),
       isActive = false,
       configuration = None,
@@ -16,7 +16,7 @@ private[wasp] object TestProducerModel {
 
   lazy val avro  = ProducerModel(
       name = "TestAVROProducer",
-      className = "it.agilelab.bigdata.wasp.whitelabel.producers.TestProducerGuardian",
+      className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
       topicName = Some(TestTopicModel.avro.name),
       isActive = false,
       configuration = None,
