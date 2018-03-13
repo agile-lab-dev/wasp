@@ -12,9 +12,10 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 # this variable contains the directory of the script
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-cd ${SCRIPT_DIR}
 
-source ../../get-docker-cmd.sh
+source $SCRIPT_DIR/../get-docker-cmd.sh
+
+cd $SCRIPT_DIR
 
 ${DOCKER_CMD} build -t agilefactory/oracle-java:jdk-8u162 .
 ${DOCKER_CMD} tag agilefactory/oracle-java:jdk-8u162 agilefactory/oracle-java:jdk-8

@@ -12,11 +12,11 @@
     - Copiare il contenuto della folder spark-2.2.1-bin-hadoop2.6/jars e di spark-2.2.1-bin-hadoop2.6/yarn su hdfs, per esempio in hdfs://nameserver/tmp/spark-jars-yarn-2.2.1//tmp/spark-jars-yarn-2.2.1/
     - Assegnare alla configurazione yarn-yar il path dove sono presenti i jar  hdfs://nameserver/tmp/spark-jars-yarn-2.2.1/
    
-- Oltre alle configurazioni di ram e cpu per fa funzionare wasp in yarn mode bisogna copiare nella folder docker-service-configuration/yarn-conf
+- Oltre alle configurazioni di ram e cpu per fa funzionare wasp in yarn mode bisogna copiare nella folder external-cluster-configuration/hadoop
   tutte le configurazioni di yarn e hbase (se si utilizza).
   Queste configurazioni sono facilmente recuperabili nel cloudera manager sotto la voce del servizio YARN Download client configuration, la stessa cosa per il servizio HBase.
   
-- Dopo aver scaricato queste configurazioni bisogna copiarle nella folder docker-service-configuration/yarn-conf
+- Dopo aver scaricato queste configurazioni bisogna copiarle nella folder external-cluster-configuration/hadoop
   e controllare che la configurazine della topology (net.topology.script.file.name) dentro il file core-site.xml che è da cancellare
 
 - Invece per quanto rigurda le configurazioni docker-environment.conf modificare il seguente esempio
