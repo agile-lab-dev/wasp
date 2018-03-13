@@ -25,63 +25,61 @@ object BatchJob_C extends Directives with JsonSupport {
             getJsonArrayOrEmpty[BatchJobModel](ConfigBL.batchJobBL.getAll, _.toJson)
           }
         } ~
-          post {
-            // unmarshal with in-scope unmarshaller
-            entity(as[BatchJobModel]) { batchJobModel =>
-              complete {
-                ConfigBL.batchJobBL.insert(batchJobModel)
-                "OK".toJson.toAngularOkResponse()
-              }
+        post {
+          // unmarshal with in-scope unmarshaller
+          entity(as[BatchJobModel]) { batchJobModel =>
+            complete {
+              ConfigBL.batchJobBL.insert(batchJobModel)
+              "OK".toJson.toAngularOkResponse()
             }
-          } ~
-          put {
-            // unmarshal with in-scope unmarshaller
-            entity(as[BatchJobModel]) { batchJobModel =>
-              complete {
-                ConfigBL.batchJobBL.update(batchJobModel)
-                "OK".toJson.toAngularOkResponse()
+          }
+        } ~
+        put {
+          // unmarshal with in-scope unmarshaller
+          entity(as[BatchJobModel]) { batchJobModel =>
+            complete {
+              ConfigBL.batchJobBL.update(batchJobModel)
+              "OK".toJson.toAngularOkResponse()
+            }
+          }
+        }
+      } ~
+      pathPrefix(Segment) { name =>
+        path("start") {
+          post {
+            complete {
+              WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name)) match {
+                case Right(s) => s.toJson.toAngularOkResponse()
+                case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
               }
             }
           }
-      } ~
-        pathPrefix(Segment) { name =>
-          path("start") {
-            post {
-              complete {
-                WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name)) match {
-                  case Right(s) => s.toJson.toAngularOkResponse()
-                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
-                }
-              }
-
+        } ~
+        path("instances") {
+          get {
+            complete {
+              getJsonArrayOrEmpty[BatchJobInstanceModel](ConfigBL.batchJobBL.instances().instancesOf(name).sortBy{ instance => -instance.startTimestamp }, _.toJson)
+            }
+          }
+        } ~
+        pathEnd {
+          get {
+            complete {
+              getJsonOrNotFound[BatchJobModel](ConfigBL.batchJobBL.getByName(name), name, "Batch job model", _.toJson)
             }
           } ~
-          path("instances") {
-            get {
-              complete {
-                getJsonArrayOrEmpty[BatchJobInstanceModel](ConfigBL.batchJobBL.instances().instancesOf(name).sortBy{ instance => -instance.startTimestamp }, _.toJson)
-              }
+          delete {
+            complete {
+              val batchJob = ConfigBL.batchJobBL.getByName(name)
+              runIfExists(batchJob,
+                () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name),
+                name,
+                "Machine learning model",
+                "delete")
             }
-          } ~
-          pathEnd {
-              get {
-                complete {
-                  getJsonOrNotFound[BatchJobModel](ConfigBL.batchJobBL.getByName(name), name, "Batch job model", _.toJson)
-                }
-
-              } ~
-                delete {
-                  complete {
-                    val batchJob = ConfigBL.batchJobBL.getByName(name)
-                    runIfExists(batchJob,
-                      () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name),
-                      name,
-                      "Machine learning model",
-                      "delete")
-                  }
-                }
-            }
+          }
         }
+      }
     }
   }
 }

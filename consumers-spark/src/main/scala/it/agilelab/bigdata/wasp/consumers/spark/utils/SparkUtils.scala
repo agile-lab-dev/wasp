@@ -30,16 +30,19 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
     logger.info(s"Starting from SparkConfigModel:\n\t$sparkConfigModel")
   
     // build SparkConf from SparkConfigModel & log it
-    var sparkConf = new SparkConf()
+    val sparkConf = new SparkConf()
       .setAppName(sparkConfigModel.appName)
       .setMaster(sparkConfigModel.master.toString)
+
+    // driver-related configs
+    sparkConf
       .set("spark.submit.deployMode", sparkConfigModel.driver.submitDeployMode)  // where the driver have to be executed (client or cluster)
       .set("spark.driver.cores", sparkConfigModel.driver.cores.toString)
       .set("spark.driver.memory", sparkConfigModel.driver.memory) // NOTE: will only work in yarn-cluster
       .set("spark.driver.host", sparkConfigModel.driver.host)
       .set("spark.driver.bindAddress", sparkConfigModel.driver.bindAddress)
     if (sparkConfigModel.driver.port != 0)
-      sparkConf = sparkConf.set("spark.driver.port", sparkConfigModel.driver.port.toString)
+      sparkConf.set("spark.driver.port", sparkConfigModel.driver.port.toString)
 
     sparkConf
       .set("spark.executor.cores", sparkConfigModel.executorCores.toString)
@@ -55,17 +58,18 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
       .setAll(sparkConfigModel.others.map(v => (v.key, v.value)))
 
+    // kryo-related configs
     if (sparkConfigModel.kryoSerializer.enabled) {
       // This setting configures the serializer used for not only shuffling data between worker nodes but also when serializing RDDs to disk.
       // N.B. The only reason Kryo is not the default is because of the custom registration requirement
-      sparkConf = sparkConf
+      sparkConf
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         //.set("spark.kryoserializer.buffer", "64k")  // default: 64k
         //.set("spark.kryoserializer.buffer.max", "64m") // default: 64m
 
       /* Registering classes: for best performance */
       // * wasp-internal class registrations
-      sparkConf = sparkConf.registerKryoClasses(
+      sparkConf.registerKryoClasses(
         Array(
 //          classOf[Array[Array[Byte]]],
 //          classOf[scala.collection.mutable.WrappedArray.ofRef[_]], // see https://stackoverflow.com/questions/34736587/kryo-serializer-causing-exception-on-underlying-scala-class-wrappedarray
@@ -73,58 +77,25 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
         )
       )
       // * standalone application class registrations (through custom-KryoRegistrators)
-      sparkConf = sparkConf.set("spark.kryo.registrator", sparkConfigModel.kryoSerializer.registrators)
+      sparkConf.set("spark.kryo.registrator", sparkConfigModel.kryoSerializer.registrators)
 
       /* strict-mode*/
       // If set to false (the default), Kryo will write unregistered class names along with each object.
       // Writing class names can cause significant performance overhead, so enabling this option can enforce strictly
       // that a user has not omitted classes from registration (i.e. will throw errors with unregistered classes).
-      sparkConf = sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
+      sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
 
-      sparkConf = sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
-
-      // Only for Debug - NotSerializableException: NOT REALLY USEFUL (also adding it to WASP_OPT in start-wasp.sh)
-      //sparkConf = sparkConf.set("spark.executor.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
-      //sparkConf = sparkConf.set("spark.driver.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
-    }
-
-    if (sparkConfigModel.kryoSerializer.enabled) {
-      // This setting configures the serializer used for not only shuffling data between worker nodes but also when serializing RDDs to disk.
-      // N.B. The only reason Kryo is not the default is because of the custom registration requirement
-      sparkConf = sparkConf
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        //.set("spark.kryoserializer.buffer", "64k")  // default: 64k
-        //.set("spark.kryoserializer.buffer.max", "64m") // default: 64m
-
-      /* Registering classes: for best performance */
-      // * wasp-internal class registrations
-      sparkConf = sparkConf.registerKryoClasses(
-        Array(
-//          classOf[Array[Array[Byte]]],
-//          classOf[scala.collection.mutable.WrappedArray.ofRef[_]], // see https://stackoverflow.com/questions/34736587/kryo-serializer-causing-exception-on-underlying-scala-class-wrappedarray
-//          classOf[Array[org.apache.spark.sql.Row]] // required by 'metadata' usage of LegacyStreamingETLActor/StructuredStreamingETLActor
-        )
-      )
-      // * standalone application class registrations (through custom-KryoRegistrators)
-      sparkConf = sparkConf.set("spark.kryo.registrator", sparkConfigModel.kryoSerializer.registrators)
-
-      /* strict-mode*/
-      // If set to false (the default), Kryo will write unregistered class names along with each object.
-      // Writing class names can cause significant performance overhead, so enabling this option can enforce strictly
-      // that a user has not omitted classes from registration (i.e. will throw errors with unregistered classes).
-      sparkConf = sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
-
-      sparkConf = sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
+      sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
 
       // Only for Debug - NotSerializableException: NOT REALLY USEFUL (also adding it to WASP_OPT in start-wasp.sh)
-      //sparkConf = sparkConf.set("spark.executor.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
-      //sparkConf = sparkConf.set("spark.driver.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
+      //sparkConf.set("spark.executor.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
+      //sparkConf.set("spark.driver.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
     }
 
-    // add specific Elastic configurations
+    // add specific Elastic configs
     val conns = elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
     val address = conns.map(e => s"${e.host}:${e.port}").mkString(",")
-    sparkConf = sparkConf.set("es.nodes", address)
+    sparkConf.set("es.nodes", address)
 
 
     logger.info(s"Resulting SparkConf:\n\t${sparkConf.toDebugString.replace("\n", "\n\t")}")
@@ -156,7 +127,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
 	
 	def generateLegacyStreamingCheckpointDir(sparkStreamingConfigModel: SparkStreamingConfigModel): String = {
 
-    val environmentPrefix = ConfigManager.getWaspConfig.environmentPrefix
+    val environmentPrefix = waspConfig.environmentPrefix
 
     val prefix = if (environmentPrefix == "") "" else "/"+environmentPrefix
 
@@ -168,7 +139,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
                                                pipegraph: PipegraphModel,
                                                component: StructuredStreamingETLModel): String = {
 
-    val environmentPrefix = ConfigManager.getWaspConfig.environmentPrefix
+    val environmentPrefix = waspConfig.environmentPrefix
 
     val prefix = if (environmentPrefix == "") "" else "/"+environmentPrefix
 

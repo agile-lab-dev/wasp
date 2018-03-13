@@ -1,8 +1,5 @@
 import sbt._
 
-// TODO finish cleanup
-// TODO finish sorting
-// TODO extract versions
 /*
  * Dependencies definitions. Keep in alphabetical order.
  *
@@ -37,16 +34,6 @@ object Dependencies {
 			module.log4jExclude
 				.exclude("org.objenesis", "objenesis")
 				.exclude("org.apache.zookeeper", "zookeeper")
-		/*
-		.excludeAll(
-      ExclusionRule(organization = "org.eclipse.jetty"),
-      ExclusionRule(organization = "javax.servlet"),
-      ExclusionRule(organization = "org.eclipse.jetty.orbit"),
-      ExclusionRule(organization = "org.apache.solr"), "solr-solrj")
-     .exclude("org.apache.solr", "solr-core")
-     .exclude("org.apache.solr", "solr-test-framework")
-				)
-		*/
 
 		def sparkExclusions: ModuleID =
 			module.log4jExclude
@@ -61,10 +48,6 @@ object Dependencies {
 	  		.exclude("org.apache.solr", "solr-solrj")
 				.exclude("org.apache.solr", "solr-core")
 				.exclude("org.apache.solr", "solr-test-framework")
-
-		def conflictSparkExclusions: ModuleID =
-			module
-				.exclude("com.google.guava", "guava")
 
 		def kafkaExclusions: ModuleID =
 			module
@@ -93,7 +76,7 @@ object Dependencies {
 	val excludeNetty: (sbt.ModuleID) => ModuleID = (module: ModuleID) =>
 		module.excludeAll(
 			sbt.ExclusionRule(organization = "io.netty", name = "netty"),
-			sbt.ExclusionRule(organization = "io.netty", name = "netty-all"),
+			sbt.ExclusionRule(organization = "io.netty", name = "netty-all")
 			//sbt.ExclusionRule(organization = "com.google.guava", name = "guava")
 		)
 	// ===================================================================================================================
@@ -217,9 +200,9 @@ object Dependencies {
 		json ++
 		test ++
 		spark :+
-		kafka :+
-		kafkaStreaming :+
-		kafkaSparkSql :+
+		kafka :+ // TODO remove when switching to plugins
+		kafkaStreaming :+ // TODO remove when switching to plugins
+		kafkaSparkSql :+ // TODO remove when switching to plugins
     quartz
 	).map(excludeNetty).map(excludeLog4j) ++
 		log4j :+

@@ -2,7 +2,7 @@
 
 - Cambiare il file docker-environment.conf in modo che spark si connetti ad un cluster yarn kerberizzato seguendo al guida (yarn.md)[/yarn.md]  
 - Configurare le configurazioni di sicurezza per kafka example:
-            other-configs =  [
+            others = [
               { "security.protocol" : "SASL_PLAINTEXT" }
               { "sasl.kerberos.service.name" : "kafka" }
               { "sasl.jaas.config" : "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"mattia.bertorello@CLUSTER01.ATSCOM.IT\";" }

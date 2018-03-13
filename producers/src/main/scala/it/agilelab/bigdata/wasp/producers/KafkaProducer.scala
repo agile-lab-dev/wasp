@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
 class KafkaPublisherActor(val producerConfig: Properties) extends KafkaProducerActor[String, Array[Byte]] {
 
   def this(conf: KafkaConfigModel) = this(WaspKafkaWriter.createConfig(
-    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.key_encoder_fqcn, conf.encoder_fqcn, conf.otherConfigs))
+    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.key_encoder_fqcn, conf.encoder_fqcn, conf.others))
 }
 
 /** Simple producer for an Akka Actor using generic encoder and default partitioner. */
@@ -33,4 +33,3 @@ abstract class KafkaProducerActor[K, V] extends Actor with ActorLogging {
       producer.send(e)
   }
 }
-

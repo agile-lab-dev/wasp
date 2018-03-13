@@ -11,6 +11,7 @@ import spray.json._
  * Created by vitoressa on 12/10/15.
  */
 object Index_C extends Directives with JsonSupport {
+
   def getRoute: Route = {
     // getByName
     pathPrefix("index" / Segment) { name =>
@@ -24,25 +25,23 @@ object Index_C extends Directives with JsonSupport {
         }
       }
     } ~
-      pathPrefix("indexes") {
-        pathEnd {
-          get {
-            complete {
-              // complete with serialized Future result
-              getJsonArrayOrEmpty[IndexModel](ConfigBL.indexBL.getAll(), _.toJson)
-            }
+    pathPrefix("indexes") {
+      pathEnd {
+        get {
+          complete {
+            // complete with serialized Future result
+            getJsonArrayOrEmpty[IndexModel](ConfigBL.indexBL.getAll(), _.toJson)
           }
-        } ~
-          path(Segment) { name =>
-            get {
-              complete {
-                // complete with serialized Future result
-                getJsonOrNotFound[IndexModel](ConfigBL.indexBL.getByName(name), name, "Index model", _.toJson)
-              }
-
-            }
-
+        }
+      } ~
+      path(Segment) { name =>
+        get {
+          complete {
+            // complete with serialized Future result
+            getJsonOrNotFound[IndexModel](ConfigBL.indexBL.getByName(name), name, "Index model", _.toJson)
           }
+        }
       }
+    }
   }
 }

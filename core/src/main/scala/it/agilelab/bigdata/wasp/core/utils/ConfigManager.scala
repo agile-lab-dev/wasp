@@ -7,7 +7,6 @@ import java.util.Map.Entry
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager.{getEntryConfigModel}
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
@@ -87,7 +86,7 @@ object ConfigManager {
       kafkaSubConfig.getString("encoder-fqcn"),
       kafkaSubConfig.getString("decoder-fqcn"),
       kafkaSubConfig.getInt("batch-send-size"),
-      getEntryConfigModel(kafkaSubConfig, "other-configs").map(e => KafkaEntryConfigModel(e._1, e._2)),
+      readOthersConfig(kafkaSubConfig).map(e => KafkaEntryConfig(e._1, e._2)),
       kafkaConfigName
     )
   }
@@ -119,7 +118,7 @@ object ConfigManager {
 
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
-      getEntryConfigModel(sparkSubConfig, "others").map(e => SparkEntryConfigModel(e._1, e._2)),
+      readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
 
       sparkStreamingConfigName
     )
@@ -149,7 +148,7 @@ object ConfigManager {
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches"),
       readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
-      getEntryConfigModel(sparkSubConfig, "others").map(e => SparkEntryConfigModel(e._1, e._2)),
+      readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
       sparkBatchConfigName
     )
   }
@@ -384,7 +383,9 @@ object ConfigManager {
     result
   }
 
-  def getEntryConfigModel(config: Config, key: String):  Seq[(String, String)] = {
+  def readOthersConfig(config: Config): Seq[(String, String)] = {
+    val key = "others"
+
     if (config.hasPath(key)) {
       val list: Iterable[ConfigObject] = config.getObjectList(key).asScala
       (for {
@@ -397,8 +398,6 @@ object ConfigManager {
       Seq()
     }
   }
-
-
 }
 
 case class ConnectionConfig(protocol: String,
@@ -427,17 +426,6 @@ case class ZookeeperConnectionsConfig(connections: Seq[ConnectionConfig],
 
   override def toString = connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot}"
 }
-
-case class SparkDriverConfig(submitDeployMode: String,
-                             cores: Int,
-                             memory: String,
-                             host: String,
-                             bindAddress: String,
-                             port: Int)
-
-case class KryoSerializerConfig(enabled: Boolean,
-                                registrators: String,
-                                strict: Boolean)
 
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig

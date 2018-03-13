@@ -141,12 +141,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       conn => s"${conn.host}:${conn.port}"
     }.mkString(",")
 
-    val otherrConfigs = tkc.otherConfigs.map(_.toTupla).toMap
     val kafkaConfigMap: Map[String, String] = Map[String, String](
       // Added for backwards compatibility
       "acks" -> "1"
     ) ++
-      tkc.otherConfigs.map(_.toTupla)
+      tkc.others.map(_.toTupla)
 
     dsw
       .option("kafka.bootstrap.servers", connectionString)

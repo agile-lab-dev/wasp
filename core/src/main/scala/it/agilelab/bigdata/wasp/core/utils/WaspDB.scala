@@ -1,31 +1,24 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import java.nio.ByteBuffer
-import java.nio.channels.AsynchronousFileChannel
-import java.nio.file.{Paths, StandardOpenOption}
 
 import com.mongodb.ErrorCategory
-import com.mongodb.async.client.Observables
 import com.mongodb.async.client.gridfs.helpers.{AsynchronousChannelHelper => JAsynchronousChannelHelper}
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
-import org.mongodb.scala.gridfs.{AsyncInputStream, GridFSBucket, GridFSUploadOptions, GridFSUploadStream}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.bson.types.ObjectId
-import org.mongodb.scala.{Completed, MongoCommandException, MongoDatabase, MongoWriteException}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.bson.codecs.Macros.{createCodecProviderIgnoreNone, _}
-import org.mongodb.scala.bson.collection.immutable.Document
+import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
-import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.gridfs.GridFSBucket
+import org.mongodb.scala.result.UpdateResult
+import org.mongodb.scala.{Completed, MongoCommandException, MongoDatabase, MongoWriteException}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
@@ -345,9 +338,9 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[SqlSourceModel]),
 	  createCodecProviderIgnoreNone(classOf[BatchETLModel]),
 	  createCodecProviderIgnoreNone(classOf[BatchJobModel]),
-	  createCodecProviderIgnoreNone(classOf[KafkaEntryConfigModel]),
+	  createCodecProviderIgnoreNone(classOf[KafkaEntryConfig]),
 	  createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
-    createCodecProviderIgnoreNone(classOf[SparkEntryConfigModel]),
+    createCodecProviderIgnoreNone(classOf[SparkEntryConfig]),
     createCodecProviderIgnoreNone(classOf[SparkDriverConfig]),
     createCodecProviderIgnoreNone(classOf[KryoSerializerConfig]),
     createCodecProviderIgnoreNone(classOf[SparkStreamingConfigModel]),

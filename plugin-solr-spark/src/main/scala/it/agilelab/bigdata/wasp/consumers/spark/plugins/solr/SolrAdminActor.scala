@@ -7,9 +7,12 @@ import java.util.Properties
 import akka.actor.Actor
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.ActorMaterializer
+import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
+import org.apache.commons.httpclient.HttpStatus
 import org.apache.http.client.HttpClient
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.util.EntityUtils
@@ -237,18 +240,23 @@ class SolrAdminActor
     httpRequest.addHeader("Content-Type", "application/json")
     httpRequest.addHeader("Accept", "application/json")
     httpRequest.setEntity(new StringEntity(message.schema, org.apache.http.entity.ContentType.APPLICATION_JSON))
+    val requestConfig = RequestConfig.custom
+                                     .setSocketTimeout(servicesTimeout.duration.toMillis.toInt)
+                                     .setConnectTimeout(servicesTimeout.duration.toMillis.toInt)
+                                     .setConnectionRequestTimeout(servicesTimeout.duration.toMillis.toInt)
+                                     .build
+    httpRequest.setConfig(requestConfig)
     val httpResponse = httpClient.execute(httpRequest)
 
     val res = httpResponse.getStatusLine.getStatusCode
     res match {
-      case 200 =>
-        logger.info(
-          s"Solr - Add Mapping response status $res, $message")
+      case HttpStatus.SC_OK =>
+        logger.info(s"Solr - Add Mapping response - statusCode: $res, message: $message")
         true
       case _ =>
         val entityString = EntityUtils.toString(httpResponse.getEntity)
         EntityUtils.consume(httpResponse.getEntity)
-        logger.error(s"Solr - Schema NOT created, $message status $res. entity $entityString")
+        logger.error(s"Solr - Schema NOT created - statusCode: $res, message: $message, entity: $entityString")
         false
     }
   }

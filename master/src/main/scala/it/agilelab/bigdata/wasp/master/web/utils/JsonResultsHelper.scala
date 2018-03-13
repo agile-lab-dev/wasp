@@ -7,13 +7,13 @@ import spray.json.{JsObject, JsString, JsValue, _}
 
 import scala.collection.immutable
 
-
 /**
   * Created by Agile Lab s.r.l. on 10/08/2017.
   */
 object JsonResultsHelper extends JsonSupport with Logging {
 
   implicit class AngularOkResponse(js: JsValue) {
+
     def toAngularOkResponse(pretty: Boolean = false): HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),
@@ -25,6 +25,7 @@ object JsonResultsHelper extends JsonSupport with Logging {
         httpResponseJson(entity = jsonResult.toString())
       }
     }
+
     def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long, pretty: Boolean = false): HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),
@@ -38,7 +39,8 @@ object JsonResultsHelper extends JsonSupport with Logging {
         httpResponseJson(entity = jsonResult.prettyPrint)
       } else {
         httpResponseJson(entity = jsonResult.toString())
-      }    }
+      }
+    }
   }
 
   def angularErrorBuilder(message: String) = {
@@ -67,7 +69,6 @@ object JsonResultsHelper extends JsonSupport with Logging {
       converter(result).toAngularOkResponse(pretty)
     }
   }
-
 
   def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo, converter: (Seq[T]) => JsValue, pretty: Boolean = false): HttpResponse = {
     if (result.isEmpty) {

@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-
 import akka.cluster.Cluster
 import akka.http.scaladsl.server.{Directives, Route}
 import com.typesafe.config.ConfigRenderOptions
@@ -11,9 +10,7 @@ import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
 
-
 object Status_C extends Directives with JsonSupport {
-
 
   val helpApi = Map(
     "wasp" -> Map(
@@ -101,7 +98,6 @@ object Status_C extends Directives with JsonSupport {
     )
   ).toJson
 
-
   def getRoute: Route = {
 
     pathPrefix("status") {
@@ -133,24 +129,23 @@ object Status_C extends Directives with JsonSupport {
         }
       }
     } ~
-      pathPrefix("help") {
-        pathEnd {
-          get {
-            complete {
-              httpResponseJson(entity = helpApi.prettyPrint)
-            }
-          }
-        }
-      } ~
-      pathPrefix("") {
-        pathEnd {
-          get {
-            complete {
-              httpResponseJson(entity = helpApi.prettyPrint)
-            }
+    pathPrefix("help") {
+      pathEnd {
+        get {
+          complete {
+            httpResponseJson(entity = helpApi.prettyPrint)
           }
         }
       }
+    } ~
+    pathPrefix("") {
+      pathEnd {
+        get {
+          complete {
+            httpResponseJson(entity = helpApi.prettyPrint)
+          }
+        }
+      }
+    }
   }
-
 }
