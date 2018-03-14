@@ -100,7 +100,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		BatchJob_C.getRoute ~
 		Configuration_C.getRoute ~
 		Index_C.getRoute ~
-		MlModels_C.getRoute  ~
+		MlModels_C.getRoute ~
 		Pipegraph_C.getRoute ~
 		Producer_C.getRoute ~
 		Topic_C.getRoute ~

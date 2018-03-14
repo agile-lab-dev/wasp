@@ -13,23 +13,24 @@ import spray.json._
 object Topic_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
-    // extract URI path element as Int
     pathPrefix("topics") {
-      pathEnd {
-        get {
-          complete {
-            // complete with serialized Future result
-            getJsonArrayOrEmpty[TopicModel](ConfigBL.topicBL.getAll, _.toJson)
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
+          get {
+            complete {
+              // complete with serialized Future result
+              getJsonArrayOrEmpty[TopicModel](ConfigBL.topicBL.getAll, _.toJson, pretty)
+            }
           }
-        }
-      } ~
-      path(Segment) { name =>
-        get {
-          complete {
-            // complete with serialized Future result
-            getJsonOrNotFound[TopicModel](ConfigBL.topicBL.getByName(name), name, "Topic model", _.toJson)
+        } ~
+          path(Segment) { name =>
+            get {
+              complete {
+                // complete with serialized Future result
+                getJsonOrNotFound[TopicModel](ConfigBL.topicBL.getByName(name), name, "Topic model", _.toJson, pretty)
+              }
+            }
           }
-        }
       }
     }
   }
