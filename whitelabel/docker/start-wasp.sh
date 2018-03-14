@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
             DROP_MONGODB_OPT="$ARG"
             shift # past argument
         ;;
-         -s|--security)
+        -s|--security)
             WASP_SECURITY=true
             WASP_YARN=true
             shift # past argument
@@ -97,20 +97,22 @@ DOCKER_IMAGE="agilefactory/oracle-java:jdk-8u162"
 
 SECURITY_DOCKER_OPTS=""
 if [ "$WASP_SECURITY" = true ]; then
-   echo -e "\nEnable security in wasp"
-   source security-env.sh
-   WASP_OPTS="$WASP_OPTS -Djava.security.krb5.conf=/root/configurations/krb5.conf -Djava.security.auth.login.config=/root/configurations/sasl.jaas.config -Djava.net.preferIPv4Stack=true -Djavax.security.auth.useSubjectCredsOnly=false -Dsun.security.krb5.debug=true -Dsun.security.spnego.debug=true"
-   SECURITY_DOCKER_OPTS="-e PRINCIPAL_NAME=$PRINCIPAL_NAME -e WASP_SECURITY=$WASP_SECURITY -e KEYTAB_FILE_NAME=$KEYTAB_FILE_NAME -e KRB5_CONFIG=/root/configurations/krb5.conf  $ETC_HOSTS -e HADOOP_JAAS_DEBUG=true"
+    echo -e "\nEnabling security..."
+    source security-env.sh
+    WASP_OPTS="$WASP_OPTS -Djava.security.krb5.conf=/root/configurations/krb5.conf -Djava.security.auth.login.config=/root/configurations/sasl.jaas.config -Djava.net.preferIPv4Stack=true -Djavax.security.auth.useSubjectCredsOnly=false -Dsun.security.krb5.debug=true -Dsun.security.spnego.debug=true"
+    SECURITY_DOCKER_OPTS="-e PRINCIPAL_NAME=$PRINCIPAL_NAME -e WASP_SECURITY=$WASP_SECURITY -e KEYTAB_FILE_NAME=$KEYTAB_FILE_NAME -e KRB5_CONFIG=/root/configurations/krb5.conf  $ETC_HOSTS -e HADOOP_JAAS_DEBUG=true"
 fi
 
 if [ "$WASP_YARN" = true ]; then
-   DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/external-cluster-configuration/hadoop:/etc/hadoop/conf/:ro"
+    echo -e "\nSetting YARN-mode docker options..."
+    DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/external-cluster-configuration/hadoop:/etc/hadoop/conf/:ro"
 else
-   DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hdfs:/etc/hadoop/conf/:ro -v $SCRIPT_DIR/docker-service-configuration/hbase:/etc/hbase/conf/:ro"
+    echo -e "\nSetting NOT YARN-mode docker options..."
+    DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hdfs:/etc/hadoop/conf/:ro -v $SCRIPT_DIR/docker-service-configuration/hbase:/etc/hbase/conf/:ro"
 fi
 
 if [ -n "$DROP_MONGODB_OPT" ]; then
-    echo -e "\nRunning module 'master' in container in order to drop MongoDB database"
+    echo -e "\nRunning module 'master' module with 'dropDB option' in container in order to drop MongoDB database..."
 
     $DOCKER_CMD run ${DOCKER_OPTS} --name master \
     -p 2891:2891 -p 5005:5005 \
