@@ -14,7 +14,7 @@ object Datastores {
 	val websocketCategory = "websocket"
 	val consoleCategory = "console"
 	val databaseCategory = "database"
-	
+
 	// available products
 	val elasticProduct = "elastic"
 	val solrProduct = "solr"

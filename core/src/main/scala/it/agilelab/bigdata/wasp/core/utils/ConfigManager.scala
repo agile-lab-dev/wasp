@@ -37,7 +37,7 @@ object ConfigManager {
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
   }
-  
+
   private def getDefaultWaspConfig: WaspConfigModel = {
     WaspConfigModel(
       conf.getString("actor-system-name"),
@@ -54,7 +54,7 @@ object ConfigManager {
       conf.getString("environment.prefix")
     )
   }
-  
+
   private def initializeMongoConfig(): Unit = {
     mongoDBConfig = getDefaultMongoConfig // mongo config is always read from file, so it's always "default"
   }
@@ -82,9 +82,11 @@ object ConfigManager {
       kafkaSubConfig.getString("broker-id"),
       kafkaSubConfig.getString("partitioner-fqcn"),
       kafkaSubConfig.getString("default-encoder"),
+      kafkaSubConfig.getString("key-encoder-fqcn"),
       kafkaSubConfig.getString("encoder-fqcn"),
       kafkaSubConfig.getString("decoder-fqcn"),
       kafkaSubConfig.getInt("batch-send-size"),
+      readOthersConfig(kafkaSubConfig).map(e => KafkaEntryConfig(e._1, e._2)),
       kafkaConfigName
     )
   }
@@ -107,8 +109,6 @@ object ConfigManager {
       sparkSubConfig.getString("additional-jars-path"),
       sparkSubConfig.getString("yarn-jar"),
       sparkSubConfig.getInt("block-manager-port"),
-      sparkSubConfig.getInt("broadcast-port"),
-      sparkSubConfig.getInt("fileserver-port"),
       sparkSubConfig.getInt("retained-stages-jobs"),
       sparkSubConfig.getInt("retained-tasks"),
       sparkSubConfig.getInt("retained-jobs"),
@@ -118,6 +118,7 @@ object ConfigManager {
 
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
+      readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
 
       sparkStreamingConfigName
     )
@@ -141,14 +142,13 @@ object ConfigManager {
       sparkSubConfig.getString("additional-jars-path"),
       sparkSubConfig.getString("yarn-jar"),
       sparkSubConfig.getInt("block-manager-port"),
-      sparkSubConfig.getInt("broadcast-port"),
-      sparkSubConfig.getInt("fileserver-port"),
       sparkSubConfig.getInt("retained-stages-jobs"),
       sparkSubConfig.getInt("retained-tasks"),
       sparkSubConfig.getInt("retained-jobs"),
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches"),
       readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
+      readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
       sparkBatchConfigName
     )
   }
@@ -178,12 +178,12 @@ object ConfigManager {
       solrConfigName
     )
   }
-  
+
   private def initializeHBaseConfig(): Unit = {
     hbaseConfig =
       retrieveConf[HBaseConfigModel](getDefaultHBaseConfig, hbaseConfigName).get
   }
-  
+
   private def getDefaultHBaseConfig: HBaseConfigModel = {
     val hbaseSubConfig = conf.getConfig("hbase")
     HBaseConfigModel(
@@ -229,21 +229,21 @@ object ConfigManager {
     initializeSparkStreamingConfig()
     initializeSparkBatchConfig()
   }
-  
+
   def getWaspConfig: WaspConfigModel = {
     if (waspConfig == null) {
       initializeWaspConfig()
     }
     waspConfig
   }
-  
+
   def getMongoDBConfig: MongoDBConfigModel = {
     if (mongoDBConfig == null) {
       initializeMongoConfig()
     }
     mongoDBConfig
   }
-  
+
   def getKafkaConfig: KafkaConfigModel = {
     if (kafkaConfig == null) {
       throw new Exception("The kafka configuration was not initialized")
@@ -382,6 +382,22 @@ object ConfigManager {
 
     result
   }
+
+  def readOthersConfig(config: Config): Seq[(String, String)] = {
+    val key = "others"
+
+    if (config.hasPath(key)) {
+      val list: Iterable[ConfigObject] = config.getObjectList(key).asScala
+      (for {
+        item: ConfigObject <- list
+        entry: Entry[String, ConfigValue] <- item.entrySet().asScala
+        key = entry.getKey
+        value = entry.getValue.unwrapped().toString
+      } yield (key, value)).toSeq
+    } else {
+      Seq()
+    }
+  }
 }
 
 case class ConnectionConfig(protocol: String,
@@ -410,17 +426,6 @@ case class ZookeeperConnectionsConfig(connections: Seq[ConnectionConfig],
 
   override def toString = connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot}"
 }
-
-case class SparkDriverConfig(submitDeployMode: String,
-                             cores: Int,
-                             memory: String,
-                             host: String,
-                             bindAddress: String,
-                             port: Int)
-
-case class KryoSerializerConfig(enabled: Boolean,
-                                registrators: String,
-                                strict: Boolean)
 
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig

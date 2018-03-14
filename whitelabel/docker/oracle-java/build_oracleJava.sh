@@ -17,10 +17,5 @@ source $SCRIPT_DIR/../get-docker-cmd.sh
 
 cd $SCRIPT_DIR
 
-cd ../base_cdh
-
-$DOCKER_CMD build --rm -t base_cdh:5.11 .
-
-cd ../hdfs
-
-$DOCKER_CMD build --rm -t hdfs_cdh:5.11 .
+${DOCKER_CMD} build -t agilefactory/oracle-java:jdk-8u162 .
+${DOCKER_CMD} tag agilefactory/oracle-java:jdk-8u162 agilefactory/oracle-java:jdk-8

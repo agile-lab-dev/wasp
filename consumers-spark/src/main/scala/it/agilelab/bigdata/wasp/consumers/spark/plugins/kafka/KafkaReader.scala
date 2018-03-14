@@ -17,8 +17,6 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
-import scala.util.Try
-
 object KafkaStructuredReader extends StructuredStreamingReader with Logging {
 
   /**
@@ -44,12 +42,18 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
           WaspSystem.kafkaAdminActor,
           CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
+      logger.info(s"Kafka spark options: subscribe: ${topic.name}, " +
+                  s"kafka.bootstrap.servers: ${kafkaConfig.connections.map(_.toString).mkString(",")} " +
+                  s"kafkaConsumer.pollTimeoutMs: ${kafkaConfig.ingestRateToMills()} " +
+                  s"others: ${kafkaConfig.others}")
+
       // create the stream
       val df: DataFrame = ss.readStream
         .format("kafka")
         .option("subscribe", topic.name)
         .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
+        .options(kafkaConfig.others.map(v => v.copy(key = "kafka." + v.key)).map(_.toTupla).toMap)
         .load()
 
       // prepare the udf
@@ -97,12 +101,16 @@ object KafkaReader extends StreamingReader with Logging {
       implicit ssc: StreamingContext): DStream[String] = {
     val kafkaConfig = ConfigManager.getKafkaConfig
 
-    val kafkaConfigMap: Map[String, String] = Map(
-      "zookeeper.connect" -> kafkaConfig.zookeeperConnections.toString,
-      "zookeeper.connection.timeout.ms" -> kafkaConfig.zookeeperConnections.connections.headOption.flatMap(_.timeout)
-        .getOrElse(ConfigManager.getWaspConfig.servicesTimeoutMillis)
-        .toString
-    )
+    val kafkaConfigMap: Map[String, String] = (
+      Seq(
+        "zookeeper.connect" -> kafkaConfig.zookeeperConnections.toString(),
+        "zookeeper.connection.timeout.ms" ->
+          kafkaConfig.zookeeperConnections.connections.headOption.flatMap(_.timeout)
+            .getOrElse(ConfigManager.getWaspConfig.servicesTimeoutMillis)
+            .toString) ++
+        kafkaConfig.others.map(_.toTupla)
+      )
+      .toMap
 
     if (??[Boolean](
           WaspSystem.kafkaAdminActor,

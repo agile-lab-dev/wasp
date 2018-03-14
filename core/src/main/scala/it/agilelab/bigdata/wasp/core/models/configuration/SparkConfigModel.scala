@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models.configuration
 
 import it.agilelab.bigdata.wasp.core.models.Model
-import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, KryoSerializerConfig, SparkDriverConfig}
+import it.agilelab.bigdata.wasp.core.utils.ConnectionConfig
 
 trait SparkConfigModel extends Model {
 	val appName: String
@@ -13,14 +13,13 @@ trait SparkConfigModel extends Model {
 	val additionalJarsPath: String
 	val yarnJar: String
 	val blockManagerPort: Int
-	val broadcastPort: Int
-	val fileserverPort: Int
 	val retainedStagesJobs: Int
 	val retainedJobs: Int
 	val retainedTasks: Int
 	val retainedExecutions: Int
 	val retainedBatches: Int
-	val kryoSerializer: KryoSerializerConfig
+  val kryoSerializer: KryoSerializerConfig
+  val others: Seq[SparkEntryConfig]
 }
 
 case class SparkStreamingConfigModel(
@@ -33,8 +32,6 @@ case class SparkStreamingConfigModel(
 																			additionalJarsPath: String,
 																			yarnJar: String,
 																			blockManagerPort: Int,
-																			broadcastPort: Int,
-																			fileserverPort: Int,
 																			retainedStagesJobs: Int,
 																			retainedTasks: Int,
 																			retainedJobs: Int,
@@ -45,6 +42,7 @@ case class SparkStreamingConfigModel(
 																			streamingBatchIntervalMs: Int,
 																			checkpointDir: String,
 
+																			others: Seq[SparkEntryConfig],
 																			name: String
 																		) extends SparkConfigModel
 
@@ -58,14 +56,32 @@ case class SparkBatchConfigModel(
 																	additionalJarsPath: String,
 																	yarnJar: String,
 																	blockManagerPort: Int,
-																	broadcastPort: Int,
-																	fileserverPort: Int,
 																	retainedStagesJobs: Int,
 																	retainedTasks: Int,
 																	retainedJobs: Int,
 																	retainedExecutions: Int,
 																	retainedBatches: Int,
 																	kryoSerializer: KryoSerializerConfig,
-
+																	others: Seq[SparkEntryConfig],
 																	name: String
 																) extends SparkConfigModel
+
+case class SparkDriverConfig(
+															submitDeployMode: String,
+															cores: Int,
+															memory: String,
+															host: String,
+															bindAddress: String,
+															port: Int
+														)
+
+case class KryoSerializerConfig(
+																 enabled: Boolean,
+																 registrators: String,
+																 strict: Boolean
+															 )
+
+case class SparkEntryConfig(
+														 key: String,
+														 value: String
+													 )

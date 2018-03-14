@@ -16,4 +16,4 @@ source get-docker-cmd.sh
 
 # stop containers
 echo "Stopping containers running the modules..."
-$DOCKER_CMD stop master producers consumers-rt consumers-spark
+$DOCKER_CMD stop master producers consumers-rt consumers-spark-streaming consumers-spark-batch

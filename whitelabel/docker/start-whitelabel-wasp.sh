@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SBT_STAGE_COMMAND_PROJECTID="wasp-whitelabel/" \
+SBT_STAGE_COMMAND_PROJECTID="wasp-whitelabel" \
 MASTER_PROJECT_DIRECTORY="/../master/" \
 PRODUCERS_PROJECT_DIRECTORY="/../producers/" \
 CONSUMERS_RT_PROJECT_DIRECTORY="/../consumers-rt/" \

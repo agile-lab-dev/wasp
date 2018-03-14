@@ -95,7 +95,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
         complete(HttpResponse(InternalServerError, entity = resultJson))
       }
   }
-	
+
 	private def getRoutes: Route = {
 		BatchJob_C.getRoute ~
 		Configuration_C.getRoute ~

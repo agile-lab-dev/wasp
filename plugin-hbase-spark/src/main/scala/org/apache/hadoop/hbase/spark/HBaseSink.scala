@@ -2,7 +2,6 @@ package org.apache.hadoop.hbase.spark
 
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.Put
-import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
@@ -86,6 +85,13 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
   val rkIdxedFields: Seq[(Int, Field)] = rkFields.map { case x =>
     (schema.fieldIndex(x.colName), x)
   }
+
+  assert(rkIdxedFields.nonEmpty,s"""
+                                  |You should put at least one column for the key of hbase row in the tableCatalog of the KeyValueModel. ex:
+                                  |"id":{"cf":"rowkey", "col":"key", "type":"string"}
+                                  |""".stripMargin
+  )
+
   val colsIdxedFields: Seq[(Int, Field)] = schema
     .fieldNames
     .partition(x => rkFields.map(_.colName).contains(x))
@@ -112,7 +118,13 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
       offset += x.length
     }
     // Removed timestamp.fold(new Put(rBytes))(new Put(rBytes, _))
-    val put = new Put(rBytes)
+    var put: Put = null
+    try {
+      put = new Put(rBytes)
+    } catch {
+      case e:IllegalArgumentException =>
+        throw new IllegalArgumentException(s"Row length is 0: sparkRow: ${row.mkString}, SparkRowSchema: ${row.schema}, rkIdxedFields: $rkIdxedFields", e)
+    }
 
     def isClusteringColumnFamily: Field => Boolean = (f: Field) => clusteringCfColumnsMap.contains(f.cf)
     def isStandardColumnFamily: Field => Boolean = (f: Field) => !isClusteringColumnFamily(f)

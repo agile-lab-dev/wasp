@@ -6,10 +6,12 @@ mainClass in Compile := Some("thisClassNotExist")
 // to use within "docker run" in start-wasp.sh using -main FULLY_QUALIFIED_NAME
 
 
-/* Spark distributed-mode usage !!! Add this in standalone applications !!! */
+/* Spark distributed-mode (Hadoop YARN, Spark Standalone) usage !!! Add this in standalone applications !!! */
 import java.io.File
 
 mappings in Universal += {
+  val jarsListFileName = "jars.list"
+
   val log = streams.value.log
 
   log.info("Getting jars names to use with additional-jars-lib-path config parameter (used by Wasp Core Framework)")
@@ -30,8 +32,6 @@ mappings in Universal += {
         dep.data.getName
     }
   }).mkString("\n")
-
-  val jarsListFileName = "jars.list"
 
   val file = new File(IO.createTemporaryDirectory.getAbsolutePath + File.separator + jarsListFileName)
   IO.write(file, jars)

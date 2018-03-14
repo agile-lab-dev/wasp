@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.classification.InterfaceAudience
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
@@ -30,11 +31,9 @@ import org.apache.hadoop.hbase.mapred.TableOutputFormat
 import org.apache.hadoop.hbase.spark.datasources._
 import org.apache.hadoop.hbase.types._
 import org.apache.hadoop.hbase.util.{Bytes, PositionedByteRange, SimplePositionedMutableByteRange}
-import org.apache.hadoop.hbase._
 import org.apache.hadoop.mapred.JobConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.{`type`, cf, col, rowKey}
 import org.apache.spark.sql.datasources.hbase.{Field, HBaseTableCatalog, Utils}
 import org.apache.spark.sql.execution.streaming.Sink
 import org.apache.spark.sql.sources._
@@ -189,8 +188,11 @@ case class HBaseRelation(
     LatestHBaseContextCache.latest
   } else {
     val config = HBaseConfiguration.create()
-    configResources.split(",").foreach(r => config.addResource(r))
-    configResources.split(",").filter(r => (r != "") && new File(r).exists()).foreach(r => config.addResource(new Path(r)))
+    configResources.split(",").filter(r => (r != "") && new File(r).exists()).foreach(r => {
+      log.info(s"HBase configuration file: $r")
+      config.addResource(new Path(r))
+    })
+    log.info(s"HBase configurations $config")
     new HBaseContext(sqlContext.sparkContext, config)
   }
 

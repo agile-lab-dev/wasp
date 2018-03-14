@@ -29,10 +29,12 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
+    waspDB.upsert[TopicModel](TestTopicModel.avro2)                       // TODO revise
     waspDB.upsert[IndexModel](TestIndexModel.solr)
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
     waspDB.upsert[RawModel](TestRawModel.flat)    // used by TestBatchJobModels.FromHdfs.toConsole
+    waspDB.upsert[KeyValueModel](TestKeyValueModel.simple)                // TODO revise
     waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
 
     /* Producers */
@@ -44,12 +46,14 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbase)   // TODO revise
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.hdfs)
 
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafka)   // TODO revise
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hdfs)
