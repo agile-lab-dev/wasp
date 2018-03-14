@@ -13,49 +13,48 @@ import spray.json._
 object MlModels_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
-    // extract URI path element as Int
     pathPrefix("mlmodels") {
-      pathEnd {
-        get {
-          complete {
-            val result = ConfigBL.mlModelBL.getAll
-            getJsonArrayOrEmpty[MlModelOnlyInfo](ConfigBL.mlModelBL.getAll, _.toJson)
-            val finalResult: JsValue = if (result.isEmpty) {
-              JsArray()
-            } else {
-              result.toJson
-            }
-
-            finalResult.toAngularOkResponse()
-          }
-        } ~
-        put {
-          // unmarshal with in-scope unmarshaller
-          entity(as[MlModelOnlyInfo]) { mlModel =>
-            complete {
-
-              ConfigBL.mlModelBL.updateMlModelOnlyInfo(mlModel)
-              "OK".toJson
-            }
-          }
-        }
-      } ~
-      path(Segment) { name =>
-        path(Segment) { version =>
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
           get {
             complete {
-              getJsonOrNotFound[MlModelOnlyInfo](ConfigBL.mlModelBL.getMlModelOnlyInfo(name,version), s"${name}/${version}", "Machine learning model", _.toJson)
+              val result = ConfigBL.mlModelBL.getAll
+              getJsonArrayOrEmpty[MlModelOnlyInfo](ConfigBL.mlModelBL.getAll, _.toJson, pretty)
+              val finalResult: JsValue = if (result.isEmpty) {
+                JsArray()
+              } else {
+                result.toJson
+              }
+
+              finalResult.toAngularOkResponse(pretty)
             }
           } ~
-          delete {
-            complete {
-              val result = ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version)
-              runIfExists(result,
-                          () => ConfigBL.mlModelBL.delete(result.get.name, result.get.version, result.get.timestamp.getOrElse(0l)),
-                          s"${name}/${version}", "Machine learning model", "delete")
+            put {
+              // unmarshal with in-scope unmarshaller
+              entity(as[MlModelOnlyInfo]) { mlModel =>
+                complete {
+
+                  ConfigBL.mlModelBL.updateMlModelOnlyInfo(mlModel)
+                  "OK".toJson
+                }
+              }
+            }
+        } ~
+          path(Segment) { name =>
+            path(Segment) { version =>
+              get {
+                complete {
+                  getJsonOrNotFound[MlModelOnlyInfo](ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version), s"${name}/${version}", "Machine learning model", _.toJson, pretty)
+                }
+              } ~
+                delete {
+                  complete {
+                    val result = ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version)
+                    runIfExists(result, () => ConfigBL.mlModelBL.delete(result.get.name, result.get.version, result.get.timestamp.getOrElse(0l)), s"${name}/${version}", "Machine learning model", "delete", pretty)
+                  }
+                }
             }
           }
-        }
       }
     }
   }

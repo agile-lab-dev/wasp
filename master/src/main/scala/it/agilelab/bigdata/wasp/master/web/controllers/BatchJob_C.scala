@@ -17,68 +17,65 @@ import spray.json._
 object BatchJob_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
-    // extract URI path element as Int
     pathPrefix("batchjobs") {
-      pathEnd {
-        get {
-          complete {
-            getJsonArrayOrEmpty[BatchJobModel](ConfigBL.batchJobBL.getAll, _.toJson)
-          }
-        } ~
-        post {
-          // unmarshal with in-scope unmarshaller
-          entity(as[BatchJobModel]) { batchJobModel =>
-            complete {
-              ConfigBL.batchJobBL.insert(batchJobModel)
-              "OK".toJson.toAngularOkResponse()
-            }
-          }
-        } ~
-        put {
-          // unmarshal with in-scope unmarshaller
-          entity(as[BatchJobModel]) { batchJobModel =>
-            complete {
-              ConfigBL.batchJobBL.update(batchJobModel)
-              "OK".toJson.toAngularOkResponse()
-            }
-          }
-        }
-      } ~
-      pathPrefix(Segment) { name =>
-        path("start") {
-          post {
-            complete {
-              WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name)) match {
-                case Right(s) => s.toJson.toAngularOkResponse()
-                case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
-              }
-            }
-          }
-        } ~
-        path("instances") {
-          get {
-            complete {
-              getJsonArrayOrEmpty[BatchJobInstanceModel](ConfigBL.batchJobBL.instances().instancesOf(name).sortBy{ instance => -instance.startTimestamp }, _.toJson)
-            }
-          }
-        } ~
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
         pathEnd {
           get {
             complete {
-              getJsonOrNotFound[BatchJobModel](ConfigBL.batchJobBL.getByName(name), name, "Batch job model", _.toJson)
+              getJsonArrayOrEmpty[BatchJobModel](ConfigBL.batchJobBL.getAll, _.toJson, pretty)
             }
           } ~
-          delete {
-            complete {
-              val batchJob = ConfigBL.batchJobBL.getByName(name)
-              runIfExists(batchJob,
-                () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name),
-                name,
-                "Machine learning model",
-                "delete")
+            post {
+              // unmarshal with in-scope unmarshaller
+              entity(as[BatchJobModel]) { batchJobModel =>
+                complete {
+                  ConfigBL.batchJobBL.insert(batchJobModel)
+                  "OK".toJson.toAngularOkResponse(pretty)
+                }
+              }
+            } ~
+            put {
+              // unmarshal with in-scope unmarshaller
+              entity(as[BatchJobModel]) { batchJobModel =>
+                complete {
+                  ConfigBL.batchJobBL.update(batchJobModel)
+                  "OK".toJson.toAngularOkResponse(pretty)
+                }
+              }
             }
+        } ~
+          pathPrefix(Segment) { name =>
+            path("start") {
+              post {
+                complete {
+                  WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name)) match {
+                    case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                    case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                  }
+                }
+              }
+            } ~
+              path("instances") {
+                get {
+                  complete {
+                    getJsonArrayOrEmpty[BatchJobInstanceModel](ConfigBL.batchJobBL.instances().instancesOf(name).sortBy { instance => -instance.startTimestamp }, _.toJson, pretty)
+                  }
+                }
+              } ~
+              pathEnd {
+                get {
+                  complete {
+                    getJsonOrNotFound[BatchJobModel](ConfigBL.batchJobBL.getByName(name), name, "Batch job model", _.toJson, pretty)
+                  }
+                } ~
+                  delete {
+                    complete {
+                      val batchJob = ConfigBL.batchJobBL.getByName(name)
+                      runIfExists(batchJob, () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name), name, "Machine learning model", "delete", pretty)
+                    }
+                  }
+              }
           }
-        }
       }
     }
   }

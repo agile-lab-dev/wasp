@@ -13,35 +13,39 @@ import spray.json._
 object Index_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
-    // getByName
+    // Segment => indexName
     pathPrefix("index" / Segment) { name =>
-      pathEnd {
-        get {
-          complete {
-            // complete with serialized Future result
-            getJsonOrNotFound[IndexModel](ConfigBL.indexBL.getByName(name), name, "Index model", _.toJson)
-          }
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
+          get {
+            complete {
+              // complete with serialized Future result
+              getJsonOrNotFound[IndexModel](ConfigBL.indexBL.getByName(name), name, "Index model", _.toJson, pretty)
+            }
 
+          }
         }
       }
     } ~
-    pathPrefix("indexes") {
-      pathEnd {
-        get {
-          complete {
-            // complete with serialized Future result
-            getJsonArrayOrEmpty[IndexModel](ConfigBL.indexBL.getAll(), _.toJson)
-          }
-        }
-      } ~
-      path(Segment) { name =>
-        get {
-          complete {
-            // complete with serialized Future result
-            getJsonOrNotFound[IndexModel](ConfigBL.indexBL.getByName(name), name, "Index model", _.toJson)
-          }
+      pathPrefix("indexes") {
+        parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+          pathEnd {
+            get {
+              complete {
+                // complete with serialized Future result
+                getJsonArrayOrEmpty[IndexModel](ConfigBL.indexBL.getAll(), _.toJson, pretty)
+              }
+            }
+          } ~
+            path(Segment) { name =>
+              get {
+                complete {
+                  // complete with serialized Future result
+                  getJsonOrNotFound[IndexModel](ConfigBL.indexBL.getByName(name), name, "Index model", _.toJson, pretty)
+                }
+              }
+            }
         }
       }
-    }
   }
 }

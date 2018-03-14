@@ -12,7 +12,6 @@ import spray.json._
 object Configuration_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
-    // extract URI path element as Int
     pathPrefix("configs") {
       parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
         path("kafka") {
@@ -23,38 +22,38 @@ object Configuration_C extends Directives with JsonSupport {
             }
           }
         } ~
-        path("sparkbatch") {
-          get {
-            complete {
-              // complete with serialized Future result
-              ConfigManager.getSparkBatchConfig.toJson.toAngularOkResponse(pretty)
+          path("sparkbatch") {
+            get {
+              complete {
+                // complete with serialized Future result
+                ConfigManager.getSparkBatchConfig.toJson.toAngularOkResponse(pretty)
+              }
+            }
+          } ~
+          path("sparkstreaming") {
+            get {
+              complete {
+                // complete with serialized Future result
+                ConfigManager.getSparkStreamingConfig.toJson.toAngularOkResponse(pretty)
+              }
+            }
+          } ~
+          path("es") {
+            get {
+              complete {
+                // complete with serialized Future result
+                ConfigManager.getElasticConfig.toJson.toAngularOkResponse(pretty)
+              }
+            }
+          } ~
+          path("solr") {
+            get {
+              complete {
+                // complete with serialized Future result
+                ConfigManager.getSolrConfig.toJson.toAngularOkResponse(pretty)
+              }
             }
           }
-        } ~
-        path("sparkstreaming") {
-          get {
-            complete {
-              // complete with serialized Future result
-              ConfigManager.getSparkStreamingConfig.toJson.toAngularOkResponse(pretty)
-            }
-          }
-        } ~
-        path("es") {
-          get {
-            complete {
-              // complete with serialized Future result
-              ConfigManager.getElasticConfig.toJson.toAngularOkResponse(pretty)
-            }
-          }
-        } ~
-        path("solr") {
-          get {
-            complete {
-              // complete with serialized Future result
-              ConfigManager.getSolrConfig.toJson.toAngularOkResponse(pretty)
-            }
-          }
-        }
       }
     }
   }

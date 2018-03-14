@@ -17,7 +17,6 @@ import spray.json._
 object Pipegraph_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
-    // extract URI path element as Int
     pathPrefix("pipegraphs") {
       parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
         pathEnd {
@@ -26,29 +25,29 @@ object Pipegraph_C extends Directives with JsonSupport {
               getJsonArrayOrEmpty[PipegraphModel](ConfigBL.pipegraphBL.getAll, _.toJson, pretty)
             }
           } ~
-          post {
-            // unmarshal with in-scope unmarshaller
-            entity(as[PipegraphModel]) { pipegraph =>
-              complete {
-                // complete with serialized Future result
-                ConfigBL.pipegraphBL.insert(pipegraph)
-                "OK".toJson.toAngularOkResponse(pretty)
+            post {
+              // unmarshal with in-scope unmarshaller
+              entity(as[PipegraphModel]) { pipegraph =>
+                complete {
+                  // complete with serialized Future result
+                  ConfigBL.pipegraphBL.insert(pipegraph)
+                  "OK".toJson.toAngularOkResponse(pretty)
+                }
+              }
+            } ~
+            put {
+              // unmarshal with in-scope unmarshaller
+              entity(as[PipegraphModel]) { pipegraph =>
+                complete {
+                  // complete with serialized Future result
+                  ConfigBL.pipegraphBL.update(pipegraph)
+                  "OK".toJson.toAngularOkResponse(pretty)
+                }
               }
             }
-          } ~
-          put {
-            // unmarshal with in-scope unmarshaller
-            entity(as[PipegraphModel]) { pipegraph =>
-              complete {
-                // complete with serialized Future result
-                ConfigBL.pipegraphBL.update(pipegraph)
-                "OK".toJson.toAngularOkResponse(pretty)
-              }
-            }
-          }
         } ~
-        pathPrefix(Segment) { name =>
-          path("start") {
+          pathPrefix(Segment) { name =>
+            path("start") {
               post {
                 complete {
                   WaspSystem.??[Either[String, String]](masterGuardian, StartPipegraph(name)) match {
@@ -57,34 +56,34 @@ object Pipegraph_C extends Directives with JsonSupport {
                   }
                 }
               }
-          } ~
-          path("stop") {
-            post {
-              complete {
-                // complete with serialized Future result
-                WaspSystem.??[Either[String, String]](masterGuardian, StopPipegraph(name)) match {
-                  case Right(s) => s.toJson.toAngularOkResponse(pretty)
-                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
-                }
-              }
-            }
-          } ~
-          pathEnd {
-            get {
-              complete {
-                // complete with serialized Future result
-                getJsonOrNotFound[PipegraphModel](ConfigBL.pipegraphBL.getByName(name), name, "Pipegraph", _.toJson, pretty)
-              }
             } ~
-            delete {
-              complete {
-                // complete with serialized Future result
-                val result = ConfigBL.pipegraphBL.getByName(name)
-                runIfExists(result, () => ConfigBL.pipegraphBL.deleteByName(name), name, "Pipegraph", "delete", pretty)
+              path("stop") {
+                post {
+                  complete {
+                    // complete with serialized Future result
+                    WaspSystem.??[Either[String, String]](masterGuardian, StopPipegraph(name)) match {
+                      case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                      case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                    }
+                  }
+                }
+              } ~
+              pathEnd {
+                get {
+                  complete {
+                    // complete with serialized Future result
+                    getJsonOrNotFound[PipegraphModel](ConfigBL.pipegraphBL.getByName(name), name, "Pipegraph", _.toJson, pretty)
+                  }
+                } ~
+                  delete {
+                    complete {
+                      // complete with serialized Future result
+                      val result = ConfigBL.pipegraphBL.getByName(name)
+                      runIfExists(result, () => ConfigBL.pipegraphBL.deleteByName(name), name, "Pipegraph", "delete", pretty)
+                    }
+                  }
               }
-            }
           }
-        }
       }
     }
   }

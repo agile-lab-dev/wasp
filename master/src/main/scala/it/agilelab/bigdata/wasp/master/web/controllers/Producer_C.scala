@@ -20,71 +20,72 @@ import spray.json._
 object Producer_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
-    // extract URI path element as Int
     pathPrefix("producers") {
-      pathEnd {
-        get {
-          complete {
-            getJsonArrayOrEmpty[ProducerModel](ConfigBL.producerBL.getAll, _.toJson)
-          }
-        } ~
-        put {
-          // unmarshal with in-scope unmarshaller
-          entity(as[ProducerModel]) { producerModel =>
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
+          get {
             complete {
-              // complete with serialized Future result
-              ConfigBL.producerBL.update(producerModel)
-              "OK".toJson.toAngularOkResponse()
+              getJsonArrayOrEmpty[ProducerModel](ConfigBL.producerBL.getAll, _.toJson, pretty)
             }
-          }
-        }
-      } ~
-      path(Segment) { name =>
-        get {
-          complete {
-            // complete with serialized Future result
-            getJsonOrNotFound[ProducerModel](ConfigBL.producerBL.getByName(name), name, "Producer model", _.toJson)
-          }
-        }
-      } ~
-      path(Segment / "start") { name =>
-        post {
-          complete {
-            WaspSystem.??[Either[String, String]](masterGuardian, StartProducer(name)) match {
-              case Right(s) => s.toJson.toAngularOkResponse()
-              case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+          } ~
+            put {
+              // unmarshal with in-scope unmarshaller
+              entity(as[ProducerModel]) { producerModel =>
+                complete {
+                  // complete with serialized Future result
+                  ConfigBL.producerBL.update(producerModel)
+                  "OK".toJson.toAngularOkResponse(pretty)
+                }
+              }
             }
-          }
-        }
-      } ~
-      path(Segment / "stop") { name =>
-        post {
-          complete {
-            WaspSystem.??[Either[String, String]](masterGuardian, StopProducer(name)) match {
-              case Right(s) => s.toJson.toAngularOkResponse()
-              case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
-            }
-          }
-        }
-      } ~
-      path(Segment / "rest") { name =>
-        post {
-          decodeRequest {
-            entity(as[JsValue]) { json: JsValue =>
+        } ~
+          path(Segment) { name =>
+            get {
               complete {
-                val request = json.convertTo[RestProducerModel]
-                val httpMethod = HttpMethod.custom(request.httpMethod)
-                val data = request.data
-
-                ModelKey
-                WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, httpMethod, data, request.mlModel)) match {
-                  case Right(s) => s.toJson.toAngularOkResponse()
+                // complete with serialized Future result
+                getJsonOrNotFound[ProducerModel](ConfigBL.producerBL.getByName(name), name, "Producer model", _.toJson, pretty)
+              }
+            }
+          } ~
+          path(Segment / "start") { name =>
+            post {
+              complete {
+                WaspSystem.??[Either[String, String]](masterGuardian, StartProducer(name)) match {
+                  case Right(s) => s.toJson.toAngularOkResponse(pretty)
                   case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                 }
               }
             }
+          } ~
+          path(Segment / "stop") { name =>
+            post {
+              complete {
+                WaspSystem.??[Either[String, String]](masterGuardian, StopProducer(name)) match {
+                  case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                }
+              }
+            }
+          } ~
+          path(Segment / "rest") { name =>
+            post {
+              decodeRequest {
+                entity(as[JsValue]) { json: JsValue =>
+                  complete {
+                    val request = json.convertTo[RestProducerModel]
+                    val httpMethod = HttpMethod.custom(request.httpMethod)
+                    val data = request.data
+
+                    ModelKey
+                    WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, httpMethod, data, request.mlModel)) match {
+                      case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                      case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                    }
+                  }
+                }
+              }
+            }
           }
-        }
       }
     }
   }
