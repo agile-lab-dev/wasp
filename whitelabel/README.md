@@ -41,7 +41,7 @@ Add this in standalone applications:
     
     mappings in Universal += {
       val jarsListFileName = "jars.list"
-      
+    
       val log = streams.value.log
     
       log.info("Getting jars names to use with additional-jars-lib-path config parameter (used by Wasp Core Framework)")
@@ -53,23 +53,14 @@ Add this in standalone applications:
           case Some(module) =>
             if (module.organization.equalsIgnoreCase("it.agilelab")) {
               //for some reason, the snapshot version is not appended correctly. Must do it manually
-              (module.organization, s"${module.name}-${module.revision}.jar")
+              s"${module.organization}.${module.name}-${module.revision}.jar"
             } else
-              (module.organization, dep.data.getName)
+              s"${module.organization}.${dep.data.getName}"
     
           case None =>
             log.warn(s"Dependency $dep does not have a valid ModuleID associated.")
-            ("", dep.data.getName)
+            dep.data.getName
         }
-      }).filter({
-        case (_, moduleName: String) => {
-          // exclude libs already provided implicitly
-          !SparkDependecies.excludedJarsSpark2.contains(moduleName)
-        }
-      }).map({
-        case (organization: String, moduleName: String) =>
-          log.info(moduleName)
-          Seq(organization, moduleName).mkString(".")
       }).mkString("\n")
     
       val file = new File(IO.createTemporaryDirectory.getAbsolutePath + File.separator + jarsListFileName)
