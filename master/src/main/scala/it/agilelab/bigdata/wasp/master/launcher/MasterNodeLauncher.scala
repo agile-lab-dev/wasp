@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.master.launcher
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpResponse
@@ -10,9 +8,9 @@ import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExcepti
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
+import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
 import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, MongoDBHelper, WaspConfiguration, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
@@ -23,9 +21,6 @@ import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang.exception.ExceptionUtils
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
 /**
 	* Launcher for the MasterGuardian and REST Server.
 	* This trait is useful for who want extend the launcher
@@ -34,33 +29,8 @@ import scala.concurrent.duration.Duration
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
 
 	override def launch(commandLine: CommandLine): Unit = {
-
-		if (commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)) {
-			// drop db
-			val mongoDBConfig = ConfigManager.getMongoDBConfig
-
-			logger.info(s"Dropping MongoDB database '${mongoDBConfig.databaseName}'")
-			val mongoDBDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
-			val dropFuture = mongoDBDatabase.drop().toFuture()
-			Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
-			logger.info(s"Dropped MongoDB database '${mongoDBConfig.databaseName}'")
-			System.exit(0)
-
-			// re-initialize mongoDB and continue (instead of exit) -> not safe due to all process write on mongoDB
-//			// db
-//			WaspDB.initializeDB()
-//			waspDB = WaspDB.getDB
-//			// configs
-//			ConfigManager.initializeCommonConfigs()
-		}
-		
-		// add system pipegraphs
 		addSystemPipegraphs()
-		
-		// launch cluster singleton
 		super.launch(commandLine)
-
-		// launch rest server
 		startRestServer(WaspSystem.actorSystem, getRoutes)
 	}
 	
@@ -73,18 +43,16 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 	override def getSingletonRoles: Seq[String] = Seq(WaspSystem.masterGuardianRole)
 	
 	private def addSystemPipegraphs(): Unit = {
-		val db = WaspDB.getDB
-		
-		// add logger pipegraph
-		db.insertIfNotExists[TopicModel](SystemPipegraphs.loggerTopic)
-		db.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
-		db.insertIfNotExists[IndexModel](SystemPipegraphs.loggerIndex)
-		db.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
-		
-		// add raw pipegraph
-		//db.insertIfNotExists[TopicModel](SystemPipegraphs.rawTopic)
-		//db.insertIfNotExists[IndexModel](SystemPipegraphs.rawIndex)
-		//db.insertIfNotExists[PipegraphModel](SystemPipegraphs.rawPipegraph)
+
+		/* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
+		waspDB.insertIfNotExists[TopicModel](SystemPipegraphs.loggerTopic)
+		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.loggerIndex)
+
+		/* Producers */
+		waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
+
+		/* Pipegraphs */
+		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
 	}
 	
 	private val myExceptionHandler = ExceptionHandler {

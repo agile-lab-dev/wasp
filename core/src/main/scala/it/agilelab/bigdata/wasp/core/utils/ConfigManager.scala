@@ -55,16 +55,16 @@ object ConfigManager {
     )
   }
 
-  private def initializeMongoConfig(): Unit = {
-    mongoDBConfig = getDefaultMongoConfig // mongo config is always read from file, so it's always "default"
+  private def initializeMongoDBConfig(): Unit = {
+    mongoDBConfig = getDefaultMongoDBConfig // mongoDB config is always read from file, so it's always "default"
   }
 
-  private def getDefaultMongoConfig: MongoDBConfigModel = {
-    val mongoSubConfig = conf.getConfig("mongo")
+  private def getDefaultMongoDBConfig: MongoDBConfigModel = {
+    val mongoDBSubConfig = conf.getConfig("mongo")
     MongoDBConfigModel(
-      mongoSubConfig.getString("address"),
-      mongoSubConfig.getString("db-name"),
-      mongoSubConfig.getInt("timeout")
+      mongoDBSubConfig.getString("address"),
+      mongoDBSubConfig.getString("db-name"),
+      mongoDBSubConfig.getInt("timeout")
     )
   }
 
@@ -217,10 +217,11 @@ object ConfigManager {
 
   /**
     * Initialize the configurations managed by this ConfigManager.
+    * 
+    * Not initialize MongoDB due to already initialized [[WaspDB.initializeDB()]]
     */
   def initializeCommonConfigs(): Unit = {
     initializeWaspConfig()
-    initializeMongoConfig()
     initializeKafkaConfig()
     initializeElasticConfig()
     initializeSolrConfig()
@@ -239,7 +240,7 @@ object ConfigManager {
 
   def getMongoDBConfig: MongoDBConfigModel = {
     if (mongoDBConfig == null) {
-      initializeMongoConfig()
+      initializeMongoDBConfig()
     }
     mongoDBConfig
   }
@@ -367,8 +368,8 @@ object ConfigManager {
   }
 
   /**
-    * Read the configuration with the specified name from MongoDB or, if it is not present, initialize
-    * it with the provided defaults.
+    * Read the configuration with the specified name from MongoDB or,
+    * if it is not present, initialize it with the provided defaults.
 		*/
   private def retrieveConf[T <: Model](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     WaspDB.getDB.insertIfNotExists[T](default)

@@ -1,13 +1,18 @@
 package it.agilelab.bigdata.wasp.core.launcher
 
+import java.util.concurrent.TimeUnit
+
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
 import it.agilelab.bigdata.wasp.core.messages.DownUnreachableMembers
-import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, MongoDBHelper, WaspDB}
 import org.apache.commons.cli
 import org.apache.commons.cli.{CommandLine, ParseException}
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 trait WaspLauncher {
 	// the actual version of WASP being ran
@@ -42,9 +47,9 @@ trait WaspLauncher {
 				printBannerAndBuildInfo()
 
 				// initialize stuff
-				initializeWasp()
+				initializeWasp(commandLine)
 
-				// initialize plugins
+				// initialize plugins (valid only for consumers nodes (streaming and batch)
 				initializePlugins(args)
 
 				// launch the application
@@ -58,14 +63,30 @@ trait WaspLauncher {
 			}
 	}
 
-	def initializeWasp(): Unit = {
-		// db
-		WaspDB.initializeDB()
-		waspDB = WaspDB.getDB
-		// configs
+	def initializeWasp(commandLine: CommandLine): Unit = {
+
+		waspDB = WaspDB.initializeDB()
+
+		/* Management of dropDB commandline ption */
+		if(getNodeName == "master") {
+			if (commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)) {
+				// drop db
+				val mongoDBConfig = ConfigManager.getMongoDBConfig
+
+				println(s"Dropping MongoDB database '${mongoDBConfig.databaseName}'")
+				val mongoDBDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
+				val dropFuture = mongoDBDatabase.drop().toFuture()
+				Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
+				println(s"Dropped MongoDB database '${mongoDBConfig.databaseName}'")
+				System.exit(0)
+
+				// re-initialize mongoDB and continue (instead of exit) -> not safe due to all process could write on mongoDB
+				//waspDB = WaspDB.initializeDB()
+			}
+		}
+
 		ConfigManager.initializeCommonConfigs()
 
-		// waspsystem
 		WaspSystem.initializeSystem()
 
 		/* Only for Debug: print Akka actor system tree
