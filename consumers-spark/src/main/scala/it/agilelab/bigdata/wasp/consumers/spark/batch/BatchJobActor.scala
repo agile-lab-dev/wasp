@@ -56,7 +56,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
     context.system.scheduler.scheduleOnce(checkInterval, self, BatchJobActor.Tick)(context.system.dispatcher)
 
     if (!SparkSingletons.initializeSpark(sparkBatchConfig)) {
-      logger.warn("The spark context was already intialized: it might not be using the spark batch configuration!")
+      logger.warn("The spark context was already initialized: it might not be using the spark batch configuration!")
     }
 
     sparkContext = SparkSingletons.getSparkContext

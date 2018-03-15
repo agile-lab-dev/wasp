@@ -28,8 +28,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
+    waspDB.upsert[TopicModel](TestTopicModel.json2)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
-    waspDB.upsert[TopicModel](TestTopicModel.avro2)                       // TODO revise
+    waspDB.upsert[TopicModel](TestTopicModel.avro2)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
@@ -43,21 +44,24 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbase)   // TODO revise
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.hdfs)
 
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafka)   // TODO revise
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hdfs)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.hdfs)
