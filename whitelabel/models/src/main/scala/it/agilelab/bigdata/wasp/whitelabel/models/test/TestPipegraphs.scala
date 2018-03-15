@@ -35,6 +35,33 @@ private[wasp] object TestPipegraphs {
         isActive = false
       )
 
+      lazy val kafka = PipegraphModel(
+        name = "TestKafkaWriterStructuredJSONPipegraph",
+        description = "Description of TestKafkaWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestKafkaWriterStructuredJSONPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json.name)
+            ),
+            output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.json2.name),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
       lazy val solr = PipegraphModel(
         name = "TestSolrWriterStructuredJSONPipegraph",
         description = "Description of TestSolrWriterStructuredJSONPipegraph",
@@ -163,6 +190,33 @@ private[wasp] object TestPipegraphs {
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
           )
+        ),
+        structuredStreamingComponents = List(),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val kafka = PipegraphModel(
+        name = "TestKafkaWriterLegacyJSONPipegraph",
+        description = "Description of TestKafkaWriterLegacyJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(
+          LegacyStreamingETLModel(
+            name = "ETL TestKafkaWriterLegacyJSONPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json.name)
+            ),
+            output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.json2.name),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
+          )
+
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
@@ -309,7 +363,6 @@ private[wasp] object TestPipegraphs {
         isActive = false
       )
 
-
       lazy val solr = PipegraphModel(
         name = "TestSolrWriterStructuredAVROPipegraph",
         description = "Description of TestSolrWriterStructuredAVROPipegraph",
@@ -427,6 +480,32 @@ private[wasp] object TestPipegraphs {
               ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro.name)
             ),
             output = WriterModel.consoleWriter("Console Writer"),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
+          )
+        ),
+        structuredStreamingComponents = List(),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val kafka = PipegraphModel(
+        name = "TestKafkaWriterLegacyAVROPipegraph",
+        description = "Description of TestKafkaWriterLegacyAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(
+          LegacyStreamingETLModel(
+            name = "ETL TestKafkaWriterLegacyAVROPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro.name)
+            ),
+            output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.avro2.name),
             mlModels = List(),
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
