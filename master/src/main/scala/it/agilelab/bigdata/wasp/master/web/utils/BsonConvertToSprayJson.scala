@@ -72,7 +72,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val etlModelFormat: RootJsonFormat[LegacyStreamingETLModel] = jsonFormat8(LegacyStreamingETLModel.apply)
   implicit val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingETLModel] = jsonFormat9(StructuredStreamingETLModel.apply)
   implicit val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
-  implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat10(PipegraphModel.apply)
+  implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat9(PipegraphModel.apply)
   implicit val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
   implicit val zookeeperConnectionFormat: RootJsonFormat[ZookeeperConnectionsConfig] = jsonFormat2(ZookeeperConnectionsConfig.apply)
   implicit val kafkaEntryConfigModelFormat: RootJsonFormat[KafkaEntryConfig] = jsonFormat2(KafkaEntryConfig.apply)

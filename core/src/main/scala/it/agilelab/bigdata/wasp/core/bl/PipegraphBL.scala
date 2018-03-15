@@ -1,24 +1,74 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel}
+import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
+import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import org.bson.{BsonBoolean, BsonString}
-import org.mongodb.scala.bson.BsonObjectId
+import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonInt64, BsonString}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
-trait PipegraphBL  {
+trait PipegraphInstanceBl {
+  def insert(instance: PipegraphInstanceModel): PipegraphInstanceModel
+
+  def update(instance: PipegraphInstanceModel): PipegraphInstanceModel
+
+  def all(): Seq[PipegraphInstanceModel]
+
+  def instancesOf(name: String): Seq[PipegraphInstanceModel]
+}
+
+class PipegraphInstanceBlImp(waspDB: WaspDB) extends PipegraphInstanceBl {
+  override def update(instance: PipegraphInstanceModel): PipegraphInstanceModel = {
+    waspDB.updateByNameRaw[PipegraphInstanceModel](instance.name, encode(instance))
+    instance
+  }
+
+  private def encode(instance: PipegraphInstanceModel): BsonDocument = {
+    val document = BsonDocument()
+      .append("name", BsonString(instance.name))
+      .append("instanceOf", BsonString(instance.instanceOf))
+      .append("startTimestamp", BsonInt64(instance.startTimestamp))
+      .append("currentStatusTimestamp", BsonInt64(instance.currentStatusTimestamp))
+      .append("status", BsonString(instance.status.toString))
+
+
+    val withError = instance.error.map(error => document.append("error", BsonString(error)))
+      .getOrElse(document)
+
+    return withError
+  }
+
+  override def all(): Seq[PipegraphInstanceModel] =
+    waspDB.getAllRaw[PipegraphInstanceModel].map(decode)
+
+  private def decode(bsonDocument: BsonDocument): PipegraphInstanceModel =
+    PipegraphInstanceModel(name = bsonDocument.get("name").asString().getValue,
+      instanceOf = bsonDocument.get("instanceOf").asString().getValue,
+      startTimestamp = bsonDocument.get("startTimestamp").asInt64().getValue,
+      currentStatusTimestamp = bsonDocument.get("currentStatusTimestamp").asInt64().getValue,
+      status = PipegraphStatus.withName(bsonDocument.get("status").asString().getValue),
+      error = if (bsonDocument.containsKey("error")) Some(bsonDocument.get("error").asString().getValue) else None)
+
+  override def instancesOf(name: String): Seq[PipegraphInstanceModel] =
+    waspDB.getAllDocumentsByFieldRaw[PipegraphInstanceModel]("instanceOf", BsonString(name)).map(decode)
+
+  override def insert(instance: PipegraphInstanceModel): PipegraphInstanceModel = {
+    waspDB.insertRaw[PipegraphInstanceModel](encode(instance))
+    instance
+  }
+
+}
+
+trait PipegraphBL {
 
   def getByName(name: String): Option[PipegraphModel]
 
-  def getAll : Seq[PipegraphModel]
-  
+  def getAll: Seq[PipegraphModel]
+
   def getSystemPipegraphs: Seq[PipegraphModel]
 
   def getNonSystemPipegraphs: Seq[PipegraphModel]
 
-  def getActivePipegraphs(isActive: Boolean = true): Seq[PipegraphModel]
+  def getActivePipegraphs(): Seq[PipegraphModel]
 
   def insert(pipegraph: PipegraphModel): Unit
 
@@ -26,19 +76,12 @@ trait PipegraphBL  {
 
   def deleteByName(id_string: String): Unit
 
-  def setIsActive(pipegraphModel: PipegraphModel, isActive: Boolean): Unit = {
-    pipegraphModel.isActive = isActive
-    pipegraphModel.legacyStreamingComponents.foreach(etl => etl.isActive = isActive)
-    pipegraphModel.structuredStreamingComponents.foreach(etl => etl.isActive = isActive)
-    pipegraphModel.rtComponents.foreach(rt => rt.isActive = isActive)
-    update(pipegraphModel)
-  }
+  def instances(): PipegraphInstanceBl
+
 }
 
 
 class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
-
-  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.legacyStreamingComponents, p.structuredStreamingComponents, p.rtComponents, p.dashboard, p.isActive)
 
   def getByName(name: String): Option[PipegraphModel] = {
     waspDB.getDocumentByField[PipegraphModel]("name", new BsonString(name)).map(pipegraph => {
@@ -46,23 +89,30 @@ class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
     })
   }
 
+  private def factory(p: PipegraphModel) = PipegraphModel(p.name, p.description, p.owner, p.isSystem, p.creationTime, p.legacyStreamingComponents, p.structuredStreamingComponents, p.rtComponents, p.dashboard)
+
   def getAll: Seq[PipegraphModel] = {
     waspDB.getAll[PipegraphModel]
   }
 
 
-
   def getSystemPipegraphs: Seq[PipegraphModel] = {
     waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(true)).map(factory)
   }
-  
+
   def getNonSystemPipegraphs: Seq[PipegraphModel] = {
     waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(false)).map(factory)
   }
 
-  def getActivePipegraphs(isActive: Boolean = true): Seq[PipegraphModel] = {
-    waspDB.getAllDocumentsByField[PipegraphModel]("isActive", new BsonBoolean(isActive)).map(factory)
+  def getActivePipegraphs(): Seq[PipegraphModel] = {
+    val allowedStates: Set[PipegraphStatus] = Set(PipegraphStatus.PENDING, PipegraphStatus.PROCESSING)
+
+    instances
+      .all()
+      .filter(instance => allowedStates.contains(instance.status))
+      .flatMap(instance => getByName(instance.name))
   }
+
   def update(pipegraphModel: PipegraphModel): Unit = {
     waspDB.updateByName[PipegraphModel](pipegraphModel.name, pipegraphModel)
   }
@@ -74,5 +124,7 @@ class PipegraphBLImp(waspDB: WaspDB) extends PipegraphBL {
   def deleteByName(name: String): Unit = {
     waspDB.deleteByName[PipegraphModel](name)
   }
+
+  lazy val instances = new PipegraphInstanceBlImp(waspDB)
 
 }

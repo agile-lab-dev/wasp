@@ -5,7 +5,7 @@ import java.util.ServiceLoader
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.{KafkaReader, KafkaStructuredReader}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.SparkConsumersStreamingMasterGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.guardian.master.SparkConsumersStreamingMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
@@ -25,7 +25,7 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val sparkConsumersStreamingMasterGuardianSingletonInfo = (
-			Props(new SparkConsumersStreamingMasterGuardian(ConfigBL, SparkWriterFactoryDefault(plugins), KafkaReader, KafkaStructuredReader, plugins)),
+			SparkConsumersStreamingMasterGuardian.props(ConfigBL.pipegraphBL),
       WaspSystem.sparkConsumersStreamingMasterGuardianName,
 			WaspSystem.sparkConsumersStreamingMasterGuardianSingletonManagerName,
 			Seq(WaspSystem.sparkConsumersStreamingMasterGuardianRole)
