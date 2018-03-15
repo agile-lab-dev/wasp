@@ -266,12 +266,10 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
 
   override def updateByNameRaw[T <: Model](name: String, doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
     replaceDocumentToCollection("name", BsonString(name), doc, lookupTable(typeTag.tpe))
-
 }
 
 object WaspDB extends Logging {
   private var waspDB: WaspDB = _
-
 
   val pipegraphsName = "pipegraphs"
   val producersName = "producers"
@@ -286,7 +284,6 @@ object WaspDB extends Logging {
   val mlModelsName = "mlmodels"
   val websocketsName = "websockets"
   val batchSchedulersName = "batchschedulers"
-
 
   val lookupTable: Map[Type, String] = Map(
     typeTag[PipegraphModel].tpe ->  pipegraphsName,
@@ -311,7 +308,6 @@ object WaspDB extends Logging {
     typeTag[HBaseConfigModel].tpe -> configurationsName,
     typeTag[JdbcConfigModel].tpe -> configurationsName
   )
-
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
 	  createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
@@ -354,7 +350,6 @@ object WaspDB extends Logging {
 	  createCodecProviderIgnoreNone(classOf[BatchSchedulerModel])
   ).asJava
 
-
   def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {
     val mongoDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
 
@@ -370,7 +365,7 @@ object WaspDB extends Logging {
     waspDB
   }
 
-  def initializeDB(): Unit = {
+  def initializeDB(): WaspDB = {
     // MongoDB initialization
     val mongoDBConfig = ConfigManager.getMongoDBConfig
     logger.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
@@ -394,12 +389,10 @@ object WaspDB extends Logging {
         val completewaspDB = new WaspDBImp(mongoDBDatabase)
         completewaspDB.initializeCollections()
         waspDB = completewaspDB
+        waspDB
 
     /*
           case None => throw new UnknownError("Unknown Error during db initialization")
         }*/
-
   }
-
-
 }

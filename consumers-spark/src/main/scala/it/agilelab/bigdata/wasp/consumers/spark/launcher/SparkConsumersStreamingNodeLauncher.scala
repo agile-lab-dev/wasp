@@ -39,24 +39,24 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 		* @param args command line arguments
 		*/
 	override def initializePlugins(args: Array[String]): Unit = {
-		logger.info("Finding WASP consumers spark plugins")
+		logger.info("Finding WASP streaming consumers spark plugins")
 		val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] = ServiceLoader.load[WaspConsumersSparkPlugin](classOf[WaspConsumersSparkPlugin])
 		val pluginsList = pluginLoader.iterator().asScala.toList
 		logger.info(s"Found ${pluginsList.size} plugins")
-		logger.info("Initializing  consumers spark plugins")
+		logger.info("Initializing streaming consumers spark plugins")
 		plugins = pluginsList.map({
 			plugin => {
-				logger.info(s"Initializing consumers spark plugin ${plugin.getClass.getSimpleName} with this type: ${plugin.pluginType}")
+				logger.info(s"Initializing streaming consumers spark plugin ${plugin.getClass.getSimpleName} with this type: ${plugin.pluginType}")
 				plugin.initialize(waspDB)
 				// You cannot have two plugin with the same name
 				(plugin.pluginType, plugin)
 			}
 		}).toMap
 
-		logger.info(s"Initialized all consumers spark plugins")
+		logger.info(s"Initialized all streaming consumers spark plugins")
 	}
 
-	override def getNodeName: String = "consumers spark"
+	override def getNodeName: String = "streaming consumers spark"
 }
 
 /**

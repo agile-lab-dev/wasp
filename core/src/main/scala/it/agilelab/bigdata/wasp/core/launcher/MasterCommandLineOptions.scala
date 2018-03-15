@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.master.launcher
+package it.agilelab.bigdata.wasp.core.launcher
 
 import org.apache.commons.cli.{Option => CliOption}
 
