@@ -243,3 +243,57 @@ version in ThisBuild := versionForContainingRepository(baseVersion)
 version in ThisBuild := versionForConstant("develop")(baseVersion)
 
 ```
+
+
+## WASP 2.6.0
+16/03/2018
+
+### Added Kerberos integration to WASP2 and other stuff
+
+[Merge request 23](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/23)
+
+Updated at: 2018-03-16T13:20:53.709Z
+
+Branch: feature/20-kerberos
+
+Author: [Mattia](https://gitlab.com/MattiaB)
+
+Assignee: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #20, #63, #71, #54, #89
+
+- Created a new docker image for wasp2; also changed the start-wasp script to integrate with the security
+- Fixed the wasp kafka producer to write in the kerberos enviroment
+- Some fix to write with Hbase and Solr in the kerberos env
+- Added some documentation to run wasp2 in YARN-mode with kerberos
+- Added general options for spark
+- Added more test for Hbase (keyValue datastore) and KafkaWriter
+
+### Resolve "[rest] improvements"
+
+[Merge request 32](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/32)
+
+Updated at: 2018-03-15T08:49:13.440Z
+
+Branch: feature/97-rest-improvements
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #97 
+
+- `/help` returns `wasp` as a JSON arrayOfObjects instead of a JSON objectOfObjects
+- Added `pretty=true` optional URI param in order to receive JSON beautified
+
+### Resolve "[improvement] master dropDB-mode issue"
+
+[Merge request 33](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/33)
+
+Updated at: 2018-03-16T13:20:57.566Z
+
+Branch: feature/100-improvement-master-dropdb-mode-issue
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #100
+
+In  WaspLauncher.initializeWasp(): pre-checked if the current node is a `master` and done an ad-hoc mngm
