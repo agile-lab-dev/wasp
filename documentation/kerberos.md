@@ -30,7 +30,7 @@
 - Nelle configurazioni di spark-streaming e spark-batch mettere queste configurazioni aggiuntive
 
         others = [
-          { "spark.files" : "file:///root/configurations/wasp2.keytab,file:///root/configurations/sasl.jaas.config" }
+          { "spark.yarn.dist.files" : "file:///root/configurations/wasp2.keytab,file:///root/configurations/sasl.jaas.config" }
           { "spark.executor.extraJavaOptions" : "-Djava.security.auth.login.config=./sasl.jaas.config" }
         ]
     IMPORTANTE mettere file:// davanti al percorso dei file altrimenti non vengono trasferti
