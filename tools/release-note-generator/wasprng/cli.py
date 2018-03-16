@@ -20,6 +20,8 @@ def main():
             print ''
             print '[Merge request %d](%s)' % (mr.iid, mr.web_url)
             print ''
+            print 'Created at: %s' % (mr.created_at)
+            print ''
             print 'Updated at: %s' % (mr.updated_at)
             print ''
             print 'Branch: %s' % (mr.source_branch)

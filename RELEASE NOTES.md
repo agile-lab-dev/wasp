@@ -252,6 +252,8 @@ version in ThisBuild := versionForConstant("develop")(baseVersion)
 
 [Merge request 23](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/23)
 
+Created at: 2018-03-12T09:49:27.083Z
+
 Updated at: 2018-03-16T13:20:53.709Z
 
 Branch: feature/20-kerberos
@@ -273,6 +275,8 @@ Closes #20, #63, #71, #54, #89
 
 [Merge request 32](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/32)
 
+Created at: 2018-03-14T17:44:03.445Z
+
 Updated at: 2018-03-15T08:49:13.440Z
 
 Branch: feature/97-rest-improvements
@@ -287,6 +291,8 @@ Closes #97
 ### Resolve "[improvement] master dropDB-mode issue"
 
 [Merge request 33](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/33)
+
+Created at: 2018-03-15T10:38:47.104Z
 
 Updated at: 2018-03-16T13:20:57.566Z
 
