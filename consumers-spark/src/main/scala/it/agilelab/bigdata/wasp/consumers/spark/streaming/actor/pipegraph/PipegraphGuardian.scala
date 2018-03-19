@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol =>
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => MyProtocol}
 
 import PipegraphGuardian._
-import it.agilelab.bigdata.wasp.core.models.StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.core.models.StructuredStreamingETLModel
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -32,7 +32,7 @@ class PipegraphGuardian(private val master: ActorRef,
       goto(RequestingWork)
     case Event(MasterProtocol.WorkGiven(pipegraph, instance), Empty) =>
       log.debug("Received work, [{}] [{}]", pipegraph.name, instance.name)
-      goto(Activating) using ActivatingData(pipegraph, instance)
+      goto(Activating) using ActivatingData(pipegraph, instance,Set.empty,pipegraph.structuredStreamingComponents.toSet)
   }
 
   when(Activating) {
@@ -262,6 +262,7 @@ class PipegraphGuardian(private val master: ActorRef,
         self ! MyProtocol.ActivateETL(etl)
       case ActivatingData.AllActive() | ActivatingData.ShouldStopAll() =>
         self ! MyProtocol.ActivationFinished
+      case _ =>
 
     }
 

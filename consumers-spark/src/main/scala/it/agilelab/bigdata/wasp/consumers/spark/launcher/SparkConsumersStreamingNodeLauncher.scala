@@ -5,7 +5,7 @@ import java.util.ServiceLoader
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.{KafkaReader, KafkaStructuredReader}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.guardian.master.SparkConsumersStreamingMasterGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
