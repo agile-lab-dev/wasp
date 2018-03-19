@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.guardian.master
+package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus

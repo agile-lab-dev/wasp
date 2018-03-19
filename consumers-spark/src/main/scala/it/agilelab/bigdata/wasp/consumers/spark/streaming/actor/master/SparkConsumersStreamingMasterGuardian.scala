@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.guardian.master
+package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props, Stash}
 import it.agilelab.bigdata.wasp.core.bl._
@@ -10,6 +10,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 import SparkConsumersStreamingMasterGuardian._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => ChildProtocol}
 import Protocol._
 import State._
 import Data._
@@ -109,7 +110,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
       updateToStatus(current.pipegraphInstance, PipegraphStatus.STOPPING) match {
         case Success(instance) =>
           val nextSchedule = schedule.toStopping(current.worker, instance)
-          current.worker ! CancelWork
+          current.worker ! ChildProtocol.CancelWork
           stay using nextSchedule replying Protocol.PipegraphStopped(name)
 
         case Failure(error) =>
@@ -123,7 +124,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
 
 
   private def handleWorkerRequest: StateFunction = {
-    case Event(GimmeWork, schedule: Schedule) =>
+    case Event(ChildProtocol.GimmeWork, schedule: Schedule) =>
       retrievePipegraphAndUpdateInstanceToProcessing(schedule.pending.head.pipegraphInstance) match {
         case Success((model, instance)) =>
           val nextSchedule = schedule.toProcessing(sender(), instance)
@@ -132,28 +133,28 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
           stay replying Protocol.WorkNotGiven(failure)
       }
 
-    case Event(WorkCancelled, _: Schedule) =>
-      self ! RetryEnvelope(WorkCancelled, sender())
+    case Event(ChildProtocol.WorkCancelled, _: Schedule) =>
+      self ! RetryEnvelope(ChildProtocol.WorkCancelled, sender())
       stay
 
-    case Event(RetryEnvelope(WorkCancelled, originalSender), schedule: Schedule) =>
+    case Event(RetryEnvelope(ChildProtocol.WorkCancelled, originalSender), schedule: Schedule) =>
       val whatWasCancelled = schedule.stopping(originalSender)
       updateToStatus(whatWasCancelled.pipegraphInstance, PipegraphStatus.STOPPED) match {
         case Success(instance) =>
           val nextSchedule = schedule.toStopped(self, instance)
           stay using nextSchedule
         case Failure(_) =>
-          setTimer(Timers.cancelWorkRetryTimer, RetryEnvelope(WorkCancelled, originalSender), retryInterval)
+          setTimer(Timers.cancelWorkRetryTimer, RetryEnvelope(ChildProtocol.WorkCancelled, originalSender), retryInterval)
           stay
       }
 
-    case Event(_:WorkNotCancelled, _: Schedule) =>
-      setTimer(Timers.workNotCancelledRetryTimer, RetryEnvelope(WorkNotCancelled, sender()), retryInterval)
+    case Event(_:ChildProtocol.WorkNotCancelled, _: Schedule) =>
+      setTimer(Timers.workNotCancelledRetryTimer, RetryEnvelope(ChildProtocol.WorkNotCancelled, sender()), retryInterval)
       stay
 
-    case Event(RetryEnvelope(WorkNotCancelled, originalSender), schedule: Schedule) =>
+    case Event(RetryEnvelope(ChildProtocol.WorkNotCancelled, originalSender), schedule: Schedule) =>
       println("sent")
-      originalSender ! CancelWork
+      originalSender ! ChildProtocol.CancelWork
       stay
 
 
@@ -197,5 +198,7 @@ object SparkConsumersStreamingMasterGuardian {
     val workNotCancelledRetryTimer = "work-not-cancelled-retry-timer"
     val cancelWorkRetryTimer = "cancel-work-retry-timer"
   }
+
+  case class RetryEnvelope[O](original:O, sender:ActorRef)
 
 }

@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.guardian.master
+package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -9,6 +9,9 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => ChildProtocol}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
+
 
 class SparkConsumersStreamingMasterGuardianSpec
   extends TestKit(ActorSystem("WASP"))
@@ -207,7 +210,7 @@ class SparkConsumersStreamingMasterGuardianSpec
       probe.expectMsg(WorkAvailable)
       probe.expectMsg(WorkAvailable)
 
-      probe.reply(GimmeWork)
+      probe.reply(ChildProtocol.GimmeWork)
 
       probe.expectMsgType[WorkGiven]
 
@@ -216,13 +219,13 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       expectMsg(PipegraphStopped("pipegraph-a"))
 
-      probe.expectMsg(CancelWork)
+      probe.expectMsg(ChildProtocol.CancelWork)
 
       mockBl.instances().instancesOf("pipegraph-a") should matchPattern {
         case Seq(PipegraphInstanceModel("pipegraph-1", "pipegraph-a", 1l, _, PipegraphStatus.STOPPING, None)) =>
       }
 
-      probe.reply(WorkCancelled)
+      probe.reply(ChildProtocol.WorkCancelled)
 
       eventually(timeout(Span(10, Seconds))) {
         mockBl.instances().instancesOf("pipegraph-a") should matchPattern {
@@ -255,18 +258,18 @@ class SparkConsumersStreamingMasterGuardianSpec
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
-      probe.reply(GimmeWork)
+      probe.reply(pipegraph.Protocol.GimmeWork)
       probe.expectMsgType[WorkGiven]
 
       fsm ! StopPipegraph("pipegraph")
 
-      probe.expectMsg(CancelWork)
+      probe.expectMsg(pipegraph.Protocol.CancelWork)
 
-      probe.reply(WorkNotCancelled(new Exception("Sorry cannot cancel")))
+      probe.reply(ChildProtocol.WorkNotCancelled(new Exception("Sorry cannot cancel")))
 
-      probe.expectMsg(CancelWork)
+      probe.expectMsg(ChildProtocol.CancelWork)
 
-      probe.reply(WorkCancelled)
+      probe.reply(ChildProtocol.WorkCancelled)
 
       expectMsgType[PipegraphStopped]
     }
@@ -342,7 +345,7 @@ class SparkConsumersStreamingMasterGuardianSpec
       probe.expectMsg(WorkAvailable)
 
 
-      fsm ! GimmeWork
+      fsm ! ChildProtocol.GimmeWork
 
       val work = expectMsgType[WorkGiven]
 
@@ -393,7 +396,7 @@ class SparkConsumersStreamingMasterGuardianSpec
       probe.expectMsg(WorkAvailable)
 
 
-      fsm ! GimmeWork
+      fsm ! ChildProtocol.GimmeWork
 
       expectMsgType[WorkNotGiven].reason.getMessage should be("Service is temporary down")
 
@@ -429,7 +432,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       probe.expectMsg(WorkAvailable)
 
-      probe.reply(GimmeWork)
+      probe.reply(ChildProtocol.GimmeWork)
 
       probe.expectMsgType[WorkGiven]
 
@@ -489,7 +492,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       probe.expectMsg(WorkAvailable)
 
-      probe.reply(GimmeWork)
+      probe.reply(ChildProtocol.GimmeWork)
 
       probe.expectMsgType[WorkGiven]
 

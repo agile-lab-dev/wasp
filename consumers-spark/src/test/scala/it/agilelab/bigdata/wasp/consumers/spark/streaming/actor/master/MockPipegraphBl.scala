@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.guardian.master
+package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import it.agilelab.bigdata.wasp.core.bl.{PipegraphBL, PipegraphInstanceBl}
 import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
