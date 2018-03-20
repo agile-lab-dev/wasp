@@ -4,6 +4,7 @@ import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import akka.pattern.ask
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -100,7 +101,7 @@ class MasterGuardian(env: {
     case message: RestProducerRequest => call(sender(), message, onProducer(message.name, restProducerRequest(message, _)))
     case message: StartETL => call(sender(), message, onEtl(message.name, message.etlName, startEtl))
     case message: StopETL => call(sender(), message, onEtl(message.name, message.etlName, stopEtl))
-    case message: StartBatchJob => call(sender(), message, onBatchJob(message.name, startBatchJob))
+    case message: StartBatchJob => call(sender(), message, onBatchJob(message.name, message.restConfig, startBatchJob))
     //case message: Any => logger.error("unknown message: " + message)
   }
 
@@ -134,10 +135,10 @@ class MasterGuardian(env: {
     }
   }
 
-  private def onBatchJob(name: String, f: BatchJobModel => Either[String, String]): Either[String, String] = {
+  private def onBatchJob(name: String, restConfig: Config, f: (BatchJobModel, Config) => Either[String, String]): Either[String, String] = {
     env.batchJobBL.getByName(name) match {
       case None => Left("BatchJob not retrieved")
-      case Some(batchJob) => f(batchJob)
+      case Some(batchJob) => f(batchJob, restConfig)
     }
   }
 
@@ -269,9 +270,9 @@ class MasterGuardian(env: {
     ??[Either[String, String]](producersMasterGuardian, request.copy(name = producer.name))
   }
 
-  private def startBatchJob(batchJob: BatchJobModel): Either[String, String] = {
+  private def startBatchJob(batchJob: BatchJobModel, restConfig: Config): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
-    ??[BatchMessages.StartBatchJobResult](sparkConsumersBatchMasterGuardian, BatchMessages.StartBatchJob(batchJob.name)) match {
+    ??[BatchMessages.StartBatchJobResult](sparkConsumersBatchMasterGuardian, BatchMessages.StartBatchJob(batchJob.name, restConfig)) match {
       case BatchMessages.StartBatchJobResultSuccess(name) => Right(s"Batch job '${name}' accepted (queued or processing)")
       case BatchMessages.StartBatchJobResultFailure(name, error) => Left(s"Batch job '${batchJob.name}' not accepted $error")
     }

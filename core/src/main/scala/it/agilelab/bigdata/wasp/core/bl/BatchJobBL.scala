@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core.bl
 
+import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
 import it.agilelab.bigdata.wasp.core.models.JobStatus.JobStatus
 import it.agilelab.bigdata.wasp.core.models.{BatchJobInstanceModel, BatchJobModel, JobStatus}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
@@ -57,6 +58,7 @@ class BatchJobInstanceBlImp(waspDB: WaspDB) extends BatchJobInstanceBL {
                           startTimestamp = bsonDocument.get("startTimestamp").asInt64().getValue,
                           currentStatusTimestamp = bsonDocument.get("currentStatusTimestamp").asInt64().getValue,
                           status = JobStatus.withName(bsonDocument.get("status").asString().getValue),
+                          restConfig = ConfigFactory.parseString(bsonDocument.get("restConfig").asString.getValue),
                           error = if (bsonDocument.containsKey("error")) Some(bsonDocument.get("error").asString().getValue) else None)
 
 
@@ -67,6 +69,7 @@ class BatchJobInstanceBlImp(waspDB: WaspDB) extends BatchJobInstanceBL {
                       .append("startTimestamp", BsonInt64(instance.startTimestamp))
                       .append("currentStatusTimestamp", BsonInt64(instance.currentStatusTimestamp))
                       .append("status", BsonString(instance.status.toString))
+                      .append("restConfig", BsonString(instance.restConfig.root.render(ConfigRenderOptions.concise())))
 
 
     val withError = instance.error.map(error => document.append("error", BsonString(error)))

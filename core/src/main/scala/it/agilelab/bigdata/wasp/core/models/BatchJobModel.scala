@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.core.models.JobStatus.JobStatus
 
 
@@ -25,6 +26,7 @@ case class BatchJobInstanceModel(override val name:String,
                                  startTimestamp: Long,
                                  currentStatusTimestamp: Long,
                                  status: JobStatus,
+                                 restConfig: Config = ConfigFactory.empty,
                                  error: Option[String] = None
                                 ) extends Model
 

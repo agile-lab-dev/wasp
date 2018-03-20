@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.core.messages
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.HttpMethod
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspMessage
 import spray.json.JsValue
 
@@ -26,4 +27,4 @@ case class RestProducerRequest
 case class StartETL(override val name: String, override val etlName: String) extends ETLMessage
 case class StopETL(override val name: String, override val etlName: String) extends ETLMessage
 
-case class StartBatchJob(override val name: String) extends BatchJobMessage
+case class StartBatchJob(override val name: String, restConfig: Config) extends BatchJobMessage

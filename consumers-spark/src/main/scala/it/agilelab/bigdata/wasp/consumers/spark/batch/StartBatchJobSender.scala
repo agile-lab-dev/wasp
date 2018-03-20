@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.messages.BatchMessages.StartBatchJob
 import org.quartz.{Job, JobExecutionContext, JobExecutionException}
@@ -23,6 +24,6 @@ class StartBatchJobSender() extends Job {
 	@throws[JobExecutionException]
 	def execute(context: JobExecutionContext): Unit = {
 		val batchJobActorRef = WaspSystem.actorSystem.actorSelection(getSparkConsumersBatchMasterGuardianActorPath)
-		batchJobActorRef ! StartBatchJob(getJobId)
+		batchJobActorRef ! StartBatchJob(getJobId, ConfigFactory.empty)
 	}
 }

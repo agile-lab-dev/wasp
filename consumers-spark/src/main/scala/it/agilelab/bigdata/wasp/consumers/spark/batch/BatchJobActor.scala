@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
 import akka.actor.{Actor, Props}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB, TransformerWithInfo}
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.Tick
@@ -104,7 +104,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
 
   }
 
-  private def stepCreateStrategy(etl: BatchETLModel, sparkContext: SparkContext): Try[Option[Strategy]] = etl.strategy match {
+  private def stepCreateStrategy(etl: BatchETLModel, sparkContext: SparkContext, restConfig: Config): Try[Option[Strategy]] = etl.strategy match {
     case None => Success(None)
     case Some(strategyModel) =>
 
@@ -114,7 +114,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
           .asInstanceOf[Strategy]
       }
 
-      val configuration = strategyModel.configurationConfig().getOrElse(ConfigFactory.empty())
+      val configuration = restConfig.withFallback(strategyModel.configurationConfig().getOrElse(ConfigFactory.empty()))
 
       result.map(_.configuration = configuration)
 
@@ -168,7 +168,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
       inputDataFrames <- stepDataFramesForReaders(readers).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to create data frames for job ${batchJobModel.name}", e))
       }
-      strategy <- stepCreateStrategy(batchJobModel.etl, sparkContext).recoverWith {
+      strategy <- stepCreateStrategy(batchJobModel.etl, sparkContext, batchJobInstanceModel.restConfig).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to create strategy for job ${batchJobModel.name}", e))
       }
       mlModelsBroadcast <- stepCreateMlModelsBroadcast(mlModelsDB, batchJobModel.etl.mlModels, sparkContext).recoverWith {

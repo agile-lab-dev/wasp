@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, ActorRefFactory, Props, Stash}
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriterFactory, SparkWriterFactoryDefault}
@@ -131,14 +132,15 @@ private[batch] trait DatabaseOperations {
     * @param model The model to instantiate
     * @return A Try containing the instance model or an exception
     */
-  def createInstanceOf(model: BatchJobModel): Try[BatchJobInstanceModel] = Try {
+  def createInstanceOf(model: BatchJobModel, restConfig: Config): Try[BatchJobInstanceModel] = Try {
 
     val instance = BatchJobInstanceModel(
       name = s"${model.name}-${UUID.randomUUID().toString}",
       instanceOf = model.name,
       startTimestamp = System.currentTimeMillis(),
       currentStatusTimestamp = -1,
-      status = JobStatus.PENDING
+      status = JobStatus.PENDING,
+      restConfig = restConfig
     )
 
     batchJobBL.instances().insert(instance)
@@ -369,13 +371,13 @@ class SparkConsumersBatchMasterGuardian private(val batchJobBL: BatchJobBL,
       context.stop(self)
     }
 
-    case BatchMessages.StartBatchJob(name) => {
+    case BatchMessages.StartBatchJob(name, restConfig) => {
 
       if (pendingJobs.exists(_.instanceOf == name) || runningJobs.keys.exists(_.instanceOf == name)) {
         sender() ! BatchMessages.StartBatchJobResultFailure(name, s"Cannot start multiple instances of same job [$name]")
       } else {
 
-        retrieveBatchJob(name).flatMap(createInstanceOf) match {
+        retrieveBatchJob(name).flatMap(createInstanceOf(_, restConfig)) match {
           case Success(instance) => {
             context.become(behavior(pendingJobs + instance, runningJobs, children))
             sender() ! BatchMessages.StartBatchJobResultSuccess(name)

@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.messages.BatchMessages
 import it.agilelab.bigdata.wasp.core.models._
@@ -157,7 +158,9 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
 
-      master ! BatchMessages.StartBatchJob("job")
+      val restConfig = ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
+
+      master ! BatchMessages.StartBatchJob("job", restConfig)
 
       expectMsg(BatchMessages.StartBatchJobResultSuccess("job"))
 
@@ -171,7 +174,7 @@ class SparkConsumersBatchMasterGuardianSpec
 
       assert(instances.exists { instance => instance.name == "job1-1" && instance.status == JobStatus.PENDING })
       assert(instances.exists { instance => instance.name == "job1-2" && instance.status == JobStatus.PENDING })
-      assert(instances.exists { instance => instance.instanceOf == "job" && instance.status == JobStatus.PENDING })
+      assert(instances.exists { instance => instance.instanceOf == "job" && instance.status == JobStatus.PENDING && instance.restConfig == restConfig })
 
 
     }
@@ -206,7 +209,7 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
 
-      master ! BatchMessages.StartBatchJob("job")
+      master ! BatchMessages.StartBatchJob("job", ConfigFactory.empty)
 
       expectMsg(BatchMessages.StartBatchJobResultFailure("job", "failure creating new batch job instance [Sorry, database is unavailable]"))
 
@@ -232,7 +235,7 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
 
-      master ! BatchMessages.StartBatchJob("job")
+      master ! BatchMessages.StartBatchJob("job", ConfigFactory.empty)
 
       expectMsg(BatchMessages.StartBatchJobResultFailure("job", "Cannot start multiple instances of same job [job]"))
 
@@ -392,7 +395,9 @@ class SparkConsumersBatchMasterGuardianSpec
 
       mockBl.insert(job)
 
-      val pendingJobInstance = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING)
+      val restConfig = ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
+
+      val pendingJobInstance = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING, restConfig)
 
 
       mockBl.instances().insert(pendingJobInstance)
@@ -411,6 +416,7 @@ class SparkConsumersBatchMasterGuardianSpec
 
       assert(message.model == job)
       assert(message.instance.instanceOf == job.name)
+      assert(message.instance.restConfig == restConfig)
 
 
       watch(master)
