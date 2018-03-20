@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.models._
 
 private[wasp] object TestPipegraphs {
@@ -143,33 +144,78 @@ private[wasp] object TestPipegraphs {
         isActive = false
       )
 
-    lazy val hbase = PipegraphModel(
-      name = "TestHBaseWriterStructuredJSONPipegraph",
-      description = "Description of TestHBaseWriterStructuredJSONPipegraph",
-      owner = "user",
-      isSystem = false,
-      creationTime = System.currentTimeMillis,
+      lazy val hbase = PipegraphModel(
+        name = "TestHBaseWriterStructuredJSONPipegraph",
+        description = "Description of TestHBaseWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
 
-      legacyStreamingComponents = List(),
-      structuredStreamingComponents = List(
-        StructuredStreamingETLModel(
-          name = "ETL TestHBaseWriterStructuredJSONPipegraph",
-          inputs = List(
-            ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json.name)
-          ),
-          output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.simple.name),
-          mlModels = List(),
-          strategy = None,
-          kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
-          config = Map()
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHBaseWriterStructuredJSONPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json.name)
+            ),
+            output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.simple.name),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val multiETL = PipegraphModel(
+        name = "TestMultiEtlJSONPipegraph",
+        description = "Description of TestMultiEtlJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents =
+          console.structuredStreamingComponents :::
+            solr.structuredStreamingComponents :::
+            elastic.structuredStreamingComponents :::
+            hdfs.structuredStreamingComponents,
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      object ERROR {
+
+        lazy val multiETL = PipegraphModel(
+          name = "TestErrorMultiEtlJSONPipegraph",
+          description = "Description of TestErrorMultiEtlJSONPipegraph",
+          owner = "user",
+          isSystem = false,
+          creationTime = System.currentTimeMillis,
+
+          legacyStreamingComponents = List(),
+          structuredStreamingComponents =
+            console.structuredStreamingComponents :::
+              solr.structuredStreamingComponents :::
+              elastic.structuredStreamingComponents :::
+              hdfs.structuredStreamingComponents.map(
+                _.copy(strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
+                                                            ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))))),
+
+          rtComponents = List(),
+
+          dashboard = None,
+          isActive = false
         )
-      ),
-      rtComponents = List(),
+      }
 
-      dashboard = None,
-      isActive = false
-    )
-  }
+    }
 
     object Legacy {
       lazy val console = PipegraphModel(
@@ -462,6 +508,30 @@ private[wasp] object TestPipegraphs {
         dashboard = None,
         isActive = false
       )
+
+      object ERROR {
+
+        lazy val multiETL = PipegraphModel(
+          name = "TestErrorMultiEtlAVROPipegraph",
+          description = "Description of TestErrorMultiEtlAVROPipegraph",
+          owner = "user",
+          isSystem = false,
+          creationTime = System.currentTimeMillis,
+
+          legacyStreamingComponents = List(),
+          structuredStreamingComponents =
+            console.structuredStreamingComponents :::
+            solr.structuredStreamingComponents :::
+            elastic.structuredStreamingComponents :::
+            hdfs.structuredStreamingComponents.map(
+              _.copy(strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
+                                                          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))))),
+          rtComponents = List(),
+
+          dashboard = None,
+          isActive = false
+        )
+      }
     }
 
     object Legacy {
@@ -596,28 +666,5 @@ private[wasp] object TestPipegraphs {
         isActive = false
       )
     }
-  }
-
-  object ERROR {
-
-    lazy val multiETL = PipegraphModel(
-      name = "TestErrorMultiEtlPipegraph",
-      description = "Description of TestErrorMultiEtlPipegraph",
-      owner = "user",
-      isSystem = false,
-      creationTime = System.currentTimeMillis,
-
-      legacyStreamingComponents = List(),
-      structuredStreamingComponents =
-        TestPipegraphs.AVRO.Structured.console.structuredStreamingComponents :::
-        TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
-        TestPipegraphs.AVRO.Structured.elastic.structuredStreamingComponents :::
-        TestPipegraphs.AVRO.Structured.hdfs.structuredStreamingComponents.map(
-          _.copy(strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy", None)))),
-      rtComponents = List(),
-
-      dashboard = None,
-      isActive = false
-    )
   }
 }

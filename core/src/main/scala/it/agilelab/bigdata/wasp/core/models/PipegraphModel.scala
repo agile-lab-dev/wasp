@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
-import org.mongodb.scala.bson.BsonObjectId
 
 case class DashboardModel(url: String, needsFilterBox: Boolean)
 

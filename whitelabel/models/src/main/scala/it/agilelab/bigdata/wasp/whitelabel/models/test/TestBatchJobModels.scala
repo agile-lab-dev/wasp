@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.models.{ReaderModel, _}
 
 private[wasp] object TestBatchJobModels {
@@ -22,7 +23,8 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.rawWriter("Raw Writer", TestRawModel.flat.name),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -46,7 +48,8 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested.name),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -70,7 +73,8 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -91,7 +95,8 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy")),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -112,7 +117,8 @@ private[wasp] object TestBatchJobModels {
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestJdbcMySqlStrategy")),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestJdbcMySqlStrategy",
+                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
