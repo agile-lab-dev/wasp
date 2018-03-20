@@ -171,6 +171,10 @@ class PipegraphGuardian(private val master: ActorRef,
 
 
   when(Monitoring) {
+    case Event(MyProtocol.CancelWork, data:MonitoringData) =>
+      log.info("Received request to perform shutdown while Monitoring")
+      goto(Monitoring) using data.copy(shouldStopAll = true)
+
     case Event(MyProtocol.MonitorETL(worker, etl), data: MonitoringData) =>
       log.info("Monitoring etl [{}] on worker [{}]", etl.name, worker)
       worker ! ChildrenProtocol.CheckETL(etl)

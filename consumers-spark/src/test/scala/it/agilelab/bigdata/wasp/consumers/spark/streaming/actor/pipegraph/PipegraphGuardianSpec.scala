@@ -693,6 +693,58 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
     }
 
+    "Be Reactive to stop request" in {
+      val master = TestProbe()
+      val transitions = TestProbe()
+      val factory = new ProbesFactory()
+
+      val strategy: ComponentFailedStrategy = _ => StopAll
+
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+
+      transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
+      transitions.expectMsgType[CurrentState[State]]
+
+      master.send(fsm, MasterProtocol.WorkAvailable)
+
+      master.expectMsg(PipegraphProtocol.GimmeWork)
+
+      master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
+
+      transitions.expectMsg(Transition[State](fsm, WaitingForWork, RequestingWork))
+      transitions.expectMsg(Transition[State](fsm, RequestingWork, Activating))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+      val etl = defaultPipegraph.structuredStreamingComponents.head
+
+      factory.probes.head.expectMsg(ETLProtocol.ActivateETL(etl))
+
+      factory.probes.head.reply(ETLProtocol.ETLActivated(etl))
+
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activated))
+
+      transitions.expectMsg(Transition[State](fsm, Activated, Materializing))
+
+      factory.probes.head.expectMsg(ETLProtocol.MaterializeETL(etl))
+      factory.probes.head.reply(ETLProtocol.ETLMaterialized(etl))
+
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materialized))
+      transitions.expectMsg(Transition[State](fsm, Materialized, Monitoring))
+
+
+      factory.probes.head.expectMsg(ETLProtocol.CheckETL(etl))
+      factory.probes.head.reply(PipegraphProtocol.CancelWork)
+
+      transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
+      transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
+      transitions.expectMsg(Transition[State](fsm, Monitoring, Monitored))
+      transitions.expectMsg(Transition[State](fsm, Monitored, Stopping))
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopped))
+    }
+
 
     "Honor Retry strategy" in {
       val master = TestProbe()
