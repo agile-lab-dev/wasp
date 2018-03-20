@@ -35,7 +35,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
     waspDB.upsert[RawModel](TestRawModel.flat)    // used by TestBatchJobModels.FromHdfs.toConsole
-    waspDB.upsert[KeyValueModel](TestKeyValueModel.simple)                        // TODO revise
+    waspDB.upsert[KeyValueModel](TestKeyValueModel.hbase)
     waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
 
     /* Producers */
@@ -48,7 +48,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbase)           // TODO revise
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbase)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.ERROR.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
@@ -62,6 +62,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hdfs)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hbase)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.ERROR.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)

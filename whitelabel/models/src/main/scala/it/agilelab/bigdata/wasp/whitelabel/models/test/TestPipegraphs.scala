@@ -158,7 +158,7 @@ private[wasp] object TestPipegraphs {
             inputs = List(
               ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json.name)
             ),
-            output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.simple.name),
+            output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbase.name),
             mlModels = List(),
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
@@ -478,6 +478,33 @@ private[wasp] object TestPipegraphs {
               ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro.name)
             ),
             output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested.name),
+            mlModels = List(),
+            strategy = None,
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        isActive = false
+      )
+
+      lazy val hbase = PipegraphModel(
+        name = "TestHBaseWriterStructuredAVROPipegraph",
+        description = "Description of TestHBaseWriterStructuredAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHBaseWriterStructuredAVROPipegraph",
+            inputs = List(
+              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro.name)
+            ),
+            output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbase.name),
             mlModels = List(),
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
