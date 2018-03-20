@@ -10,7 +10,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => ChildProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.{MockPipegraphBl, MockPipegraphInstanceBl, pipegraph}
 
 
 class SparkConsumersStreamingMasterGuardianSpec
@@ -53,7 +53,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       val probe = TestProbe()
 
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
@@ -103,7 +103,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
@@ -158,7 +158,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -203,7 +203,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -253,7 +253,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -298,7 +298,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -337,7 +337,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -388,7 +388,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -426,7 +426,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -486,7 +486,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 
@@ -545,7 +545,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
       val probe = TestProbe()
-      val childCreator: ChildCreator = _ => probe.ref
+      val childCreator: ChildCreator = (_,_) => probe.ref
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
 

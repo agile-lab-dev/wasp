@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
+package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor
 
 import it.agilelab.bigdata.wasp.core.bl.PipegraphInstanceBl
 import it.agilelab.bigdata.wasp.core.models.PipegraphInstanceModel

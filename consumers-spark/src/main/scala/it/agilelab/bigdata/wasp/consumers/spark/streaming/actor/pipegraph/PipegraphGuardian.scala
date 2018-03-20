@@ -40,7 +40,7 @@ class PipegraphGuardian(private val master: ActorRef,
 
       log.info("Activating etl [{}]", etl.name)
 
-      val newAssociation = WorkerToEtlAssociation(context.watch(childFactory(context)), etl)
+      val newAssociation = WorkerToEtlAssociation(childFactory(context), etl)
 
       newAssociation.worker ! ChildrenProtocol.ActivateETL(etl)
 

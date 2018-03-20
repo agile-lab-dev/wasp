@@ -37,8 +37,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
       resetStatesWhileRecoveringAndReturnPending match {
         case Success(pending) =>
           val nextSchedule = pending.foldLeft(Schedule(Seq())) { (acc, instance) => acc.toPending(self, instance) }
-          val child = pending.map(_ => childCreator(context))
-          child.foreach(context.watch)
+          val child = pending.map(_ => childCreator(self,context))
           child.foreach(_ ! WorkAvailable)
           log.info("Initialization succeeded")
           goto(Initialized) using nextSchedule
@@ -76,8 +75,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
         case Success(instance) =>
 
           val nextSchedule = schedule.toPending(self, instance)
-          val child = childCreator(context)
-          context.watch(child)
+          val child = childCreator(self, context)
           child ! WorkAvailable
 
           stay using nextSchedule replying Protocol.PipegraphStarted(name)
@@ -196,7 +194,7 @@ object SparkConsumersStreamingMasterGuardian {
 
   import scala.concurrent.duration._
 
-  type ChildCreator = (ActorRefFactory) => ActorRef
+  type ChildCreator = (ActorRef, ActorRefFactory) => ActorRef
 
   def props(pipegraphBL: PipegraphBL): Props = props(pipegraphBL, ???, 5.seconds)
 
