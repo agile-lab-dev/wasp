@@ -512,6 +512,63 @@ class SparkConsumersStreamingMasterGuardianSpec
 
     }
 
+    "Retry database access to update completed pipegraph" in {
+
+
+      val mockBl = new MockPipegraphBl(new MockPipegraphInstanceBl {
+
+        val callCount = new AtomicInteger()
+
+        override def update(instance: PipegraphInstanceModel): PipegraphInstanceModel =
+          if (instance.status == PipegraphStatus.STOPPED && callCount.incrementAndGet() == 1) {
+            throw new Exception("Service is temporary down")
+          } else {
+            super.update(instance)
+          }
+
+      })
+
+
+      mockBl.instances().insert(PipegraphInstanceModel("pipegraph-1", "pipegraph", 1l, 0l, PipegraphStatus.PENDING))
+
+      val pipegraph = PipegraphModel(name = "pipegraph",
+        description = "",
+        owner = "test",
+        isSystem = false,
+        creationTime = System.currentTimeMillis(),
+        legacyStreamingComponents = List.empty,
+        structuredStreamingComponents = List.empty,
+        rtComponents = List.empty,
+        dashboard = None)
+
+      mockBl.insert(pipegraph)
+
+
+      val probe = TestProbe()
+      val childCreator: ChildCreator = _ => probe.ref
+
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+
+      probe.expectMsg(WorkAvailable)
+
+      probe.reply(ChildProtocol.GimmeWork)
+
+      probe.expectMsgType[WorkGiven]
+
+
+      probe.reply(WorkCompleted)
+
+
+      eventually(timeout(Span(10, Seconds))) {
+
+        mockBl.instances().all should matchPattern {
+          case Seq(PipegraphInstanceModel("pipegraph-1", "pipegraph", 1l, _, PipegraphStatus.STOPPED, None)) =>
+        }
+      }
+
+
+    }
+
 
   }
 

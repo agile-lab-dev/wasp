@@ -20,7 +20,7 @@ object Protocol {
 
   private[actor] case class ETLMaterialized(etl: StructuredStreamingETLModel) extends Protocol
 
-  private[actor] case class ETLNotMaterialized(etl: StructuredStreamingETLModel) extends Protocol
+  private[actor] case class ETLNotMaterialized(etl: StructuredStreamingETLModel, reason:Throwable) extends Protocol
 
 
   private[actor] case class CheckETL(etl: StructuredStreamingETLModel) extends Protocol

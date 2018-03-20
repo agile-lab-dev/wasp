@@ -300,8 +300,9 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       factory.probes.head.expectMsg(ETLProtocol.ActivateETL(etl))
 
-      factory.probes.head.reply(ETLProtocol.ETLNotActivated(etl, new
-          Exception("Error!")))
+      val reason = new Exception("Error!")
+
+      factory.probes.head.reply(ETLProtocol.ETLNotActivated(etl, reason))
 
       transitions.expectMsg(Transition[State](fsm, Activating, Activating))
 
@@ -311,11 +312,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       transitions.expectMsg(Transition[State](fsm, Stopping, Stopped))
 
-
-      master.expectMsg(MasterProtocol.PipegraphStopped(defaultPipegraph.name))
-
-
-
+      master.expectMsg(MasterProtocol.WorkFailed(reason))
 
     }
 
@@ -404,8 +401,10 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       transitions.expectMsg(Transition[State](fsm, Activated, Materializing))
 
+      val reason = new Exception("Error!")
+
       factory.probes.head.expectMsg(ETLProtocol.MaterializeETL(etl))
-      factory.probes.head.reply(ETLProtocol.ETLNotMaterialized(etl))
+      factory.probes.head.reply(ETLProtocol.ETLNotMaterialized(etl,reason))
 
       transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
       transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
@@ -449,7 +448,10 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       transitions.expectMsg(Transition[State](fsm, Activated, Materializing))
 
       factory.probes.head.expectMsg(ETLProtocol.MaterializeETL(etl))
-      factory.probes.head.reply(ETLProtocol.ETLNotMaterialized(etl))
+
+      val reason = new Exception("Error!")
+
+      factory.probes.head.reply(ETLProtocol.ETLNotMaterialized(etl, reason))
 
       transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
 
@@ -501,8 +503,10 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       transitions.expectMsg(Transition[State](fsm, Activated, Materializing))
 
+      val reason = new Exception("Error!")
+
       factory.probes.head.expectMsg(ETLProtocol.MaterializeETL(etl))
-      factory.probes.head.reply(ETLProtocol.ETLNotMaterialized(etl))
+      factory.probes.head.reply(ETLProtocol.ETLNotMaterialized(etl, reason))
 
       transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
       transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
@@ -510,7 +514,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       transitions.expectMsg(Transition[State](fsm, Materialized, Stopping))
       transitions.expectMsg(Transition[State](fsm, Stopping, Stopped))
 
-      master.expectMsg(MasterProtocol.PipegraphStopped(defaultPipegraph.name))
+      master.expectMsg(MasterProtocol.WorkFailed(reason))
     }
   }
 
@@ -631,7 +635,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       transitions.expectMsg(Transition[State](fsm, Monitored, Stopping))
       transitions.expectMsg(Transition[State](fsm, Stopping, Stopped))
 
-      master.expectMsg(MasterProtocol.PipegraphStopped(defaultPipegraph.name))
+      master.expectMsg(MasterProtocol.WorkCompleted)
     }
 
 
@@ -760,7 +764,10 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
 
       factory.probes(1).expectMsg(ETLProtocol.CheckETL(failingEtl))
-      factory.probes(1).reply(ETLProtocol.ETLCheckFailed(failingEtl, new Exception("Ops!")))
+
+      val reason = new Exception("Ops!")
+
+      factory.probes(1).reply(ETLProtocol.ETLCheckFailed(failingEtl, reason))
       transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
 
       transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))

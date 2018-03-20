@@ -77,7 +77,8 @@ class PipegraphGuardian(private val master: ActorRef,
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
           goto(Activating) using  data.copy(activating = data.activating - association,
-                                            shouldStopAll = true)
+                                            shouldStopAll = true,
+                                            reason=Some(reason))
       }
 
     case Event(MyProtocol.PerformRetry, data:ActivatingData) =>
@@ -126,7 +127,7 @@ class PipegraphGuardian(private val master: ActorRef,
       goto(Materializing) using data.copy(materializing = data.materializing - association,
                                           materialized = data.materialized + association)
 
-    case Event(ChildrenProtocol.ETLNotMaterialized(etl), data:MaterializingData) =>
+    case Event(ChildrenProtocol.ETLNotMaterialized(etl,reason), data:MaterializingData) =>
       log.info("Could not materialize etl [{}] on worker [{}]", etl.name, sender())
 
       val association = WorkerToEtlAssociation(sender(), etl)
@@ -142,7 +143,8 @@ class PipegraphGuardian(private val master: ActorRef,
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
           goto(Materializing) using  data.copy(materializing = data.materializing - association,
-                                               shouldStopAll = true)
+                                               shouldStopAll = true,
+                                               reason = Some(reason))
       }
 
     case Event(MyProtocol.PerformRetry, data:MaterializingData) =>
@@ -202,7 +204,8 @@ class PipegraphGuardian(private val master: ActorRef,
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
           goto(Monitoring) using  data.copy(monitoring = data.monitoring - association,
-                                            shouldStopAll = true)
+                                            shouldStopAll = true,
+                                            reason=Some(reason) )
       }
 
     case Event(MyProtocol.MonitoringFinished, data:MonitoringData) if !data.shouldStopAll =>
@@ -251,8 +254,11 @@ class PipegraphGuardian(private val master: ActorRef,
   }
 
   when(Stopped) {
-    case Event(MyProtocol.Shutdown, StoppedData(pipegraph, _)) =>
-      master ! MasterProtocol.PipegraphStopped(pipegraph.name)
+    case Event(MyProtocol.Shutdown, StoppedData(_, _, None)) =>
+      master ! MasterProtocol.WorkCompleted
+      stop()
+    case Event(MyProtocol.Shutdown, StoppedData(_, _, Some(reason))) =>
+      master ! MasterProtocol.WorkFailed(reason)
       stop()
   }
 

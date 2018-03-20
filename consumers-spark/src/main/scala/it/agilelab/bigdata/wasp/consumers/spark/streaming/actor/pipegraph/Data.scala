@@ -19,10 +19,11 @@ object Data {
                             activating: Associations = Set.empty,
                             active: Associations = Set.empty,
                             toBeRetried: Set[StructuredStreamingETLModel] = Set.empty,
-                            shouldStopAll: Boolean = false) extends Data {
+                            shouldStopAll: Boolean = false,
+                            reason:Option[Throwable] = None) extends Data {
 
     def createActivatedData() =
-      ActivatedData(pipegraph, instance, materialized, active, toBeRetried, shouldStopAll)
+      ActivatedData(pipegraph, instance, materialized, active, toBeRetried, shouldStopAll,reason)
   }
 
   case class ActivatedData(pipegraph: PipegraphModel,
@@ -30,10 +31,11 @@ object Data {
                            materialized: Associations = Set.empty,
                            active: Associations = Set.empty,
                            toBeRetried: Set[StructuredStreamingETLModel] = Set.empty,
-                           shouldStopAll: Boolean = false) extends Data {
+                           shouldStopAll: Boolean = false,
+                           reason:Option[Throwable]) extends Data {
 
     def createStoppingData() =
-      StoppingData(pipegraph, instance, materialized ++ active)
+      StoppingData(pipegraph, instance, materialized ++ active, reason = reason)
 
     def createMaterializingData() =
       MaterializingData(pipegraph, instance, active, Set.empty, materialized)
@@ -46,13 +48,15 @@ object Data {
                                materializing: Associations = Set.empty,
                                materialized: Associations = Set.empty,
                                toBeRetried: Associations = Set.empty,
-                               shouldStopAll:Boolean = false) extends Data {
+                               shouldStopAll:Boolean = false,
+                               reason: Option[Throwable]=None) extends Data {
 
     def createMaterializedData(): Data = MaterializedData(pipegraph,
                                                           instance,
                                                           materialized,
                                                           toBeRetried,
-                                                          shouldStopAll)
+                                                          shouldStopAll,
+                                                          reason)
 
   }
 
@@ -60,10 +64,11 @@ object Data {
                               instance: PipegraphInstanceModel,
                               materialized: Associations = Set.empty,
                               toBeRetried: Associations = Set.empty,
-                              shouldStopAll: Boolean = false) extends Data {
+                              shouldStopAll: Boolean = false,
+                              reason: Option[Throwable] = None) extends Data {
 
     def createStoppingData() =
-      StoppingData(pipegraph, instance, materialized)
+      StoppingData(pipegraph, instance, materialized, reason = reason)
 
     def createMonitoringData() =
       MonitoringData(pipegraph, instance, materialized)
@@ -77,10 +82,11 @@ object Data {
                             monitoring: Associations = Set.empty,
                             monitored: Associations = Set.empty,
                             toBeRetried:Associations = Set.empty,
-                            shouldStopAll:Boolean = false) extends Data {
+                            shouldStopAll:Boolean = false,
+                            reason:Option[Throwable] = None) extends Data {
 
     def createMonitoredData(): Data =
-      MonitoredData(pipegraph,instance,monitored,toBeRetried,shouldStopAll)
+      MonitoredData(pipegraph,instance,monitored,toBeRetried,shouldStopAll,reason)
 
 
   }
@@ -90,13 +96,14 @@ object Data {
                            instance: PipegraphInstanceModel,
                            monitored: Associations = Set.empty,
                            toBeRetried: Associations=Set.empty,
-                           shouldStopAll:Boolean = false) extends Data {
+                           shouldStopAll:Boolean = false,
+                           reason: Option[Throwable]) extends Data {
     def createActivatingData(): Data =
       ActivatingData(pipegraph, instance,monitored,toBeRetried.map(_.etl).toSet )
 
 
     def createStoppingData(): Data =
-      StoppingData(pipegraph, instance, monitored)
+      StoppingData(pipegraph, instance, monitored,reason = reason)
 
     def createMonitoringData(): Data =
       MonitoringData(pipegraph,instance, monitored)
@@ -108,15 +115,17 @@ object Data {
                           instance: PipegraphInstanceModel,
                           toBeStopped: Associations = Set.empty,
                           stopping: Associations = Set.empty,
-                          stopped: Associations = Set.empty) extends Data {
+                          stopped: Associations = Set.empty,
+                          reason: Option[Throwable]) extends Data {
 
     def createStoppedData() =
-      StoppedData(pipegraph,instance)
+      StoppedData(pipegraph,instance, reason)
   }
 
 
   case class StoppedData(pipegraph: PipegraphModel,
-                         instance: PipegraphInstanceModel) extends Data
+                         instance: PipegraphInstanceModel,
+                         reason: Option[Throwable] ) extends Data
 
   case object Empty extends Data
 

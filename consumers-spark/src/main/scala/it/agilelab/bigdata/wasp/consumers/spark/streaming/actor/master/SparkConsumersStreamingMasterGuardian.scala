@@ -158,6 +158,21 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
       stay
 
 
+    case Event(WorkCompleted, _: Schedule) =>
+      self ! RetryEnvelope(WorkCompleted, sender())
+      stay
+
+    case Event(RetryEnvelope(WorkCompleted, originalSender), schedule: Schedule) =>
+      val whatFailed = schedule.processing(originalSender)
+      updateToStatus(whatFailed.pipegraphInstance, PipegraphStatus.STOPPED) match {
+        case Success(instance) =>
+          val nextSchedule = schedule.toFailed(originalSender, instance)
+          stay using nextSchedule
+        case Failure(_) =>
+          setTimer(Timers.workCompleted, RetryEnvelope(WorkCompleted, originalSender), retryInterval)
+          stay
+      }
+
     case Event(message:WorkFailed, _: Schedule) =>
       self ! RetryEnvelope(message,sender())
       stay
@@ -197,6 +212,8 @@ object SparkConsumersStreamingMasterGuardian {
     val workFailedRetryTimer = "work-failed-retry-timer"
     val workNotCancelledRetryTimer = "work-not-cancelled-retry-timer"
     val cancelWorkRetryTimer = "cancel-work-retry-timer"
+    val workCompleted = "completed-retry-timer"
+
   }
 
   case class RetryEnvelope[O](original:O, sender:ActorRef)

@@ -28,6 +28,8 @@ object Protocol {
 
   private[actor] case class WorkNotGiven(reason: Throwable) extends Protocol
 
-  case class WorkFailed(reason: Throwable) extends Protocol
+  private[actor] case class WorkFailed(reason: Throwable) extends Protocol
+
+  private[actor] case object WorkCompleted extends Protocol
 
 }
