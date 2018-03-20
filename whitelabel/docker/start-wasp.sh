@@ -108,7 +108,7 @@ if [ "$WASP_YARN" = true ]; then
     DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/external-cluster-configuration/hadoop:/etc/hadoop/conf/:ro"
 else
     echo -e "\nSetting NOT YARN-mode docker options..."
-    DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hdfs:/etc/hadoop/conf/:ro -v $SCRIPT_DIR/docker-service-configuration/hbase:/etc/hbase/conf/:ro"
+    DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hadoop:/etc/hadoop/conf/:ro -v $SCRIPT_DIR/docker-service-configuration/hbase:/etc/hbase/conf/:ro"
 fi
 
 if [ -n "$DROP_MONGODB_OPT" ]; then

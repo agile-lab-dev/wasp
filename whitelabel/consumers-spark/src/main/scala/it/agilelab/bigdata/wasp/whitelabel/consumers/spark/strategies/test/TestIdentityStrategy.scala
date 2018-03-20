@@ -6,5 +6,10 @@ import org.apache.spark.sql.DataFrame
 
 class TestIdentityStrategy extends Strategy with Logging {
 
-  override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = dataFrames.head._2
+  override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
+
+    logger.info(s"Strategy configuration: ${configuration}")
+
+    dataFrames.head._2
+  }
 }
