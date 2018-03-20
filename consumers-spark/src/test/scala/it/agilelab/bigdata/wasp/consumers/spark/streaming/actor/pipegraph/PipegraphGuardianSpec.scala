@@ -77,7 +77,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -102,7 +102,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -151,7 +151,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -185,7 +185,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -222,7 +222,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => Retry
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -246,14 +246,15 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       transitions.expectMsg(Transition[State](fsm, Activating, Activating))
 
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
       factory.probes(1).expectMsg(ETLProtocol.ActivateETL(etl))
 
       factory.probes(1).reply(ETLProtocol.ETLActivated(etl))
 
 
-      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
-
-      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
 
       transitions.expectMsg(Transition[State](fsm, Activating, Activating))
 
@@ -281,7 +282,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => StopAll
 
-      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -331,7 +332,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -386,7 +387,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -432,7 +433,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -478,7 +479,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => Retry
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -534,7 +535,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => StopAll
 
-      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -589,7 +590,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -657,7 +658,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -719,7 +720,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -783,7 +784,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -868,7 +869,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => StopAll
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
@@ -930,7 +931,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]

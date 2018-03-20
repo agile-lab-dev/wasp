@@ -284,7 +284,7 @@ class PipegraphGuardian(private val master: ActorRef,
     case (Activating, Activating) => nextStateData match {
       case ActivatingData.ShouldRetry() =>
         log.info("[Activating->Activating] Scheduling Retry")
-        self ! MyProtocol.PerformRetry
+        setTimer("retry", MyProtocol.PerformRetry, retryDuration)
       case ActivatingData.ToBeActivated(etl) =>
         log.info("[Activating->Activating] Activating [{}]", etl.name)
         self ! MyProtocol.ActivateETL(etl)
@@ -365,7 +365,7 @@ class PipegraphGuardian(private val master: ActorRef,
     case (Materializing, Materializing) => nextStateData match {
       case MaterializingData.ShouldRetry() =>
         log.info("[Materializing->Materializing] Scheduling Retry")
-        self ! MyProtocol.PerformRetry
+        setTimer("retry", MyProtocol.PerformRetry, retryDuration)
       case MaterializingData.ToBeMaterialized(WorkerToEtlAssociation(worker, data)) =>
         log.info("[Materializing->Materializing] materialize [{}->{}]", worker,data.name)
         self ! MyProtocol.MaterializeETL(worker, data)
@@ -404,13 +404,14 @@ class PipegraphGuardian(private val master: ActorRef,
     case (Monitoring,Monitored) => nextStateData match {
       case MonitoredData.ShouldRetry() =>
         log.info("[Monitoring->Monitored] Scheduling Retry")
-        self ! MyProtocol.PerformRetry
+        setTimer("retry", MyProtocol.PerformRetry, retryDuration)
       case MonitoredData.ShouldStopAll() =>
         log.info("[Monitoring->Monitored] StopAll")
         self ! MyProtocol.CancelWork
       case MonitoredData.ShouldMonitorAgain() =>
         log.info("[Monitoring->Monitored] Scheduling Monitoring")
-        self ! MyProtocol.MonitorPipegraph
+        setTimer("monitoring", MyProtocol.MonitorPipegraph,monitoringInterval)
+
       case MonitoredData.NothingToMonitor() =>
         log.info("[Monitoring->Monitored] Nothing to monitor")
         self ! MyProtocol.CancelWork
