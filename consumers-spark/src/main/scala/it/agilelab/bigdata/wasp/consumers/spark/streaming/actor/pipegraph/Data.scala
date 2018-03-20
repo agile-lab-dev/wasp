@@ -22,7 +22,7 @@ object Data {
                             shouldStopAll: Boolean = false) extends Data {
 
     def createActivatedData() =
-      ActivatedData(pipegraph, instance, materialized, activating, toBeRetried, shouldStopAll)
+      ActivatedData(pipegraph, instance, materialized, active, toBeRetried, shouldStopAll)
   }
 
   case class ActivatedData(pipegraph: PipegraphModel,
@@ -91,6 +91,9 @@ object Data {
                            monitored: Associations = Set.empty,
                            toBeRetried: Associations=Set.empty,
                            shouldStopAll:Boolean = false) extends Data {
+    def createActivatingData(): Data =
+      ActivatingData(pipegraph, instance,monitored,toBeRetried.map(_.etl).toSet )
+
 
     def createStoppingData(): Data =
       StoppingData(pipegraph, instance, monitored)
@@ -141,13 +144,15 @@ object Data {
 
       def unapply(arg: ActivatingData): Boolean = arg.toBeActivated.isEmpty &&
                                                   arg.activating.isEmpty &&
-                                                  arg.toBeRetried.nonEmpty
+                                                  arg.toBeRetried.isEmpty
 
     }
 
     object ShouldRetry {
 
-      def unapply(arg: ActivatingData): Boolean = arg.toBeRetried.nonEmpty
+      def unapply(arg: ActivatingData): Boolean =  arg.toBeActivated.isEmpty &&
+                                                   arg.activating.isEmpty &&
+                                                   arg.toBeRetried.nonEmpty
 
     }
 
@@ -166,21 +171,26 @@ object Data {
 
     object ToBeMaterialized {
       def unapply(arg: MaterializingData): Option[WorkerToEtlAssociation] =
-        (arg.toBeMaterialized ++ arg.toBeRetried).headOption
+        arg.toBeMaterialized.headOption
     }
 
     object ShouldRetry {
 
-      def unapply(arg: ActivatingData): Boolean = arg.toBeRetried.nonEmpty
+      def unapply(arg: MaterializingData): Boolean =  arg.toBeMaterialized.isEmpty &&
+                                                      arg.materializing.isEmpty &&
+                                                      arg.toBeRetried.nonEmpty
 
     }
 
     object AllMaterialized {
       def unapply(arg: MaterializingData):Boolean = arg.toBeMaterialized.isEmpty &&
                                                     arg.materializing.isEmpty &&
-                                                    arg.toBeRetried.nonEmpty
+                                                    arg.toBeRetried.isEmpty
     }
 
+    object ShouldStopAll {
+      def unapply(arg: ActivatingData): Boolean = arg.shouldStopAll
+    }
 
   }
 
@@ -189,21 +199,47 @@ object Data {
 
     object ShouldRetry {
 
-      def unapply(arg: ActivatingData): Boolean = arg.toBeRetried.nonEmpty
+      def unapply(arg: MonitoringData): Boolean = arg.toBeRetried.nonEmpty
 
     }
 
     object ToBeMonitored {
-      def unapply(arg: MonitoringData): Option[WorkerToEtlAssociation] =
-        (arg.toBeMonitored ++ arg.toBeRetried).headOption
+      def unapply(arg: MonitoringData): Option[WorkerToEtlAssociation] = arg.toBeMonitored.headOption
     }
 
     object AllMonitored {
       def unapply(arg: MonitoringData):Boolean = arg.toBeMonitored.isEmpty &&
-                                                 arg.monitoring.isEmpty &&
-                                                 arg.toBeRetried.nonEmpty
+                                                 arg.monitoring.isEmpty
     }
 
+    object ShouldStopAll {
+      def unapply(arg: MonitoringData): Boolean = arg.shouldStopAll
+    }
+
+
+  }
+
+  object MonitoredData {
+
+
+    object ShouldRetry {
+
+      def unapply(arg: MonitoredData): Boolean = arg.toBeRetried.nonEmpty
+
+    }
+
+
+    object ShouldStopAll {
+      def unapply(arg: MonitoredData): Boolean = arg.shouldStopAll
+    }
+
+    object ShouldMonitorAgain {
+      def unapply(arg: MonitoredData): Boolean = arg.toBeRetried.isEmpty && arg.monitored.nonEmpty
+    }
+
+    object NothingToMonitor {
+      def unapply(arg: MonitoredData): Boolean = arg.toBeRetried.isEmpty && arg.monitored.isEmpty
+    }
 
   }
 
