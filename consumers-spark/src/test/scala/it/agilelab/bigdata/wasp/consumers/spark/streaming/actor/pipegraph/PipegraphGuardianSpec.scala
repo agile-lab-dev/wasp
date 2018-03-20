@@ -316,6 +316,63 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
     }
 
+    "Honor StopALL strategy Multiple etlcomponent" in {
+
+      val master = TestProbe()
+      val transitions = TestProbe()
+      val factory = new ProbesFactory()
+
+      val failingEtl = defaultPipegraph.structuredStreamingComponents.head.copy(name="failing-component")
+      val etl = defaultPipegraph.structuredStreamingComponents.head
+      val pipegraph = defaultPipegraph.copy(structuredStreamingComponents = List(etl,failingEtl))
+
+      val strategy: ComponentFailedStrategy = {
+        case `failingEtl` => StopAll
+        case `etl` => DontCare
+      }
+
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+
+      transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
+      transitions.expectMsgType[CurrentState[State]]
+
+      master.send(fsm, MasterProtocol.WorkAvailable)
+
+      master.expectMsg(PipegraphProtocol.GimmeWork)
+
+
+
+
+      master.send(fsm, MasterProtocol.WorkGiven(pipegraph, defaultInstance))
+
+      transitions.expectMsg(Transition[State](fsm, WaitingForWork, RequestingWork))
+      transitions.expectMsg(Transition[State](fsm, RequestingWork, Activating))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+
+
+      factory.probes.head.expectMsg(ETLProtocol.ActivateETL(etl))
+      factory.probes.head.reply(ETLProtocol.ETLActivated(etl))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+      val reason = new Exception("Ops!")
+
+      factory.probes(1).expectMsg(ETLProtocol.ActivateETL(failingEtl))
+      factory.probes(1).reply(ETLProtocol.ETLNotActivated(failingEtl, reason))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activated))
+      transitions.expectMsg(Transition[State](fsm, Activated, Stopping))
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopping))
+
+      factory.probes.head.expectMsg(ETLProtocol.StopETL(etl))
+      factory.probes.head.reply(ETLProtocol.ETLStopped(etl))
+
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopping))
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopped))
+
+
+    }
 
 
   }
@@ -516,6 +573,78 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       master.expectMsg(MasterProtocol.WorkFailed(reason))
     }
+
+    "Honor StopALL strategy Multiple etlcomponent" in {
+
+      val master = TestProbe()
+      val transitions = TestProbe()
+      val factory = new ProbesFactory()
+
+      val failingEtl = defaultPipegraph.structuredStreamingComponents.head.copy(name="failing-component")
+      val etl = defaultPipegraph.structuredStreamingComponents.head
+      val pipegraph = defaultPipegraph.copy(structuredStreamingComponents = List(etl,failingEtl))
+
+      val strategy: ComponentFailedStrategy = {
+        case `failingEtl` => StopAll
+        case `etl` => DontCare
+      }
+
+      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
+
+      transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
+      transitions.expectMsgType[CurrentState[State]]
+
+      master.send(fsm, MasterProtocol.WorkAvailable)
+
+      master.expectMsg(PipegraphProtocol.GimmeWork)
+
+
+
+
+      master.send(fsm, MasterProtocol.WorkGiven(pipegraph, defaultInstance))
+
+      transitions.expectMsg(Transition[State](fsm, WaitingForWork, RequestingWork))
+      transitions.expectMsg(Transition[State](fsm, RequestingWork, Activating))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+
+
+      factory.probes.head.expectMsg(ETLProtocol.ActivateETL(etl))
+      factory.probes.head.reply(ETLProtocol.ETLActivated(etl))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+      factory.probes(1).expectMsg(ETLProtocol.ActivateETL(failingEtl))
+      factory.probes(1).reply(ETLProtocol.ETLActivated(failingEtl))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activated))
+
+      transitions.expectMsg(Transition[State](fsm, Activated, Materializing))
+
+      factory.probes.head.expectMsg(ETLProtocol.MaterializeETL(etl))
+      factory.probes.head.reply(ETLProtocol.ETLMaterialized(etl))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+
+      val reason = new Exception("Ops!")
+
+      factory.probes(1).expectMsg(ETLProtocol.MaterializeETL(failingEtl))
+      factory.probes(1).reply(ETLProtocol.ETLNotMaterialized(failingEtl, reason))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materialized))
+      transitions.expectMsg(Transition[State](fsm, Materialized, Stopping))
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopping))
+
+      factory.probes.head.expectMsg(ETLProtocol.StopETL(etl))
+      factory.probes.head.reply(ETLProtocol.ETLStopped(etl))
+
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopping))
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopped))
+
+    }
   }
 
 
@@ -644,7 +773,15 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       val transitions = TestProbe()
       val factory = new ProbesFactory()
 
-      val strategy: ComponentFailedStrategy = _ => StopAll
+
+      val failingEtl = defaultPipegraph.structuredStreamingComponents.head.copy(name="failing-component")
+      val etl = defaultPipegraph.structuredStreamingComponents.head
+      val pipegraph = defaultPipegraph.copy(structuredStreamingComponents = List(etl,failingEtl))
+
+      val strategy: ComponentFailedStrategy = {
+        case `failingEtl` => StopAll
+        case `etl` => DontCare
+      }
 
       val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 1.millisecond, 1.millisecond, strategy))
 
@@ -655,17 +792,24 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       master.expectMsg(PipegraphProtocol.GimmeWork)
 
-      master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
+
+
+
+      master.send(fsm, MasterProtocol.WorkGiven(pipegraph, defaultInstance))
 
       transitions.expectMsg(Transition[State](fsm, WaitingForWork, RequestingWork))
       transitions.expectMsg(Transition[State](fsm, RequestingWork, Activating))
       transitions.expectMsg(Transition[State](fsm, Activating, Activating))
 
-      val etl = defaultPipegraph.structuredStreamingComponents.head
+
 
       factory.probes.head.expectMsg(ETLProtocol.ActivateETL(etl))
-
       factory.probes.head.reply(ETLProtocol.ETLActivated(etl))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
+
+      factory.probes(1).expectMsg(ETLProtocol.ActivateETL(failingEtl))
+      factory.probes(1).reply(ETLProtocol.ETLActivated(failingEtl))
+      transitions.expectMsg(Transition[State](fsm, Activating, Activating))
 
       transitions.expectMsg(Transition[State](fsm, Activating, Activating))
       transitions.expectMsg(Transition[State](fsm, Activating, Activated))
@@ -674,21 +818,45 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       factory.probes.head.expectMsg(ETLProtocol.MaterializeETL(etl))
       factory.probes.head.reply(ETLProtocol.ETLMaterialized(etl))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+
+      factory.probes(1).expectMsg(ETLProtocol.MaterializeETL(failingEtl))
+      factory.probes(1).reply(ETLProtocol.ETLMaterialized(failingEtl))
+      transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
+
 
       transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
       transitions.expectMsg(Transition[State](fsm, Materializing, Materializing))
       transitions.expectMsg(Transition[State](fsm, Materializing, Materialized))
+
       transitions.expectMsg(Transition[State](fsm, Materialized, Monitoring))
 
 
       factory.probes.head.expectMsg(ETLProtocol.CheckETL(etl))
-      factory.probes.head.reply(ETLProtocol.ETLCheckFailed(etl, new Exception("Ops!")))
+      factory.probes.head.reply(ETLProtocol.ETLCheckSucceeded(etl))
+      transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
+
+      factory.probes(1).expectMsg(ETLProtocol.CheckETL(failingEtl))
+
+      val reason = new Exception("Ops!")
+
+      factory.probes(1).reply(ETLProtocol.ETLCheckFailed(failingEtl, reason))
+      transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
 
       transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
       transitions.expectMsg(Transition[State](fsm, Monitoring, Monitoring))
       transitions.expectMsg(Transition[State](fsm, Monitoring, Monitored))
+
+
       transitions.expectMsg(Transition[State](fsm, Monitored, Stopping))
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopping))
+
+      factory.probes.head.expectMsg(ETLProtocol.StopETL(etl))
+      factory.probes.head.reply(ETLProtocol.ETLStopped(etl))
+
+      transitions.expectMsg(Transition[State](fsm, Stopping, Stopping))
       transitions.expectMsg(Transition[State](fsm, Stopping, Stopped))
+
 
 
     }

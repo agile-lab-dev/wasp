@@ -353,6 +353,7 @@ class PipegraphGuardian(private val master: ActorRef,
         self ! MyProtocol.StopETL(worker, etl)
       case StoppingData.AllStopped() =>
         self ! MyProtocol.StopFinished
+      case _ => log.info("[Stopping->Stopping] Empty transition effect")
     }
 
     case (Stopping, Stopped) => nextStateData match {
