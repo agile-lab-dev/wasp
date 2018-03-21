@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.utils
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import com.typesafe.config._
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnectionsConfig}
@@ -38,11 +39,21 @@ class EnumJsonConverter[T <: scala.Enumeration](enu: T) extends RootJsonFormat[T
 
   override def write(obj: T#Value): JsValue = JsString(obj.toString)
 
-  override def read(json: JsValue): T#Value = {
-    json match {
-      case JsString(txt) => enu.withName(txt)
-      case somethingElse => throw DeserializationException(s"Expected a value from enum $enu instead of $somethingElse")
-    }
+  override def read(json: JsValue): T#Value = json match {
+    case JsString(txt) => enu.withName(txt)
+    case somethingElse => throw DeserializationException(s"Expected a value from enum $enu instead of $somethingElse")
+  }
+}
+
+class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
+  val ParseOptions = ConfigParseOptions.defaults().setSyntax(ConfigSyntax.JSON)
+  val RenderOptions = ConfigRenderOptions.concise().setJson(true)
+
+  override def write(config: Config): JsValue = JsonParser(config.root.render(RenderOptions))
+
+  override def read(jsValue: JsValue): Config = jsValue match {
+    case obj: JsObject => ConfigFactory.parseString(obj.compactPrint, ParseOptions)
+    case _ => deserializationError("Expected JsObject for Config deserialization")
   }
 }
 
@@ -77,6 +88,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat6(BatchJobModel.apply)
   implicit val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat7(ProducerModel.apply)
   implicit val jobStatusFormat: RootJsonFormat[JobStatus.JobStatus] = new EnumJsonConverter(JobStatus)
-  implicit val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat6(BatchJobInstanceModel.apply)
+  implicit val typesafeConfigFormat: RootJsonFormat[Config] = new TypesafeConfigJsonConverter
+  implicit val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat7(BatchJobInstanceModel.apply)
 }
 

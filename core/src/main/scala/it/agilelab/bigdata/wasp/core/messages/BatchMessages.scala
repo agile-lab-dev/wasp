@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core.messages
 
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspMessage
 
 
@@ -16,7 +17,7 @@ object BatchMessages {
     *
     * @param name The name of the [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]] to start
     */
-  case class StartBatchJob(name: String) extends BatchMessage
+  case class StartBatchJob(name: String, restConfig: Config) extends BatchMessage
 
   /**
     * Trait marking messages as being result of the [[StartBatchJob]] request.

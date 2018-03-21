@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
+import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
@@ -47,12 +48,20 @@ object BatchJob_C extends Directives with JsonSupport {
           pathPrefix(Segment) { name =>
             path("start") {
               post {
-                complete {
-                  WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name)) match {
-                    case Right(s) => s.toJson.toAngularOkResponse(pretty)
-                    case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                entity(as[Config]) { restConfig =>
+                  complete {
+                    WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name, restConfig)) match {
+                      case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                      case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                    }
                   }
-                }
+                } ~
+                  complete {
+                    WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name, ConfigFactory.empty)) match {
+                      case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                      case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                    }
+                  }
               }
             } ~
               path("instances") {
