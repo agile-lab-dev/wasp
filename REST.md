@@ -117,7 +117,7 @@ Producers Sample
 
 Topics Sample
 
-`GET http://localhost:2891/producers`
+`GET http://localhost:2891/topics`
 
 ```javascript
 {
@@ -210,10 +210,10 @@ Topics Sample
 ## Batchjobs
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /batchjobs |  Get all the batchjobs in the system. | Insert a new batchjobs.  | Update an existing batchjobs. |   |
-| /batchjobs/{id} |  Get the batchjobs with the specified id. |   |   | Delete the batchjobs with the specified id.  |
-| /batchjobs/{id}/start |   | Start the batchjobs with the specified id.  |   |   |
-| /batchjobs/{id}/instances|Retrieve instances of specified job ordered newest to latest   | |   |   |
+| /batchjobs | Get all the batchjobs in the system. | Insert a new batchjobs.  | Update an existing batchjobs. | |
+| /batchjobs/{id} | Get the batchjob with the specified id. | | | Delete the batchjobs with the specified id. |
+| /batchjobs/{id}/start | | Start a instance of specified job with optional JSON configuration. | | |
+| /batchjobs/{id}/instances | Retrieve instances of specified job ordered newest to latest. | | | |
 
 Batchjobs Sample
 
@@ -295,6 +295,17 @@ Batchjobs Sample
     }
   ]
 }
+```
+
+Batchjob instance start Sample
+```bash
+curl -X POST \
+  http://localhost:2891/batchjobs/TestBatchJobFromHdfsFlatToConsole/start \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "stringKey": "aaa",
+        "intKey2": 5
+     }'
 ```
 
 ## Indices
