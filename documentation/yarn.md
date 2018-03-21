@@ -13,11 +13,10 @@
     - Assegnare alla configurazione yarn-yar il path dove sono presenti i jar  hdfs://nameserver/tmp/spark-jars-yarn-2.2.1/
    
 - Oltre alle configurazioni di ram e cpu per fa funzionare wasp in yarn mode bisogna copiare nella folder external-cluster-configuration/hadoop
-  tutte le configurazioni di yarn e hbase (se si utilizza).
-  Queste configurazioni sono facilmente recuperabili nel cloudera manager sotto la voce del servizio YARN Download client configuration, la stessa cosa per il servizio HBase.
-  
-- Dopo aver scaricato queste configurazioni bisogna copiarle nella folder external-cluster-configuration/hadoop
-  e controllare che la configurazine della topology (net.topology.script.file.name) dentro il file core-site.xml che è da cancellare
+  tutte le configurazioni di yarn e hbase (se si utilizza): queste sono facilmente recuperabili nel cloudera manager sotto la voce `Download Client Configuration` dei servizi YARN e HBase.
+
+    - N.B. Tra le configurazioni, rimuovere: property relativa alla configurazione della topology (net.topology.script.file.name) dentro il file core-site.xml e i file topology.py e topology.map
+    
 
 - Invece per quanto rigurda le configurazioni docker-environment.conf modificare il seguente esempio
 
@@ -55,6 +54,7 @@
           { "spark.authenticate" : "true" }
         
         ]
+        
 - Ricordarsi di cambiare le driver-port e block-manager-port in modo che siano diverse tra lo streaming e il batch 
 
-- Lanciare con l'opzione --yarn
+- Lanciare whitelabel/docker/start-whitelabel-wasp.sh con l'opzione -y oppure --yarn
