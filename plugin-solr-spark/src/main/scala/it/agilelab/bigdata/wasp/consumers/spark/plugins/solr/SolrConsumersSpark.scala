@@ -89,7 +89,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   private def startupSolr(servicesTimeoutMillis: Long)(implicit timeout: Timeout): Unit = {
-    logger.info(s"Trying to connect with Sol...")
+    logger.info(s"Trying to connect with Solr...")
 
     //TODO if solrConfig are not initialized skip the initialization
     val solrResult = solrAdminActor_ ? Initialization(ConfigManager.getSolrConfig)

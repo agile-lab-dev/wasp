@@ -85,8 +85,9 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
       ret
 
     } else {
-      logger.error(s"Topic not found on Kafka: $topic")
-      throw new Exception(s"Topic not found on Kafka: $topic")
+      val msg = s"Topic not found on Kafka: $topic"
+      logger.error(msg)
+      throw new Exception(msg)
     }
   }
 }
@@ -149,8 +150,9 @@ object KafkaReader extends StreamingReader with Logging {
       }
 
     } else {
-      logger.error(s"Topic not found on Kafka: $topic")
-      throw new Exception(s"Topic not found on Kafka: $topic")
+      val msg = s"Topic not found on Kafka: $topic"
+      logger.error(msg)
+      throw new Exception(msg)
     }
   }
 }
