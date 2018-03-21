@@ -21,7 +21,7 @@
 
 - Invece per quanto rigurda le configurazioni docker-environment.conf modificare il seguente esempio
 
-        master = {
+        master {
           protocol = ""
           host = "yarn" # Dice a spark di abilitare la modalità yarn
           port = 0
@@ -32,14 +32,14 @@
           driver-memory = "1G"
           driver-hostname = "server08.cluster01.atscom.it" # Questo è l'hostname che gli executor contattano per comunicare con il driver
           driver-bind-address =  "0.0.0.0"
-          driver-port = "31541"
+          driver-port = 31541
         }
-        block-manager-port = "31542"
+        block-manager-port = 31542
         yarn-jar = "hdfs://server08.cluster01.atscom.it:8020/tmp/spark-jars-yarn-2.2.1/*" # La folder dove sono presenti tutti i jars di Spark per gli executors 
         additionalJarsPath = "/root/wasp/lib/" # Percorso di dove spark va a prendere i jar utente 
-        executor-cores = "1"
+        executor-cores = 1
         executor-memory = "1G"
-        executor-instances = "1"
+        executor-instances = 1
         retained-stages-jobs = 100
         retained-tasks = 5000
         retained-executions = 100
