@@ -132,10 +132,8 @@ class IntegrationSpec
       val secondPipegraph = defaultPipegraph.copy(name = "second", structuredStreamingComponents = List(secondEtl))
 
 
-
       mockBl.insert(firstPipegraph)
       mockBl.insert(secondPipegraph)
-
 
 
       val probe = TestProbe()
@@ -145,11 +143,10 @@ class IntegrationSpec
       val strategy: ComponentFailedStrategy = _ => DontCare
 
 
-      val childCreator: ChildCreator = (master,system) => system.actorOf(Props(new PipegraphGuardian(master, factory,
+      val childCreator: ChildCreator = (master, system) => system.actorOf(Props(new PipegraphGuardian(master, factory,
         500.milliseconds, 500.milliseconds, strategy)))
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
-
 
 
       probe.send(fsm, MasterProtocol.StartPipegraph(firstPipegraph.name))
@@ -207,6 +204,7 @@ class IntegrationSpec
       factory.probes.head.reply(ETLProtocol.ETLStopped(firstEtl))
 
       probe.expectMsg(MasterProtocol.PipegraphStopped(firstPipegraph.name))
+
 
     }
 

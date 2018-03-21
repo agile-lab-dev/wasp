@@ -161,8 +161,10 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
       stay
 
     case Event(RetryEnvelope(WorkCompleted, originalSender), schedule: Schedule) =>
-      val whatFailed = schedule.processing(originalSender)
-      updateToStatus(whatFailed.pipegraphInstance, PipegraphStatus.STOPPED) match {
+
+      val whatCompleted = schedule.stoppingOrProcessing(originalSender)
+
+      updateToStatus(whatCompleted.pipegraphInstance, PipegraphStatus.STOPPED) match {
         case Success(instance) =>
           val nextSchedule = schedule.toFailed(originalSender, instance)
           stay using nextSchedule

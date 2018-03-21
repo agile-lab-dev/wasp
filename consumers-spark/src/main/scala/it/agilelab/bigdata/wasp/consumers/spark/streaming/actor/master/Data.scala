@@ -58,6 +58,8 @@ object Data {
 
     def stopping(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.STOPPING)
 
+    def stoppingOrProcessing(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.STOPPING, PipegraphStatus.PROCESSING)
+
     def processing(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.PROCESSING)
 
     def processing(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PROCESSING)
@@ -67,8 +69,8 @@ object Data {
         .find(_.instanceOf == instanceOf)
         .head
 
-    private def byStatus(worker: ActorRef, pipegraphStatus: PipegraphStatus) =
-      scheduleInstances.filter(_.pipegraphInstance.status == pipegraphStatus)
+    private def byStatus(worker: ActorRef, pipegraphStatus: PipegraphStatus*) =
+      scheduleInstances.filter(instance => pipegraphStatus.contains(instance.pipegraphInstance.status))
         .find(_.worker == worker)
         .head
 
