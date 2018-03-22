@@ -35,7 +35,7 @@ class ConsoleSparkStructuredStreamingWriter()
     stream.writeStream
       .format("console")
       .outputMode("append")
-      .option("checkpointLocation", checkpointDir) // should be ignored due to format("console")
+      .option("checkpointLocation", checkpointDir)
       .queryName(queryName)
       .start()
   }

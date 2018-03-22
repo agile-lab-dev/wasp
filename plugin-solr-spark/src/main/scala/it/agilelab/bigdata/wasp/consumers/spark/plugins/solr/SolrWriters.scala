@@ -99,7 +99,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
 
         val docs = stream.transform { rdd =>
 
-          val df: Dataset[Row] = sqlContext.read.json(rdd)
+          val df = sqlContext.read.json(rdd)
 
           df.rdd.map { r =>
             try {

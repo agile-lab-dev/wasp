@@ -114,14 +114,14 @@ object SparkSingletons extends Logging {
         
         // instantiate & assign StreamingContext
         logger.info("Instantiating StreamingContext...")
-        val legacyStreamingCheckpointDir = generateLegacyStreamingCheckpointDir(sparkStreamingConfigModel)
+        val uniqueLegacyStreamingCheckpointDir = generateUniqueLegacyStreamingCheckpointDir
         def createStreamingContext: () => StreamingContext = () => { // helper to create StreamingContext
           val batchDuration = Milliseconds(sparkStreamingConfigModel.streamingBatchIntervalMs)
           val newStreamingContext = new StreamingContext(getSparkContext, batchDuration)
-          newStreamingContext.checkpoint(legacyStreamingCheckpointDir)
+          newStreamingContext.checkpoint(uniqueLegacyStreamingCheckpointDir)
           newStreamingContext
         }
-        streamingContext = StreamingContext.getOrCreate(legacyStreamingCheckpointDir, createStreamingContext)
+        streamingContext = StreamingContext.getOrCreate(uniqueLegacyStreamingCheckpointDir, createStreamingContext)
         logger.info("Successfully instantiated StreamingContext")
   
         true
