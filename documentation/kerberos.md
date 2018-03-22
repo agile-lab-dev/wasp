@@ -1,19 +1,23 @@
 ## Cosa fare per configurare kerberos 
 
-- Cambiare il file docker-environment.conf in modo che spark si connetti ad un cluster yarn kerberizzato seguendo al guida (yarn.md)[/yarn.md]  
-- Configurare le configurazioni di sicurezza per kafka example:
+- Cambiare il file docker-environment.conf in modo che spark si connetti ad un cluster yarn kerberizzato seguendo la guida [yarn.md](yarn.md)
+- Configurare le configurazioni di sicurezza per kafka:
+
             others = [
+              # mandatory
+              { "acks" : "1" }
               { "security.protocol" : "SASL_PLAINTEXT" }
               { "sasl.kerberos.service.name" : "kafka" }
               { "sasl.jaas.config" : "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"mattia.bertorello@CLUSTER01.ATSCOM.IT\";" }
               { "sasl.mechanism" : "GSSAPI" }
+              
+              # optional
               { "sasl.kerberos.kinit.cmd" : "/usr/bin/kinit" }
               { "sasl.kerberos.min.time.before.relogin" : "60000" }
-              { "sasl.kerberos.service.name" : "kafka" }
               { "sasl.kerberos.ticket.renew.jitter" : "0.05" }
               { "sasl.kerberos.ticket.renew.window.factor" : "0.8" }
-              { "acks" : "1" }
             ]
+            
 - Creare un keytab da inserire sotto la cartella whitelabel/docker (seguire le istruzioni del file whitelabel/docker/keytab-build.sh per creare il keytab )
 - Andare nel file whitelabel/docker/security-env.sh e modificare le variabili di ambiente con i valori corretti:
     - KEYTAB_FILE_NAME è il nome del file del keytab creato ex. wasp2.keytab
@@ -22,7 +26,7 @@
       a cui spark si dovrebbe collegare questo succede quando il dns non ha il reverse o non è configurato per fornire informazioni riguardanti kerberos
       ex. "--add-host=server08.cluster01.atscom.it:192.168.69.223"
     - Controllare che le opzioni presenti nel file krb5.conf che viene generato siano corrette 
-- Lanciare whitelabel/docker/start-whitelabel-wasp.sh con l'opzione --security
+- Lanciare whitelabel/docker/start-whitelabel-wasp.sh con l'opzione -s oppure -security
 
 ## Remembers 
 
