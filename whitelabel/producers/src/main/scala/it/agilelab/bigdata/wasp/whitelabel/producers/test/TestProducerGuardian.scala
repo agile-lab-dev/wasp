@@ -27,6 +27,9 @@ private[producers] class TestActor(kafka_router: ActorRef, topic: Option[TopicMo
   extends ProducerActor[TestDocument](kafka_router, topic)
     with SprayJsonSupport with DefaultJsonProtocol {
 
+
+  override def retrievePartitionKey: TestDocument => String = (td: TestDocument) => td.id
+
   def createTestDocument(documentId: Int) = {
 
     val nestedDocument = TestNestedDocument("field1_"+ documentId, documentId, Some("field3_"+ documentId))
