@@ -15,6 +15,8 @@ import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql._
+import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
@@ -137,7 +139,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
 
   override def write(stream: DataFrame,
                      queryName: String,
-                     checkpointDir: String): Unit = {
+                     checkpointDir: String): StreamingQuery = {
 
     // get index model from BL
     val indexOpt: Option[IndexModel] = indexBL.getByName(name)
@@ -174,7 +176,9 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$name' does not exits pay ATTENTION the spark stream won't start")
+      val message = s"The index '$name' does not exits pay ATTENTION the spark stream won't start"
+      logger.error(message)
+      throw new Exception(message)
     }
   }
 }

@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.console
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.streaming.dstream.DStream
 
 class ConsoleSparkLegacyStreamingWriter()
@@ -28,7 +29,7 @@ class ConsoleSparkLegacyStreamingWriter()
 class ConsoleSparkStructuredStreamingWriter()
   extends SparkStructuredStreamingWriter {
 
-  override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
+  override def write(stream: DataFrame, queryName: String, checkpointDir: String): StreamingQuery = {
 
     // configure and start streaming
     stream.writeStream

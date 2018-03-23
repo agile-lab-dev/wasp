@@ -6,10 +6,6 @@ sealed trait Protocol
 
 object Protocol {
 
-  case class WorkFailed(etl: StructuredStreamingETLModel, reason: Throwable)
-
-
-
   private[actor] case class ActivateETL(etl: StructuredStreamingETLModel)
 
   private[actor] case class ETLActivated(etl: StructuredStreamingETLModel) extends Protocol

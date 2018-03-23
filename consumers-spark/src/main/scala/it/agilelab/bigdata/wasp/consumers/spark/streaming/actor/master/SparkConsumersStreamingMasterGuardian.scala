@@ -1,19 +1,24 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props, Stash}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
+import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReader
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Data._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Protocol._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.State._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.ComponentFailedStrategy
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, Protocol => ChildProtocol}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.exception.ExceptionUtils
-
+import org.apache.spark.sql.SparkSession
+import it.agilelab.bigdata.wasp.core
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
-
-import SparkConsumersStreamingMasterGuardian._
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => ChildProtocol}
-import Protocol._
-import State._
-import Data._
 
 class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: PipegraphBL,
                                             protected val childCreator: ChildCreator,
@@ -198,9 +203,40 @@ object SparkConsumersStreamingMasterGuardian {
 
   type ChildCreator = (ActorRef, ActorRefFactory) => ActorRef
 
-  def props(pipegraphBL: PipegraphBL): Props = props(pipegraphBL, ???, 5.seconds)
 
-  private[streaming] def props(pipegraphBl: PipegraphBL, childCreator: ChildCreator, retryInterval: FiniteDuration): Props =
+  def defaultChildCreator(reader: StructuredStreamingReader,
+                          plugins: Map[String, WaspConsumersSparkPlugin],
+                          sparkSession: SparkSession,
+                          sparkWriterFactory: SparkWriterFactory,
+                          retryDuration: FiniteDuration,
+                          monitoringInterval: FiniteDuration,
+                          componentFailedStrategy: ComponentFailedStrategy,
+                          env: {
+                            val pipegraphBL: PipegraphBL
+                            val mlModelBL: MlModelBL
+                            val indexBL: IndexBL
+                            val topicBL: TopicBL
+                            val rawBL: RawBL
+                            val keyValueBL: KeyValueBL
+                          }): ChildCreator = { (master, context) =>
+
+
+
+    val writerFactory : MaterializationSteps.WriterFactory = { writerModel =>
+      sparkWriterFactory.createSparkWriterStructuredStreaming(env,sparkSession,writerModel)
+    }
+
+
+    val defaultGrandChildrenCreator = PipegraphGuardian.defaultChildFactory(reader, plugins, sparkSession,env.mlModelBL,
+      env.topicBL,writerFactory)
+
+
+
+    context.actorOf(PipegraphGuardian.props(master,defaultGrandChildrenCreator,retryDuration,monitoringInterval,componentFailedStrategy))
+
+  }
+
+  def props(pipegraphBl: PipegraphBL, childCreator: ChildCreator, retryInterval: FiniteDuration): Props =
     Props(new SparkConsumersStreamingMasterGuardian(pipegraphBl, childCreator, retryInterval))
 
   private def compose[A, B](functions: PartialFunction[A, B]*) = functions.foldLeft(PartialFunction.empty[A, B]) {

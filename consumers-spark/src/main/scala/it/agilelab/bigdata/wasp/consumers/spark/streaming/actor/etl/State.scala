@@ -4,4 +4,10 @@ sealed trait State
 
 object State {
 
+  case object WaitingToBeActivated extends State
+
+  case object WaitingToBeMaterialized extends State
+
+  case object WaitingToBeMonitored extends State
+
 }
