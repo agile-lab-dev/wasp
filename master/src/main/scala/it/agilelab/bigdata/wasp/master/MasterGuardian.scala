@@ -8,6 +8,7 @@ import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
@@ -73,6 +74,8 @@ class MasterGuardian(env: {
     case message: StartETL => call(sender(), message, onEtl(message.name, message.etlName, startEtl))
     case message: StopETL => call(sender(), message, onEtl(message.name, message.etlName, stopEtl))
     case message: StartBatchJob => call(sender(), message, onBatchJob(message.name, message.restConfig, startBatchJob))
+    case message: StartPipegraph => call(sender(), message, onPipegraph(message.name, startPipegraph))
+    case message: StopPipegraph => call(sender(), message, onPipegraph(message.name, stopPipegraph))
     //case message: Any => logger.error("unknown message: " + message)
   }
 
@@ -81,12 +84,7 @@ class MasterGuardian(env: {
     sender ! result
   }
 
-  private def onPipegraph(name: String, f: PipegraphModel => Either[String, String]): Either[String, String] = {
-    env.pipegraphBL.getByName(name) match {
-      case None => Left("Pipegraph not retrieved")
-      case Some(pipegraph) => f(pipegraph)
-    }
-  }
+
 
   private def onProducer(name: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
     env.producerBL.getByName(name) match {
@@ -99,6 +97,13 @@ class MasterGuardian(env: {
     env.pipegraphBL.getByName(pipegraphName) match {
       case None => Left("ETL not retrieved")
       case Some(pipegraph) => f(pipegraph, etlName)
+    }
+  }
+
+  private def onPipegraph(name: String, f: PipegraphModel => Either[String, String]): Either[String, String] = {
+    env.pipegraphBL.getByName(name) match {
+      case None => Left("Pipegraph not retrieved")
+      case Some(pipegraph) => f(pipegraph)
     }
   }
 
@@ -155,4 +160,20 @@ class MasterGuardian(env: {
     }
   }
 
+  private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
+    logger.info(s"Starting pipegraph '${pipegraph.name}'")
+    ??[PipegraphMessages.StartPipegraphResult](sparkConsumersStreamingMasterGuardian, PipegraphMessages.StartPipegraph(pipegraph.name)) match {
+      case PipegraphMessages.PipegraphStarted(name) => Right(s"Pipegraph '$name' accepted (queued or processing)")
+      case PipegraphMessages.PipegraphNotStarted(name, error) => Left(s"Pipegraph '$name' not accepted $error")
+    }
+  }
+
+  private def stopPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
+    logger.info(s"Stopping pipegraph '${pipegraph.name}'")
+    ??[PipegraphMessages.StopPipegraphResult](sparkConsumersStreamingMasterGuardian, PipegraphMessages.StopPipegraph
+    (pipegraph.name)) match {
+      case PipegraphMessages.PipegraphStopped(name) => Right(s"Pipegraph '$name' stopped")
+      case PipegraphMessages.PipegraphNotStopped(name, error) => Left(s"Pipegraph '$name' not stopped due to [$error]")
+    }
+  }
 }

@@ -132,7 +132,7 @@ class PipegraphGuardian(private val master: ActorRef,
         materialized = data.materialized + association)
 
     case Event(ChildrenProtocol.ETLNotMaterialized(etl, reason), data: MaterializingData) =>
-      log.info("Could not materialize etl [{}] on worker [{}]", etl.name, sender())
+      log.info("Could not materialize etl [{}] on worker [{}] reason: [{}]", etl.name, sender(), reason)
 
       val association = WorkerToEtlAssociation(sender(), etl)
 

@@ -2,23 +2,29 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphModel}
+import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages
 
 sealed trait Protocol
 
 
 object Protocol {
 
-  case class StartPipegraph(name: String) extends Protocol
+  val StartPipegraph: PipegraphMessages.StartPipegraph.type = PipegraphMessages.StartPipegraph
+  val PipegraphStarted: PipegraphMessages.PipegraphStarted.type = PipegraphMessages.PipegraphStarted
+  val PipegraphNotStarted: PipegraphMessages.PipegraphNotStarted.type = PipegraphMessages.PipegraphNotStarted
 
-  case class PipegraphStarted(name: String) extends Protocol
+  val StopPipegraph: PipegraphMessages.StopPipegraph.type = PipegraphMessages.StopPipegraph
+  val PipegraphStopped: PipegraphMessages.PipegraphStopped.type = PipegraphMessages.PipegraphStopped
+  val PipegraphNotStopped: PipegraphMessages.PipegraphNotStopped.type = PipegraphMessages.PipegraphNotStopped
 
-  case class PipegraphNotStarted(name: String, reason: String) extends Protocol
 
-  case class StopPipegraph(name: String) extends Protocol
+  type StartPipegraph = PipegraphMessages.StartPipegraph
+  type PipegraphStarted = PipegraphMessages.PipegraphStarted
+  type PipegraphNotStarted = PipegraphMessages.PipegraphNotStarted
 
-  case class PipegraphStopped(name: String) extends Protocol
-
-  case class PipegraphNotStopped(name: String, reason: String) extends Protocol
+  type StopPipegraph = PipegraphMessages.StopPipegraph
+  type PipegraphStopped = PipegraphMessages.PipegraphStopped
+  type PipegraphNotStopped = PipegraphMessages.PipegraphNotStopped
 
   private[master] case object Initialize extends Protocol
 

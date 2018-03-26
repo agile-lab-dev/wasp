@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph, StopPipegraph}
+import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph,StopPipegraph}
 import it.agilelab.bigdata.wasp.core.models.PipegraphModel
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport

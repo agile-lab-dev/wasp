@@ -14,6 +14,8 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefaul
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import org.apache.commons.cli.CommandLine
 
 import scala.collection.JavaConverters._
 
@@ -26,6 +28,13 @@ import scala.collection.JavaConverters._
 trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
 
 	var plugins: Map[String, WaspConsumersSparkPlugin] = Map()
+
+	override def launch(commandLine: CommandLine): Unit = {
+		SparkSingletons.initializeSpark(ConfigManager.getSparkStreamingConfig)
+		SparkSingletons.initializeSparkStreaming(ConfigManager.getSparkStreamingConfig)
+
+		super.launch(commandLine)
+	}
 
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 
@@ -42,13 +51,10 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 			_ => PipegraphGuardian.Retry,
 			ConfigBL)
 
-		var masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(
+		val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(
 			ConfigBL.pipegraphBL,
 			childrenCreator,
 			5.seconds)
-
-
-
 
 
 		val sparkConsumersStreamingMasterGuardianSingletonInfo = (

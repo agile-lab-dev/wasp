@@ -45,7 +45,7 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
   when(WaitingToBeMaterialized) {
     case Event(MyProtocol.MaterializeETL(etl), ActivatedData(dataFrame)) =>
       materialize(etl, pipegraph, dataFrame) match {
-        case Success(streamingQuery) => goto(WaitingToBeMaterialized) using MaterializedData(streamingQuery) replying Protocol
+        case Success(streamingQuery) => goto(WaitingToBeMonitored) using MaterializedData(streamingQuery) replying Protocol
           .ETLMaterialized(etl)
         case Failure(reason) => goto(WaitingToBeMaterialized) using ActivatedData(dataFrame) replying MyProtocol
           .ETLNotMaterialized(etl, reason)
@@ -60,13 +60,13 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
       monitor(query) match {
         case Success(monitoringInfo) => monitoringInfo match {
           case MonitorOutcome(_, _, _, Some(failure)) =>
-            goto(WaitingToBeMaterialized) using MaterializedData(query) replying MyProtocol.ETLCheckFailed(etl, failure)
+            goto(WaitingToBeMonitored) using MaterializedData(query) replying MyProtocol.ETLCheckFailed(etl, failure)
           case MonitorOutcome(_, _, _, None) =>
-            goto(WaitingToBeMaterialized) using MaterializedData(query) replying MyProtocol.ETLCheckSucceeded(etl)
+            goto(WaitingToBeMonitored) using MaterializedData(query) replying MyProtocol.ETLCheckSucceeded(etl)
         }
 
         case Failure(reason) =>
-          goto(WaitingToBeMaterialized) using MaterializedData(query) replying MyProtocol.ETLCheckFailed(etl, reason)
+          goto(WaitingToBeMonitored) using MaterializedData(query) replying MyProtocol.ETLCheckFailed(etl, reason)
       }
 
     case Event(MyProtocol.StopETL(etl), MaterializedData(query)) =>

@@ -49,7 +49,11 @@ object Data {
       val updatedScheduleInstances = scheduleInstances.filterNot(_.instanceOf == instance.instanceOf) :+
         ScheduleInstance(worker, updatedInstance)
 
-      Schedule(updatedScheduleInstances)
+
+      val statusesToForget = Set(PipegraphStatus.STOPPED, PipegraphStatus.FAILED)
+
+      Schedule(updatedScheduleInstances.filterNot(instance => statusesToForget.contains(instance.pipegraphInstance
+        .status)))
     }
 
     def pending: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.PENDING)
