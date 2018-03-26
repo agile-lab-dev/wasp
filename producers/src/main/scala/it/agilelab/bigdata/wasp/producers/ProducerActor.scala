@@ -25,6 +25,11 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
 
   def mainTask()
 
+  /**
+    * Defines a function to extract the key to be used to identify the landing partition in kafka topic,
+    * given a message of type T
+    * @return a function that extract the partition key as String from the T instance to be sent to kafka
+    */
   def retrievePartitionKey: T => String
 
   lazy val topicSchemaType = topic.get.topicDataType
