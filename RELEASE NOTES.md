@@ -303,3 +303,140 @@ Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
 Closes #100
 
 In  WaspLauncher.initializeWasp(): pre-checked if the current node is a `master` and done an ad-hoc mngm
+
+
+## WASP 2.7.0
+26/03/2018
+
+### Resolve "[rest] batchjob-start REST json parameter"
+
+[Merge request 38](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/38)
+
+Created at: 2018-03-16T18:31:17.440Z
+
+Updated at: 2018-03-21T09:34:24.638Z
+
+Branch: feature/104-rest-allow-batchjob-rest-post-parameters
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #104, #86 
+
+**Usage example**
+
+cURL
+
+```bash
+curl -X POST \
+  http://localhost:2891/batchjobs/TestBatchJobFromHdfsFlatToConsole/start \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "stringKey": "aaa",
+        "intKey2": 5
+      }'
+```
+
+Rest API => POST http://localhost:2891/batchjobs/_batchJobName_/start
+
+Header => Content-Type: application/json
+
+Body => _jsonContent_
+
+**Note**
+
+For the resulting batchJob instance start, the json keys (in the REST json parameter) will be merged with the batchJobETL strategy configuration (Typesafe Config) keys of the related batchJob => the merged configuration is injected in the Strategy `configuration` (Typesafe Config)
+
+*N.B. json keys (in the REST json parameter) override any duplicate keys of the specific batchJob*
+
+
+### Resolve "[whitelabel] testcases"
+
+[Merge request 39](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/39)
+
+Created at: 2018-03-19T15:21:37.224Z
+
+Updated at: 2018-03-21T13:44:40.817Z
+
+Branch: feature/106-whitelabel-verify-hbase-testcase
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #106 
+
+Fix HBase
+* `docker-service-configuration/hdfs` => `docker-service-configuration/hadoop` including also `hbase-site.xml`
+* `whitelabel/docker/start-wasp.sh`:
+
+```
+DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hdfs:/etc/hadoop/conf/:ro ..."
+```
+
+=>
+
+```
+DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hadoop:/etc/hadoop/conf/:ro ..."
+```
+
+
+### Resolve "[config] revise core-site.xml and hbase.site.xml in containers"
+
+[Merge request 40](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/40)
+
+Created at: 2018-03-21T13:36:28.900Z
+
+Updated at: 2018-03-21T14:01:03.491Z
+
+Branch: feature/108-config-revise-core-site-xml-and-hbase-site-xml-in-container-and
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #108
+* `core-site.xml` in solr, hdfs, hbase containers:
+
+```
+hdfs://hdfs-namenode:9000
+```
+=>
+```
+hdfs://namenode:9000
+```
+
+* `whitelabel/docker/start-wasp.sh`:
+
+```
+DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hdfs:/etc/hadoop/conf/:ro  -v $SCRIPT_DIR/docker-service-configuration/hbase:/etc/hbase/conf/:ro"
+```
+
+=>
+
+```
+DOCKER_OPTS="$DOCKER_OPTS -v $SCRIPT_DIR/docker-service-configuration/hadoop:/etc/hadoop/conf/:ro"
+```
+
+*  hbase in `reference.conf`:
+
+```
+    core-site-xml-path = "/etc/hbase/conf/core-site.xml"
+    hbase-site-xml-path = "/etc/hbase/conf/hbase-site.xml" 
+```
+
+ =>
+
+```
+    core-site-xml-path = "/etc/hadoop/conf/core-site.xml"
+    hbase-site-xml-path = "/etc/hadoop/conf/hbase-site.xml"
+```
+
+### GL-111: Producer actor now support extract partition key value
+
+[Merge request 44](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/44)
+
+Created at: 2018-03-23T17:29:37.763Z
+
+Updated at: 2018-03-26T10:29:38.088Z
+
+Branch: feature/GL-111-producerPartitionKey
+
+Author: [Vito](https://gitlab.com/vito.ressa)
+
+Closes #111 
