@@ -25,8 +25,12 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
 
   def mainTask()
 
-  //TODO occhio che abbiamo la partition key schianatata, quindi usiamo sempre e solo una partizione
-  val partitionKey = "partitionKey"
+  /**
+    * Defines a function to extract the key to be used to identify the landing partition in kafka topic,
+    * given a message of type T
+    * @return a function that extract the partition key as String from the T instance to be sent to kafka
+    */
+  def retrievePartitionKey: T => String
 
   lazy val topicSchemaType = topic.get.topicDataType
   lazy val topicSchema = JsonConverter.toString(topic.get.schema.asDocument())
@@ -50,9 +54,9 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
 
       try {
         topicSchemaType match {
-          case "avro" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, partitionKey, AvroToJsonUtil.jsonToAvro(msg, topicSchema))
-          case "json" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, partitionKey, JsonToByteArrayUtil.jsonToByteArray(msg))
-          case _ => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, partitionKey, AvroToJsonUtil.jsonToAvro(msg, topicSchema))
+          case "avro" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
+          case "json" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), JsonToByteArrayUtil.jsonToByteArray(msg))
+          case _ => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
         }
 
       } catch {

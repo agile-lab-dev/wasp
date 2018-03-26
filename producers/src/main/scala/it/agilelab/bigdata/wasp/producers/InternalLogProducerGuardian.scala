@@ -97,6 +97,9 @@ private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[Top
 
   override def receive: Actor.Receive = super.receive orElse loggerReceive
 
+  //TODO define a proper partition field from logEvent
+  override def retrievePartitionKey: LogEvent => String = _ => "staticKey"
+
   def loggerReceive(): Actor.Receive = {
     case event : LogEvent => sendMessage(event)
   }
