@@ -1,5 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props, Stash}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReader
@@ -17,6 +20,8 @@ import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark.sql.SparkSession
 import it.agilelab.bigdata.wasp.core
+import org.apache.commons.codec.net.URLCodec
+
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
@@ -42,7 +47,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
       resetStatesWhileRecoveringAndReturnPending match {
         case Success(pending) =>
           val nextSchedule = pending.foldLeft(Schedule(Seq())) { (acc, instance) => acc.toPending(self, instance) }
-          val child = pending.map(_ => childCreator(self,context))
+          val child = pending.map(pending => childCreator(self, pending.name, context))
           child.foreach(_ ! WorkAvailable)
           log.info("Initialization succeeded")
           goto(Initialized) using nextSchedule
@@ -80,7 +85,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
         case Success(instance) =>
 
           val nextSchedule = schedule.toPending(self, instance)
-          val child = childCreator(self, context)
+          val child = childCreator(self, instance.name, context)
           child ! WorkAvailable
 
           stay using nextSchedule replying Protocol.PipegraphStarted(name)
@@ -151,7 +156,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
           stay
       }
 
-    case Event(_:ChildProtocol.WorkNotCancelled, _: Schedule) =>
+    case Event(_: ChildProtocol.WorkNotCancelled, _: Schedule) =>
       setTimer(Timers.workNotCancelledRetryTimer, RetryEnvelope(ChildProtocol.WorkNotCancelled, sender()), retryInterval)
       stay
 
@@ -178,8 +183,8 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
           stay
       }
 
-    case Event(message:WorkFailed, _: Schedule) =>
-      self ! RetryEnvelope(message,sender())
+    case Event(message: WorkFailed, _: Schedule) =>
+      self ! RetryEnvelope(message, sender())
       stay
 
     case Event(RetryEnvelope(message@WorkFailed(reason), originalSender), schedule: Schedule) =>
@@ -201,7 +206,7 @@ object SparkConsumersStreamingMasterGuardian {
 
   import scala.concurrent.duration._
 
-  type ChildCreator = (ActorRef, ActorRefFactory) => ActorRef
+  type ChildCreator = (ActorRef, String, ActorRefFactory) => ActorRef
 
 
   def defaultChildCreator(reader: StructuredStreamingReader,
@@ -218,21 +223,21 @@ object SparkConsumersStreamingMasterGuardian {
                             val topicBL: TopicBL
                             val rawBL: RawBL
                             val keyValueBL: KeyValueBL
-                          }): ChildCreator = { (master, context) =>
+                          }): ChildCreator = { (master, name, context) =>
 
 
-
-    val writerFactory : MaterializationSteps.WriterFactory = { writerModel =>
-      sparkWriterFactory.createSparkWriterStructuredStreaming(env,sparkSession,writerModel)
+    val writerFactory: MaterializationSteps.WriterFactory = { writerModel =>
+      sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, writerModel)
     }
 
 
-    val defaultGrandChildrenCreator = PipegraphGuardian.defaultChildFactory(reader, plugins, sparkSession,env.mlModelBL,
-      env.topicBL,writerFactory)
+    val defaultGrandChildrenCreator = PipegraphGuardian.defaultChildFactory(reader, plugins, sparkSession, env.mlModelBL,
+      env.topicBL, writerFactory)
 
+    val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
 
-
-    context.actorOf(PipegraphGuardian.props(master,defaultGrandChildrenCreator,retryDuration,monitoringInterval,componentFailedStrategy))
+    context.actorOf(PipegraphGuardian.props(master, defaultGrandChildrenCreator, retryDuration, monitoringInterval,
+      componentFailedStrategy), saneName)
 
   }
 
@@ -243,6 +248,7 @@ object SparkConsumersStreamingMasterGuardian {
     (acc, elem) => acc.orElse(elem)
   }
 
+  case class RetryEnvelope[O](original: O, sender: ActorRef)
 
   object Timers {
     val workFailedRetryTimer = "work-failed-retry-timer"
@@ -251,7 +257,5 @@ object SparkConsumersStreamingMasterGuardian {
     val workCompleted = "completed-retry-timer"
 
   }
-
-  case class RetryEnvelope[O](original:O, sender:ActorRef)
 
 }

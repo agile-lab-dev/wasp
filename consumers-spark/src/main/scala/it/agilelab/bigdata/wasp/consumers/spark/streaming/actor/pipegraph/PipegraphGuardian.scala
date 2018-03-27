@@ -1,5 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
 import State._
 import Data._
@@ -45,7 +48,7 @@ class PipegraphGuardian(private val master: ActorRef,
 
       log.info("Activating etl [{}]", etl.name)
 
-      val newAssociation = WorkerToEtlAssociation(childFactory(data.pipegraph, context), etl)
+      val newAssociation = WorkerToEtlAssociation(childFactory(data.pipegraph, etl.name, context), etl)
 
       newAssociation.worker ! ChildrenProtocol.ActivateETL(etl)
 
@@ -457,7 +460,7 @@ class PipegraphGuardian(private val master: ActorRef,
 
 object PipegraphGuardian {
 
-  type ChildFactory = (PipegraphModel,ActorRefFactory) => ActorRef
+  type ChildFactory = (PipegraphModel,String, ActorRefFactory) => ActorRef
   type ComponentFailedStrategy = StructuredStreamingETLModel => Choice
 
   def defaultChildFactory(reader: StructuredStreamingReader,
@@ -465,10 +468,13 @@ object PipegraphGuardian {
                           sparkSession: SparkSession,
                           mlModelBl: MlModelBL,
                           topicsBl: TopicBL,
-                          writerFactory: WriterFactory): ChildFactory = { (pipegraph, context) =>
+                          writerFactory: WriterFactory): ChildFactory = { (pipegraph,name, context) =>
+
+
+    val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
 
     context.actorOf(StructuredStreamingETLActor.props(reader, plugins, sparkSession, mlModelBl, topicsBl,
-      writerFactory, pipegraph))
+      writerFactory, pipegraph),saneName)
 
   }
 
