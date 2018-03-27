@@ -12,6 +12,7 @@ Below you can find all the APIs associated with the supported HTTP verbs.
 | /pipegraphs/name/{name} | Get the pipegraph with the specified name. |   |   |   |
 | /pipegraphs/{id}/start |  | Start the pipegraph with the specified id. |   |   |
 | /pipegraphs/{id}/stop |  | Stop the pipegraph with the specified id. |   |   |
+| /pipegraphs/{id}/instances |  Retrieve instances of specified pipegraph ordered newest to latest |   |   | |
 
 Pipegraphs Sample
 

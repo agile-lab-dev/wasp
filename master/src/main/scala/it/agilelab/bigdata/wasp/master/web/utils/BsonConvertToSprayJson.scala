@@ -90,5 +90,9 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val jobStatusFormat: RootJsonFormat[JobStatus.JobStatus] = new EnumJsonConverter(JobStatus)
   implicit val typesafeConfigFormat: RootJsonFormat[Config] = new TypesafeConfigJsonConverter
   implicit val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat7(BatchJobInstanceModel.apply)
+  implicit val pipegraphStatusFormat: RootJsonFormat[PipegraphStatus.PipegraphStatus] = new EnumJsonConverter(PipegraphStatus)
+  implicit val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat6(BatchJobInstanceModel.apply)
+  implicit val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat6(PipegraphInstanceModel.apply)
+
 }
 
