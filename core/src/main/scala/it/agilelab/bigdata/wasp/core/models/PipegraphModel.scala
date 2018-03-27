@@ -40,6 +40,9 @@ trait ProcessingComponentModel {
   }
 }
 
+@deprecated("Legacy Streaming ETL Model are deprecated, running of pipegraph containing legacy components will not " +
+  "work, keeping the definition only for api compatibility, the definition will be removed in a future wasp version",
+  "2.8.0")
 case class LegacyStreamingETLModel(name: String,
                                    inputs: List[ReaderModel],
                                    output: WriterModel,
@@ -56,7 +59,6 @@ case class StructuredStreamingETLModel(name: String,
                                        strategy: Option[StrategyModel],
                                        kafkaAccessType: String,
                                        group: String = "default",
-                                       var isActive: Boolean = false,
                                        config: Map[String, String]) extends ProcessingComponentModel
 
 case class RTModel(name: String,

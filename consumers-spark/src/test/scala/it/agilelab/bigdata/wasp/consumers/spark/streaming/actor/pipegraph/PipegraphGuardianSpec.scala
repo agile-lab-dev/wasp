@@ -19,11 +19,12 @@ import scala.collection.immutable.Map
 import scala.concurrent.duration._
 
 
-class ProbesFactory(implicit val actorSystem: ActorSystem) extends ((PipegraphModel,ActorRefFactory) => ActorRef) {
+class ProbesFactory(implicit val actorSystem: ActorSystem) extends ((PipegraphModel,String, ActorRefFactory) =>
+  ActorRef) {
 
   var probes: Seq[TestProbe] = Seq.empty
 
-  override def apply(pipegraphModel:PipegraphModel,factory: ActorRefFactory): ActorRef = {
+  override def apply(pipegraphModel:PipegraphModel,name: String, factory: ActorRefFactory): ActorRef = {
     val probe = TestProbe()
     probes = probes :+ probe
     probe.ref

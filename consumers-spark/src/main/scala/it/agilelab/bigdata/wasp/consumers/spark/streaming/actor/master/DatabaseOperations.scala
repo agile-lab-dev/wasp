@@ -12,9 +12,24 @@ private[streaming] trait DatabaseOperations {
   this: SparkConsumersStreamingMasterGuardian =>
 
 
+  def checkThatModelDoesNotContainLegacyOrRTComponents(model: PipegraphModel) : Try[PipegraphModel] = {
+
+    val errors = Seq(
+      (() => model.legacyStreamingComponents.nonEmpty, "No legacy streaming etl model allowed in pipegraph definition"),
+      (() => model.rtComponents.nonEmpty, "No rt etl model allowed in pipegraph definition")
+    ).filter(_._1())
+     .map(_._2)
+
+    if(errors.nonEmpty){
+      Failure(new Exception(errors.mkString(",")))
+    }else{
+      Success(model)
+    }
+
+  }
 
   def createInstanceOf(modelName: String): Try[PipegraphInstanceModel] = for {
-    model <- retrievePipegraph(modelName)
+    model <- retrievePipegraph(modelName).flatMap(checkThatModelDoesNotContainLegacyOrRTComponents)
     instance <- createInstanceOf(model)
   } yield instance
 

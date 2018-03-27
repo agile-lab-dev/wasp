@@ -78,8 +78,9 @@ class IntegrationSpec
       val strategy: ComponentFailedStrategy = _ => DontCare
 
 
-      val childCreator: ChildCreator = (master,system) => system.actorOf(Props(new PipegraphGuardian(master, factory,
-        500.milliseconds, 500.milliseconds, strategy)))
+      val childCreator: ChildCreator = (master,name, system) => system.actorOf(Props(new PipegraphGuardian(master,
+        factory,
+        500.milliseconds, 500.milliseconds, strategy)),name)
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
 
@@ -143,8 +144,9 @@ class IntegrationSpec
       val strategy: ComponentFailedStrategy = _ => DontCare
 
 
-      val childCreator: ChildCreator = (master, system) => system.actorOf(Props(new PipegraphGuardian(master, factory,
-        500.milliseconds, 500.milliseconds, strategy)))
+      val childCreator: ChildCreator = (master,name, system) => system.actorOf(Props(new PipegraphGuardian(master,
+        factory,
+        500.milliseconds, 500.milliseconds, strategy)), name)
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
 
@@ -223,8 +225,9 @@ class IntegrationSpec
       val strategy: ComponentFailedStrategy = _ => StopAll
 
 
-      val childCreator: ChildCreator = (master,system) => system.actorOf(Props(new PipegraphGuardian(master, factory,
-        500.milliseconds, 500.milliseconds, strategy)))
+      val childCreator: ChildCreator = (master,name, system) => system.actorOf(Props(new PipegraphGuardian(master,
+        factory,
+        500.milliseconds, 500.milliseconds, strategy)), name)
 
       val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
 
