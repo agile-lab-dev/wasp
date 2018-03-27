@@ -8,10 +8,18 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.util.{Failure, Success, Try}
 
+/**
+  * Trait holding the Database operations needed by [[SparkConsumersStreamingMasterGuardian]]
+  */
 private[streaming] trait DatabaseOperations {
   this: SparkConsumersStreamingMasterGuardian =>
 
 
+  /**
+    * Preprocessing method that checks that currently not supported components are not used.
+    * @param model The pipegraph model to check
+    * @return The checked pipegraphmodel
+    */
   def checkThatModelDoesNotContainLegacyOrRTComponents(model: PipegraphModel) : Try[PipegraphModel] = {
 
     val errors = Seq(

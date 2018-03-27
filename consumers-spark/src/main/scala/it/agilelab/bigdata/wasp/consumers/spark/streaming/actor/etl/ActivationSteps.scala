@@ -16,18 +16,42 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.util.{Failure, Success, Try}
 
+/**
+  * Trait collecting operations to be composed to realize Activation of a [[StructuredStreamingETLModel]]
+  */
 trait ActivationSteps {
 
-  val reader: StructuredStreamingReader
+  /**
+    * We need a [[StructuredStreamingReader]] able to read from kafka.
+    */
+  protected val reader: StructuredStreamingReader
 
-  val plugins: Map[String, WaspConsumersSparkPlugin]
+  /**
+    * We need the plugins map
+    */
+  protected val plugins: Map[String, WaspConsumersSparkPlugin]
 
-  val sparkSession: SparkSession
+  /**
+    * We need a Spark Session
+    */
+  protected val sparkSession: SparkSession
 
-  val mlModelBl: MlModelBL
+  /**
+    * We need access to machine learning models
+    */
+  protected val mlModelBl: MlModelBL
 
-  val topicsBl: TopicBL
+  /**
+    * We need access to topics
+    */
+  protected   val topicsBl: TopicBL
 
+
+  /**
+    * Performs activation of a [[StructuredStreamingETLModel]] returning the output data frame
+    * @param etl The [[StructuredStreamingETLModel]] to activate
+    * @return the output dataframe
+    */
   protected def activate(etl: StructuredStreamingETLModel): Try[DataFrame] = for {
     streamingSource <- checkOnlyOneStreamingSource(etl).recoverWith {
       case e: Throwable => Failure(new Exception(s"Only one streaming source is allowed in etl ${etl.name}", e))
@@ -44,6 +68,12 @@ trait ActivationSteps {
 
   } yield transformedStream
 
+
+  /**
+    * Checks that [[StructuredStreamingETLModel]] contains only a Streaming source
+    * @param etl The etl to check
+    * @return The topic model
+    */
   private def checkOnlyOneStreamingSource(etl: StructuredStreamingETLModel): Try[TopicModel] = {
 
     etl.inputs.filter(_.readerType == ReaderType.kafkaReaderType) match {
@@ -55,6 +85,11 @@ trait ActivationSteps {
 
   }
 
+  /**
+    * Retries a [[TopicModel]] by name from DB
+    * @param named The name of the topic
+    * @return The retrieved [[TopicModel]]
+    */
   private def retrieveTopic(named: String) = Try {
     topicsBl.getByName(named)
   } flatMap {
@@ -62,14 +97,55 @@ trait ActivationSteps {
     case None => Failure(new Exception(s"Failed to retrieve topic named [$named]"))
   }
 
+
+  /**
+    * Creates structured stream for kafka streaming source
+    * @param etl The etl to activate streaming sources for
+    * @param topicModel The model of the topic to read from
+    * @return The streaming reader.
+    */
   private def createStructuredStreamFromStreamingSource(etl: StructuredStreamingETLModel,
                                                         topicModel: TopicModel): Try[(ReaderKey, DataFrame)] = Try {
     (ReaderKey(TopicModel.readerType, topicModel.name),
       reader.createStructuredStream(etl.group, etl.kafkaAccessType, topicModel)(sparkSession))
   }
 
+
+  /**
+    * Creates structured Streams for non streaming sources
+    * @param etl The etl to activate Non streaming sources for
+    * @return The created non streaming Sources
+    */
   private def createStructuredStreamsFromNonStreamingSources(etl: StructuredStreamingETLModel): Try[Map[ReaderKey, DataFrame]] = {
+
+    def createAnotherStructuredStreamFromNonStreamingSource(previous: Map[ReaderKey, DataFrame],
+                                                                    readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
+
+      def createReader(readerModel: ReaderModel): Try[SparkReader] = Try {
+        readerModel match {
+          case ReaderModel(name, endpointName, readerType) =>
+            plugins.get(readerType.getActualProduct) match {
+              case Some(r) => r.getSparkReader(endpointName, name)
+              case None => throw new Exception(s"Cannot create Reader, no plugin able to handle [$readerType]")
+            }
+        }
+      }
+
+
+      def createStructuredStream(reader: SparkReader): Try[(ReaderKey, DataFrame)] = Try {
+        (ReaderKey(reader.readerType, reader.name), reader.read(sparkSession.sparkContext))
+      }
+
+
+      for {
+        reader <- createReader(readerModel)
+        stream <- createStructuredStream(reader)
+      } yield previous ++ Map(stream)
+
+    }
+
     val empty = Try(Map.empty[ReaderKey, DataFrame])
+
 
     etl.inputs
       .filterNot(_.readerType == ReaderType.kafkaReaderType)
@@ -82,32 +158,17 @@ trait ActivationSteps {
 
   }
 
-  private def createAnotherStructuredStreamFromNonStreamingSource(previous: Map[ReaderKey, DataFrame],
-                                                                  readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
-
-    def createReader(readerModel: ReaderModel): Try[SparkReader] = Try {
-      readerModel match {
-        case ReaderModel(name, endpointName, readerType) =>
-          plugins.get(readerType.getActualProduct) match {
-            case Some(r) => r.getSparkReader(endpointName, name)
-            case None => throw new Exception(s"Cannot create Reader, no plugin able to handle [$readerType]")
-          }
-      }
-    }
 
 
-    def createStructuredStream(reader: SparkReader): Try[(ReaderKey, DataFrame)] = Try {
-      (ReaderKey(reader.readerType, reader.name), reader.read(sparkSession.sparkContext))
-    }
 
-
-    for {
-      reader <- createReader(readerModel)
-      stream <- createStructuredStream(reader)
-    } yield previous ++ Map(stream)
-
-  }
-
+  /**
+    * Applies the transformation if an input strategy is supplied, if not the input data frame is returned.
+    *
+    * @param etl The etl whose strategy should be applied
+    * @param structuredInputStream The input stream from kafka
+    * @param nonStreamingInputStreams The other non streaming DataFrames
+    * @return A dataframe with strategy applied or the input DataFrame
+    */
   private def applyTransformOrInputIfNoStrategy(etl: StructuredStreamingETLModel, structuredInputStream: (ReaderKey,
     DataFrame), nonStreamingInputStreams: Map[ReaderKey, DataFrame]): Try[DataFrame] = {
 
@@ -129,6 +190,12 @@ trait ActivationSteps {
 
   }
 
+  /**
+    * Instantiate a strategy if one is configured
+    *
+    * @param etl The etl to instantiate strategy for
+    * @return A try holding an optional strategy
+    */
   private def createStrategy(etl: StructuredStreamingETLModel): Try[Option[Strategy]] = {
 
 
@@ -184,6 +251,17 @@ trait ActivationSteps {
 
   }
 
+  /**
+    * Applies strategy and handles metadata collection for telemetry purposes.
+    *
+    * @param readerKey The key to place the resulting stream in the map passed to the strategy
+    * @param stream The input stream coming from kafka
+    * @param dataStoreDFs The data frames representing non streaming data stores
+    * @param strategy The strategy to be applied
+    * @param writerType The type of the output writer, will be used to properly handle metadata schema
+    * @param etl The etl model
+    * @return A Try representing the application of the strategy as a new DataFrame
+    */
   private def applyTransform(readerKey: ReaderKey,
                              stream: DataFrame,
                              dataStoreDFs: Map[ReaderKey, DataFrame],

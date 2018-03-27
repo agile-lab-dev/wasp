@@ -13,12 +13,27 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.util.{Failure, Success, Try}
 
+/**
+  * Trait collecting operations to be composed to realize Materialization of a [[StructuredStreamingETLModel]]
+  */
 trait MaterializationSteps {
 
-  val pipegraph : PipegraphModel
-  val writerFactory: WriterFactory
 
-  def materialize(etl: StructuredStreamingETLModel,pipegraph: PipegraphModel, dataFrame: DataFrame): Try[StreamingQuery] =
+  /**
+    * We need a writer factory
+    */
+  protected val writerFactory: WriterFactory
+
+
+  /**
+    * Performs materialization of a dataFrame activated from a [[StructuredStreamingETLModel]]
+    * @param etl The etl whose output dataFrame is being materialized
+    * @param pipegraph The pipegraph containing the etl
+    * @param dataFrame The [[DataFrame]] created by the activation step
+    * @return The Materialized [[StreamingQuery]]
+    */
+  protected def materialize(etl: StructuredStreamingETLModel,pipegraph: PipegraphModel, dataFrame: DataFrame)
+    : Try[StreamingQuery] =
     for {
     config <- retrieveSparkStreamingConfig.recoverWith {
       case e: Throwable => Failure(new Exception(s"Cannot retrieve spark streaming config in etl ${etl.name}", e))
@@ -33,6 +48,8 @@ trait MaterializationSteps {
       case e: Throwable => Failure(new Exception(s"Cannot materialize etl ${etl.name}", e))
     }
   } yield streamingQuery
+
+
 
   private def generateCheckPointDir(etl: StructuredStreamingETLModel,
                                     sparkStreamingConfig: SparkStreamingConfigModel,
@@ -64,5 +81,11 @@ trait MaterializationSteps {
 }
 
 object MaterializationSteps {
+
+  /**
+    * A function able to go from a [[WriterModel]] to an [[Option]] of [[SparkStructuredStreamingWriter]].
+    *
+    * THe goal of this type is to abstract out the concrete implementation of this computation.
+    */
   type WriterFactory = (WriterModel) => Option[SparkStructuredStreamingWriter]
 }

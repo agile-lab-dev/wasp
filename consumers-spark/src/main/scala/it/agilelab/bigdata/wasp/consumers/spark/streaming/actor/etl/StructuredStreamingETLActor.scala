@@ -20,7 +20,7 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
                                           override val mlModelBl: MlModelBL,
                                           override val topicsBl: TopicBL,
                                           override val writerFactory: WriterFactory,
-                                          override val pipegraph: PipegraphModel
+                                          val pipegraph: PipegraphModel
                                          )
   extends FSM[State, Data]
     with ActivationSteps

@@ -4,18 +4,32 @@ import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
 import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphStatus}
 
-sealed trait Data {
-
-}
+/**
+  * Trait marking classes holding [[SparkConsumersStreamingMasterGuardian]] State Data
+  */
+sealed trait Data
 
 object Data {
 
+  /**
+    * Case class representing an element of the current schedule, it associates a worker to a pipegraph instance
+    * @param worker The worker
+    * @param pipegraphInstance The pipegraph instance
+    */
   case class ScheduleInstance(worker: ActorRef, pipegraphInstance: PipegraphInstanceModel) {
     def instanceOf: String = pipegraphInstance.instanceOf
   }
 
+  /**
+    * Empty state data.
+    */
   case object NoData extends Data
 
+  /**
+    * Data of the [[State.Initialized]] state
+    *
+    * @param scheduleInstances The current know schedules to be instantiated
+    */
   case class Schedule private(private val scheduleInstances: Seq[ScheduleInstance])
     extends Data {
 
