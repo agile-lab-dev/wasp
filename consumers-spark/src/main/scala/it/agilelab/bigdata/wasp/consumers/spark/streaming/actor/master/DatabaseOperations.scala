@@ -132,6 +132,15 @@ private[streaming] trait DatabaseOperations {
   }
 
   /**
+    * Retrieves [[PipegraphModel]]s that are marked as system
+    *
+    * @return A Try containing the [[PipegraphModel]]s or an exception
+    */
+  def retrieveSystemPipegraphs(): Try[Seq[PipegraphModel]] = Try {
+    pipegraphBL.getSystemPipegraphs
+  }
+
+  /**
     * Updates the status of the supplied instance to the target status.
     *
     * @param jobInstance  The instance to update

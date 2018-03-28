@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
 import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphStatus, _}
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -568,7 +568,6 @@ class SparkConsumersStreamingMasterGuardianSpec
 
 
     }
-
 
   }
 

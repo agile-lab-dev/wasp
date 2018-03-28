@@ -25,12 +25,13 @@ object Data {
     */
   case object NoData extends Data
 
+
   /**
     * Data of the [[State.Initialized]] state
     *
     * @param scheduleInstances The current know schedules to be instantiated
     */
-  case class Schedule private(private val scheduleInstances: Seq[ScheduleInstance])
+  case class Schedule private(scheduleInstances: Seq[ScheduleInstance])
     extends Data {
 
     private val byStatus = scheduleInstances.groupBy(instance => instance.pipegraphInstance.status)
@@ -71,6 +72,8 @@ object Data {
     }
 
     def pending: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.PENDING)
+    def processing: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus
+      .PROCESSING)
 
     def pending(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PENDING)
 

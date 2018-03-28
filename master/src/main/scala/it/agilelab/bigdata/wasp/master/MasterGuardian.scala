@@ -9,6 +9,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages
+import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages.StartSystemPipegraphs
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
@@ -62,6 +63,15 @@ class MasterGuardian(env: {
     with Logging {
 
   import MasterGuardian._
+
+
+  override def preStart(): Unit = {
+    if (waspConfig.systemPipegraphsStart) {
+      logger.info("Activating system pipegraphs...")
+
+      sparkConsumersStreamingMasterGuardian ! StartSystemPipegraphs
+    }
+  }
 
 
   override def receive: Actor.Receive = {

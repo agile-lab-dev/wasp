@@ -8,6 +8,9 @@ object PipegraphMessages {
   sealed trait StartPipegraphResult extends PipegraphMessage
   sealed trait StopPipegraphResult extends PipegraphMessage
 
+  case object StartSystemPipegraphs extends  PipegraphMessage
+
+  case object SystemPipegraphsStarted extends PipegraphMessage
 
   case class StartPipegraph(name: String) extends PipegraphMessage
 

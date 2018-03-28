@@ -22,4 +22,7 @@ object State {
     */
   case object Initialized extends State
 
+
+  case object Restarting extends State
+
 }

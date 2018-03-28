@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphModel}
 import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages
+import it.agilelab.bigdata.wasp.core.messages
 
 /**
   * Trait marking messages as being part of the [[SparkConsumersStreamingMasterGuardian]] protocol.
@@ -61,6 +62,24 @@ object Protocol {
     */
   val PipegraphNotStopped: PipegraphMessages.PipegraphNotStopped.type = PipegraphMessages.PipegraphNotStopped
 
+
+  /**
+    * Alias object  [[messages.RestartConsumers]]
+    */
+  val RestartConsumers: messages.RestartConsumers.type = messages.RestartConsumers
+
+
+
+  /**
+    * Alias object  [[PipegraphMessages.StartSystemPipegraphs]]
+    */
+  val StartSystemPipegraphs: PipegraphMessages.StartSystemPipegraphs.type = PipegraphMessages.StartSystemPipegraphs
+
+  /**
+    * Alias object  [[PipegraphMessages.SystemPipegraphsStarted]]
+    */
+  val SystemPipegraphsStarted: PipegraphMessages.SystemPipegraphsStarted.type = PipegraphMessages.SystemPipegraphsStarted
+
   /**
     * Message sent from [[SparkConsumersStreamingMasterGuardian]] to
     * [[it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian]]
@@ -80,6 +99,14 @@ object Protocol {
   private[actor] case class WorkNotGiven(reason: Throwable) extends Protocol
 
   private[actor] case class WorkFailed(reason: Throwable) extends Protocol
+
+  /**
+    * Self message sent by [[SparkConsumersStreamingMasterGuardian]] to itself to signal that a restart happened.
+    */
+  private[master] case object ConsumersRestarted
+
+
+
 
   /**
     * Message sent from [[SparkConsumersStreamingMasterGuardian]] to itself

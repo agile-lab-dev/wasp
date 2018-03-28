@@ -460,6 +460,9 @@ class PipegraphGuardian(private val master: ActorRef,
 
 object PipegraphGuardian {
 
+  /**
+    * A child factory is a function of (pipegraph,actorName, context | Actorsystem)
+    */
   type ChildFactory = (PipegraphModel,String, ActorRefFactory) => ActorRef
   type ComponentFailedStrategy = StructuredStreamingETLModel => Choice
 
@@ -470,7 +473,7 @@ object PipegraphGuardian {
                           topicsBl: TopicBL,
                           writerFactory: WriterFactory): ChildFactory = { (pipegraph,name, context) =>
 
-
+    //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
 
     context.actorOf(StructuredStreamingETLActor.props(reader, plugins, sparkSession, mlModelBl, topicsBl,
