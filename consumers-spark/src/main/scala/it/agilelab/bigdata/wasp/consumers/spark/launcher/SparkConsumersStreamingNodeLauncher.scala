@@ -5,11 +5,10 @@ import java.util.ServiceLoader
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.{KafkaReader, KafkaStructuredReader}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaStructuredReader
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
@@ -45,7 +44,7 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 			KafkaStructuredReader,
 			plugins,
 			SparkSingletons.getSparkSession,
-			new SparkWriterFactoryDefault(plugins),
+			SparkWriterFactoryDefault(plugins),
 			5.seconds,
 			5.seconds,
 			_ => PipegraphGuardian.Retry,

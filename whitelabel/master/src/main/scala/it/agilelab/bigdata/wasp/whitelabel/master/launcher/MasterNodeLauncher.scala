@@ -15,6 +15,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
   private def addExamplePipegraphs(): Unit = {
 
+    /* standalone applications should prefer waspDB.insertIfNotExist() instead of waspDB.upsert() */
+    
+
     /* Example */
 
     /* Topic for Producers, Pipegraphs */
@@ -29,8 +32,10 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
     waspDB.upsert[TopicModel](TestTopicModel.json2)
+    waspDB.upsert[TopicModel](TestTopicModel.jsonCheckpoint)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
     waspDB.upsert[TopicModel](TestTopicModel.avro2)
+    waspDB.upsert[TopicModel](TestTopicModel.avroCheckpoint)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
@@ -40,7 +45,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Producers */
     waspDB.upsert[ProducerModel](TestProducerModel.json)
+    waspDB.upsert[ProducerModel](TestProducerModel.jsonCheckpoint)
     waspDB.upsert[ProducerModel](TestProducerModel.avro)
+    waspDB.upsert[ProducerModel](TestProducerModel.avroCheckpoint)
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
@@ -51,6 +58,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbase)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.ERROR.multiETL)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.CHECKPOINT.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.solr)
@@ -65,6 +73,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hbase)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.ERROR.multiETL)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.CHECKPOINT.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
