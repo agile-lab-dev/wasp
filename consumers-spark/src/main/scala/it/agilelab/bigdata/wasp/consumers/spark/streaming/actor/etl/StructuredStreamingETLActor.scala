@@ -51,7 +51,8 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
           .ETLNotMaterialized(etl, reason)
       }
 
-    case Event(MyProtocol.StopETL(_), ActivatedData(_)) =>
+    case Event(MyProtocol.StopETL(etl), ActivatedData(_)) =>
+      sender() ! MyProtocol.ETLStopped(etl)
       stop()
   }
 
