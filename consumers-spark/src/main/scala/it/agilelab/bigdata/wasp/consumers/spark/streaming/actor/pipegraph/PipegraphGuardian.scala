@@ -43,6 +43,8 @@ class PipegraphGuardian(private val master: ActorRef,
   }
 
   when(Activating) {
+    case Event(MyProtocol.CancelWork, data: ActivatingData) =>
+      goto(Activating) using data.copy(shouldStopAll = true)
 
     case Event(MyProtocol.ActivateETL(etl), data: ActivatingData) =>
 
@@ -116,6 +118,9 @@ class PipegraphGuardian(private val master: ActorRef,
 
 
   when(Materializing) {
+    case Event(MyProtocol.CancelWork, data: MaterializingData) =>
+      goto(Materializing) using data.copy(shouldStopAll = true)
+
     case Event(MyProtocol.MaterializeETL(worker, etl), data: MaterializingData) =>
       log.info("Materializing etl [{}] on worker [{}]", etl.name, worker)
       worker ! ChildrenProtocol.MaterializeETL(etl)
