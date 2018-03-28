@@ -3,13 +3,19 @@ package it.agilelab.bigdata.wasp.consumers.spark.launcher
 import java.util.ServiceLoader
 
 import akka.actor.Props
+import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.{KafkaReader, KafkaStructuredReader}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.SparkConsumersStreamingMasterGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import org.apache.commons.cli.CommandLine
 
 import scala.collection.JavaConverters._
 
@@ -23,9 +29,36 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 
 	var plugins: Map[String, WaspConsumersSparkPlugin] = Map()
 
+	override def launch(commandLine: CommandLine): Unit = {
+		SparkSingletons.initializeSpark(ConfigManager.getSparkStreamingConfig)
+		SparkSingletons.initializeSparkStreaming(ConfigManager.getSparkStreamingConfig)
+
+		super.launch(commandLine)
+	}
+
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
+
+		import scala.concurrent.duration._
+
+
+		val childrenCreator: ChildCreator = SparkConsumersStreamingMasterGuardian.defaultChildCreator(
+			KafkaStructuredReader,
+			plugins,
+			SparkSingletons.getSparkSession,
+			new SparkWriterFactoryDefault(plugins),
+			5.seconds,
+			5.seconds,
+			_ => PipegraphGuardian.Retry,
+			ConfigBL)
+
+		val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(
+			ConfigBL.pipegraphBL,
+			childrenCreator,
+			5.seconds)
+
+
 		val sparkConsumersStreamingMasterGuardianSingletonInfo = (
-			Props(new SparkConsumersStreamingMasterGuardian(ConfigBL, SparkWriterFactoryDefault(plugins), KafkaReader, KafkaStructuredReader, plugins)),
+			masterGuardianProps,
       WaspSystem.sparkConsumersStreamingMasterGuardianName,
 			WaspSystem.sparkConsumersStreamingMasterGuardianSingletonManagerName,
 			Seq(WaspSystem.sparkConsumersStreamingMasterGuardianRole)

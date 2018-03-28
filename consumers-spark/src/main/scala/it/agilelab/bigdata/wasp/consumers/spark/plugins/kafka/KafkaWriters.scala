@@ -9,7 +9,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.TinyKafkaConfig
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, RowToAvro}
-import org.apache.spark.sql.streaming.DataStreamWriter
+import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -72,7 +72,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
   override def write(stream: DataFrame,
                      queryName: String,
-                     checkpointDir: String): Unit = {
+                     checkpointDir: String): StreamingQuery = {
 
     import ss.implicits._
 
@@ -80,23 +80,15 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
     val topicOpt: Option[TopicModel] = topicBL.getByName(name)
-    topicOpt.foreach(topic => {
 
+
+    if (topicOpt.isDefined) {
+
+      val topic = topicOpt.get
       val topicDataTypeB = ss.sparkContext.broadcast(topic.topicDataType)
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-//        val kafkaFormattedDF = stream.toJSON.map{
-//          json =>
-//            val payload = topicDataTypeB.value match {
-//              case "avro" => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
-//              case "json" => JsonToByteArrayUtil.jsonToByteArray(json)
-//              case _ => AvroToJsonUtil.jsonToAvro(json, schemaB.value)
-//            }
-//            payload
-//        }
-
-        // partition key
         val pkf = topic.partitionKeyField
         val pkfIndex: Option[Int] = pkf.map(k => stream.schema.fieldIndex(k))
 
@@ -132,7 +124,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
         val msg = s"Error creating topic ${topic.name}"
         throw new Exception(msg)
       }
-    })
+    } else {
+      val msg = s"No Topic specified in writer model"
+      throw new Exception(msg)
+    }
+
   }
 
   private def addKafkaConf(dsw: DataStreamWriter[Row], tkc: TinyKafkaConfig): DataStreamWriter[Row] = {

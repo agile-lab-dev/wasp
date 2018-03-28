@@ -280,6 +280,8 @@ object WaspDB extends Logging {
   val sqlSourceName = "sqlsource"
   val batchjobName = "batchjobs"
   val batchjobInstanceName = "batchjobinstances"
+  val pipegraphInstanceName = "pipegraphinstances"
+
   val configurationsName = "configurations"
   val mlModelsName = "mlmodels"
   val websocketsName = "websockets"
@@ -298,7 +300,7 @@ object WaspDB extends Logging {
     typeTag[WebsocketModel].tpe -> websocketsName,
     typeTag[BatchSchedulerModel].tpe -> batchSchedulersName,
     typeTag[BatchJobInstanceModel].tpe -> batchjobInstanceName,
-
+    typeTag[PipegraphInstanceModel].tpe -> pipegraphInstanceName,
     typeTag[KafkaConfigModel].tpe -> configurationsName,
     typeTag[SparkBatchConfigModel].tpe -> configurationsName,
     typeTag[SparkStreamingConfigModel].tpe -> configurationsName,

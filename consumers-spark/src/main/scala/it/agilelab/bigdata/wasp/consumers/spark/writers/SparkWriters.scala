@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.writers
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.streaming.dstream.DStream
 
 trait SparkLegacyStreamingWriter {
@@ -8,7 +9,7 @@ trait SparkLegacyStreamingWriter {
 }
 
 trait SparkStructuredStreamingWriter {
-  def write(stream: DataFrame, queryName: String, checkpointDir: String)
+  def write(stream: DataFrame, queryName: String, checkpointDir: String) : StreamingQuery
 }
 
 trait SparkWriter {

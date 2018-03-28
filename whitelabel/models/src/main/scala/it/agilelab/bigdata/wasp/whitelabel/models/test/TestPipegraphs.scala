@@ -32,8 +32,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val kafka = PipegraphModel(
@@ -59,8 +58,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val solr = PipegraphModel(
@@ -86,8 +84,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val elastic = PipegraphModel(
@@ -113,8 +110,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val hdfs = PipegraphModel(
@@ -140,8 +136,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val hbase = PipegraphModel(
@@ -167,8 +162,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val multiETL = PipegraphModel(
@@ -186,8 +180,7 @@ private[wasp] object TestPipegraphs {
             hdfs.structuredStreamingComponents,
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       object ERROR {
@@ -210,9 +203,7 @@ private[wasp] object TestPipegraphs {
 
           rtComponents = List(),
 
-          dashboard = None,
-          isActive = false
-        )
+          dashboard = None)
       }
 
     }
@@ -240,8 +231,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val kafka = PipegraphModel(
@@ -267,8 +257,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val solr = PipegraphModel(
@@ -293,8 +282,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val elastic = PipegraphModel(
@@ -319,8 +307,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val hdfs = PipegraphModel(
@@ -345,8 +332,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
     }
   }
@@ -378,8 +364,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val kafka = PipegraphModel(
@@ -405,8 +390,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val solr = PipegraphModel(
@@ -432,8 +416,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val elastic = PipegraphModel(
@@ -459,8 +442,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val hdfs = PipegraphModel(
@@ -486,8 +468,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val hbase = PipegraphModel(
@@ -513,8 +494,7 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val multiETL = PipegraphModel(
@@ -527,13 +507,12 @@ private[wasp] object TestPipegraphs {
         legacyStreamingComponents = List(),
         structuredStreamingComponents =
           console.structuredStreamingComponents :::
-          solr.structuredStreamingComponents :::
-          elastic.structuredStreamingComponents :::
-          hdfs.structuredStreamingComponents,
+            solr.structuredStreamingComponents :::
+            elastic.structuredStreamingComponents :::
+            hdfs.structuredStreamingComponents,
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       object ERROR {
@@ -548,17 +527,17 @@ private[wasp] object TestPipegraphs {
           legacyStreamingComponents = List(),
           structuredStreamingComponents =
             console.structuredStreamingComponents :::
-            solr.structuredStreamingComponents :::
-            elastic.structuredStreamingComponents :::
-            hdfs.structuredStreamingComponents.map(
-              _.copy(strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
-                                                          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))))),
+              solr.structuredStreamingComponents :::
+              elastic.structuredStreamingComponents :::
+              hdfs.structuredStreamingComponents.map(
+                _.copy(strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
+                  ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))))),
           rtComponents = List(),
 
-          dashboard = None,
-          isActive = false
+          dashboard = None
         )
       }
+
     }
 
     object Legacy {
@@ -584,9 +563,7 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val kafka = PipegraphModel(
@@ -611,8 +588,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val solr = PipegraphModel(
@@ -637,8 +613,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val elastic = PipegraphModel(
@@ -663,8 +638,7 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
 
       lazy val hdfs = PipegraphModel(
@@ -689,9 +663,30 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(),
         rtComponents = List(),
 
-        dashboard = None,
-        isActive = false
+        dashboard = None
       )
     }
+  }
+
+  object ERROR {
+
+    lazy val multiETL = PipegraphModel(
+      name = "TestErrorMultiEtlPipegraph",
+      description = "Description of TestErrorMultiEtlPipegraph",
+      owner = "user",
+      isSystem = false,
+      creationTime = System.currentTimeMillis,
+
+      legacyStreamingComponents = List(),
+      structuredStreamingComponents =
+        TestPipegraphs.AVRO.Structured.console.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.elastic.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.hdfs.structuredStreamingComponents.map(
+          _.copy(strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy", None)))),
+      rtComponents = List(),
+
+      dashboard = None
+    )
   }
 }

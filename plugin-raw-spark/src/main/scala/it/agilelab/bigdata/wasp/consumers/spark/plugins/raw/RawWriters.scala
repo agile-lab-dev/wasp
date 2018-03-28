@@ -9,6 +9,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
@@ -68,7 +69,7 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
                                         ss: SparkSession)
   extends SparkStructuredStreamingWriter with Logging {
 
-  override def write(stream: DataFrame, queryName: String, checkpointDir: String): Unit = {
+  override def write(stream: DataFrame, queryName: String, checkpointDir: String): StreamingQuery = {
   
     // get path timed or standard
     val path = if (hdfsModel.timed) {

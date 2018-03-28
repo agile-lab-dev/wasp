@@ -139,7 +139,5 @@ private[wasp] object LoggerPipegraph {
     ),
 
 		rtComponents = List(),
-		dashboard = None,
-		isActive = false
-  )
+		dashboard = None)
 }

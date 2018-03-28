@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph, StopPipegraph}
-import it.agilelab.bigdata.wasp.core.models.PipegraphModel
+import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphModel}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
@@ -65,6 +65,14 @@ object Pipegraph_C extends Directives with JsonSupport {
                       case Right(s) => s.toJson.toAngularOkResponse(pretty)
                       case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                     }
+                  }
+                }
+              } ~
+              path("instances") {
+                get {
+                  complete {
+                    getJsonArrayOrEmpty[PipegraphInstanceModel](ConfigBL.pipegraphBL.instances().instancesOf(name).sortBy { instance => -instance.startTimestamp }, _.toJson,
+                      pretty)
                   }
                 }
               } ~

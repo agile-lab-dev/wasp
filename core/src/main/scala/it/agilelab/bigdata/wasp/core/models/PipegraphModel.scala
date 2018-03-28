@@ -1,6 +1,14 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
+import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
+
+
+object PipegraphStatus extends Enumeration {
+  type PipegraphStatus = Value
+
+  val PENDING, PROCESSING, STOPPING, FAILED, STOPPED = Value
+}
 
 case class DashboardModel(url: String, needsFilterBox: Boolean)
 
@@ -32,6 +40,9 @@ trait ProcessingComponentModel {
   }
 }
 
+@deprecated("Legacy Streaming ETL Model are deprecated, running of pipegraph containing legacy components will not " +
+  "work, keeping the definition only for api compatibility, the definition will be removed in a future wasp version",
+  "2.8.0")
 case class LegacyStreamingETLModel(name: String,
                                    inputs: List[ReaderModel],
                                    output: WriterModel,
@@ -48,7 +59,6 @@ case class StructuredStreamingETLModel(name: String,
                                        strategy: Option[StrategyModel],
                                        kafkaAccessType: String,
                                        group: String = "default",
-                                       var isActive: Boolean = false,
                                        config: Map[String, String]) extends ProcessingComponentModel
 
 case class RTModel(name: String,
@@ -57,6 +67,13 @@ case class RTModel(name: String,
                    strategy: Option[StrategyModel] = None,
                    endpoint: Option[WriterModel] = None) extends ProcessingComponentModel
 
+
+final case class PipegraphInstanceModel(override val name:String,
+                                        instanceOf: String,
+                                        startTimestamp: Long,
+                                        currentStatusTimestamp: Long,
+                                        status: PipegraphStatus,
+                                        error: Option[String] = None) extends Model
 /**
   * A model for a pipegraph, a processing pipeline abstraction.
   *
@@ -69,7 +86,6 @@ case class RTModel(name: String,
   * @param structuredStreamingComponents components describing processing built on Spark Structured Streaming
   * @param rtComponents components describing processing built on Akka actors
   * @param dashboard dashboard of the pipegraph
-  * @param isActive whether the pipegraph is currently active
   */
 case class PipegraphModel(override val name: String,
                           description: String,
@@ -79,8 +95,7 @@ case class PipegraphModel(override val name: String,
                           legacyStreamingComponents: List[LegacyStreamingETLModel],
                           structuredStreamingComponents: List[StructuredStreamingETLModel],
                           rtComponents: List[RTModel],
-                          dashboard: Option[DashboardModel] = None,
-                          var isActive: Boolean = false) extends Model {
+                          dashboard: Option[DashboardModel] = None) extends Model {
 
   def generateStandardPipegraphName: String = s"pipegraph_$name"
   

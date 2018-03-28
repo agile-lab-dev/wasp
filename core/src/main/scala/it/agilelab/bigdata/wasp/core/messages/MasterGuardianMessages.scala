@@ -13,9 +13,10 @@ trait ProducerMessage extends MasterGuardianMessage
 trait ETLMessage extends MasterGuardianMessage { val etlName: String }
 trait BatchJobMessage extends MasterGuardianMessage
 
-case class RemovePipegraph(override val name: String) extends PipegraphMessage
 case class StartPipegraph(override val name: String) extends PipegraphMessage
 case class StopPipegraph(override val name: String) extends PipegraphMessage
+
+case class RemovePipegraph(override val name: String) extends PipegraphMessage
 case object RestartPipegraphs extends MasterGuardianMessage { val name = null }
 case class AddRemoteProducer(override val name: String, remoteProducer: ActorRef) extends ProducerMessage
 case class RemoveRemoteProducer(override val name: String, remoteProducer: ActorRef) extends ProducerMessage

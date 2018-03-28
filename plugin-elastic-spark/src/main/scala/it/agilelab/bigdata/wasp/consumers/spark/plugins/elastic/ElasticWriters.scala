@@ -1,11 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkLegacyStreamingWriter,
-  SparkStructuredStreamingWriter,
-  SparkWriter
-}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -13,6 +9,7 @@ import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -81,7 +78,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
 
   override def write(stream: DataFrame,
                      queryName: String,
-                     checkpointDir: String): Unit = {
+                     checkpointDir: String): StreamingQuery = {
 
     val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
@@ -125,7 +122,10 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(msg)
       }
     } else {
-      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
+      val message = s"The index '$name' does not exits pay ATTENTION spark won't start"
+      logger.error(message)
+      throw new Exception(message)
+
     }
   }
 
