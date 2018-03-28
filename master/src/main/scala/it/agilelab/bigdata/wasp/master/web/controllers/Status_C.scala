@@ -29,6 +29,9 @@ object Status_C extends Directives with JsonSupport {
     "/pipegraphs/{name}/stop" -> Map(
       "POST" -> "Stop the pipegraph with the specified name."
     ),
+    "/pipegraphs/{name}/instances" -> Map(
+      "GET" -> "Get instances of pipegraph with the specified name ordered newest to oldest"
+    ),
     "/producers" -> Map(
       "GET" -> "Get all the procuders in the system.",
       "PUT" -> "Update an existing pipegraph."
