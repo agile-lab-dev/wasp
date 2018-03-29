@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.models.configuration.TinyKafkaConfig
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, RowToAvro}
 import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
@@ -136,20 +136,21 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val connectionString = tkc.connections.map{
       conn => s"${conn.host}:${conn.port}"
     }.mkString(",")
-
-    val kafkaConfigMap: Map[String, String] = Map[String, String](
-      // Added for backwards compatibility
-      "acks" -> "1"
-    ) ++
-      tkc.others.map(_.toTupla)
+    // Added for backwards compatibility
+    val kafkaConfigMap: Seq[KafkaEntryConfig] =
+      if (tkc.others.map(_.key).contains("acks")) {
+        tkc.others
+      } else {
+        tkc.others :+ KafkaEntryConfig("acks", "1")
+      }
 
     dsw
       .option("kafka.bootstrap.servers", connectionString)
-      .option("serializer.class", tkc.default_encoder)
-      .option("key.serializer.class", tkc.encoder_fqcn)
-      .option("partitioner.class", tkc.partitioner_fqcn)
-      .option("batch.size", tkc.batch_send_size.toString)
-      .options(kafkaConfigMap)
+      .option("value.serializer", tkc.default_encoder)
+      .option("key.serializer", tkc.encoder_fqcn)
+      .option("kafka.partitioner.class", tkc.partitioner_fqcn)
+      .option("kafka.batch.size", tkc.batch_send_size.toString)
+      .options(kafkaConfigMap.map(v => v.copy(key = "kafka." + v.key)).map(_.toTupla).toMap)
   }
 }
 
