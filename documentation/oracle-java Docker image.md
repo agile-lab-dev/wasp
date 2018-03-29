@@ -1,4 +1,4 @@
-# Docker Image Java
+## Docker Image Java
 
 In order to start WASP it is required to pre-build the docker image which include `oracle-java` (i.e JRE) and `Kerberos client`.
 

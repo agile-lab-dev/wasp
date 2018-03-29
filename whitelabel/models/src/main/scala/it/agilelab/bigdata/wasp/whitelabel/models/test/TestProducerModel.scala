@@ -14,6 +14,16 @@ private[wasp] object TestProducerModel {
       isSystem = false
     )
 
+  lazy val jsonCheckpoint = ProducerModel(
+    name = "TestJSONCheckpointProducer",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestCheckpointProducerGuardian",
+    topicName = Some(TestTopicModel.jsonCheckpoint.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
+
   lazy val avro  = ProducerModel(
       name = "TestAVROProducer",
       className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
@@ -24,4 +34,13 @@ private[wasp] object TestProducerModel {
       isSystem = false
     )
 
+  lazy val avroCheckpoint  = ProducerModel(
+    name = "TestAVROCheckpointProducer",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestCheckpointProducerGuardian",
+    topicName = Some(TestTopicModel.avroCheckpoint.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
 }

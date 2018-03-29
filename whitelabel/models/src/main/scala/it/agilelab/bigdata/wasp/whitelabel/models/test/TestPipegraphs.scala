@@ -206,6 +206,38 @@ private[wasp] object TestPipegraphs {
           dashboard = None)
       }
 
+      object CHECKPOINT {
+        lazy val console = PipegraphModel(
+          name = "TestCheckpointConsoleWriterStructuredJSONPipegraph",
+          description = "Description of TestCheckpointConsoleWriterStructuredJSONPipegraph",
+          owner = "user",
+          isSystem = false,
+          creationTime = System.currentTimeMillis,
+
+          legacyStreamingComponents = List(),
+          structuredStreamingComponents = List(
+            StructuredStreamingETLModel(
+              name = "ETL TestCheckpointConsoleWriterStructuredJSONPipegraph",
+              inputs = List(
+                ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.jsonCheckpoint.name)
+              ),
+              output = WriterModel.consoleWriter("Console Writer"),
+              mlModels = List(),
+              strategy = Some(StrategyModel.create(
+                "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV1",
+                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV2",
+                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV3",
+                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV4",
+                ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+              kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+              config = Map()
+            )
+          ),
+          rtComponents = List(),
+
+          dashboard = None
+        )
+      }
     }
 
     object Legacy {
@@ -538,6 +570,38 @@ private[wasp] object TestPipegraphs {
         )
       }
 
+      object CHECKPOINT {
+        lazy val console = PipegraphModel(
+          name = "TestCheckpointConsoleWriterStructuredAVROPipegraph",
+          description = "Description of TestCheckpointConsoleWriterStructuredAVROPipegraph",
+          owner = "user",
+          isSystem = false,
+          creationTime = System.currentTimeMillis,
+
+          legacyStreamingComponents = List(),
+          structuredStreamingComponents = List(
+            StructuredStreamingETLModel(
+              name = "ETL TestCheckpointConsoleWriterStructuredAVROPipegraph",
+              inputs = List(
+                ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avroCheckpoint.name)
+              ),
+              output = WriterModel.consoleWriter("Console Writer"),
+              mlModels = List(),
+              strategy = Some(StrategyModel.create(
+                "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV1",
+                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV2",
+                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV3",
+                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV4",
+                ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+              kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+              config = Map()
+            )
+          ),
+          rtComponents = List(),
+
+          dashboard = None
+        )
+      }
     }
 
     object Legacy {

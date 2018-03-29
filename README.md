@@ -8,7 +8,7 @@
 - [General](#general)
   - [Gitter](#gitter)
   - [Overview](#overview)
-  - [WASP in the wild](wasp-in-the-wild)
+  - [WASP in the wild](#wasp-in-the-wild)
   - [Background](#background)
   - [Architecture](#architecture)
   - [Glossary](#glossary)
