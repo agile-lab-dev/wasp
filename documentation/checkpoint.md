@@ -48,6 +48,8 @@ A file for each micro-batch, related to `offsets`:
 ### state
 (see [IncrementalExecution](https://github.com/jaceklaskowski/spark-structured-streaming-book/blob/master/spark-sql-streaming-IncrementalExecution.adoc))
 
+A folder for each stateful transformation (`0`, `1`, ...), each one containing a set of sub-folders (`0` to `<number_shuffle_partitions>`), each one containing:
+
 - N files `.delta` + related `.delta.crc`
 
-- 1 file `.snapshot` + related `.snapshot.crc`
+- N files `.snapshot` + related `.snapshot.crc`
