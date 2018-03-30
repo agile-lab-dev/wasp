@@ -224,7 +224,8 @@ class TestCheckpointJSONStrategyV4 extends TestCheckpointStrategy("v4", TestTopi
 
       val oldState: TestCheckpointState =
         if (!state.exists)
-          TestCheckpointStateV4(sum = 0, stateV4Internal = TestCheckpointStateV4Internal(0, 0.toString))
+          TestCheckpointStateV4(sum = 0,
+                                stateV4Internal = TestCheckpointStateV4Internal(0, 0.toString))
         else
           state.get
 
@@ -490,7 +491,8 @@ class TestCheckpointAVROStrategyV4 extends TestCheckpointStrategy("v4", TestTopi
 
       val oldState: TestCheckpointState =
         if (!state.exists)
-          TestCheckpointStateV4(sum = 0, stateV4Internal = TestCheckpointStateV4Internal(0, 0.toString))
+          TestCheckpointStateV4(sum = 0,
+                                stateV4Internal = TestCheckpointStateV4Internal(0, 0.toString))
         else
           state.get
 
@@ -502,7 +504,7 @@ class TestCheckpointAVROStrategyV4 extends TestCheckpointStrategy("v4", TestTopi
 
             // update state using TestCheckpointStateV4
             TestCheckpointStateV4(sum = oldStateImpl.sum + element.value,
-              stateV4Internal = TestCheckpointStateV4Internal(oldSumInt = oldStateImpl.sum, oldSumString = oldStateImpl.sum.toString))
+                                  stateV4Internal = TestCheckpointStateV4Internal(oldSumInt = oldStateImpl.sum, oldSumString = oldStateImpl.sum.toString))
           }
           case oldStateImpl: TestCheckpointStateV3 => {
             // do something using oldStateImpl TestCheckpointStateV3
@@ -510,7 +512,7 @@ class TestCheckpointAVROStrategyV4 extends TestCheckpointStrategy("v4", TestTopi
 
             // update state using TestCheckpointStateV4
             TestCheckpointStateV4(sum = oldStateImpl.sum + element.value,
-              stateV4Internal = TestCheckpointStateV4Internal(oldSumInt = oldStateImpl.sum, oldSumString = oldStateImpl.sum.toString))
+                                  stateV4Internal = TestCheckpointStateV4Internal(oldSumInt = oldStateImpl.sum, oldSumString = oldStateImpl.sum.toString))
           }
           case oldStateImpl: TestCheckpointStateV2 => {
             // do something using oldStateImpl TestCheckpointStateV2
@@ -518,7 +520,7 @@ class TestCheckpointAVROStrategyV4 extends TestCheckpointStrategy("v4", TestTopi
 
             // update state using TestCheckpointStateV4
             TestCheckpointStateV4(sum = oldStateImpl.sum + element.value,
-              stateV4Internal = TestCheckpointStateV4Internal(oldSumInt = oldStateImpl.sum, oldSumString = oldStateImpl.sum.toString))
+                                  stateV4Internal = TestCheckpointStateV4Internal(oldSumInt = oldStateImpl.sum, oldSumString = oldStateImpl.sum.toString))
           }
           case oldStateImpl: TestCheckpointStateV1 => {
             // do something using oldStateImpl TestCheckpointStateV1
