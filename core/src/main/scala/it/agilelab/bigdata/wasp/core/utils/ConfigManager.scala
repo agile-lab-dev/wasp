@@ -23,7 +23,6 @@ object ConfigManager {
   val solrConfigName = "Solr"
   val hbaseConfigName = "HBase"
   val jdbcConfigName = "Jdbc"
-  val waspConsumersSparkAdditionalJarsFileName = "wasp-consumers-spark-additional-jars-path-names"
 
   private var waspConfig : WaspConfigModel = _
   private var mongoDBConfig: MongoDBConfigModel = _
@@ -33,7 +32,7 @@ object ConfigManager {
   private var elasticConfig: ElasticConfigModel = _
   private var solrConfig: SolrConfigModel = _
   private var hbaseConfig: HBaseConfigModel = _
-  private var jdbcConfigs: JdbcConfigModel = _
+  private var jdbcConfig: JdbcConfigModel = _
 
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
@@ -195,21 +194,24 @@ object ConfigManager {
   }
 
   private def initializeJdbcConfig(): Unit = {
-    jdbcConfigs = retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
+    jdbcConfig =
+      retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
   }
 
   private def getDefaultJdbcConfig: JdbcConfigModel = {
-    val jdbcSubConfig = conf.getConfig("jdbc").getConfigList("connections").asScala
-
-    val connectionsMap = jdbcSubConfig.map{
-      subConf =>
-        val jdbcConf = readJdbcConfig(subConf)
-        jdbcConf.name -> jdbcConf
-    }.toMap
-
+    val jdbcSubConfig = conf.getConfig("jdbc")
+    val connectionsMap = jdbcSubConfig
+                            .getObject("connections")
+                            .entrySet()
+                            .asScala
+                            .toSeq
+                            .filter(entry => entry.getValue.isInstanceOf[ConfigObject])
+                            .map(entry => (entry.getKey, entry.getValue.asInstanceOf[ConfigObject].toConfig))
+                            .map(t => (t._1, readJdbcConfig(t._1, t._2)))
+                            .toMap
     JdbcConfigModel(
-      jdbcConfigName,
-      connectionsMap
+      connectionsMap,
+      jdbcConfigName
     )
   }
 
@@ -287,28 +289,10 @@ object ConfigManager {
   }
 
   def getJdbcConfig: JdbcConfigModel = {
-    if (jdbcConfigs == null) {
+    if (jdbcConfig == null) {
       throw new Exception("The jdbc configuration was not initialized")
     }
-    jdbcConfigs
-  }
-
-  private def readJdbcConfig(config: Config): JdbcConnectionConfig = {
-    JdbcConnectionConfig(
-      config.getString("name"),//name
-      config.getString("dbType"),
-      config.getString("host"),
-      config.getInt("port"),
-      config.getString("user"),//user
-      config.getString("password"),//password
-      config.getString("driverName")//driverName
-    )
-  }
-
-  private def readConnections(config: Config,
-                              path: String): Array[ConnectionConfig] = {
-    val connections = config.getConfigList(path).asScala
-    connections map (connection => readConnection(connection)) toArray
+    jdbcConfig
   }
 
   private def readJdbcConfig(name: String, config: Config): JdbcConnectionConfig = {

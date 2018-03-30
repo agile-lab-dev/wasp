@@ -3,12 +3,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 import java.util
 
 import akka.actor.ActorRef
-import com.lucidworks.spark.util.SolrSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkLegacyStreamingWriter,
-  SparkStructuredStreamingWriter,
-  SparkWriter
-}
+import com.lucidworks.spark.SolrSupport
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging

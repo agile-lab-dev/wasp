@@ -9,10 +9,10 @@
 /* Framework */
 
 lazy val core = Project("wasp-core", file("core"))
-	.settings(Settings.commonSettings: _*)
-	.settings(Settings.sbtBuildInfoSettings: _*)
-	.settings(libraryDependencies ++= Dependencies.core)
-	.enablePlugins(BuildInfoPlugin)
+  .settings(Settings.commonSettings: _*)
+  .settings(Settings.sbtBuildInfoSettings: _*)
+  .settings(libraryDependencies ++= Dependencies.core ++ Dependencies.test)
+  .enablePlugins(BuildInfoPlugin)
 
 lazy val master = Project("wasp-master", file("master"))
 	.settings(Settings.commonSettings: _*)
@@ -69,10 +69,6 @@ lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc
 
 /* Framework + Plugins */
 
-lazy val plugin_console_spark = Project("wasp-plugin-console-spark", file("plugin-console-spark"))
-	.settings(Settings.commonSettings: _*)
-	.dependsOn(consumers_spark)
-
 lazy val wasp = Project("wasp", file("."))
 	.settings(Settings.commonSettings: _*)
 	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, plugin_jdbc_spark)
@@ -108,7 +104,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
 	.dependsOn(plugin_solr_spark)
 	.dependsOn(plugin_console_spark)
 	.dependsOn(plugin_jdbc_spark)
-	.settings(libraryDependencies ++= Dependencies.log4j)
+	.settings(libraryDependencies ++= Dependencies.log4j :+ "mysql" % "mysql-connector-java" % "5.1.6")
 	.enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelConsumersRt= Project("wasp-whitelabel-consumers-rt", file("whitelabel/consumers-rt"))

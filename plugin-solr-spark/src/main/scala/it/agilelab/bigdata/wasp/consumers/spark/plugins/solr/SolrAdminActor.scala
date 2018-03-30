@@ -201,8 +201,6 @@ class SolrAdminActor
     createRequest.setNumShards(numShards)
     createRequest.setReplicationFactor(replicationFactor)
 
-
-
     val createResponse: CollectionAdminResponse =
       createRequest.process(solrServer)
 

@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.core.models
 import it.agilelab.bigdata.wasp.core.models.configuration.JdbcPartitioningInfo
 
 object SqlSourceModel{
-  def readerType: String = "jdbc"
+  def readerType: String = Datastores.databaseCategory
 }
 
 /**

@@ -3,21 +3,17 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 import it.agilelab.bigdata.wasp.core.models.Model
 
 case class JdbcConfigModel(
-                          name: String,
-                          connections: Map[String, JdbcConnectionConfig]
+                            connections: Map[String, JdbcConnectionConfig],
+                            name: String
                           ) extends Model
 
 case class JdbcConnectionConfig(
-                            name: String,
-                            dbType: String,
-                            host: String,
-                            port: Int,
-                            user: String,
-                            password: String,
-                            driverName: String
-                          ) {
-  def connectionString: String = s"$host:$port"
-}
+                                name: String,
+                                url: String,  // JDBC Connection String
+                                user: String,
+                                password: String,
+                                driverName: String
+                              )
 
 case class JdbcPartitioningInfo(
                                  partitionColumn: String,

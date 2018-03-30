@@ -9,8 +9,6 @@ trait BatchSchedulersBL {
 
   def getActiveSchedulers(isActive: Boolean = true): Seq[BatchSchedulerModel]
 
-  def getActiveSchedulers(isActive: Boolean = true): Seq[BatchSchedulerModel]
-
   def persist(schedulerModel: BatchSchedulerModel): Unit
 }
 
