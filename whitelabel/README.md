@@ -77,7 +77,8 @@ Add this in standalone applications:
 
     scriptClasspath += ":$HADOOP_CONF_DIR:$YARN_CONF_DIR"
     
-## Checkpoint and stateful transformation in Spark StructuredStreaming ETL
+
+## Procedure of Strategy version upgrade
 
 (see
 
@@ -90,9 +91,14 @@ Add this in standalone applications:
 
 Inside the *checkpointDir* (default: `/checkpoint` on HDFS) are automatically stored:
  
-- the offsets / commits related to the Kafka queue positions already managed by the Spark StructuredStreaming ETL: this should not be a critical point, also changing the transform's behavior.
+- **offsets** / **commits** related to the Kafka queue positions already managed by the Spark StructuredStreaming ETL (e.g. `flatMapGroups`)
+   
+  Consequently, a Strategy based only on these sub-folders (i.e. Strategy's transform containing only stateless transformations of the Spark StructuredStreaming ETL) should not be really critical, also changing the transform's behavior.
 
-- the user-defined per-group states related to stateful transformations of the Spark StructuredStreaming ETL (e.g. `flatMapGroupsWithState`).
+- **user-defined per-group states** related to stateful transformations of the Spark StructuredStreaming ETL (e.g. `flatMapGroupsWithState`)
+
+  Consequently, a Strategy based also on this sub-folder (i.e. Strategy's transform containing stateless transformations of the Spark StructuredStreaming ETL) is obviously critical.
+
 
 **"Best-practise"**
 

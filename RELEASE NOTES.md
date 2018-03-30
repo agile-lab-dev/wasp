@@ -440,3 +440,260 @@ Branch: feature/GL-111-producerPartitionKey
 Author: [Vito](https://gitlab.com/vito.ressa)
 
 Closes #111 
+
+
+## WASP 2.8.0
+30/03/2018
+
+### Resolve "Error/exception handling - Pipegraph start may leave components running while returning a failure"
+
+[Merge request 29](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/29)
+
+Created at: 2018-03-12T16:41:58.997Z
+
+Updated at: 2018-03-30T14:03:08.080Z
+
+Branch: feature/13-error-exception-handling-pipegraph-start-may-leave-components-running-while-returning-a-failure
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+#### Start Pipegraph
+When a REST start pipegraph request is received a new pipegraphinstance is created and asynchronously runned by the assigned pipegraph guardian
+
+```bash
+http -v POST :2891/pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/start
+
+POST /pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/stop HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 0
+Host: localhost:2891
+User-Agent: HTTPie/0.9.9
+
+
+HTTP/1.1 200 OK
+Content-Length: 97
+Content-Type: application/json
+Date: Fri, 30 Mar 2018 09:32:05 GMT
+Server: akka-http/10.0.9
+
+{
+    "Result": "OK", 
+    "data": "Pipegraph 'TestConsoleWriterWithMetadataStructuredJSONPipegraph' accepted (queued or processing)"
+}
+```
+
+#### Check pipegraph instance status
+
+* To check if a pipegraph started check the status of the instance via a REST the request /pipegraph/$name/instances
+
+```
+http -v GET :2891/pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/instances            531ms  ven 30 mar 2018 15:04:29 CEST
+GET /pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/instances HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:2891
+User-Agent: HTTPie/0.9.9
+
+
+
+HTTP/1.1 200 OK
+Content-Length: 285
+Content-Type: application/json
+Date: Fri, 30 Mar 2018 13:04:37 GMT
+Server: akka-http/10.0.9
+
+{
+    "Result": "OK", 
+    "data": [
+        {
+            "currentStatusTimestamp": 1522404178417, 
+            "instanceOf": "TestConsoleWriterWithMetadataStructuredJSONPipegraph", 
+            "name": "TestConsoleWriterWithMetadataStructuredJSONPipegraph-c5db85bb-08d0-4d5a-ab7f-2f52019ddc1d", 
+            "startTimestamp": 1522404178360, 
+            "status": "PROCESSING"
+        }
+    ]
+}
+
+```
+
+#### Stop Pipegraph
+
+* To Stop a pipegraph use the REST api, the stop will be performed asynchronously, check the status via instances api
+
+```
+http -v POST :2891/pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/stop                274ms  ven 30 mar 2018 15:04:37 CEST
+POST /pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/stop HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 0
+Host: localhost:2891
+User-Agent: HTTPie/0.9.9
+
+
+
+HTTP/1.1 200 OK
+Content-Length: 97
+Content-Type: application/json
+Date: Fri, 30 Mar 2018 13:05:58 GMT
+Server: akka-http/10.0.9
+
+{
+    "Result": "OK", 
+    "data": "Pipegraph 'TestConsoleWriterWithMetadataStructuredJSONPipegraph' stopped"
+}
+
+http -v GET :2891/pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/instances            304ms  ven 30 mar 2018 15:05:58 CEST
+GET /pipegraphs/TestConsoleWriterWithMetadataStructuredJSONPipegraph/instances HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:2891
+User-Agent: HTTPie/0.9.9
+
+
+
+HTTP/1.1 200 OK
+Content-Length: 282
+Content-Type: application/json
+Date: Fri, 30 Mar 2018 13:06:53 GMT
+Server: akka-http/10.0.9
+
+{
+    "Result": "OK", 
+    "data": [
+        {
+            "currentStatusTimestamp": 1522415158518, 
+            "instanceOf": "TestConsoleWriterWithMetadataStructuredJSONPipegraph", 
+            "name": "TestConsoleWriterWithMetadataStructuredJSONPipegraph-c5db85bb-08d0-4d5a-ab7f-2f52019ddc1d", 
+            "startTimestamp": 1522404178360, 
+            "status": "STOPPED"
+        }
+    ]
+}
+
+```
+
+#### Phases
+
+When a pipegraph is started a new `PipegraphGuardian` is spawned by the `SparkConsumersStreamingMasterGuardian`
+the `PipegraphGuardian` instantiate an `StructuredStreamingETLActor` for each Etl component
+
+The `PipegraphGuardian` manages the `StructuredStreamingETLActors` in steps
+
+##### Activation
+The strategy is applied, if a failure happens in strategy application it is assumed as transient and thus Activation is retried until successful or a Stop is received (maybe a rest request from within the code executed in wasp jvm before strategy application) 
+##### Materialization
+The output plugin is applied, if a failure happens in output plugin it is assumed as transient and thus Materialization is retried until successful or a Stop is received (maybe the output data store did not accept the creation of the tables/indices)
+##### Monitoring
+The streaming query is monitored for failure and progress, if the query signal that a failure and that it has stopped then the activation of that query is retried (the other etls are left running)
+##### Stop
+The streaming query are stopped gracefully one by one
+ 
+
+#### Availability guarantees
+
+If spark-consumers jvm is lost (the spark driver is also lost) spark checkpointing and kafka should handle the buffering of incoming data and the consistency of the streaming. 
+When the  spark-consumers jvm restarts it should check mongo for pipegraphs in pending or processing status and restart them recovering the queries that were running when the unexpected shutdown occurred
+
+`NOTE: To prevent reactivation of running pipegraphs when intentionally rebooting spark-consumers explicitly stop all pipegraphs`
+
+
+![statemachines](diagrams/statemachines.png)
+```plantuml
+@startuml
+state PipegraphGuardian {
+[*] --> WaitingForWork
+WaitingForWork --> RequestingWork: WorkAvailable
+RequestingWork --> RequestingWork : WorkNotGiven
+RequestingWork --> Activating : WorkGiven
+Activating --> Activating : ActivateETL
+Activating --> Activating : ETLActivated
+Activating --> Activating : ETLNotActivated
+Activating --> Activated : ActivationFinished
+Activated --> Stopping : CancelWork
+Activated --> Materializing : MaterializePipegraph
+Materializing --> Materializing : MaterializeETL
+Materializing --> Materializing : ETLNotMaterialized
+Materializing --> Materializing : ETLMaterialized
+Materializing --> Materialized : MaterializationFinished
+Materialized --> Stopping  : CancelWork
+Materialized --> Monitoring : MonitorPipegraph
+Monitoring --> Monitoring : CheckETL
+Monitoring --> Monitoring : ETLCheckSucceeded
+Monitoring --> Monitoring : ETLCheckFailed
+Monitoring --> Monitored: MonitoringFinished
+Monitored --> Stopping : CancelWork
+Monitored --> Monitoring : MonitorPipegraph
+Monitored --> Activating
+Stopping --> Stopping: StopETL
+Stopping --> Stopping: ETLNotStopped
+Stopping --> Stopping: ETLStopped
+Stopping --> Stopped : StopFinished
+Stopped --> [*]: Shutdown
+}
+
+
+state StructuredStreamingETLActor {
+[*] --> WaitingForActivation
+WaitingForActivation --> WaitingForMaterialization : ActivateETL
+WaitingForActivation --> [*]: CancelWork
+WaitingForMaterialization --> WaitingForMonitoring : MaterializeETL
+WaitingForMaterialization --> [*]: CancelWork
+WaitingForMonitoring --> WaitingForMonitoring : CheckETL
+WaitingForMonitoring --> [*]: CancelWork
+}
+
+state SparkConsumersStreamingMasterGuardian {
+[*] --> Idle
+Idle --> Initializing: Initialize
+Initializing --> Initializing: TimeOut
+Initializing --> Initialized
+
+}
+@enduml
+```
+
+### Resolve "Verify checkpointing with new strategy load"
+
+[Merge request 43](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/43)
+
+Created at: 2018-03-22T11:36:44.193Z
+
+Updated at: 2018-03-29T16:39:14.656Z
+
+Branch: feature/4-verify-checkpointing-with-new-strategy-load
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #4, #118 
+
+*  Default (`reference.conf`) CheckpointDir root is `/checkpoint` on HDFS
+*  New testcases to test and show "best-practise" for checkpoint using stateful transformations in Spark StructuredStreaming ETL (e.g. `flatMapGroupsWithState`); in `whitelabel/models/test/TestPipegraphs.scala`
+   1.  `TestCheckpointConsoleWriterStructuredJSONPipegraph`
+   2.  `TestCheckpointConsoleWriterStructuredAVROPipegraph`
+* Documentation
+   1. `documentation/checkpoint.md`: general info about checkpoint internal implementation
+   2. `whitelabel/README.md`: added section "Checkpoint and Stateful transformation in Spark StructuredStreaming ETL"
+
+### Resolve "[cherrypick] hotfix kafka-writer-config"
+
+[Merge request 48](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/48)
+
+Created at: 2018-03-30T10:25:42.227Z
+
+Updated at: 2018-03-30T12:29:07.699Z
+
+Branch: feature/119-cherrypick-hotfix-kafka-writer-config
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #119 
+
+*  Fixed some Kafka configurations not being used properly.
+*  Fixed reference.conf in wasp core to reflect those changes.
+

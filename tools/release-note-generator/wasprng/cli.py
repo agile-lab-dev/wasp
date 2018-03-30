@@ -1,7 +1,11 @@
 import gitlab
 
 import argparse
+import codecs
+import sys
 
+UTF8Writer = codecs.getwriter('utf8')
+sys.stdout = UTF8Writer(sys.stdout)
 
 def main():
     parser = argparse.ArgumentParser(description='Wasp release note generator')
