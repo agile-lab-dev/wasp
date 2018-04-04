@@ -46,13 +46,18 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
 		/* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
 		waspDB.insertIfNotExists[TopicModel](SystemPipegraphs.loggerTopic)
+		waspDB.insertIfNotExists[TopicModel](SystemPipegraphs.latencyTopic)
 		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.loggerIndex)
+		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.latencyIndex)
+		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.elasticLatencyIndex)
 
 		/* Producers */
 		waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
 
 		/* Pipegraphs */
 		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
+
+		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.latencyPipegraph)
 	}
 	
 	private val myExceptionHandler = ExceptionHandler {

@@ -32,6 +32,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
     waspDB.upsert[TopicModel](TestTopicModel.json2)
+    waspDB.upsert[TopicModel](TestTopicModel.jsonWithMetadata)
     waspDB.upsert[TopicModel](TestTopicModel.jsonCheckpoint)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
     waspDB.upsert[TopicModel](TestTopicModel.avro2)
@@ -45,12 +46,14 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Producers */
     waspDB.upsert[ProducerModel](TestProducerModel.json)
+    waspDB.upsert[ProducerModel](TestProducerModel.jsonWithMetadata)
     waspDB.upsert[ProducerModel](TestProducerModel.jsonCheckpoint)
     waspDB.upsert[ProducerModel](TestProducerModel.avro)
     waspDB.upsert[ProducerModel](TestProducerModel.avroCheckpoint)
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.consoleWithMetadata)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)

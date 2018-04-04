@@ -19,6 +19,16 @@ private[wasp] object TestTopicModel {
     schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
+  lazy val jsonWithMetadata = TopicModel(
+    name = TopicModel.name(topic_name + "_with_metadata_json"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "json",
+    partitionKeyField = None,
+    schema = JsonConverter.fromString(withMetadataSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
+
   lazy val json2 = TopicModel(
     name = TopicModel.name(topic2_name + "_json"),
     creationTime = System.currentTimeMillis,
@@ -100,6 +110,86 @@ private[wasp] object TestTopicModel {
         |                      }
         |        }
       """.stripMargin))
+
+  private val withMetadataSchema =
+    TopicModel.generateField("test", "test", Some(
+      """
+                {
+                  "name": "metadata",
+                  "type": {
+                    "name": "nested_metadata",
+                    "type": "record",
+                    "fields": [
+                      {
+                        "name": "id",
+                        "type": "string"
+                      },
+                      {
+                        "name": "sourceId",
+                        "type": "string"
+                      },
+                      {
+                        "name": "arrivalTimestamp",
+                        "type": "long"
+                      },
+                      {
+                        "name": "lastSeenTimestamp",
+                        "type": "long"
+                      },
+                      {
+                        "name": "path",
+                        "type": {
+                          "type": "array",
+                          "items": {
+                            "name": "Path",
+                            "type": "record",
+                            "fields": [
+                              {
+                                "name": "name",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ts",
+                                "type": "long"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "doc": ""
+                },
+                {
+                  "name": "number",
+                  "type": "int",
+                  "doc": ""
+                },
+                {
+                  "name": "nested",
+                  "type": {
+                    "type": "record",
+                    "name": "nested_document",
+                    "fields": [
+                      {
+                        "name": "field1",
+                        "type": "string"
+                      },
+                      {
+                        "name": "field2",
+                        "type": "long"
+                      },
+                      {
+                        "name": "field3",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }"""))
 
   private val topicCheckpointSchema =
     TopicModel.generateField("test", "test", Some(

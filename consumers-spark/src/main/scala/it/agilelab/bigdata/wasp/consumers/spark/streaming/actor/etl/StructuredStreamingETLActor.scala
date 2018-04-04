@@ -61,13 +61,15 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
       monitor(query) match {
         case Success(monitoringInfo) => monitoringInfo match {
           case MonitorOutcome(_, _, _, Some(failure)) =>
-            goto(WaitingToBeMonitored) using MaterializedData(query) replying MyProtocol.ETLCheckFailed(etl, failure)
+            sender() ! MyProtocol.ETLCheckFailed(etl, failure)
+            stop(FSM.Failure(failure))
           case MonitorOutcome(_, _, _, None) =>
             goto(WaitingToBeMonitored) using MaterializedData(query) replying MyProtocol.ETLCheckSucceeded(etl)
         }
 
         case Failure(reason) =>
-          goto(WaitingToBeMonitored) using MaterializedData(query) replying MyProtocol.ETLCheckFailed(etl, reason)
+          sender() ! MyProtocol.ETLCheckFailed(etl, reason)
+          stop(FSM.Failure(reason))
       }
 
     case Event(MyProtocol.StopETL(etl), MaterializedData(query)) =>
