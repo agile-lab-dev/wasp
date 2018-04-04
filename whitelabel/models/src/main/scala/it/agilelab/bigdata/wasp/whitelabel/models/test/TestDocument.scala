@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
+import it.agilelab.bigdata.wasp.core.models.{Metadata, MetadataModel}
+
 case class TestDocument(id: String,
                         number: Int,
                         nested: TestNestedDocument)
@@ -15,3 +17,8 @@ case class TestCheckpointDocument(version: String,
                                   sum: Int = -1,
                                   oldSumInt: Int = -1,
                                   oldSumString: String = "-1")
+
+case class TestDocumentWithMetadata(override val metadata: MetadataModel,
+                                    id: String,
+                                    number: Int,
+                                    nested: TestNestedDocument) extends Metadata

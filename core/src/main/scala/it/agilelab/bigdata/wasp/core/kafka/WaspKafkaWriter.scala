@@ -10,7 +10,7 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 /** Simple producer using generic encoder and default partitioner. */
 //TODO remove and use kafka connect or kafka camel
-class WaspKafkaWriter[K, V](producerConfig: Properties) extends Logging {
+class WaspKafkaWriter[K, V](producerConfig: Properties) {
 
   def this(brokers: Set[String], batchSize: Int, acks: String , producerType: String, serializerFqcn: String, keySerializerFqcn: String) =
     this(WaspKafkaWriter.createConfig(brokers, batchSize, acks, serializerFqcn, keySerializerFqcn))
@@ -21,7 +21,7 @@ class WaspKafkaWriter[K, V](producerConfig: Properties) extends Logging {
   def this(conf: TinyKafkaConfig) = this(WaspKafkaWriter.createConfig(
     conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.acks, conf.encoder_fqcn, conf.encoder_fqcn))
 
-  logger.info(s"Kafka Producer configuration $producerConfig")
+  //logger.info(s"Kafka Producer configuration $producerConfig")
   private val producer = new KafkaProducer[K, V](producerConfig)
 
   /** Sends the data, partitioned by key to the topic. */

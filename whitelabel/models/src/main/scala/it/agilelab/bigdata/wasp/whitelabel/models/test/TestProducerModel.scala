@@ -14,6 +14,16 @@ private[wasp] object TestProducerModel {
       isSystem = false
     )
 
+  lazy val jsonWithMetadata = ProducerModel(
+    name = "TestJSONProducerWithMetadata",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestDocumentWithMetadataProducerGuardian",
+    topicName = Some(TestTopicModel.jsonWithMetadata.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
+
   lazy val jsonCheckpoint = ProducerModel(
     name = "TestJSONCheckpointProducer",
     className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestCheckpointProducerGuardian",
