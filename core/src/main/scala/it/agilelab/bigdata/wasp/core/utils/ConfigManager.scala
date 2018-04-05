@@ -163,6 +163,7 @@ object ConfigManager {
       kafkaSubConfig.getString("encoder-fqcn"),
       kafkaSubConfig.getString("decoder-fqcn"),
       kafkaSubConfig.getInt("batch-send-size"),
+      kafkaSubConfig.getString("acks"),
       readOthersConfig(kafkaSubConfig).map(e => KafkaEntryConfig(e._1, e._2)),
       kafkaConfigName
     )

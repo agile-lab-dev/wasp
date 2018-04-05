@@ -5,17 +5,16 @@
 
             others = [
               # mandatory
-              { "acks" : "1" }
-              { "security.protocol" : "SASL_PLAINTEXT" }
-              { "sasl.kerberos.service.name" : "kafka" }
-              { "sasl.jaas.config" : "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"mattia.bertorello@CLUSTER01.ATSCOM.IT\";" }
-              { "sasl.mechanism" : "GSSAPI" }
-              
+              { "security.protocol" = "SASL_PLAINTEXT" }
+              { "sasl.kerberos.service.name" = "kafka" }
+              { "sasl.jaas.config" = "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"wasp2@REALM\";" }
+              { "sasl.mechanism" = "GSSAPI" }
+            
               # optional
-              { "sasl.kerberos.kinit.cmd" : "/usr/bin/kinit" }
-              { "sasl.kerberos.min.time.before.relogin" : "60000" }
-              { "sasl.kerberos.ticket.renew.jitter" : "0.05" }
-              { "sasl.kerberos.ticket.renew.window.factor" : "0.8" }
+              { "sasl.kerberos.kinit.cmd" = "/usr/bin/kinit" }
+              { "sasl.kerberos.min.time.before.relogin" = "60000" }
+              { "sasl.kerberos.ticket.renew.jitter" = "0.05" }
+              { "sasl.kerberos.ticket.renew.window.factor" = "0.8" }
             ]
             
 - Creare un keytab da inserire sotto la cartella whitelabel/docker (seguire le istruzioni del file whitelabel/docker/keytab-build.sh per creare il keytab )
@@ -34,8 +33,8 @@
 - Nelle configurazioni di spark-streaming e spark-batch mettere queste configurazioni aggiuntive
 
         others = [
-          { "spark.yarn.dist.files" : "file:///root/configurations/wasp2.keytab,file:///root/configurations/sasl.jaas.config" }
-          { "spark.executor.extraJavaOptions" : "-Djava.security.auth.login.config=./sasl.jaas.config" }
+          { "spark.yarn.dist.files" = "file:///root/configurations/wasp2.keytab,file:///root/configurations/sasl.jaas.config" }
+          { "spark.executor.extraJavaOptions" = "-Djava.security.auth.login.config=./sasl.jaas.config" }
         ]
     IMPORTANTE mettere file:// davanti al percorso dei file altrimenti non vengono trasferti
 - Non cambiare il nome al keytab altrimenti modificate l'MD5 e l'autenticazione non fuziona più

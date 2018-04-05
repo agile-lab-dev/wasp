@@ -12,17 +12,14 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 //TODO remove and use kafka connect or kafka camel
 class WaspKafkaWriter[K, V](producerConfig: Properties) extends Logging {
 
-  def this(brokers: Set[String], batchSize: Int, producerType: String, serializerFqcn: String, keySerializerFqcn: String) =
-    this(WaspKafkaWriter.createConfig(brokers, batchSize, serializerFqcn, keySerializerFqcn))
-
-  def this(config: KafkaConfig) =
-    this(WaspKafkaWriter.defaultConfig(config))
+  def this(brokers: Set[String], batchSize: Int, acks: String , producerType: String, serializerFqcn: String, keySerializerFqcn: String) =
+    this(WaspKafkaWriter.createConfig(brokers, batchSize, acks, serializerFqcn, keySerializerFqcn))
 
   def this(conf: KafkaConfigModel) = this(WaspKafkaWriter.createConfig(
-    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.encoder_fqcn, conf.encoder_fqcn))
+    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.acks, conf.encoder_fqcn, conf.encoder_fqcn))
 
   def this(conf: TinyKafkaConfig) = this(WaspKafkaWriter.createConfig(
-    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.encoder_fqcn, conf.encoder_fqcn))
+    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.acks, conf.encoder_fqcn, conf.encoder_fqcn))
 
   logger.info(s"Kafka Producer configuration $producerConfig")
   private val producer = new KafkaProducer[K, V](producerConfig)
@@ -44,7 +41,7 @@ class WaspKafkaWriter[K, V](producerConfig: Properties) extends Logging {
 
 object WaspKafkaWriter {
 
-  def createConfig(brokers: Set[String], batchSendSize: Int,
+  def createConfig(brokers: Set[String], batchSendSize: Int, acks: String,
                    keySerializerFqcn: String, serializerFqcn: String,
                    others: Seq[KafkaEntryConfig] = Seq()): Properties = {
 
@@ -53,14 +50,12 @@ object WaspKafkaWriter {
     props.put("value.serializer", serializerFqcn)
     props.put("key.serializer", keySerializerFqcn)
     props.put("batch.size", batchSendSize.toString)
-    props.put("acks", others.filter(_.key == "acks").map(_.value).headOption.getOrElse("1"))
+    props.put("acks", acks)
 
     others.foreach(v => {
       props.put(v.key, v.value)
     })
+
     props
   }
-
-  def defaultConfig(config: KafkaConfig): Properties =
-    createConfig(Set(s"${config.hostName}:${config.port}"), 0, "org.apache.kafka.common.serialization.StringSerializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
 }

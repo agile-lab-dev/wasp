@@ -13,11 +13,12 @@ case class KafkaConfigModel(connections: Seq[ConnectionConfig],
 														encoder_fqcn: String,
 														decoder_fqcn: String,
 														batch_send_size: Int,
+														acks: String,
 														others: Seq[KafkaEntryConfig],
 														name: String
                            ) extends Model {
 
-	def toTinyConfig() = TinyKafkaConfig(connections, batch_send_size, default_encoder, encoder_fqcn, partitioner_fqcn, others)
+	def toTinyConfig() = TinyKafkaConfig(connections, batch_send_size, acks, default_encoder, encoder_fqcn, partitioner_fqcn, others)
 
 	def ingestRateToMills() = {
 		val defaultIngestRate = 1000
@@ -32,6 +33,7 @@ case class KafkaConfigModel(connections: Seq[ConnectionConfig],
 case class TinyKafkaConfig(
 														connections: Seq[ConnectionConfig],
 														batch_send_size: Int,
+														acks: String,
 														default_encoder: String,
 														encoder_fqcn: String,
 														partitioner_fqcn: String,
