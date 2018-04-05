@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.producers
 import java.util.Properties
 
 import akka.actor.{Actor, ActorLogging}
-import it.agilelab.bigdata.wasp.core.WaspEvent
 import it.agilelab.bigdata.wasp.core.kafka.WaspKafkaWriter
 import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
@@ -16,8 +15,6 @@ class KafkaPublisherActor(val producerConfig: Properties) extends KafkaProducerA
 
 /** Simple producer for an Akka Actor using generic encoder and default partitioner. */
 abstract class KafkaProducerActor[K, V] extends Actor with ActorLogging {
-
-  import WaspEvent._
 
   def producerConfig: Properties
 
