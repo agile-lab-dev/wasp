@@ -44,7 +44,7 @@ class WaspKafkaWriter[K, V](producerConfig: Properties) extends Logging {
 
 object WaspKafkaWriter {
 
-  def createConfig(brokers: Set[String], batchSize: Int,
+  def createConfig(brokers: Set[String], batchSendSize: Int,
                    keySerializerFqcn: String, serializerFqcn: String,
                    others: Seq[KafkaEntryConfig] = Seq()): Properties = {
 
@@ -52,7 +52,7 @@ object WaspKafkaWriter {
     props.put("bootstrap.servers", brokers.mkString(","))
     props.put("value.serializer", serializerFqcn)
     props.put("key.serializer", keySerializerFqcn)
-    props.put("batch.size", batchSize.toString)
+    props.put("batch.size", batchSendSize.toString)
     props.put("acks", others.filter(_.key == "acks").map(_.value).headOption.getOrElse("1"))
 
     others.foreach(v => {
@@ -62,5 +62,5 @@ object WaspKafkaWriter {
   }
 
   def defaultConfig(config: KafkaConfig): Properties =
-    createConfig(Set(s"${config.hostName}:${config.port}"), 1, "org.apache.kafka.common.serialization.StringSerializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+    createConfig(Set(s"${config.hostName}:${config.port}"), 0, "org.apache.kafka.common.serialization.StringSerializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
 }
