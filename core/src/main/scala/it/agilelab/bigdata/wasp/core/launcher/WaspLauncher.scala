@@ -3,10 +3,9 @@ package it.agilelab.bigdata.wasp.core.launcher
 import java.util.concurrent.TimeUnit
 
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
+import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
-import it.agilelab.bigdata.wasp.core.messages.DownUnreachableMembers
+import it.agilelab.bigdata.wasp.core.models.configuration.{ValidationRule, WaspConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, MongoDBHelper, WaspDB}
 import org.apache.commons.cli
 import org.apache.commons.cli.{CommandLine, ParseException}
@@ -49,8 +48,11 @@ trait WaspLauncher {
 				// initialize stuff
 				initializeWasp(commandLine)
 
-				// initialize plugins (valid only for consumers nodes (streaming and batch)
+				// initialize plugins - really defined only for spark consumers nodes (streaming and batch)
 				initializePlugins(args)
+
+				// validate configs - use of plugin-level validationRules only for spark consumers nodes (streaming and batch), which define them
+				validateConfigs()
 
 				// launch the application
 				launch(commandLine)
@@ -154,11 +156,50 @@ trait WaspLauncher {
 	protected def getOptions: Seq[cli.Option] = WaspCommandLineOptions.allOptions
 
 	/**
-		* Initialize the WASP plugins, this method is called after the wasp initialization
+		* Initialize the WASP plugins, this method is called after the WASP initialization.
+		*
+		* Default: no nothing.
+		* Overrided by spark consumers nodes (streaming and batch): plugin initialization
+		*
 		* @param args command line arguments
 		*/
-	def initializePlugins(args: Array[String]): Unit = {
-		Unit
+	def initializePlugins(args: Array[String]): Unit = Unit
+
+	/**
+		* Validate the configs, this methos is called after the WASP plugin initializations
+		*
+		* Default: use global-level validationRules in [[ConfigManager]].
+		* Overrided by spark consumers nodes (streaming and batch): use global-level and plugin-level validationRules defined only for spark consumers nodes (streaming and batch)
+		*
+		* @param pluginsValidationRules
+		*/
+	def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Unit = {
+		println("Configs validation")
+
+		// validate configs
+		val validationResults = ConfigManager.validateConfigs(pluginsValidationRules)
+
+		println(s"VALIDATION-RESULT:\n\t${
+			validationResults
+				.map( pair => pair._1 -> (if(pair._2.isLeft) "NOT PASSED" else "PASSED"))
+				.mkString("\n\t")
+		}")
+
+		if (validationResults.exists(_._2.isLeft)) {
+			// there is at least a validation failure
+
+			if(waspConfig.environmentMode == WaspConfigModel.WaspEnvironmentMode.develop)
+				println(s"VALIDATION-WARN: Configs NOT successfully validated. Continuation due to WASP is launched in 'develop' mode")
+			else {
+				// all not "develop" is considered "production" by default
+				println(s"VALIDATION-ERROR: Configs NOT successfully validated. Termination due to WASP is launched in 'production' mode (environment.mode = '${waspConfig.environmentMode}')")
+				System.exit(1)
+
+				// TODO stop all cluster nodes due to pluginsValidationRules are not validated by all nodes (i.e. a failures related to pluginsValidationRules are not recognized by all nodes)
+			}
+		}
+		else
+			println("Configs successfully validated")
 	}
 
 	def getNodeName: String

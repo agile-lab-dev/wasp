@@ -5,16 +5,24 @@ package it.agilelab.bigdata.wasp.core.models.configuration
 	*
 	*/
 case class WaspConfigModel(
-	                          actorSystemName: String,
+														actorSystemName: String,
 														actorDowningTimeout: Int,
-	                          indexRollover: Boolean,
-	                          generalTimeoutMillis: Int,
-	                          servicesTimeoutMillis: Int,
-	                          defaultIndexedDatastore: String,
-	                          defaultKeyvalueDatastore: String,
-	                          systemPipegraphsStart: Boolean,
-	                          systemProducersStart: Boolean,
-	                          restServerHostname: String,
-	                          restServerPort: Int,
-														environmentPrefix: String //This should not contain space or /. chars
+														indexRollover: Boolean,
+														generalTimeoutMillis: Int,
+														servicesTimeoutMillis: Int,
+														defaultIndexedDatastore: String,
+														defaultKeyvalueDatastore: String,
+														systemPipegraphsStart: Boolean,
+														systemProducersStart: Boolean,
+														restServerHostname: String,
+														restServerPort: Int,
+														environmentPrefix: String,
+														validationRulesToIgnore: Seq[String],
+														environmentMode: String
                           )
+
+object WaspConfigModel {
+	object WaspEnvironmentMode {
+		val develop = "develop"
+	}
+}

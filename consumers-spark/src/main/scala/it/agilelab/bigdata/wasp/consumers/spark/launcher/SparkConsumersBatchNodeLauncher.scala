@@ -9,6 +9,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefaul
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
+import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 
 import scala.collection.JavaConverters._
 
@@ -53,6 +54,12 @@ trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLaun
 		}).toMap
 
 		logger.info(s"Initialized all batch consumers spark plugins")
+	}
+
+	override def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Unit = {
+		val pluginsValidationRules = plugins.flatMap(plugin => plugin._2.getValidationRules).toSeq
+
+		super.validateConfigs(pluginsValidationRules)
 	}
 
 	override def getNodeName: String = "batch consumers spark"
