@@ -76,7 +76,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
   implicit val zookeeperConnectionFormat: RootJsonFormat[ZookeeperConnectionsConfig] = jsonFormat2(ZookeeperConnectionsConfig.apply)
   implicit val kafkaEntryConfigModelFormat: RootJsonFormat[KafkaEntryConfig] = jsonFormat2(KafkaEntryConfig.apply)
-  implicit val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat12(KafkaConfigModel.apply)
+  implicit val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat13(KafkaConfigModel.apply)
   implicit val sparkDriverConfigFormat: RootJsonFormat[SparkDriverConfig] = jsonFormat6(SparkDriverConfig.apply)
   implicit val kryoSerializerConfigFormat: RootJsonFormat[KryoSerializerConfig] = jsonFormat3(KryoSerializerConfig.apply)
   implicit val sparkEntryConfigModelConfigFormat: RootJsonFormat[SparkEntryConfig] = jsonFormat2(SparkEntryConfig.apply)
