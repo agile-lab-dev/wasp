@@ -165,16 +165,16 @@ class MasterGuardian(env: {
   private def startBatchJob(batchJob: BatchJobModel, restConfig: Config): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
     ??[BatchMessages.StartBatchJobResult](sparkConsumersBatchMasterGuardian, BatchMessages.StartBatchJob(batchJob.name, restConfig)) match {
-      case BatchMessages.StartBatchJobResultSuccess(name) => Right(s"Batch job '${name}' accepted (queued or processing)")
-      case BatchMessages.StartBatchJobResultFailure(name, error) => Left(s"Batch job '${batchJob.name}' not accepted $error")
+      case BatchMessages.StartBatchJobResultSuccess(name) => Right(s"Batch job '$name' start accepted")
+      case BatchMessages.StartBatchJobResultFailure(name, error) => Left(s"Batch job '$name' start not accepted due to [$error]")
     }
   }
 
   private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
     logger.info(s"Starting pipegraph '${pipegraph.name}'")
     ??[PipegraphMessages.StartPipegraphResult](sparkConsumersStreamingMasterGuardian, PipegraphMessages.StartPipegraph(pipegraph.name)) match {
-      case PipegraphMessages.PipegraphStarted(name) => Right(s"Pipegraph '$name' accepted (queued or processing)")
-      case PipegraphMessages.PipegraphNotStarted(name, error) => Left(s"Pipegraph '$name' not accepted $error")
+      case PipegraphMessages.PipegraphStarted(name) => Right(s"Pipegraph '$name' start accepted")
+      case PipegraphMessages.PipegraphNotStarted(name, error) => Left(s"Pipegraph '$name' start not accepted due to [$error]")
     }
   }
 
@@ -182,8 +182,8 @@ class MasterGuardian(env: {
     logger.info(s"Stopping pipegraph '${pipegraph.name}'")
     ??[PipegraphMessages.StopPipegraphResult](sparkConsumersStreamingMasterGuardian, PipegraphMessages.StopPipegraph
     (pipegraph.name)) match {
-      case PipegraphMessages.PipegraphStopped(name) => Right(s"Pipegraph '$name' stopped")
-      case PipegraphMessages.PipegraphNotStopped(name, error) => Left(s"Pipegraph '$name' not stopped due to [$error]")
+      case PipegraphMessages.PipegraphStopped(name) => Right(s"Pipegraph '$name' stop accepted")
+      case PipegraphMessages.PipegraphNotStopped(name, error) => Left(s"Pipegraph '$name' stop not accepted due to [$error]")
     }
   }
 }
