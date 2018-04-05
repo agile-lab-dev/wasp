@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark
 
 import java.lang
 
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.{logger, _}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
 import org.apache.spark.deploy.SparkHadoopUtil
@@ -55,7 +55,7 @@ object SparkSingletons extends Logging {
           try {
             logger.info("Instantiating SparkContext...")
             new SparkContext(sparkConf)
-            logger.info("Successfully instantiated SparkContext")
+            logger.info("SparkContext sSuccessfully instantiated")
           } catch {
             case se: SparkException if se.getMessage.contains("SPARK-2243") =>
               // another SparkContext was already running; this means we did not create it!
@@ -70,7 +70,7 @@ object SparkSingletons extends Logging {
           // instantiate & assign SparkSession
           logger.info("Instantiating SparkSession...")
           sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
-          logger.info("Successfully instantiated SparkSession")
+          logger.info("SparkSession successfully instantiated")
           logger.info(s"SparkContext configuration: ${sparkSession.sparkContext.hadoopConfiguration.toString}")
           logger.info(s"SparkHadoopUtil configuration: ${SparkHadoopUtil.get.conf.toString}")
 
@@ -78,7 +78,7 @@ object SparkSingletons extends Logging {
           sparkContext = sparkSession.sparkContext
           sqlContext = sparkSession.sqlContext
   
-          logger.info("Successfully initialized Spark")
+          logger.info("Spark successfully initialized")
   
           true
         }
@@ -107,10 +107,8 @@ object SparkSingletons extends Logging {
           throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with the same configuration " +
                                           "before calling initializeSparkStreaming")
         }
-        
-        // validate config & log it
-        validateConfig(sparkStreamingConfigModel)
-        logger.info("Using SparkStreamingConfigModel:\n" + sparkStreamingConfigModel)
+
+        logger.info(s"Starting from SparkStreamingConfigModel:\n\t$sparkStreamingConfigModel")
         
         // instantiate & assign StreamingContext
         logger.info("Instantiating StreamingContext...")
@@ -122,7 +120,7 @@ object SparkSingletons extends Logging {
           newStreamingContext
         }
         streamingContext = StreamingContext.getOrCreate(uniqueLegacyStreamingCheckpointDir, createStreamingContext)
-        logger.info("Successfully instantiated StreamingContext")
+        logger.info("StreamingContext successfully instantiated")
   
         true
       } else {

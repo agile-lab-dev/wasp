@@ -78,6 +78,19 @@ Add this in standalone applications:
     scriptClasspath += ":$HADOOP_CONF_DIR:$YARN_CONF_DIR"
     
 
+## Configuration validation rules
+(see `/whitelabel/docker/docker-environment.conf`)
+
+WASP defines a set of configuration validation rules to be validated in order to be launched.
+
+These validation rules are defined at global-level (by `validationRules` in `ConfigManager.scala`) and at plugin-level (by `WaspConsumersSparkPlugin.getValidationRules()` exposed by each plugin).
+
+The following configurations allow to alter the default behavior of WASP related to validation rules:
+- `environment.validationRulesToIgnore`: list of validation rules to ignore (through validation rule's keys) (**default: []**)
+- For all not ignored validation rules: print VALIDATION-RESULT (validation rule's keys and PASSED/NOT PASSED); if there is at least a validation failure (NOT PASSED):
+    - `environment.mode` == "develop": print VALIDATION-WARN and continue
+    - `environment.mode` != "develop" (all not "develop" is considered "production" by default): print VALIDATION-ERROR and exit (**default: "production"**)
+
 ## Procedure of Strategy version upgrade
 
 (see
@@ -121,7 +134,7 @@ Inside the *checkpointDir* (default: `/checkpoint` on HDFS) are automatically st
 - **Note:** In Strategy's transform (`TestCheckpointStrategy`), adding a further stateful transformation (es. `flatMapGroupsWithState`) based on the result of the already existing one, requires to clean-up the *checkpointDir* folders `offsets`, `commits` and `state`.
             
     The reason is that the sub-folder `state/0` exists, related to the already present stateful transformation, whereas the fresh new created sub-folder `state/1`, related to the new stateful transformation,
-    still does not exist (i.e. does not contain files `.delta` / `.snapshot`, see [checkpoint-State](../documentation/checkpoint.md#state)) despite the "checkpointing process" of this Spark StructuredStreaming ETL expecting it.
+    still does not exist (i.e. does not contain files `.delta` / `.snapshot`, see [checkpoint-State](../documentation/spark-structured-streaming-checkpointing.md#state)) despite the "checkpointing process" of this Spark StructuredStreaming ETL expecting it.
 
     For sake of clarity:
 

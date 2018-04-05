@@ -13,6 +13,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefaul
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
+import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.commons.cli.CommandLine
 
@@ -86,6 +87,12 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 		}).toMap
 
 		logger.info(s"Initialized all streaming consumers spark plugins")
+	}
+
+	override def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Unit = {
+		val pluginsValidationRules = plugins.flatMap(plugin => plugin._2.getValidationRules).toSeq
+
+		super.validateConfigs(pluginsValidationRules)
 	}
 
 	override def getNodeName: String = "streaming consumers spark"

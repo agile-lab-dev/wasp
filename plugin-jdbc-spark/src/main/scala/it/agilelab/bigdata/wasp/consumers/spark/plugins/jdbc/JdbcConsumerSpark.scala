@@ -5,6 +5,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.{SqlSourceBl, SqlSourceBlImpl}
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.models.{Datastores, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
@@ -54,4 +55,6 @@ class JdbcConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def pluginType: String = Datastores.jdbcProduct
+
+  override def getValidationRules: Seq[ValidationRule] = Seq()
 }

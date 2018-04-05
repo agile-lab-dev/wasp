@@ -25,10 +25,8 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
   def buildSparkConfFromSparkConfigModel(sparkConfigModel: SparkConfigModel): SparkConf = {
     logger.info("Building Spark configuration from configuration model")
     
-    // validate SparkConfigModel & log it
-    validateConfig(sparkConfigModel)
     logger.info(s"Starting from SparkConfigModel:\n\t$sparkConfigModel")
-  
+
     // build SparkConf from SparkConfigModel & log it
     val sparkConf = new SparkConf()
       .setAppName(sparkConfigModel.appName)
@@ -117,12 +115,6 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
         logger.error(msg, e)
         throw e
     }
-  }
-  
-  def validateConfig(sparkConfig: SparkConfigModel): Unit = {
-    val master = sparkConfig.master
-    if (master.protocol == "" && master.host.startsWith("yarn"))
-      logger.warn("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
   }
 	
 	def generateUniqueLegacyStreamingCheckpointDir: String = {
