@@ -677,7 +677,7 @@ Closes #4, #118
    1.  `TestCheckpointConsoleWriterStructuredJSONPipegraph`
    2.  `TestCheckpointConsoleWriterStructuredAVROPipegraph`
 * Documentation
-   1. `documentation/checkpoint.md`: general info about checkpoint internal implementation
+   1. `documentation/spark-structured-streaming-checkpointing.md`: general info about checkpoint internal implementation
    2. `whitelabel/README.md`: added section "Checkpoint and Stateful transformation in Spark StructuredStreaming ETL"
 
 ### Resolve "[cherrypick] hotfix kafka-writer-config"

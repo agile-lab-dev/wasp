@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.core
 
-import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, ActorSystem, Props}
@@ -11,11 +10,8 @@ import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.Datastores
-import it.agilelab.bigdata.wasp.core.plugins.WaspPlugin
 import it.agilelab.bigdata.wasp.core.utils._
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.{Failure, Success}
@@ -118,19 +114,7 @@ object WaspSystem extends WaspConfiguration with Logging {
       logger.info("Spawning clusterListener actor")
       clusterListenerActor_ = actorSystem.actorOf(Props(new ClusterListenerActor), ClusterListenerActor.name)
       logger.info("Spawned clusterListener actors")
-      
-      logger.info("Finding WASP plugins")
-      val pluginLoader: ServiceLoader[WaspPlugin] = ServiceLoader.load[WaspPlugin](classOf[WaspPlugin])
-      val plugins = pluginLoader.iterator().asScala.toList
-      logger.info(s"Found ${plugins.size} plugins")
-      logger.info("Initializing plugins")
-      plugins foreach {
-        plugin => {
-          logger.info(s"Initializing plugin ${plugin.getClass.getSimpleName}")
-          plugin.initialize()
-        }
-      }
-  
+
       logger.info("Connecting to services")
 
       // check connectivity with kafka's zookeper
@@ -147,36 +131,11 @@ object WaspSystem extends WaspConfiguration with Logging {
         case None => throw new UnknownError("Unknown error during Zookeeper connection initialization")
       }
 
+      logger.info("Connected to services")
+
       // implicit timeout used below
       implicit val implicitServicesTimeout = servicesTimeout
-    
-      // initialize indexed datastore
-      val defaultIndexedDatastore = waspConfig.defaultIndexedDatastore
-      if (defaultIndexedDatastore != Datastores.elasticProduct && defaultIndexedDatastore != Datastores.solrProduct) {
-        logger.error(s"No indexed datastore configured! Value: ${defaultIndexedDatastore} is different from elastic or solr")
-      }
 
-      // initialize keyvalue datastore
-      val defaultKeyvalueDatastore = waspConfig.defaultKeyvalueDatastore
-      defaultKeyvalueDatastore match {
-        case "hbase" => {
-          logger.info(s"Trying to connect with HBase...")
-          startupHBase(servicesTimeout.duration.toMillis)
-        }
-        case _ => {
-          logger.error("No keyvalue datastore configured!")
-        }
-      }
-      
-      // TODO do we really want this? what if there is a rt-only pipegraph using just kafka?
-      // fail if neither indexed nor keyvalue datastore is configured
-      if (defaultIndexedDatastore.isEmpty && defaultKeyvalueDatastore.isEmpty) {
-        logger.error("No datastore configured!")
-        throw new UnsupportedOperationException("No datastore configured! Configure a keyvalue or an indexed datastore")
-      }
-      
-      logger.info("Connected to services")
-  
       // get distributed pub sub mediator
       logger.info("Initializing distributed pub sub mediator")
       mediator_ = DistributedPubSub.get(WaspSystem.actorSystem).mediator

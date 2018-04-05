@@ -5,6 +5,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
 import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.models.{Datastores, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
@@ -45,4 +46,6 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def pluginType: String = Datastores.kafkaProduct
+
+  override def getValidationRules: Seq[ValidationRule] = Seq()
 }

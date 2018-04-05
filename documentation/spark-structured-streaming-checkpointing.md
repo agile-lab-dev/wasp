@@ -1,4 +1,4 @@
-## Checkpoint 
+## Spark StructuredStreaming Checkpointing 
 
 Folders automatically created:
 - `/metadata`
@@ -6,7 +6,7 @@ Folders automatically created:
 - `/offsets`
 - `/commits`
 - `/state`
-    - created only with stateful transformations in Spark StructuredStreaming (e.g. `flatMapGroupsWithState`)
+    - Created only with stateful transformations in Spark StructuredStreaming (e.g. `flatMapGroupsWithState`)
 
 ### offsets
 

@@ -433,8 +433,8 @@ Indices Sample
 | /configs/kafka  | Get the Kakfa configuration. |   |   |   |
 | /configs/sparkbatch  | Get the Spark batch configuration. |   |   |   |
 | /configs/sparkstreaming  | Get the Spark streaming configuration. |   |   |   |
-| /configs/es  | Get the Elasticsearch configuration. If exists. |   |   |   |
-| /configs/solr  | Get the Solr configuration. If exists. |   |   |   |
+| /configs/es  | Get the Elasticsearch configuration, if exists. |   |   |   |
+| /configs/solr  | Get the Solr configuration, if exists. |   |   |   |
 
 Configurations Sample
 

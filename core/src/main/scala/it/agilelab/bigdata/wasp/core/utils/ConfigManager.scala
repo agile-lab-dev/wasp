@@ -5,8 +5,8 @@ import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
-import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.models.configuration._
+import it.agilelab.bigdata.wasp.core.models.{Datastores, Model}
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
@@ -16,13 +16,81 @@ import scala.reflect.runtime.universe._
 object ConfigManager {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
-  val kafkaConfigName = "Kafka"
-  val sparkBatchConfigName = "SparkBatch"
-  val sparkStreamingConfigName = "SparkStreaming"
-  val elasticConfigName = "Elastic"
-  val solrConfigName = "Solr"
-  val hbaseConfigName = "HBase"
-  val jdbcConfigName = "Jdbc"
+  private val kafkaConfigName = "Kafka"
+  private val sparkBatchConfigName = "SparkBatch"
+  private val sparkStreamingConfigName = "SparkStreaming"
+  private val elasticConfigName = "Elastic"
+  private val solrConfigName = "Solr"
+  private val hbaseConfigName = "HBase"
+  private val jdbcConfigName = "Jdbc"
+
+  private val globalValidationRules: Seq[ValidationRule] = Seq(
+
+    /* waspConfig validation-rules */
+
+    ValidationRule("DefaultIndexedDatastoreAndKeyValueDatastoreEmpty") {
+      (configManager) => {
+
+        if (configManager.getWaspConfig.defaultIndexedDatastore.isEmpty && configManager.getWaspConfig.defaultKeyvalueDatastore.isEmpty)
+          Left("No datastore configured! Configure at least an indexed or a keyvalue datastore")
+        else
+          Right()
+      }
+    },
+    ValidationRule("DefaultIndexedDatastoreUnknown") {
+      (configManager) => {
+
+        if (configManager.getWaspConfig.defaultIndexedDatastore != Datastores.elasticProduct && configManager.getWaspConfig.defaultIndexedDatastore != Datastores.solrProduct)
+          Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${Datastores.elasticProduct}' or '${Datastores.solrProduct}'")
+        else
+          Right()
+      }
+    },
+    ValidationRule("DefaultKeyValueDatastoreUnknown") {
+      (configManager) => {
+
+        if (configManager.getWaspConfig.defaultKeyvalueDatastore != Datastores.hbaseProduct)
+          Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${Datastores.hbaseProduct}'")
+        else
+          Right()
+      }
+    },
+
+    /* sparkStreamingConfig validation-rules */
+
+    ValidationRule("SparkStreamingYARNmode") {
+      (configManager) => {
+
+        val master = configManager.sparkStreamingConfig.master
+        if (master.protocol == "" && master.host.startsWith("yarn"))
+          Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
+        else
+          Right()
+      }
+    },
+    ValidationRule("SparkStreamingCheckpointDirLocal") {
+      (configManager) => {
+
+        if (configManager.sparkStreamingConfig.checkpointDir.startsWith("file:///"))
+          Left("Using a localPath (within the consumers-spark-streaming container) for the checkpoint folder is not recommended. Use a remotePath on HDFS (i.e. '/...') instead")
+        else
+          Right()
+      }
+    },
+
+    /* sparkBatchConfig validation-rules */
+
+    ValidationRule("SparkBatchYARNmode") {
+      (configManager) => {
+
+        val master = configManager.sparkBatchConfig.master
+        if (master.protocol == "" && master.host.startsWith("yarn"))
+          Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
+        else
+          Right()
+      }
+    }
+  )
 
   private var waspConfig : WaspConfigModel = _
   private var mongoDBConfig: MongoDBConfigModel = _
@@ -34,11 +102,18 @@ object ConfigManager {
   private var hbaseConfig: HBaseConfigModel = _
   private var jdbcConfig: JdbcConfigModel = _
 
+  def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
+    (globalValidationRules ++ pluginsValidationRules)
+      .filterNot(validationRule => waspConfig.validationRulesToIgnore.contains(validationRule.key))
+      .map(validationRule => validationRule.key -> validationRule.func(this)).toMap
+  }
+
   private def initializeWaspConfig(): Unit = {
     waspConfig = getDefaultWaspConfig // wasp config is always read from file, so it's always "default"
   }
 
   private def getDefaultWaspConfig: WaspConfigModel = {
+    val environmentSubConfig = conf.getConfig("environment")
     WaspConfigModel(
       conf.getString("actor-system-name"),
       conf.getInt("actor-downing-timeout-millis"),
@@ -51,7 +126,9 @@ object ConfigManager {
       conf.getBoolean("systemproducers.start"),
       conf.getString("rest.server.hostname"),
       conf.getInt("rest.server.port"),
-      conf.getString("environment.prefix")
+      environmentSubConfig.getString("prefix"),
+      readValidationRulesToIgnore(environmentSubConfig, "validationRulesToIgnore"),
+      environmentSubConfig.getString("mode")
     )
   }
 
@@ -221,7 +298,11 @@ object ConfigManager {
     * Not initialize MongoDB due to already initialized [[WaspDB.initializeDB()]]
     */
   def initializeCommonConfigs(): Unit = {
-    initializeWaspConfig()
+
+    if (waspConfig == null) {
+      initializeWaspConfig() // already initialized within WaspDB.initializeDB() due to logger.info()
+    }
+
     initializeKafkaConfig()
     initializeElasticConfig()
     initializeSolrConfig()
@@ -303,6 +384,11 @@ object ConfigManager {
       config.getString("password"),
       config.getString("driverName")
     )
+  }
+
+  private def readValidationRulesToIgnore(config: Config, path: String): Array[String] = {
+    val validationRulesToIgnore = config.getStringList(path).asScala
+    validationRulesToIgnore.toArray
   }
 
   private def readConnectionsConfig(config: Config, path: String): Array[ConnectionConfig] = {

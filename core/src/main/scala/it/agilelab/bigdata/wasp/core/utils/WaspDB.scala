@@ -375,26 +375,9 @@ object WaspDB extends Logging {
     val codecRegistry = fromRegistries(fromProviders(codecRegisters), DEFAULT_CODEC_REGISTRY)
 
     val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig).withCodecRegistry(codecRegistry)
-    /*val primaryNode = connection.wait()
-    val primaryNodeReady = Await.ready(primaryNode, 6.second)
-    println(primaryNodeReady.value)
-
-    primaryNodeReady.value match {
-      case Some(Failure(t)) =>
-        val msg = s"There is no MongoDB instance active on address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}. Message: ${t.getMessage}"
-        log.error(msg)
-        connection.close()
-        driver.close()
-        throw new Exception(msg)
-
-      case Some(Success(_)) =>*/
-        val completewaspDB = new WaspDBImp(mongoDBDatabase)
-        completewaspDB.initializeCollections()
-        waspDB = completewaspDB
-        waspDB
-
-    /*
-          case None => throw new UnknownError("Unknown Error during db initialization")
-        }*/
+    val completewaspDB = new WaspDBImp(mongoDBDatabase)
+    completewaspDB.initializeCollections()
+    waspDB = completewaspDB
+    waspDB
   }
 }
