@@ -194,8 +194,6 @@ trait WaspLauncher {
 				// all not "develop" is considered "production" by default
 				println(s"VALIDATION-ERROR: Configs NOT successfully validated. Termination due to WASP is launched in 'production' mode (environment.mode = '${waspConfig.environmentMode}')")
 				System.exit(1)
-
-				// TODO stop all cluster nodes due to pluginsValidationRules are not validated by all nodes (i.e. a failures related to pluginsValidationRules are not recognized by all nodes)
 			}
 		}
 		else
