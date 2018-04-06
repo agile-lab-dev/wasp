@@ -55,7 +55,7 @@ object SparkSingletons extends Logging {
           try {
             logger.info("Instantiating SparkContext...")
             new SparkContext(sparkConf)
-            logger.info("SparkContext sSuccessfully instantiated")
+            logger.info("SparkContext successfully instantiated")
           } catch {
             case se: SparkException if se.getMessage.contains("SPARK-2243") =>
               // another SparkContext was already running; this means we did not create it!
