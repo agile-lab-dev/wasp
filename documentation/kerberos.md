@@ -2,20 +2,28 @@
 
 - Cambiare il file docker-environment.conf in modo che spark si connetti ad un cluster yarn kerberizzato seguendo la guida [yarn.md](yarn.md)
 - Configurare le configurazioni di sicurezza per kafka:
-
-            others = [
-              # mandatory
-              { "security.protocol" = "SASL_PLAINTEXT" }
-              { "sasl.kerberos.service.name" = "kafka" }
-              { "sasl.jaas.config" = "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"wasp2@REALM\";" }
-              { "sasl.mechanism" = "GSSAPI" }
             
-              # optional
-              { "sasl.kerberos.kinit.cmd" = "/usr/bin/kinit" }
-              { "sasl.kerberos.min.time.before.relogin" = "60000" }
-              { "sasl.kerberos.ticket.renew.jitter" = "0.05" }
-              { "sasl.kerberos.ticket.renew.window.factor" = "0.8" }
-            ]
+        others = [
+          # mandatory
+          { "security.protocol" = "SASL_PLAINTEXT" }
+          { "sasl.kerberos.service.name" = "kafka" }
+          { "sasl.jaas.config" = "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"wasp2@REALM\";" }
+          { "sasl.mechanism" = "GSSAPI" }
+          { "kafka.security.protocol" = "SASL_PLAINTEXT" }
+          { "kafka.sasl.kerberos.service.name" = "kafka" }
+          { "kafka.sasl.jaas.config" = "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"wasp2@REALM\";" }
+          { "kafka.sasl.mechanism" = "GSSAPI" }
+        
+          # optional
+          { "sasl.kerberos.kinit.cmd" = "/usr/bin/kinit" }
+          { "sasl.kerberos.min.time.before.relogin" = "60000" }
+          { "sasl.kerberos.ticket.renew.jitter" = "0.05" }
+          { "sasl.kerberos.ticket.renew.window.factor" = "0.8" }
+          { "kafka.sasl.kerberos.kinit.cmd" = "/usr/bin/kinit" }
+          { "kafka.sasl.kerberos.min.time.before.relogin" = "60000" }
+          { "kafka.sasl.kerberos.ticket.renew.jitter" = "0.05" }
+          { "kafka.sasl.kerberos.ticket.renew.window.factor" = "0.8" }
+        ]
             
 - Creare un keytab da inserire sotto la cartella whitelabel/docker (seguire le istruzioni del file whitelabel/docker/keytab-build.sh per creare il keytab )
 - Andare nel file whitelabel/docker/security-env.sh e modificare le variabili di ambiente con i valori corretti:

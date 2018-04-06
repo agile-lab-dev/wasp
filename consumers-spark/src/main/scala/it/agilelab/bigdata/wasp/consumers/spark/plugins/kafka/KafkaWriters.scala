@@ -136,13 +136,8 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val connectionString = tkc.connections.map{
       conn => s"${conn.host}:${conn.port}"
     }.mkString(",")
-    // Added for backwards compatibility
-    val kafkaConfigMap: Seq[KafkaEntryConfig] =
-      if (tkc.others.map(_.key).contains("acks")) {
-        tkc.others
-      } else {
-        tkc.others :+ KafkaEntryConfig("acks", "1")
-      }
+
+    val kafkaConfigMap: Seq[KafkaEntryConfig] = tkc.others
 
     dsw
       .option("kafka.bootstrap.servers", connectionString)
@@ -150,7 +145,8 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       .option("key.serializer", tkc.encoder_fqcn)
       .option("kafka.partitioner.class", tkc.partitioner_fqcn)
       .option("kafka.batch.size", tkc.batch_send_size.toString)
-      .options(kafkaConfigMap.map(v => v.copy(key = "kafka." + v.key)).map(_.toTupla).toMap)
+      .option("kafka.acks", tkc.acks)
+      .options(kafkaConfigMap.map(_.toTupla).toMap)
   }
 }
 
