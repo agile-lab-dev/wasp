@@ -32,7 +32,7 @@ Add these in standalone applications:
 
     // to use within "docker run" in start-wasp.sh using -main FULLY_QUALIFIED_NAME
 
-## Spark distributed-mode (Hadoop YARN, Spark Standalone) usage
+## Spark distributed-mode (Spark Standalone, Hadoop YARN) usage
 (see `consumers-spark/build.sbt`)
 
 Add this in standalone applications:
@@ -83,13 +83,13 @@ Add this in standalone applications:
 
 WASP defines a set of configuration validation rules to be validated in order to be launched.
 
-These validation rules are defined at global-level (by `validationRules` in `ConfigManager.scala`) and at plugin-level (by `WaspConsumersSparkPlugin.getValidationRules()` exposed by each plugin).
+These validation rules are defined at global-level (by `globalValidationRules` in `ConfigManager.scala`) and at plugin-level (by `WaspConsumersSparkPlugin.getValidationRules()` exposed by each plugin).
 
 The following configurations allow to alter the default behavior of WASP related to validation rules:
-- `environment.validationRulesToIgnore`: list of validation rules to ignore (through validation rule's keys) (**default: []**)
-- For all not ignored validation rules: print VALIDATION-RESULT (validation rule's keys and PASSED/NOT PASSED); if there is at least a validation failure (NOT PASSED):
-    - `environment.mode` == "develop": print VALIDATION-WARN and continue
-    - `environment.mode` != "develop" (all not "develop" is considered "production" by default): print VALIDATION-ERROR and exit (**default: "production"**)
+- `environment.validationRulesToIgnore`(default: `[]`): list of validation rules to ignore (through validation rule's keys)
+- `environment.mode` (default: `"production"`) - for all not ignored validation rules: print VALIDATION-RESULT (validation rule's keys and PASSED/NOT PASSED); if there is at least a validation failure (NOT PASSED):
+    - `environment.mode` == `"develop"`: print VALIDATION-WARN and continue
+    - `environment.mode` != `"develop"` (all not "develop" is considered "production" by default): print VALIDATION-ERROR and exit
 
 ## Procedure of Strategy version upgrade
 
