@@ -697,3 +697,80 @@ Closes #119
 *  Fixed some Kafka configurations not being used properly.
 *  Fixed reference.conf in wasp core to reflect those changes.
 
+
+## WASP 2.9.0
+06/04/2018
+
+### Resolve "[config] production checks"
+
+[Merge request 49](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/49)
+
+Created at: 2018-04-03T09:45:04.610Z
+
+Updated at: 2018-04-05T10:19:15.583Z
+
+Branch: feature/105-config-production-checks
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #105
+
+Added management of production checks using validation rules:
+*  `environment.validationRulesToIgnore`: list of validation rules to ignore (through validation rule's keys)
+* For all not ignored validation rules: print VALIDATION-RESULT (validation rule's keys and PASSED/NOT PASSED); if there is at least a validation failure (NOT PASSED):
+ * `environment.mode` == "develop": print VALIDATION-WARN and continue
+ * `environment.mode` != "develop" (all not "develop" is considered "production" by default): print VALIDATION-ERROR and exit
+
+
+Documentation
+* `whitelabel/README.md`: added section "Configuration validation rules"
+
+### Resolve "Change rest api message for pipegraph stop to better explain that stopping is async"
+
+[Merge request 51](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/51)
+
+Created at: 2018-04-05T10:39:13.190Z
+
+Updated at: 2018-04-05T10:52:10.873Z
+
+Branch: feature/120-change-rest-api-message-for-pipegraph-stop-to-better-explain-that-stopping-is-async
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #120 
+
+Updated feedback messages at start/stop of batch_jobs/pipegraphs (accepted/not accepted due to the new concept of "instance")
+
+### Resolve "WaspKafkaWriter and KafkaWriter issues""
+
+[Merge request 53](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/53)
+
+Created at: 2018-04-05T15:21:51.837Z
+
+Updated at: 2018-04-06T14:21:48.220Z
+
+Branch: feature/74-waspkafkawriter-has-a-hardcoded-value-for-request-required-acks
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #74, #123 
+
+Kafka config "acks":
+* taken out from "kafka.others.acks" to "kafka.acks"
+* default (`reference.conf`): -1 (i.e. "all")
+
+Kafka config "others":
+* Must contain duplicated keys (for WASP-Producers and for PipegraphETLKafka-Producers/Consumers). Example:
+
+    ```
+        others = [
+          { "security.protocol" = "SASL_PLAINTEXT" }
+          { "sasl.kerberos.service.name" = "kafka" }
+          { "sasl.jaas.config" = "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"wasp2@REALM\";" }
+          { "sasl.mechanism" = "GSSAPI" }
+          { "kafka.security.protocol" = "SASL_PLAINTEXT" }
+          { "kafka.sasl.kerberos.service.name" = "kafka" }
+          { "kafka.sasl.jaas.config" = "com.sun.security.auth.module.Krb5LoginModule required storeKey=true useKeyTab=true useTicketCache=false keyTab=\"./wasp2.keytab\" serviceName=\"kafka\" principal=\"wasp2@REALM\";" }
+          { "kafka.sasl.mechanism" = "GSSAPI" }
+        ]
+    ```
