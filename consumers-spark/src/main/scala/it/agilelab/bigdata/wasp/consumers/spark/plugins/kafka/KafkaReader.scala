@@ -53,7 +53,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .option("subscribe", topic.name)
         .option("kafka.bootstrap.servers", kafkaConfig.connections.map(_.toString).mkString(","))
         .option("kafkaConsumer.pollTimeoutMs", kafkaConfig.ingestRateToMills())
-        .options(kafkaConfig.others.map(v => v.copy(key = "kafka." + v.key)).map(_.toTupla).toMap)
+        .options(kafkaConfig.others.map(_.toTupla).toMap)
         .load()
 
       // prepare the udf
