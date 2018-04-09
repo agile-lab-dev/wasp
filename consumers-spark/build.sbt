@@ -5,7 +5,7 @@ mainClass in Compile := Some("thisClassNotExist")
 
 // to use within "docker run" in start-wasp.sh using -main FULLY_QUALIFIED_NAME
 
-/* Spark distributed-mode (Spark Standalone, Hadoop YARN) usage */
+/* Spark distributed-mode (Spark Standalone or Hadoop YARN cluster managers) usage */
 import java.io.File
 
 mappings in Universal += {
