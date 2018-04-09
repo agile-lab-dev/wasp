@@ -51,7 +51,7 @@ object Pipegraph_C extends Directives with JsonSupport {
               post {
                 complete {
                   WaspSystem.??[Either[String, String]](masterGuardian, StartPipegraph(name)) match {
-                    case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                    case Right(jsonToParse) => jsonToParse.parseJson.toAngularOkResponse(pretty)
                     case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                   }
                 }

@@ -3,19 +3,17 @@ package it.agilelab.bigdata.wasp.master
 import java.util.Calendar
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
-import akka.pattern.ask
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages
 import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages.StartSystemPipegraphs
-import it.agilelab.bigdata.wasp.core.messages._
+import it.agilelab.bigdata.wasp.core.messages.{PipegraphMessages, _}
 import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
+import spray.json.{JsObject, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.TimeoutException
 import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
 
 object MasterGuardian
@@ -165,7 +163,13 @@ class MasterGuardian(env: {
   private def startBatchJob(batchJob: BatchJobModel, restConfig: Config): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
     ??[BatchMessages.StartBatchJobResult](sparkConsumersBatchMasterGuardian, BatchMessages.StartBatchJob(batchJob.name, restConfig)) match {
-      case BatchMessages.StartBatchJobResultSuccess(name) => Right(s"Batch job '$name' start accepted")
+      case BatchMessages.StartBatchJobResultSuccess(name, instanceName) =>
+        Right(
+          JsObject(
+            "startResult" -> JsString(s"Batch job '$name' start accepted'"),
+            "instance" -> JsString(s"$instanceName")
+          ).toString
+        )
       case BatchMessages.StartBatchJobResultFailure(name, error) => Left(s"Batch job '$name' start not accepted due to [$error]")
     }
   }
@@ -173,7 +177,13 @@ class MasterGuardian(env: {
   private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
     logger.info(s"Starting pipegraph '${pipegraph.name}'")
     ??[PipegraphMessages.StartPipegraphResult](sparkConsumersStreamingMasterGuardian, PipegraphMessages.StartPipegraph(pipegraph.name)) match {
-      case PipegraphMessages.PipegraphStarted(name) => Right(s"Pipegraph '$name' start accepted")
+      case PipegraphMessages.PipegraphStarted(name, instanceName) =>
+        Right(
+          JsObject(
+            "startResult" -> JsString(s"Pipegraph '$name' start accepted'"),
+            "instance" -> JsString(s"$instanceName")
+          ).toString
+        )
       case PipegraphMessages.PipegraphNotStarted(name, error) => Left(s"Pipegraph '$name' start not accepted due to [$error]")
     }
   }

@@ -470,10 +470,9 @@
   },
   "solr": {
     "server": "/solr/",
-    "core_name": "logger_index_shard1_replica1",
+    "core_name": "logger_solr_index_shard1_replica1",
     "core_list": [
-      "logger_index_shard1_replica1",
-      "test_index_shard1_replica1"
+      "logger_solr_index_shard1_replica1"
     ],
     "global_params": ""
   },

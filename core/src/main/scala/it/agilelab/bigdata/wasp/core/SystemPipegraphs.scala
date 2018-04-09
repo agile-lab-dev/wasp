@@ -84,7 +84,7 @@ private[wasp] object LoggerTopicModel {
 				|            "name": "stack_trace",
 				|            "type": "string",
 				|            "doc": "Stacktrace of the logged exception attached to this logged message",
-				|        },
+				|        }
 			""".stripMargin))
 }
 
