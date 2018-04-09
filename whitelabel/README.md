@@ -71,11 +71,27 @@ Add this in standalone applications:
 
 
 ## Hadoop YARN usage
-(see `consumers-spark/build.sbt`)
+(see
 
-Add this in standalone applications:
+- `consumers-spark/build.sbt`
 
-    scriptClasspath += ":$HADOOP_CONF_DIR:$YARN_CONF_DIR"
+- `whitelabel/docker/docker-environment.conf`
+)
+
+In standalone applications:
+- Add this in `consumers-spark/build.sbt`:
+
+        scriptClasspath += ":$HADOOP_CONF_DIR:$YARN_CONF_DIR"
+    
+- Override with the correct valid jar-path these in `whitelabel/docker/docker-environment.conf`:
+
+        spark-streaming.master.protocol = ""    # default: ""
+        spark-streaming.master.host = "yarn"    # default: "local[*]"
+        spark-streaming.yarn-jar = "..."        # default: ""
+        
+        spark-batch.master.protocol = ""        # default: ""
+        spark-batch.master.host = "yarn"        # default: "local[*]"
+        spark-batch.yarn-jar = "..."            # default: ""
     
 
 ## Configuration validation rules
