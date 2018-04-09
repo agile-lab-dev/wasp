@@ -45,6 +45,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
     sparkConf
       .set("spark.executor.cores", sparkConfigModel.executorCores.toString)
       .set("spark.executor.memory", sparkConfigModel.executorMemory)
+      .set("spark.cores.max", sparkConfigModel.coresMax.toString)
       .set("spark.executor.instances", sparkConfigModel.executorInstances.toString)
       .setJars(getAdditionalJars(sparkConfigModel.additionalJarsPath))
       .set("spark.yarn.jars", sparkConfigModel.yarnJar)

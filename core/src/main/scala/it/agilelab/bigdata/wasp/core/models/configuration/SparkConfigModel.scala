@@ -9,6 +9,7 @@ trait SparkConfigModel extends Model {
 	val driver: SparkDriverConfig
 	val executorCores: Int
 	val executorMemory: String
+	val coresMax: Int
 	val executorInstances: Int
 	val additionalJarsPath: String
 	val yarnJar: String
@@ -28,6 +29,7 @@ case class SparkStreamingConfigModel(
 																			driver: SparkDriverConfig,
 																			executorCores: Int,
 																			executorMemory: String,
+																			coresMax: Int,
 																			executorInstances: Int,
 																			additionalJarsPath: String,
 																			yarnJar: String,
@@ -52,6 +54,7 @@ case class SparkBatchConfigModel(
 																	driver: SparkDriverConfig,
 																	executorCores: Int,
 																	executorMemory: String,
+																	coresMax: Int,
 																	executorInstances: Int,
 																	additionalJarsPath: String,
 																	yarnJar: String,
