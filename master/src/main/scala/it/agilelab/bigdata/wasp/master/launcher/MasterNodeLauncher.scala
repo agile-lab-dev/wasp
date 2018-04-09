@@ -47,7 +47,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		/* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
 		waspDB.insertIfNotExists[TopicModel](SystemPipegraphs.loggerTopic)
 		waspDB.insertIfNotExists[TopicModel](SystemPipegraphs.telemetryTopic)
-		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.loggerIndex)
+		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.solrLoggerIndex)
+		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.elasticLoggerIndex)
 		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.solrTelemetryIndex)
 		waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.elasticTelemetryIndex)
 

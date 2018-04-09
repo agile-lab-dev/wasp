@@ -14,7 +14,8 @@ object SystemPipegraphs {
 
 	/* Topic, Index, Raw for Producer, Pipegraph */
 	lazy val loggerTopic = LoggerTopicModel()
-	lazy val loggerIndex = LoggerIndex()
+	lazy val solrLoggerIndex = SolrLoggerIndex()
+  lazy val elasticLoggerIndex = ElasticLoggerIndexModel()
 
 	/* Producer */
 	lazy val loggerProducer = LoggerProducer()
@@ -205,9 +206,9 @@ private[wasp] object LoggerProducer {
 		isSystem = true)
 }
 
-private[wasp] object LoggerIndex {
+private[wasp] object SolrLoggerIndex {
 
-	val index_name = "logger"
+	val index_name = "logger_solr"
 
 	import IndexModelBuilder._
 
@@ -227,10 +228,70 @@ private[wasp] object LoggerIndex {
 
 }
 
+private[wasp] object ElasticLoggerIndexModel {
+  import org.json4s._
+
+  import org.json4s.native.JsonMethods._
+  import org.json4s.JsonDSL._
+
+  import IndexModelBuilder._
+
+  val index_name = "logger_elastic"
+
+  import IndexModelBuilder._
+
+  def apply(): IndexModel = IndexModelBuilder.forElastic
+    .named(index_name)
+    .config(Elastic.Config(shards = 1,
+                           replica = 1))
+    .schema(Elastic.Schema(indexElasticSchema))
+    .build
+
+  //noinspection ScalaUnnecessaryParentheses
+  private lazy val indexElasticSchema = parse(
+    """
+        {
+          "properties": {
+            "log_source": {
+              "type": "keyword"
+            },
+            "log_level": {
+              "type": "keyword"
+            },
+            "message": {
+               "type": "text"
+             },
+            "timestamp": {
+              "type": "date"
+            },
+            "thread": {
+              "type": "keyword"
+            },
+            "cause": {
+              "type": "text"
+            },
+            "stack_trace": {
+              "type": "text"
+            }
+          }
+        }""").asInstanceOf[JObject]
+}
+
 private[wasp] object LoggerPipegraph {
 	import SystemPipegraphs._
 
 	val loggerPipegraphName = "LoggerPipegraph"
+
+  private def writer: WriterModel = ConfigManager.getWaspConfig.defaultIndexedDatastore match {
+    case "elastic" => WriterModel.elasticWriter(
+      elasticLoggerIndex.name,
+      elasticLoggerIndex.name
+    )
+    case "solr" => WriterModel.solrWriter(
+      solrLoggerIndex.name,
+      solrLoggerIndex.name
+    )
+  }
 
 	def apply() = PipegraphModel(
 		name = loggerPipegraphName,
@@ -244,10 +305,7 @@ private[wasp] object LoggerPipegraph {
       StructuredStreamingETLModel(
         name = "write on index",
         inputs = List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic.name)),
-        output = WriterModel.solrWriter(
-          loggerIndex.name,
-          loggerIndex.name
-        ),
+        output = writer,
         mlModels = List(),
         strategy = None,
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
@@ -257,6 +315,8 @@ private[wasp] object LoggerPipegraph {
 		rtComponents = List(),
 		dashboard = None)
 }
+
+
 
 private[wasp] object TelemetryPipegraph {
 	import SystemPipegraphs._
