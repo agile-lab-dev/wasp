@@ -29,66 +29,62 @@ object ConfigManager {
     /* waspConfig validation-rules */
 
     ValidationRule("DefaultIndexedDatastoreAndKeyValueDatastoreEmpty") {
-      (configManager) => {
-
+      (configManager) =>
         if (configManager.getWaspConfig.defaultIndexedDatastore.isEmpty && configManager.getWaspConfig.defaultKeyvalueDatastore.isEmpty)
           Left("No datastore configured! Configure at least an indexed or a keyvalue datastore")
         else
           Right()
-      }
     },
     ValidationRule("DefaultIndexedDatastoreUnknown") {
-      (configManager) => {
-
+      (configManager) =>
         if (configManager.getWaspConfig.defaultIndexedDatastore != Datastores.elasticProduct && configManager.getWaspConfig.defaultIndexedDatastore != Datastores.solrProduct)
           Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${Datastores.elasticProduct}' or '${Datastores.solrProduct}'")
         else
           Right()
-      }
     },
     ValidationRule("DefaultKeyValueDatastoreUnknown") {
-      (configManager) => {
-
+      (configManager) =>
         if (configManager.getWaspConfig.defaultKeyvalueDatastore != Datastores.hbaseProduct)
           Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${Datastores.hbaseProduct}'")
         else
           Right()
-      }
     },
 
     /* sparkStreamingConfig validation-rules */
 
     ValidationRule("SparkStreamingYARNmode") {
-      (configManager) => {
-
-        val master = configManager.sparkStreamingConfig.master
-        if (master.protocol == "" && master.host.startsWith("yarn"))
-          Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
+      (configManager) =>
+        val master = configManager.getSparkStreamingConfig.master
+        if (master.protocol == "" && master.host == "yarn") {
+          if(configManager.getSparkStreamingConfig.yarnJar.isEmpty)
+            Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
+          else
+            Right()
+        }
         else
           Right()
-      }
     },
     ValidationRule("SparkStreamingCheckpointDirLocal") {
-      (configManager) => {
-
-        if (configManager.sparkStreamingConfig.checkpointDir.startsWith("file:///"))
+      (configManager) =>
+        if (configManager.getSparkStreamingConfig.checkpointDir.startsWith("file:///"))
           Left("Using a localPath (within the consumers-spark-streaming container) for the checkpoint folder is not recommended. Use a remotePath on HDFS (i.e. '/...') instead")
         else
           Right()
-      }
     },
 
     /* sparkBatchConfig validation-rules */
 
     ValidationRule("SparkBatchYARNmode") {
-      (configManager) => {
-
-        val master = configManager.sparkBatchConfig.master
-        if (master.protocol == "" && master.host.startsWith("yarn"))
-          Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
+      (configManager) =>
+        val master = configManager.getSparkBatchConfig.master
+        if (master.protocol == "" && master.host == "yarn") {
+          if(configManager.getSparkBatchConfig.yarnJar.isEmpty)
+            Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
+          else
+            Right()
+        }
         else
           Right()
-      }
     }
   )
 
