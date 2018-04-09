@@ -287,14 +287,26 @@ trait ActivationSteps {
 
     val config = ConfigManager.getKafkaConfig.toTinyConfig()
 
-    val inputStreamWithEnterMetadata = MetadataOps.sendLatencyMessage(MetadataOps.enter(etl.name, stream), config)
+
+    val sampleOneMessageEveryKey = "wasp.telemetry.latency.sample-one-message-every"
+
+    val defaultConfiguration = ConfigFactory.parseString(s"$sampleOneMessageEveryKey=100")
+
+    val sampleOneMessageEveryValue = strategy.configuration.withFallback(defaultConfiguration).getInt(sampleOneMessageEveryKey)
+
+    val saneSampleOneMessageEvery = if (sampleOneMessageEveryValue < 1) 1 else sampleOneMessageEveryValue
+
+
+    val inputStreamWithEnterMetadata = MetadataOps.sendLatencyMessage(MetadataOps.enter(etl.name, stream),
+      config, saneSampleOneMessageEvery)
 
     val strategyInputStreams = dataStoreDFs + (readerKey -> inputStreamWithEnterMetadata)
 
     val strategyOutputStream = strategy.transform(strategyInputStreams)
 
+
     val strategyOutputStreamWithExitMetadata = MetadataOps.sendLatencyMessage(MetadataOps.exit(etl.name,
-      strategyOutputStream),config)
+      strategyOutputStream),config, saneSampleOneMessageEvery)
 
     writerType.getActualProduct match {
       case Datastores.kafkaProduct => strategyOutputStreamWithExitMetadata
@@ -362,7 +374,7 @@ object MetadataOps {
   }
 
 
-  def sendLatencyMessage(stream: DataFrame, kafkaConfig: TinyKafkaConfig): DataFrame =
+  def sendLatencyMessage(stream: DataFrame, kafkaConfig: TinyKafkaConfig, samplingFactor: Int): DataFrame =
 
     if (stream.columns.contains("metadata")) {
 
@@ -384,15 +396,15 @@ object MetadataOps {
       stream.mapPartitions { partition: Iterator[Row] =>
 
 
-
         val writer: Producer[Array[Byte], Array[Byte]] = new KafkaProducer[Array[Byte], Array[Byte]](props)
         TaskContext.get().addTaskCompletionListener(_ => writer.close())
 
-        val counter = new AtomicInteger()
+        var counter = 0
+
 
         partition.map { row =>
 
-          if(counter.getAndIncrement() % 1 == 0) {
+          if(counter % samplingFactor == 0) {
 
             val metadata = row.getStruct(row.fieldIndex("metadata"))
 
@@ -431,6 +443,7 @@ object MetadataOps {
 
           }
 
+          counter = counter + 1
           row
         }
 
