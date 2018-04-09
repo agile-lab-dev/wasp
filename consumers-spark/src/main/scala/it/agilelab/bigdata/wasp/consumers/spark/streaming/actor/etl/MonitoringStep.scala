@@ -9,10 +9,7 @@ import scala.util.{Failure, Try}
   */
 trait MonitoringStep {
 
-  case class MonitorOutcome(isActive: Boolean,
-                            status: StreamingQueryStatus,
-                            progress: StreamingQueryProgress,
-                            option: Option[StreamingQueryException])
+
 
 
   /**
@@ -20,7 +17,8 @@ trait MonitoringStep {
     * @param query The query to be monitored
     * @return The [[MonitorOutcome]]
     */
-  protected def monitor(query: StreamingQuery) = Try(MonitorOutcome(query.isActive, query.status, query.lastProgress, query
+  protected def monitor(query: StreamingQuery) = Try(MonitorOutcome(query.isActive, query.status, Option(query
+    .lastProgress), query
     .exception)).recoverWith {
     case e: Throwable => Failure(new Exception(s"Failed monitoring of query ${query.name}", e))
   }

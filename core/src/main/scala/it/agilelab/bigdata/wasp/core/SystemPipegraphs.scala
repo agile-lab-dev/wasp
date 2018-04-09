@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core
 
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.JsonConverter
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 import org.json4s.JObject
 
 /**
@@ -25,11 +25,11 @@ object SystemPipegraphs {
 
 
 
-	/** Latency  */
-	lazy val latencyTopic = LatencyTopicModel()
-	lazy val latencyIndex = LatencyIndexModel()
-  lazy val elasticLatencyIndex = ElasticLatencyIndexModel()
-  lazy val latencyPipegraph = LatencyPipegraph()
+	/** Telemetry  */
+	lazy val telemetryTopic = TelemetryTopicModel()
+	lazy val solrTelemetryIndex = SolrTelemetryIndexModel()
+  lazy val elasticTelemetryIndex = ElasticLatencyIndexModel()
+  lazy val telemetryPipegraph = TelemetryPipegraph()
 }
 
 private[wasp] object LoggerTopicModel {
@@ -87,9 +87,9 @@ private[wasp] object LoggerTopicModel {
 			""".stripMargin))
 }
 
-private[wasp] object LatencyTopicModel {
+private[wasp] object TelemetryTopicModel {
 
-	private val topic_name = "latency"
+	private val topic_name = "telemetry"
 
 	def apply() = TopicModel(
 		name = TopicModel.name(topic_name),
@@ -102,33 +102,38 @@ private[wasp] object LatencyTopicModel {
 	)
 
 	private val topicSchema =
-		TopicModel.generateField("logging", "logging", Some(
+		TopicModel.generateField("telemetry", "telemetry", Some(
 			"""
-      |        {
-      |            "name": "messageId",
-      |            "type": "string",
-      |            "doc": "Unique id of message whose latency was recorded"
-      |        },
-      |				 {
-      |            "name": "timestamp",
-      |            "type": "string",
-      |            "doc": "Logged message timestamp in  ISO-8601 format"
-      |        },
-      |        {
-      |            "name": "sourceId",
-      |            "type": "string",
-      |            "doc": "Id of the block that generated this message"
-      |        },
-      |        {
-      |            "name": "latency",
-      |            "type": "long",
-      |            "doc": "Latency in milliseconds of the block"
-      |        }""".stripMargin))
+				|        {
+				|            "name": "messageId",
+				|            "type": "string",
+				|            "doc": "Unique id of message whose latency was recorded"
+				|        },
+				|				 {
+				|            "name": "timestamp",
+				|            "type": "string",
+				|            "doc": "Logged message timestamp in  ISO-8601 format"
+				|        },
+				|        {
+				|            "name": "sourceId",
+				|            "type": "string",
+				|            "doc": "Id of the block that generated this message"
+				|        },
+				|        {
+				|            "name": "metric",
+				|            "type": "string",
+				|            "doc": "Name of the metric"
+				|        },
+				|        {
+				|            "name": "value",
+				|            "type": "double",
+				|            "doc": "Value of the metric"
+				|        }""".stripMargin))
 }
 
-private[wasp] object LatencyIndexModel {
+private[wasp] object SolrTelemetryIndexModel {
 
-	val index_name = "latency"
+	val index_name = "telemetry_solr"
 
 	import IndexModelBuilder._
 
@@ -140,7 +145,8 @@ private[wasp] object LatencyIndexModel {
       Solr.Field("messageId", Solr.Type.String),
       Solr.Field("timestamp", Solr.Type.TrieDate),
       Solr.Field("sourceId", Solr.Type.String),
-			Solr.Field("latency", Solr.Type.TrieLong)))
+			Solr.Field("metric", Solr.Type.String),
+			Solr.Field("value", Solr.Type.TrieDouble)))
 		.build
 
 }
@@ -153,7 +159,7 @@ private[wasp] object ElasticLatencyIndexModel {
 
   import IndexModelBuilder._
 
-  val index_name = "latency_elastic"
+  val index_name = "telemetry_elastic"
 
   import IndexModelBuilder._
 
@@ -174,8 +180,11 @@ private[wasp] object ElasticLatencyIndexModel {
             "sourceId": {
               "type": "keyword"
             },
-            "latency": {
-              "type": "long"
+						"metric": {
+               "type": "keyword"
+             },
+            "value": {
+              "type": "double"
             },
             "timestamp": {
               "type": "date"
@@ -249,14 +258,25 @@ private[wasp] object LoggerPipegraph {
 		dashboard = None)
 }
 
-private[wasp] object LatencyPipegraph {
+private[wasp] object TelemetryPipegraph {
 	import SystemPipegraphs._
 
-	val latencyPipegraphName = "LatencyPipegraph"
+	val telemetryPipegraphName = "Telemetry Pipegraph"
+
+	private def writer: WriterModel = ConfigManager.getWaspConfig.defaultIndexedDatastore match {
+		case "elastic" => WriterModel.elasticWriter(
+			elasticTelemetryIndex.name,
+			elasticTelemetryIndex.name
+		)
+		case "solr" => WriterModel.solrWriter(
+			solrTelemetryIndex.name,
+			solrTelemetryIndex.name
+		)
+	}
 
 	def apply() = PipegraphModel(
-		name = latencyPipegraphName,
-		description = "System Latency Pipegraph",
+		name = telemetryPipegraphName,
+		description = "System Telemetry Pipegraph",
 		owner = "system",
 		isSystem = true,
 		creationTime = System.currentTimeMillis,
@@ -265,11 +285,8 @@ private[wasp] object LatencyPipegraph {
 		structuredStreamingComponents = List(
 			StructuredStreamingETLModel(
 				name = "write on index",
-				inputs = List(ReaderModel.kafkaReader(latencyTopic.name, latencyTopic.name)),
-				output = WriterModel.elasticWriter(
-					elasticLatencyIndex.name,
-          elasticLatencyIndex.name
-				),
+				inputs = List(ReaderModel.kafkaReader(telemetryTopic.name, telemetryTopic.name)),
+				output = writer,
 				mlModels = List(),
 				strategy = None,
 				kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
