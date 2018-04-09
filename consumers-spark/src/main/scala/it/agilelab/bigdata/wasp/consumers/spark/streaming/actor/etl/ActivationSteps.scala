@@ -16,7 +16,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.WorkerKafkaWriter
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
-import it.agilelab.bigdata.wasp.core.{LatencyPipegraph, LatencyTopicModel, SystemPipegraphs}
+import it.agilelab.bigdata.wasp.core.{TelemetryPipegraph, TelemetryTopicModel, SystemPipegraphs}
 import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.{TinyKafkaConfig, WaspConfigModel}
@@ -417,11 +417,12 @@ object MetadataOps {
 
             val json = JSONObject(Map("messageId" -> messageId,
                                       "sourceId" -> compositeSourceId,
-                                      "latency" -> latency,
+                                      "metric" -> "latencyMs",
+                                      "value" -> latency,
                                       "timestamp" -> collectionTimeAsString)).toString(JSONFormat.defaultFormatter)
 
 
-            val topic = SystemPipegraphs.latencyTopic.name
+            val topic = SystemPipegraphs.telemetryTopic.name
 
             val record = new ProducerRecord[Array[Byte], Array[Byte]](topic,
                                                                       messageId.getBytes(StandardCharsets.UTF_8),

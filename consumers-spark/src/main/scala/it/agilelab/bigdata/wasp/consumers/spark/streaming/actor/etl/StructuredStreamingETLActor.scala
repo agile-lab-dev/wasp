@@ -1,15 +1,18 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
-import akka.actor.{FSM, Props}
+import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.State._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.StructuredStreamingETLActor.TelemetryActorFactory
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => MyProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => PipegraphProtocol}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.telemetry.TelemetryActor
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.SparkSession
 
 import scala.util.{Failure, Success}
@@ -20,13 +23,17 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
                                           override val mlModelBl: MlModelBL,
                                           override val topicsBl: TopicBL,
                                           override val writerFactory: WriterFactory,
-                                          val pipegraph: PipegraphModel
+                                          val pipegraph: PipegraphModel,
+                                          val telemetryActorFactory: TelemetryActorFactory
                                          )
   extends FSM[State, Data]
     with ActivationSteps
     with MaterializationSteps
     with MonitoringStep
     with StoppingStep {
+
+
+  val telemetryActor = telemetryActorFactory("telemetry", context)
 
   startWith(WaitingToBeActivated, IdleData)
 
@@ -63,7 +70,8 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
           case MonitorOutcome(_, _, _, Some(failure)) =>
             sender() ! MyProtocol.ETLCheckFailed(etl, failure)
             stop(FSM.Failure(failure))
-          case MonitorOutcome(_, _, _, None) =>
+          case outcome @ MonitorOutcome(_, _, _, None) =>
+            telemetryActor ! outcome
             goto(WaitingToBeMonitored) using MaterializedData(query) replying MyProtocol.ETLCheckSucceeded(etl)
         }
 
@@ -89,6 +97,7 @@ class StructuredStreamingETLActor private(override val reader: StructuredStreami
 
 object StructuredStreamingETLActor {
 
+  type TelemetryActorFactory = (String, ActorRefFactory) => ActorRef
 
   def props(reader: StructuredStreamingReader,
             plugins: Map[String, WaspConsumersSparkPlugin],
@@ -96,13 +105,28 @@ object StructuredStreamingETLActor {
             mlModelBl: MlModelBL,
             topicsBl: TopicBL,
             writerFactory: WriterFactory,
-            pipegraph: PipegraphModel) = Props(new StructuredStreamingETLActor(reader,
+            pipegraph: PipegraphModel,
+            telemetryActorFactory: TelemetryActorFactory) = Props(new StructuredStreamingETLActor(reader,
                                                                                plugins,
                                                                                sparkSession,
                                                                                mlModelBl,
                                                                                topicsBl,
                                                                                writerFactory,
-                                                                               pipegraph))
+                                                                               pipegraph,
+                                                                               telemetryActorFactory))
+
+
+  def defaultTelemetryActorFactory() : TelemetryActorFactory = { (name, context) =>
+
+    val kafkaConfig = ConfigManager.getKafkaConfig
+
+    val connectionString = kafkaConfig.connections.map{
+      conn => s"${conn.host}:${conn.port}"
+    }.mkString(",")
+
+    context.actorOf(TelemetryActor.props(connectionString, kafkaConfig.toTinyConfig()), name)
+
+  }
 
 }
 
