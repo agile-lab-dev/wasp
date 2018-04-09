@@ -32,7 +32,7 @@ Add these in standalone applications:
 
     // to use within "docker run" in start-wasp.sh using -main FULLY_QUALIFIED_NAME
 
-## Spark distributed-mode (Spark Standalone, Hadoop YARN) usage
+## Spark distributed-mode (Spark Standalone or Hadoop YARN cluster managers) usage
 (see `consumers-spark/build.sbt`)
 
 Add this in standalone applications:

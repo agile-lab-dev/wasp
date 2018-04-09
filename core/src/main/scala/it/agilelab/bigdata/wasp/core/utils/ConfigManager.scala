@@ -52,11 +52,22 @@ object ConfigManager {
 
     /* sparkStreamingConfig validation-rules */
 
+    ValidationRule("SparkStreamingStandaloneMode") {
+      (configManager) =>
+        if (configManager.getSparkStreamingConfig.master.protocol == "spark") {
+          if (configManager.getSparkStreamingConfig.coresMax < configManager.getSparkStreamingConfig.executorCores)
+            Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
+          else
+            Right()
+        }
+        else
+          Right()
+    },
     ValidationRule("SparkStreamingYARNmode") {
       (configManager) =>
         val master = configManager.getSparkStreamingConfig.master
         if (master.protocol == "" && master.host == "yarn") {
-          if(configManager.getSparkStreamingConfig.yarnJar.isEmpty)
+          if (configManager.getSparkStreamingConfig.yarnJar.isEmpty)
             Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
           else
             Right()
@@ -74,11 +85,22 @@ object ConfigManager {
 
     /* sparkBatchConfig validation-rules */
 
+    ValidationRule("SparkBatchStandaloneMode") {
+      (configManager) =>
+        if (configManager.getSparkBatchConfig.master.protocol == "spark") {
+          if (configManager.getSparkBatchConfig.coresMax < configManager.getSparkBatchConfig.executorCores)
+            Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
+          else
+            Right()
+        }
+        else
+          Right()
+    },
     ValidationRule("SparkBatchYARNmode") {
       (configManager) =>
         val master = configManager.getSparkBatchConfig.master
         if (master.protocol == "" && master.host == "yarn") {
-          if(configManager.getSparkBatchConfig.yarnJar.isEmpty)
+          if (configManager.getSparkBatchConfig.yarnJar.isEmpty)
             Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
           else
             Right()
@@ -179,6 +201,7 @@ object ConfigManager {
       readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
+      sparkSubConfig.getInt("cores-max"),
       sparkSubConfig.getInt("executor-instances"),
       sparkSubConfig.getString("additional-jars-path"),
       sparkSubConfig.getString("yarn-jar"),
@@ -212,6 +235,7 @@ object ConfigManager {
       readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
       sparkSubConfig.getInt("executor-cores"),
       sparkSubConfig.getString("executor-memory"),
+      sparkSubConfig.getInt("cores-max"),
       sparkSubConfig.getInt("executor-instances"),
       sparkSubConfig.getString("additional-jars-path"),
       sparkSubConfig.getString("yarn-jar"),

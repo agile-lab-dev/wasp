@@ -3,7 +3,7 @@ services:
 
   spark-master:
     # Change to the spark version when gettyimages will put the image tag
-    image: gettyimages/spark:2.2.0-hadoop-2.7
+    image: gettyimages/spark:2.2.1-hadoop-2.7
     command: ["bin/spark-class","org.apache.spark.deploy.master.Master","-h","spark-master"]
     container_name: spark-master
     environment:
@@ -24,13 +24,13 @@ services:
       - "./spark-master:/etc/spark"
 
   spark-worker:
-    image: gettyimages/spark:2.2.0-hadoop-2.7
+    image: gettyimages/spark:2.2.1-hadoop-2.7
     command: ["bin/spark-class","org.apache.spark.deploy.worker.Worker","spark://spark-master:7077"]
     container_name: spark-worker
     environment:
       SPARK_CONF_DIR: /etc/spark
       SPARK_WORKER_CORES: 4
-      SPARK_WORKER_MEMORY: 2048m
+      SPARK_WORKER_MEMORY: 4096m
       SPARK_WORKER_PORT: 8881
     expose:
       - "7012"
