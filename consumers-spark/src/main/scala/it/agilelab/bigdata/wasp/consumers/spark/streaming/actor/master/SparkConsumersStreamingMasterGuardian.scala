@@ -104,7 +104,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
           val child = childCreator(self, instance.name, context)
           child ! WorkAvailable
 
-          stay using nextSchedule replying Protocol.PipegraphStarted(name)
+          stay using nextSchedule replying Protocol.PipegraphStarted(name, instance.name)
 
         case Failure(error) =>
           stay replying Protocol.PipegraphNotStarted(name, ExceptionUtils.getStackTrace(error))
@@ -309,7 +309,7 @@ object SparkConsumersStreamingMasterGuardian  {
 
   private def askToStart(ref: ActorRef, pipegraph:String, timeout:FiniteDuration)(implicit context:ExecutionContext) : Future[String] =
     ask(ref, StartPipegraph(pipegraph), timeout).flatMap {
-      case PipegraphStarted(`pipegraph`) => Future.successful(pipegraph)
+      case PipegraphStarted(`pipegraph`, _) => Future.successful(pipegraph)
       case PipegraphNotStarted(`pipegraph`, _) => askToStart(ref, pipegraph,timeout)
       case _ => throw new Exception("unexpected result")
     }

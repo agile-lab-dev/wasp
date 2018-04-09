@@ -162,9 +162,11 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val restConfig = ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
 
-      master ! BatchMessages.StartBatchJob("job", restConfig)
+      master ! BatchMessages.StartBatchJob(job.name, restConfig)
 
-      expectMsg(BatchMessages.StartBatchJobResultSuccess("job"))
+      expectMsgPF() {
+        case BatchMessages.StartBatchJobResultSuccess(job.name, instanceName) if instanceName.startsWith(s"${job.name}-") => ()
+      }
 
       watch(master)
 
@@ -176,7 +178,7 @@ class SparkConsumersBatchMasterGuardianSpec
 
       assert(instances.exists { instance => instance.name == "job1-1" && instance.status == JobStatus.PENDING })
       assert(instances.exists { instance => instance.name == "job1-2" && instance.status == JobStatus.PENDING })
-      assert(instances.exists { instance => instance.instanceOf == "job" && instance.status == JobStatus.PENDING && instance.restConfig == restConfig })
+      assert(instances.exists { instance => instance.instanceOf == job.name && instance.status == JobStatus.PENDING && instance.restConfig == restConfig })
 
 
     }
@@ -211,9 +213,9 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
 
-      master ! BatchMessages.StartBatchJob("job", ConfigFactory.empty)
+      master ! BatchMessages.StartBatchJob(job.name, ConfigFactory.empty)
 
-      expectMsg(BatchMessages.StartBatchJobResultFailure("job", "failure creating new batch job instance [Sorry, database is unavailable]"))
+      expectMsg(BatchMessages.StartBatchJobResultFailure(job.name, "failure creating new batch job instance [Sorry, database is unavailable]"))
 
       watch(master)
 
@@ -315,9 +317,9 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
 
-      master ! BatchMessages.StopBatchJob("job")
+      master ! BatchMessages.StopBatchJob(job.name)
 
-      expectMsg(BatchMessages.StopBatchJobResultFailure("job", "failure stopping instances of job [Sorry, database is unavailable]"))
+      expectMsg(BatchMessages.StopBatchJobResultFailure(job.name, "failure stopping instances of job [Sorry, database is unavailable]"))
 
       watch(master)
 
@@ -359,9 +361,9 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
 
-      master ! BatchMessages.StopBatchJob("job")
+      master ! BatchMessages.StopBatchJob(job.name)
 
-      expectMsg(BatchMessages.StopBatchJobResultSuccess("job"))
+      expectMsg(BatchMessages.StopBatchJobResultSuccess(job.name))
 
       watch(master)
 
@@ -369,7 +371,7 @@ class SparkConsumersBatchMasterGuardianSpec
 
       expectTerminated(master)
 
-      assert(mockBl.instances().instancesOf("job").exists(_.status==JobStatus.STOPPED))
+      assert(mockBl.instances().instancesOf(job.name).exists(_.status==JobStatus.STOPPED))
 
 
     }
@@ -399,7 +401,7 @@ class SparkConsumersBatchMasterGuardianSpec
 
       val restConfig = ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
 
-      val pendingJobInstance = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING, restConfig)
+      val pendingJobInstance = BatchJobInstanceModel("job-1", job.name, 1l, 0l, JobStatus.PENDING, restConfig)
 
 
       mockBl.instances().insert(pendingJobInstance)
@@ -491,7 +493,7 @@ class SparkConsumersBatchMasterGuardianSpec
       mockBl.insert(job)
 
 
-      val jobInstance = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING)
+      val jobInstance = BatchJobInstanceModel("job-1", job.name, 1l, 0l, JobStatus.PENDING)
 
 
       mockBl.instances().insert(jobInstance)
@@ -512,7 +514,7 @@ class SparkConsumersBatchMasterGuardianSpec
       probe.expectMsg("OK")
 
 
-      assertResult(JobStatus.SUCCESSFUL)(mockBl.instances().instancesOf("job").head.status)
+      assertResult(JobStatus.SUCCESSFUL)(mockBl.instances().instancesOf(job.name).head.status)
 
       watch(master)
 
@@ -545,7 +547,7 @@ class SparkConsumersBatchMasterGuardianSpec
       mockBl.insert(job)
 
 
-      val jobInstance = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING)
+      val jobInstance = BatchJobInstanceModel("job-1", job.name, 1l, 0l, JobStatus.PENDING)
 
       mockBl.instances().insert(jobInstance)
 
@@ -567,7 +569,7 @@ class SparkConsumersBatchMasterGuardianSpec
       probe.expectMsg("OK")
 
 
-      assert(mockBl.instances().instancesOf("job").exists(_.status==JobStatus.FAILED))
+      assert(mockBl.instances().instancesOf(job.name).exists(_.status==JobStatus.FAILED))
 
       watch(master)
 

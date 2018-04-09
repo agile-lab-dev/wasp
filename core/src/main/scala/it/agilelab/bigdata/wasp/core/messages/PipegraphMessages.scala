@@ -14,7 +14,7 @@ object PipegraphMessages {
 
   case class StartPipegraph(name: String) extends PipegraphMessage
 
-  case class PipegraphStarted(name: String) extends StartPipegraphResult
+  case class PipegraphStarted(name: String, instanceName: String) extends StartPipegraphResult
 
   case class PipegraphNotStarted(name: String, reason: String) extends StartPipegraphResult
 
