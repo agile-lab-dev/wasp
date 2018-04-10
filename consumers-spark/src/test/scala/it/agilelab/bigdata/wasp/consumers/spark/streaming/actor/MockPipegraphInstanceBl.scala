@@ -22,4 +22,6 @@ class MockPipegraphInstanceBl extends PipegraphInstanceBl {
   override def all(): Seq[PipegraphInstanceModel] = buffer
 
   override def instancesOf(name: String): Seq[PipegraphInstanceModel] = buffer.filter(_.instanceOf == name)
+
+  override def getByName(name: String): Option[PipegraphInstanceModel] = buffer.find(_.name == name)
 }

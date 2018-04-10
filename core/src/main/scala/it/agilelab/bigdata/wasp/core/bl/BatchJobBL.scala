@@ -1,13 +1,14 @@
 package it.agilelab.bigdata.wasp.core.bl
 
 import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
-import it.agilelab.bigdata.wasp.core.models.JobStatus.JobStatus
 import it.agilelab.bigdata.wasp.core.models.{BatchJobInstanceModel, BatchJobModel, JobStatus}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
 
-
 trait BatchJobInstanceBL {
+
+  def getByName(name: String): Option[BatchJobInstanceModel]
+
   def insert(instance: BatchJobInstanceModel): BatchJobInstanceModel
 
   def update(instance: BatchJobInstanceModel): BatchJobInstanceModel
@@ -51,6 +52,9 @@ class BatchJobInstanceBlImp(waspDB: WaspDB) extends BatchJobInstanceBL {
     instance
   }
 
+  override def getByName(name: String): Option[BatchJobInstanceModel] = {
+    waspDB.getDocumentByFieldRaw[BatchJobInstanceModel]("name", new BsonString(name)).map(decode)
+  }
 
   private def decode(bsonDocument: BsonDocument) : BatchJobInstanceModel =
     BatchJobInstanceModel(name = bsonDocument.get("name").asString().getValue,
@@ -77,7 +81,6 @@ class BatchJobInstanceBlImp(waspDB: WaspDB) extends BatchJobInstanceBL {
 
     return withError
   }
-
 }
 
 
