@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph, StopPipegraph}
 import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphModel}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
 
 /**
@@ -68,11 +68,26 @@ object Pipegraph_C extends Directives with JsonSupport {
                   }
                 }
               } ~
-              path("instances") {
-                get {
-                  complete {
-                    getJsonArrayOrEmpty[PipegraphInstanceModel](ConfigBL.pipegraphBL.instances().instancesOf(name).sortBy { instance => -instance.startTimestamp }, _.toJson,
-                      pretty)
+              pathPrefix("instances") {
+                pathPrefix(Segment) { instanceName =>
+                  get {
+                    complete {
+                      val instance = ConfigBL.pipegraphBL.instances().getByName(instanceName)
+                      if ((instance.isDefined) && (instance.get.instanceOf != name))
+                        httpResponseJson(
+                          entity = JsonResultsHelper.angularErrorBuilder(s"Pipegraph instance '$instanceName' not related to pipegraph '$name'").toString(),
+                          status = StatusCodes.BadRequest
+                        )
+                      else
+                        getJsonOrNotFound[PipegraphInstanceModel](instance, name, "Pipegraphinstance", _.toJson, pretty)
+                    }
+                  }
+                } ~
+                pathEnd {
+                  get {
+                    complete {
+                      getJsonArrayOrEmpty[PipegraphInstanceModel](ConfigBL.pipegraphBL.instances().instancesOf(name).sortBy { instance => -instance.startTimestamp }, _.toJson, pretty)
+                    }
                   }
                 }
               } ~
@@ -80,14 +95,14 @@ object Pipegraph_C extends Directives with JsonSupport {
                 get {
                   complete {
                     // complete with serialized Future result
-                    getJsonOrNotFound[PipegraphModel](ConfigBL.pipegraphBL.getByName(name), name, "Pipegraph", _.toJson, pretty)
+                    getJsonOrNotFound[PipegraphModel](ConfigBL.pipegraphBL.getByName(name), name, "Pipegraph model", _.toJson, pretty)
                   }
                 } ~
                   delete {
                     complete {
                       // complete with serialized Future result
                       val result = ConfigBL.pipegraphBL.getByName(name)
-                      runIfExists(result, () => ConfigBL.pipegraphBL.deleteByName(name), name, "Pipegraph", "delete", pretty)
+                      runIfExists(result, () => ConfigBL.pipegraphBL.deleteByName(name), name, "Pipegraph model", "delete", pretty)
                     }
                   }
               }

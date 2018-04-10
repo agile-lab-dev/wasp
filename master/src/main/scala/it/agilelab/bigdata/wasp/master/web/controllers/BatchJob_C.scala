@@ -9,7 +9,7 @@ import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.StartBatchJob
 import it.agilelab.bigdata.wasp.core.models.{BatchJobInstanceModel, BatchJobModel}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
 import spray.json._
 
 /**
@@ -64,12 +64,28 @@ object BatchJob_C extends Directives with JsonSupport {
                   }
               }
             } ~
-              path("instances") {
-                get {
-                  complete {
-                    getJsonArrayOrEmpty[BatchJobInstanceModel](ConfigBL.batchJobBL.instances().instancesOf(name).sortBy { instance => -instance.startTimestamp }, _.toJson, pretty)
+              pathPrefix("instances") {
+                pathPrefix(Segment) { instanceName =>
+                  get {
+                    complete {
+                      val instance = ConfigBL.batchJobBL.instances().getByName(instanceName)
+                      if ((instance.isDefined) && (instance.get.instanceOf != name))
+                        httpResponseJson(
+                          entity = JsonResultsHelper.angularErrorBuilder(s"Batch job instance '$instanceName' not related to batch job '$name'").toString(),
+                          status = StatusCodes.BadRequest
+                        )
+                      else
+                        getJsonOrNotFound[BatchJobInstanceModel](instance, name, "Batch job instance", _.toJson, pretty)
+                    }
                   }
-                }
+                } ~
+                  pathEnd {
+                    get {
+                      complete {
+                        getJsonArrayOrEmpty[BatchJobInstanceModel](ConfigBL.batchJobBL.instances().instancesOf(name).sortBy { instance => -instance.startTimestamp }, _.toJson, pretty)
+                      }
+                    }
+                  }
               } ~
               pathEnd {
                 get {
@@ -80,7 +96,7 @@ object BatchJob_C extends Directives with JsonSupport {
                   delete {
                     complete {
                       val batchJob = ConfigBL.batchJobBL.getByName(name)
-                      runIfExists(batchJob, () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name), name, "Machine learning model", "delete", pretty)
+                      runIfExists(batchJob, () => ConfigBL.batchJobBL.deleteByName(batchJob.get.name), name, "Batch job model", "delete", pretty)
                     }
                   }
               }

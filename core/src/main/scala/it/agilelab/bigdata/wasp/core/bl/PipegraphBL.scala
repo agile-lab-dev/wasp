@@ -5,8 +5,10 @@ import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphMo
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonInt64, BsonString}
 
-
 trait PipegraphInstanceBl {
+
+  def getByName(name: String): Option[PipegraphInstanceModel]
+
   def insert(instance: PipegraphInstanceModel): PipegraphInstanceModel
 
   def update(instance: PipegraphInstanceModel): PipegraphInstanceModel
@@ -56,6 +58,9 @@ class PipegraphInstanceBlImp(waspDB: WaspDB) extends PipegraphInstanceBl {
     instance
   }
 
+  override def getByName(name: String): Option[PipegraphInstanceModel] = {
+    waspDB.getDocumentByFieldRaw[PipegraphInstanceModel]("name", new BsonString(name)).map(decode)
+  }
 }
 
 trait PipegraphBL {

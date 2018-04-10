@@ -7,105 +7,150 @@ Below you can find all the APIs associated with the supported HTTP verbs.
 
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /pipegraphs  |  Get all the pipegraph in the system. | Insert a new pipegraph.  | Update an existing pipegraph.  |  |
-| /pipegraphs/{id}  | Get the pipegraph with the specified id. |   |   | Delete the pipegraph with the specified id.  |
-| /pipegraphs/name/{name} | Get the pipegraph with the specified name. |   |   |   |
-| /pipegraphs/{id}/start |  | Start the pipegraph with the specified id. |   |   |
-| /pipegraphs/{id}/stop |  | Stop the pipegraph with the specified id. |   |   |
-| /pipegraphs/{id}/instances |  Retrieve instances of specified pipegraph ordered newest to latest |   |   | |
+| /pipegraphs  |  Get all pipegraphs in the system | Insert a new pipegraph  | Update an existing pipegraph  |  |
+| /pipegraphs/{id}  | Get the pipegraph with the specified id |   |   | Delete the pipegraph with the specified id  |
+| /pipegraphs/{id}/start |  | Start an instance of the specified pipegraph and return the related instance id |   |   |
+| /pipegraphs/{id}/stop |  | Stop the active (i.e. "PROCESSING") instance of the specified pipegraph |   |   |
+| /pipegraphs/{id}/instances |  Retrieve instances of the specified pipegraph, ordered newest to latest |   |   | |
+| /pipegraphs/{pipegraphId}/instances/{instanceId} |  Retrieve instance status of the specified pipegraph instance |   |   | |
 
-Pipegraphs Sample
+Pipegraphs
 
 `GET http://localhost:2891/pipegraphs`
-
 ```javascript
 {
-  "Result": "OK",
-  "data": [
-    {
-      "name": "MetroPipegraph6",
-      "description": "Los Angeles Metro Pipegraph",
-      "owner": "user",
-      "system": false,
-      "creationTime": 1475066851495,
-      "etl": [
+    "Result": "OK",
+    "data": [
         {
-          "name": "write on index",
-          "inputs": [
-            {
-              "id": {
-                "$oid": "57ebbbe30100000100835289"
-              },
-              "name": "metro.topic",
-              "readerType": "topic"
-            }
-          ],
-          "output": {
-            "id": {
-              "$oid": "57ebbbe3010000010083528a"
-            },
-            "name": "metro_index",
-            "writerType": {
-              "wtype": "index",
-              "product": "elastic"
-            }
-          },
-          "mlModels": [],
-          "strategy": {
-            "className": "it.agilelab.bigdata.wasp.pipegraph.metro.strategies.MetroStrategy"
-          },
-          "group": "default",
-          "isActive": false
-        }
-      ],
-      "rt": [],
-      "isActive": false,
-      "_id": {
-        "$oid": "57ebbbe3010000010083528b"
-      }
-    }
-  ]
+            "isSystem": true,
+            "name": "LoggerPipegraph",
+            "description": "System Logger Pipegraph",
+            "legacyStreamingComponents": [],
+            "structuredStreamingComponents": [
+                {
+                    "name": "write on index",
+                    "config": {},
+                    "kafkaAccessType": "receiver-based",
+                    "inputs": [
+                        {
+                            "name": "logger.topic",
+                            "endpointName": "logger.topic",
+                            "readerType": {
+                                "category": "topic",
+                                "product": "kafka"
+                            }
+                        }
+                    ],
+                    "output": {
+                        "name": "logger_index",
+                        "endpointName": "logger_index",
+                        "writerType": {
+                            "category": "index",
+                            "product": "solr"
+                        }
+                    },
+                    "mlModels": [],
+                    "group": "default"
+                }
+            ],
+            "rtComponents": [],
+            "owner": "system",
+            "creationTime": 1523434864847
+        },
+        ...
+    ]
 }
 ```
 
-Start a producer with the system id `57ebbbe3010000010083528b`. 
+Pipegraph instance start
 
-`POST http://localhost:2891/producers/57ebbbe3010000010083528b/start`
+`POST http://localhost:2891/pipegraphs/TestConsoleWriterStructuredJSONPipegraph/start`
 ```javascript
 {
-  "Result": "OK",
-  "data": "Producer 'MetroProducer' started"
+    "Result": "OK",
+    "data": {
+        "startResult": "Pipegraph 'TestConsoleWriterStructuredJSONPipegraph' start accepted'",
+        "instance": "TestConsoleWriterStructuredJSONPipegraph-6e139f53-254c-44b9-8b6a-3dbbaaa84760"
+    }
+}
+```
+
+Pipegraph instances status
+
+`GET http://localhost:2891/pipegraphs/TestConsoleWriterStructuredJSONPipegraph/instances`
+```javascript
+{
+    "Result": "OK",
+    "data": [
+        {
+            "name": "TestConsoleWriterStructuredJSONPipegraph-6e139f53-254c-44b9-8b6a-3dbbaaa84760",
+            "instanceOf": "TestConsoleWriterStructuredJSONPipegraph",
+            "currentStatusTimestamp": 1523435670321,
+            "status": "PROCESSING",
+            "startTimestamp": 1523435670306
+        },
+        {
+            "name": "TestConsoleWriterStructuredJSONPipegraph-8bab7248-2077-411b-ae43-e1ac6d9b6833",
+            "instanceOf": "TestConsoleWriterStructuredJSONPipegraph",
+            "currentStatusTimestamp": 1523435666550,
+            "status": "STOPPED",
+            "startTimestamp": 1523435661763
+        }
+    ]
+}
+```
+
+Pipegraph specified instance status
+
+`GET http://localhost:2891/pipegraphs/TestConsoleWriterStructuredJSONPipegraph/instances/TestConsoleWriterStructuredJSONPipegraph-6e139f53-254c-44b9-8b6a-3dbbaaa84760`
+```javascript
+{
+    "Result": "OK",
+    "data": {
+            "name": "TestConsoleWriterStructuredJSONPipegraph-6e139f53-254c-44b9-8b6a-3dbbaaa84760",
+            "instanceOf": "TestConsoleWriterStructuredJSONPipegraph",
+            "currentStatusTimestamp": 1523435670321,
+            "status": "PROCESSING",
+            "startTimestamp": 1523435670306
+    }
 }
 ```
 
 ## Producers
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /producers |  Get all the procuders in the system. |   | Update an existing pipegraph.  |   |
-| /producers/{id} | Get the producer with the specified id. |   |   |   |
-| /producers/{id}/start |  | Start the producer with the specified id. |   |   |
-| /producers/{id}/stop |  | Stop the producer with the specified id. |   |   |
+| /producers |  Get all the producers in the system |   | Update an existing producer  |   |
+| /producers/{id} | Get the producer with the specified id |   |   |   |
+| /producers/{id}/start |  | Start the producer with the specified id |   |   |
+| /producers/{id}/stop |  | Stop the producer with the specified id |   |   |
 
-Producers Sample
+Producers
 
 `GET http://localhost:2891/producers`
+```javascript
+{
+    "Result": "OK",
+    "data": [
+        {
+            "isSystem": true,
+            "name": "LoggerProducer",
+            "isRemote": false,
+            "className": "it.agilelab.bigdata.wasp.producers.InternalLogProducerGuardian",
+            "topicName": "logger.topic",
+            "isActive": false
+        },
+        ...
+    ]
+}
+```
 
+Producer start
+
+`POST http://localhost:2891/producers/LoggerProducer/start`
 ```javascript
 {
   "Result": "OK",
-  "data": [
-    {
-      "name": "MetroProducer",
-      "className": "it.agilelab.bigdata.wasp.pipegraph.metro.producers.MetroProducer",
-      "id_topic": {
-        "$oid": "57ebbbe30100000100835289"
-      },
-      "isActive": false,
-      "_id": {
-        "$oid": "57ebbbe3010000010083528c"
-      }
-    }
-  ]
+  "data": "Producer 'LoggerProducer' started"
 }
 ```
 
@@ -211,94 +256,62 @@ Topics Sample
 ## Batchjobs
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /batchjobs | Get all the batchjobs in the system. | Insert a new batchjobs.  | Update an existing batchjobs. | |
-| /batchjobs/{id} | Get the batchjob with the specified id. | | | Delete the batchjobs with the specified id. |
-| /batchjobs/{id}/start | | Start a instance of specified job with optional JSON configuration. | | |
-| /batchjobs/{id}/instances | Retrieve instances of specified job ordered newest to latest. | | | |
+| /batchjobs | Get all batchjobs in the system | Insert a new batchjob  | Update an existing batchjob | |
+| /batchjobs/{id} | Get the batchjob with the specified id | | | Delete the batchjobs with the specified id |
+| /batchjobs/{id}/start | | Start an instance  (with optional JSON configuration) of the specified batchjob and return the related instance id | | |
+| /batchjobs/{id}/instances | Retrieve instances of the specified batchjob, ordered newest to latest | | | |
+| /batchjobs/{batchjobId}/instances/{instanceId} | Retrieve instance status of the specified batchjob instance | | | |
 
-Batchjobs Sample
+Batchjobs
 
 `GET http://localhost:2891/batchjobs`
-
 ```javascript
 {
-  "Result": "OK",
-  "data": [
-    {
-      "name": "BatchJobExample",
-      "description": "BatchJob example",
-      "owner": "system",
-      "system": true,
-      "creationTime": 1475220991703,
-      "etl": {
-        "name": "WriteToBatchOutput",
-        "inputs": [
-          {
-            "id": {
-              "$oid": "57ee15ff5a77b16a008d30cb"
+    "Result": "OK",
+    "data": [
+        {
+            "name": "TestBatchJobFromElasticToHdfs",
+            "system": false,
+            "description": "Description pf TestBatchJobFromElasticToHdfs",
+            "etl": {
+                "name": "EtlModel for TestBatchJobFromElasticToHdfs",
+                "kafkaAccessType": "direct",
+                "inputs": [
+                    {
+                        "name": "Elastic Reader",
+                        "endpointName": "test_elastic_index",
+                        "readerType": {
+                            "category": "index",
+                            "product": "elastic"
+                        }
+                    }
+                ],
+                "strategy": {
+                    "className": "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+                    "configuration": "{\"intKey\":1,\"stringKey\":\"stringValue\"}"
+                },
+                "isActive": false,
+                "output": {
+                    "name": "Raw Writer",
+                    "endpointName": "TestRawNestedSchemaModel",
+                    "writerType": {
+                        "category": "raw",
+                        "product": "raw"
+                    }
+                },
+                "mlModels": [],
+                "group": "default"
             },
-            "name": "batchoutput_index",
-            "readerType": "index"
-          }
-        ],
-        "output": {
-          "id": {
-            "$oid": "57ee15ff5a77b16a008d30cb"
-          },
-          "name": "batchoutput_index",
-          "writerType": {
-            "wtype": "index",
-            "product": "elastic"
-          }
+            "owner": "user",
+            "creationTime": 1523436991649
         },
-        "mlModels": [],
-        "strategy": {
-          "className": "it.agilelab.bigdata.wasp.batch.strategies.DummyBatchStrategy"
-        },
-        "group": "default",
-        "isActive": true
-      },
-      "state": "PENDING",
-      "_id": {
-        "$oid": "57ee15ff5a77b16a008d30cc"
-      }
-    },
-    {
-      "name": "BatchJobWithModelCreationExample",
-      "description": "BatchJobWithModelCreationExample example",
-      "owner": "system",
-      "system": true,
-      "creationTime": 1475220991748,
-      "etl": {
-        "name": "empty",
-        "inputs": [],
-        "output": {
-          "id": {
-            "$oid": "57ee15ff5a77b16a008d30cb"
-          },
-          "name": "batchoutput_index",
-          "writerType": {
-            "wtype": "index",
-            "product": "elastic"
-          }
-        },
-        "mlModels": [],
-        "strategy": {
-          "className": "it.agilelab.bigdata.wasp.batch.strategies.BatchModelMaker"
-        },
-        "group": "default",
-        "isActive": true
-      },
-      "state": "PENDING",
-      "_id": {
-        "$oid": "57ee15ff5a77b16a008d30cd"
-      }
-    }
-  ]
+        ...
+    ]
 }
 ```
 
-Batchjob instance start Sample
+Batchjob instance start
+
 ```bash
 curl -X POST \
   http://localhost:2891/batchjobs/TestBatchJobFromHdfsFlatToConsole/start \
@@ -307,6 +320,71 @@ curl -X POST \
         "stringKey": "aaa",
         "intKey2": 5
      }'
+```
+```javascript
+{
+    "Result": "OK",
+    "data": {
+        "startResult": "Batch job 'TestBatchJobFromHdfsFlatToConsole' start accepted'",
+        "instance": "TestBatchJobFromHdfsFlatToConsole-8a900d14-3859-4a5a-b2c2-5b8fcb8250c4"
+    }
+}
+```
+
+Batchjob instances status
+
+`GET http://localhost:2891/batchjobs/TestBatchJobFromHdfsFlatToConsole/instances`
+```javascript
+{
+    "Result": "OK",
+    "data": [
+        {
+            "name": "TestBatchJobFromHdfsFlatToConsole-8a900d14-3859-4a5a-b2c2-5b8fcb8250c4",
+            "instanceOf": "TestBatchJobFromHdfsFlatToConsole",
+            "restConfig": {
+                "intKey2": 5,
+                "stringKey": "aaa"
+            },
+            "currentStatusTimestamp": 1523437338661,
+            "error": "java.lang.Exception: Failed to create data frames for job TestBatchJobFromHdfsFlatToConsole...",
+            "status": "FAILED",
+            "startTimestamp": 1523437333307
+        },
+        {
+            "name": "TestBatchJobFromHdfsFlatToConsole-87503963-05b4-4fd5-a82f-1c0760c0ffac",
+            "instanceOf": "TestBatchJobFromHdfsFlatToConsole",
+            "restConfig": {
+                "intKey2": 5,
+                "stringKey": "aaa"
+            },
+            "currentStatusTimestamp": 1523437329580,
+            "error": "java.lang.Exception: Failed to create data frames for job TestBatchJobFromHdfsFlatToConsole...",
+            "status": "FAILED",
+            "startTimestamp": 1523437326018
+        }
+    ]
+}
+```
+
+Batchjob specified instance status
+
+`GET http://localhost:2891/batchjobs/TestBatchJobFromHdfsFlatToConsole/instances/TestBatchJobFromHdfsFlatToConsole-8a900d14-3859-4a5a-b2c2-5b8fcb8250c4`
+```javascript
+{
+    "Result": "OK",
+    "data": {
+        "name": "TestBatchJobFromHdfsFlatToConsole-8a900d14-3859-4a5a-b2c2-5b8fcb8250c4",
+        "instanceOf": "TestBatchJobFromHdfsFlatToConsole",
+        "restConfig": {
+            "intKey2": 5,
+            "stringKey": "aaa"
+        },
+        "currentStatusTimestamp": 1523437338661,
+        "error": "java.lang.Exception: Failed to create data frames for job TestBatchJobFromHdfsFlatToConsole...",
+        "status": "FAILED",
+        "startTimestamp": 1523437333307
+    }
+}
 ```
 
 ## Indices
