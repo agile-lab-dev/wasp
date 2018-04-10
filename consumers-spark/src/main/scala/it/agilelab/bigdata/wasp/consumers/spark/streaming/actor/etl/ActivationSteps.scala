@@ -16,10 +16,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.WorkerKafkaWriter
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
-import it.agilelab.bigdata.wasp.core.{TelemetryPipegraph, TelemetryTopicModel, SystemPipegraphs}
+import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, TelemetryPipegraph, TelemetryTopicModel}
 import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.{TinyKafkaConfig, WaspConfigModel}
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig, WaspConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.kafka.clients.producer._
 import org.apache.kafka.common.{Metric, MetricName, PartitionInfo}
@@ -29,6 +29,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Encoder, Row, SparkSession}
 
+import scala.collection.JavaConverters._
 import scala.util.parsing.json.{JSONFormat, JSONObject}
 import scala.util.{Failure, Success, Try}
 
@@ -389,7 +390,12 @@ object MetadataOps {
       props.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
       props.put("batch.size", "1048576")
       props.put("acks", "0")
-      kafkaConfig.others.filterNot(_.key=="acks").foreach(entry => props.put(entry.key, entry.value))
+
+      val notOverridableKeys = props.keySet.asScala
+
+      kafkaConfig.others.filterNot(notOverridableKeys.contains(_)).foreach {
+        case KafkaEntryConfig(key, value) => props.put(key, value)
+      }
 
       implicit val rowEncoder: Encoder[Row] = RowEncoder(stream.schema)
 
@@ -400,7 +406,6 @@ object MetadataOps {
         TaskContext.get().addTaskCompletionListener(_ => writer.close())
 
         var counter = 0
-
 
         partition.map { row =>
 
