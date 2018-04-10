@@ -6,7 +6,7 @@ import java.util.{Properties, UUID}
 import akka.actor.{Actor, Props}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutcome
 import it.agilelab.bigdata.wasp.core.SystemPipegraphs
-import it.agilelab.bigdata.wasp.core.models.configuration.TinyKafkaConfig
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import org.apache.kafka.clients.producer.{KafkaProducer, Producer, ProducerRecord}
 import org.apache.spark.sql.streaming.StreamingQueryProgress
 
@@ -26,7 +26,12 @@ class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKa
     props.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
     props.put("batch.size", "1048576")
     props.put("acks", "0")
-    kafkaConfig.others.filterNot(_.key=="acks").foreach(entry => props.put(entry.key, entry.value))
+
+    val notOverridableKeys = props.keySet.asScala
+
+    kafkaConfig.others.filterNot(notOverridableKeys.contains(_)).foreach {
+      case KafkaEntryConfig(key, value) => props.put(key, value)
+    }
 
     writer = new KafkaProducer[Array[Byte], Array[Byte]](props)
   }
