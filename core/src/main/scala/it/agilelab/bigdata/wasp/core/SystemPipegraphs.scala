@@ -321,7 +321,7 @@ private[wasp] object LoggerPipegraph {
 private[wasp] object TelemetryPipegraph {
 	import SystemPipegraphs._
 
-	val telemetryPipegraphName = "Telemetry Pipegraph"
+	val telemetryPipegraphName = "TelemetryPipegraph"
 
 	private def writer: WriterModel = ConfigManager.getWaspConfig.defaultIndexedDatastore match {
 		case "elastic" => WriterModel.elasticWriter(
