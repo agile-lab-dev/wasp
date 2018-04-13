@@ -774,3 +774,581 @@ Kafka config "others":
           { "kafka.sasl.mechanism" = "GSSAPI" }
         ]
     ```
+    
+    
+    
+### Resolve "Telemetria tramite StructuredStreaming"
+
+[Merge request 50](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/50)
+
+Created at: 2018-04-04T14:09:17.647Z
+
+Updated at: 2018-04-13T10:26:31.244Z
+
+Branch: feature/1-telemetria-tramite-structuredstreaming
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #1 
+
+### Flow
+
+
+```
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|                                                  wasp-consumer-streaming              |
+|                                                                                       |
+|  +-----------------------------------+                                                |
+|  |                                   |                                                |
+|  | StructuredStreamingMasterGuardian |                                                |
+|  |                                   |                                                |
+|  +-----------------------------------+                                                |
+|                                                                                       |
+|  +-------------------------------------------------------------------------------+    |
+|  |      +-------------------+                                                    |    |
+|  |      |                   |                              Pipegraph             |    |
+|  |      | PipegraphGuardian |                                                    |    |
+|  |      |                   |                                                    |    |          TELEMETRY
+|  |      +-------------------+                                                    |    |
+|  |                                                                               |    |
+|  | +------------------------------------------------------------+                |    |
+|  | |                                                            |                |    |
+|  | |   +-----------------------------+            ETLBlock      |                |    |
+|  | |   |                             |                          |                |    |
+|  | |   | StructuredStreamingETLActor |                          |                |    |
+|  | |   |                             |                          |                |    |
+|  | |   +-----------------------------+                          |                |    |
+|  | |                                                            |                |    |
+|  | |                                                            |                |    |
+|  | |                                                            |                |    |
+|  | |         +----------------+                                 |                |    |
+|  | |         |                |                                 |                |    |
+|  | |         | TelemetryActor |                                 |                |    |
+|  | |         |                |                                 |                |    |
+|  | |         +------|X|-------+                                 |                |    |
+|  | +----------------|X|-----------------------------------------+                |    |
+|  +------------------|X|----------------------------------------------------------+    |
++---------------------|X|---------------------------------------------------------------+
+                       |
+                       |
+                       |
+                       |
+              +--------v--------+    +--------------------+       +-----------------+
+              |                 |    |                    |       |                 |
+              | telemetry.topic +----> TelemetryPipegraph +-------> OutputDataStore |
+              |                 |    |                    |       |                 |
+              +--------^--------+    +--------------------+       +-----------------+
+                       |
+                       |
+                       |
+                       |
+     +-----------------X--------------------------------------------------------+
+     |                 +                                                        |
+     |                 |                                        SPARK-WORKER    |
+     |                 |                                                        |
+     |                 |                                                        |
+     |                 |                                                        |
+     |   +-------------X-----------------------------------------+              |
+     |   |             |                                         |              |
+     |   |             |                      PARTITION-N        |              |
+     |   |   +---------+------+                                  |              |
+     |   |   |                |                                  |              |
+     |   |   |  Kafka Writer  |                                  |              |
+     |   |   |                |                                  |              |           LATENCY
+     |   |   +----------------+                                  |              |
+     |   |                                                       |              |
+     |   |                                                       |              |
+     |   +-------------------------------------------------------+              |
+     |                                                                          |
+     +--------------------------------------------------------------------------+
+
+```
+
+Telemetry is written to `elasticsearch` if `wasp.datastore.indexed="elastic"` or to `solr` if `wasp.datastore.indexed=solr`
+
+
+### Streaming query Telemetry
+
+**To enable telemetry collection Start TelemetryPipegraph or enable system pipegraph startup**
+
+Telemetry about streaming query performance is now collected by `TelemetryActor`, a child of `StructuredStreamingETLActor`
+
+
+Telemetry is extracted during the Monitoring phase of a pipegraph, extracted telemetry is composed of:
+
+* inputRows
+* inputRowsPerSecond
+* processedRowsPerSecond
+* durationMS of various spark streaming events
+
+```json
+{
+    "messageId": "22cc1baf-b28e-4385-995d-c7db4e040f5c",
+    "timestamp": "2018-04-09T16:54:10.652Z",
+    "sourceId": "pipegraph_Telemetry Pipegraph_structuredstreaming_write_on_index_writer_telemetry_elastic_index",
+    "metric": "triggerExecution-durationMs",
+    "value": 1
+  }
+```
+
+sourceId is the name of the streaming query, messageId is relative to the collection of the telemetry and is a random identifier.
+
+### Message Latency sampling
+
+Latency data is extracted per message with a subsampling applied per partition.
+
+The default sampling is one every 100 messages for partition.
+
+**To adjust the sampling factor provide the strategy with a `Configuration` object containing the key**
+```wasp.telemetry.latency.sample-one-message-every=<number of messages>```
+
+To enable latency collection the DataFrame should have a `Metadata` column and the ETL block should have a declared strategy.
+
+latency is extracted in the form
+
+```json
+{
+    "messageId": "3729",
+    "timestamp": "2018-04-09T16:49:17.349Z",
+    "sourceId": "testDocumentWithMetadataProducer/test-with-metadata-console-etl-enter/test-with-metadata-console-etl-exit",
+    "metric": "latencyMs",
+    "value": 1
+  }
+```
+
+messageId is assigned by the source by generating a `metadata` column, see 
+`it.agilelab.bigdata.wasp.whitelabel.producers.test.TestDocumentWithMetadataProducerGuardian`
+
+sourceId is the path covered by the message inside wasp
+
+```
+
+testDocumentWithMetadataProducer/test-with-metadata-console-etl-enter
+                   ^                              ^
+                  source                        enter in streaming query
+
+the timestamp will be the one recorded at the entrance of an etl block, latencyMS will be the difference between the time of
+publish on kafka and the entrance of the message in an etl block (we will measure latency to dequeue from kafka)
+
+testDocumentWithMetadataProducer/test-with-metadata-console-etl-enter/test-with-metadata-console-etl-exit
+                   ^                               ^                                       ^
+                source                        enter in streaming query               exit from streaming query
+
+the timestamp will be the one recorded at the exit of an etl block, latencyMS will be the difference between the time of
+enter and the time of exit from the etl block (we will measure latency in processing)
+
+```
+
+```scala
+var counter = 0
+        
+        partition.map { row =>
+
+          if(counter % samplingFactor == 0) {
+
+            val metadata = row.getStruct(row.fieldIndex("metadata"))
+
+            val pathField = metadata.fieldIndex("path")
+
+            val messageId = metadata.getString(metadata.fieldIndex("id"))
+
+            val sourceId = metadata.getString(metadata.fieldIndex("sourceId"))
+
+            val arrivalTimestamp = metadata.getLong(metadata.fieldIndex("arrivalTimestamp"))
+
+            val path = Path(sourceId,arrivalTimestamp) +: metadata.getSeq[Row](pathField).map(Path.apply)
+
+            val lastTwoHops = path.takeRight(2)
+
+            val latency = lastTwoHops(1).ts - lastTwoHops(0).ts
+
+            val collectionTimeAsString = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(lastTwoHops(1).ts))
+
+            val compositeSourceId = path.map(_.name.replace(' ', '-')).mkString("/")
+
+
+            val json = JSONObject(Map("messageId" -> messageId,
+                                      "sourceId" -> compositeSourceId,
+                                      "metric" -> "latencyMs",
+                                      "value" -> latency,
+                                      "timestamp" -> collectionTimeAsString)).toString(JSONFormat.defaultFormatter)
+
+
+            val topic = SystemPipegraphs.telemetryTopic.name
+
+            val record = new ProducerRecord[Array[Byte], Array[Byte]](topic,
+                                                                      messageId.getBytes(StandardCharsets.UTF_8),
+                                                                      json.getBytes(StandardCharsets.UTF_8))
+            writer.send(record)
+
+          }
+
+          counter = counter + 1
+          row
+        }
+```
+
+
+## WASP 2.10.0
+13/04/2018
+
+### Resolve "Telemetria tramite StructuredStreaming"
+
+[Merge request 50](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/50)
+
+Created at: 2018-04-04T14:09:17.647Z
+
+Updated at: 2018-04-13T13:46:11.977Z
+
+Branch: feature/1-telemetria-tramite-structuredstreaming
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #1 
+
+#### Flow
+
+
+```
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|                                                  wasp-consumer-streaming              |
+|                                                                                       |
+|  +-----------------------------------+                                                |
+|  |                                   |                                                |
+|  | StructuredStreamingMasterGuardian |                                                |
+|  |                                   |                                                |
+|  +-----------------------------------+                                                |
+|                                                                                       |
+|  +-------------------------------------------------------------------------------+    |
+|  |      +-------------------+                                                    |    |
+|  |      |                   |                              Pipegraph             |    |
+|  |      | PipegraphGuardian |                                                    |    |
+|  |      |                   |                                                    |    |          TELEMETRY
+|  |      +-------------------+                                                    |    |
+|  |                                                                               |    |
+|  | +------------------------------------------------------------+                |    |
+|  | |                                                            |                |    |
+|  | |   +-----------------------------+            ETLBlock      |                |    |
+|  | |   |                             |                          |                |    |
+|  | |   | StructuredStreamingETLActor |                          |                |    |
+|  | |   |                             |                          |                |    |
+|  | |   +-----------------------------+                          |                |    |
+|  | |                                                            |                |    |
+|  | |                                                            |                |    |
+|  | |                                                            |                |    |
+|  | |         +----------------+                                 |                |    |
+|  | |         |                |                                 |                |    |
+|  | |         | TelemetryActor |                                 |                |    |
+|  | |         |                |                                 |                |    |
+|  | |         +------|X|-------+                                 |                |    |
+|  | +----------------|X|-----------------------------------------+                |    |
+|  +------------------|X|----------------------------------------------------------+    |
++---------------------|X|---------------------------------------------------------------+
+                       |
+                       |
+                       |
+                       |
+              +--------v--------+    +--------------------+       +-----------------+
+              |                 |    |                    |       |                 |
+              | telemetry.topic +----> TelemetryPipegraph +-------> OutputDataStore |
+              |                 |    |                    |       |                 |
+              +--------^--------+    +--------------------+       +-----------------+
+                       |
+                       |
+                       |
+                       |
+     +-----------------X--------------------------------------------------------+
+     |                 +                                                        |
+     |                 |                                        SPARK-WORKER    |
+     |                 |                                                        |
+     |                 |                                                        |
+     |                 |                                                        |
+     |   +-------------X-----------------------------------------+              |
+     |   |             |                                         |              |
+     |   |             |                      PARTITION-N        |              |
+     |   |   +---------+------+                                  |              |
+     |   |   |                |                                  |              |
+     |   |   |  Kafka Writer  |                                  |              |
+     |   |   |                |                                  |              |           LATENCY
+     |   |   +----------------+                                  |              |
+     |   |                                                       |              |
+     |   |                                                       |              |
+     |   +-------------------------------------------------------+              |
+     |                                                                          |
+     +--------------------------------------------------------------------------+
+
+```
+
+Telemetry is written to `elasticsearch` if `wasp.datastore.indexed="elastic"` or to `solr` if `wasp.datastore.indexed=solr`
+
+
+#### Streaming query Telemetry
+
+**To enable telemetry collection Start TelemetryPipegraph or enable system pipegraph startup**
+
+Telemetry about streaming query performance is now collected by `TelemetryActor`, a child of `StructuredStreamingETLActor`
+
+
+Telemetry is extracted during the Monitoring phase of a pipegraph, extracted telemetry is composed of:
+
+* inputRows
+* inputRowsPerSecond
+* processedRowsPerSecond
+* durationMS of various spark streaming events
+
+```json
+{
+    "messageId": "22cc1baf-b28e-4385-995d-c7db4e040f5c",
+    "timestamp": "2018-04-09T16:54:10.652Z",
+    "sourceId": "pipegraph_Telemetry Pipegraph_structuredstreaming_write_on_index_writer_telemetry_elastic_index",
+    "metric": "triggerExecution-durationMs",
+    "value": 1
+  }
+```
+
+sourceId is the name of the streaming query, messageId is relative to the collection of the telemetry and is a random identifier.
+
+#### Message Latency sampling
+
+Latency data is extracted per message with a subsampling applied per partition.
+
+The default sampling is one every 100 messages for partition.
+
+**To adjust the sampling factor provide the strategy with a `Configuration` object containing the key**
+```wasp.telemetry.latency.sample-one-message-every=<number of messages>```
+
+To enable latency collection the DataFrame should have a `Metadata` column and the ETL block should have a declared strategy.
+
+latency is extracted in the form
+
+```json
+{
+    "messageId": "3729",
+    "timestamp": "2018-04-09T16:49:17.349Z",
+    "sourceId": "testDocumentWithMetadataProducer/test-with-metadata-console-etl-enter/test-with-metadata-console-etl-exit",
+    "metric": "latencyMs",
+    "value": 1
+  }
+```
+
+messageId is assigned by the source by generating a `metadata` column, see 
+`it.agilelab.bigdata.wasp.whitelabel.producers.test.TestDocumentWithMetadataProducerGuardian`
+
+sourceId is the path covered by the message inside wasp
+
+```
+
+testDocumentWithMetadataProducer/test-with-metadata-console-etl-enter
+                   ^                              ^
+                  source                        enter in streaming query
+
+the timestamp will be the one recorded at the entrance of an etl block, latencyMS will be the difference between the time of
+publish on kafka and the entrance of the message in an etl block (we will measure latency to dequeue from kafka)
+
+testDocumentWithMetadataProducer/test-with-metadata-console-etl-enter/test-with-metadata-console-etl-exit
+                   ^                               ^                                       ^
+                source                        enter in streaming query               exit from streaming query
+
+the timestamp will be the one recorded at the exit of an etl block, latencyMS will be the difference between the time of
+enter and the time of exit from the etl block (we will measure latency in processing)
+
+```
+
+```scala
+var counter = 0
+        
+        partition.map { row =>
+
+          if(counter % samplingFactor == 0) {
+
+            val metadata = row.getStruct(row.fieldIndex("metadata"))
+
+            val pathField = metadata.fieldIndex("path")
+
+            val messageId = metadata.getString(metadata.fieldIndex("id"))
+
+            val sourceId = metadata.getString(metadata.fieldIndex("sourceId"))
+
+            val arrivalTimestamp = metadata.getLong(metadata.fieldIndex("arrivalTimestamp"))
+
+            val path = Path(sourceId,arrivalTimestamp) +: metadata.getSeq[Row](pathField).map(Path.apply)
+
+            val lastTwoHops = path.takeRight(2)
+
+            val latency = lastTwoHops(1).ts - lastTwoHops(0).ts
+
+            val collectionTimeAsString = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(lastTwoHops(1).ts))
+
+            val compositeSourceId = path.map(_.name.replace(' ', '-')).mkString("/")
+
+
+            val json = JSONObject(Map("messageId" -> messageId,
+                                      "sourceId" -> compositeSourceId,
+                                      "metric" -> "latencyMs",
+                                      "value" -> latency,
+                                      "timestamp" -> collectionTimeAsString)).toString(JSONFormat.defaultFormatter)
+
+
+            val topic = SystemPipegraphs.telemetryTopic.name
+
+            val record = new ProducerRecord[Array[Byte], Array[Byte]](topic,
+                                                                      messageId.getBytes(StandardCharsets.UTF_8),
+                                                                      json.getBytes(StandardCharsets.UTF_8))
+            writer.send(record)
+
+          }
+
+          counter = counter + 1
+          row
+        }
+```
+
+
+
+### Resolve "[docker] updates in order to use Spark Standalone"
+
+[Merge request 54](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/54)
+
+Created at: 2018-04-06T09:29:09.623Z
+
+Updated at: 2018-04-09T16:41:47.430Z
+
+Branch: feature/122-docker-update-spark-images-to-2-2-1-to-test-spark-standalone
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #122 
+
+**In order to enable usage on Spark Standalone cluster manager:**
+
+1.  Updated Spark docker-images (`spark-docker-compose.yml`):
+ *  image: from `gettyimages/spark:2.2.0-hadoop-2.7` to `gettyimages/spark:2.2.1-hadoop-2.7`
+ *  Worker SPARK_WORKER_MEMORY: from `2048m` to `4096m`
+
+2.  Added to `reference.conf` / `whitelabel/docker/docker-environment.conf`: `cores.max`
+
+3. Added Validation Rules to check that config `cores.max` >= `executor-cores` when `master.protocol=="spark`" within `spark-streaming`/`spark-batch`
+
+4. Whitelabel uses Spark Standalone cluster manager by default:
+ * `whitelabel/docker/docker-environment.conf` -> `master` within `spark-streaming`/`spark-batch`
+
+### Resolve "Instance info on start"
+
+[Merge request 57](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/57)
+
+Created at: 2018-04-09T15:46:36.119Z
+
+Updated at: 2018-04-13T10:26:47.369Z
+
+Branch: feature/instance-info-on-start
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #124, #126 
+
+* Returned `instanceId` of the created instance on start of batchjobs
+```javascript
+{
+    "Result": "OK",
+    "data": {
+        "startResult": "Batch job 'TestBatchJobFromHdfsFlatToConsole' start accepted'",
+        "instance": "TestBatchJobFromHdfsFlatToConsole-96ade2b0-7d20-4c21-b7ca-797a93c1a355"
+    }
+}
+```
+
+* Returned `instanceId` of the created instance on start of pipegraphs
+```javascript
+{
+    "Result": "OK",
+    "data": {
+        "startResult": "Pipegraph 'TestConsoleWriterStructuredJSONPipegraph' start accepted'",
+        "instance": "TestConsoleWriterStructuredJSONPipegraph-1ebc889c-8c71-449b-943d-ca9fd5181598"
+    }
+}
+```
+
+* Updated tests: `SparkConsumersBatchMasterGuardianSpec.scala` and `IntegrationSpec.scala`
+* Updated `REST.md`
+
+
+### Resolve "REST API to retrieve instance status"
+
+[Merge request 58](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/58)
+
+Created at: 2018-04-10T08:36:49.022Z
+
+Updated at: 2018-04-13T10:01:39.111Z
+
+Branch: feature/rest-api-to-retrieve-instance-status
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #125, #127 
+
+- Implemented REST to retrieve batchjob instance status
+
+```bash
+curl -X GET \
+  http://localhost:2891/batchjobs/TestBatchJobFromHdfsFlatToConsole/instances/TestBatchJobFromHdfsFlatToConsole-8a900d14-3859-4a5a-b2c2-5b8fcb8250c4
+```
+```javascript
+{
+    "Result": "OK",
+    "data": {
+        "name": "TestBatchJobFromHdfsFlatToConsole-8a900d14-3859-4a5a-b2c2-5b8fcb8250c4",
+        "instanceOf": "TestBatchJobFromHdfsFlatToConsole",
+        "restConfig": {
+            "intKey2": 5,
+            "stringKey": "aaa"
+        },
+        "currentStatusTimestamp": 1523437338661,
+        "error": "java.lang.Exception: Failed to create data frames for job TestBatchJobFromHdfsFlatToConsole...",
+        "status": "FAILED",
+        "startTimestamp": 1523437333307
+    }
+}
+```
+
+- Implemented REST to retrieve pipegraph instance status
+
+```bash
+curl -X GET \
+  http://localhost:2891/pipegraphs/TestConsoleWriterStructuredJSONPipegraph/instances/TestConsoleWriterStructuredJSONPipegraph-6e139f53-254c-44b9-8b6a-3dbbaaa84760
+```
+```javascript
+{
+    "Result": "OK",
+    "data": {
+            "name": "TestConsoleWriterStructuredJSONPipegraph-6e139f53-254c-44b9-8b6a-3dbbaaa84760",
+            "instanceOf": "TestConsoleWriterStructuredJSONPipegraph",
+            "currentStatusTimestamp": 1523435670321,
+            "status": "PROCESSING",
+            "startTimestamp": 1523435670306
+    }
+}
+```
+
+- Updated `REST.md`
+
+### Resolve "[kafka writer] possibility to define kafka partition key from nested dataframe field"
+
+[Merge request 59](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/59)
+
+Created at: 2018-04-11T17:24:37.695Z
+
+Updated at: 2018-04-13T13:47:18.852Z
+
+Branch: feature/112-kafka-writer-possibility-to-define-kafka-partition-key-from-nested-dataframe-field
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #112
+
+Supported kafka partition key from nested dataframe field for AVRO and JSON
+
+See `whitelabel`:
+*  `TestPipegraphs.JSON.Structured.kafka`, `TestTopicModel.json2`
+*  `TestPipegraphs.AVRO.Structured.kafka`, `TestTopicModel.avro2`
