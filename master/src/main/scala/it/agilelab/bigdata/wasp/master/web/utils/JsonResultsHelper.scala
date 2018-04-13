@@ -54,9 +54,10 @@ object JsonResultsHelper extends JsonSupport with Logging {
     if (result.isDefined) {
       converter(result.get).toAngularOkResponse(pretty)
     } else {
-      logger.info(s"$resource $id not found")
+      val msg = s"$resource '$id' not found"
+      logger.info(msg)
       httpResponseJson(
-        entity = JsonResultsHelper.angularErrorBuilder(s"$resource $id not found").toString(),
+        entity = JsonResultsHelper.angularErrorBuilder(msg).toString(),
         status = StatusCodes.NotFound
       )
     }
@@ -83,9 +84,10 @@ object JsonResultsHelper extends JsonSupport with Logging {
       func()
       "OK".toJson.toAngularOkResponse(pretty)
     } else {
-      logger.info(s"$resource $id not found isn't possible $action")
+      val msg = s"$resource '$id' not found isn't possible $action"
+      logger.info(msg)
       httpResponseJson(
-        entity = JsonResultsHelper.angularErrorBuilder(s"$resource $id not found isn't possible $action").toJson.toString(),
+        entity = JsonResultsHelper.angularErrorBuilder(msg).toJson.toString(),
         status = StatusCodes.NotFound
       )
     }

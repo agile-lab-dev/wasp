@@ -45,6 +45,8 @@ class AllBLsTestWrapper {
       override def update(instance: BatchJobInstanceModel): BatchJobInstanceModel = ???
 
       override def insert(instance: BatchJobInstanceModel): BatchJobInstanceModel = ???
+
+      override def getByName(name: String): Option[BatchJobInstanceModel] = ???
     }
   }
 

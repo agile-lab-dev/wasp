@@ -31,6 +31,8 @@ class MockBatchInstancesBl extends BatchJobInstanceBL {
   override def all(): Seq[BatchJobInstanceModel] = buffer
 
   override def instancesOf(name: String): Seq[BatchJobInstanceModel] = buffer.filter(_.instanceOf == name)
+
+  override def getByName(name: String): Option[BatchJobInstanceModel] = buffer.find(_.name == name)
 }
 
 class MockBatchBl(batchJobInstanceBL: BatchJobInstanceBL) extends BatchJobBL {
