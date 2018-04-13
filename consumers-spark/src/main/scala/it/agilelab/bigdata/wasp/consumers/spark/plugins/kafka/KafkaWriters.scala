@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
+import java.util.UUID
+
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
@@ -89,24 +91,53 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-        val pkf = topic.partitionKeyField
-        val pkfIndex: Option[Int] = pkf.map(k => stream.schema.fieldIndex(k))
+        logger.debug(s"Schema DF spark, topic name ${topic.name}:\n${stream.schema.treeString}")
 
+        val pkf = topic.partitionKeyField
+        //val pkfIndex: Option[Int] = pkf.map(k => stream.schema.fieldIndex(k))
         val dswParsed = topicDataTypeB.value match {
           case "avro" => {
             val converter: RowToAvro = RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema))
-            logger.debug(s"Schema DF spark, topic name ${topic.name}: " + stream.schema.treeString)
-            logger.debug(s"Schema Avro, topic name ${topic.name}: " + converter.getSchema().toString(true))
+            logger.debug(s"Schema Avro, topic name ${topic.name}:\n${converter.getSchema().toString(true)}")
 
-            stream.map(r => {
-              val key: String = pkfIndex.map(r.getString).orNull
-              (key, converter.write(r))
-            }).toDF("key", "value")
+            if (pkf.isDefined) {
+              /* create a temp key (its name is not really relevant but have to be unique)
+                  e.g. pkf = "aaa.bbb" => key = "key_aaa_bbb__<UUID>" (UUID "underscored" instead "dotted")
+
+                  N.B. pkf have to be related to a String field
+               */
+              val tempKey = s"key_${pkf.get}__${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
+              logger.debug(s"tempKey: $tempKey")
+
+              val streamWithKey = stream.selectExpr(s"${pkf.get} AS $tempKey", "*")
+              logger.debug(s"SchemaWithKey DF spark, topic name ${topic.name}:\n${streamWithKey.schema.treeString}")
+
+              streamWithKey.map(r => {
+                val keyAndData = r.toSeq
+                val key: String = keyAndData.head.asInstanceOf[String]  // have to be string
+                val dataRow = Row.fromSeq(keyAndData.tail)
+
+                (key, converter.write(dataRow))
+              }).toDF("key", "value")
+            }
+            else {
+              stream.map(r => {
+                val key: String = null
+
+                (key, converter.write(r))
+              }).toDF("key", "value")
+            }
           }
           case _ => {
             // json conversion
-            if (pkf.isDefined)  stream.selectExpr(pkf.get, "to_json(struct(*)) AS value")
-            else stream.selectExpr("to_json(struct(*)) AS value")
+            if (pkf.isDefined) {
+              val streamWithKey = stream.selectExpr(s"${pkf.get} AS key", "to_json(struct(*)) AS value")
+              logger.debug(s"SchemaWithKey DF spark, topic name ${topic.name}:\n${streamWithKey.schema.treeString}")
+
+              streamWithKey
+            }
+            else
+              stream.selectExpr("to_json(struct(*)) AS value")
           }
         }
 
