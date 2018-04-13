@@ -1,22 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor
 
-import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Protocol.WorkAvailable
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Data, Protocol, SparkConsumersStreamingMasterGuardian, State}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.State.Initialized
-import it.agilelab.bigdata.wasp.core.models._
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import org.scalatest.concurrent.Eventually
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol => MasterProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, ProbesFactory, State, Protocol => PipegraphProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => ETLProtocol}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{SparkConsumersStreamingMasterGuardian, Protocol => MasterProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.{ComponentFailedStrategy, DontCare, StopAll}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.State.{Activating, RequestingWork, WaitingForWork}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, ProbesFactory, Protocol => PipegraphProtocol}
+import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace
+import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.collection.immutable.Map
 
@@ -30,7 +24,6 @@ class IntegrationSpec
 
 
   import SparkConsumersStreamingMasterGuardian._
-
 
   import scala.concurrent.duration._
 
@@ -89,7 +82,9 @@ class IntegrationSpec
       probe.send(fsm, MasterProtocol.StartPipegraph(defaultPipegraph.name))
 
 
-      probe.expectMsg(MasterProtocol.PipegraphStarted(defaultPipegraph.name))
+      probe.expectMsgPF() {
+        case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName) if instanceName.startsWith(s"${defaultPipegraph.name}-") => ()
+      }
 
       val etl = defaultPipegraph.structuredStreamingComponents.head
 
@@ -158,8 +153,12 @@ class IntegrationSpec
       }
 
       probe.send(fsm, MasterProtocol.StartPipegraph(secondPipegraph.name))
-      probe.expectMsg(MasterProtocol.PipegraphStarted(firstPipegraph.name))
-      probe.expectMsg(MasterProtocol.PipegraphStarted(secondPipegraph.name))
+      probe.expectMsgPF() {
+        case MasterProtocol.PipegraphStarted(firstPipegraph.name, instanceName) if instanceName.startsWith(s"${firstPipegraph.name}-") => ()
+      }
+      probe.expectMsgPF() {
+        case MasterProtocol.PipegraphStarted(secondPipegraph.name, instanceName) if instanceName.startsWith(s"${secondPipegraph.name}-") => ()
+      }
 
       factory.probes.head.expectMsg(ETLProtocol.ActivateETL(firstEtl))
 
@@ -236,7 +235,9 @@ class IntegrationSpec
       probe.send(fsm, MasterProtocol.StartPipegraph(defaultPipegraph.name))
 
 
-      probe.expectMsg(MasterProtocol.PipegraphStarted(defaultPipegraph.name))
+      probe.expectMsgPF() {
+        case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName) if instanceName.startsWith(s"${defaultPipegraph.name}-") => ()
+      }
 
       val etl = defaultPipegraph.structuredStreamingComponents.head
 

@@ -51,14 +51,14 @@ object BatchJob_C extends Directives with JsonSupport {
                 entity(as[Config]) { restConfig =>
                   complete {
                     WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name, restConfig)) match {
-                      case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                      case Right(jsonToParse) => jsonToParse.parseJson.toAngularOkResponse(pretty)
                       case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                     }
                   }
                 } ~
                   complete {
                     WaspSystem.??[Either[String, String]](masterGuardian, StartBatchJob(name, ConfigFactory.empty)) match {
-                      case Right(s) => s.toJson.toAngularOkResponse(pretty)
+                      case Right(jsonToParse) => jsonToParse.parseJson.toAngularOkResponse(pretty)
                       case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
                     }
                   }

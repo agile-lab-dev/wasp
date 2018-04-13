@@ -378,9 +378,9 @@ class SparkConsumersBatchMasterGuardian private(val batchJobBL: BatchJobBL,
       } else {
 
         retrieveBatchJob(name).flatMap(createInstanceOf(_, restConfig)) match {
-          case Success(instance) => {
+          case Success(instance: BatchJobInstanceModel) => {
             context.become(behavior(pendingJobs + instance, runningJobs, children))
-            sender() ! BatchMessages.StartBatchJobResultSuccess(name)
+            sender() ! BatchMessages.StartBatchJobResultSuccess(name, instance.name)
           }
           case Failure(error) => {
             sender() ! BatchMessages.StartBatchJobResultFailure(name, s"failure creating new batch job instance [${error.getMessage}]")

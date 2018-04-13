@@ -28,7 +28,7 @@ object BatchMessages {
     * Successful response to [[StartBatchJob]]
     * @param name The name of the [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]] started
     */
-  case class StartBatchJobResultSuccess(name: String) extends StartBatchJobResult
+  case class StartBatchJobResultSuccess(name: String, instanceName: String) extends StartBatchJobResult
 
   /**
     * Failure response to [[StartBatchJob]]
