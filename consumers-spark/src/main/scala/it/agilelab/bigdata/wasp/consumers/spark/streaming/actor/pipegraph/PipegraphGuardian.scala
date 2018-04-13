@@ -15,6 +15,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReade
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
 import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, PipegraphBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel}
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark.sql.SparkSession
 
 import scala.concurrent.duration.FiniteDuration
@@ -140,7 +141,7 @@ class PipegraphGuardian(private val master: ActorRef,
         materialized = data.materialized + association)
 
     case Event(ChildrenProtocol.ETLNotMaterialized(etl, reason), data: MaterializingData) =>
-      log.info("Could not materialize etl [{}] on worker [{}] reason: [{}]", etl.name, sender(), reason)
+      log.info("Could not materialize etl [{}] on worker [{}] reason: [{}]", etl.name, sender(), ExceptionUtils.getStackTrace(reason))
 
       val association = WorkerToEtlAssociation(sender(), etl)
 
