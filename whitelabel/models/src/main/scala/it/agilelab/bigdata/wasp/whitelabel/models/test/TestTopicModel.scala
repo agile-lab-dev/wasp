@@ -35,7 +35,7 @@ private[wasp] object TestTopicModel {
     partitions = 3,
     replicas = 1,
     topicDataType = "json",
-    partitionKeyField = None,
+    partitionKeyField = Some("nested.field3"), // useful to test with a specified nested kafka partitionKey
     schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
@@ -65,7 +65,7 @@ private[wasp] object TestTopicModel {
     partitions = 3,
     replicas = 1,
     topicDataType = "avro",
-    partitionKeyField = None,
+    partitionKeyField = Some("nested.field3"), // useful to test with a specified nested kafka partitionKey
     schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
