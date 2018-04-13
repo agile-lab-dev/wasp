@@ -35,6 +35,32 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val consoleWithMetadata = PipegraphModel(
+        name = "TestConsoleWriterWithMetadataStructuredJSONPipegraph",
+        description = "Description of TestConsoleWriterWithMetadataStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "test-with-metadata-console-etl",
+            inputs = List(
+              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.jsonWithMetadata.name)
+            ),
+            output = WriterModel.consoleWriter("Console Writer with metadata"),
+            mlModels = List(),
+            strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestEchoStrategy")),
+            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
+            config = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None
+      )
+
       lazy val kafka = PipegraphModel(
         name = "TestKafkaWriterStructuredJSONPipegraph",
         description = "Description of TestKafkaWriterStructuredJSONPipegraph",

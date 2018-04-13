@@ -481,8 +481,12 @@ object PipegraphGuardian {
     //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
 
+
+
+
+
     context.actorOf(StructuredStreamingETLActor.props(reader, plugins, sparkSession, mlModelBl, topicsBl,
-      writerFactory, pipegraph),saneName)
+      writerFactory, pipegraph, StructuredStreamingETLActor.defaultTelemetryActorFactory()),saneName)
 
   }
 
