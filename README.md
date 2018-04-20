@@ -1,6 +1,6 @@
-![WASP_logo](icons/WASP_logo.jpg)
+![WASP_logo](documentation/icons/WASP_logo.jpg)
 
-# WASP - Wide Analytics Streaming Platform - v2
+# WASP - Wide Analytics Streaming Platform
 
 
 ## Table of contents
@@ -14,8 +14,10 @@
   - [Glossary](#glossary)
   - [Services](#services)
   - [Using WASP](#using-wasp)
-- [WASP RESTful APIs](REST.md)
-- [Whitelabel - Application example](whitelabel/README.md)
+- [WASP RESTful APIs](documentation/api.md)
+- DevOps on Standalone applications 
+    - [Development](documentation/dev.md)
+    - [Operations](documentation/ops.md)
 
 
 ### General
@@ -42,7 +44,7 @@ WASP is a big data framework that allows you to not waste time with devops archi
 #### WASP in the wild
 WASP has been added to Cloudera Solution Gallery as an Open Source tool to simplify streaming workflows.
 
-__You can see it [here](https://www.cloudera.com/solutions/gallery/agilelab-wide-streaming-analytics-platform.html)!__
+**You can see it [here](https://www.cloudera.com/solutions/gallery/agilelab-wide-streaming-analytics-platform.html)!**
 
 
 #### Background
@@ -50,13 +52,14 @@ Handling huge streams of data in near real time is a hard task. So we want to bu
 Kafka is the central pillar of the architecture and helps to handle streams in the correct way. We have been inspired by the Kappa architecture definition. 
 
 #### Architecture
-You can refer to the diagrams ( [Wasp1](diagrams/Wasp1.png) and [Wasp2](diagrams/Wasp2.png) ) to gain a general overview of the architecture.
+You can refer to the diagrams ([Wasp1](documentation/diagrams/Wasp1.png) and [Wasp2](documentation/diagrams/Wasp2.png)) to gain a general overview of the architecture.
 The project is divided into sub modules:
 
 - **wasp-core**: provides all basic functionalities, pojo and utilities
-- **wasp-producer**: a thin layer to easily expose endpoints for ingestion purposes. Leveraging Akka-Camel we can provide Http, Tcp, ActiveMQ, JMS, File and many other connectors. This ingestion layer pushes data into Kafka.
-- **wasp-consumer**: the consumer layer incapsulates Spark Streaming to dequeue data from Kafka, apply business logic to it and then push the output on a target system. 
-- **wasp-webapp**: it provides the main entry point to control your application, exposing the WASP REST API. In the future, this will also provide a complete web application for monitoring and configuration.
+- **wasp-master**: it provides the main entry point to control your application, exposing the WASP REST API. In the future, this will also provide a complete web application for monitoring and configuration.
+- **wasp-producers**: a thin layer to easily expose endpoints for ingestion purposes. Leveraging Akka-Camel we can provide Http, Tcp, ActiveMQ, JMS, File and many other connectors. This ingestion layer pushes data into Kafka.
+- **wasp-consumers-rt**: ...
+- **wasp-consumers-spark**: the consumer layer incapsulates Spark Streaming to dequeue data from Kafka, apply business logic to it and then push the output on a target system. 
 
 All the components are coordinated, monitored and owned by an Akka Cluster layer, that provides scalability and fault tolerance for each component. For example you can spawn multiple identical producers to balance the load on your http endpoint, and then fairly distribute the data on Kafka.
 
@@ -80,7 +83,7 @@ For development purposes, WASP comes with two ways to handle the service depende
 - **Producer**: Producers are independent from pipegraphs. They ingest data from different sources and write data to a Kafka topic, after formatting it according to a the schema.
 
 #### Services
-![components](diagrams/components.png)
+![components](documentation/diagrams/components.png)
 
 ##### Kafka
 Kafka is the central element of this architecture blue print.
@@ -97,7 +100,7 @@ WASP supports running Spark in three different ways:
 
 ##### Akka
 Akka is our middleware: each component of WASP is an actor and relies on a clustered Actor System. In this way each component can be a separate process, and even run on different machines, and we can handle fault tolerance in a trasparent way to the whole application.
-This is a general overview of the [ActorSystem](diagrams/actor_system.png)
+This is a general overview of the [ActorSystem](documentation/diagrams/actor_system.png)
 
 ##### MongoDB
 MongoDB is the central repository for all configurations, ML models, and entities. It is fault tolerant and it simplifies the deployment in a distributed environment because each node just needs the MongoDB address to be ready to go.
@@ -125,9 +128,11 @@ The steps to getting WASP up and running for development are pretty simple:
 - Clone this repository:
 
     `git clone https://github.com/agile-lab-dev/wasp.git`
+    
 - Use the scripts to run the service dependencies with Docker:
 
-    `./docker/all-services-docker.sh`
+    `docker/start-services.sh`
+    
 - Start WASP. You can either run WASP inside or outside of a Docker container:
 
     - inside a container: `./docker/wasp-docker-image/build-wasp-docker-image.sh && ./docker/wasp-container-all-services.sh`
@@ -283,88 +288,78 @@ An example of an extended WaspProducerActor:
 
 - **Pipegraph**:
 
-The following diagrams represent a pipegraph overview diagram:
+    The following diagrams represent a pipegraph overview diagram:
 
-![pipegraph](diagrams/pipegraph.png)
+    ![pipegraph](documentation/diagrams/pipegraph.png)
 
-while this is  a more specific model representation of it:
-
-![pipegraph_model](diagrams/pipegraph_model.png)
-
-The pipegraph is the core of WASP, because it allows to abstract a pipeline with no coupling between components. It's really easy to change a pipegraph in order to add a datastore or more transformation steps.
-The structure of a Pipegraph forces you to implement in the right direction to avoid architectural mistakes. It forces you to have just one single output for each stream, so if you need to write your data into two datastore you are obliged to redirect the stream to Kafka topic and to consume it with two indipendent consumers.
-
-An example of a Pipegraph definition:
-	
-	object MetroPipegraphModel {
-	
-        lazy val metroPipegraphName = "MetroPipegraph6"
-        lazy val metroPipegraph = MetroPipegraph()
-        lazy val conf: Config = ConfigFactory.load
-        lazy val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
-  	
-		  private[wasp] object MetroPipegraph {
+    while this is  a more specific model representation of it:
+    
+    ![pipegraph_model](documentation/diagrams/pipegraph_model.png)
+    
+    The pipegraph is the core of WASP, because it allows to abstract a pipeline with no coupling between components. It's really easy to change a pipegraph in order to add a datastore or more transformation steps.
+    The structure of a Pipegraph forces you to implement in the right direction to avoid architectural mistakes. It forces you to have just one single output for each stream, so if you need to write your data into two datastore you are obliged to redirect the stream to Kafka topic and to consume it with two indipendent consumers.
+    
+    An example of a Pipegraph definition:
         
-            def apply() =
-              PipegraphModel(
-                  name = MetroPipegraphModel.metroPipegraphName,
-                  description = "Los Angeles Metro Pipegraph",
-                  owner = "user",
-                  system = false,
-                  creationTime = WaspSystem.now,
-                  etl = List(
-                      ETLModel("write on index",
-                               List(ReaderModel(MetroTopicModel.metroTopic._id.get,
-                                                MetroTopicModel.metroTopic.name,
-                                                TopicModel.readerType)),
-                               WriterModel.IndexWriter(MetroIndexModel.metroIndex._id.get,
-                                                       MetroIndexModel.metroIndex.name, defaultDataStoreIndexed),
-                               List(),
-                               Some(StrategyModel("it.agilelab.bigdata.wasp.pipegraph.metro.strategies.MetroStrategy", None))
-                      )
-                  ),
-                  rt = List(),
-                  dashboard = None,
-                  isActive = false,
-                  _id = Some(BSONObjectID.generate))
+        object MetroPipegraphModel {
         
-          }}
-
-An other important part of the pipegraph is the strategy. Using strategy, you can apply custom transformation directly to the dataframe, when the DStream is processed with
-Spark.
-
-An example of a Pipegraph strategy definition:
-
-    case class MetroStrategy() extends Strategy {
+            lazy val metroPipegraphName = "MetroPipegraph6"
+            lazy val metroPipegraph = MetroPipegraph()
+            lazy val conf: Config = ConfigFactory.load
+            lazy val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
+        
+              private[wasp] object MetroPipegraph {
+            
+                def apply() =
+                  PipegraphModel(
+                      name = MetroPipegraphModel.metroPipegraphName,
+                      description = "Los Angeles Metro Pipegraph",
+                      owner = "user",
+                      system = false,
+                      creationTime = WaspSystem.now,
+                      etl = List(
+                          ETLModel("write on index",
+                                   List(ReaderModel(MetroTopicModel.metroTopic._id.get,
+                                                    MetroTopicModel.metroTopic.name,
+                                                    TopicModel.readerType)),
+                                   WriterModel.IndexWriter(MetroIndexModel.metroIndex._id.get,
+                                                           MetroIndexModel.metroIndex.name, defaultDataStoreIndexed),
+                                   List(),
+                                   Some(StrategyModel("it.agilelab.bigdata.wasp.pipegraph.metro.strategies.MetroStrategy", None))
+                          )
+                      ),
+                      rt = List(),
+                      dashboard = None,
+                      isActive = false,
+                      _id = Some(BSONObjectID.generate))
+            
+              }}
     
-      def transform(dataFrames: Map[ReaderKey, DataFrame]) = {
+    An other important part of the pipegraph is the strategy. Using strategy, you can apply custom transformation directly to the dataframe, when the DStream is processed with
+    Spark.
     
-        val input = dataFrames.get(ReaderKey(TopicModel.readerType, "metro.topic")).get
+    An example of a Pipegraph strategy definition:
     
-        /** Put your transformation here. */
-    
-        input.filter(input("longitude") < -118.451683D)
-    
-      }
-    
-    }
+        case class MetroStrategy() extends Strategy {
+        
+          def transform(dataFrames: Map[ReaderKey, DataFrame]) = {
+        
+            val input = dataFrames.get(ReaderKey(TopicModel.readerType, "metro.topic")).get
+        
+            /** Put your transformation here. */
+        
+            input.filter(input("longitude") < -118.451683D)
+        
+          }
+        
+        }
 
-In this example the DataFrame is filtered at runtime with a "longitude" condition (i.e. < -118.451683D). Is possible apply more complicated trasformations
-using all the Spark DataFrame APIs like select, filter, groupBy and count [Spark DataFrame APIs](https://spark.apache.org/docs/1.6.2/api/scala/index.html#org.apache.spark.sql.DataFrame).
+    In this example the DataFrame is filtered at runtime with a "longitude" condition (i.e. < -118.451683D). Is possible apply more complicated trasformations
+    using all the Spark DataFrame APIs like select, filter, groupBy and count [Spark DataFrame APIs](https://spark.apache.org/docs/1.6.2/api/scala/index.html#org.apache.spark.sql.DataFrame).
 
-#### Running your application
-
-To run your application, you have to change the entry point to be your new Launcher. You can do this in many ways, the most straightforward one is changing the `mainClass` setting in `build.sbt` to point to your launcher.
-
-Then, start as WASP as you did above in the environment setup part.
-
-Your new Pipegraphs, Producers and associated models should now be laoded into MongoDB. You can check it by connecting to the WASP MongoDB instance, on `localhost:27017`, or using the REST API, by doing a `GET localhost:2891/pipegraphs` and `GET localhost:2891/producers`.
-
-Now you can start your Producer and Pipegraphs, using the respective IDs, with the REST API by doing `POST localhost:2891/producers/$ID/start` and `POST localhost:2891/pipegraphs/$ID/start`.
-
-Then, you can have a look at what's going on:
+#### Have a look at what's going on
 - <http://localhost:2891/pipegraphs>, <http://localhost:2891/producers>, <http://localhost:2891/batchjobs> for the current state of your Pipegraphs / Producers / BatchJobs
-- <http://localhost:4040> for Spark WebUI
+- <http://localhost:4040> for Spark Web UI
 - <http://localhost:50071> for HDFS
 - <http://localhost:8983>  for Solr
 - <http://localhost:32770> for Banana (Data visualization plugin for Solr)

@@ -1,18 +1,21 @@
 # WASP RESTful APIs
-This documentation explain all the exposed services of WASP system. Via the APIs is possible to access and manage every element of the system. All the APIs return a response using JSON format, like below. At the moment is the only supported format.
+This documentation explains all the exposed services of WASP system. Via the APIs is possible to access and manage every element of the system.
+All APIs return a response using JSON format (at the moment this is the only supported format).
+
 This is the first version of this documentation and the APIs are currently work in progress. In the next future we will make improvements at the system and consequently at the APIs.
+
 Below you can find all the APIs associated with the supported HTTP verbs.
 
 ## Pipegraphs
 
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /pipegraphs  |  Get all pipegraphs in the system | Insert a new pipegraph  | Update an existing pipegraph  |  |
+| /pipegraphs  |  Get all the pipegraphs in the system | Insert a new pipegraph  | Update an existing pipegraph  |  |
 | /pipegraphs/{id}  | Get the pipegraph with the specified id |   |   | Delete the pipegraph with the specified id  |
 | /pipegraphs/{id}/start |  | Start an instance of the specified pipegraph and return the related instance id |   |   |
 | /pipegraphs/{id}/stop |  | Stop the active (i.e. "PROCESSING") instance of the specified pipegraph |   |   |
-| /pipegraphs/{id}/instances |  Retrieve instances of the specified pipegraph, ordered newest to latest |   |   | |
-| /pipegraphs/{pipegraphId}/instances/{instanceId} |  Retrieve instance status of the specified pipegraph instance |   |   | |
+| /pipegraphs/{id}/instances |  Get instances of the specified pipegraph, ordered newest to latest |   |   | |
+| /pipegraphs/{pipegraphId}/instances/{instanceId} |  Get instance status of the specified pipegraph instance |   |   | |
 
 Pipegraphs
 
@@ -157,110 +160,77 @@ Producer start
 ## Topics
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /topics |  Get all the topics in the system. |   |   |   |
-| /topics/{id} | Get the producer with the specified id.  |   |   |   |
+| /topics |  Get all the topics in the system |   |   |   |
+| /topics/{id} | Get the producer with the specified id  |   |   |   |
 
 
-Topics Sample
+Topics
 
 `GET http://localhost:2891/topics`
-
 ```javascript
 {
-  "Result": "OK",
-  "data": [
-    {
-      "name": "metro.topic",
-      "creationTime": 1475066850990,
-      "schema": {
-        "type": "record",
-        "namespace": "PublicTransportsTracking",
-        "name": "LAMetro",
-        "fields": [
-          {
-            "name": "id_event",
-            "type": "double"
-          },
-          {
-            "name": "source_name",
-            "type": "string"
-          },
-          {
-            "name": "topic_name",
-            "type": "string"
-          },
-          {
-            "name": "metric_name",
-            "type": "string"
-          },
-          {
-            "name": "timestamp",
-            "type": "string",
-            "java-class": "java.util.Date"
-          },
-          {
-            "name": "latitude",
-            "type": "double"
-          },
-          {
-            "name": "longitude",
-            "type": "double"
-          },
-          {
-            "name": "value",
-            "type": "double"
-          },
-          {
-            "name": "payload",
-            "type": "string"
-          },
-          {
-            "name": "last_update",
-            "type": "double"
-          },
-          {
-            "name": "vehicle_code",
-            "type": "int"
-          },
-          {
-            "name": "position",
-            "type": {
-              "name": "positionData",
-              "type": "record",
-              "fields": [
-                {
-                  "name": "lat",
-                  "type": "double"
-                },
-                {
-                  "name": "lon",
-                  "type": "double"
-                }
-              ]
-            }
-          },
-          {
-            "name": "predictable",
-            "type": "boolean"
-          }
-        ]
-      },
-      "_id": {
-        "$oid": "57ebbbe30100000100835289"
-      }
-    }
-  ]
-}
+    "Result": "OK",
+    "data": [
+        {
+            "name": "logger.topic",
+            "replicas": 1,
+            "topicDataType": "avro",
+            "schema": {
+                "type": "record",
+                "namespace": "logging",
+                "name": "logging",
+                "fields": [
+                    {
+                        "name": "log_source",
+                        "type": "string",
+                        "doc": "Class that logged this message"
+                    },
+                    {
+                        "name": "log_level",
+                        "type": "string",
+                        "doc": "Logged message level"
+                    },
+                    {
+                        "name": "message",
+                        "type": "string",
+                        "doc": "Logged message"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "string",
+                        "doc": "Logged message timestamp in  ISO-8601 format"
+                    },
+                    {
+                        "name": "thread",
+                        "type": "string",
+                        "doc": "Thread that logged this message"
+                    },
+                    {
+                        "name": "cause",
+                        "type": "string",
+                        "doc": "Message of the logged exception attached to this logged message"
+                    },
+                    {
+                        "name": "stack_trace",
+                        "type": "string",
+                        "doc": "Stacktrace of the logged exception attached to this logged message"
+                    }
+                ]
+            },
+            "partitions": 3,
+            "creationTime": 1523635138573
+        },
+        ...
 ```
 
 ## Batchjobs
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /batchjobs | Get all batchjobs in the system | Insert a new batchjob  | Update an existing batchjob | |
+| /batchjobs | Get all the batchjobs in the system | Insert a new batchjob  | Update an existing batchjob | |
 | /batchjobs/{id} | Get the batchjob with the specified id | | | Delete the batchjobs with the specified id |
 | /batchjobs/{id}/start | | Start an instance  (with optional JSON configuration) of the specified batchjob and return the related instance id | | |
-| /batchjobs/{id}/instances | Retrieve instances of the specified batchjob, ordered newest to latest | | | |
-| /batchjobs/{batchjobId}/instances/{instanceId} | Retrieve instance status of the specified batchjob instance | | | |
+| /batchjobs/{id}/instances | Get instances of the specified batchjob, ordered newest to latest | | | |
+| /batchjobs/{batchjobId}/instances/{instanceId} | Get instance status of the specified batchjob instance | | | |
 
 Batchjobs
 
@@ -390,160 +360,82 @@ Batchjob specified instance status
 ## Indices
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /index/{name} | Get the pipegraph with the specified name. |   |   |   |
+| /indexes |  Get all the indexes in the system |   |   |   |
+| /indexes/{id} | Get the index with the specified id |   |   |   |
 
-Indices Sample
+Indices
 
-`GET http://localhost:2891/index/metro_index`
-
+`GET http://localhost:2891/indexes`
 ```javascript
 {
-  "Result": "OK",
-  "data": {
-    "name": "metro_index",
-    "creationTime": 1475161139634,
-    "schema": {
-      "lametro": {
-        "properties": {
-          "id_event": {
-            "type": "double",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "source_name": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "Index_name": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "metric_name": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "timestamp": {
-            "type": "date",
-            "format": "date_time",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "latitude": {
-            "type": "double",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "longitude": {
-            "type": "double",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "value": {
-            "type": "double",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "payload": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "last_update": {
-            "type": "double",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "vehicle_code": {
-            "type": "integer",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "position": {
-            "type": "geo_point",
-            "geohash": true,
-            "geohash_prefix": true,
-            "geohash_precision": 7,
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          },
-          "predictable": {
-            "type": "boolean",
-            "index": "not_analyzed",
-            "store": "true",
-            "enabled": "true"
-          }
-        }
-      }
-    },
-    "_id": {
-      "$oid": "57ed2c3344000001007f27b6"
-    },
-    "numShards": 2,
-    "replicationFactor": 1
-  }
+    "Result": "OK",
+    "data": [
+        {
+            "name": "logger_solr_index",
+            "schema": "[{\"name\":\"log_source\",\"type\":\"string\",\"indexed\":true,\"stored\":true,\"required\":false},{\"name\":\"log_level\",\"type\":\"string\",\"indexed\":true,\"stored\":true,\"required\":false},{\"name\":\"message\",\"type\":\"string\",\"indexed\":true,\"stored\":true,\"required\":false},{\"name\":\"timestamp\",\"type\":\"date\",\"indexed\":true,\"stored\":true,\"required\":false},{\"name\":\"thread\",\"type\":\"string\",\"indexed\":true,\"stored\":true,\"required\":false},{\"name\":\"cause\",\"type\":\"string\",\"indexed\":true,\"stored\":true,\"required\":false},{\"name\":\"stack_trace\",\"type\":\"string\",\"indexed\":true,\"stored\":true,\"required\":false}]",
+            "replicationFactor": 1,
+            "rollingIndex": false,
+            "creationTime": 1523635512255,
+            "numShards": 1
+        },
+        ...
 }
 ```
 
 ## ML Models
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /mlmodels | Get all the ML models in the system. |   | Update an existing ML models.  |   |
-| /mlmodels/{id} | Get the ML models with the specified id. |   |   | Delete the ML models with the specified id. |
+| /mlmodels | Get all the ML models in the system |   | Update an existing ML models  |   |
+| /mlmodels/{id} | Get the ML models with the specified id |   |   | Delete the ML models with the specified id |
 
 ## Configurations
 |   |  GET |  POST | PUT | DELETE  |
 |---|---|---|---|---|
-| /configs/kafka  | Get the Kakfa configuration. |   |   |   |
-| /configs/sparkbatch  | Get the Spark batch configuration. |   |   |   |
-| /configs/sparkstreaming  | Get the Spark streaming configuration. |   |   |   |
-| /configs/es  | Get the Elasticsearch configuration, if exists. |   |   |   |
-| /configs/solr  | Get the Solr configuration, if exists. |   |   |   |
+| /configs/kafka  | Get the Kakfa configuration |   |   |   |
+| /configs/sparkbatch  | Get the Spark batch configuration |   |   |   |
+| /configs/sparkstreaming  | Get the Spark streaming configuration |   |   |   |
+| /configs/es  | Get the Elasticsearch configuration |   |   |   |
+| /configs/solr  | Get the Solr configuration |   |   |   |
 
 Configurations Sample
 
 `GET http://localhost:2891/configs/kafka`
-
 ```javascript
 {
-  "Result": "OK",
-  "data": {
-    "connections": [
-      {
-        "protocol": "",
-        "host": "server02.cluster01.atscom.it",
-        "port": 9092,
-        "timeout": 5000
-      }
-    ],
-    "ingest_rate": "1s",
-    "zookeeper": {
-      "protocol": "",
-      "host": "server01.cluster01.atscom.it",
-      "port": 2181,
-      "timeout": 5000
-    },
-    "broker_id": "0",
-    "partitioner_fqcn": "kafka.producer.DefaultPartitioner",
-    "default_encoder": "kafka.serializer.DefaultEncoder",
-    "encoder_fqcn": "kafka.serializer.StringEncoder",
-    "decoder_fqcn": "kafka.serializer.StringDecoder",
-    "batch_send_size": 100,
-    "name": "Kafka"
-  }
+    "Result": "OK",
+    "data": {
+        "key_encoder_fqcn": "org.apache.kafka.common.serialization.StringSerializer",
+        "name": "Kafka",
+        "zookeeperConnections": {
+            "connections": [
+                {
+                    "host": "zookeeper",
+                    "port": 2181,
+                    "metadata": {},
+                    "timeout": 15000,
+                    "protocol": ""
+                }
+            ],
+            "chRoot": "/kafka"
+        },
+        "batch_send_size": 0,
+        "default_encoder": "kafka.serializer.DefaultEncoder",
+        "broker_id": "0",
+        "ingest_rate": "1s",
+        "others": [],
+        "partitioner_fqcn": "org.apache.kafka.clients.producer.internals.DefaultPartitioner",
+        "acks": "-1",
+        "decoder_fqcn": "org.apache.kafka.common.serialization.ByteArrayDeserializer",
+        "encoder_fqcn": "org.apache.kafka.common.serialization.ByteArraySerializer",
+        "connections": [
+            {
+                "host": "kafka",
+                "port": 9092,
+                "metadata": {},
+                "timeout": 15000,
+                "protocol": ""
+            }
+        ]
+    }
 }
 ```

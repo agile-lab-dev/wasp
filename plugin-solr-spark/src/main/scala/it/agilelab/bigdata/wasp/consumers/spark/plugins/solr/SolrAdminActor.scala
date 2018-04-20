@@ -74,7 +74,7 @@ class SolrAdminActor
     solrConfig = message.solrConfigModel
 
     logger.info(s"Solr - New client created with: config $solrConfig")
-    val jaasPath = System.getenv("java.security.auth.login.config")
+    val jaasPath = System.getProperty("java.security.auth.login.config")
     logger.info(s"Solr Kerberos is enabled with Jaas Path -> ${System.getProperty("java.security.auth.login.config")}")
 
     if (jaasPath != null) {
@@ -193,16 +193,14 @@ class SolrAdminActor
     val numShards = message.numShards
     val replicationFactor = message.replicationFactor
 
-    val createRequest: CollectionAdminRequest.Create =
-      new CollectionAdminRequest.Create()
+    val createRequest: CollectionAdminRequest.Create = new CollectionAdminRequest.Create()
 
     createRequest.setConfigName(s"${SolrAdminActor.configSet}_${message.collection}")
     createRequest.setCollectionName(message.collection)
     createRequest.setNumShards(numShards)
     createRequest.setReplicationFactor(replicationFactor)
 
-    val createResponse: CollectionAdminResponse =
-      createRequest.process(solrServer)
+    val createResponse: CollectionAdminResponse = createRequest.process(solrServer)
 
     val ret = createResponse.isSuccess()
     if (!ret)
@@ -313,7 +311,7 @@ class SolrAdminActor
 
     val ret = removeResponse.isSuccess
     if (!ret) {
-      logger.info(s"Collection NOT successfully removed. ${message.collection}")
+      logger.info(s"Collection Alias NOT successfully removed. ${message.collection}")
     }
 
     ret

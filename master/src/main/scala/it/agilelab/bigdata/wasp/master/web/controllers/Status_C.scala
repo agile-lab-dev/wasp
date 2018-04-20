@@ -15,94 +15,97 @@ object Status_C extends Directives with JsonSupport {
   /** Return the available APIs as a JSON arrayOfObjects */
   private lazy val helpContentArray = Array(
     Map("/pipegraphs" -> Map(
-      "GET" -> "Get all the pipegraph in the system.",
-      "POST" -> "Insert a new pipegraph.",
-      "PUT" -> "Update an existing pipegraph."
+      "GET" -> "Get all the pipegraph in the system",
+      "POST" -> "Insert a new pipegraph",
+      "PUT" -> "Update an existing pipegraph"
     )),
-    Map("/pipegraphs/{name}" -> Map(
-      "GET" -> "Get the pipegraph with the specified name.",
-      "DELETE" -> "Delete the pipegraph with the specified name."
+    Map("/pipegraphs/{id}" -> Map(
+      "GET" -> "Get the pipegraph with the specified id",
+      "DELETE" -> "Delete the pipegraph with the specified id"
     )),
-    Map("/pipegraphs/{name}/start" -> Map(
-      "POST" -> "Start the pipegraph with the specified name."
+    Map("/pipegraphs/{id}/start" -> Map(
+      "POST" -> "Start the pipegraph with the specified id and return the related instance id"
     )),
-    Map("/pipegraphs/{name}/stop" -> Map(
-      "POST" -> "Stop the pipegraph with the specified name."
+    Map("/pipegraphs/{id}/stop" -> Map(
+      "POST" -> "Stop the active (i.e. \"PROCESSING\") instance of the specified pipegraph"
     )),
-    Map("/pipegraphs/{name}/instances" -> Map(
-      "GET" -> "Get instances of pipegraph with the specified name, ordered newest to oldest"
+    Map("/pipegraphs/{id}/instances" -> Map(
+      "GET" -> "Get instances of the specified pipegraph, ordered newest to latest"
     )),
-    Map("/pipegraphs/{pipegraphName}/instances/{instanceName}" -> Map(
-      "GET" -> "Get instance status of pipegraph instance with the specified name"
+    Map("/pipegraphs/{pipegraphId}/instances/{instanceId}" -> Map(
+      "GET" -> "Get instance status of the specified pipegraph instance"
     )),
+
     Map("/producers" -> Map(
-      "GET" -> "Get all the procuders in the system.",
-      "PUT" -> "Update an existing pipegraph."
+      "GET" -> "Get all the procuders in the system",
+      "PUT" -> "Update an existing producer"
     )),
-    Map("/producers/{name}" -> Map(
-      "GET" -> "Get the producer with the specified name."
+    Map("/producers/{id}" -> Map(
+      "GET" -> "Get the producer with the specified id"
     )),
-    Map("/producers/{name}/start" -> Map(
-      "POST" -> "Start the producer with the specified name."
+    Map("/producers/{id}/start" -> Map(
+      "POST" -> "Start the producer with the specified id"
     )),
-    Map("/producers/{name}/stop" -> Map(
-      "POST" -> "Stop the producer with the specified name."
+    Map("/producers/{id}/stop" -> Map(
+      "POST" -> "Stop the producer with the specified id"
     )),
+
     Map("/topics" -> Map(
-      "GET" -> "Get all the topics in the system."
+      "GET" -> "Get all the topics in the system"
     )),
-    Map("/topics/{name}" -> Map(
-      "GET" -> "Get the producer with the specified name."
+    Map("/topics/{id}" -> Map(
+      "GET" -> "Get the producer with the specified id."
     )),
+
     Map("/batchjobs" -> Map(
-      "GET" -> "Get all the batchjobs in the system.",
-      "POST" -> "Insert a new batchjobs.",
-      "PUT" -> "Update an existing batchjobs."
+      "GET" -> "Get all the batchjobs in the system",
+      "POST" -> "Insert a new batchjob",
+      "PUT" -> "Update an existing batchjob"
     )),
-    Map("/batchjobs/{name}" -> Map(
-      "GET" -> "Get the batchjobs with the specified id.",
-      "DELETE" -> "Delete the batchjobs with the specified name."
+    Map("/batchjobs/{id}" -> Map(
+      "GET" -> "Get the batchjobs with the specified id",
+      "DELETE" -> "Delete the batchjob with the specified id"
     )),
-    Map("/batchjobs/{name}/start" -> Map(
-      "POST" -> "Start the batchjobs with the specified name."
+    Map("/batchjobs/{id}/start" -> Map(
+      "POST" -> "Start an instance (with optional JSON configuration) of the specified batchjob and return the related instance id"
     )),
-    Map("/batchjobs/{name}/instances" -> Map(
-      "GET" -> "Get instances of batchjob with the specified name, ordered newest to oldest"
+    Map("/batchjobs/{id}/instances" -> Map(
+      "GET" -> "Get instances of the specified batchjob, ordered newest to latest"
     )),
-    Map("/batchjobs/{batchjobName}/instances/{instanceName}" -> Map(
-      "GET" -> "Get instance status of batchjob instance with the specified name"
+    Map("/batchjobs/{batchjobId}/instances/{instanceId}" -> Map(
+      "GET" -> "Get instance status of the specified batchjob instance"
     )),
-    Map("/index/{name}" -> Map(
-      "GET" -> "Get the index with the specified name."
-    )),
+
     Map("/indexes" -> Map(
-      "GET" -> "Get all the indexes."
+      "GET" -> "Get all the indexes in the system"
     )),
-    Map("/indexes/{name}" -> Map(
-      "GET" -> "Get the index with the specified name."
+    Map("/indexes/{id}" -> Map(
+      "GET" -> "Get the index with the specified id"
     )),
+
     Map("/mlmodels" -> Map(
-      "GET" -> "Get all the ML models in the system.",
-      "PUT" -> "Update an existing ML models."
+      "GET" -> "Get all the ML models in the system",
+      "PUT" -> "Update an existing ML models"
     )),
-    Map("/mlmodels/{name}/{version}" -> Map(
-      "GET" -> "Get the ML models with the specified name and version.",
-      "DELETE" -> "Delete the ML models with the specified name and version."
+    Map("/mlmodels/{id}" -> Map(
+      "GET" -> "Get the ML models with the specified id",
+      "DELETE" -> "Delete the ML models with the specified id"
     )),
+
     Map("/configs/kafka" -> Map(
-      "GET" -> "Get the Kakfa configuration."
+      "GET" -> "Get the Kakfa configuration"
     )),
     Map("/configs/sparkbatch" -> Map(
-      "GET" -> "Get the Spark batch configuration."
+      "GET" -> "Get the Spark batch configuration"
     )),
     Map("/configs/sparkstreaming" -> Map(
-      "GET" -> "Get the Spark streaming configuration."
+      "GET" -> "Get the Spark streaming configuration"
     )),
     Map("/configs/es" -> Map(
-      "GET" -> "Get the Elasticsearch configuration. If exists."
+      "GET" -> "Get the Elasticsearch configuration"
     )),
     Map("/configs/solr" -> Map(
-      "GET" -> "Get the Solr configuration. If exists."
+      "GET" -> "Get the Solr configuration"
     ))
   )
 

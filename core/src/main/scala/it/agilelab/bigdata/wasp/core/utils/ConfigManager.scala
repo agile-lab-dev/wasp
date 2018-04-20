@@ -78,7 +78,7 @@ object ConfigManager {
     ValidationRule("SparkStreamingCheckpointDirLocal") {
       (configManager) =>
         if (configManager.getSparkStreamingConfig.checkpointDir.startsWith("file:///"))
-          Left("Using a localPath (within the consumers-spark-streaming container) for the checkpoint folder is not recommended. Use a remotePath on HDFS (i.e. '/...') instead")
+          Left("Using a localPath (within the consumers-spark-streaming container) for the checkpoint directory is not recommended. Use a remotePath on HDFS (i.e. '/...') instead")
         else
           Right()
     },
