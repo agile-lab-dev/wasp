@@ -1138,3 +1138,35 @@ Supported kafka partition key from nested dataframe field for AVRO and JSON
 See `whitelabel`:
 *  `TestPipegraphs.JSON.Structured.kafka`, `TestTopicModel.json2`
 *  `TestPipegraphs.AVRO.Structured.kafka`, `TestTopicModel.avro2`
+
+
+## WASP 2.11.0
+20/04/2018
+
+### Resolve "[Documentation] Draft Procedure Operations"
+
+[Merge request 60](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/60)
+
+Created at: 2018-04-16T13:44:38.295Z
+
+Updated at: 2018-04-20T09:24:21.904Z
+
+Branch: feature/22-documentation-procedure-operations
+
+Author: [Davide Colombatto](https://gitlab.com/davidecolombatto)
+
+Closes #22
+
+All the sub-documentation, diagrams and icons are moved under `documentation`
+
+Revised documentation:
+* WASP RESTful APIs -> `api.md`
+* Development -> `dev.md`, includes old `whitelabel.md`, `yarn.md` and `kerberos.md`
+
+Draft documentation:
+* Operations -> `ops.md`
+
+Revised code:
+*  API `http://localhost:2891/help` to retrieve the list of available APIs
+*  `SolrAdminActor` checks `System.getProperty("java.security.auth.login.config")` instead of 
+   `System.getenv("java.security.auth.login.config")`
