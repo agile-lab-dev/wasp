@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
+import java.util
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem}
@@ -226,11 +227,26 @@ class SparkConsumersBatchMasterGuardianSpec
 
     }
 
-    "Respond failure on StartJob when instance of job is already PENDING or PROCESSING" in {
+    "Respond failure on StartJob when instance of job is already PENDING or PROCESSING and it is fullyExclusive" in {
 
       val mockBl = new MockBatchBl(new MockBatchInstancesBl)
       val schedulersBL = new MockBatchSchedulersBl
 
+      val job = BatchJobModel(name = "job",
+        description = "testJob",
+        owner = "test",
+        system = false,
+        creationTime = System.currentTimeMillis(),
+        etl = BatchETLModel(
+          name ="name",
+          inputs = List.empty,
+          output = WriterModel.kafkaWriter("test", "test"),
+          mlModels = List.empty,
+          strategy = None,
+          kafkaAccessType = ""
+        ),
+        BatchJobExclusionConfig(isFullyExclusive = true, Seq.empty[String]))
+      mockBl.insert(job)
       val job1 = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING)
 
       val factory: ActorRefFactory => ActorRef = _ => testActor
@@ -241,7 +257,114 @@ class SparkConsumersBatchMasterGuardianSpec
 
       master ! BatchMessages.StartBatchJob("job", ConfigFactory.empty)
 
-      expectMsg(BatchMessages.StartBatchJobResultFailure("job", "Cannot start multiple instances of same job [job]"))
+      expectMsg(BatchMessages.StartBatchJobResultFailure("job", "Cannot start multiple instances of same job [job]. The batch job is fully exclusive."))
+
+      watch(master)
+
+      master ! SparkConsumersBatchMasterGuardian.Terminate
+
+      expectTerminated(master)
+
+
+    }
+
+    "Respond failure on StartJob when instance of job is already PENDING or PROCESSING, it is NOT fullyExclusive and it " +
+      "has the same rest config for exclusive parameters" in {
+
+      val mockBl = new MockBatchBl(new MockBatchInstancesBl)
+      val schedulersBL = new MockBatchSchedulersBl
+
+      val job = BatchJobModel(name = "job",
+        description = "testJob",
+        owner = "test",
+        system = false,
+        creationTime = System.currentTimeMillis(),
+        etl = BatchETLModel(
+          name ="name",
+          inputs = List.empty,
+          output = WriterModel.kafkaWriter("test", "test"),
+          mlModels = List.empty,
+          strategy = None,
+          kafkaAccessType = ""
+        ),
+        BatchJobExclusionConfig(isFullyExclusive = false, Seq("aParam")))
+
+      val configMap1: util.HashMap[String, String] = new util.HashMap[String, String]()
+      configMap1.put("aParam", "1")
+      configMap1.put("bParam", "2")
+      val configMap2: util.HashMap[String, String] = new util.HashMap[String, String]()
+      configMap2.put("aParam", "1")
+      configMap2.put("bParam", "5")
+
+      val instanceConfig1 = ConfigFactory.parseMap(configMap1)
+      val instanceConfig2 = ConfigFactory.parseMap(configMap2)
+
+      mockBl.insert(job)
+      val job1 = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING, instanceConfig1)
+
+      val factory: ActorRefFactory => ActorRef = _ => testActor
+
+      mockBl.instances().insert(job1)
+
+      val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
+
+      master ! BatchMessages.StartBatchJob("job", instanceConfig2)
+
+      expectMsg(BatchMessages.StartBatchJobResultFailure("job", "Cannot start multiple instances of same job [job]. " +
+        "The batch job is not fully exclusive but have exclusive parameters aParam."))
+
+      watch(master)
+
+      master ! SparkConsumersBatchMasterGuardian.Terminate
+
+      expectTerminated(master)
+
+
+    }
+
+    "Respond success on StartJob when instance of job is already PENDING or PROCESSING, it is NOT fullyExclusive and it " +
+      "has the different rest config for exclusive parameters" in {
+
+      val mockBl = new MockBatchBl(new MockBatchInstancesBl)
+      val schedulersBL = new MockBatchSchedulersBl
+
+      val job = BatchJobModel(name = "job",
+        description = "testJob",
+        owner = "test",
+        system = false,
+        creationTime = System.currentTimeMillis(),
+        etl = BatchETLModel(
+          name ="name",
+          inputs = List.empty,
+          output = WriterModel.kafkaWriter("test", "test"),
+          mlModels = List.empty,
+          strategy = None,
+          kafkaAccessType = ""
+        ),
+        BatchJobExclusionConfig(isFullyExclusive = false, Seq("bParam")))
+
+      val configMap1: util.HashMap[String, String] = new util.HashMap[String, String]()
+      configMap1.put("aParam", "1")
+      configMap1.put("bParam", "2")
+      val configMap2: util.HashMap[String, String] = new util.HashMap[String, String]()
+      configMap2.put("aParam", "1")
+      configMap2.put("bParam", "5")
+
+      val instanceConfig1 = ConfigFactory.parseMap(configMap1)
+      val instanceConfig2 = ConfigFactory.parseMap(configMap2)
+
+      mockBl.insert(job)
+      val job1 = BatchJobInstanceModel("job-1", "job", 1l, 0l, JobStatus.PENDING, instanceConfig1)
+
+      val factory: ActorRefFactory => ActorRef = _ => testActor
+
+      mockBl.instances().insert(job1)
+
+      val master = system.actorOf(SparkConsumersBatchMasterGuardian.props(mockBl,schedulersBL, 5, factory))
+
+      master ! BatchMessages.StartBatchJob("job", instanceConfig2)
+
+      expectMsgClass(classOf[BatchMessages.StartBatchJobResultSuccess])
 
       watch(master)
 
