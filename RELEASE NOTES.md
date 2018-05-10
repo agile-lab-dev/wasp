@@ -1170,3 +1170,30 @@ Revised code:
 *  API `http://localhost:2891/help` to retrieve the list of available APIs
 *  `SolrAdminActor` checks `System.getProperty("java.security.auth.login.config")` instead of 
    `System.getenv("java.security.auth.login.config")`
+
+## WASP 2.12.0
+10/05/2018
+
+### Batch jobs can now be multi-instantiated
+
+[Merge request 61](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/61)
+
+Created at: 2018-05-10T15:58:51.154Z
+
+Updated at: 2018-05-10T16:13:44.280Z
+
+Branch: feature/GL-130-parallelBatchJobs
+
+Author: [Vito](https://gitlab.com/vito.ressa)
+
+GL-130: Batch jobs can now be multi-instantiated. Exclusivity can be limited to a subset of rest parameters.
+BatchJobModel now has a "exclusivityConfig" of type BatchJobExclusionConfig.
+BatchJobExclusionConfig has 2 fields:
+- isFullyExclusive: Boolean
+- restConfigExclusiveParams: Seq[String]
+If a batch job is fully exclusive it can never be multi-instantiated as pending or processing. Eventual start request fails if there is another job of the same model pending or processing.
+
+If a batch job is NOT fully exclusive but restConfigExclusiveParams is NOT empty can be multi-instantiated if the instances differs in input rest config in at least one fields indicated in restConfigExclusiveParams.
+
+If a batch job is NOT fully exclusive and restConfigExclusiveParams is empty it can always be multi-instantiated.
+
