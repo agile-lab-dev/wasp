@@ -373,11 +373,55 @@ class SparkConsumersBatchMasterGuardian private(val batchJobBL: BatchJobBL,
 
     case BatchMessages.StartBatchJob(name, restConfig) => {
 
-      if (pendingJobs.exists(_.instanceOf == name) || runningJobs.keys.exists(_.instanceOf == name)) {
-        sender() ! BatchMessages.StartBatchJobResultFailure(name, s"Cannot start multiple instances of same job [$name]")
+      val batchJobModel = retrieveBatchJob(name)
+      val bjmRetrieved = batchJobModel.isSuccess
+
+      def inConflictWithJobsSet(bjName: String, bjModel: Option[BatchJobModel], jobs: Set[BatchJobInstanceModel]) = {
+        // The job is in conflict if the condition " A OR B" holds, where
+        // A:  The batch job is fully exclusive and exist already a job instance
+        // B:  The batch job is not fully exclusive but exists a job instance with the same exclusive parameters configuration if any
+        bjModel.forall {
+          bjm =>
+            // A
+            (
+              bjm.exclusivityConfig.isFullyExclusive &&
+                jobs.exists(j => j.instanceOf == name)
+              ) ||
+              // B
+              (
+                (!bjm.exclusivityConfig.isFullyExclusive) &&
+                  bjm.exclusivityConfig.restConfigExclusiveParams.nonEmpty &&
+                  jobs.exists { j =>
+                    j.instanceOf == name &&
+                      bjm.exclusivityConfig.restConfigExclusiveParams.forall {
+                        exclusiveParam =>
+                          restConfig.getString(exclusiveParam) == j.restConfig.getString(exclusiveParam)
+                      }
+                  }
+                )
+        }
+      }
+
+      val inConflictWithPendingJobs = inConflictWithJobsSet(name, batchJobModel.toOption, pendingJobs)
+      val inConflictWithRunningJobs = inConflictWithJobsSet(name, batchJobModel.toOption, runningJobs.keys.toSet)
+
+      val isInConflict = inConflictWithPendingJobs || inConflictWithRunningJobs
+
+      if (bjmRetrieved && isInConflict) {
+        val isFullyExclusive = batchJobModel.get.exclusivityConfig.isFullyExclusive
+        val exclusiveParameters = batchJobModel.get.exclusivityConfig.restConfigExclusiveParams.mkString(", ")
+        sender() ! BatchMessages.StartBatchJobResultFailure(name,
+          s"Cannot start multiple instances of same job [$name]. The batch job is " +
+            s"${if(!isFullyExclusive) {
+              s"not fully exclusive but have exclusive parameters $exclusiveParameters."
+            } else {
+              "fully exclusive."
+            }
+            }"
+        )
       } else {
 
-        retrieveBatchJob(name).flatMap(createInstanceOf(_, restConfig)) match {
+        batchJobModel.flatMap(createInstanceOf(_, restConfig)) match {
           case Success(instance: BatchJobInstanceModel) => {
             context.become(behavior(pendingJobs + instance, runningJobs, children))
             sender() ! BatchMessages.StartBatchJobResultSuccess(name, instance.name)

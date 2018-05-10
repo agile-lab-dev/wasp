@@ -16,7 +16,11 @@ case class BatchJobModel(override val name: String,
                          owner: String,
                          system: Boolean,
                          creationTime: Long,
-                         etl: BatchETLModel)
+                         etl: BatchETLModel,
+                         exclusivityConfig: BatchJobExclusionConfig = BatchJobExclusionConfig(
+                           isFullyExclusive = true,
+                           Seq.empty[String])
+                         )
 	  extends Model
 
 
@@ -38,3 +42,5 @@ case class BatchETLModel(name: String,
                          kafkaAccessType: String,
                          group: String = "default",
                          var isActive: Boolean = false)
+
+case class BatchJobExclusionConfig(isFullyExclusive: Boolean, restConfigExclusiveParams: Seq[String])

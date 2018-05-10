@@ -110,7 +110,7 @@ class BatchJobBLImp(waspDB: WaspDB) extends BatchJobBL {
     })
   }
 
-  private def factory(p: BatchJobModel) = new BatchJobModel(p.name, p.description, p.owner, p.system, p.creationTime, p.etl)
+  private def factory(p: BatchJobModel) = new BatchJobModel(p.name, p.description, p.owner, p.system, p.creationTime, p.etl, p.exclusivityConfig)
 
   override def instances(): BatchJobInstanceBL = instanceBl
 

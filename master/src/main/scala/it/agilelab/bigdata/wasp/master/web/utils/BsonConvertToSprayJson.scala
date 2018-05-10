@@ -85,7 +85,8 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat2(ElasticConfigModel.apply)
   implicit val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat2(SolrConfigModel.apply)
   implicit val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)
-  implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat6(BatchJobModel.apply)
+  implicit val batchJobExclusionConfig: RootJsonFormat[BatchJobExclusionConfig] = jsonFormat2(BatchJobExclusionConfig.apply)
+  implicit val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat7(BatchJobModel.apply)
   implicit val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat7(ProducerModel.apply)
   implicit val jobStatusFormat: RootJsonFormat[JobStatus.JobStatus] = new EnumJsonConverter(JobStatus)
   implicit val typesafeConfigFormat: RootJsonFormat[Config] = new TypesafeConfigJsonConverter
