@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, RowToAvro}
-import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery}
+import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -141,14 +141,21 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
           }
         }
 
-        val dswParsedReady = dswParsed
+        val partialStreamWriter = dswParsed
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
           .option("checkpointLocation", checkpointDir)
-          .queryName(queryName)
 
-        val dswWithWritingConf = addKafkaConf(dswParsedReady, tinyKafkaConfig)
+        val streamWriter =
+          if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
+            partialStreamWriter
+              .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
+              .queryName(queryName)
+          else
+            partialStreamWriter.queryName(queryName)
+
+        val dswWithWritingConf = addKafkaConf(streamWriter, tinyKafkaConfig)
 
         dswWithWritingConf.start()
       } else {

@@ -9,13 +9,13 @@ import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
-import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
 import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.streaming.StreamingContext
@@ -164,11 +164,18 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
           index.collection,
           index.idField)
 
-        stream.writeStream
+        val streamWriter = stream.writeStream
           .option("checkpointLocation", checkpointDir)
           .foreach(solrWriter)
           .queryName(queryName)
-          .start()
+
+        if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
+          streamWriter
+            .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
+            .start()
+        else
+          streamWriter.start()
+
 
       } else {
         val msg = s"Error creating solr index: $index with this index name $indexName"

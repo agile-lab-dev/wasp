@@ -195,6 +195,8 @@ object ConfigManager {
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
 
+    val triggerInterval = if(sparkSubConfig.hasPath("trigger-interval-ms")) Some(sparkSubConfig.getLong("trigger-interval-ms")) else None
+
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
       readConnectionConfig(sparkSubConfig.getConfig("master")),
@@ -215,6 +217,7 @@ object ConfigManager {
 
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
+      triggerInterval,
       readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
 
       sparkStreamingConfigName

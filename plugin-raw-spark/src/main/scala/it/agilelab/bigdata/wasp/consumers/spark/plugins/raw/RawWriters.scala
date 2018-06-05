@@ -9,7 +9,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
@@ -91,7 +91,7 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
     val partitionBy = options.partitionBy.getOrElse(Nil)
 
     // configure and start streaming
-    stream.writeStream
+    val partialStreamWriter = stream.writeStream
       .format(format)
       .outputMode(mode)
       .options(extraOptions)
@@ -99,7 +99,14 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
       .option("checkpointLocation", checkpointDir)
       .option("path", path)
       .queryName(queryName)
-      .start()
+
+
+    if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
+      partialStreamWriter
+        .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
+        .start()
+    else
+      partialStreamWriter.start()
   }
 }
 
