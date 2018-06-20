@@ -159,6 +159,8 @@ object ConfigManager {
     MongoDBConfigModel(
       mongoDBSubConfig.getString("address"),
       mongoDBSubConfig.getString("db-name"),
+      mongoDBSubConfig.getString("username"),
+      mongoDBSubConfig.getString("password"),
       mongoDBSubConfig.getInt("timeout")
     )
   }

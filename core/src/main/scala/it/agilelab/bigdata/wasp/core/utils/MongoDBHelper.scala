@@ -114,14 +114,14 @@ private[utils] trait MongoDBHelper extends Logging {
     val selector = BsonDocument(key -> value)
     val result =
       try {
-      val result1 = mongoDatabase.getCollection[T](collection).replaceOne(selector, updateValue, updateOptions).headResult()
-      logger.info(s"Replaced success for field $key with value $value, updateValue: $updateValue, collection: $collection, result: $result1")
-      result1
-    } catch {
-      case e: Exception =>
-        logger.error(s"Unable to replace document. Error message: ${e.getMessage}, field $key with value $value, updateValue: $updateValue, collection: $collection ")
-        throw e
-    }
+        val result1 = mongoDatabase.getCollection[T](collection).replaceOne(selector, updateValue, updateOptions).headResult()
+        logger.info(s"Replaced success for field $key with value $value, updateValue: $updateValue, collection: $collection, result: $result1")
+        result1
+      } catch {
+        case e: Exception =>
+          logger.error(s"Unable to replace document. Error message: ${e.getMessage}, field $key with value $value, updateValue: $updateValue, collection: $collection ")
+          throw e
+      }
     result
   }
 
@@ -161,20 +161,28 @@ object MongoDBHelper extends Logging {
   def getDatabase(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {
     //return a connection pool
 
-    val settings = MongoClientSettings.builder()
-                         .clusterSettings(ClusterSettings.builder()
-                                                         .applyConnectionString(new ConnectionString(mongoDBConfig.address))
-                                                         .build())
-                         //we need full consistency so we consider a write on mongo as successful when it lands on disk
-                         .writeConcern(WriteConcern.ACKNOWLEDGED.withFsync(true))
-                         .heartbeatSocketSettings(SocketSettings.builder()
-                                                                .connectTimeout(mongoDBConfig.millisecondsTimeoutConnection,
-                                                                                TimeUnit.MILLISECONDS)
-                                                                .readTimeout(mongoDBConfig.millisecondsTimeoutConnection,
-                                                                             TimeUnit.MILLISECONDS)
-                                                                .build())
-                         .build()
+    val settingsBuilder = MongoClientSettings.builder()
+      .clusterSettings(ClusterSettings.builder()
+        .applyConnectionString(new ConnectionString(mongoDBConfig.address))
+        .build())
+      //we need full consistency so we consider a write on mongo as successful when it lands on disk
+      .writeConcern(WriteConcern.ACKNOWLEDGED.withFsync(true))
+      .heartbeatSocketSettings(SocketSettings.builder()
+        .connectTimeout(mongoDBConfig.millisecondsTimeoutConnection,
+          TimeUnit.MILLISECONDS)
+        .readTimeout(mongoDBConfig.millisecondsTimeoutConnection,
+          TimeUnit.MILLISECONDS)
+        .build())
 
+    val settings = if(mongoDBConfig.username != ""){
+      val credentials = List(MongoCredential.createCredential(
+        mongoDBConfig.username,
+        mongoDBConfig.databaseName,
+        mongoDBConfig.password.toCharArray)).asJava
+      settingsBuilder.credentialList(credentials).build()
+    } else {
+      settingsBuilder.build()
+    }
 
     resultTimeout = Duration(mongoDBConfig.millisecondsTimeoutConnection, TimeUnit.MILLISECONDS)
 
@@ -187,7 +195,7 @@ object MongoDBHelper extends Logging {
     mongoDatabase.listCollectionNames().results()
     mongoDatabase
   }
-  
+
   /**
     * Function to recursively convert a BsonDocument to a Map[String, Any].
     *
@@ -204,12 +212,12 @@ object MongoDBHelper extends Logging {
     */
   def bsonDocumentToMap(bsonDocument: BsonDocument): Map[String, Any] = {
     val entries = bsonDocument.entrySet().asScala
-    
+
     entries map {
       entry =>
         // extract field name to use as key
         val key = entry.getKey
-        
+
         // extract and convert value to corresponding scala type
         val value = entry.getValue match {
           case boolean: BsonBoolean   => boolean.getValue
@@ -220,7 +228,7 @@ object MongoDBHelper extends Logging {
           case document: BsonDocument => bsonDocumentToMap(document)
           case x                      => x
         }
-        
+
         key -> value
     } toMap
   }
