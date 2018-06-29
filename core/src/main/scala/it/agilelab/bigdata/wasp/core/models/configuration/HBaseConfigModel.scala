@@ -9,5 +9,11 @@ import it.agilelab.bigdata.wasp.core.models.Model
 case class HBaseConfigModel(
 														 coreSiteXmlPath: String,
 														 hbaseSiteXmlPath: String,
+														 others: Seq[HBaseEntryConfig],
 														 name: String
                            ) extends Model
+
+case class HBaseEntryConfig(
+														 key: String,
+														 value: String
+													 )

@@ -292,6 +292,7 @@ object ConfigManager {
     HBaseConfigModel(
       hbaseSubConfig.getString("core-site-xml-path"),
       hbaseSubConfig.getString("hbase-site-xml-path"),
+      readOthersConfig(hbaseSubConfig).map(e => HBaseEntryConfig(e._1, e._2)),
       hbaseConfigName
     )
   }
