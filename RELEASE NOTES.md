@@ -1197,3 +1197,32 @@ If a batch job is NOT fully exclusive but restConfigExclusiveParams is NOT empty
 
 If a batch job is NOT fully exclusive and restConfigExclusiveParams is empty it can always be multi-instantiated.
 
+## WASP 2.12.3
+20/06/2018
+
+[Merge request 62](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/62)
+
+Branch: hotfix/mongoAuthentication
+
+Author: [Vito](https://gitlab.com/vito.ressa)
+
+HOTFIX: Mongo authentication fixed when mongo.username is defined.
+
+Connection to authorized mongo fixed.
+New fields in config:
+wasp.mongo.username -> Username to be used to connect
+wasp.mongo.password -> Password to be used to connect
+
+If wasp.mongo.username = "" authentication doesn't happen
+
+
+## WASP 2.12.4
+02/07/2018
+
+[Merge request 63](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/63)
+
+Branch: hotfix/hbaseOptConfigs
+
+Author: [Vito](https://gitlab.com/vito.ressa)
+
+Now it is possible to add options to hbase config
