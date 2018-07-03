@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models.configuration
 
+import com.typesafe.config.Config
+
 /**
 	* Configuration model for WASP.
 	*
@@ -16,6 +18,7 @@ case class WaspConfigModel(
 														systemProducersStart: Boolean,
 														restServerHostname: String,
 														restServerPort: Int,
+														restHttpsConf: Option[RestHttpsConfigModel],
 														environmentPrefix: String,
 														validationRulesToIgnore: Seq[String],
 														environmentMode: String
@@ -26,3 +29,9 @@ object WaspConfigModel {
 		val develop = "develop"
 	}
 }
+
+case class RestHttpsConfigModel(
+																 keystoreLocation: String,
+																 passwordLocation: String,
+																 keystoreType: String
+															 )

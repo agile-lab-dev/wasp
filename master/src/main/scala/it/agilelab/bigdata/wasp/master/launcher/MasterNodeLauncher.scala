@@ -1,7 +1,11 @@
 package it.agilelab.bigdata.wasp.master.launcher
 
+import java.io.{FileInputStream, InputStream}
+import java.security.{KeyStore, SecureRandom}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+
 import akka.actor.{ActorSystem, Props}
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
@@ -21,6 +25,8 @@ import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang.exception.ExceptionUtils
 
+import scala.io.Source
+
 /**
 	* Launcher for the MasterGuardian and REST Server.
 	* This trait is useful for who want extend the launcher
@@ -32,6 +38,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		addSystemPipegraphs()
 		super.launch(commandLine)
 		startRestServer(WaspSystem.actorSystem, getRoutes)
+		logger.info(s"MasterNode has been launched with WaspConfig ${waspConfig.toString}")
 	}
 	
 	override def getSingletonProps: Props = Props(new MasterGuardian(ConfigBL))
@@ -89,7 +96,48 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 		implicit val materializer = ActorMaterializer()
 		val finalRoute = handleExceptions(myExceptionHandler)(route)
 		logger.info(s"start rest server and bind on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
-		val bindingFuture = Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
+
+		val optHttpsContext = createHttpsContext
+
+		val bindingFuture = if(optHttpsContext.isDefined) {
+			logger.info(s"Rest API will be available through HTTPS on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
+			Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort, optHttpsContext.get)
+		} else {
+			logger.info(s"Rest API will be available through HTTP on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
+			Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
+		}
+	}
+
+	private def createHttpsContext: Option[HttpsConnectionContext] = {
+		if(waspConfig.restHttpsConf.isEmpty){
+			None
+		} else {
+
+			logger.info("Creating Https context for REST API")
+
+			val restHttpConfig = waspConfig.restHttpsConf.get
+
+			logger.info(s"Reading keystore password from file ${restHttpConfig.passwordLocation}")
+			val password: Array[Char] = Source.fromFile(restHttpConfig.passwordLocation).getLines().next().toCharArray
+
+			val ks: KeyStore = KeyStore.getInstance(restHttpConfig.keystoreType)
+
+			val keystore: FileInputStream = new FileInputStream(restHttpConfig.keystoreLocation)
+
+			require(keystore != null, "Keystore required!")
+			ks.load(keystore, password)
+
+			val keyManagerFactory: KeyManagerFactory = KeyManagerFactory.getInstance("SunX509")
+			keyManagerFactory.init(ks, password)
+
+			val tmf: TrustManagerFactory = TrustManagerFactory.getInstance("SunX509")
+			tmf.init(ks)
+
+			val sslContext: SSLContext = SSLContext.getInstance("TLS")
+			sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
+			val https: HttpsConnectionContext = ConnectionContext.https(sslContext)
+			Some(https)
+		}
 	}
 	
 	override def getNodeName: String = "master"

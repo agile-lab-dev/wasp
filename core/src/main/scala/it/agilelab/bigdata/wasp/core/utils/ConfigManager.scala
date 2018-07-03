@@ -144,6 +144,7 @@ object ConfigManager {
       conf.getBoolean("systemproducers.start"),
       conf.getString("rest.server.hostname"),
       conf.getInt("rest.server.port"),
+      readRestHttpsConfig(),
       environmentSubConfig.getString("prefix"),
       readValidationRulesToIgnore(environmentSubConfig, "validationRulesToIgnore"),
       environmentSubConfig.getString("mode")
@@ -411,6 +412,24 @@ object ConfigManager {
       config.getString("password"),
       config.getString("driverName")
     )
+  }
+
+  private def readRestHttpsConfig(): Option[RestHttpsConfigModel] = {
+      val httpsActive = conf.hasPath("rest.server.https.active") && conf.getBoolean("rest.server.https.active")
+
+      if(httpsActive){
+        val restHttpsSubConf = conf.getConfig("rest.server.https")
+        Some(
+          RestHttpsConfigModel(
+            keystoreLocation = restHttpsSubConf.getString("keystore-location"),
+            passwordLocation = restHttpsSubConf.getString("password-location"),
+            keystoreType = restHttpsSubConf.getString("keystore-type")
+          )
+        )
+      } else {
+        None
+      }
+
   }
 
   private def readValidationRulesToIgnore(config: Config, path: String): Array[String] = {
