@@ -1226,3 +1226,33 @@ Branch: hotfix/hbaseOptConfigs
 Author: [Vito](https://gitlab.com/vito.ressa)
 
 Now it is possible to add options to hbase config
+
+
+## WASP 2.13.0
+
+[Merge request 64](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/64)
+
+Branch: feature/GL-131-restHttps
+
+Author: [Vito](https://gitlab.com/vito.ressa)
+
+Is now possible to expose REST API via https. 
+In config put ssl config under wasp.rest.server.https 
+
+```
+[ ... ] 
+https = { 
+          active = true 
+          keystore-location = "/path/to/test-file.p12" 
+          password-location = "/path/to/keystore-pwd.key" 
+          keystore-type = "PKCS12" 
+} 
+[ ... ]
+```
+
+
+
+
+
+
+
