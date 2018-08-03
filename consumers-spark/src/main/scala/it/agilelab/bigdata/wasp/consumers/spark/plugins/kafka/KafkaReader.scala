@@ -78,6 +78,10 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
             .select(from_json(col("value_parsed"), topic.getDataType).alias("value"))
             .select(col("value.*"))
         }
+        case "plaintext" => {
+          df
+            .select(col("value"))
+        }
         case _ => throw new Exception(s"No such topic data type ${topic.topicDataType}")
       }
       logger.debug(s"Kafka reader avro schema: ${new Schema.Parser().parse(topic.getJsonSchema).toString(true)}")
@@ -141,9 +145,9 @@ object KafkaReader extends StreamingReader with Logging {
       topic.topicDataType match {
         case "avro" =>
           receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)
-        case "json" =>
+        case "json" | "plaintext" =>
           receiver
-            .map(x => (x._1, JsonToByteArrayUtil.byteArrayToJson(x._2)))
+            .map(x => (x._1, StringToByteArrayUtil.byteArrayToString(x._2)))
             .map(_._2)
         case _ =>
           receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)

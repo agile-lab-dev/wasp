@@ -46,7 +46,7 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
 
             partitionOfRecords.foreach(record => {
               val bytes = topicDataTypeB.value match {
-                case "json" => StringToByteArrayUtil.stringToByteArray(record)
+                case "json" | "plaintext" => StringToByteArrayUtil.stringToByteArray(record)
                 case "avro" => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
                 case _ => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
               }
@@ -128,7 +128,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
               }).toDF("key", "value")
             }
           }
-          case _ => {
+          case "json" => {
             // json conversion
             if (pkf.isDefined) {
               val streamWithKey = stream.selectExpr(s"${pkf.get} AS key", "to_json(struct(*)) AS value")
@@ -139,6 +139,16 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             else
               stream.selectExpr("to_json(struct(*)) AS value")
           }
+          case "plaintext" | _ =>
+            if (pkf.isDefined) {
+              val streamWithKey = stream.selectExpr(s"${pkf.get} AS key", "* AS value")
+              logger.debug(s"SchemaWithKey DF spark, topic name ${topic.name}:\n${streamWithKey.schema.treeString}")
+
+              streamWithKey
+            }
+            else
+              stream.selectExpr("* AS value")
+
         }
 
         val partialStreamWriter = dswParsed
