@@ -77,7 +77,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
             epManagerActor ! outputJson
           }
           case "json" => {
-            val jsonMsg = JsonToByteArrayUtil.byteArrayToJson(data)
+            val jsonMsg = StringToByteArrayUtil.byteArrayToString(data)
             val outputJson = applyStrategy(key, jsonMsg)
             epManagerActor ! outputJson
           }

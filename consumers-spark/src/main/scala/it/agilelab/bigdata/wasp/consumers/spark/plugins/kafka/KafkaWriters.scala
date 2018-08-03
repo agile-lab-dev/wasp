@@ -10,7 +10,7 @@ import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, JsonToByteArrayUtil, RowToAvro}
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil, RowToAvro}
 import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
@@ -46,7 +46,7 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
 
             partitionOfRecords.foreach(record => {
               val bytes = topicDataTypeB.value match {
-                case "json" => JsonToByteArrayUtil.jsonToByteArray(record)
+                case "json" => StringToByteArrayUtil.stringToByteArray(record)
                 case "avro" => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
                 case _ => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
               }

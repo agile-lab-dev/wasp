@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef, Cancellable}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
 import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, JsonToByteArrayUtil}
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, StringToByteArrayUtil}
 
 case object StopMainTask
 
@@ -55,7 +55,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
       try {
         topicSchemaType match {
           case "avro" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
-          case "json" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), JsonToByteArrayUtil.jsonToByteArray(msg))
+          case "json" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), StringToByteArrayUtil.stringToByteArray(msg))
           case _ => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
         }
 

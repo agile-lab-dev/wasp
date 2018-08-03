@@ -57,7 +57,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
         .load()
 
       // prepare the udf
-      val byteArrayToJson: Array[Byte] => String = JsonToByteArrayUtil.byteArrayToJson
+      val byteArrayToJson: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
 
       import org.apache.spark.sql.functions._
 
