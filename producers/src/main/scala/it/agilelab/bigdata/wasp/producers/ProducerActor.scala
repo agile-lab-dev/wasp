@@ -55,7 +55,8 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
       try {
         topicSchemaType match {
           case "avro" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
-          case "json" | "plaintext" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), StringToByteArrayUtil.stringToByteArray(msg))
+          case "json" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), StringToByteArrayUtil.stringToByteArray(msg))
+          case "plaintext" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), StringToByteArrayUtil.stringToByteArray(input.asInstanceOf))
           case _ => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
         }
 
