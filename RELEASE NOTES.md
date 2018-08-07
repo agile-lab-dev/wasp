@@ -1250,9 +1250,20 @@ https = {
 [ ... ]
 ```
 
+## WASP 2.14.0
 
+### kafka plaintext support
 
+[Merge request 65](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/65)
 
+Created at: 2018-08-07T12:39:34.186Z
 
+Updated at: 2018-08-07T12:52:29.932Z
 
+Branch: feature/kafka-plaintext-support
+
+Author: [Stefano Castoldi](https://gitlab.com/theShadow89)
+
+Add `plaintext` for Kafka Topic Data Type
+*  In the `Producer Actor` implementations, the method `generateOutputJsonMessage` should return a simple string instead of a JSON when topic data type is `plaintext`
 
