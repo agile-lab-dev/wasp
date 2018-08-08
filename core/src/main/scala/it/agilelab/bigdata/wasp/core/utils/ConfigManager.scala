@@ -511,7 +511,8 @@ object ConfigManager {
       config.getString("driver-memory"),
       config.getString("driver-hostname"),
       config.getString("driver-bind-address"),
-      config.getInt("driver-port")
+      config.getInt("driver-port"),
+      config.getBoolean("kill-driver-process-if-spark-context-stops")
     )
   }
 

@@ -75,7 +75,10 @@ class IntegrationSpec
         factory,
         500.milliseconds, 500.milliseconds, strategy)),name)
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator,
+        1.millisecond))
 
 
 
@@ -143,7 +146,10 @@ class IntegrationSpec
         factory,
         500.milliseconds, 500.milliseconds, strategy)), name)
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator,
+        1.millisecond))
 
 
       probe.send(fsm, MasterProtocol.StartPipegraph(firstPipegraph.name))
@@ -228,7 +234,10 @@ class IntegrationSpec
         factory,
         500.milliseconds, 500.milliseconds, strategy)), name)
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, watchdogCreator,
+        1.millisecond))
 
 
 

@@ -76,7 +76,8 @@ case class SparkDriverConfig(
 															memory: String,
 															host: String,
 															bindAddress: String,
-															port: Int
+															port: Int,
+															killDriverProcessIfSparkContextStops: Boolean
 														)
 
 case class KryoSerializerConfig(

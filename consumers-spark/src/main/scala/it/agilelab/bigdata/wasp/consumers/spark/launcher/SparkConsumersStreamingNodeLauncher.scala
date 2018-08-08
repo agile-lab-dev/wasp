@@ -51,9 +51,19 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 			_ => PipegraphGuardian.Retry,
 			ConfigBL)
 
+		val watchdog = if(ConfigManager.getSparkStreamingConfig.driver.killDriverProcessIfSparkContextStops) {
+
+      SparkConsumersStreamingMasterGuardian.exitingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext,
+      -1)
+
+    }else {
+      SparkConsumersStreamingMasterGuardian.doNothingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext)
+    }
+
 		val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(
 			ConfigBL.pipegraphBL,
 			childrenCreator,
+      watchdog,
 			5.seconds)
 
 

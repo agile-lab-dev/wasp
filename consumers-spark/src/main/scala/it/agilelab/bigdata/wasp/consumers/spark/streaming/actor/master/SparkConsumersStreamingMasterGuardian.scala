@@ -15,11 +15,13 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkCons
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.State._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.ComponentFailedStrategy
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, Protocol => ChildProtocol}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.watchdog.SparkContextWatchDog
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
 import scala.collection.mutable
@@ -29,6 +31,7 @@ import scala.util.{Failure, Success}
 
 class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: PipegraphBL,
                                             protected val childCreator: ChildCreator,
+                                            protected val watchdogCreator: ChildCreator,
                                             retryInterval: FiniteDuration)
   extends FSM[State, Data]
     with DatabaseOperations
@@ -36,6 +39,7 @@ class SparkConsumersStreamingMasterGuardian(protected val pipegraphBL: Pipegraph
     with Logging
     with PipeToSupport {
 
+  watchdogCreator(self, "spark-context-watchdog", context)
 
   startWith(Idle, NoData)
 
@@ -250,6 +254,12 @@ object SparkConsumersStreamingMasterGuardian  {
   type ChildCreator = (ActorRef, String, ActorRefFactory) => ActorRef
 
 
+  def exitingWatchdogCreator(sc: SparkContext, exitCode: Int): ChildCreator = (_, name, context) =>
+    context.actorOf(SparkContextWatchDog.exitingWatchdogProps(sc, exitCode), name)
+
+  def doNothingWatchdogCreator(sc: SparkContext): ChildCreator = (_, name, context) =>
+    context.actorOf(SparkContextWatchDog.logAndDoNothingWatchdogProps(sc), name)
+
   def defaultChildCreator(reader: StructuredStreamingReader,
                           plugins: Map[String, WaspConsumersSparkPlugin],
                           sparkSession: SparkSession,
@@ -283,9 +293,10 @@ object SparkConsumersStreamingMasterGuardian  {
 
   }
 
-  def props(pipegraphBl: PipegraphBL, childCreator: ChildCreator, retryInterval: FiniteDuration): Props =
-    Props(new SparkConsumersStreamingMasterGuardian(pipegraphBl, childCreator, retryInterval))
 
+  def props(pipegraphBl: PipegraphBL, childCreator: ChildCreator,watchDogCreator: ChildCreator,
+            retryInterval: FiniteDuration): Props =
+    Props(new SparkConsumersStreamingMasterGuardian(pipegraphBl, childCreator, watchDogCreator, retryInterval))
   private def compose[A, B](functions: PartialFunction[A, B]*) = functions.foldLeft(PartialFunction.empty[A, B]) {
     (acc, elem) => acc.orElse(elem)
   }

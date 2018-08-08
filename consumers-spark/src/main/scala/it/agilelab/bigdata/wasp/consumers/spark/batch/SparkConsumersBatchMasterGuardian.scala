@@ -24,12 +24,12 @@ object SparkConsumersBatchMasterGuardian {
 
   /**
     *
-    * Creates props for the [SparkConsumersBatchMasterGuardian] actor
+    * Creates exitingWatchdogProps for the [SparkConsumersBatchMasterGuardian] actor
     *
     * @param env The environment
     * @param sparkWriterFactory The spark writer factory
     * @param plugins The plugins
-    * @return the props of the [[SparkConsumersBatchMasterGuardian]] actor
+    * @return the exitingWatchdogProps of the [[SparkConsumersBatchMasterGuardian]] actor
     */
   def props(env: {val batchJobBL: BatchJobBL; val batchSchedulersBL: BatchSchedulersBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL}, sparkWriterFactory: SparkWriterFactory, plugins: Map[String, WaspConsumersSparkPlugin]): Props = {
     props(env.batchJobBL, env.batchSchedulersBL, 10, refFactory => refFactory.actorOf(BatchJobActor.props(env, sparkWriterFactory, plugins, retryDuration)))
@@ -48,12 +48,12 @@ object SparkConsumersBatchMasterGuardian {
 
 
   /**
-    * Creates props for the actor, use this method in tests to plug into the instantiation of children actor via the [[BatchJobActorFactory]] parameter
+    * Creates exitingWatchdogProps for the actor, use this method in tests to plug into the instantiation of children actor via the [[BatchJobActorFactory]] parameter
     * @param batchJobBl The bl to access batch jobs
     * @param batchSchedulersBL The bl to access batch schedulers
     * @param howManySlaveActors How many slave actor to start
     * @param batchJobActorFactory The factory used to instantiate actors
-    * @return the props of the [[SparkConsumersBatchMasterGuardian]] actor
+    * @return the exitingWatchdogProps of the [[SparkConsumersBatchMasterGuardian]] actor
     */
   private[batch] def props(batchJobBl: BatchJobBL, batchSchedulersBL: BatchSchedulersBL, howManySlaveActors: Int, batchJobActorFactory: BatchJobActorFactory): Props =
     Props(new SparkConsumersBatchMasterGuardian(batchJobBl, batchSchedulersBL, howManySlaveActors, batchJobActorFactory))

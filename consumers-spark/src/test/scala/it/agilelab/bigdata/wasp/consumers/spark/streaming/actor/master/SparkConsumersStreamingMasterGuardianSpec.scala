@@ -55,8 +55,9 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millisecond))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator,
+        1.millisecond))
 
 
       fsm.stateName should be(Initialized)
@@ -105,8 +106,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
 
       eventually(timeout(Span(10, Seconds))) {
@@ -159,8 +160,8 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
-
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
       probe.expectMsg(WorkAvailable)
@@ -205,7 +206,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
       probe.expectMsg(WorkAvailable)
@@ -255,7 +257,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
       probe.reply(pipegraph.Protocol.GimmeWork)
@@ -300,7 +303,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
       probe.expectMsg(WorkAvailable)
@@ -338,8 +342,9 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
       probe.expectMsg(WorkAvailable)
@@ -390,7 +395,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
       probe.expectMsg(WorkAvailable)
@@ -428,7 +434,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
 
@@ -488,7 +495,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
 
@@ -547,7 +555,8 @@ class SparkConsumersStreamingMasterGuardianSpec
       val probe = TestProbe()
       val childCreator: ChildCreator = (_,_,_) => probe.ref
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, 1.millis))
+      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator, 1.millis))
 
       probe.expectMsg(WorkAvailable)
 

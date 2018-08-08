@@ -32,7 +32,7 @@ object BatchJobActor {
     * @param sparkWriterFactory A spark writer factory
     * @param plugins The plugins
     * @param checkInterval The interval between requests for job from [[BatchJobActor]] to [[SparkConsumersBatchMasterGuardian]]
-    * @return props for [[BatchJobActor]]
+    * @return exitingWatchdogProps for [[BatchJobActor]]
     */
   def props(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
             sparkWriterFactory: SparkWriterFactory,
