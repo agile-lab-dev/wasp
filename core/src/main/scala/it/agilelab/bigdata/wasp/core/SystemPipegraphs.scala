@@ -323,7 +323,7 @@ private[wasp] object TelemetryPipegraph {
 
 	val telemetryPipegraphName = "TelemetryPipegraph"
 
-	private def writer: WriterModel = ConfigManager.getWaspConfig.defaultIndexedDatastore match {
+	private def writer: WriterModel = ConfigManager.getTelemetryConfig.writer match {
 		case "elastic" => WriterModel.elasticWriter(
 			elasticTelemetryIndex.name,
 			elasticTelemetryIndex.name

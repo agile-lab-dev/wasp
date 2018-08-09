@@ -70,7 +70,7 @@ final class InternalLogProducerGuardian(env: {val producerBL: ProducerBL; val to
 
             env.producerBL.setIsActive(producer, isActive = true)
 
-            Right()
+            Right(())
           } else {
             val msg = s"Producer '$name': error creating topic " + topicOption.get.name
             logger.error(msg)

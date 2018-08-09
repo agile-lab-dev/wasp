@@ -68,7 +68,7 @@ class RtConsumersMasterGuardian(env: {
       logger.info(s"RtConsumersMasterGuardian $self is now in uninitialized state")
     
       // answer ok to MasterGuardian since this is normal if all pipegraphs are unactive
-      masterGuardian ! Right()
+      masterGuardian ! Right(())
 
     } else { // we have pipegaphs/components to start
       // enter starting state so we stash restarts
@@ -108,7 +108,7 @@ class RtConsumersMasterGuardian(env: {
       logger.info(s"RtConsumersMasterGuardian $self continuing startup sequence...")
 
       // confirm startup success to MasterGuardian
-      masterGuardian ! Right()
+      masterGuardian ! Right(())
 
       // enter intialized state
       context become initialized

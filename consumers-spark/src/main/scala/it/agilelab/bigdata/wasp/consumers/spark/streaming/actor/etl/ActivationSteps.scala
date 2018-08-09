@@ -289,13 +289,19 @@ trait ActivationSteps {
     val config = ConfigManager.getKafkaConfig.toTinyConfig()
 
 
-    val sampleOneMessageEveryKey = "wasp.telemetry.latency.sample-one-message-every"
+    val keyDefaultOneMessageEveryKey = "wasp.telemetry.latency.sample-one-message-every"
+    val valueDefaultOneMessageEveryKey = ConfigManager.getTelemetryConfig.sampleOneMessageEvery
 
-    val defaultConfiguration = ConfigFactory.parseString(s"$sampleOneMessageEveryKey=100")
+    val defaultConfiguration = ConfigFactory.parseString(s"$keyDefaultOneMessageEveryKey=$valueDefaultOneMessageEveryKey")
 
-    val sampleOneMessageEveryValue = strategy.configuration.withFallback(defaultConfiguration).getInt(sampleOneMessageEveryKey)
+    val sampleOneMessageEveryValue = strategy.configuration.withFallback(defaultConfiguration).getInt(keyDefaultOneMessageEveryKey)
 
     val saneSampleOneMessageEvery = if (sampleOneMessageEveryValue < 1) 1 else sampleOneMessageEveryValue
+
+
+    val dropMetadataDefault = ConfigFactory.parseString(s"dropMetadata=false")
+    val dropMetadataColumn = etl.strategy.flatMap(strategy => strategy.configurationConfig().map(_.withFallback(dropMetadataDefault).getBoolean("dropMetadata"))).getOrElse(false)
+
 
 
     val inputStreamWithEnterMetadata = MetadataOps.sendLatencyMessage(MetadataOps.enter(etl.name, stream),
@@ -305,21 +311,26 @@ trait ActivationSteps {
 
     val strategyOutputStream = strategy.transform(strategyInputStreams)
 
+    val strategyOutputStreamWithExitMetadata = MetadataOps.sendLatencyMessage(MetadataOps.exit(etl.name, strategyOutputStream),config, saneSampleOneMessageEvery)
 
-    val strategyOutputStreamWithExitMetadata = MetadataOps.sendLatencyMessage(MetadataOps.exit(etl.name,
-      strategyOutputStream),config, saneSampleOneMessageEvery)
+    val cleanOutputStream: DataFrame = dropMetadataColumn match{
+      case true => if(strategyOutputStreamWithExitMetadata.columns.contains("metadata")) strategyOutputStreamWithExitMetadata.drop("metadata") else strategyOutputStreamWithExitMetadata
+      case false => strategyOutputStreamWithExitMetadata
+    }
+
+
 
     writerType.getActualProduct match {
-      case Datastores.kafkaProduct => strategyOutputStreamWithExitMetadata
-      case Datastores.hbaseProduct => strategyOutputStreamWithExitMetadata
-      case Datastores.rawProduct => strategyOutputStreamWithExitMetadata
-      case Datastores.consoleProduct => strategyOutputStreamWithExitMetadata
+      case Datastores.kafkaProduct => cleanOutputStream
+      case Datastores.hbaseProduct => cleanOutputStream
+      case Datastores.rawProduct => cleanOutputStream
+      case Datastores.consoleProduct => cleanOutputStream
       case _ =>
-        if (strategyOutputStreamWithExitMetadata.columns.contains("metadata")) {
-          strategyOutputStreamWithExitMetadata.select(MetadataUtils.flatMetadataSchema(strategyOutputStreamWithExitMetadata.schema, None): _*)
+        if (cleanOutputStream.columns.contains("metadata")) {
+          cleanOutputStream.select(MetadataUtils.flatMetadataSchema(cleanOutputStream.schema, None): _*)
         }
         else
-          strategyOutputStreamWithExitMetadata
+          cleanOutputStream
     }
   }
 }

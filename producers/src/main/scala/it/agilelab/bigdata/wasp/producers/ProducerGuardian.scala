@@ -55,13 +55,13 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
     case Stop =>
       logger.info(s"Producer '$producerName' already stopped")
-      sender() ! Right()
+      sender() ! Right(())
   }
 
   def initialized: Actor.Receive = {
     case Start =>
       logger.info(s"Producer '$producerName' already started")
-      sender() ! Right()
+      sender() ! Right(())
 
     case Stop =>
       logger.info(s"Producer '$producerName' stopping")
@@ -91,7 +91,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
         context become uninitialized
 
-        senderTmp ! Right()
+        senderTmp ! Right(())
       } else {
         val msg = s"Producer '$producerName': something went wrong! Unable to shutdown all nodes"
         logger.error(msg)
@@ -120,7 +120,7 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
           env.producerBL.setIsActive(producer, isActive = true)
 
-          Right()
+          Right(())
         } else {
           val msg = s"Producer '$producerName': error creating topic " + topicOption.get.name
           logger.error(msg)

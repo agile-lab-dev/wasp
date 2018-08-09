@@ -7,6 +7,7 @@ import java.util.Map.Entry
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.models.{Datastores, Model}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager.telemetryConfig
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
@@ -23,6 +24,7 @@ object ConfigManager {
   private val solrConfigName = "Solr"
   private val hbaseConfigName = "HBase"
   private val jdbcConfigName = "Jdbc"
+  private val telemetryConfigName = "Telemetry"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
 
@@ -33,21 +35,21 @@ object ConfigManager {
         if (configManager.getWaspConfig.defaultIndexedDatastore.isEmpty && configManager.getWaspConfig.defaultKeyvalueDatastore.isEmpty)
           Left("No datastore configured! Configure at least an indexed or a keyvalue datastore")
         else
-          Right()
+          Right(())
     },
     ValidationRule("DefaultIndexedDatastoreUnknown") {
       (configManager) =>
         if (configManager.getWaspConfig.defaultIndexedDatastore != Datastores.elasticProduct && configManager.getWaspConfig.defaultIndexedDatastore != Datastores.solrProduct)
           Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${Datastores.elasticProduct}' or '${Datastores.solrProduct}'")
         else
-          Right()
+          Right(())
     },
     ValidationRule("DefaultKeyValueDatastoreUnknown") {
       (configManager) =>
         if (configManager.getWaspConfig.defaultKeyvalueDatastore != Datastores.hbaseProduct)
           Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${Datastores.hbaseProduct}'")
         else
-          Right()
+          Right(())
     },
 
     /* sparkStreamingConfig validation-rules */
@@ -58,10 +60,10 @@ object ConfigManager {
           if (configManager.getSparkStreamingConfig.coresMax < configManager.getSparkStreamingConfig.executorCores)
             Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
           else
-            Right()
+            Right(())
         }
         else
-          Right()
+          Right(())
     },
     ValidationRule("SparkStreamingYARNmode") {
       (configManager) =>
@@ -70,17 +72,17 @@ object ConfigManager {
           if (configManager.getSparkStreamingConfig.yarnJar.isEmpty)
             Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
           else
-            Right()
+            Right(())
         }
         else
-          Right()
+          Right(())
     },
     ValidationRule("SparkStreamingCheckpointDirLocal") {
       (configManager) =>
         if (configManager.getSparkStreamingConfig.checkpointDir.startsWith("file:///"))
           Left("Using a localPath (within the consumers-spark-streaming container) for the checkpoint directory is not recommended. Use a remotePath on HDFS (i.e. '/...') instead")
         else
-          Right()
+          Right(())
     },
 
     /* sparkBatchConfig validation-rules */
@@ -91,10 +93,10 @@ object ConfigManager {
           if (configManager.getSparkBatchConfig.coresMax < configManager.getSparkBatchConfig.executorCores)
             Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
           else
-            Right()
+            Right(())
         }
         else
-          Right()
+          Right(())
     },
     ValidationRule("SparkBatchYARNmode") {
       (configManager) =>
@@ -103,14 +105,15 @@ object ConfigManager {
           if (configManager.getSparkBatchConfig.yarnJar.isEmpty)
             Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
           else
-            Right()
+            Right(())
         }
         else
-          Right()
+          Right(())
     }
   )
 
   private var waspConfig : WaspConfigModel = _
+  private var telemetryConfig: TelemetryConfigModel = _
   private var mongoDBConfig: MongoDBConfigModel = _
   private var kafkaConfig: KafkaConfigModel = _
   private var sparkBatchConfig: SparkBatchConfigModel = _
@@ -149,6 +152,20 @@ object ConfigManager {
       readValidationRulesToIgnore(environmentSubConfig, "validationRulesToIgnore"),
       environmentSubConfig.getString("mode")
     )
+  }
+
+  private def initializaTelemetryConfig(): Unit = {
+    telemetryConfig = getDefaultTelemetryConfig
+  }
+
+
+  private def getDefaultTelemetryConfig: TelemetryConfigModel = {
+    val telemetrySubConfig = conf.getConfig("telemetry")
+    TelemetryConfigModel(
+      telemetrySubConfig.getString("writer"),
+      telemetrySubConfig.getInt("latency.sample-one-message-every")
+    )
+
   }
 
   private def initializeMongoDBConfig(): Unit = {
@@ -331,6 +348,7 @@ object ConfigManager {
       initializeWaspConfig() // already initialized within WaspDB.initializeDB() due to logger.info()
     }
 
+    initializaTelemetryConfig()
     initializeKafkaConfig()
     initializeElasticConfig()
     initializeSolrConfig()
@@ -345,6 +363,13 @@ object ConfigManager {
       initializeWaspConfig()
     }
     waspConfig
+  }
+
+  def getTelemetryConfig: TelemetryConfigModel = {
+    if (telemetryConfig == null) {
+      initializaTelemetryConfig()
+    }
+    telemetryConfig
   }
 
   def getMongoDBConfig: MongoDBConfigModel = {
