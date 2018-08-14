@@ -1267,3 +1267,35 @@ Author: [Stefano Castoldi](https://gitlab.com/theShadow89)
 Add `plaintext` for Kafka Topic Data Type
 *  In the `Producer Actor` implementations, the method `generateOutputJsonMessage` should return a simple string instead of a JSON when topic data type is `plaintext`
 
+# WASP 2.15.0
+
+### Resolve "Spark consumers streaming module is unable to proceed if spark context goes down due to executor failures"
+
+[Merge request 66](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/66)
+
+Created at: 2018-08-08T10:15:54.270Z
+
+Updated at: 2018-08-14T09:19:11.063Z
+
+Branch: hotfix/132-spark-consumers-streaming-module-is-unable-to-proceed-if-spark-context-goes-down-due-to-executor-failures
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #132
+
+### allow to discard column metadata before writer write data
+
+[Merge request 67](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/67)
+
+Created at: 2018-08-13T15:44:16.767Z
+
+Updated at: 2018-08-14T09:19:47.367Z
+
+Branch: hotfix/dropColumnMetadata
+
+Author: [Andrea L.](https://gitlab.com/andreaL)
+
+Allow to discard column metadata before writing phase begins. For use this feature you need to set the property 'dropMetadata' in strategy config. 
+
+Added the possibility to select a datastore for the telemetry index.
+
