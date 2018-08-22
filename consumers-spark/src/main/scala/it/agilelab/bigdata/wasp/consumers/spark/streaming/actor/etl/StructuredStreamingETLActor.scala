@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
+import java.util.UUID
+
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReader
@@ -116,7 +118,9 @@ object StructuredStreamingETLActor {
                                                                                telemetryActorFactory))
 
 
-  def defaultTelemetryActorFactory() : TelemetryActorFactory = { (name, context) =>
+  def defaultTelemetryActorFactory() : TelemetryActorFactory = { (suppliedName, context) =>
+
+    val name = s"$suppliedName-${UUID.randomUUID()}"
 
     val kafkaConfig = ConfigManager.getKafkaConfig
 

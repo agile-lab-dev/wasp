@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.UUID
 
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props, Stash}
 import akka.pattern.Patterns.ask
@@ -274,8 +275,10 @@ object SparkConsumersStreamingMasterGuardian  {
                             val topicBL: TopicBL
                             val rawBL: RawBL
                             val keyValueBL: KeyValueBL
-                          }): ChildCreator = { (master, name, context) =>
+                          }): ChildCreator = { (master, suppliedName, context) =>
 
+
+    val name = s"$suppliedName-${UUID.randomUUID()}"
 
     val writerFactory: MaterializationSteps.WriterFactory = { writerModel =>
       sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, writerModel)
