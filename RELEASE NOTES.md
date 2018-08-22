@@ -1299,3 +1299,21 @@ Allow to discard column metadata before writing phase begins. For use this featu
 
 Added the possibility to select a datastore for the telemetry index.
 
+# WASP 2.15.2
+
+### Resolve "Actor names are not unique when restarting (actor restart are async, append unique identifier)"
+
+[Merge request 69](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/69)
+
+Created at: 2018-08-22T12:44:42.151Z
+
+Updated at: 2018-08-22T13:10:03.147Z
+
+Branch: hotfix/133-actor-names-are-not-unique-when-restarting-actor-restart-are-async-append-unique-identifier
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #133
+
+An unique uuid will be appended to every actor name in order to prevent name clashes if akka has not yet deregistered the old actor name
+
