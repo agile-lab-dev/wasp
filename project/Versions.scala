@@ -8,8 +8,9 @@ object Versions {
 	val avro = "1.7.7"
 	val avroSpark = "3.2.0"
 	val camel = "2.17.7"
-	val cdh = "cdh5.13.1"
+	val cdh = "cdh5.13.1" // Cloudera Distribution of Hadoop
 	val commonsCli = "1.4"
+	val cds = "cloudera3" // Cloudera Distribution of Spark
 	val elasticSearch = "6.1.2"
 	val elasticSearchSpark = "6.1.2"
 	val guava = "14.0.1"
@@ -31,5 +32,5 @@ object Versions {
 	val slf4j = "1.7.12"
 	val solrSpark = "1.2.9"
 	val solr = s"4.10.3-$cdh"
-	val spark = "2.2.1"
+	val spark = s"2.2.0.$cds"
 }
