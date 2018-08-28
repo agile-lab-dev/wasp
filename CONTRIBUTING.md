@@ -7,7 +7,7 @@
 
 The branching model is as follows:
 
-![branching-model](documentation/images/branching-model.png)
+![branching-model](documentation/images/wasp-branching-model.png)
 
 ## Develop branch
 This is the main development branch; it is always sync with the newest release.
