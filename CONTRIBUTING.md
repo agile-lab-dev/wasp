@@ -1,3 +1,8 @@
+# Contributing to WASP
+
+* [Branching model](#branching-model)
+* [Workflow](#workflow)
+
 # Branching model
 
 The branching model is as follows:
@@ -49,10 +54,13 @@ When a build is performed on a tag, artifacts will be deployed with version
 `v${major}.${minor}.${patch}`.
 
 # Workflow
-To start a new branch please open a new issue on GitLab, then after the issue is created please click on the `Create merge request` dropdown and change the proposed branch name
-to one of the legal prefixes described in this document or you will not be able to push.
+To start working on a new feature/bugfix:
+- open a new issue on GitLab
+- click on the `Create merge request` dropdown
+- change the proposed branch name to one of the legal prefixes described in this document ()or you will not be able to push!)
 
-Do your work on the branch, then:
-- rebase on the branch you started on
-- merge your branch
-- wait for the CI to deploy the artifact
+Do your work on the branch as usual; to get new artifact created and deployed from it, simply push to it.
+ 
+When you're done:
+- rebase on the branch you started on, to make the merge as clean as possible
+- ask somebody with the appropriate permissions to accept your merge request
