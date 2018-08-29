@@ -57,10 +57,15 @@ When a build is performed on a tag, artifacts will be deployed with version
 To start working on a new feature/bugfix:
 - open a new issue on GitLab
 - click on the `Create merge request` dropdown
-- change the proposed branch name to one of the legal prefixes described in this document ()or you will not be able to push!)
+- select `Create merge request and branch` option, in order to also automatically create a merge request with:
+    - prefix "WIP:" in the Title, which avoid to accept the merge request
+    - "Closes #${issue-number}" in the Description, which will close the related issue when the merge request will be accepted
+- change the proposed branch name to one of the legal prefixes described in this document (or you will not be able to push!)
 
 Do your work on the branch as usual; to get new artifact created and deployed from it, simply push to it.
  
 When you're done:
-- rebase on the branch you started on, to make the merge as clean as possible
+- rebase onto `develop` the branch you started on, in order to make the merge process as clean as possible
+- "Resolve WIP Status" on merge request: remove from the title of the merge request the prefix "WIP:" in order to allow the merge
 - ask somebody with the appropriate permissions to accept your merge request
+- the merge process will automatically close the issue
