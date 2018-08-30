@@ -1,14 +1,9 @@
-# VERSION   0.1
-
-FROM base_cdh:5.11
-
-MAINTAINER Mattia Bertorello <mattia.bertorello@agilelab.it>
-
+FROM base_cdh:5.13
+MAINTAINER AgileLab WASP Team <wasp@agilelab.it>
 
 RUN yum -y install solr-server && \
     mkdir -p /data && \
     yum -y clean all
-
 
 #The solr config file needs to be added after installation or it fails.
 ADD solr /etc/default/solr.docker
@@ -20,7 +15,6 @@ COPY conf  /etc/hadoop/conf/
 VOLUME /data
 
 ADD solr-foreground /opt/docker-solr/solr-foreground
-
 
 RUN  mv /etc/default/solr.docker /etc/default/solr && \
     chmod +x /opt/docker-solr/solr-foreground

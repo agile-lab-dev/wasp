@@ -1,7 +1,5 @@
-# VERSION   0.1
-
-FROM base_cdh:5.11
-MAINTAINER Mattia Bertorello <mattia.bertorello@agilelab.it>
+FROM base_cdh:5.13
+MAINTAINER AgileLab WASP Team <wasp@agilelab.it>
 
 ADD ./hbase-server /opt/hbase-server
 
@@ -15,7 +13,6 @@ COPY conf  /etc/hadoop/conf/
 ADD ./hbase-site.xml /etc/hbase/conf/hbase-site.xml
 ADD ./hbase-env.sh /etc/hbase/conf/hbase-env.sh
 ADD ./zoo.cfg /etc/hbase/conf/zoo.cfg
-
 
 VOLUME /data
 

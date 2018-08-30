@@ -3,7 +3,7 @@ services:
 
   solr:
     build: ./solr/
-    image: solr_cdh:5.11
+    image: solr_cdh:5.13
     container_name: solr
     hostname: solr
     environment:
