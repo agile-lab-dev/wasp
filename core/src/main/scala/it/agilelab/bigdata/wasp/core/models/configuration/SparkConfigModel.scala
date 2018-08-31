@@ -40,7 +40,6 @@ case class SparkStreamingConfigModel(
 																			retainedExecutions: Int,
 																			retainedBatches: Int,
 																			kryoSerializer: KryoSerializerConfig,
-
 																			streamingBatchIntervalMs: Int,
 																			checkpointDir: String,
 																			triggerIntervalMs: Option[Long],

@@ -1,7 +1,8 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import it.agilelab.bigdata.wasp.core.datastores.KeyValueCategory
+
 object KeyValueModel {
-	val readerType = Datastores.keyValueCategory
 
 	val metadataAvro = s"""   {"namespace": "it.agilelab.wasp.avro",
 		  |   "type": "record", "name": "metadata",
@@ -55,7 +56,8 @@ case class KeyValueModel(override val name: String,
 												 tableCatalog: String,
 												 dataFrameSchema: Option[String],
 												 options: Option[Seq[KeyValueOption]],
-												 avroSchemas: Option[Map[String, String]]) extends Model {
+												 avroSchemas: Option[Map[String, String]])
+	  extends DatastoreModel[KeyValueCategory] {
 
 	def getOptionsMap(): Map[String, String] = {
 		options.map(sOpts => {

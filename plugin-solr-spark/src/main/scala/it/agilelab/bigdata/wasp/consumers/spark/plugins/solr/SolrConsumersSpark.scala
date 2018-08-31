@@ -45,18 +45,18 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the solr spark streaming writer with this writer model name '${writerModel.endpointName}'")
-    new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointName.get, solrAdminActor_)
+    logger.info(s"Initialize the solr spark streaming writer with this writer model name '${writerModel.datastoreModelName}'")
+    new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName.get, solrAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
-    logger.info(s"Initialize the solr spark structured streaming writer with this writer model endpointName '${writerModel.endpointName}'")
-    new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointName.get, solrAdminActor_)
+    logger.info(s"Initialize the solr spark structured streaming writer with this writer model endpointName '${writerModel.datastoreModelName}'")
+    new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName.get, solrAdminActor_)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
-    logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.endpointName}'")
-    new SolrSparkWriter(indexBL, sc, writerModel.endpointName.get, solrAdminActor_)
+    logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.datastoreModelName}'")
+    new SolrSparkWriter(indexBL, sc, writerModel.datastoreModelName.get, solrAdminActor_)
   }
 
   override def getSparkReader(endpointId: String, name: String): SparkReader = {

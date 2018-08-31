@@ -47,12 +47,12 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
-    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.endpointName.get, elasticAdminActor_)
+    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName.get, elasticAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
     logger.info(s"Initialize the elastic spark structured streaming writer with this writer model name '${writerModel.name}'")
-    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.endpointName.get, elasticAdminActor_)
+    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName.get, elasticAdminActor_)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {

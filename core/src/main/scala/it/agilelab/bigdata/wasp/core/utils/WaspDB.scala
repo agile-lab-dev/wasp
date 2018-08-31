@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.core.utils
 import java.nio.ByteBuffer
 
 import com.mongodb.ErrorCategory
-import com.mongodb.async.client.gridfs.helpers.{AsynchronousChannelHelper => JAsynchronousChannelHelper}
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
+import it.agilelab.bigdata.wasp.core.datastores._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
@@ -312,46 +312,55 @@ object WaspDB extends Logging {
   )
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
-	  createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
+    createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
     createCodecProviderIgnoreNone(classOf[BatchJobInstanceModel]),
     createCodecProviderIgnoreNone(classOf[ZookeeperConnectionsConfig]),
-	  createCodecProviderIgnoreNone(classOf[DashboardModel]),
-	  createCodecProviderIgnoreNone(classOf[RTModel]),
-	  createCodecProviderIgnoreNone(classOf[LegacyStreamingETLModel]),
+    createCodecProviderIgnoreNone(classOf[DashboardModel]),
+    createCodecProviderIgnoreNone(classOf[RTModel]),
+    createCodecProviderIgnoreNone(classOf[LegacyStreamingETLModel]),
     createCodecProviderIgnoreNone(classOf[StructuredStreamingETLModel]),
-	  createCodecProviderIgnoreNone(classOf[PipegraphModel]),
-	  createCodecProviderIgnoreNone(classOf[ProducerModel]),
-	  createCodecProviderIgnoreNone(classOf[ReaderType]),
-	  createCodecProviderIgnoreNone(classOf[ReaderModel]),
-	  createCodecProviderIgnoreNone(classOf[MlModelOnlyInfo]),
-	  createCodecProviderIgnoreNone(classOf[StrategyModel]),
-	  createCodecProviderIgnoreNone(classOf[WriterType]),
-	  createCodecProviderIgnoreNone(classOf[WriterModel]),
-	  createCodecProviderIgnoreNone(classOf[TopicModel]),
-	  createCodecProviderIgnoreNone(classOf[IndexModel]),
-	  createCodecProviderIgnoreNone(classOf[RawOptions]),
-	  createCodecProviderIgnoreNone(classOf[RawModel]),
-	  createCodecProviderIgnoreNone(classOf[KeyValueOption]),
-	  createCodecProviderIgnoreNone(classOf[KeyValueModel]),
+    createCodecProviderIgnoreNone(classOf[PipegraphModel]),
+    createCodecProviderIgnoreNone(classOf[ProducerModel]),
+    createCodecProviderIgnoreNone(ConsoleProduct.getClass),
+    createCodecProviderIgnoreNone(ElasticProduct.getClass),
+    createCodecProviderIgnoreNone(HBaseProduct.getClass),
+    createCodecProviderIgnoreNone(JDBCProduct.getClass),
+    createCodecProviderIgnoreNone(KafkaProduct.getClass),
+    createCodecProviderIgnoreNone(RawProduct.getClass),
+    createCodecProviderIgnoreNone(SolrProduct.getClass),
+    createCodecProviderIgnoreNone(WebSocketProduct.getClass),
+    createCodecProviderIgnoreNone(GenericIndexProduct.getClass),
+    createCodecProviderIgnoreNone(GenericKeyValueProduct.getClass),
+    createCodecProviderIgnoreNone(GenericTopicProduct.getClass),
+    createCodecProviderIgnoreNone(classOf[ReaderModel]),
+    createCodecProviderIgnoreNone(classOf[MlModelOnlyInfo]),
+    createCodecProviderIgnoreNone(classOf[StrategyModel]),
+    createCodecProviderIgnoreNone(classOf[WriterModel]),
+    createCodecProviderIgnoreNone(classOf[TopicModel]),
+    createCodecProviderIgnoreNone(classOf[IndexModel]),
+    createCodecProviderIgnoreNone(classOf[RawOptions]),
+    createCodecProviderIgnoreNone(classOf[RawModel]),
+    createCodecProviderIgnoreNone(classOf[KeyValueOption]),
+    createCodecProviderIgnoreNone(classOf[KeyValueModel]),
     createCodecProviderIgnoreNone(classOf[SqlSourceModel]),
-	  createCodecProviderIgnoreNone(classOf[BatchETLModel]),
+    createCodecProviderIgnoreNone(classOf[BatchETLModel]),
     createCodecProviderIgnoreNone(classOf[BatchJobExclusionConfig]),
-	  createCodecProviderIgnoreNone(classOf[BatchJobModel]),
-	  createCodecProviderIgnoreNone(classOf[KafkaEntryConfig]),
-	  createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
+    createCodecProviderIgnoreNone(classOf[BatchJobModel]),
+    createCodecProviderIgnoreNone(classOf[KafkaEntryConfig]),
+    createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
     createCodecProviderIgnoreNone(classOf[SparkEntryConfig]),
     createCodecProviderIgnoreNone(classOf[SparkDriverConfig]),
     createCodecProviderIgnoreNone(classOf[KryoSerializerConfig]),
     createCodecProviderIgnoreNone(classOf[SparkStreamingConfigModel]),
     createCodecProviderIgnoreNone(classOf[SparkBatchConfigModel]),
-	  createCodecProviderIgnoreNone(classOf[ElasticConfigModel]),
+    createCodecProviderIgnoreNone(classOf[ElasticConfigModel]),
     createCodecProviderIgnoreNone(classOf[SolrConfigModel]),
     createCodecProviderIgnoreNone(classOf[HBaseEntryConfig]),
-	  createCodecProviderIgnoreNone(classOf[HBaseConfigModel]),
+    createCodecProviderIgnoreNone(classOf[HBaseConfigModel]),
     createCodecProviderIgnoreNone(classOf[JdbcConnectionConfig]),
     createCodecProviderIgnoreNone(classOf[JdbcConfigModel]),
-	  createCodecProviderIgnoreNone(classOf[WebsocketModel]),
-	  createCodecProviderIgnoreNone(classOf[BatchSchedulerModel])
+    createCodecProviderIgnoreNone(classOf[WebsocketModel]),
+    createCodecProviderIgnoreNone(classOf[BatchSchedulerModel])
   ).asJava
 
   def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {

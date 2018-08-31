@@ -31,7 +31,7 @@ trait MaterializationSteps {
     * @param dataFrame The [[DataFrame]] created by the activation step
     * @return The Materialized [[StreamingQuery]]
     */
-  protected def materialize(etl: StructuredStreamingETLModel,pipegraph: PipegraphModel, dataFrame: DataFrame)
+  protected def materialize(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel, dataFrame: DataFrame)
     : Try[StreamingQuery] =
     for {
     config <- retrieveSparkStreamingConfig.recoverWith {
@@ -84,7 +84,7 @@ object MaterializationSteps {
   /**
     * A function able to go from a [[WriterModel]] to an [[Option]] of [[SparkStructuredStreamingWriter]].
     *
-    * THe goal of this type is to abstract out the concrete implementation of this computation.
+    * The goal of this type is to abstract out the concrete implementation of this computation.
     */
   type WriterFactory = (WriterModel) => Option[SparkStructuredStreamingWriter]
 }

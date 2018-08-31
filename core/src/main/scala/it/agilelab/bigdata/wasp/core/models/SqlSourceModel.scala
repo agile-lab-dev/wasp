@@ -1,10 +1,8 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import it.agilelab.bigdata.wasp.core.datastores.DatabaseCategory
 import it.agilelab.bigdata.wasp.core.models.configuration.JdbcPartitioningInfo
 
-object SqlSourceModel{
-  def readerType: String = Datastores.databaseCategory
-}
 
 /**
   * Class representing a SqlSource model
@@ -17,11 +15,10 @@ object SqlSourceModel{
   * @param numPartitions    optional - Number of partitions
   * @param fetchSize        optional - Fetch size
   */
-case class SqlSourceModel(
-                           name: String,
-                           connectionName: String,
-                           dbtable: String,
-                           partitioningInfo: Option[JdbcPartitioningInfo],
-                           numPartitions: Option[Int],
-                           fetchSize: Option[Int]
-                         ) extends Model
+case class SqlSourceModel(name: String,
+                          connectionName: String,
+                          dbtable: String,
+                          partitioningInfo: Option[JdbcPartitioningInfo],
+                          numPartitions: Option[Int],
+                           fetchSize: Option[Int])
+    extends DatastoreModel[DatabaseCategory]

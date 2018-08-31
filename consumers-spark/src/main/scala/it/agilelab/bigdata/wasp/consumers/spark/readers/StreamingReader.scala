@@ -25,13 +25,12 @@ trait StreamingReader {
 
 trait StructuredStreamingReader {
   /**
+    * Create a streaming DataFrame from a streaming source.
     *
-    * Create a Dataframe from a streaming source
-    * @param group
-    * @param accessType
-    * @param topic
-    * @param ss
+    * @param group the group of the ETL for which the stream is being created
+    * @param topic the topic from which the stream originates
+    * @param ss the Spark Session to use
     * @return
     */
-  def createStructuredStream(group: String, accessType: String, topic: TopicModel)(implicit ss: SparkSession): DataFrame
+  def createStructuredStream(group: String, topic: TopicModel)(implicit ss: SparkSession): DataFrame
 }

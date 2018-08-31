@@ -1,10 +1,11 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+import it.agilelab.bigdata.wasp.core.datastores.WebSocketCategory
+import org.mongodb.scala.bson.BsonDocument
 
 case class WebsocketModel (override val name: String,
                            host: String,
                            port: String,
                            resourceName: String,
-                           //var isActive: Boolean,
-                           options: Option[BsonDocument] = None) extends Model
+                           options: Option[BsonDocument] = None)
+	  extends DatastoreModel[WebSocketCategory]

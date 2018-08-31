@@ -1,10 +1,8 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import it.agilelab.bigdata.wasp.core.datastores.IndexCategory
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
-object IndexModel {
-  val readerType = Datastores.indexCategory
-}
 
 case class IndexModel private[core] (override val name: String,
                       creationTime: Long,
@@ -14,7 +12,7 @@ case class IndexModel private[core] (override val name: String,
                       replicationFactor: Option[Int] = Some(1),
                       rollingIndex: Boolean = true,
                       idField: Option[String] = None)
-  extends Model {
+    extends DatastoreModel[IndexCategory] {
 
   def resource = s"$eventuallyTimedName/$dataType"
 
@@ -29,7 +27,6 @@ case class IndexModel private[core] (override val name: String,
   def getJsonSchema: String = {
     schema.getOrElse("")
   }
-
 
   def dataType: String = name
 }

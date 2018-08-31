@@ -5,9 +5,9 @@ import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import it.agilelab.bigdata.wasp.core.datastores.{ElasticProduct, HBaseProduct, SolrProduct}
 import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.models.{Datastores, Model}
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager.telemetryConfig
+import it.agilelab.bigdata.wasp.core.models.Model
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
@@ -39,15 +39,15 @@ object ConfigManager {
     },
     ValidationRule("DefaultIndexedDatastoreUnknown") {
       (configManager) =>
-        if (configManager.getWaspConfig.defaultIndexedDatastore != Datastores.elasticProduct && configManager.getWaspConfig.defaultIndexedDatastore != Datastores.solrProduct)
-          Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${Datastores.elasticProduct}' or '${Datastores.solrProduct}'")
+        if (configManager.getWaspConfig.defaultIndexedDatastore != ElasticProduct.getActualProduct && configManager.getWaspConfig.defaultIndexedDatastore != SolrProduct.getActualProduct)
+          Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${ElasticProduct.getActualProduct}' or '${SolrProduct.getActualProduct}'")
         else
           Right(())
     },
     ValidationRule("DefaultKeyValueDatastoreUnknown") {
       (configManager) =>
-        if (configManager.getWaspConfig.defaultKeyvalueDatastore != Datastores.hbaseProduct)
-          Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${Datastores.hbaseProduct}'")
+        if (configManager.getWaspConfig.defaultKeyvalueDatastore != HBaseProduct.getActualProduct)
+          Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${HBaseProduct.getActualProduct}'")
         else
           Right(())
     },

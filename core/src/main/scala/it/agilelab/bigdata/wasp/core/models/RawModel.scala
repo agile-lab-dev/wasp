@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import it.agilelab.bigdata.wasp.core.datastores.RawCategory
+
 object RawModel{
 	val metadata = """
     {"name": "id", "type":"string", "nullable":false, "metadata":{}},
@@ -66,7 +68,8 @@ case class RawModel(override val name: String,
                     uri: String,
                     timed: Boolean = true,
                     schema: String,
-                    options: RawOptions = RawOptions.default) extends Model
+                    options: RawOptions = RawOptions.default)
+	  extends DatastoreModel[RawCategory]
 
 // TODO external scaladocs links
 /**
