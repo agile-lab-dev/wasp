@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.core.models
 
 import it.agilelab.bigdata.wasp.core.datastores._
 
-
+// TODO: switch to new apply as main ctor (see companion)
 /**
 	* A model for a reader, composed by a name, an datastoreModelName defining the datastore, and a datastoreProduct
 	* defining the datastore software product to use.
@@ -12,11 +12,15 @@ import it.agilelab.bigdata.wasp.core.datastores._
 	* @param datastoreProduct the datastore software product to be used when reading
 	*/
 case class ReaderModel @deprecated("Please use the other apply or the factory methods provided in the companion object as they ensure compatibility between the DatastoreModel and the DatastoreProduct")
-                       (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct) // why do we even normalize and not save the datastore model inside? it's bloody mongodb...
+                       (name: String, datastoreModelName: String, datastoreProduct: String) // why do we even normalize and not save the datastore model inside? it's bloody mongodb...
 
 object ReaderModel {
-	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct](name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP)(implicit ev: DSP <:< DSC) = {
-		ReaderModel(name, datastoreModel.name, datastoreProduct)
+  // unfortunately we can't use this as the main ctor right now because DatastoreProduct doesn't have a working mongodb
+  // codec and we need to write our own
+  def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
+           (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP)
+           (implicit ev: DSP <:< DSC): ReaderModel = {
+		ReaderModel(name, datastoreModel.name, datastoreProduct.getActualProduct)
 	}
 	def indexReader(name: String, indexModel: IndexModel) = apply(name, indexModel, GenericIndexProduct)
 	def elasticReader(name: String, indexModel: IndexModel) = apply(name, indexModel, ElasticProduct)

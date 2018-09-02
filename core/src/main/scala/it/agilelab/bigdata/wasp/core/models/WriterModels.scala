@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.core.models
 import it.agilelab.bigdata.wasp.core.datastores._
 
 
+// TODO: switch to new apply as main ctor (see companion)
 /**
 	* A model for a writer, composed by a name, an datastoreModelName defining the datastore, and a datastoreProduct
 	* defining the datastore software product to use.
@@ -15,7 +16,11 @@ case class WriterModel @deprecated("Please use the other apply or the factory me
                        (name: String, datastoreModelName: Option[String], datastoreProduct: DatastoreProduct) // why do we even normalize and not save the datastore model inside? it's bloody mongodb...
 
 object WriterModel {
-	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct](name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP)(implicit ev: DSP <:< DSC) = {
+  // unfortunately we can't use this as the main ctor right now because DatastoreProduct doesn't have a working mongodb
+  // codec and we need to write our own
+	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
+           (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP)
+           (implicit ev: DSP <:< DSC): WriterModel = {
 		WriterModel(name, Some(datastoreModel.name), datastoreProduct)
 	}
 	// helpers to create writer models for supported datastores
