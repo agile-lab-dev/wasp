@@ -16,8 +16,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
-import org.apache.spark.sql.types.{DataType, StructField, StructType}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{DataType, MapType, StructField, StructType}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
@@ -52,6 +51,10 @@ object SolrSparkWriter {
       fieldType.foreach { structField =>
         if (!row.isNullAt(row.fieldIndex(structField.name))) {
           structField.dataType match {
+            case f: MapType => {
+              val path = parentPath.map(p => p + "." + structField.name).getOrElse(structField.name)
+              doc.setField(path, row.getJavaMap(row.fieldIndex(structField.name)))
+            }
             case f: StructType => {
               val path = parentPath.map(p => p + "." + structField.name).orElse(Some(structField.name))
               convert(doc, f, row.getStruct(row.fieldIndex(structField.name)), path)
