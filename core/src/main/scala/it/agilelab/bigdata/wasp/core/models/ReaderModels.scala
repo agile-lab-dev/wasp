@@ -16,15 +16,15 @@ import it.agilelab.bigdata.wasp.core.datastores._
 case class ReaderModel @deprecated("Please use the other apply or the factory methods provided in the companion " +
 	                                 "object as they ensure compatibility between the DatastoreModel and the " +
                                    "DatastoreProduct")
-                       (name: String, datastoreModelName: String, datastoreProduct: String, options: Map[String, String] = Map.empty)
+                       (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String])
 
 object ReaderModel {
-  // unfortunately we can't use this as the main ctor right now because DatastoreProduct doesn't have a working mongodb
-  // codec and we need to write our own
+  import DatastoreProduct._
+	
   def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
            (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
            (implicit ev: DSP <:< DSC): ReaderModel = {
-		ReaderModel(name, datastoreModel.name, datastoreProduct.getActualProduct)
+		ReaderModel(name, datastoreModel.name, datastoreProduct, options)
 	}
 	def indexReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
     apply(name, indexModel, GenericIndexProduct, options)

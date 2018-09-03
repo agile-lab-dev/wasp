@@ -64,12 +64,12 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
 
 
   private def stepEnsureReadersAreNotTopicBased(readers: Seq[ReaderModel]): Try[Seq[ReaderModel]] =
-    readers.find(_.readerType.category == Datastores.topicCategory)
+    readers.find(_.datastoreProduct.category == Datastores.topicCategory)
       .map { _ => Failure(new Exception("No stream readers allowed in batch jobs")) }
       .getOrElse(Success(readers))
 
   private def stepEnsureWritersAreNotTopicBased(writer: WriterModel): Try[WriterModel] =
-    if (writer.writerType.category == Datastores.topicCategory) {
+    if (writer.datastoreProduct.category == Datastores.topicCategory) {
       Failure(new Exception("No stream readers allowed in batch jobs"))
     } else {
       Success(writer)

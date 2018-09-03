@@ -25,7 +25,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
     val keyValueBL: KeyValueBL
   }, ssc: StreamingContext, writerModel: WriterModel): Option[SparkLegacyStreamingWriter] = {
 
-    val writerType = writerModel.writerType.getActualProduct
+    val writerType = writerModel.datastoreProduct.getActualProduct
 
     // Get the plugin
     val writerPlugin = plugins.get(writerType)
@@ -45,7 +45,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
     val indexBL: IndexBL
   }, ss: SparkSession, writerModel: WriterModel) = {
 
-    val writerType = writerModel.writerType.getActualProduct
+    val writerType = writerModel.datastoreProduct.getActualProduct
 
     // Get the plugin
     val writerPlugin = plugins.get(writerType)
@@ -63,7 +63,7 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
     val keyValueBL: KeyValueBL
   }, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter] = {
 
-    val writerType = writerModel.writerType.getActualProduct
+    val writerType = writerModel.datastoreProduct.getActualProduct
 
     // Get the plugin
     val writerPlugin = plugins.get(writerType)

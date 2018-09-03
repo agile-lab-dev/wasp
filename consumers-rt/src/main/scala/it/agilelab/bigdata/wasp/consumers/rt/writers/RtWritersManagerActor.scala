@@ -42,9 +42,9 @@ class RtWritersManagerActor(env: {
   }
 
   def initializeEndpoint(writer: WriterModel): Option[ActorRef] = {
-    writer.writerType.category match {
+    writer.datastoreProduct.category match {
       case Datastores.topicCategory => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
-      case Datastores.indexCategory => writer.writerType.getActualProduct match {
+      case Datastores.indexCategory => writer.datastoreProduct.getActualProduct match {
         // TODO
         case Datastores.elasticProduct => ???
         case Datastores.solrProduct => ???

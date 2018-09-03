@@ -7,25 +7,15 @@ import org.json4s.JObject
 /**
 	* Default system pipegraphs.
 	*/
-
 object SystemPipegraphs {
-
 	/** Logger  */
-
-	/* Topic, Index, Raw for Producer, Pipegraph */
 	lazy val loggerTopic = LoggerTopicModel()
 	lazy val solrLoggerIndex = SolrLoggerIndex()
   lazy val elasticLoggerIndex = ElasticLoggerIndexModel()
-
-	/* Producer */
 	lazy val loggerProducer = LoggerProducer()
-
-	/* Pipegraph */
 	lazy val loggerPipegraph = LoggerPipegraph()
 
-
-
-
+	
 	/** Telemetry  */
 	lazy val telemetryTopic = TelemetryTopicModel()
 	lazy val solrTelemetryIndex = SolrTelemetryIndexModel()
@@ -284,12 +274,12 @@ private[wasp] object LoggerPipegraph {
 
   private def writer: WriterModel = ConfigManager.getWaspConfig.defaultIndexedDatastore match {
     case "elastic" => WriterModel.elasticWriter(
-      elasticLoggerIndex.name,
-      elasticLoggerIndex.name
+	    "Write logging data to Elastic",
+	    elasticLoggerIndex
     )
     case "solr" => WriterModel.solrWriter(
-      solrLoggerIndex.name,
-      solrLoggerIndex.name
+	    "Write logging data to Solr",
+	    solrLoggerIndex
     )
   }
 
@@ -304,7 +294,7 @@ private[wasp] object LoggerPipegraph {
 		structuredStreamingComponents = List(
       StructuredStreamingETLModel(
         name = "write on index",
-        inputs = List(ReaderModel.kafkaReader(loggerTopic.name, loggerTopic.name)),
+        inputs = List(ReaderModel.kafkaReader("Read logging data form Kafka", loggerTopic)),
         output = writer,
         mlModels = List(),
         strategy = None,
@@ -325,12 +315,12 @@ private[wasp] object TelemetryPipegraph {
 
 	private def writer: WriterModel = ConfigManager.getTelemetryConfig.writer match {
 		case "elastic" => WriterModel.elasticWriter(
-			elasticTelemetryIndex.name,
-			elasticTelemetryIndex.name
+			"Write telemetry data to Elastic",
+			elasticTelemetryIndex
 		)
 		case "solr" => WriterModel.solrWriter(
-			solrTelemetryIndex.name,
-			solrTelemetryIndex.name
+			"Write telemetry data to Solr",
+			solrTelemetryIndex
 		)
 	}
 
@@ -345,7 +335,7 @@ private[wasp] object TelemetryPipegraph {
 		structuredStreamingComponents = List(
 			StructuredStreamingETLModel(
 				name = "write on index",
-				inputs = List(ReaderModel.kafkaReader(telemetryTopic.name, telemetryTopic.name)),
+				inputs = List(ReaderModel.kafkaReader("Read telemetry data from Kafka", telemetryTopic)),
 				output = writer,
 				mlModels = List(),
 				strategy = None,

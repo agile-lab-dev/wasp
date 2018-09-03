@@ -142,7 +142,7 @@ class LegacyStreamingETLActor(env: {
       }
     })
     val topicReaderModelNumber =
-      legacyStreamingETL.inputs.count(_.readerType.category == TopicModel.readerType)
+      legacyStreamingETL.inputs.count(_.datastoreProduct.category == TopicModel.readerType)
     if (topicReaderModelNumber == 0)
       throw new Exception("There is NO topic to read data, inputs: " + legacyStreamingETL.inputs)
     if (topicReaderModelNumber != 1)
@@ -175,7 +175,7 @@ class LegacyStreamingETLActor(env: {
       if (createStrategy.isDefined) {
         val strategy = createStrategy.get
 
-        val staticReaders = legacyStreamingETL.inputs.filterNot(_.readerType.category == Datastores.topicCategory)
+        val staticReaders = legacyStreamingETL.inputs.filterNot(_.datastoreProduct.category == Datastores.topicCategory)
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
           if (staticReaders.isEmpty)
@@ -211,7 +211,7 @@ class LegacyStreamingETLActor(env: {
           topicStreamWithKey._2,
           dataStoreDFs,
           strategy,
-          legacyStreamingETL.output.writerType)
+          legacyStreamingETL.output.datastoreProduct)
       } else {
         topicStreamWithKey._2
       }

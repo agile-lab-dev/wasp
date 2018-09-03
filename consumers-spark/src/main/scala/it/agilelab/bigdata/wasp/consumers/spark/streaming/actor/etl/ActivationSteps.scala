@@ -95,7 +95,7 @@ trait ActivationSteps {
     */
   private def checkOnlyOneStreamingSource(etl: StructuredStreamingETLModel): Try[TopicModel] = {
 
-    etl.inputs.filter(_.readerType == ReaderType.kafkaReaderType) match {
+    etl.inputs.filter(_.datastoreProduct == ReaderType.kafkaReaderType) match {
       //only one kafka reader model
       case Seq(ReaderModel(_, topicName, _)) => retrieveTopic(topicName)
       // more than one kafka reader
@@ -170,7 +170,7 @@ trait ActivationSteps {
 
 
     etl.inputs
-      .filterNot(_.readerType == ReaderType.kafkaReaderType)
+      .filterNot(_.datastoreProduct == ReaderType.kafkaReaderType)
       .foldLeft(empty) { (previousOutcome, readerModel) =>
 
         //we update outcome only if createStructuredStream does not blow up
@@ -196,11 +196,11 @@ trait ActivationSteps {
     createStrategy(etl) match {
       case Success(Some(strategy)) =>
         applyTransform(structuredInputStream._1,
-          structuredInputStream._2,
-          nonStreamingInputStreams,
-          strategy,
-          etl.output.writerType,
-          etl)
+                       structuredInputStream._2,
+                       nonStreamingInputStreams,
+                       strategy,
+                       etl.output.datastoreProduct,
+                       etl)
       case Success(None) =>
         Success(structuredInputStream._2)
       case Failure(reason) =>

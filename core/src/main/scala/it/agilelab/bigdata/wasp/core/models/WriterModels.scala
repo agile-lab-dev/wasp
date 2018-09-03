@@ -16,11 +16,11 @@ import it.agilelab.bigdata.wasp.core.datastores._
 case class WriterModel @deprecated("Please use the other apply or the factory methods provided in the companion " +
                                    "object as they ensure compatibility between the DatastoreModel and the " +
                                    "DatastoreProduct")
-                       (name: String, datastoreModelName: Option[String], datastoreProduct: DatastoreProduct, options: Map[String, String] = Map.empty)
+                       (name: String, datastoreModelName: Option[String], datastoreProduct: DatastoreProduct, options: Map[String, String])
 
 object WriterModel {
-  // unfortunately we can't use this as the main ctor right now because DatastoreProduct doesn't have a working mongodb
-  // codec and we need to write our own
+  import DatastoreProduct._
+	
 	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
            (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
            (implicit ev: DSP <:< DSC): WriterModel = {

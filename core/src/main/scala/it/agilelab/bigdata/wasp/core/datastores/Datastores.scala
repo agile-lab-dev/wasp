@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 	*
 	* @author Nicolò Bidotti
 	*/
-trait DatastoreCategory {
+sealed trait DatastoreCategory {
 	def category: String
 }
 trait ConsoleCategory   extends DatastoreCategory { override val category = "console"   }
@@ -25,9 +25,13 @@ trait WebSocketCategory extends DatastoreCategory { override val category = "web
 	*
 	* @author Nicolò Bidotti
 	*/
-trait DatastoreProduct {
+sealed trait DatastoreProduct {
 	this: DatastoreCategory =>
+	
+	import DatastoreProduct._
+	
 	def product: Option[String]
+	
 	def getActualProduct: String = {
 		product match {
 			case Some(p) => p
@@ -46,14 +50,16 @@ trait DatastoreProduct {
 		}
 	}
 }
-object ConsoleProduct         extends ConsoleCategory   with DatastoreProduct { override val product = Some("console")   }
-object ElasticProduct         extends IndexCategory     with DatastoreProduct { override val product = Some("elastic")   }
-object HBaseProduct           extends KeyValueCategory  with DatastoreProduct { override val product = Some("hbase")     }
-object JDBCProduct            extends DatabaseCategory  with DatastoreProduct { override val product = Some("jdbc")      }
-object KafkaProduct           extends TopicCategory     with DatastoreProduct { override val product = Some("kafka")     }
-object RawProduct             extends RawCategory       with DatastoreProduct { override val product = Some("raw")       }
-object SolrProduct            extends IndexCategory     with DatastoreProduct { override val product = Some("solr")      }
-object WebSocketProduct       extends WebSocketCategory with DatastoreProduct { override val product = Some("websocket") }
-object GenericIndexProduct    extends IndexCategory     with DatastoreProduct { override val product = None              }
-object GenericKeyValueProduct extends KeyValueCategory  with DatastoreProduct { override val product = None              }
-object GenericTopicProduct    extends TopicCategory     with DatastoreProduct { override val product = None              }
+object DatastoreProduct {
+	object ConsoleProduct         extends ConsoleCategory   with DatastoreProduct { override val product = Some("console")   }
+	object ElasticProduct         extends IndexCategory     with DatastoreProduct { override val product = Some("elastic")   }
+	object HBaseProduct           extends KeyValueCategory  with DatastoreProduct { override val product = Some("hbase")     }
+	object JDBCProduct            extends DatabaseCategory  with DatastoreProduct { override val product = Some("jdbc")      }
+	object KafkaProduct           extends TopicCategory     with DatastoreProduct { override val product = Some("kafka")     }
+	object RawProduct             extends RawCategory       with DatastoreProduct { override val product = Some("raw")       }
+	object SolrProduct            extends IndexCategory     with DatastoreProduct { override val product = Some("solr")      }
+	object WebSocketProduct       extends WebSocketCategory with DatastoreProduct { override val product = Some("websocket") }
+	object GenericIndexProduct    extends IndexCategory     with DatastoreProduct { override val product = None              }
+	object GenericKeyValueProduct extends KeyValueCategory  with DatastoreProduct { override val product = None              }
+	object GenericTopicProduct    extends TopicCategory     with DatastoreProduct { override val product = None              }
+}

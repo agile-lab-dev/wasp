@@ -24,7 +24,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
   val strategy: Option[StrategyRT] = createStrategyRT(rt)
   lazy val kafkaReaders: List[Option[ActorRef]] = {
     rt.inputs.map { input =>
-      val topicOpt = env.topicBL.getByName(input.endpointName)
+      val topicOpt = env.topicBL.getByName(input.datastoreModelName)
       val ref = topicOpt match {
         case Some(topic) => {
           //subscribe(topic.name, self)
@@ -32,7 +32,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
           Some(context.actorOf(Props(new CamelKafkaReader(ConfigManager.getKafkaConfig, topic.name, groupId = this.hashCode().toString, self))))
         }
         case None =>
-          logger.warn(s"RT ${rt.name} has the input name ${input.endpointName} which does not identify a topic")
+          logger.warn(s"RT ${rt.name} has the input name ${input.datastoreModelName} which does not identify a topic")
           None // Should never happen
       }
       ref
@@ -88,13 +88,13 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
 
   // returns the topic type corresponding to the input given
   private def getTopiModel(input: ReaderModel): TopicModel = {
-    val topicName: String = input.endpointName
+    val topicName: String = input.datastoreModelName
     val typeOpt: Option[TopicModel] = topicDataTypes.get(topicName)
 
     typeOpt match {
       case Some(topicDataType) => topicDataType // found in cache, simply return it
       case None => { // not found, get from db, add to cache, return it
-        val topicOpt: Option[TopicModel] = env.topicBL.getByName(input.endpointName)
+        val topicOpt: Option[TopicModel] = env.topicBL.getByName(input.datastoreModelName)
 
         topicDataTypes += topicName -> topicOpt.get
 
