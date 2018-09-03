@@ -10,7 +10,7 @@ object Versions {
 	val camel = "2.17.7"
 	val cdh = "cdh5.13.1" // Cloudera Distribution of Hadoop
 	val commonsCli = "1.4"
-	val cds = "cloudera3" // Cloudera Distribution of Spark
+	val cds = "cloudera2" // Cloudera Distribution of Spark
 	val elasticSearch = "6.1.2"
 	val elasticSearchSpark = "6.1.2"
 	val guava = "14.0.1"
