@@ -57,7 +57,6 @@ case class StructuredStreamingETLModel(name: String,
                                        output: WriterModel,
                                        mlModels: List[MlModelOnlyInfo],
                                        strategy: Option[StrategyModel],
-                                       kafkaAccessType: String,
                                        group: String = "default",
                                        config: Map[String, String]) extends ProcessingComponentModel
 
