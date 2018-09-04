@@ -5,7 +5,7 @@ import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
-import it.agilelab.bigdata.wasp.core.datastores.{ElasticProduct, HBaseProduct, SolrProduct}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, HBaseProduct, SolrProduct}
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.models.Model
 import org.bson.BsonString

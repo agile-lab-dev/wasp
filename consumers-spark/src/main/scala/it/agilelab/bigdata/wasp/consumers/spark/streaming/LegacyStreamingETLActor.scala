@@ -13,6 +13,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{GenericTopicProduct, KafkaProduct}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.spark.sql.DataFrame
@@ -91,12 +92,12 @@ class LegacyStreamingETLActor(env: {
     */
   private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
     staticReaderModels.flatMap({
-      case ReaderModel(name, endpointName, readerType) =>
-        val readerProduct = readerType.getActualProduct
-        logger.info(s"Get reader plugin $readerProduct before was $readerType, plugin map: $plugins")
+      case ReaderModel(name, datastoreModelName, datastoreProduct, options) =>
+        val readerProduct = datastoreProduct.getActualProduct
+        logger.info(s"Get reader plugin $readerProduct before was $datastoreProduct, plugin map: $plugins")
         val readerPlugin = plugins.get(readerProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(endpointName, name))
+          Some(readerPlugin.get.getSparkReader(datastoreModelName, name))
         } else {
           logger.error(s"The $readerProduct plugin in staticReaderModels does not exists")
           None
@@ -118,21 +119,21 @@ class LegacyStreamingETLActor(env: {
   private def topicModels(): List[Option[TopicModel]] =
     legacyStreamingETL.inputs
       .flatMap({
-        case ReaderModel(name, topicName, ReaderType.kafkaReaderType) =>
-          val topicOpt = env.topicBL.getByName(topicName)
+        case ReaderModel(name, datastoreModelName, KafkaProduct, options) =>
+          val topicOpt = env.topicBL.getByName(datastoreModelName)
           Some(topicOpt)
         case _ => None
       })
 
   private def validationTask(): Unit = {
     legacyStreamingETL.inputs.foreach({
-      case ReaderModel(name, endpointName, ReaderType.kafkaReaderType) => {
+      case ReaderModel(name, datastoreModelName, KafkaProduct, options) => {
         val topicOpt = env.topicBL.getByName(endpointName)
         if (topicOpt.isEmpty) {
           throw new Exception(s"There isn't this topic: $endpointName, $name")
         }
       }
-      case ReaderModel(name, endpointName, readerType) => {
+      case ReaderModel(name, datastoreModelName, KafkaProduct, options) => {
         val readerPlugin = plugins.get(readerType.getActualProduct)
         if (readerPlugin.isDefined) {
           readerPlugin.get.getSparkReader(endpointName, name)
@@ -142,7 +143,7 @@ class LegacyStreamingETLActor(env: {
       }
     })
     val topicReaderModelNumber =
-      legacyStreamingETL.inputs.count(_.datastoreProduct.category == TopicModel.readerType)
+      legacyStreamingETL.inputs.count(_.datastoreProduct. == GenericTopicProduct.category)
     if (topicReaderModelNumber == 0)
       throw new Exception("There is NO topic to read data, inputs: " + legacyStreamingETL.inputs)
     if (topicReaderModelNumber != 1)
