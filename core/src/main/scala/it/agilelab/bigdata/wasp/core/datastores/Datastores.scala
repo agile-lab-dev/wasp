@@ -65,12 +65,13 @@ object DatastoreProduct {
 	object GenericTopicProduct    extends TopicCategory     with DatastoreProduct { override val product = None              }
 }
 
+
 trait StreamingSource
 trait StreamingSink
 trait BatchSource
 trait BatchSink
 
-trait StreamingSourceAndSink extends StreamingSource with StreamingSink
-trait BatchSourceAndSink extends BatchSource with BatchSink
+trait StreamingSourceAndSink         extends StreamingSource with StreamingSink
+trait BatchSourceAndSink             extends BatchSource     with BatchSink
 
 trait StreamingAndBatchSourceAndSink extends StreamingSourceAndSink with BatchSourceAndSink
