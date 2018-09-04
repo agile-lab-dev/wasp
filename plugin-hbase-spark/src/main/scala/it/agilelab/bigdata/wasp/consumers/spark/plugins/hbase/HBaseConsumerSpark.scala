@@ -74,7 +74,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   @throws(classOf[ModelNotFound])
   private def getKeyValueModel(writerModel: WriterModel): KeyValueModel = {
 
-    val endpointName = writerModel.datastoreModelName.get
+    val endpointName = writerModel.datastoreModelName
     val hbaseModelOpt = keyValueBL.getByName(endpointName)
     if (hbaseModelOpt.isDefined) {
       hbaseModelOpt.get

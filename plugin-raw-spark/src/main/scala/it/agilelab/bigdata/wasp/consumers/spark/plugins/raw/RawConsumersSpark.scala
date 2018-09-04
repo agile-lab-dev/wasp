@@ -27,17 +27,17 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the HDFS spark streaming writer with this model: $writerModel")
-    new RawSparkLegacyStreamingWriter(getModelAndChekHdfsSchema(writerModel.datastoreModelName.get), ssc)
+    new RawSparkLegacyStreamingWriter(getModelAndChekHdfsSchema(writerModel.datastoreModelName), ssc)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
     logger.info(s"Initialize HDFS spark structured streaming writer with this model: $writerModel")
-    new RawSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.datastoreModelName.get), ss)
+    new RawSparkStructuredStreamingWriter(getModelAndChekHdfsSchema(writerModel.datastoreModelName), ss)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     logger.info(s"Initialize HDFS spark batch writer with this model: $writerModel")
-    new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.datastoreModelName.get), sc)
+    new RawSparkWriter(getModelAndChekHdfsSchema(writerModel.datastoreModelName), sc)
   }
 
   override def getSparkReader(id: String, name: String): SparkReader = {

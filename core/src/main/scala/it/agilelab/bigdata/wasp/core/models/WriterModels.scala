@@ -9,14 +9,14 @@ import it.agilelab.bigdata.wasp.core.datastores._
 	* defining the datastore software product to use, and any additional options needed to configure the writer.
 	*
 	* @param name the name of this writer model
-	* @param datastoreModelName (optional) the name of the endpoint to write to
+	* @param datastoreModelName the name of the endpoint to write to; ignored when using a `ConsoleCategory` datastore
 	* @param datastoreProduct the datastore software product to be used when writing
   * @param options additional options for the writer
 	*/
 case class WriterModel @deprecated("Please use the other apply or the factory methods provided in the companion " +
                                    "object as they ensure compatibility between the DatastoreModel and the " +
                                    "DatastoreProduct")
-                       (name: String, datastoreModelName: Option[String], datastoreProduct: DatastoreProduct, options: Map[String, String])
+                       (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String])
 
 object WriterModel {
   import DatastoreProduct._
@@ -24,7 +24,7 @@ object WriterModel {
 	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
            (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
            (implicit ev: DSP <:< DSC): WriterModel = {
-		WriterModel(name, Some(datastoreModel.name), datastoreProduct, options)
+		WriterModel(name, datastoreModel.name, datastoreProduct, options)
 	}
 	def indexWriter(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
     apply(name, indexModel, GenericIndexProduct, options)
@@ -45,5 +45,5 @@ object WriterModel {
 	def websocketWriter(name: String, websocketModel: WebsocketModel, options: Map[String, String] = Map.empty) =
     apply(name, websocketModel, WebSocketProduct, options)
 	def consoleWriter(name: String, options: Map[String, String] = Map.empty) =
-    apply(name, None, ConsoleProduct, options)
+    apply(name, ConsoleProduct.getActualProduct, ConsoleProduct, options)
 }

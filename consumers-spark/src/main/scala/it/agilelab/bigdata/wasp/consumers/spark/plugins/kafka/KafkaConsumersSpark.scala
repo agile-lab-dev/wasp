@@ -22,13 +22,13 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the kafka spark streaming writer")
-    new KafkaSparkLegacyStreamingWriter(topicBL, ssc, writerModel.datastoreModelName.get)
+    new KafkaSparkLegacyStreamingWriter(topicBL, ssc, writerModel.datastoreModelName)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
     logger.info(s"Initialize the kafka spark structured streaming writer")
     logger.info(s"Topic: $topicBL")
-    new KafkaSparkStructuredStreamingWriter(topicBL, writerModel.datastoreModelName.get, ss)
+    new KafkaSparkStructuredStreamingWriter(topicBL, writerModel.datastoreModelName, ss)
   }
 
   override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
