@@ -312,6 +312,7 @@ object WaspDB extends Logging {
   )
 
   private lazy val codecRegisters: java.util.List[CodecProvider] = List(
+    DatastoreProductCodecProvider,
     createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
     createCodecProviderIgnoreNone(classOf[BatchJobInstanceModel]),
     createCodecProviderIgnoreNone(classOf[ZookeeperConnectionsConfig]),
