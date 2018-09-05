@@ -25,9 +25,7 @@ trait WebSocketCategory extends DatastoreCategory with StreamingSourceAndSink   
 	*
 	* @author Nicolò Bidotti
 	*/
-sealed trait DatastoreProduct {
-	this: DatastoreCategory =>
-	
+sealed trait DatastoreProduct extends DatastoreCategory {
 	import DatastoreProduct._
 	
 	def product: Option[String]
