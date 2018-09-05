@@ -298,7 +298,6 @@ private[wasp] object LoggerPipegraph {
         output = writer,
         mlModels = List(),
         strategy = None,
-        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
         config = Map())
     ),
 
@@ -339,7 +338,6 @@ private[wasp] object TelemetryPipegraph {
 				output = writer,
 				mlModels = List(),
 				strategy = None,
-				kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
 				config = Map())
 		),
 
