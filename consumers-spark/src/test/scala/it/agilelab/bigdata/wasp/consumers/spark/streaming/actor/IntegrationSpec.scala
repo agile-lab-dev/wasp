@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
+import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => ETLProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{SparkConsumersStreamingMasterGuardian, Protocol => MasterProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.{ComponentFailedStrategy, DontCare, StopAll}
@@ -39,11 +40,10 @@ class IntegrationSpec
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(name = "component",
-        inputs = List(ReaderModel.kafkaReader("", "")),
-        output = WriterModel.solrWriter("", ""),
+        inputs = List(ReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json)),
+        output = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
         mlModels = List(),
         strategy = None,
-        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
         config = Map()
       )),
     rtComponents = List.empty,

@@ -1,19 +1,19 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
-import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
+import akka.actor.{ActorRef, ActorRefFactory, ActorSystem}
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
-import it.agilelab.bigdata.wasp.core.models._
-import org.scalatest.concurrent.Eventually
-import org.scalatest._
-import PipegraphGuardian._
-import State._
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol => MasterProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => PipegraphProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => ETLProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.Data.{ActivatedData, MaterializingData, WorkerToEtlAssociation}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol => MasterProtocol}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.Data.{MaterializingData, WorkerToEtlAssociation}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.State._
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => PipegraphProtocol}
+import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp._
+import org.scalatest._
+import org.scalatest.concurrent.Eventually
 
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
@@ -49,12 +49,11 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(name = "component",
-        inputs = List(ReaderModel.kafkaReader("", "")),
-        output = WriterModel.solrWriter("", ""),
-        mlModels = List(),
-        strategy = None,
-        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
-        config = Map()
+                                  inputs = List(ReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json)),
+                                  output = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
+                                  mlModels = List(),
+                                  strategy = None,
+                                  config = Map()
       )),
     rtComponents = List.empty,
     dashboard = None)

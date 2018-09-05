@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.messages.BatchMessages
 import it.agilelab.bigdata.wasp.core.models._
@@ -146,7 +147,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -201,7 +202,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -240,7 +241,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -282,7 +283,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -336,7 +337,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -424,7 +425,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -466,7 +467,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -513,7 +514,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -567,7 +568,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -607,7 +608,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
@@ -661,7 +662,7 @@ class SparkConsumersBatchMasterGuardianSpec
         etl = BatchETLModel(
           name ="name",
           inputs = List.empty,
-          output = WriterModel.kafkaWriter("test", "test"),
+          output = WriterModel.kafkaWriter("test", DatastoreModelsForTesting.TopicModels.json),
           mlModels = List.empty,
           strategy = None,
           kafkaAccessType = ""
