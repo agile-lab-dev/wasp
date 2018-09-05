@@ -2,9 +2,10 @@ package it.agilelab.bigdata.wasp.master.web.utils
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, ZookeeperConnectionsConfig}
+import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, DatastoreProductJsonFormat, ZookeeperConnectionsConfig}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat, _}
 
@@ -62,10 +63,11 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
   implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat7(TopicModel.apply)
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat8(IndexModel.apply)
-  implicit val readerTypeFormat: RootJsonFormat[ReaderType] = jsonFormat2(ReaderType.apply)
-  implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat3((name: String, endpointName: String, readerType: ReaderType) => ReaderModel.apply(name, endpointName, readerType))
-  implicit val writerTypeFormat: RootJsonFormat[WriterType] = jsonFormat2(WriterType.apply)
-  implicit val writerModelFormat: RootJsonFormat[WriterModel] = jsonFormat3((name: String, endpointName: Option[String], writerType: WriterType) => WriterModel.apply(name, endpointName, writerType))
+  implicit val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
+  implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat4(
+    (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String]) => ReaderModel(name, datastoreModelName, datastoreProduct, options))
+  implicit val writerModelFormat: RootJsonFormat[WriterModel] = jsonFormat4(
+    (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String]) => WriterModel(name, datastoreModelName, datastoreProduct, options))
   implicit val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
   implicit val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
   implicit val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
