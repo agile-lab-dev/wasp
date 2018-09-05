@@ -5,7 +5,6 @@ import org.bson.{BsonInvalidOperationException, BsonReader, BsonWriter}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 
-import scala.reflect.runtime.{universe => runtimeUniverse}
 
 
 /**
@@ -34,29 +33,17 @@ object DatastoreProductCodecProvider extends CodecProvider {
 		// grabs all subtypes of DatastoreProduct and builds a list of (DatastoreProcut, "category|product") from which
 		// we can then build the lookup maps
 		private def buildSubclassIdentifiersList(): List[(DatastoreProduct, String)] = {
-			// get a runtime classloader mirror
-			val runtimeMirror = runtimeUniverse.runtimeMirror(this.getClass.getClassLoader)
+			val objectSubclassesList = ReflectionUtils.findObjectSubclassesOfSealedTraitAssumingTheyAreAllObjects[DatastoreProduct]
 			
-			// grab the class for the base trait
-			val datastoreProductType = runtimeUniverse.typeOf[DatastoreProduct]
-			val datastoreProductClass = datastoreProductType.typeSymbol.asClass
+			// build list of (object, identifier)
+			val subclassesIdentifiersList = objectSubclassesList.map(datastoreProduct => {
+					val identifier = datastoreProduct.category + "|" + datastoreProduct.product.getOrElse("")
+					(datastoreProduct, identifier)
+	      }
+			)
 			
-			// ensure we're working with a sealed trait
-			require(!(datastoreProductClass.isSealed && datastoreProductClass.isTrait), "Building the lookup tables with reflection only works for sealed traits!")
-			
-			// reflection on the class to find all object subtypes and build identifiers for each one
-			val subclassesIdentifiersList: List[(DatastoreProduct, String)] = datastoreProductClass
-				.knownDirectSubclasses // finds all subclasses
-		    .toList
-				.map(_.getClass)
-				.map(datastoreProductSubClass => {
-						val productObject = runtimeMirror
-							.staticModule(datastoreProductSubClass.getName)
-							.asInstanceOf[DatastoreProduct with DatastoreCategory]
-						val identifier = productObject.category + "|" + productObject.product.getOrElse("")
-						(productObject.asInstanceOf[DatastoreProduct], identifier)
-		      }
-				)
+			// check that there's only one pipe
+			require(!subclassesIdentifiersList.map(_._2).exists(_.count(_ == '|') > 1), "The character '|' cannot be used in product or category names!")
 			
 			// check that we don't have collisions so we can use the list for forward and reverse lookup maps
 			val listSize = subclassesIdentifiersList.size
