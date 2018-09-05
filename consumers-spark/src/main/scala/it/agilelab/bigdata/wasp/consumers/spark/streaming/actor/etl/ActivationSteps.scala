@@ -3,26 +3,23 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 import java.nio.charset.StandardCharsets
 import java.time.{Clock, Instant}
 import java.time.format.DateTimeFormatter
-import java.util
-import java.util.{Properties, UUID}
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{CompletableFuture, Future, TimeUnit}
+import java.util.Properties
 
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.WorkerKafkaWriter
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
-import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, TelemetryPipegraph, TelemetryTopicModel}
+import it.agilelab.bigdata.wasp.core.SystemPipegraphs
 import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
+import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig, WaspConfigModel}
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.kafka.clients.producer._
-import org.apache.kafka.common.{Metric, MetricName, PartitionInfo}
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -95,9 +92,9 @@ trait ActivationSteps {
     */
   private def checkOnlyOneStreamingSource(etl: StructuredStreamingETLModel): Try[TopicModel] = {
 
-    etl.inputs.filter(_.datastoreProduct == ReaderType.kafkaReaderType) match {
+    etl.inputs.filter(_.datastoreProduct.isInstanceOf[TopicCategory]) match {
       //only one kafka reader model
-      case Seq(ReaderModel(_, topicName, _)) => retrieveTopic(topicName)
+      case Seq(ReaderModel(_, topicModelName, _, _)) => retrieveTopic(topicModelName)
       // more than one kafka reader
       case _ => Failure(new Exception("More than one kafka reader found, only one allowed"))
     }
@@ -127,8 +124,8 @@ trait ActivationSteps {
     */
   private def createStructuredStreamFromStreamingSource(etl: StructuredStreamingETLModel,
                                                         topicModel: TopicModel): Try[(ReaderKey, DataFrame)] = Try {
-    (ReaderKey(TopicModel.readerType, topicModel.name),
-      reader.createStructuredStream(etl.group, etl.kafkaAccessType, topicModel)(sparkSession))
+    (ReaderKey(GenericTopicProduct.category, topicModel.name),
+      reader.createStructuredStream(etl.group, topicModel)(sparkSession))
   }
 
 
@@ -145,10 +142,10 @@ trait ActivationSteps {
 
       def createReader(readerModel: ReaderModel): Try[SparkReader] = Try {
         readerModel match {
-          case ReaderModel(name, endpointName, readerType) =>
-            plugins.get(readerType.getActualProduct) match {
-              case Some(r) => r.getSparkReader(endpointName, name)
-              case None => throw new Exception(s"Cannot create Reader, no plugin able to handle [$readerType]")
+          case ReaderModel(name, datastoreModelName, datastoreProduct, options) =>
+            plugins.get(datastoreProduct.getActualProduct) match {
+              case Some(r) => r.getSparkReader(datastoreModelName, name)
+              case None => throw new Exception(s"""Cannot create Reader, no plugin able to handle datastore product "$datastoreProduct" found""")
             }
         }
       }
@@ -170,7 +167,7 @@ trait ActivationSteps {
 
 
     etl.inputs
-      .filterNot(_.datastoreProduct == ReaderType.kafkaReaderType)
+      .filterNot(_.datastoreProduct.isInstanceOf[TopicCategory])
       .foldLeft(empty) { (previousOutcome, readerModel) =>
 
         //we update outcome only if createStructuredStream does not blow up
@@ -271,19 +268,19 @@ trait ActivationSteps {
   /**
     * Applies strategy and handles metadata collection for telemetry purposes.
     *
-    * @param readerKey    The key to place the resulting stream in the map passed to the strategy
-    * @param stream       The input stream coming from kafka
-    * @param dataStoreDFs The data frames representing non streaming data stores
-    * @param strategy     The strategy to be applied
-    * @param writerType   The type of the output writer, will be used to properly handle metadata schema
-    * @param etl          The etl model
+    * @param readerKey        The key to place the resulting stream in the map passed to the strategy
+    * @param stream           The input stream coming from kafka
+    * @param dataStoreDFs     The data frames representing non streaming data stores
+    * @param strategy         The strategy to be applied
+    * @param datastoreProduct The type of the output datastore, will be used to properly handle metadata schema
+    * @param etl              The etl model
     * @return A Try representing the application of the strategy as a new DataFrame
     */
   private def applyTransform(readerKey: ReaderKey,
                              stream: DataFrame,
                              dataStoreDFs: Map[ReaderKey, DataFrame],
                              strategy: Strategy,
-                             writerType: WriterType,
+                             datastoreProduct: DatastoreProduct,
                              etl: StructuredStreamingETLModel): Try[DataFrame] = Try {
 
     val config = ConfigManager.getKafkaConfig.toTinyConfig()
@@ -318,13 +315,12 @@ trait ActivationSteps {
       case false => strategyOutputStreamWithExitMetadata
     }
 
-
-
-    writerType.getActualProduct match {
-      case Datastores.kafkaProduct => cleanOutputStream
-      case Datastores.hbaseProduct => cleanOutputStream
-      case Datastores.rawProduct => cleanOutputStream
-      case Datastores.consoleProduct => cleanOutputStream
+    // TODO maybe we should match on categories instead
+    datastoreProduct match {
+      case KafkaProduct => cleanOutputStream
+      case HBaseProduct => cleanOutputStream
+      case RawProduct => cleanOutputStream
+      case ConsoleProduct => cleanOutputStream
       case _ =>
         if (cleanOutputStream.columns.contains("metadata")) {
           cleanOutputStream.select(MetadataUtils.flatMetadataSchema(cleanOutputStream.schema, None): _*)

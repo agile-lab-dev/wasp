@@ -24,14 +24,12 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
     * Create a Dataframe from a streaming source
     *
     * @param group
-    * @param accessType
     * @param topic
     * @param ss
     * @return
     */
   override def createStructuredStream(
       group: String,
-      accessType: String,
       topic: TopicModel)(implicit ss: SparkSession): DataFrame = {
 
     // get the config

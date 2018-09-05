@@ -9,10 +9,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{KeyValueBL, KeyValueBLImp}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.HBaseProduct
 import it.agilelab.bigdata.wasp.core.exceptions.ModelNotFound
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.{Datastores, KeyValueModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -83,7 +84,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  override def pluginType: String = Datastores.hbaseProduct
+  override def pluginType: String = HBaseProduct.getActualProduct
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 }

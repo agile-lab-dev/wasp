@@ -4,9 +4,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
 import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.KafkaProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.{Datastores, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.WriterModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -45,7 +46,7 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     throw new UnsupportedOperationException(msg)
   }
 
-  override def pluginType: String = Datastores.kafkaProduct
+  override def pluginType: String = KafkaProduct.getActualProduct
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 }

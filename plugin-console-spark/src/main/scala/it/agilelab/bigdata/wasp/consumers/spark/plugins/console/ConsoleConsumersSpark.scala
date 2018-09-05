@@ -3,9 +3,10 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.console
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.ConsoleProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.{Datastores, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.WriterModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -38,7 +39,7 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     throw new UnsupportedOperationException(msg)
   }
 
-  override def pluginType: String = Datastores.consoleProduct
+  override def pluginType: String = ConsoleProduct.getActualProduct
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 }

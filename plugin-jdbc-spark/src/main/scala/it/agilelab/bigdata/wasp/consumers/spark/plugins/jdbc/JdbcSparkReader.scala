@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.jdbc
 
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.JDBCProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{Datastores, SqlSourceModel}
 import it.agilelab.bigdata.wasp.core.utils.JdbcConfiguration
@@ -15,7 +16,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
   */
 class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcConfiguration with Logging {
   val name: String = sqlModel.name
-  val readerType: String = Datastores.jdbcProduct
+  val readerType: String = JDBCProduct.getActualProduct
 
   if(! jdbcConfig.connections.isDefinedAt(sqlModel.connectionName)) {
     val msg = s"Jdbc spark reader connectionName not found: '${sqlModel.connectionName}'"

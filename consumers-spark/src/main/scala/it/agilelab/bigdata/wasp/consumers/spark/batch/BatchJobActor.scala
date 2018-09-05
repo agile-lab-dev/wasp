@@ -10,6 +10,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
@@ -61,15 +62,14 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
 
     sparkContext = SparkSingletons.getSparkContext
   }
-
-
+  
   private def stepEnsureReadersAreNotTopicBased(readers: Seq[ReaderModel]): Try[Seq[ReaderModel]] =
-    readers.find(_.datastoreProduct.category == Datastores.topicCategory)
+    readers.find(_.datastoreProduct.isInstanceOf[TopicCategory])
       .map { _ => Failure(new Exception("No stream readers allowed in batch jobs")) }
       .getOrElse(Success(readers))
 
   private def stepEnsureWritersAreNotTopicBased(writer: WriterModel): Try[WriterModel] =
-    if (writer.datastoreProduct.category == Datastores.topicCategory) {
+    if (writer.datastoreProduct.isInstanceOf[TopicCategory]) {
       Failure(new Exception("No stream readers allowed in batch jobs"))
     } else {
       Success(writer)
@@ -81,8 +81,8 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
     case class ReaderPlugin(name: String, endpoint: String, plugin: WaspConsumersSparkPlugin)
 
     val pluginsForReaderModels: Seq[ReaderPlugin] = readerModels.flatMap {
-      case ReaderModel(name, endpointName, readerType) => {
-        plugins.get(readerType.getActualProduct).map(ReaderPlugin(name, endpointName, _))
+      case ReaderModel(name, datastoreModelName, datastoreProduct, options) => {
+        plugins.get(datastoreProduct.getActualProduct).map(ReaderPlugin(name, datastoreModelName, _))
       }
     }
 

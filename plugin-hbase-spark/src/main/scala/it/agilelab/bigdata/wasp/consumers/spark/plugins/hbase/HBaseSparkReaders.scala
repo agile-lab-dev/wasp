@@ -1,15 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.HBaseProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{Datastores, KeyValueModel}
+import it.agilelab.bigdata.wasp.core.models.KeyValueModel
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
 class HBaseSparkReader(keyValueModel: KeyValueModel) extends SparkReader with Logging {
   val name: String = keyValueModel.name
-  val readerType: String = Datastores.hbaseProduct
+  val readerType: String = HBaseProduct.getActualProduct
 
   override def read(sc: SparkContext): DataFrame = {
 

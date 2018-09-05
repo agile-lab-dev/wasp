@@ -13,7 +13,8 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{GenericTopicProduct, KafkaProduct}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
+import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, IndexCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.spark.sql.DataFrame
@@ -128,22 +129,22 @@ class LegacyStreamingETLActor(env: {
   private def validationTask(): Unit = {
     legacyStreamingETL.inputs.foreach({
       case ReaderModel(name, datastoreModelName, KafkaProduct, options) => {
-        val topicOpt = env.topicBL.getByName(endpointName)
+        val topicOpt = env.topicBL.getByName(datastoreModelName)
         if (topicOpt.isEmpty) {
-          throw new Exception(s"There isn't this topic: $endpointName, $name")
+          throw new Exception(s"There isn't this topic: $datastoreModelName, $name")
         }
       }
-      case ReaderModel(name, datastoreModelName, KafkaProduct, options) => {
-        val readerPlugin = plugins.get(readerType.getActualProduct)
+      case ReaderModel(name, datastoreModelName, indexProduct, options) if indexProduct.isInstanceOf[IndexCategory] => {
+        val readerPlugin = plugins.get(indexProduct.getActualProduct)
         if (readerPlugin.isDefined) {
-          readerPlugin.get.getSparkReader(endpointName, name)
+          readerPlugin.get.getSparkReader(datastoreModelName, name)
         } else {
-          throw new Exception(s"There isn't the plugin for this index: '$endpointName', '$name', readerType: '$readerType'")
+          throw new Exception(s"There isn't the plugin for this index: '$datastoreModelName', '$name', readerType: '$indexProduct'")
         }
       }
     })
     val topicReaderModelNumber =
-      legacyStreamingETL.inputs.count(_.datastoreProduct. == GenericTopicProduct.category)
+      legacyStreamingETL.inputs.count(_.datastoreProduct.category == GenericTopicProduct.category)
     if (topicReaderModelNumber == 0)
       throw new Exception("There is NO topic to read data, inputs: " + legacyStreamingETL.inputs)
     if (topicReaderModelNumber != 1)
@@ -162,7 +163,7 @@ class LegacyStreamingETLActor(env: {
             legacyStreamingETL.group,
             legacyStreamingETL.kafkaAccessType,
             topicModel)(ssc)
-        (ReaderKey(TopicModel.readerType, topicModel.name), stream)
+        (ReaderKey(GenericTopicProduct.category, topicModel.name), stream)
       })
 
     //TODO  Join condition between streams
@@ -176,7 +177,7 @@ class LegacyStreamingETLActor(env: {
       if (createStrategy.isDefined) {
         val strategy = createStrategy.get
 
-        val staticReaders = legacyStreamingETL.inputs.filterNot(_.datastoreProduct.category == Datastores.topicCategory)
+        val staticReaders = legacyStreamingETL.inputs.filterNot(_.datastoreProduct.category == GenericTopicProduct.category)
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
           if (staticReaders.isEmpty)
@@ -247,7 +248,7 @@ class LegacyStreamingETLActor(env: {
                         stream: DStream[String],
                         dataStoreDFs: Map[ReaderKey, DataFrame],
                         strategy: Strategy,
-                        writerType: WriterType): DStream[String] = {
+                        datastoreProduct: DatastoreProduct): DStream[String] = {
 
     val sqlContext = SparkSingletons.getSQLContext
 
@@ -304,11 +305,11 @@ class LegacyStreamingETLActor(env: {
         /** use of the broadcasted Strategy required when Strategy is not serializable, e.g. extends Logging (java.io.NotSerializableException: it.agilelab.bigdata.wasp.core.logging.WaspLogger) */
         val output = strategyBroadcast.value.transform(completeMapOfDFs)
 
-        writerType.getActualProduct match {
-          case Datastores.kafkaProduct => output.toJSON.rdd
-          case Datastores.hbaseProduct => output.toJSON.rdd
-          case Datastores.rawProduct => output.toJSON.rdd
-          case Datastores.consoleProduct => output.toJSON.rdd
+        datastoreProduct match {
+          case KafkaProduct => output.toJSON.rdd
+          case HBaseProduct => output.toJSON.rdd
+          case RawProduct => output.toJSON.rdd
+          case ConsoleProduct => output.toJSON.rdd
           case _ => {
             output
               .select(MetadataUtils.flatMetadataSchema(df.schema, None): _*)

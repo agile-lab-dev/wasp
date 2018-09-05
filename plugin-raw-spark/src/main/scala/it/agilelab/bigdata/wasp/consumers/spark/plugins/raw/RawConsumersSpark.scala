@@ -6,9 +6,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
 import it.agilelab.bigdata.wasp.core.bl.{RawBL, RawBLImp}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.RawProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.{Datastores, RawModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.{RawModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -61,7 +62,7 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  override def pluginType: String = Datastores.rawProduct
+  override def pluginType: String = RawProduct.getActualProduct
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 }

@@ -12,9 +12,10 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.ElasticProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.{Datastores, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.WriterModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -119,7 +120,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     }
   }
 
-  override def pluginType: String = Datastores.elasticProduct
+  override def pluginType: String = ElasticProduct.getActualProduct
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 }
