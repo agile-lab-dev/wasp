@@ -58,7 +58,7 @@ case class StructuredStreamingETLModel(name: String,
                                        mlModels: List[MlModelOnlyInfo],
                                        strategy: Option[StrategyModel],
                                        group: String = "default",
-                                       config: Map[String, String]) extends ProcessingComponentModel
+                                       options: Map[String, String]) extends ProcessingComponentModel
 
 case class RTModel(name: String,
                    inputs: List[ReaderModel],
