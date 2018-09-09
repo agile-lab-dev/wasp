@@ -52,13 +52,24 @@ case class LegacyStreamingETLModel(name: String,
                                    group: String = "default",
                                    var isActive: Boolean = false) extends ProcessingComponentModel
 
+/**
+  * A streaming processing component that leverages Spark's Structured Streaming API.
+  *
+  * @param name unique name of the processing component
+  * @param inputs list of inputs
+  * @param output streaming output
+  * @param mlModels machine learngin models to be used in the processing
+  * @param strategy name of a class implementing `Strategy` that defines the processing
+  * @param group group of which the processing component is part
+  * @param options has no effect at all
+  */
 case class StructuredStreamingETLModel(name: String,
+                                       group: String = "default",
                                        inputs: List[ReaderModel],
                                        output: WriterModel,
                                        mlModels: List[MlModelOnlyInfo],
                                        strategy: Option[StrategyModel],
-                                       group: String = "default",
-                                       options: Map[String, String]) extends ProcessingComponentModel
+                                       options: Map[String, String] = Map.empty) extends ProcessingComponentModel
 
 case class RTModel(name: String,
                    inputs: List[ReaderModel],

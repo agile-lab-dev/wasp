@@ -298,7 +298,7 @@ private[wasp] object LoggerPipegraph {
         output = writer,
         mlModels = List(),
         strategy = None,
-        config = Map())
+        options = Map())
     ),
 
 		rtComponents = List(),
@@ -338,7 +338,7 @@ private[wasp] object TelemetryPipegraph {
 				output = writer,
 				mlModels = List(),
 				strategy = None,
-				config = Map())
+				options = Map())
 		),
 
 		rtComponents = List(),

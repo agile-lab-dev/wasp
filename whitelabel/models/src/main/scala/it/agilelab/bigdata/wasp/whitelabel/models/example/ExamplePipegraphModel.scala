@@ -25,7 +25,7 @@ private[wasp] object ExamplePipegraphModel {
         mlModels = List.empty,
         strategy = None,
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
-        config = Map()
+        options = Map()
       )
     ),
     rtComponents = List(),

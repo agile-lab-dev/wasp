@@ -26,7 +26,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -51,7 +51,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.consoleWriter("Console Writer with metadata"),
             mlModels = List(),
             strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestEchoStrategy")),
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -76,7 +76,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.json2),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -101,7 +101,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.solrWriter("Solr Writer", TestIndexModel.solr),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -126,7 +126,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.elasticWriter("Elastic Writer", TestIndexModel.elastic),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -151,7 +151,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -176,7 +176,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbase),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -248,7 +248,7 @@ private[wasp] object TestPipegraphs {
                 //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV3",
                 //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV4",
                 ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
-              config = Map()
+              options = Map()
             )
           ),
           rtComponents = List(),
@@ -408,7 +408,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -433,7 +433,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.avro2),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -458,7 +458,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.solrWriter("Solr Writer", TestIndexModel.solr),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -483,7 +483,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.elasticWriter("Elastic Writer", TestIndexModel.elastic),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -508,7 +508,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -533,7 +533,7 @@ private[wasp] object TestPipegraphs {
             output = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbase),
             mlModels = List(),
             strategy = None,
-            config = Map()
+            options = Map()
           )
         ),
         rtComponents = List(),
@@ -605,7 +605,7 @@ private[wasp] object TestPipegraphs {
                 //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV3",
                 //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV4",
                 ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
-              config = Map()
+              options = Map()
             )
           ),
           rtComponents = List(),
