@@ -2,7 +2,7 @@ version: '2'
 services:
  namenode:
       build: ./hdfs/
-      image: hdfs_cdh:5.13
+      image: hdfs_cdh:5.12
       command: hdfs namenode
       environment:
         - HADOOP_NAMENODE_OPTS=-Xms200m -Xmx200m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:+PrintTenuringDistribution
@@ -16,7 +16,7 @@ services:
 
  datanode:
       build: ./hdfs/
-      image: hdfs_cdh:5.13
+      image: hdfs_cdh:5.12
       command: hdfs datanode
       environment:
         - HADOOP_DATANODE_OPTS=-Xms200m -Xmx200m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:+PrintTenuringDistribution

@@ -1,4 +1,4 @@
-FROM base_cdh:5.13
+FROM base_cdh:5.12
 MAINTAINER AgileLab WASP Team <wasp@agilelab.it>
 
 RUN yum -y  -q install hadoop-conf-pseudo && \

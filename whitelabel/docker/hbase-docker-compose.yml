@@ -2,7 +2,7 @@ version: '2'
 services:
  hbase:
       build: ./hbase
-      image: hbase_cdh:5.13
+      image: hbase_cdh:5.12
       hostname: hbase
       ports:
           - "60010:60010"

@@ -5,7 +5,7 @@ ENV TERM xterm
 
 ENV JAVA_HOME /usr/java/jdk1.8.0_181-amd64/
 ENV JAVA_VERSION 8b181
-ARG CLOUDERA_VERSION=5.13
+ARG CLOUDERA_VERSION=5.12
 
 ADD cloudera-cdh5.repo.template ./
 

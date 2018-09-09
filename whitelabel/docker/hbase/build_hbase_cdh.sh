@@ -19,8 +19,8 @@ cd $SCRIPT_DIR
 
 cd ../base_cdh
 
-$DOCKER_CMD build --rm -t base_cdh:5.13 .
+$DOCKER_CMD build --rm -t base_cdh:5.12 .
 
 cd ../hbase
 
-$DOCKER_CMD build --rm -t hbase_cdh:5.13 .
+$DOCKER_CMD build --rm -t hbase_cdh:5.12 .
