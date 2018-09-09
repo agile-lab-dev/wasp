@@ -2,8 +2,15 @@ package it.agilelab.bigdata.wasp.core.models
 
 import it.agilelab.bigdata.wasp.core.datastores._
 
+// this exists because we want to keep the declaration on one line because of a quirk of the compiler when
+// using both an annotation and an access modifier: it doesn't allow us to break it into more than one line,
+// complaining about the case class missing a parameter list
+object DeprecationMessageReaderModel {
+  val deprecationMessage = "Please use the other apply or the factory methods provided in the companion " +
+    "object as they ensure compatibility between the DatastoreModel and the " +
+    "DatastoreProduct"
+}
 
-// TODO: switch to new apply as main ctor (see companion)
 /**
 	* A model for a reader, composed by a name, a datastoreModelName defining the datastore, a datastoreProduct
 	* defining the datastore software product to use, and any additional options needed to configure the reader.
@@ -13,10 +20,11 @@ import it.agilelab.bigdata.wasp.core.datastores._
 	* @param datastoreProduct the datastore software product to be used when reading
   * @param options additional options for the reader
 	*/
-case class ReaderModel @deprecated("Please use the other apply or the factory methods provided in the companion " +
-	                                 "object as they ensure compatibility between the DatastoreModel and the " +
-                                   "DatastoreProduct")
-                       (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String])
+case class ReaderModel @deprecated(DeprecationMessageReaderModel.deprecationMessage) private[wasp]
+                       (name: String,
+                        datastoreModelName: String,
+                        datastoreProduct: DatastoreProduct,
+                        options: Map[String, String])
 
 object ReaderModel {
   import DatastoreProduct._
