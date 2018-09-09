@@ -53,6 +53,7 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
                                   output = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
                                   mlModels = List(),
                                   strategy = None,
+                                  triggerInterval = None,
                                   options = Map()
       )),
     rtComponents = List.empty,
