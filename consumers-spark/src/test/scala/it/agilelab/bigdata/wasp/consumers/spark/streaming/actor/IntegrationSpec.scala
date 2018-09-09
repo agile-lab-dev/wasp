@@ -44,7 +44,7 @@ class IntegrationSpec
         output = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
         mlModels = List(),
         strategy = None,
-        triggerInterval = None,
+        triggerIntervalMs = None,
         options = Map()
       )),
     rtComponents = List.empty,
