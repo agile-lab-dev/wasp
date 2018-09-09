@@ -34,6 +34,7 @@ object WriterModel {
            (implicit ev: DSP <:< DSC): WriterModel = {
 		WriterModel(name, datastoreModel.name, datastoreProduct, options)
 	}
+
 	def indexWriter(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
     apply(name, indexModel, GenericIndexProduct, options)
 	def elasticWriter(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =

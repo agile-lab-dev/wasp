@@ -34,6 +34,7 @@ object ReaderModel {
            (implicit ev: DSP <:< DSC): ReaderModel = {
 		ReaderModel(name, datastoreModel.name, datastoreProduct, options)
 	}
+
 	def indexReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
     apply(name, indexModel, GenericIndexProduct, options)
 	def elasticReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
