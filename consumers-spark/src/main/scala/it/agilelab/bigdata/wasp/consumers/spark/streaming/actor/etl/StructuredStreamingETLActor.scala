@@ -13,6 +13,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol =>
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => PipegraphProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.telemetry.TelemetryActor
 import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.SparkSession
@@ -20,7 +21,7 @@ import org.apache.spark.sql.SparkSession
 import scala.util.{Failure, Success}
 
 class StructuredStreamingETLActor private(override val reader: StructuredStreamingReader,
-                                          override val plugins: Map[String, WaspConsumersSparkPlugin],
+                                          override val plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
                                           override val sparkSession: SparkSession,
                                           override val mlModelBl: MlModelBL,
                                           override val topicsBl: TopicBL,
@@ -102,7 +103,7 @@ object StructuredStreamingETLActor {
   type TelemetryActorFactory = (String, ActorRefFactory) => ActorRef
 
   def props(reader: StructuredStreamingReader,
-            plugins: Map[String, WaspConsumersSparkPlugin],
+            plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
             sparkSession: SparkSession,
             mlModelBl: MlModelBL,
             topicsBl: TopicBL,

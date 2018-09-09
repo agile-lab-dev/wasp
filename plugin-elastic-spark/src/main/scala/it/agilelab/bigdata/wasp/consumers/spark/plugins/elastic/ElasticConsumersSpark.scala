@@ -12,10 +12,11 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.ElasticProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.WriterModel
+import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, ReaderModel, StructuredStreamingETLModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -33,6 +34,8 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var indexBL: IndexBL = _
   var elasticAdminActor_ : ActorRef = _
 
+  override def datastoreProduct: DatastoreProduct = ElasticProduct
+
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info("Initialize the index BL")
     indexBL = new IndexBLImp(waspDB)
@@ -46,23 +49,29 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     startupElastic(servicesTimeoutMillis)
   }
 
-  override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
+  override def getValidationRules: Seq[ValidationRule] = Seq()
+
+  override def getSparkLegacyStreamingWriter(ssc: StreamingContext,
+                                             legacyStreamingETLModel: LegacyStreamingETLModel,
+                                             writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
     new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName, elasticAdminActor_)
   }
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
+  override def getSparkStructuredStreamingWriter(ss: SparkSession,
+                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
+                                                 writerModel: WriterModel): ElasticSparkStructuredStreamingWriter = {
     logger.info(s"Initialize the elastic spark structured streaming writer with this writer model name '${writerModel.name}'")
     new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, elasticAdminActor_)
   }
 
-  override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     logger.info(s"Initialize the elastic spark batch writer with this writer model name '${writerModel.name}'")
     new ElasticSparkWriter(indexBL, sc, writerModel.name, elasticAdminActor_)
   }
 
-  override def getSparkReader(endpointName: String, name: String): SparkReader = {
-    val indexOpt = indexBL.getByName(endpointName)
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+    val indexOpt = indexBL.getByName(readerModel.name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -94,7 +103,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
         throw new Exception(msg)
       }
     } else {
-      val msg = s"Elastic spark reader indexOption not found: id: '$endpointName, name: $name'"
+      val msg = s"Index model not found: $readerModel"
       logger.error(msg)
       throw new Exception(msg)
     }
@@ -119,8 +128,4 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
       case None => throw new UnknownError("Unknown error during Elastic connection initialization")
     }
   }
-
-  override def pluginType: String = ElasticProduct.getActualProduct
-
-  override def getValidationRules: Seq[ValidationRule] = Seq()
 }

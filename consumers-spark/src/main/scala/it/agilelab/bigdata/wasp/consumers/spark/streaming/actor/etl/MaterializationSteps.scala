@@ -61,7 +61,7 @@ trait MaterializationSteps {
   }
 
   private def createWriter(etl: StructuredStreamingETLModel): Try[SparkStructuredStreamingWriter] = {
-    Try(writerFactory(etl.output)) match {
+    Try(writerFactory(etl, etl.output)) match {
       case Success(Some(writer)) => Success(writer)
       case Success(None) => Failure(new Exception("Could not instantiate writer"))
       case failure: Failure[Option[SparkStructuredStreamingWriter]] => Failure(failure.exception)
@@ -86,5 +86,5 @@ object MaterializationSteps {
     *
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
-  type WriterFactory = (WriterModel) => Option[SparkStructuredStreamingWriter]
+  type WriterFactory = (StructuredStreamingETLModel, WriterModel) => Option[SparkStructuredStreamingWriter]
 }

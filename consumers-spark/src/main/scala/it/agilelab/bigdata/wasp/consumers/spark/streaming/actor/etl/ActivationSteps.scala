@@ -43,7 +43,7 @@ trait ActivationSteps {
   /**
     * We need the plugins map
     */
-  protected val plugins: Map[String, WaspConsumersSparkPlugin]
+  protected val plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin]
 
   /**
     * We need a Spark Session
@@ -141,12 +141,10 @@ trait ActivationSteps {
                                                             readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
 
       def createReader(readerModel: ReaderModel): Try[SparkReader] = Try {
-        readerModel match {
-          case ReaderModel(name, datastoreModelName, datastoreProduct, options) =>
-            plugins.get(datastoreProduct.getActualProduct) match {
-              case Some(r) => r.getSparkReader(datastoreModelName, name)
-              case None => throw new Exception(s"""Cannot create Reader, no plugin able to handle datastore product "$datastoreProduct" found""")
-            }
+        val datastoreProduct = readerModel.datastoreProduct
+        plugins.get(datastoreProduct) match {
+          case Some(r) => r.getSparkBatchReader(sparkSession.sparkContext, readerModel)
+          case None => throw new Exception(s"""Cannot create Reader, no plugin able to handle datastore product "$datastoreProduct" found""")
         }
       }
 

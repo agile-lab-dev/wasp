@@ -10,7 +10,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
+import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
@@ -37,14 +37,14 @@ object BatchJobActor {
     */
   def props(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
             sparkWriterFactory: SparkWriterFactory,
-            plugins: Map[String, WaspConsumersSparkPlugin],
+            plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
             checkInterval: FiniteDuration) = Props(new BatchJobActor(env, sparkWriterFactory, plugins, checkInterval))
 
 }
 
 class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
                     sparkWriterFactory: SparkWriterFactory,
-                    plugins: Map[String, WaspConsumersSparkPlugin],
+                    plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
                     checkInterval: FiniteDuration)
   extends Actor
     with Logging
@@ -78,18 +78,18 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
 
   private def stepStaticReaders(readerModels: Seq[ReaderModel]): Try[Seq[SparkReader]] = {
 
-    case class ReaderPlugin(name: String, endpoint: String, plugin: WaspConsumersSparkPlugin)
+    case class ReaderPlugin(readerModel: ReaderModel, plugin: WaspConsumersSparkPlugin)
 
     val pluginsForReaderModels: Seq[ReaderPlugin] = readerModels.flatMap {
-      case ReaderModel(name, datastoreModelName, datastoreProduct, options) => {
-        plugins.get(datastoreProduct.getActualProduct).map(ReaderPlugin(name, datastoreModelName, _))
+      readerModel => {
+        plugins.get(readerModel.datastoreProduct).map(ReaderPlugin(readerModel, _))
       }
     }
 
     val zero = Try(Seq.empty[SparkReader])
 
     pluginsForReaderModels.foldLeft(zero)((a, b) => a.flatMap(readers => Try {
-      readers ++ Seq(b.plugin.getSparkReader(b.endpoint, b.name))
+      readers ++ Seq(b.plugin.getSparkBatchReader(sparkContext, b.readerModel))
     }))
 
   }

@@ -19,6 +19,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Pipeg
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.watchdog.SparkContextWatchDog
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -262,7 +263,7 @@ object SparkConsumersStreamingMasterGuardian  {
     context.actorOf(SparkContextWatchDog.logAndDoNothingWatchdogProps(sc), name)
 
   def defaultChildCreator(reader: StructuredStreamingReader,
-                          plugins: Map[String, WaspConsumersSparkPlugin],
+                          plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
                           sparkSession: SparkSession,
                           sparkWriterFactory: SparkWriterFactory,
                           retryDuration: FiniteDuration,
@@ -280,8 +281,8 @@ object SparkConsumersStreamingMasterGuardian  {
 
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
-    val writerFactory: MaterializationSteps.WriterFactory = { writerModel =>
-      sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, writerModel)
+    val writerFactory: MaterializationSteps.WriterFactory = { (structuredStreamingETLModel, writerModel) =>
+      sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETLModel, writerModel)
     }
 
 

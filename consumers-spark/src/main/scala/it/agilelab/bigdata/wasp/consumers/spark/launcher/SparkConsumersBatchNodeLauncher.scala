@@ -8,6 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 
@@ -21,7 +22,7 @@ import scala.collection.JavaConverters._
 	*/
 trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
 
-	var plugins: Map[String, WaspConsumersSparkPlugin] = Map()
+	var plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin] = Map()
 
 	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 		val sparkConsumersBatchMasterGuardianSingletonInfo = (
@@ -39,21 +40,21 @@ trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLaun
 		* @param args command line arguments
 		*/
 	override def initializePlugins(args: Array[String]): Unit = {
-		logger.info("Finding WASP batch consumers spark plugins")
+		logger.info("Finding Spark consumers plugins")
 		val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] = ServiceLoader.load[WaspConsumersSparkPlugin](classOf[WaspConsumersSparkPlugin])
 		val pluginsList = pluginLoader.iterator().asScala.toList
 		logger.info(s"Found ${pluginsList.size} plugins")
-		logger.info("Initializing batch consumers spark plugins")
+		logger.info("Initializing Spark consumers plugins")
 		plugins = pluginsList.map({
 			plugin => {
-				logger.info(s"Initializing batch consumers spark plugin ${plugin.getClass.getSimpleName} with this type: ${plugin.pluginType}")
+				logger.info(s"Initializing Spark consumers plugin ${plugin.getClass.getSimpleName} for datastore product ${plugin.datastoreProduct}")
 				plugin.initialize(waspDB)
 				// You cannot have two plugin with the same name
-				(plugin.pluginType, plugin)
+				(plugin.datastoreProduct, plugin)
 			}
 		}).toMap
 
-		logger.info(s"Initialized all batch consumers spark plugins")
+		logger.info(s"Initialized all Spark consumers plugins")
 	}
 
 	override def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Unit = {

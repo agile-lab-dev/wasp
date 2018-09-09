@@ -12,10 +12,11 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.SolrProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.WriterModel
+import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, ReaderModel, StructuredStreamingETLModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -33,6 +34,8 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var indexBL: IndexBL = _
   var solrAdminActor_ : ActorRef = _
 
+  override def datastoreProduct: DatastoreProduct = SolrProduct
+
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info("Initialize the index BL")
     indexBL = new IndexBLImp(waspDB)
@@ -45,23 +48,29 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     startupSolr(servicesTimeoutMillis)
   }
 
-  override def getSparkLegacyStreamingWriter(ssc: StreamingContext, writerModel: WriterModel): SparkLegacyStreamingWriter = {
+  override def getValidationRules: Seq[ValidationRule] = Seq()
+
+  override def getSparkLegacyStreamingWriter(ssc: StreamingContext,
+                                             legacyStreamingETLModel: LegacyStreamingETLModel,
+                                             writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the solr spark streaming writer with this writer model name '${writerModel.datastoreModelName}'")
     new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName, solrAdminActor_)
   }
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession, writerModel: WriterModel) = {
+  override def getSparkStructuredStreamingWriter(ss: SparkSession,
+                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
+                                                 writerModel: WriterModel): SolrSparkStructuredStreamingWriter = {
     logger.info(s"Initialize the solr spark structured streaming writer with this writer model endpointName '${writerModel.datastoreModelName}'")
     new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, solrAdminActor_)
   }
 
-  override def getSparkWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
     logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.datastoreModelName}'")
     new SolrSparkWriter(indexBL, sc, writerModel.datastoreModelName, solrAdminActor_)
   }
 
-  override def getSparkReader(endpointId: String, name: String): SparkReader = {
-    val indexOpt = indexBL.getByName(endpointId)
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+    val indexOpt = indexBL.getByName(readerModel.name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
       val indexName = index.eventuallyTimedName
@@ -84,7 +93,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
         throw new Exception(msg)
       }
     } else {
-      val msg = s"Solr spark reader indexOption not found - id: '$endpointId, name: $name'"
+      val msg = s"Index model not found: $readerModel"
       logger.error(msg)
       throw new Exception(msg)
     }
@@ -109,8 +118,4 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
       case None => throw new UnknownError("Unknown error during Solr connection initialization")
     }
   }
-
-  override def pluginType: String = SolrProduct.getActualProduct
-
-  override def getValidationRules: Seq[ValidationRule] = Seq()
 }

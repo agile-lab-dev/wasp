@@ -35,7 +35,7 @@ class LegacyStreamingETLActor(env: {
                               pipegraph: PipegraphModel,
                               legacyStreamingETL: LegacyStreamingETLModel,
                               listener: ActorRef,
-                              plugins: Map[String, WaspConsumersSparkPlugin])
+                              plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin])
   extends Actor
     with Logging {
 
@@ -93,14 +93,14 @@ class LegacyStreamingETLActor(env: {
     */
   private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
     staticReaderModels.flatMap({
-      case ReaderModel(name, datastoreModelName, datastoreProduct, options) =>
-        val readerProduct = datastoreProduct.getActualProduct
-        logger.info(s"Get reader plugin $readerProduct before was $datastoreProduct, plugin map: $plugins")
-        val readerPlugin = plugins.get(readerProduct)
+      case readerModel =>
+        val datastoreProduct = readerModel.datastoreProduct
+        logger.info(s"Finding reader plugin for datastore product $datastoreProduct")
+        val readerPlugin = plugins.get(datastoreProduct)
         if (readerPlugin.isDefined) {
-          Some(readerPlugin.get.getSparkReader(datastoreModelName, name))
+          Some(readerPlugin.get.getSparkBatchReader(ssc.sparkContext, readerModel))
         } else {
-          logger.error(s"The $readerProduct plugin in staticReaderModels does not exists")
+          logger.error(s"No plugin found for datastore product $datastoreProduct!")
           None
         }
       case _ => None
@@ -127,6 +127,8 @@ class LegacyStreamingETLActor(env: {
       })
 
   private def validationTask(): Unit = {
+    // WTF is the point of this? for topics we check the topic model, for indexes we check the plugin, for the other ones... nothing?
+    /*
     legacyStreamingETL.inputs.foreach({
       case ReaderModel(name, datastoreModelName, KafkaProduct, options) => {
         val topicOpt = env.topicBL.getByName(datastoreModelName)
@@ -135,14 +137,15 @@ class LegacyStreamingETLActor(env: {
         }
       }
       case ReaderModel(name, datastoreModelName, indexProduct, options) if indexProduct.isInstanceOf[IndexCategory] => {
-        val readerPlugin = plugins.get(indexProduct.getActualProduct)
+        val readerPlugin = plugins.get(indexProduct)
         if (readerPlugin.isDefined) {
-          readerPlugin.get.getSparkReader(datastoreModelName, name)
+          readerPlugin.get.getSparkBatchReader(datastoreModelName, name)
         } else {
           throw new Exception(s"There isn't the plugin for this index: '$datastoreModelName', '$name', readerType: '$indexProduct'")
         }
       }
     })
+    */
     val topicReaderModelNumber =
       legacyStreamingETL.inputs.count(_.datastoreProduct.category == GenericTopicProduct.category)
     if (topicReaderModelNumber == 0)
@@ -218,7 +221,7 @@ class LegacyStreamingETLActor(env: {
         topicStreamWithKey._2
       }
 
-    val sparkWriterOpt = sparkWriterFactory.createSparkWriterStreaming(env, ssc, legacyStreamingETL.output)
+    val sparkWriterOpt = sparkWriterFactory.createSparkWriterLegacyStreaming(env, ssc, legacyStreamingETL, legacyStreamingETL.output)
     sparkWriterOpt match {
       case Some(writer) => writer.write(outputStream)
       case None => throw new Exception(s"No Spark Streaming writer available for writer ${legacyStreamingETL.output}")

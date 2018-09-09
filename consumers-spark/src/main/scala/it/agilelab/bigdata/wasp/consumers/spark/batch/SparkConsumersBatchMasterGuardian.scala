@@ -8,6 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriterFactory, SparkWriterFactoryDefault}
 import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.BatchMessages
 import it.agilelab.bigdata.wasp.core.models.JobStatus.JobStatus
@@ -31,7 +32,7 @@ object SparkConsumersBatchMasterGuardian {
     * @param plugins The plugins
     * @return the exitingWatchdogProps of the [[SparkConsumersBatchMasterGuardian]] actor
     */
-  def props(env: {val batchJobBL: BatchJobBL; val batchSchedulersBL: BatchSchedulersBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL}, sparkWriterFactory: SparkWriterFactory, plugins: Map[String, WaspConsumersSparkPlugin]): Props = {
+  def props(env: {val batchJobBL: BatchJobBL; val batchSchedulersBL: BatchSchedulersBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL}, sparkWriterFactory: SparkWriterFactory, plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin]): Props = {
     props(env.batchJobBL, env.batchSchedulersBL, 10, refFactory => refFactory.actorOf(BatchJobActor.props(env, sparkWriterFactory, plugins, retryDuration)))
   }
 

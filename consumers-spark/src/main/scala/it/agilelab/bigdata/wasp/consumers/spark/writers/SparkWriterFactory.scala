@@ -2,36 +2,35 @@ package it.agilelab.bigdata.wasp.consumers.spark.writers
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.WriterModel
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
 
 trait SparkWriterFactory {
-
-  def createSparkWriterStreaming(env: {val indexBL: IndexBL; val topicBL: TopicBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ssc: StreamingContext, writerModel: WriterModel): Option[SparkLegacyStreamingWriter]
-  def createSparkWriterStructuredStreaming(env: {val indexBL: IndexBL; val topicBL: TopicBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ss: SparkSession, writerModel: WriterModel): Option[SparkStructuredStreamingWriter]
+  def createSparkWriterLegacyStreaming(env: {val indexBL: IndexBL; val topicBL: TopicBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ssc: StreamingContext, legacyStreamingETLModel: LegacyStreamingETLModel, writerModel: WriterModel): Option[SparkLegacyStreamingWriter]
+  def createSparkWriterStructuredStreaming(env: {val indexBL: IndexBL; val topicBL: TopicBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ss: SparkSession, structuredStreamingETLModel: StructuredStreamingETLModel, writerModel: WriterModel): Option[SparkStructuredStreamingWriter]
   def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter]
 }
 
-case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlugin]) extends SparkWriterFactory with Logging {
+case class SparkWriterFactoryDefault(plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin]) extends SparkWriterFactory with Logging {
 
-  override def createSparkWriterStreaming(env: {
+  override def createSparkWriterLegacyStreaming(env: {
     val topicBL: TopicBL
     val indexBL: IndexBL
     val rawBL: RawBL
     val keyValueBL: KeyValueBL
-  }, ssc: StreamingContext, writerModel: WriterModel): Option[SparkLegacyStreamingWriter] = {
+  }, ssc: StreamingContext, etlModel: LegacyStreamingETLModel, writerModel: WriterModel): Option[SparkLegacyStreamingWriter] = {
 
-    val writerType = writerModel.datastoreProduct.getActualProduct
+    val writerType = writerModel.datastoreProduct
 
     // Get the plugin
     val writerPlugin = plugins.get(writerType)
 
     if (writerPlugin.isDefined) {
-      Some(writerPlugin.get.getSparkLegacyStreamingWriter(ssc, writerModel))
+      Some(writerPlugin.get.getSparkLegacyStreamingWriter(ssc, etlModel, writerModel))
     } else {
       logger.error(s"""Invalid spark streaming writer type: "$writerType" in writer model: $writerModel""")
       None
@@ -43,16 +42,15 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
     val keyValueBL: KeyValueBL
     val topicBL: TopicBL
     val indexBL: IndexBL
-  }, ss: SparkSession, writerModel: WriterModel) = {
-
-    val writerType = writerModel.datastoreProduct.getActualProduct
+  }, ss: SparkSession, etlModel: StructuredStreamingETLModel, writerModel: WriterModel): Option[SparkStructuredStreamingWriter] = {
+    val datastoreProduct = writerModel.datastoreProduct
 
     // Get the plugin
-    val writerPlugin = plugins.get(writerType)
+    val writerPlugin = plugins.get(datastoreProduct)
     if (writerPlugin.isDefined) {
-      Some(writerPlugin.get.getSparkStructuredStreamingWriter(ss, writerModel))
+      Some(writerPlugin.get.getSparkStructuredStreamingWriter(ss, etlModel, writerModel))
     } else {
-      logger.error(s"""Invalid spark structured streaming writer type: "$writerType" in writer model: $writerModel""")
+      logger.error(s"""Invalid Spark Structured Streaming datastore product "$datastoreProduct" in writer model: $writerModel""")
       None
     }
   }
@@ -63,12 +61,12 @@ case class SparkWriterFactoryDefault(plugins: Map[String, WaspConsumersSparkPlug
     val keyValueBL: KeyValueBL
   }, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter] = {
 
-    val writerType = writerModel.datastoreProduct.getActualProduct
+    val writerType = writerModel.datastoreProduct
 
     // Get the plugin
     val writerPlugin = plugins.get(writerType)
     if (writerPlugin.isDefined) {
-      Some(writerPlugin.get.getSparkWriter(sc, writerModel))
+      Some(writerPlugin.get.getSparkBatchWriter(sc, writerModel))
     } else {
       logger.error(s"""Invalid spark writer type: "$writerType" in writer model: $writerModel""")
       None
