@@ -6,11 +6,11 @@ import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.ElasticConfiguration
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.streaming.DataStreamWriter
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.elasticsearch.spark.sparkRDDFunctions
@@ -76,9 +76,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
     with ElasticConfiguration
     with Logging {
 
-  override def write(stream: DataFrame,
-                     queryName: String,
-                     checkpointDir: String): StreamingQuery = {
+  override def write(stream: DataFrame): DataStreamWriter[Row] = {
 
     val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
@@ -97,10 +95,7 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(s"The index name must be all lowercase: $index")
       }
 
-
-
-      val options = Map("checkpointLocation" -> checkpointDir) ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
-
+      val options = indexOpt.get.idField.map(it => ("es.mapping.id", it)).toMap
 
       if (??[Boolean](
           elasticAdminActor,
@@ -110,18 +105,10 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           index.dataType,
           index.getJsonSchema))) {
 
-        val streamWriter = stream.writeStream
+        stream
+          .writeStream
           .options(options)
           .format("es")
-          .queryName(queryName)
-
-        if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
-          streamWriter
-            .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
-            .start(resource)
-        else
-          streamWriter.start(resource)
-
       } else {
         val msg = s"Error creating elastic index: $index with this index name $indexName"
         logger.error(msg)

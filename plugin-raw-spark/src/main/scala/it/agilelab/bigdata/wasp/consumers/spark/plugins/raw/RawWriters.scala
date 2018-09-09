@@ -7,9 +7,9 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
+import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
@@ -69,7 +69,7 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
                                         ss: SparkSession)
   extends SparkStructuredStreamingWriter with Logging {
 
-  override def write(stream: DataFrame, queryName: String, checkpointDir: String): StreamingQuery = {
+  override def write(stream: DataFrame): DataStreamWriter[Row] = {
   
     // get path timed or standard
     val path = if (hdfsModel.timed) {
@@ -90,23 +90,13 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
     val extraOptions = options.extraOptions.getOrElse(Map())
     val partitionBy = options.partitionBy.getOrElse(Nil)
 
-    // configure and start streaming
-    val partialStreamWriter = stream.writeStream
+    // create and configure DataStreamWriter
+    stream.writeStream
       .format(format)
       .outputMode(mode)
       .options(extraOptions)
       .partitionBy(partitionBy:_*)
-      .option("checkpointLocation", checkpointDir)
       .option("path", path)
-      .queryName(queryName)
-
-
-    if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
-      partialStreamWriter
-        .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
-        .start()
-    else
-      partialStreamWriter.start()
   }
 }
 

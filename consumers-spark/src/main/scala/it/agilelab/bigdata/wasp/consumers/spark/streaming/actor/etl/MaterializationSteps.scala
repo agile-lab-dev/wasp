@@ -7,8 +7,8 @@ import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.genera
 import it.agilelab.bigdata.wasp.core.models.configuration.SparkStreamingConfigModel
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
 
 import scala.util.{Failure, Success, Try}
 
@@ -17,15 +17,14 @@ import scala.util.{Failure, Success, Try}
   */
 trait MaterializationSteps {
 
-
   /**
     * We need a writer factory
     */
   protected val writerFactory: WriterFactory
 
-
   /**
-    * Performs materialization of a dataFrame activated from a [[StructuredStreamingETLModel]]
+    * Performs materialization of a DataFrame activated from a [[StructuredStreamingETLModel]].
+    *
     * @param etl The etl whose output dataFrame is being materialized
     * @param pipegraph The pipegraph containing the etl
     * @param dataFrame The [[DataFrame]] created by the activation step
@@ -34,21 +33,22 @@ trait MaterializationSteps {
   protected def materialize(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel, dataFrame: DataFrame)
     : Try[StreamingQuery] =
     for {
-    config <- retrieveSparkStreamingConfig.recoverWith {
-      case e: Throwable => Failure(new Exception(s"Cannot retrieve spark streaming config in etl ${etl.name}", e))
+      config <- retrieveSparkStreamingConfig.recoverWith {
+      case e: Throwable => Failure(new Exception(s"Cannot retrieve Spark Streaming config for etl ${etl.name}", e))
     }
-    checkpointDir <- generateCheckPointDir(etl, config, pipegraph).recoverWith {
-      case e: Throwable => Failure(new Exception(s"Cannot create checkpoint dir for etl ${etl.name}", e))
+      checkpointDir <- generateCheckPointDir(etl, config, pipegraph).recoverWith {
+      case e: Throwable => Failure(new Exception(s"Cannot generate checkpoint dir name for etl ${etl.name}", e))
     }
-    writer <- createWriter(etl).recoverWith {
-      case e: Throwable => Failure(new Exception(s"Cannot create writer in etl ${etl.name}", e))
+      sparkStructuredStreamingWriter <- createWriter(etl).recoverWith {
+      case e: Throwable => Failure(new Exception(s"Cannot create Spark Structured Streaming writer for etl ${etl.name}", e))
     }
-    streamingQuery <- write(writer, dataFrame, queryName(etl, pipegraph), checkpointDir).recoverWith {
+      dataStreamWriter <- write(sparkStructuredStreamingWriter, dataFrame).recoverWith {
+      case e: Throwable => Failure(new Exception(s"Cannot create DataStreamWriter for etl ${etl.name}", e))
+    }
+      streamingQuery <- startQuery(dataStreamWriter, config, etl, queryName(etl, pipegraph), checkpointDir).recoverWith {
       case e: Throwable => Failure(new Exception(s"Cannot materialize etl ${etl.name}", e))
     }
   } yield streamingQuery
-
-
 
   private def generateCheckPointDir(etl: StructuredStreamingETLModel,
                                     sparkStreamingConfig: SparkStreamingConfigModel,
@@ -68,14 +68,32 @@ trait MaterializationSteps {
     }
   }
 
-  private def write(writer: SparkStructuredStreamingWriter, dataFrame: DataFrame, queryName: String,
-                    checkpointDir: String): Try[StreamingQuery] =
+  private def write(writer: SparkStructuredStreamingWriter, dataFrame: DataFrame): Try[DataStreamWriter[Row]] =
     Try {
-      writer.write(dataFrame, queryName, checkpointDir)
+      writer.write(dataFrame)
+    }
+
+  private def startQuery(dataStreamWriter: DataStreamWriter[Row],
+                         config: SparkStreamingConfigModel,
+                         etl: StructuredStreamingETLModel,
+                         queryName: String,
+                         checkpointDir: String): Try[StreamingQuery] =
+    Try {
+      // grab the trigger interval from the etl, or if not specified from the config, or if not specified use 0
+      val triggerInterval = config
+        .triggerIntervalMs
+        .getOrElse(0l) // this is the same default that Spark uses, see org.apache.spark.sql.streaming.DataStreamWriter
+
+      val trigger = Trigger.ProcessingTime(triggerInterval)
+
+      dataStreamWriter
+        .queryName(queryName)
+        .option("checkpointLocation", checkpointDir)
+        .trigger(trigger)
+        .start()
     }
 
   private def queryName(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel) = generateUniqueComponentName(pipegraph, etl)
-
 
 }
 

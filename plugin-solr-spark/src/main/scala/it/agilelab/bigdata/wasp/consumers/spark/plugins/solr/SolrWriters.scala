@@ -9,14 +9,14 @@ import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SolrConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
 import org.apache.solr.client.solrj.impl.CloudSolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
-import org.apache.spark.sql.types.{DataType, MapType, StructField, StructType}
+import org.apache.spark.sql.types.{MapType, StructType}
+import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
@@ -140,9 +140,7 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     with SolrConfiguration
     with Logging {
 
-  override def write(stream: DataFrame,
-                     queryName: String,
-                     checkpointDir: String): StreamingQuery = {
+  override def write(stream: DataFrame): DataStreamWriter[Row] = {
 
     // get index model from BL
     val indexOpt: Option[IndexModel] = indexBL.getByName(name)
@@ -167,19 +165,8 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
           index.collection,
           index.idField)
 
-        val streamWriter = stream.writeStream
-          .option("checkpointLocation", checkpointDir)
+        stream.writeStream
           .foreach(solrWriter)
-          .queryName(queryName)
-
-        if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
-          streamWriter
-            .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
-            .start()
-        else
-          streamWriter.start()
-
-
       } else {
         val msg = s"Error creating solr index: $index with this index name $indexName"
         logger.error(msg)

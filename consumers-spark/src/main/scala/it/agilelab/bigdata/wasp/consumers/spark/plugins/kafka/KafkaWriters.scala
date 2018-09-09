@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil, RowToAvro}
-import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
+import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -72,9 +72,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
   extends SparkStructuredStreamingWriter
     with Logging {
 
-  override def write(stream: DataFrame,
-                     queryName: String,
-                     checkpointDir: String): StreamingQuery = {
+  override def write(stream: DataFrame): DataStreamWriter[Row] = {
 
     import ss.implicits._
 
@@ -82,7 +80,6 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
     val topicOpt: Option[TopicModel] = topicBL.getByName(name)
-
 
     if (topicOpt.isDefined) {
 
@@ -155,19 +152,10 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
-          .option("checkpointLocation", checkpointDir)
 
-        val streamWriter =
-          if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
-            partialStreamWriter
-              .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
-              .queryName(queryName)
-          else
-            partialStreamWriter.queryName(queryName)
+        val dswWithWritingConf = addKafkaConf(partialStreamWriter, tinyKafkaConfig)
 
-        val dswWithWritingConf = addKafkaConf(streamWriter, tinyKafkaConfig)
-
-        dswWithWritingConf.start()
+        dswWithWritingConf
       } else {
         val msg = s"Error creating topic ${topic.name}"
         throw new Exception(msg)
