@@ -69,6 +69,7 @@ case class StructuredStreamingETLModel(name: String,
                                        output: WriterModel,
                                        mlModels: List[MlModelOnlyInfo],
                                        strategy: Option[StrategyModel],
+                                       triggerIntervalMs: Option[Long],
                                        options: Map[String, String] = Map.empty) extends ProcessingComponentModel
 
 case class RTModel(name: String,

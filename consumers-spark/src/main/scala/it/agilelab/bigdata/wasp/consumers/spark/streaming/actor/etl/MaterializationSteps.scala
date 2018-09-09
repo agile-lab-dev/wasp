@@ -80,8 +80,9 @@ trait MaterializationSteps {
                          checkpointDir: String): Try[StreamingQuery] =
     Try {
       // grab the trigger interval from the etl, or if not specified from the config, or if not specified use 0
-      val triggerInterval = config
+      val triggerInterval = etl
         .triggerIntervalMs
+        .orElse(config.triggerIntervalMs)
         .getOrElse(0l) // this is the same default that Spark uses, see org.apache.spark.sql.streaming.DataStreamWriter
 
       val trigger = Trigger.ProcessingTime(triggerInterval)
