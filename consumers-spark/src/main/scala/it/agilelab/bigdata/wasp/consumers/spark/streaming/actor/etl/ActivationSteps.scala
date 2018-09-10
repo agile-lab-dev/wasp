@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.core.SystemPipegraphs
@@ -36,9 +36,9 @@ import scala.util.{Failure, Success, Try}
 trait ActivationSteps {
 
   /**
-    * We need a [[StructuredStreamingReader]] able to read from kafka.
+    * We need a [[SparkStructuredStreamingReader]] able to read from kafka.
     */
-  protected val reader: StructuredStreamingReader
+  protected val reader: SparkStructuredStreamingReader
 
   /**
     * We need the plugins map
@@ -140,7 +140,7 @@ trait ActivationSteps {
     def createAnotherStructuredStreamFromNonStreamingSource(previous: Map[ReaderKey, DataFrame],
                                                             readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
 
-      def createReader(readerModel: ReaderModel): Try[SparkReader] = Try {
+      def createReader(readerModel: ReaderModel): Try[SparkBatchReader] = Try {
         val datastoreProduct = readerModel.datastoreProduct
         plugins.get(datastoreProduct) match {
           case Some(r) => r.getSparkBatchReader(sparkSession.sparkContext, readerModel)
@@ -149,7 +149,7 @@ trait ActivationSteps {
       }
 
 
-      def createStructuredStream(reader: SparkReader): Try[(ReaderKey, DataFrame)] = Try {
+      def createStructuredStream(reader: SparkBatchReader): Try[(ReaderKey, DataFrame)] = Try {
         (ReaderKey(reader.readerType, reader.name), reader.read(sparkSession.sparkContext))
       }
 

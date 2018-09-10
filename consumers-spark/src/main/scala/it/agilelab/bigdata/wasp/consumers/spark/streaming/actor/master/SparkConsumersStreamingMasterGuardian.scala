@@ -8,7 +8,7 @@ import akka.actor.{ActorRef, ActorRefFactory, FSM, Props, Stash}
 import akka.pattern.Patterns.ask
 import akka.pattern.PipeToSupport
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkStructuredStreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Protocol._
@@ -262,7 +262,7 @@ object SparkConsumersStreamingMasterGuardian  {
   def doNothingWatchdogCreator(sc: SparkContext): ChildCreator = (_, name, context) =>
     context.actorOf(SparkContextWatchDog.logAndDoNothingWatchdogProps(sc), name)
 
-  def defaultChildCreator(reader: StructuredStreamingReader,
+  def defaultChildCreator(reader: SparkStructuredStreamingReader,
                           plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
                           sparkSession: SparkSession,
                           sparkWriterFactory: SparkWriterFactory,

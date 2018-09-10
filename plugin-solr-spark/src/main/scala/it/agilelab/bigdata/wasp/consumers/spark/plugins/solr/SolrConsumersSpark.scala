@@ -6,8 +6,8 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
@@ -64,12 +64,12 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, solrAdminActor_)
   }
 
-  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
     logger.info(s"Initialize the solr spark batch writer with this writer model id '${writerModel.datastoreModelName}'")
-    new SolrSparkWriter(indexBL, sc, writerModel.datastoreModelName, solrAdminActor_)
+    new SolrSparkBatchWriter(indexBL, sc, writerModel.datastoreModelName, solrAdminActor_)
   }
 
-  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     val indexOpt = indexBL.getByName(readerModel.name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
@@ -85,7 +85,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
             index.numShards.getOrElse(1),
             index.replicationFactor.getOrElse(1)))) {
 
-        new SolrSparkReader(index)
+        new SolrSparkBatchReader(index)
 
       } else {
         val msg = s"Error creating solr index: $index with this index name $indexName"

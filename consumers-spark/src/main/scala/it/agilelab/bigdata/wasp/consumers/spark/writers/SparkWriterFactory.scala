@@ -12,7 +12,7 @@ import org.apache.spark.streaming.StreamingContext
 trait SparkWriterFactory {
   def createSparkWriterLegacyStreaming(env: {val indexBL: IndexBL; val topicBL: TopicBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ssc: StreamingContext, legacyStreamingETLModel: LegacyStreamingETLModel, writerModel: WriterModel): Option[SparkLegacyStreamingWriter]
   def createSparkWriterStructuredStreaming(env: {val indexBL: IndexBL; val topicBL: TopicBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, ss: SparkSession, structuredStreamingETLModel: StructuredStreamingETLModel, writerModel: WriterModel): Option[SparkStructuredStreamingWriter]
-  def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter]
+  def createSparkWriterBatch(env: {val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL}, sc: SparkContext, writerModel: WriterModel): Option[SparkBatchWriter]
 }
 
 case class SparkWriterFactoryDefault(plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin]) extends SparkWriterFactory with Logging {
@@ -59,7 +59,7 @@ case class SparkWriterFactoryDefault(plugins: Map[DatastoreProduct, WaspConsumer
     val indexBL: IndexBL
     val rawBL: RawBL
     val keyValueBL: KeyValueBL
-  }, sc: SparkContext, writerModel: WriterModel): Option[SparkWriter] = {
+  }, sc: SparkContext, writerModel: WriterModel): Option[SparkBatchWriter] = {
 
     val writerType = writerModel.datastoreProduct
 

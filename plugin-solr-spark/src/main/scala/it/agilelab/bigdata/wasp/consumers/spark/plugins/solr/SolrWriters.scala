@@ -4,7 +4,7 @@ import java.util
 
 import akka.actor.ActorRef
 import com.lucidworks.spark.SolrSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -24,7 +24,7 @@ import org.apache.spark.streaming.dstream.DStream
 /**
   * Created by matbovet on 02/09/2016.
   */
-object SolrSparkWriter {
+object SolrSparkBatchWriter {
 
   def createSolrDocument(r: Row, idFieldOption: Option[String]) = {
     val doc: SolrInputDocument = new SolrInputDocument()
@@ -106,7 +106,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
 
           df.rdd.map { r =>
             try {
-                SolrSparkWriter.createSolrDocument(r, index.idField)
+                SolrSparkBatchWriter.createSolrDocument(r, index.idField)
             } catch {
               case e: Exception =>
                 val msg = s"Unable to create Solr document. Error message: ${e.getMessage}"
@@ -200,7 +200,7 @@ class SolrForeachWriter(ss: SparkSession,
   override def process(value: Row): Unit = {
 
     try {
-      val docs = SolrSparkWriter.createSolrDocument(value, idFieldOption)
+      val docs = SolrSparkBatchWriter.createSolrDocument(value, idFieldOption)
       batch.add(docs)
 
       if (batch.size() > batchSize) {
@@ -221,11 +221,11 @@ class SolrForeachWriter(ss: SparkSession,
   }
 }
 
-class SolrSparkWriter(indexBL: IndexBL,
-                      sc: SparkContext,
-                      name: String,
-                      solrAdminActor: ActorRef)
-  extends SparkWriter
+class SolrSparkBatchWriter(indexBL: IndexBL,
+                           sc: SparkContext,
+                           name: String,
+                           solrAdminActor: ActorRef)
+  extends SparkBatchWriter
     with SolrConfiguration
     with Logging {
 
@@ -250,7 +250,7 @@ class SolrSparkWriter(indexBL: IndexBL,
         val docs = data.rdd.map { r =>
 
           try {
-            SolrSparkWriter.createSolrDocument(r, index.idField)
+            SolrSparkBatchWriter.createSolrDocument(r, index.idField)
           } catch {
             case e: Exception =>
               val msg = s"Unable to create Solr document. Error message: ${e.getMessage}"

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
 import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
@@ -41,13 +41,13 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     new KafkaSparkStructuredStreamingWriter(topicBL, writerModel.datastoreModelName, ss)
   }
 
-  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
     val msg = s"The datastore product $datastoreProduct is not a valid batch sink! Writer model $writerModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
 
-  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     val msg = s"The datastore product $datastoreProduct is not a valid batch source! Reader model $readerModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)

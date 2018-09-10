@@ -12,7 +12,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{StructuredS
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => MyProtocol}
 import PipegraphGuardian._
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkStructuredStreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
 import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, PipegraphBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
@@ -474,7 +474,7 @@ object PipegraphGuardian {
   type ChildFactory = (PipegraphModel,String, ActorRefFactory) => ActorRef
   type ComponentFailedStrategy = StructuredStreamingETLModel => Choice
 
-  def defaultChildFactory(reader: StructuredStreamingReader,
+  def defaultChildFactory(reader: SparkStructuredStreamingReader,
                           plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
                           sparkSession: SparkSession,
                           mlModelBl: MlModelBL,

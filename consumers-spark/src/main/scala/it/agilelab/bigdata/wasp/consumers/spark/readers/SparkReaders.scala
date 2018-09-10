@@ -10,7 +10,7 @@ import org.apache.spark.streaming.dstream.DStream
   * Created by Mattia Bertorello on 05/10/15.
   * Modified by Matteo Bovetti on 02/10/17.
   */
-trait StreamingReader {
+trait SparkLegacyStreamingReader {
   /**
     *
     * Create a DStream from a streaming source
@@ -23,7 +23,7 @@ trait StreamingReader {
   
 }
 
-trait StructuredStreamingReader {
+trait SparkStructuredStreamingReader {
   /**
     * Create a streaming DataFrame from a streaming source.
     *
@@ -38,7 +38,7 @@ trait StructuredStreamingReader {
 /**
   * Created by Mattia Bertorello on 10/09/15.
   */
-trait SparkReader {
+trait SparkBatchReader {
   val name: String
   val readerType: String
 

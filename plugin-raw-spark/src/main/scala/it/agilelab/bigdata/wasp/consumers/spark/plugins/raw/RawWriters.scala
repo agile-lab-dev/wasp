@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.RawModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
@@ -100,9 +100,9 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
   }
 }
 
-class RawSparkWriter(hdfsModel: RawModel,
-                     sc: SparkContext)
-  extends SparkWriter
+class RawSparkBatchWriter(hdfsModel: RawModel,
+                          sc: SparkContext)
+  extends SparkBatchWriter
     with Logging {
 
   // TODO: validate against hdfsmodel.schema

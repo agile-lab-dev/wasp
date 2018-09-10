@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.jdbc
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.JDBCProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{Datastores, SqlSourceModel}
@@ -14,7 +14,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
   *
   * @param sqlModel JDBC configuration
   */
-class JdbcSparkReader(sqlModel: SqlSourceModel) extends SparkReader with JdbcConfiguration with Logging {
+class JDBCSparkBatchReader(sqlModel: SqlSourceModel) extends SparkBatchReader with JdbcConfiguration with Logging {
   val name: String = sqlModel.name
   val readerType: String = JDBCProduct.getActualProduct
 

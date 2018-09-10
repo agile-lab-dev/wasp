@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
@@ -27,8 +27,7 @@ trait WaspConsumersSparkPlugin {
                                         structuredStreamingModel: StructuredStreamingETLModel,
                                         writerModel: WriterModel): SparkStructuredStreamingWriter
 	def getSparkBatchWriter(sc: SparkContext,
-                          writerModel: WriterModel): SparkWriter
+                          writerModel: WriterModel): SparkBatchWriter
 	def getSparkBatchReader(sc: SparkContext,
-                          readerModel: ReaderModel): SparkReader
-
+                          readerModel: ReaderModel): SparkBatchReader
 }

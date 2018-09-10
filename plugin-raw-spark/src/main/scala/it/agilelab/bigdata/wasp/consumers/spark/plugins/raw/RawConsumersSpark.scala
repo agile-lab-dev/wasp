@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 import java.net.URI
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.bl.{RawBL, RawBLImp}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.RawProduct
@@ -45,14 +45,14 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     new RawSparkStructuredStreamingWriter(getModelAndCheckHdfsSchema(writerModel.datastoreModelName), ss)
   }
 
-  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
     logger.info(s"Initialize HDFS spark batch writer with this model: $writerModel")
-    new RawSparkWriter(getModelAndCheckHdfsSchema(writerModel.datastoreModelName), sc)
+    new RawSparkBatchWriter(getModelAndCheckHdfsSchema(writerModel.datastoreModelName), sc)
   }
 
-  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     logger.info(s"Initialize HDFS reader with model $readerModel")
-    new RawSparkReader(getModelAndCheckHdfsSchema(readerModel.name))
+    new RawSparkBatchReader(getModelAndCheckHdfsSchema(readerModel.name))
   }
 
   private def getModelAndCheckHdfsSchema(name: String): RawModel = {

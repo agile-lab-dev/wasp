@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorRef
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.bl.{KeyValueBL, KeyValueBLImp}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
@@ -53,21 +53,21 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
                                              legacyStreamingETLModel: LegacyStreamingETLModel,
                                              writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the hbase spark streaming writer with this writer model name '${writerModel.name}'")
-    HBaseWriter.createSparkStreamingWriter(keyValueBL, ssc, getKeyValueModel(writerModel))
+    HBaseBatchWriter.createSparkStreamingWriter(keyValueBL, ssc, getKeyValueModel(writerModel))
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
                                                  writerModel: WriterModel): SparkStructuredStreamingWriter = {
-    HBaseWriter.createSparkStructuredStreamingWriter(keyValueBL, ss, getKeyValueModel(writerModel))
+    HBaseBatchWriter.createSparkStructuredStreamingWriter(keyValueBL, ss, getKeyValueModel(writerModel))
   }
 
-  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
     logger.info(s"Initialize the hbase spark batch writer with this writer model name '${writerModel.name}'")
-    HBaseWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
+    HBaseBatchWriter.createSparkWriter(keyValueBL, sc, getKeyValueModel(writerModel))
   }
 
-  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     logger.info(s"Creating HBase Spark batch reader for key value model $readerModel")
     val hbaseOpt = keyValueBL.getByName(readerModel.name)
     val keyValue =
@@ -79,7 +79,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
         throw new Exception(msg)
       }
 
-    new HBaseSparkReader(keyValue)
+    new HBaseSparkBatchReader(keyValue)
   }
 
   @throws(classOf[ModelNotFound])

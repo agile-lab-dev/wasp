@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{StreamingReader, StructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
@@ -17,7 +17,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
-object KafkaStructuredReader extends StructuredStreamingReader with Logging {
+object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReader with Logging {
 
   /**
     *
@@ -94,7 +94,7 @@ object KafkaStructuredReader extends StructuredStreamingReader with Logging {
   }
 }
 
-object KafkaReader extends StreamingReader with Logging {
+object KafkaSparkLegacyStreamingReader extends SparkLegacyStreamingReader with Logging {
 
   /**
     * Kafka configuration

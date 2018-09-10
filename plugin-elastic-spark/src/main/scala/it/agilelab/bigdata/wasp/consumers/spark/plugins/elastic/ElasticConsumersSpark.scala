@@ -6,8 +6,8 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
@@ -55,22 +55,22 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
                                              legacyStreamingETLModel: LegacyStreamingETLModel,
                                              writerModel: WriterModel): SparkLegacyStreamingWriter = {
     logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
-    new ElasticSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName, elasticAdminActor_)
+    new ElasticsearchSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName, elasticAdminActor_)
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): ElasticSparkStructuredStreamingWriter = {
+                                                 writerModel: WriterModel): ElasticsearchSparkStructuredStreamingWriter = {
     logger.info(s"Initialize the elastic spark structured streaming writer with this writer model name '${writerModel.name}'")
-    new ElasticSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, elasticAdminActor_)
+    new ElasticsearchSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, elasticAdminActor_)
   }
 
-  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
     logger.info(s"Initialize the elastic spark batch writer with this writer model name '${writerModel.name}'")
-    new ElasticSparkWriter(indexBL, sc, writerModel.name, elasticAdminActor_)
+    new ElasticsearchSparkBatchWriter(indexBL, sc, writerModel.name, elasticAdminActor_)
   }
 
-  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     val indexOpt = indexBL.getByName(readerModel.name)
     if (indexOpt.isDefined) {
       val index = indexOpt.get
@@ -95,7 +95,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
           index.dataType,
           index.getJsonSchema))) {
 
-        new ElasticSparkReader(index)
+        new ElasticsearchSparkBatchReader(index)
 
       } else {
         val msg = s"Error creating elastic index: $index with this index name $indexName"

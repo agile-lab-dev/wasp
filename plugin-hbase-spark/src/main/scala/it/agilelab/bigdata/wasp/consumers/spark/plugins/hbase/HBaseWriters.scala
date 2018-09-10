@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
 import java.io.File
 
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.KeyValueModel
@@ -19,7 +19,7 @@ import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
-object HBaseWriter {
+object HBaseBatchWriter {
   def createSparkStructuredStreamingWriter(keyValueBL: KeyValueBL, ss: SparkSession, hbaseModel: KeyValueModel): SparkStructuredStreamingWriter = {
     new HBaseStructuredStreamingWriter(hbaseModel, ss)
   }
@@ -28,8 +28,8 @@ object HBaseWriter {
     new HBaseStreamingWriter(hbaseModel, ssc)
   }
 
-  def createSparkWriter(keyValueBL: KeyValueBL, sc: SparkContext, hbaseModel: KeyValueModel): SparkWriter = {
-    new HBaseWriter(hbaseModel, sc)
+  def createSparkWriter(keyValueBL: KeyValueBL, sc: SparkContext, hbaseModel: KeyValueModel): SparkBatchWriter = {
+    new HBaseBatchWriter(hbaseModel, sc)
   }
 }
 
@@ -96,9 +96,9 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
   }
 }
 
-class HBaseWriter(hbaseModel: KeyValueModel,
-                  sc: SparkContext)
-  extends SparkWriter {
+class HBaseBatchWriter(hbaseModel: KeyValueModel,
+                       sc: SparkContext)
+  extends SparkBatchWriter {
 
   override def write(df: DataFrame): Unit = {
     val options: Map[String, String] = hbaseModel.getOptionsMap ++

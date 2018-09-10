@@ -6,9 +6,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, M
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.Tick
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriter, SparkWriterFactory}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -76,7 +76,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
     }
 
 
-  private def stepStaticReaders(readerModels: Seq[ReaderModel]): Try[Seq[SparkReader]] = {
+  private def stepStaticReaders(readerModels: Seq[ReaderModel]): Try[Seq[SparkBatchReader]] = {
 
     case class ReaderPlugin(readerModel: ReaderModel, plugin: WaspConsumersSparkPlugin)
 
@@ -86,7 +86,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
       }
     }
 
-    val zero = Try(Seq.empty[SparkReader])
+    val zero = Try(Seq.empty[SparkBatchReader])
 
     pluginsForReaderModels.foldLeft(zero)((a, b) => a.flatMap(readers => Try {
       readers ++ Seq(b.plugin.getSparkBatchReader(sparkContext, b.readerModel))
@@ -94,7 +94,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
 
   }
 
-  private def stepDataFramesForReaders(readers: Seq[SparkReader]): Try[Map[ReaderKey, DataFrame]] = {
+  private def stepDataFramesForReaders(readers: Seq[SparkBatchReader]): Try[Map[ReaderKey, DataFrame]] = {
 
     val zero = Try(Map.empty[ReaderKey, DataFrame])
 
@@ -141,7 +141,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
 
   private def stepWriteResult(dataFrame: DataFrame, writerModel: WriterModel): Try[Any] = {
 
-    val maybeWriter: Try[Option[SparkWriter]] = Try {
+    val maybeWriter: Try[Option[SparkBatchWriter]] = Try {
       sparkWriterFactory.createSparkWriterBatch(env, sparkContext, writerModel = writerModel)
     }
 

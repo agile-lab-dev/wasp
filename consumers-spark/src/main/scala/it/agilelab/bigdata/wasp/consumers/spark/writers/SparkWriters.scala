@@ -12,6 +12,6 @@ trait SparkStructuredStreamingWriter {
   def write(stream: DataFrame): DataStreamWriter[Row]
 }
 
-trait SparkWriter {
+trait SparkBatchWriter {
 	def write(data: DataFrame)
 }

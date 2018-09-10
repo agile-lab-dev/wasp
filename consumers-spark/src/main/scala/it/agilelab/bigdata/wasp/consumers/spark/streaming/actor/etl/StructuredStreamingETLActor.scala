@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.StructuredStreamingReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkStructuredStreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.State._
@@ -20,7 +20,7 @@ import org.apache.spark.sql.SparkSession
 
 import scala.util.{Failure, Success}
 
-class StructuredStreamingETLActor private(override val reader: StructuredStreamingReader,
+class StructuredStreamingETLActor private(override val reader: SparkStructuredStreamingReader,
                                           override val plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
                                           override val sparkSession: SparkSession,
                                           override val mlModelBl: MlModelBL,
@@ -102,7 +102,7 @@ object StructuredStreamingETLActor {
 
   type TelemetryActorFactory = (String, ActorRefFactory) => ActorRef
 
-  def props(reader: StructuredStreamingReader,
+  def props(reader: SparkStructuredStreamingReader,
             plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
             sparkSession: SparkSession,
             mlModelBl: MlModelBL,

@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.RawProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.RawModel
@@ -9,7 +9,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
-class RawSparkReader(rawModel: RawModel) extends SparkReader with Logging {
+class RawSparkBatchReader(rawModel: RawModel) extends SparkBatchReader with Logging {
   val name: String = rawModel.name
   val readerType: String = RawProduct.getActualProduct
 

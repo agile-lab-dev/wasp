@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, M
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkReader, StreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
@@ -30,7 +30,7 @@ class LegacyStreamingETLActor(env: {
                                 val mlModelBL: MlModelBL
                               },
                               sparkWriterFactory: SparkWriterFactory,
-                              streamingReader: StreamingReader,
+                              streamingReader: SparkLegacyStreamingReader,
                               ssc: StreamingContext,
                               pipegraph: PipegraphModel,
                               legacyStreamingETL: LegacyStreamingETLModel,
@@ -91,7 +91,7 @@ class LegacyStreamingETLActor(env: {
   /**
     * All static readers initialization
     */
-  private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = {
+  private def allStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkBatchReader] = {
     staticReaderModels.flatMap({
       case readerModel =>
         val datastoreProduct = readerModel.datastoreProduct
@@ -112,7 +112,7 @@ class LegacyStreamingETLActor(env: {
     *
     * @return
     */
-  private def retrieveStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkReader] = allStaticReaders(staticReaderModels)
+  private def retrieveStaticReaders(staticReaderModels: List[ReaderModel]): List[SparkBatchReader] = allStaticReaders(staticReaderModels)
 
   /**
     * Topic models initialization

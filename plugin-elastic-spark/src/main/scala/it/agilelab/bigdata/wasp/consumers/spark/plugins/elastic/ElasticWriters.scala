@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -16,10 +16,10 @@ import org.apache.spark.streaming.dstream.DStream
 import org.elasticsearch.spark.sparkRDDFunctions
 import org.elasticsearch.spark.sql.EsSparkSQL
 
-class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
-                                        ssc: StreamingContext,
-                                        name: String,
-                                        elasticAdminActor: ActorRef)
+class ElasticsearchSparkLegacyStreamingWriter(indexBL: IndexBL,
+                                              ssc: StreamingContext,
+                                              name: String,
+                                              elasticAdminActor: ActorRef)
     extends SparkLegacyStreamingWriter
     with ElasticConfiguration
     with Logging {
@@ -68,10 +68,10 @@ class ElasticSparkLegacyStreamingWriter(indexBL: IndexBL,
   }
 }
 
-class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
-                                            ss: SparkSession,
-                                            name: String,
-                                            elasticAdminActor: ActorRef)
+class ElasticsearchSparkStructuredStreamingWriter(indexBL: IndexBL,
+                                                  ss: SparkSession,
+                                                  name: String,
+                                                  elasticAdminActor: ActorRef)
     extends SparkStructuredStreamingWriter
     with ElasticConfiguration
     with Logging {
@@ -124,11 +124,11 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
 
 }
 
-class ElasticSparkWriter(indexBL: IndexBL,
-                         sc: SparkContext,
-                         name: String,
-                         elasticAdminActor: ActorRef)
-    extends SparkWriter
+class ElasticsearchSparkBatchWriter(indexBL: IndexBL,
+                                    sc: SparkContext,
+                                    name: String,
+                                    elasticAdminActor: ActorRef)
+    extends SparkBatchWriter
     with ElasticConfiguration
     with Logging {
 

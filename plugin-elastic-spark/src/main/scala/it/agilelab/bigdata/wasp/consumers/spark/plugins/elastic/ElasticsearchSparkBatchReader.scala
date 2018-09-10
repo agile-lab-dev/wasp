@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.ElasticProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
@@ -16,7 +16,7 @@ import org.elasticsearch.spark.sql.EsSparkSQL
   *
   * @param indexModel Elastic configuration
   */
-class ElasticSparkReader(indexModel: IndexModel) extends SparkReader with ElasticConfiguration with Logging {
+class ElasticsearchSparkBatchReader(indexModel: IndexModel) extends SparkBatchReader with ElasticConfiguration with Logging {
   val name: String = indexModel.name
   val readerType: String = ElasticProduct.getActualProduct
 

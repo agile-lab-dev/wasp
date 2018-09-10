@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.jdbc
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
 import it.agilelab.bigdata.wasp.core.bl.{SqlSourceBl, SqlSourceBlImpl}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.JDBCProduct
@@ -42,13 +42,13 @@ class JdbcConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     throw new UnsupportedOperationException(msg)
   }
 
-  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
     val msg = s"Invalid spark writer type: jdbc spark batch writer"
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
 
-  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkReader = {
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     logger.info(s"Initialize JdbcReader with model $readerModel")
     val sqlOpt = sqlModelBL.getByName(readerModel.name)
     val sqlSource =
@@ -60,6 +60,6 @@ class JdbcConsumerSpark extends WaspConsumersSparkPlugin with Logging {
         throw new Exception(msg)
       }
 
-    new JdbcSparkReader(sqlSource)
+    new JDBCSparkBatchReader(sqlSource)
   }
 }
