@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
+import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, StreamingSink, StreamingSource}
 import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
 
 
@@ -44,8 +45,8 @@ trait ProcessingComponentModel {
   "work, keeping the definition only for api compatibility, the definition will be removed in a future wasp version",
   "2.8.0")
 case class LegacyStreamingETLModel(name: String,
-                                   inputs: List[ReaderModel],
-                                   output: WriterModel,
+                                   inputs: List[ReaderModel[_ <: DatastoreProduct]],
+                                   output: WriterModel[_ <: DatastoreProduct],
                                    mlModels: List[MlModelOnlyInfo],
                                    strategy: Option[StrategyModel],
                                    kafkaAccessType: String,
@@ -65,18 +66,18 @@ case class LegacyStreamingETLModel(name: String,
   */
 case class StructuredStreamingETLModel(name: String,
                                        group: String = "default",
-                                       inputs: List[ReaderModel],
-                                       output: WriterModel,
+                                       inputs: List[ReaderModel[_  <: DatastoreProduct]],
+                                       output: WriterModel[_ <: DatastoreProduct with StreamingSink],
                                        mlModels: List[MlModelOnlyInfo],
                                        strategy: Option[StrategyModel],
                                        triggerIntervalMs: Option[Long],
                                        options: Map[String, String] = Map.empty) extends ProcessingComponentModel
 
 case class RTModel(name: String,
-                   inputs: List[ReaderModel],
+                   inputs: List[ReaderModel[_]],
                    var isActive: Boolean = false,
                    strategy: Option[StrategyModel] = None,
-                   endpoint: Option[WriterModel] = None) extends ProcessingComponentModel
+                   endpoint: Option[WriterModel[_]] = None) extends ProcessingComponentModel
 
 
 final case class PipegraphInstanceModel(override val name:String,

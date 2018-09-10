@@ -2,14 +2,6 @@ package it.agilelab.bigdata.wasp.core.models
 
 import it.agilelab.bigdata.wasp.core.datastores._
 
-// this exists because we want to keep the declaration on one line because of a quirk of the compiler when
-// using both an annotation and an access modifier: it doesn't allow us to break it into more than one line,
-// complaining about the case class missing a parameter list
-object DeprecationMessageWriterModel {
-  val deprecationMessage = "Please use the other apply or the factory methods provided in the companion " +
-    "object as they ensure compatibility between the DatastoreModel and the " +
-    "DatastoreProduct"
-}
 
 /**
 	* A model for a writer, composed by a name, a datastoreModelName defining the datastore, a datastoreProduct
@@ -20,18 +12,18 @@ object DeprecationMessageWriterModel {
 	* @param datastoreProduct the datastore software product to be used when writing
   * @param options additional options for the writer
 	*/
-case class WriterModel @deprecated(DeprecationMessageWriterModel.deprecationMessage) private[wasp]
-                       (name: String,
-                        datastoreModelName: String,
-                        datastoreProduct: DatastoreProduct,
-                        options: Map[String, String])
+case class WriterModel[DSP <: DatastoreProduct] @deprecated(WriterModel.deprecationMessage) private[wasp]
+                      (name: String,
+                       datastoreModelName: String,
+                       datastoreProduct: DSP,
+                       options: Map[String, String])
 
 object WriterModel {
   import DatastoreProduct._
 	
 	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
            (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
-           (implicit ev: DSP <:< DSC): WriterModel = {
+           (implicit ev: DSP <:< DSC): WriterModel[DSP] = {
 		WriterModel(name, datastoreModel.name, datastoreProduct, options)
 	}
 
@@ -55,4 +47,10 @@ object WriterModel {
     apply(name, websocketModel, WebSocketProduct, options)
 	def consoleWriter(name: String, options: Map[String, String] = Map.empty) =
     apply(name, ConsoleProduct.getActualProduct, ConsoleProduct, options)
+
+  // this exists because we want to keep the main declaration on one line because of a quirk of the compiler when
+  // using both an annotation and an access modifier: it doesn't allow us to break it into more than one line,
+  // complaining about the case class missing a parameter list
+  private val deprecationMessage = "Please use the other apply or the factory methods provided in the companion " +
+      "object as they ensure compatibility between the DatastoreModel and the DatastoreProduct"
 }
