@@ -12,10 +12,10 @@ import it.agilelab.bigdata.wasp.core.datastores._
 	* @param datastoreProduct the datastore software product to be used when reading
   * @param options additional options for the reader
 	*/
-case class ReaderModel[DSP <: DatastoreProduct] @deprecated(ReaderModel.deprecationMessage) private[wasp]
+case class ReaderModel @deprecated(ReaderModel.deprecationMessage) private[wasp]
                       (name: String,
                        datastoreModelName: String,
-                       datastoreProduct: DSP,
+                       datastoreProduct: DatastoreProduct,
                        options: Map[String, String])
 
 object ReaderModel {
@@ -23,7 +23,7 @@ object ReaderModel {
 	
   def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
            (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
-           (implicit ev: DSP <:< DSC): ReaderModel[DSP] = {
+           (implicit ev: DSP <:< DSC): ReaderModel = {
 		ReaderModel(name, datastoreModel.name, datastoreProduct, options)
 	}
 

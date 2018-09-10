@@ -12,10 +12,10 @@ import it.agilelab.bigdata.wasp.core.datastores._
 	* @param datastoreProduct the datastore software product to be used when writing
   * @param options additional options for the writer
 	*/
-case class WriterModel[DSP <: DatastoreProduct] @deprecated(WriterModel.deprecationMessage) private[wasp]
+case class WriterModel @deprecated(WriterModel.deprecationMessage) private[wasp]
                       (name: String,
                        datastoreModelName: String,
-                       datastoreProduct: DSP,
+                       datastoreProduct: DatastoreProduct,
                        options: Map[String, String])
 
 object WriterModel {
@@ -23,7 +23,7 @@ object WriterModel {
 	
 	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
            (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
-           (implicit ev: DSP <:< DSC): WriterModel[DSP] = {
+           (implicit ev: DSP <:< DSC): WriterModel = {
 		WriterModel(name, datastoreModel.name, datastoreProduct, options)
 	}
 
