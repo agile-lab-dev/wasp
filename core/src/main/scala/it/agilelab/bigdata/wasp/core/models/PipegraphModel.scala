@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
-import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, StreamingSink, StreamingSource}
 import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
 
 
@@ -32,7 +31,7 @@ trait ProcessingComponentModel {
   }
   
   def generateStandardWriterName: String = this match { // TODO: remove match once output member is moved into ProcessingComponentModel
-    case ss: StructuredStreamingETLModel => s"writer_${ss.output.name.replace(" ", "_")}"
+    case ss: StructuredStreamingETLModel => s"writer_${ss.streamingOutput.name.replace(" ", "_")}"
     case ls: LegacyStreamingETLModel => s"writer_${ls.output.name.replace(" ", "_")}"
     case rt: RTModel => rt.endpoint match {
       case Some(output) => s"writer_${output.name.replace(" ", "_")}"
@@ -57,17 +56,19 @@ case class LegacyStreamingETLModel(name: String,
   * A streaming processing component that leverages Spark's Structured Streaming API.
   *
   * @param name unique name of the processing component
-  * @param inputs list of inputs
-  * @param output streaming output
-  * @param mlModels machine learngin models to be used in the processing
-  * @param strategy name of a class implementing `Strategy` that defines the processing
   * @param group group of which the processing component is part
+  * @param staticInputs list of inputs for static datasets
+  * @param streamingOutput streaming output
+  * @param mlModels machine learning models to be used in the processing
+  * @param strategy strategy model that defines the processing
+  * @param triggerIntervalMs trigger interval to use, in milliseconds
   * @param options has no effect at all
   */
 case class StructuredStreamingETLModel(name: String,
                                        group: String = "default",
-                                       inputs: List[ReaderModel],
-                                       output: WriterModel,
+                                       streamingInput: StreamingReaderModel,
+                                       staticInputs: List[ReaderModel],
+                                       streamingOutput: WriterModel,
                                        mlModels: List[MlModelOnlyInfo],
                                        strategy: Option[StrategyModel],
                                        triggerIntervalMs: Option[Long],

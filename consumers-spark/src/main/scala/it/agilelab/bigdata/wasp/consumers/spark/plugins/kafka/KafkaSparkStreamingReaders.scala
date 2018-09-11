@@ -3,9 +3,10 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
+import it.agilelab.bigdata.wasp.core.bl.TopicBLImp
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils._
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
@@ -24,14 +25,17 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     * Create a Dataframe from a streaming source
     *
     * @param group
-    * @param topic
+    * @param streamingReaderModel
     * @param ss
     * @return
     */
   override def createStructuredStream(
       group: String,
-      topic: TopicModel)(implicit ss: SparkSession): DataFrame = {
+      streamingReaderModel: StreamingReaderModel)(implicit ss: SparkSession): DataFrame = {
 
+    // extract the topic model
+    val topic = new TopicBLImp(WaspDB.getDB).getByName(streamingReaderModel.datastoreModelName).get
+    
     // get the config
     val kafkaConfig = ConfigManager.getKafkaConfig
 

@@ -68,38 +68,17 @@ trait ActivationSteps {
     * @return the output dataframe
     */
   protected def activate(etl: StructuredStreamingETLModel): Try[DataFrame] = for {
-    streamingSource <- checkOnlyOneStreamingSource(etl).recoverWith {
-      case e: Throwable => Failure(new Exception(s"Only one streaming source is allowed in etl ${etl.name}", e))
-    }
-    structuredInputStream <- createStructuredStreamFromStreamingSource(etl, streamingSource).recoverWith {
+    streamingDataFrame <- createStreamingDataFrameFromStreamingSource(etl, etl.streamingInput).recoverWith {
       case e: Throwable => Failure(new Exception(s"Cannot create input from streaming source in etl ${etl.name}", e))
     }
-    nonStreamingInputStreams <- createStructuredStreamsFromNonStreamingSources(etl).recoverWith {
-      case e: Throwable => Failure(new Exception(s"Cannot instantiate non streaming sources in etl ${etl.name}", e))
+    staticDataFrames <- createStaticDataFramesFromStaticSources(etl).recoverWith {
+      case e: Throwable => Failure(new Exception(s"Cannot instantiate static sources in etl ${etl.name}", e))
     }
-    transformedStream <- applyTransformOrInputIfNoStrategy(etl, structuredInputStream, nonStreamingInputStreams).recoverWith {
+    transformedStream <- applyTransformOrInputIfNoStrategy(etl, streamingDataFrame, staticDataFrames).recoverWith {
       case e: Throwable => Failure(new Exception(s"Failed to apply strategy in etl ${etl.name}", e))
     }
 
   } yield transformedStream
-
-
-  /**
-    * Checks that [[StructuredStreamingETLModel]] contains only a Streaming source
-    *
-    * @param etl The etl to check
-    * @return The topic model
-    */
-  private def checkOnlyOneStreamingSource(etl: StructuredStreamingETLModel): Try[TopicModel] = {
-
-    etl.inputs.filter(_.datastoreProduct.isInstanceOf[TopicCategory]) match {
-      //only one kafka reader model
-      case Seq(ReaderModel(_, topicModelName, _, _)) => retrieveTopic(topicModelName)
-      // more than one kafka reader
-      case _ => Failure(new Exception("More than one kafka reader found, only one allowed"))
-    }
-
-  }
 
   /**
     * Retries a [[TopicModel]] by name from DB
@@ -116,16 +95,16 @@ trait ActivationSteps {
 
 
   /**
-    * Creates structured stream for kafka streaming source
+    * Creates structured stream for a streaming source
     *
-    * @param etl        The etl to activate streaming sources for
-    * @param topicModel The model of the topic to read from
+    * @param etl                  The etl to activate streaming sources for
+    * @param streamingReaderModel The model of the streaming source to read from
     * @return The streaming reader.
     */
-  private def createStructuredStreamFromStreamingSource(etl: StructuredStreamingETLModel,
-                                                        topicModel: TopicModel): Try[(ReaderKey, DataFrame)] = Try {
-    (ReaderKey(GenericTopicProduct.category, topicModel.name),
-      reader.createStructuredStream(etl.group, topicModel)(sparkSession))
+  private def createStreamingDataFrameFromStreamingSource(etl: StructuredStreamingETLModel,
+                                                          streamingReaderModel: StreamingReaderModel): Try[(ReaderKey, DataFrame)] = Try {
+    (ReaderKey(streamingReaderModel.datastoreProduct.category, streamingReaderModel.name),
+      reader.createStructuredStream(etl.group, streamingReaderModel)(sparkSession))
   }
 
 
@@ -135,10 +114,10 @@ trait ActivationSteps {
     * @param etl The etl to activate Non streaming sources for
     * @return The created non streaming Sources
     */
-  private def createStructuredStreamsFromNonStreamingSources(etl: StructuredStreamingETLModel): Try[Map[ReaderKey, DataFrame]] = {
+  private def createStaticDataFramesFromStaticSources(etl: StructuredStreamingETLModel): Try[Map[ReaderKey, DataFrame]] = {
 
-    def createAnotherStructuredStreamFromNonStreamingSource(previous: Map[ReaderKey, DataFrame],
-                                                            readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
+    def createAnotherStaticDataFrameFromStaticSource(previous: Map[ReaderKey, DataFrame],
+                                                     readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
 
       def createReader(readerModel: ReaderModel): Try[SparkBatchReader] = Try {
         val datastoreProduct = readerModel.datastoreProduct
@@ -164,12 +143,11 @@ trait ActivationSteps {
     val empty = Try(Map.empty[ReaderKey, DataFrame])
 
 
-    etl.inputs
-      .filterNot(_.datastoreProduct.isInstanceOf[TopicCategory])
+    etl.staticInputs
       .foldLeft(empty) { (previousOutcome, readerModel) =>
 
         //we update outcome only if createStructuredStream does not blow up
-        previousOutcome.flatMap(createAnotherStructuredStreamFromNonStreamingSource(_, readerModel))
+        previousOutcome.flatMap(createAnotherStaticDataFrameFromStaticSource(_, readerModel))
 
       }
 
@@ -194,7 +172,7 @@ trait ActivationSteps {
                        structuredInputStream._2,
                        nonStreamingInputStreams,
                        strategy,
-                       etl.output.datastoreProduct,
+                       etl.streamingOutput.datastoreProduct,
                        etl)
       case Success(None) =>
         Success(structuredInputStream._2)

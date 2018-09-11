@@ -49,8 +49,8 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(name = "component",
-                                  inputs = List(ReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json)),
-                                  output = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
+                                  staticInputs = List(ReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json)),
+                                  streamingOutput = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
                                   mlModels = List(),
                                   strategy = None,
                                   triggerIntervalMs = None,
