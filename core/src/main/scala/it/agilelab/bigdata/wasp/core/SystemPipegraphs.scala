@@ -294,7 +294,8 @@ private[wasp] object LoggerPipegraph {
 		structuredStreamingComponents = List(
       StructuredStreamingETLModel(
 	      name = "write on index",
-	      staticInputs = List(ReaderModel.kafkaReader("Read logging data form Kafka", loggerTopic)),
+	      streamingInput = StreamingReaderModel.kafkaReader("Read logging data form Kafka", loggerTopic, Some(100)),
+	      staticInputs = List.empty,
 	      streamingOutput = writer,
 	      mlModels = List(),
 	      strategy = None,
