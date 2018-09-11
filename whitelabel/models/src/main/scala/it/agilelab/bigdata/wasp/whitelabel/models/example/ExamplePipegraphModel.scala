@@ -14,18 +14,18 @@ private[wasp] object ExamplePipegraphModel {
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
-        name = "Write on console",
-        inputs = List(
-          ReaderModel.kafkaReader(
-            ExampleTopicModel.topic.name,
-            ExampleTopicModel.topic.name
-          )
-        ),
-        output = WriterModel.consoleWriter("console-writer"),
-        mlModels = List.empty,
-        strategy = None,
-        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED,
-        options = Map()
+	      name = "Write on console",
+	      streamingInput = StreamingReaderModel.kafkaReader(
+			      name = "Read from example topic",
+			      topicModel = ExampleTopicModel.topic,
+			      rateLimit = None
+		      ),
+	      staticInputs = List.empty,
+	      streamingOutput = WriterModel.consoleWriter("console-writer"),
+	      mlModels = List.empty,
+	      strategy = None,
+	      triggerIntervalMs = None,
+	      options = Map()
       )
     ),
     rtComponents = List(),

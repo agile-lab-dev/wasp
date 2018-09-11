@@ -293,13 +293,13 @@ private[wasp] object LoggerPipegraph {
 		legacyStreamingComponents = List(),
 		structuredStreamingComponents = List(
       StructuredStreamingETLModel(
-        name = "write on index",
-        inputs = List(ReaderModel.kafkaReader("Read logging data form Kafka", loggerTopic)),
-        output = writer,
-        mlModels = List(),
-        strategy = None,
-				triggerIntervalMs = None,
-        options = Map())
+	      name = "write on index",
+	      staticInputs = List(ReaderModel.kafkaReader("Read logging data form Kafka", loggerTopic)),
+	      streamingOutput = writer,
+	      mlModels = List(),
+	      strategy = None,
+	      triggerIntervalMs = None,
+	      options = Map())
     ),
 
 		rtComponents = List(),
@@ -335,8 +335,9 @@ private[wasp] object TelemetryPipegraph {
 		structuredStreamingComponents = List(
 			StructuredStreamingETLModel(
 				name = "write on index",
-				inputs = List(ReaderModel.kafkaReader("Read telemetry data from Kafka", telemetryTopic)),
-				output = writer,
+				streamingInput = StreamingReaderModel.kafkaReader("Read telemetry data from Kafka", telemetryTopic, Some(100)),
+				staticInputs = List.empty,
+				streamingOutput = writer,
 				mlModels = List(),
 				strategy = None,
 				triggerIntervalMs = None,
