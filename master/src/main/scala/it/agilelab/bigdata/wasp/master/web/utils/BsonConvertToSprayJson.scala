@@ -64,15 +64,28 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat7(TopicModel.apply)
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat8(IndexModel.apply)
   implicit val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
+  implicit val streamingReaderModelFormat: RootJsonFormat[StreamingReaderModel] = jsonFormat5(
+    (name: String,
+     datastoreModelName: String,
+     datastoreProduct: DatastoreProduct,
+     rateLimit: Option[Int],
+     options: Map[String, String]) =>
+      StreamingReaderModel(name, datastoreModelName, datastoreProduct, rateLimit, options))
   implicit val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat4(
-    (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String]) => ReaderModel(name, datastoreModelName, datastoreProduct, options))
+    (name: String,
+     datastoreModelName: String,
+     datastoreProduct: DatastoreProduct,
+     options: Map[String, String]) => ReaderModel(name, datastoreModelName, datastoreProduct, options))
   implicit val writerModelFormat: RootJsonFormat[WriterModel] = jsonFormat4(
-    (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String]) => WriterModel(name, datastoreModelName, datastoreProduct, options))
+    (name: String,
+     datastoreModelName: String,
+     datastoreProduct: DatastoreProduct,
+     options: Map[String, String]) => WriterModel(name, datastoreModelName, datastoreProduct, options))
   implicit val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
   implicit val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
   implicit val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
   implicit val etlModelFormat: RootJsonFormat[LegacyStreamingETLModel] = jsonFormat8(LegacyStreamingETLModel.apply)
-  implicit val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingETLModel] = jsonFormat8(StructuredStreamingETLModel.apply)
+  implicit val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingETLModel] = jsonFormat9(StructuredStreamingETLModel.apply)
   implicit val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
   implicit val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat9(PipegraphModel.apply)
   implicit val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
