@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.generateSpecificStructuredStreamingCheckpointDir
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkStructuredStreamingWriter
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
@@ -79,11 +80,7 @@ trait MaterializationSteps {
                          queryName: String,
                          checkpointDir: String): Try[StreamingQuery] =
     Try {
-      // grab the trigger interval from the etl, or if not specified from the config, or if not specified use 0
-      val triggerInterval = etl
-        .triggerIntervalMs
-        .orElse(config.triggerIntervalMs)
-        .getOrElse(0l) // this is the same default that Spark uses, see org.apache.spark.sql.streaming.DataStreamWriter
+      val triggerInterval = SparkUtils.getTriggerIntervalMs(config, etl)
 
       val trigger = Trigger.ProcessingTime(triggerInterval)
 

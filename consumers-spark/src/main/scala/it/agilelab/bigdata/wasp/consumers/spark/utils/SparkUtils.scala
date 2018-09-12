@@ -5,7 +5,7 @@ import java.net.URLEncoder
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.SparkConfigModel
+import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SparkStreamingConfiguration, WaspConfiguration}
 import org.apache.spark.SparkConf
 
@@ -135,5 +135,13 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
 	    "structured_streaming" + "/" +
 	    pipegraph.generateStandardPipegraphName + "/" +
 	    component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName
+  }
+  
+  def getTriggerIntervalMs(sparkStreamingConfigModel: SparkStreamingConfigModel, structuredStreamingETLModel: StructuredStreamingETLModel): Long = {
+    // grab the trigger interval from the etl, or if not specified from the config, or if not specified use 0
+    structuredStreamingETLModel
+      .triggerIntervalMs
+      .orElse(sparkStreamingConfigModel.triggerIntervalMs)
+      .getOrElse(0l) // this is the same default that Spark uses, see org.apache.spark.sql.streaming.DataStreamWriter
   }
 }
