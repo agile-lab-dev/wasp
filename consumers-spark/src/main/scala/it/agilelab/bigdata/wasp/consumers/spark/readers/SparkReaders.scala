@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.readers
 
-import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.streaming.StreamingContext
@@ -32,7 +32,7 @@ trait SparkStructuredStreamingReader {
     * @param ss the Spark Session to use
     * @return
     */
-  def createStructuredStream(group: String, streamingReaderModel: StreamingReaderModel)(implicit ss: SparkSession): DataFrame
+  def createStructuredStream(etl: StructuredStreamingETLModel, streamingReaderModel: StreamingReaderModel)(implicit ss: SparkSession): DataFrame
 }
 
 /**

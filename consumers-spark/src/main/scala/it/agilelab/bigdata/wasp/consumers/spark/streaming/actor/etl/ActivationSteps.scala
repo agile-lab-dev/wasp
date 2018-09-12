@@ -104,7 +104,7 @@ trait ActivationSteps {
   private def createStreamingDataFrameFromStreamingSource(etl: StructuredStreamingETLModel,
                                                           streamingReaderModel: StreamingReaderModel): Try[(ReaderKey, DataFrame)] = Try {
     (ReaderKey(streamingReaderModel.datastoreProduct.category, streamingReaderModel.name),
-      reader.createStructuredStream(etl.group, streamingReaderModel)(sparkSession))
+      reader.createStructuredStream(etl, streamingReaderModel)(sparkSession))
   }
 
 
