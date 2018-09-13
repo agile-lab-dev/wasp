@@ -17,7 +17,7 @@ abstract class TestCheckpointStrategy(val version: String, val topicName: String
     println(s"Strategy configuration: $configuration")
     println(s"Strategy dataFrames received: $dataFrames")
 
-    val dataFrame = dataFrames(ReaderKey(GenericTopicProduct.category, topicName))
+    val dataFrame = dataFrames(ReaderKey(GenericTopicProduct.categoryName, topicName))
     import dataFrame.sparkSession.implicits._
     import TestCheckpointState.implicits._
 

@@ -37,7 +37,7 @@ object DatastoreProductCodecProvider extends CodecProvider {
 			
 			// build list of (object, identifier)
 			val subclassesIdentifiersList = objectSubclassesList.map(datastoreProduct => {
-					val identifier = datastoreProduct.category + "|" + datastoreProduct.product.getOrElse("")
+					val identifier = datastoreProduct.categoryName + "|" + datastoreProduct.productName.getOrElse("")
 					(datastoreProduct, identifier)
 	      }
 			)

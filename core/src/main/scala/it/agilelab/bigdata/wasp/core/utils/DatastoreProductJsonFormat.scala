@@ -17,7 +17,7 @@ object DatastoreProductJsonFormat extends RootJsonFormat[DatastoreProduct] {
 		val objectSubclassesList = ReflectionUtils.findObjectSubclassesOfSealedTraitAssumingTheyAreAllObjects[DatastoreProduct]
 		
 		// build list of (object, identifier)
-		val subclassesIdentifiersList = objectSubclassesList.map(datastoreProduct => (datastoreProduct, (datastoreProduct.category, datastoreProduct.product.getOrElse(""))))
+		val subclassesIdentifiersList = objectSubclassesList.map(datastoreProduct => (datastoreProduct, (datastoreProduct.categoryName, datastoreProduct.productName.getOrElse(""))))
 		
 		// check that we don't have collisions so we can use the list for forward and reverse lookup maps
 		val listSize = subclassesIdentifiersList.size

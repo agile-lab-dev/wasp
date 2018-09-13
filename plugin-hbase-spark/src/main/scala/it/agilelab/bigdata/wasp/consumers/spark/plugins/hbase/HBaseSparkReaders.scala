@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 
 class HBaseSparkBatchReader(keyValueModel: KeyValueModel) extends SparkBatchReader with Logging {
   val name: String = keyValueModel.name
-  val readerType: String = HBaseProduct.getActualProduct
+  val readerType: String = HBaseProduct.getActualProductName
 
   override def read(sc: SparkContext): DataFrame = {
 

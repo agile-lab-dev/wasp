@@ -18,7 +18,7 @@ import org.elasticsearch.spark.sql.EsSparkSQL
   */
 class ElasticsearchSparkBatchReader(indexModel: IndexModel) extends SparkBatchReader with ElasticConfiguration with Logging {
   val name: String = indexModel.name
-  val readerType: String = ElasticProduct.getActualProduct
+  val readerType: String = ElasticProduct.getActualProductName
 
   override def read(sc: SparkContext): DataFrame = {
 

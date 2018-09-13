@@ -49,7 +49,7 @@ object WriterModel {
 	def websocketWriter(name: String, websocketModel: WebsocketModel, options: Map[String, String] = Map.empty) =
     apply(name, websocketModel, WebSocketProduct, options)
 	def consoleWriter(name: String, options: Map[String, String] = Map.empty) =
-    apply(name, ConsoleProduct.getActualProduct, ConsoleProduct, options)
+    apply(name, ConsoleProduct.getActualProductName, ConsoleProduct, options)
 
   // this exists because we want to keep the main declaration on one line because of a quirk of the compiler when
   // using both an annotation and an access modifier: it doesn't allow us to break it into more than one line,

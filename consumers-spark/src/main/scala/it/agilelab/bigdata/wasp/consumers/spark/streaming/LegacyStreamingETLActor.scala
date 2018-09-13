@@ -147,7 +147,7 @@ class LegacyStreamingETLActor(env: {
     })
     */
     val topicReaderModelNumber =
-      legacyStreamingETL.inputs.count(_.datastoreProduct.category == GenericTopicProduct.category)
+      legacyStreamingETL.inputs.count(_.datastoreProduct.categoryName == GenericTopicProduct.categoryName)
     if (topicReaderModelNumber == 0)
       throw new Exception("There is NO topic to read data, inputs: " + legacyStreamingETL.inputs)
     if (topicReaderModelNumber != 1)
@@ -166,7 +166,7 @@ class LegacyStreamingETLActor(env: {
             legacyStreamingETL.group,
             legacyStreamingETL.kafkaAccessType,
             topicModel)(ssc)
-        (ReaderKey(GenericTopicProduct.category, topicModel.name), stream)
+        (ReaderKey(GenericTopicProduct.categoryName, topicModel.name), stream)
       })
 
     //TODO  Join condition between streams
@@ -180,7 +180,7 @@ class LegacyStreamingETLActor(env: {
       if (createStrategy.isDefined) {
         val strategy = createStrategy.get
 
-        val staticReaders = legacyStreamingETL.inputs.filterNot(_.datastoreProduct.category == GenericTopicProduct.category)
+        val staticReaders = legacyStreamingETL.inputs.filterNot(_.datastoreProduct.categoryName == GenericTopicProduct.categoryName)
 
         val dataStoreDFs : Map[ReaderKey, DataFrame] =
           if (staticReaders.isEmpty)

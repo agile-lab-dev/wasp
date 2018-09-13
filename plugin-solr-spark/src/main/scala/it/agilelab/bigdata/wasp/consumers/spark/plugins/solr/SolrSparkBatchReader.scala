@@ -17,7 +17,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
   */
 class SolrSparkBatchReader(indexModel: IndexModel) extends SparkBatchReader with SolrConfiguration with Logging {
   val name: String = indexModel.name
-  val readerType: String = SolrProduct.getActualProduct
+  val readerType: String = SolrProduct.getActualProductName
 
   override def read(sc: SparkContext): DataFrame = {
 

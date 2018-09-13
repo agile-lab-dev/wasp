@@ -103,7 +103,7 @@ trait ActivationSteps {
     */
   private def createStreamingDataFrameFromStreamingSource(etl: StructuredStreamingETLModel,
                                                           streamingReaderModel: StreamingReaderModel): Try[(ReaderKey, DataFrame)] = Try {
-    (ReaderKey(streamingReaderModel.datastoreProduct.category, streamingReaderModel.name),
+    (ReaderKey(streamingReaderModel.datastoreProduct.categoryName, streamingReaderModel.name),
       reader.createStructuredStream(etl, streamingReaderModel)(sparkSession))
   }
 

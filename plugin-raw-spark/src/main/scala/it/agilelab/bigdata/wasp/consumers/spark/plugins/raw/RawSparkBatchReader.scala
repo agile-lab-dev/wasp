@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 
 class RawSparkBatchReader(rawModel: RawModel) extends SparkBatchReader with Logging {
   val name: String = rawModel.name
-  val readerType: String = RawProduct.getActualProduct
+  val readerType: String = RawProduct.getActualProductName
 
   override def read(sc: SparkContext): DataFrame = {
     logger.info(s"Initialize Spark HDFSReader with this model: $rawModel")

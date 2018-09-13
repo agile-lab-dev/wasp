@@ -39,15 +39,15 @@ object ConfigManager {
     },
     ValidationRule("DefaultIndexedDatastoreUnknown") {
       (configManager) =>
-        if (configManager.getWaspConfig.defaultIndexedDatastore != ElasticProduct.getActualProduct && configManager.getWaspConfig.defaultIndexedDatastore != SolrProduct.getActualProduct)
-          Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${ElasticProduct.getActualProduct}' or '${SolrProduct.getActualProduct}'")
+        if (configManager.getWaspConfig.defaultIndexedDatastore != ElasticProduct.getActualProductName && configManager.getWaspConfig.defaultIndexedDatastore != SolrProduct.getActualProductName)
+          Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${ElasticProduct.getActualProductName}' or '${SolrProduct.getActualProductName}'")
         else
           Right(())
     },
     ValidationRule("DefaultKeyValueDatastoreUnknown") {
       (configManager) =>
-        if (configManager.getWaspConfig.defaultKeyvalueDatastore != HBaseProduct.getActualProduct)
-          Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${HBaseProduct.getActualProduct}'")
+        if (configManager.getWaspConfig.defaultKeyvalueDatastore != HBaseProduct.getActualProductName)
+          Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${HBaseProduct.getActualProductName}'")
         else
           Right(())
     },
