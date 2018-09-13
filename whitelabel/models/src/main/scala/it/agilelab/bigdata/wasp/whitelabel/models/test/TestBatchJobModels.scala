@@ -19,9 +19,9 @@ private[wasp] object TestBatchJobModels {
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromSolr",
         inputs = List(
-          ReaderModel.solrReader("Solr Reader", TestIndexModel.solr.name)
+          ReaderModel.solrReader("Solr Reader", TestIndexModel.solr)
         ),
-        output = WriterModel.rawWriter("Raw Writer", TestRawModel.flat.name),
+        output = WriterModel.rawWriter("Raw Writer", TestRawModel.flat),
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
                                               ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
@@ -44,9 +44,9 @@ private[wasp] object TestBatchJobModels {
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromElasticToHdfs",
         inputs = List(
-          ReaderModel.elasticReader("Elastic Reader", TestIndexModel.elastic.name)
+          ReaderModel.elasticReader("Elastic Reader", TestIndexModel.elastic)
         ),
-        output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested.name),
+        output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested),
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
                                               ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
@@ -69,7 +69,7 @@ private[wasp] object TestBatchJobModels {
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromHdfsFlatToConsole",
         inputs = List(
-          ReaderModel.rawReader("Raw Reader", TestRawModel.flat.name)
+          ReaderModel.rawReader("Raw Reader", TestRawModel.flat)
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
@@ -91,7 +91,7 @@ private[wasp] object TestBatchJobModels {
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
         inputs = List(
-          ReaderModel.rawReader("Raw Reader", TestRawModel.nested.name)
+          ReaderModel.rawReader("Raw Reader", TestRawModel.nested)
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
@@ -113,7 +113,7 @@ private[wasp] object TestBatchJobModels {
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromJdbcMySqlToConsole",
         inputs = List(
-          ReaderModel.jdbcReader("JDBC Reader", TestSqlSouceModel.mySql.name)
+          ReaderModel.jdbcReader("JDBC Reader", TestSqlSouceModel.mySql)
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),

@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.GenericTopicProduct
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
 import org.apache.spark.sql.DataFrame
@@ -16,7 +17,7 @@ abstract class TestCheckpointStrategy(val version: String, val topicName: String
     println(s"Strategy configuration: $configuration")
     println(s"Strategy dataFrames received: $dataFrames")
 
-    val dataFrame = dataFrames(ReaderKey(TopicModel.readerType, topicName))
+    val dataFrame = dataFrames(ReaderKey(GenericTopicProduct.category, topicName))
     import dataFrame.sparkSession.implicits._
     import TestCheckpointState.implicits._
 
