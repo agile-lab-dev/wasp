@@ -11,7 +11,7 @@ object DatastoreProductJsonFormat extends RootJsonFormat[DatastoreProduct] {
 	private val categoryField = "category"
 	private val productField = "product"
 	
-	// grabs all subtypes of DatastoreProduct and builds a list of (DatastoreProcut, ("category", "product")) from which
+	// grabs all subtypes of DatastoreProduct and builds a list of (DatastoreProduct, ("category", "product")) from which
 	// we can then build the lookup maps
 	private def buildSubclassIdentifiersList(): List[(DatastoreProduct, (String, String))] = {
 		val objectSubclassesList = ReflectionUtils.findObjectSubclassesOfSealedTraitAssumingTheyAreAllObjects[DatastoreProduct]

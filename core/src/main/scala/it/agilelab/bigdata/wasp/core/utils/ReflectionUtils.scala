@@ -30,6 +30,7 @@ private[wasp] object ReflectionUtils {
     subclasses
   }
 	
+	// how to be too verbose 101
 	def findObjectSubclassesOfSealedTraitAssumingTheyAreAllObjects[T: TypeTag]: List[T] = {
 		// get a runtime classloader mirror
 		val runtimeMirror = runtimeUniverse.runtimeMirror(this.getClass.getClassLoader)
