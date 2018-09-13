@@ -22,11 +22,16 @@ object ReaderModel {
   import DatastoreProduct._
 	
   def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
-           (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
+           (name: String,
+            datastoreModel: DatastoreModel[DSC],
+            datastoreProduct: DSP,
+            options: Map[String, String] = Map.empty)
            (implicit ev: DSP <:< DSC): ReaderModel = {
 		ReaderModel(name, datastoreModel.name, datastoreProduct, options)
 	}
 
+	def jdbcReader(name: String, sqlSourceModel: SqlSourceModel, options: Map[String, String] = Map.empty) =
+		apply(name, sqlSourceModel, JDBCProduct, options)
 	def indexReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
     apply(name, indexModel, GenericIndexProduct, options)
 	def elasticReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =

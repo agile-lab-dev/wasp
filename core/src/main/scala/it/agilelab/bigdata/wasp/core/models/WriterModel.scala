@@ -22,7 +22,10 @@ object WriterModel {
   import DatastoreProduct._
 	
 	def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
-           (name: String, datastoreModel: DatastoreModel[DSC], datastoreProduct: DSP, options: Map[String, String] = Map.empty)
+           (name: String,
+            datastoreModel: DatastoreModel[DSC],
+            datastoreProduct: DSP,
+            options: Map[String, String] = Map.empty)
            (implicit ev: DSP <:< DSC): WriterModel = {
 		WriterModel(name, datastoreModel.name, datastoreProduct, options)
 	}
