@@ -40,8 +40,11 @@ private[wasp] object ReflectionUtils {
 		
 		// assume they're all objects and just grab the module reference
 		val objects = subclasses.map(subclass => {
-				val module = runtimeMirror
-					.staticModule(subclass.fullName)
+			  val moduleSymbol = runtimeMirror.staticModule(subclass.fullName)
+			  
+			  val module = runtimeMirror
+				  .reflectModule(moduleSymbol)
+			    .instance
 					.asInstanceOf[T]
 				
 				module
