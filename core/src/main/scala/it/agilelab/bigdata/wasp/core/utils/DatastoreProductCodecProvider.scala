@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import it.agilelab.bigdata.wasp.core.datastores.{DatastoreCategory, DatastoreProduct}
-import org.bson.{BsonInvalidOperationException, BsonReader, BsonWriter}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import org.bson.{BsonReader, BsonWriter}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 
