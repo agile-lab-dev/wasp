@@ -17,5 +17,5 @@ source $SCRIPT_DIR/../get-docker-cmd.sh
 
 cd $SCRIPT_DIR
 
-${DOCKER_CMD} build -t agilefactory/oracle-java:jdk-8u162 .
-${DOCKER_CMD} tag agilefactory/oracle-java:jdk-8u162 agilefactory/oracle-java:jdk-8
+${DOCKER_CMD} build -t agilefactory/oracle-java:jdk-8u181 .
+${DOCKER_CMD} tag agilefactory/oracle-java:jdk-8u181 agilefactory/oracle-java:jdk-8

@@ -93,7 +93,7 @@ d=$(tput sgr0)
 WASP_OPTS="-J-Xmx1g -J-Xms512m -Dlog4j.configurationFile=/root/configurations/log4j2.properties -Dconfig.file=/root/configurations/${WASP_CONFIGURATION_FILE} "
 WASP_OPTS="$WASP_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -J-XX:+HeapDumpOnOutOfMemoryError -J-XX:HeapDumpPath=/root/"
 DOCKER_OPTS="-i -v $SCRIPT_DIR:/root/configurations/:ro --network=wasp-docker --rm -w /root/configurations/"
-DOCKER_IMAGE="agilefactory/oracle-java:jdk-8u162"
+DOCKER_IMAGE="agilefactory/oracle-java:jdk-8u181"
 
 SECURITY_DOCKER_OPTS=""
 if [ "$WASP_SECURITY" = true ]; then

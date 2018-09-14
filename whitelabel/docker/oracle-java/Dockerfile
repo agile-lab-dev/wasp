@@ -4,32 +4,31 @@
 # https://github.com/dockerfile/java
 # https://github.com/dockerfile/java/tree/master/oracle-java8
 #
-
-# Pull base image.
 FROM library/ubuntu:16.04
-
-# Java Version
-ENV JAVA_VERSION 8u162
-
-# Install Java.
 
 MAINTAINER AgileLab <infra@agilelab.it>
 
-ENV JAVA_PKG=jre-8u*-linux-x64.tar.gz \
-    JAVA_HOME=/usr/java/default
+# Define helpful variables
+ENV JAVA_VERSION 8u181
+ENV JAVA_PKG="jdk-${JAVA_VERSION}-linux-x64.tar.gz"
+ENV JAVA_PKG_DOWNLOAD_URL="http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/${JAVA_PKG}"
 
+# Prepare, download, extract, configure, cleanup
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y curl wget tcpdump iputils-ping krb5-kdc krb5-admin-server python gettext-base && \
     mkdir /usr/java/ && \
-    echo "Start downloading oracle jre ${JAVA_VERSION}" && \
-    curl -C - -L -O -R -s -S -H "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u162-b12/0da788060d494f5095bf8624735fa2f1/jre-8u162-linux-x64.tar.gz && \
+    echo "Downloading Oracle JDK from ${JAVA_PKG_DOWNLOAD_URL}" && \
+    wget --no-cookies -q --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" ${JAVA_PKG_DOWNLOAD_URL} && \
+    echo "Extracting archive ${JAVA_PKG}" && \
     tar -xvzf ${JAVA_PKG}  -C /usr/java/ && \
-    rm -rf ${JAVA_PKG} && \
+    echo "Configuring" && \
     export JAVA_DIR=$(ls -1 -d /usr/java/*) && \
     ln -s $JAVA_DIR /usr/java/latest && \
     ln -s $JAVA_DIR /usr/java/default && \
     update-alternatives --install /usr/bin/java java $JAVA_DIR/bin/java 20000 && \
+    echo "Cleaning up" && \
+    rm ${JAVA_PKG} && \
     apt-get autoremove -y && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* && \
