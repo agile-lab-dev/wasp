@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
-import org.bson.{BsonReader, BsonWriter}
-import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
+import it.agilelab.bigdata.wasp.core.utils.ReflectionUtils.{findSubclassesOfSealedTrait, getRuntimeClass}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
-
+import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
+import org.bson.{BsonReader, BsonWriter}
 
 
 /**
@@ -13,10 +13,9 @@ import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 	* @author Nicolò Bidotti
 	*/
 object DatastoreProductCodecProvider extends CodecProvider {
+	private val subclassesOfDatastoreProduct = findSubclassesOfSealedTrait[DatastoreProduct].map(getRuntimeClass(_).getName).toSet
 	
-  private def isDatastoreProduct[T](clazz: Class[T]): Boolean = {
-	  DatastoreProduct.getClass.isAssignableFrom(clazz)
-  }
+  private def isDatastoreProduct[T](clazz: Class[T]): Boolean = subclassesOfDatastoreProduct(clazz.getName)
 
 	override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
 		if (isDatastoreProduct(clazz)) {

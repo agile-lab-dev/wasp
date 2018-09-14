@@ -14,6 +14,13 @@ private[wasp] object ReflectionUtils {
 		clazz
 	}
 	
+	def getRuntimeClass(classSymbol: ClassSymbol): Class[_] = {
+		// get a runtime classloader mirror
+		val runtimeMirror = runtimeUniverse.runtimeMirror(this.getClass.getClassLoader)
+		
+		runtimeMirror.runtimeClass(classSymbol)
+	}
+	
   def findSubclassesOfSealedTrait[T: TypeTag]: List[ClassSymbol] = {
 		// get the class symbol
     val clazz = getClassSymbol[T]
