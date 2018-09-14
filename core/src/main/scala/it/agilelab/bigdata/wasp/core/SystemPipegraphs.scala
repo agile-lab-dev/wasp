@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core
 
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, GenericIndexProduct, SolrProduct}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 import org.json4s.JObject
@@ -314,15 +315,25 @@ private[wasp] object TelemetryPipegraph {
 
 	val telemetryPipegraphName = "TelemetryPipegraph"
 
-	private def writer: WriterModel = ConfigManager.getTelemetryConfig.writer match {
-		case "elastic" => WriterModel.elasticWriter(
-			"Write telemetry data to Elastic",
-			elasticTelemetryIndex
-		)
-		case "solr" => WriterModel.solrWriter(
-			"Write telemetry data to Solr",
-			solrTelemetryIndex
-		)
+	private def writer: WriterModel = {
+		val indexedDatastoreProduct = ConfigManager.getTelemetryConfig.writer match {
+			case "default" | "" => GenericIndexProduct.getDefaultProductForThisCategory
+			case ElasticProduct.getActualProductName => ElasticProduct
+			case SolrProduct.getActualProductName => SolrProduct
+		}
+		
+		indexedDatastoreProduct match {
+			case ElasticProduct =>
+				WriterModel.elasticWriter(
+					"Write telemetry data to Elastic",
+					elasticTelemetryIndex
+				)
+			case SolrProduct =>
+				WriterModel.solrWriter(
+					"Write telemetry data to Solr",
+					solrTelemetryIndex
+				)
+		}
 	}
 
 	def apply() = PipegraphModel(
