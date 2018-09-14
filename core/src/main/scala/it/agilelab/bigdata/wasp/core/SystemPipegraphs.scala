@@ -316,11 +316,12 @@ private[wasp] object TelemetryPipegraph {
 	val telemetryPipegraphName = "TelemetryPipegraph"
 
 	private def writer: WriterModel = {
-		val indexedDatastoreProduct = ConfigManager.getTelemetryConfig.writer match {
-			case "default" | "" => GenericIndexProduct.getDefaultProductForThisCategory
-			case ElasticProduct.getActualProductName => ElasticProduct
-			case SolrProduct.getActualProductName => SolrProduct
-		}
+		val datastoreProductName = ConfigManager.getTelemetryConfig.writer
+		val indexedDatastoreProduct =
+			if (datastoreProductName == "default" | datastoreProductName == "")    GenericIndexProduct.getDefaultProductForThisCategory
+			else if (datastoreProductName == ElasticProduct.getActualProductName)  ElasticProduct
+			else if (datastoreProductName == SolrProduct.getActualProductName)     SolrProduct
+			else throw new IllegalArgumentException(s"""Invalid datastore name in telemetry configuration: "$datastoreProductName"""")
 		
 		indexedDatastoreProduct match {
 			case ElasticProduct =>
