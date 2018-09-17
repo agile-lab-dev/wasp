@@ -15,7 +15,12 @@ import org.bson.{BsonReader, BsonWriter}
 object DatastoreProductCodecProvider extends CodecProvider {
 	private val subclassesOfDatastoreProduct = findSubclassesOfSealedTrait[DatastoreProduct].map(getRuntimeClass(_).getName).toSet
 	
-  private def isDatastoreProduct[T](clazz: Class[T]): Boolean = subclassesOfDatastoreProduct(clazz.getName)
+  private def isDatastoreProduct[T](clazz: Class[T]): Boolean = {
+	  // this codec provider must match both the subclasses and the interface itself:
+	  // - we check whether the class is a subclass of DatastoreProduct because when we encode we get those classes
+	  // - we also check whether it is the interface itself because when decoding we get that class
+	  subclassesOfDatastoreProduct(clazz.getName) || classOf[DatastoreProduct].getName == clazz.getName
+  }
 
 	override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
 		if (isDatastoreProduct(clazz)) {
