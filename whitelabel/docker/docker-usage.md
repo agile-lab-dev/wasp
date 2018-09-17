@@ -1,1 +1,0 @@
-docker run --rm --link kafka:kafka --link zookeeper:zookeeper --network=wasp-docker wurstmeister/kafka:0.10.2.1 /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic metrosecondary.topic --from-beginning
