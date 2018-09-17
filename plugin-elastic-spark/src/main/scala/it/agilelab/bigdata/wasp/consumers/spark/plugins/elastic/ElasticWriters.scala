@@ -95,7 +95,7 @@ class ElasticsearchSparkStructuredStreamingWriter(indexBL: IndexBL,
         throw new Exception(s"The index name must be all lowercase: $index")
       }
 
-      val options = indexOpt.get.idField.map(it => ("es.mapping.id", it)).toMap
+      val options = indexOpt.get.idField.map(it => ("es.mapping.id", it)).toMap + ("path" -> resource)
 
       if (??[Boolean](
           elasticAdminActor,
