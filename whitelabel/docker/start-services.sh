@@ -14,25 +14,31 @@ done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 # help
-HELP="Usage:
+HELP="Usage: start-services.sh [options] SERVICE...
+
+    Options:
     -h, --help                  show this help and exit
-    -i, --indexed-datastore     specify what indexed datatore to use. Valid
-                                values: \"es\", \"elastic\", \"elasticsearch\",
-                                \"solr\", \"both\", \"none\"
-    --no-indexed-datastore      same as \"-i none\"
-    --no-spark                  do not start spark master and worker
-    --no-kafka                  do not start zookeeper and kafka
-    --with-hbase                start HBase
-    --with-hdfs                 start HDFS
+
+    Services:
+    elasticsearch               start elasticsearch (and kibana)
+    hbase                       start hbase (and hdfs)
+    hdfs                        start hdfs
+    kafka                       start kafka (and zookeeper)
+    mysql                       start mysql
+    solr                        start solr (and banana)
+    spark                       start spark
+
+    The MongoDB service is always started.
 "
 
 # parse command line arguments
-INDEXED_DATASTORE=""
-SPARK=1
-KAFKA=1
+ELASTICSEARCH=0
 HBASE=0
 HDFS=0
+KAFKA=0
 MYSQL=0
+SOLR=0
+SPARK=0
 while [[ $# -gt 0 ]]; do
     ARG=$1
     case $ARG in
@@ -40,37 +46,37 @@ while [[ $# -gt 0 ]]; do
             echo "$HELP"
             exit 0
         ;;
-        -i|--indexed-datastore)
-            INDEXED_DATASTORE="$2"
-            shift # past argument
-            shift # past value
-        ;;
-        --no-indexed-datastore)
-            INDEXED_DATASTORE="none"
+        "elasticsearch")
+            ELASTICSEARCH=1
             shift # past argument
         ;;
-        --no-spark)
-            SPARK=0
-            shift # past argument
-        ;;
-        --no-kafka)
-            KAFKA=0
-            shift # past argument
-        ;;
-        --with-hbase)
+        "hbase")
             HBASE=1
-            shift # past argument
-        ;;
-        --with-hdfs)
             HDFS=1
             shift # past argument
         ;;
-        --with-mysql)
+        "hdfs")
+            HDFS=1
+            shift # past argument
+        ;;
+        "kafka")
+            KAFKA=1
+            shift # past argument
+        ;;
+        "mysql")
             MYSQL=1
             shift # past argument
         ;;
+        "solr")
+            SOLR=1
+            shift # past argument
+        ;;
+        "spark")
+            SPARK=1
+            shift # past argument
+        ;;
         *)
-            echo "Unknown option $ARG"
+            echo "Unknown option/service $ARG"
             echo "$HELP"
             exit 1
         ;;
@@ -79,29 +85,9 @@ done
 
 # decide which compose files to use
 COMPOSE_FILES=("mongodb-docker-compose.yml")
-case ${INDEXED_DATASTORE} in
-    "es"|"elastic"|"elasticsearch")
-        COMPOSE_FILES+=("elastickibana-docker-compose.yml")
-        ;;
-    "solr")
-        COMPOSE_FILES+=("solrcloudbanana-docker-compose.yml")
-        ;;
-    "both")
-        COMPOSE_FILES+=("elastickibana-docker-compose.yml")
-        COMPOSE_FILES+=("solrcloudbanana-docker-compose.yml")
-        ;;
-    "none")
-        ;;
-    *)
-        echo "No indexed datastore specified (valid: \"es\", \"elastic\", \"elasticsearch\", \"solr\", \"both\"); using elasticsearch."
-        COMPOSE_FILES+=("elastickibana-docker-compose.yml")
-        ;;
-esac
-if [ ${SPARK} -eq 1 ]; then
-    COMPOSE_FILES+=("spark-docker-compose.yml")
-fi
-if [ ${KAFKA} -eq 1 ]; then
-    COMPOSE_FILES+=("kafka-docker-compose.yml")
+
+if [ ${ELASTICSEARCH} -eq 1 ]; then
+    COMPOSE_FILES+=("elastickibana-docker-compose.yml")
 fi
 if [ ${HBASE} -eq 1 ]; then
     COMPOSE_FILES+=("hbase-docker-compose.yml")
@@ -109,9 +95,19 @@ fi
 if [ ${HDFS} -eq 1 ]; then
     COMPOSE_FILES+=("hdfs-docker-compose.yml")
 fi
+if [ ${KAFKA} -eq 1 ]; then
+    COMPOSE_FILES+=("kafka-docker-compose.yml")
+fi
 if [ ${MYSQL} -eq 1 ]; then
     COMPOSE_FILES+=("mysql-docker-compose.yml")
 fi
+if [ ${SOLR} -eq 1 ]; then
+    COMPOSE_FILES+=("solrcloudbanana-docker-compose.yml")
+fi
+if [ ${SPARK} -eq 1 ]; then
+    COMPOSE_FILES+=("spark-docker-compose.yml")
+fi
+
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR
