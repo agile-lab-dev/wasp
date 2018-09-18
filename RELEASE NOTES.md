@@ -1317,3 +1317,120 @@ Closes #133
 
 An unique uuid will be appended to every actor name in order to prevent name clashes if akka has not yet deregistered the old actor name
 
+# WASP 2.16.0
+
+### Change Spark version to CDS
+
+[Merge request 70](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/70)
+
+Created at: 2018-08-28T15:32:59.897Z
+
+Updated at: 2018-09-18T10:22:45.866Z
+
+Branch: feature/136-spark-cdh
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #136 
+
+WASP now uses the CLoudera Distribution of Spark, which means that we get CDH as a transitive dependency. This should fix various problems with KMS and also bring many other fixes and improvementsfrom CDS & CDH.
+
+### Resolve "Add ability to specify query/writer options for each ETL/Writer"
+
+[Merge request 71](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/71)
+
+Created at: 2018-08-28T16:00:11.317Z
+
+Updated at: 2018-09-18T14:37:54.988Z
+
+Branch: feature/138-query-writer-options-for-each-etl-writer
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #138
+
+New features and improvements:
+- the streaming readers of a SparkStructuredStreamingETLModel have been moved to a separate field in preparation of the support of stream-to-stream joins and multi-stream support
+- StreamingReaderModel has been introduced to add support for rate limiting each streaming source independently
+- trigger interval is now independently configurable for each SparkStructuredStreamingETLModel
+- datastores are now organized using a class hierarchy (see DatastoreCategory, DatastoreProduct and related)
+- WriterModels now don't have an optional endpoint anymore
+- docker containers for services are now based on CDH 5.12
+- docker containers for WASP now use the JDK 1.8u181
+- query final configuration and starting has been moved from the writers to MaterializationSteps 
+- general rework of the Spark consumers plugins and writers to accomodate the new features
+- the telemetry writer can now be specified as "default", letting the framework choose the indexed datastore from its configuration
+
+Fixes:
+- remove kafkaAccessType in SparkStructuredStreamingETLModel as it is not applicable
+- some Spark Structured Streaming writers did not apply the trigger interval setting
+- improvements in some logging messages
+- the whitelabel now has a functional configuration for the telemetry
+- fix kafka docker container broker znode check
+
+
+### Resolve "Add informations on how to contribute"
+
+[Merge request 74](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/74)
+
+Created at: 2018-08-29T16:53:22.034Z
+
+Updated at: 2018-09-18T10:23:06.997Z
+
+Branch: feature/137-contributing
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #137
+
+### Resolve "Solr Writer Atomic Update Support"
+
+[Merge request 75](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/75)
+
+Created at: 2018-09-03T09:03:41.415Z
+
+Updated at: 2018-09-18T10:34:51.176Z
+
+Branch: feature/144-solr-writer-atomic-update-support
+
+Author: [Gloria Lovera](https://gitlab.com/glovera)
+
+Assignee: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #144
+
+New features and improvements:
+- the Solr writers now support atomic updates
+
+When processing Rows, any fields of type MapType are converted to a Java Map that is then interpreted by Solr as an atomic update with the modifier specified as the key. To perform an atomic add (as in, append to a multivalue) on a multivalue field named `ts` with values of type `Timestamp`, you would declare a column of a DataFrame called `ts` with contents:
+```
+Map[String,Timestamp]("add"-> new Timestamp(System.currentTimeMillis)))
+```
+
+### Resolve "Change Spark version to CDS 2.2.0.cloudera2"
+
+[Merge request 76](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/76)
+
+Created at: 2018-09-03T10:31:53.030Z
+
+Updated at: 2018-09-18T10:24:37.179Z
+
+Branch: feature/145-change-spark-version-to-cds-2-2-0-cloudera2
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #145
+
+### Resolve "Fix setup.py for wasprng"
+
+[Merge request 77](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/77)
+
+Created at: 2018-09-18T15:27:03.893Z
+
+Updated at: 2018-09-18T15:44:16.360Z
+
+Branch: feature/147-fix-setup-py-for-wasprng
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #147
