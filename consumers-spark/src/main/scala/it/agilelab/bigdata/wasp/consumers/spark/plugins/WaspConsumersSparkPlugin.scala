@@ -32,7 +32,7 @@ trait WaspConsumersSparkPlugin {
                                         writerModel: WriterModel): SparkStructuredStreamingWriter
 	def getSparkStructuredStreamingReader(ss: SparkSession,
 	                                      structuredStreamingETLModel: StructuredStreamingETLModel,
-	                                      readerModel: ReaderModel): SparkStructuredStreamingReader
+	                                      streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader
 	def getSparkBatchWriter(sc: SparkContext,
                           writerModel: WriterModel): SparkBatchWriter
 	def getSparkBatchReader(sc: SparkContext,

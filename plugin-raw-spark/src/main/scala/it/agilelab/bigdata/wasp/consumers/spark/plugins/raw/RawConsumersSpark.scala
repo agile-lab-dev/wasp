@@ -55,8 +55,8 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   
   override def getSparkStructuredStreamingReader(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 readerModel: ReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
+                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
+    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }

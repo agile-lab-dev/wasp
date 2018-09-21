@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.ConsoleProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, ReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -47,8 +47,8 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   
   override def getSparkStructuredStreamingReader(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 readerModel: ReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
+                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
+    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }

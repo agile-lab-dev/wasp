@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.KafkaProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, ReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -51,7 +51,7 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   
   override def getSparkStructuredStreamingReader(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 readerModel: ReaderModel): SparkStructuredStreamingReader = {
+                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
     logger.info(s"Returning object $KafkaSparkStructuredStreamingReader")
     // why is this an object? :/
     KafkaSparkStructuredStreamingReader
