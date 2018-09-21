@@ -200,9 +200,6 @@ object Dependencies {
 		json ++
 		test ++
 		spark :+
-		kafka :+ // TODO remove when switching to plugins
-		kafkaStreaming :+ // TODO remove when switching to plugins
-		kafkaSparkSql :+ // TODO remove when switching to plugins
     quartz
 	).map(excludeNetty).map(excludeLog4j) ++
 		log4j :+
@@ -229,12 +226,17 @@ object Dependencies {
 	val plugin_elastic_spark = Seq(
 		elasticSearchSpark
 	)
-
+	
   val plugin_hbase_spark = (
 		hbase :+
 		scalatest
 	).map(excludeNetty)
-
+	
+	val plugin_kafka_spark = Seq(
+		kafkaStreaming,
+		kafkaSparkSql
+	).map(excludeLog4j).map(excludeNetty)
+	
 	val plugin_solr_spark = Seq(
 		solr,
 		sparkSolr
