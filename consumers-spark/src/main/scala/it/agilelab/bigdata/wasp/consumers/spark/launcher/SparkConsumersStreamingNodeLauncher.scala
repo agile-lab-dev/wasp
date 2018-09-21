@@ -5,11 +5,11 @@ import java.util.ServiceLoader
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaSparkStructuredStreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
+import it.agilelab.bigdata.wasp.consumers.spark.readers.PluginBasedSparkReaderFactory
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
@@ -43,9 +43,8 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 
 
 		val childrenCreator: ChildCreator = SparkConsumersStreamingMasterGuardian.defaultChildCreator(
-			KafkaSparkStructuredStreamingReader,
-			plugins,
 			SparkSingletons.getSparkSession,
+			new PluginBasedSparkReaderFactory(plugins),
 			SparkWriterFactoryDefault(plugins),
 			5.seconds,
 			5.seconds,

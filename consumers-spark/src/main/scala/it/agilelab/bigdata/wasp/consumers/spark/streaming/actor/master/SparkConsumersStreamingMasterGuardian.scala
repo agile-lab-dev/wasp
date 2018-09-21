@@ -7,9 +7,8 @@ import java.util.UUID
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props, Stash}
 import akka.pattern.Patterns.ask
 import akka.pattern.PipeToSupport
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkStructuredStreamingReader
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReaderFactory
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{ActivationSteps, MaterializationSteps}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Protocol._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian._
@@ -19,7 +18,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Pipeg
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.watchdog.SparkContextWatchDog
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -262,9 +260,8 @@ object SparkConsumersStreamingMasterGuardian  {
   def doNothingWatchdogCreator(sc: SparkContext): ChildCreator = (_, name, context) =>
     context.actorOf(SparkContextWatchDog.logAndDoNothingWatchdogProps(sc), name)
 
-  def defaultChildCreator(reader: SparkStructuredStreamingReader,
-                          plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
-                          sparkSession: SparkSession,
+  def defaultChildCreator(sparkSession: SparkSession,
+                          sparkReaderFactory: SparkReaderFactory,
                           sparkWriterFactory: SparkWriterFactory,
                           retryDuration: FiniteDuration,
                           monitoringInterval: FiniteDuration,
@@ -280,14 +277,25 @@ object SparkConsumersStreamingMasterGuardian  {
 
 
     val name = s"$suppliedName-${UUID.randomUUID()}"
-
+  
+    val streamingReaderFactory: ActivationSteps.StreamingReaderFactory = { (structuredStreamingETLModel, streamingReaderModel) =>
+      sparkReaderFactory.createSparkStructuredStreamingReader(env, sparkSession, structuredStreamingETLModel, streamingReaderModel)
+    }
+  
+    val staticReaderFactory: ActivationSteps.StaticReaderFactory = { (structuredStreamingETLModel, readerModel) =>
+      sparkReaderFactory.createSparkBatchReader(env, sparkSession.sparkContext, readerModel)
+    }
+    
     val writerFactory: MaterializationSteps.WriterFactory = { (structuredStreamingETLModel, writerModel) =>
       sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETLModel, writerModel)
     }
 
-
-    val defaultGrandChildrenCreator = PipegraphGuardian.defaultChildFactory(reader, plugins, sparkSession, env.mlModelBL,
-      env.topicBL, writerFactory)
+    val defaultGrandChildrenCreator = PipegraphGuardian.defaultChildFactory(sparkSession,
+                                                                            env.mlModelBL,
+                                                                            env.topicBL,
+                                                                            streamingReaderFactory,
+                                                                            staticReaderFactory,
+                                                                            writerFactory)
 
     //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())

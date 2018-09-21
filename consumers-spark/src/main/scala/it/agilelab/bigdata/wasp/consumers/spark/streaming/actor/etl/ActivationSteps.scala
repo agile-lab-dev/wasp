@@ -8,14 +8,14 @@ import java.util.Properties
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.core.SystemPipegraphs
 import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
-import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
@@ -30,20 +30,11 @@ import scala.collection.JavaConverters._
 import scala.util.parsing.json.{JSONFormat, JSONObject}
 import scala.util.{Failure, Success, Try}
 
+
 /**
   * Trait collecting operations to be composed to realize Activation of a [[StructuredStreamingETLModel]]
   */
 trait ActivationSteps {
-
-  /**
-    * We need a [[SparkStructuredStreamingReader]] able to read from kafka.
-    */
-  protected val reader: SparkStructuredStreamingReader
-
-  /**
-    * We need the plugins map
-    */
-  protected val plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin]
 
   /**
     * We need a Spark Session
@@ -59,7 +50,16 @@ trait ActivationSteps {
     * We need access to topics
     */
   protected val topicsBl: TopicBL
-
+  
+  /**
+    * We need a streaming reader factory
+    */
+  protected val streamingReaderFactory: StreamingReaderFactory
+  
+  /**
+    * We need a static reader factory
+    */
+  protected val staticReaderFactory: StaticReaderFactory
 
   /**
     * Performs activation of a [[StructuredStreamingETLModel]] returning the output data frame
@@ -103,8 +103,14 @@ trait ActivationSteps {
     */
   private def createStreamingDataFrameFromStreamingSource(etl: StructuredStreamingETLModel,
                                                           streamingReaderModel: StreamingReaderModel): Try[(ReaderKey, DataFrame)] = Try {
-    (ReaderKey(streamingReaderModel.datastoreProduct.categoryName, streamingReaderModel.name),
-      reader.createStructuredStream(etl, streamingReaderModel)(sparkSession))
+    val maybeReader = streamingReaderFactory(etl, streamingReaderModel)
+    val streamingDataFrame = maybeReader match {
+      case Some(reader) => reader.createStructuredStream(etl, streamingReaderModel)(sparkSession)
+      case None =>
+        val datastoreProduct = streamingReaderModel.datastoreProduct
+        throw new Exception(s"""Cannot create streaming reader, no plugin able to handle datastore product "$datastoreProduct" found""")
+    }
+    (ReaderKey(streamingReaderModel.datastoreProduct.categoryName, streamingReaderModel.name), streamingDataFrame)
   }
 
 
@@ -120,18 +126,18 @@ trait ActivationSteps {
                                                      readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
 
       def createReader(readerModel: ReaderModel): Try[SparkBatchReader] = Try {
-        val datastoreProduct = readerModel.datastoreProduct
-        plugins.get(datastoreProduct) match {
-          case Some(r) => r.getSparkBatchReader(sparkSession.sparkContext, readerModel)
-          case None => throw new Exception(s"""Cannot create Reader, no plugin able to handle datastore product "$datastoreProduct" found""")
+        val maybeReader = staticReaderFactory(etl, readerModel)
+        maybeReader match {
+          case Some(reader) => reader
+          case None =>
+            val datastoreProduct = readerModel.datastoreProduct
+            throw new Exception(s"""Cannot create static reader, no plugin able to handle datastore product "$datastoreProduct" found""")
         }
       }
-
 
       def createStructuredStream(reader: SparkBatchReader): Try[(ReaderKey, DataFrame)] = Try {
         (ReaderKey(reader.readerType, reader.name), reader.read(sparkSession.sparkContext))
       }
-
 
       for {
         reader <- createReader(readerModel)
@@ -305,6 +311,24 @@ trait ActivationSteps {
           cleanOutputStream
     }
   }
+}
+
+object ActivationSteps {
+  /**
+    * A function able to go from a [[StructuredStreamingETLModel]]] and a [[StreamingReaderModel]] to an [[Option]]
+    * of [[SparkStructuredStreamingReader]].
+    *
+    * The goal of this type is to abstract out the concrete implementation of this computation.
+    */
+  type StreamingReaderFactory = (StructuredStreamingETLModel, StreamingReaderModel) => Option[SparkStructuredStreamingReader]
+  
+  /**
+    * A function able to go from a [[StructuredStreamingETLModel]]] and a [[ReaderModel]] to an [[Option]] of
+    * [[SparkBatchReader]].
+    *
+    * The goal of this type is to abstract out the concrete implementation of this computation.
+    */
+  type StaticReaderFactory = (StructuredStreamingETLModel, ReaderModel) => Option[SparkBatchReader]
 }
 
 object MetadataOps {

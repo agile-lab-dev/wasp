@@ -11,11 +11,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{StructuredStreamingETLActor, Protocol => ChildrenProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => MyProtocol}
 import PipegraphGuardian._
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkStructuredStreamingReader
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
-import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, PipegraphBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark.sql.SparkSession
@@ -474,24 +472,27 @@ object PipegraphGuardian {
   type ChildFactory = (PipegraphModel,String, ActorRefFactory) => ActorRef
   type ComponentFailedStrategy = StructuredStreamingETLModel => Choice
 
-  def defaultChildFactory(reader: SparkStructuredStreamingReader,
-                          plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
-                          sparkSession: SparkSession,
+  def defaultChildFactory(sparkSession: SparkSession,
                           mlModelBl: MlModelBL,
                           topicsBl: TopicBL,
+                          streamingReaderFactory: StreamingReaderFactory,
+                          staticReaderFactory: StaticReaderFactory,
                           writerFactory: WriterFactory): ChildFactory = { (pipegraph,suppliedName, context) =>
 
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
     //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
-
-
-
-
-
-    context.actorOf(StructuredStreamingETLActor.props(reader, plugins, sparkSession, mlModelBl, topicsBl,
-      writerFactory, pipegraph, StructuredStreamingETLActor.defaultTelemetryActorFactory()),saneName)
+    
+    context.actorOf(StructuredStreamingETLActor.props(sparkSession,
+                                                      mlModelBl,
+                                                      topicsBl,
+                                                      streamingReaderFactory,
+                                                      staticReaderFactory,
+                                                      writerFactory,
+                                                      pipegraph,
+                                                      StructuredStreamingETLActor.defaultTelemetryActorFactory()),
+                    saneName)
 
   }
 

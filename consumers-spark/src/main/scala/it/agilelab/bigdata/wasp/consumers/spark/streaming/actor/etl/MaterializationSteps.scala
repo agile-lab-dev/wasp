@@ -17,7 +17,7 @@ import scala.util.{Failure, Success, Try}
   * Trait collecting operations to be composed to realize Materialization of a [[StructuredStreamingETLModel]]
   */
 trait MaterializationSteps {
-
+  
   /**
     * We need a writer factory
     */
@@ -96,7 +96,7 @@ trait MaterializationSteps {
 }
 
 object MaterializationSteps {
-
+  
   /**
     * A function able to go from a [[WriterModel]] to an [[Option]] of [[SparkStructuredStreamingWriter]].
     *

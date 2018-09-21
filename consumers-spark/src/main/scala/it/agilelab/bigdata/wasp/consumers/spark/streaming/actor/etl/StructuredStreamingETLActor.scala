@@ -3,28 +3,25 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkStructuredStreamingReader
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.State._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.StructuredStreamingETLActor.TelemetryActorFactory
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => MyProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => PipegraphProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.telemetry.TelemetryActor
 import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.SparkSession
 
 import scala.util.{Failure, Success}
 
-class StructuredStreamingETLActor private(override val reader: SparkStructuredStreamingReader,
-                                          override val plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
-                                          override val sparkSession: SparkSession,
+class StructuredStreamingETLActor private(override val sparkSession: SparkSession,
                                           override val mlModelBl: MlModelBL,
                                           override val topicsBl: TopicBL,
+                                          override val streamingReaderFactory: StreamingReaderFactory,
+                                          override val staticReaderFactory: StaticReaderFactory,
                                           override val writerFactory: WriterFactory,
                                           val pipegraph: PipegraphModel,
                                           val telemetryActorFactory: TelemetryActorFactory
@@ -102,21 +99,22 @@ object StructuredStreamingETLActor {
 
   type TelemetryActorFactory = (String, ActorRefFactory) => ActorRef
 
-  def props(reader: SparkStructuredStreamingReader,
-            plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
-            sparkSession: SparkSession,
+  def props(sparkSession: SparkSession,
             mlModelBl: MlModelBL,
             topicsBl: TopicBL,
+            streamingReaderFactory: StreamingReaderFactory,
+            staticReaderFactory: StaticReaderFactory,
             writerFactory: WriterFactory,
             pipegraph: PipegraphModel,
-            telemetryActorFactory: TelemetryActorFactory) = Props(new StructuredStreamingETLActor(reader,
-                                                                               plugins,
-                                                                               sparkSession,
-                                                                               mlModelBl,
-                                                                               topicsBl,
-                                                                               writerFactory,
-                                                                               pipegraph,
-                                                                               telemetryActorFactory))
+            telemetryActorFactory: TelemetryActorFactory) =
+    Props(new StructuredStreamingETLActor(sparkSession,
+                                          mlModelBl,
+                                          topicsBl,
+                                          streamingReaderFactory,
+                                          staticReaderFactory,
+                                          writerFactory,
+                                          pipegraph,
+                                          telemetryActorFactory))
 
 
   def defaultTelemetryActorFactory() : TelemetryActorFactory = { (suppliedName, context) =>
