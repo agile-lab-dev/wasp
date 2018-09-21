@@ -6,8 +6,8 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkBatchWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
@@ -56,12 +56,28 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info(s"Initialize the solr spark streaming writer with this writer model name '${writerModel.datastoreModelName}'")
     new SolrSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName, solrAdminActor_)
   }
+  
+  override def getSparkLegacyStreamingReader(ssc: StreamingContext,
+                                             legacyStreamingETLModel: LegacyStreamingETLModel,
+                                             readerModel: ReaderModel): SparkLegacyStreamingReader = {
+    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
+    logger.error(msg)
+    throw new UnsupportedOperationException(msg)
+  }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
                                                  writerModel: WriterModel): SolrSparkStructuredStreamingWriter = {
     logger.info(s"Initialize the solr spark structured streaming writer with this writer model endpointName '${writerModel.datastoreModelName}'")
     new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, solrAdminActor_)
+  }
+  
+  override def getSparkStructuredStreamingReader(ss: SparkSession,
+                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
+                                                 readerModel: ReaderModel): SparkStructuredStreamingReader = {
+    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
+    logger.error(msg)
+    throw new UnsupportedOperationException(msg)
   }
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {

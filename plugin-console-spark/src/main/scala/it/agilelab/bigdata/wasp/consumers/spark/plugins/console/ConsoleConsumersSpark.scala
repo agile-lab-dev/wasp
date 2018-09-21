@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.console
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.ConsoleProduct
@@ -29,12 +29,28 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info(s"Creating $datastoreProduct Spark Legacy Streaming writer")
     new ConsoleSparkLegacyStreamingWriter()
   }
+  
+  override def getSparkLegacyStreamingReader(ssc: StreamingContext,
+                                             legacyStreamingETLModel: LegacyStreamingETLModel,
+                                             readerModel: ReaderModel): SparkLegacyStreamingReader = {
+    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
+    logger.error(msg)
+    throw new UnsupportedOperationException(msg)
+  }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
                                                  writerModel: WriterModel): ConsoleSparkStructuredStreamingWriter = {
     logger.info(s"Creating $datastoreProduct Spark Structured Streaming writer")
     new ConsoleSparkStructuredStreamingWriter()
+  }
+  
+  override def getSparkStructuredStreamingReader(ss: SparkSession,
+                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
+                                                 readerModel: ReaderModel): SparkStructuredStreamingReader = {
+    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
+    logger.error(msg)
+    throw new UnsupportedOperationException(msg)
   }
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {

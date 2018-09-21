@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
 import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
@@ -32,6 +32,14 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info(s"Initialize the kafka spark streaming writer")
     new KafkaSparkLegacyStreamingWriter(topicBL, ssc, writerModel.datastoreModelName)
   }
+  
+  override def getSparkLegacyStreamingReader(ssc: StreamingContext,
+                                             legacyStreamingETLModel: LegacyStreamingETLModel,
+                                             readerModel: ReaderModel): SparkLegacyStreamingReader = {
+    logger.info(s"Returning object $KafkaSparkLegacyStreamingReader")
+    // why is this an object? :/
+    KafkaSparkLegacyStreamingReader
+  }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
@@ -39,6 +47,14 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info(s"Initialize the kafka spark structured streaming writer")
     logger.info(s"Topic: $topicBL")
     new KafkaSparkStructuredStreamingWriter(topicBL, writerModel.datastoreModelName, ss)
+  }
+  
+  override def getSparkStructuredStreamingReader(ss: SparkSession,
+                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
+                                                 readerModel: ReaderModel): SparkStructuredStreamingReader = {
+    logger.info(s"Returning object $KafkaSparkStructuredStreamingReader")
+    // why is this an object? :/
+    KafkaSparkStructuredStreamingReader
   }
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
