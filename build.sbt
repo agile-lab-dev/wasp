@@ -40,7 +40,7 @@ lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
 
 /* Plugins */
 
-lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
+lazy val plugin_console_spark = Project("wasp-plugin-console-spark", file("plugin-console-spark"))
 	.settings(Settings.commonSettings: _*)
 	.dependsOn(consumers_spark)
 
@@ -54,18 +54,23 @@ lazy val plugin_hbase_spark = Project("wasp-plugin-hbase-spark", file("plugin-hb
 	.dependsOn(consumers_spark)
 	.settings(libraryDependencies ++= Dependencies.plugin_hbase_spark)
 
+lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+
+lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-kafka-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+	.settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
+
+lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+
 lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr-spark"))
 	.settings(Settings.commonSettings: _*)
 	.dependsOn(consumers_spark)
 	.settings(libraryDependencies ++= Dependencies.plugin_solr_spark)
-
-lazy val plugin_console_spark = Project("wasp-plugin-console-spark", file("plugin-console-spark"))
-	.settings(Settings.commonSettings: _*)
-	.dependsOn(consumers_spark)
-
-lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc-spark"))
-	.settings(Settings.commonSettings: _*)
-	.dependsOn(consumers_spark)
 
 /* Framework + Plugins */
 
