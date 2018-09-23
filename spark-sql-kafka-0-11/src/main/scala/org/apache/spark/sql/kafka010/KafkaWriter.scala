@@ -20,6 +20,7 @@ package org.apache.spark.sql.kafka010
 import java.{util => ju}
 
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.{AnalysisException, SparkSession}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.execution.{QueryExecution, SQLExecution}
@@ -85,11 +86,11 @@ private[kafka010] object KafkaWriter extends Logging {
       topic: Option[String] = None): Unit = {
     val schema = queryExecution.analyzed.output
     validateQuery(queryExecution, kafkaParameters, topic)
+    val rdd = queryExecution.toRdd
     SQLExecution.withNewExecutionId(sparkSession, queryExecution) {
-      queryExecution.toRdd.foreachPartition { iter =>
+      rdd.foreachPartition { iter =>
         val writeTask = new KafkaWriteTask(kafkaParameters, schema, topic)
-        Utils.tryWithSafeFinally(block = writeTask.execute(iter))(
-          finallyBlock = writeTask.close())
+        Utils.tryWithSafeFinally(block = writeTask.execute(iter))(finallyBlock = writeTask.close())
       }
     }
   }
