@@ -68,7 +68,7 @@ import org.apache.spark.unsafe.types.UTF8String
  * To avoid this issue, you should make sure stopping the query before stopping the Kafka brokers
  * and not use wrong broker addresses.
  */
-private[kafka010] class KafkaSource(
+private[kafka011] class KafkaSource(
     sqlContext: SQLContext,
     kafkaReader: KafkaOffsetReader,
     executorKafkaParams: ju.Map[String, Object],
@@ -333,7 +333,7 @@ private[kafka010] class KafkaSource(
 }
 
 /** Companion object for the [[KafkaSource]]. */
-private[kafka010] object KafkaSource {
+private[kafka011] object KafkaSource {
   val INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_FALSE =
     """
       |Some data may have been lost because they are not available in Kafka any more; either the
@@ -350,7 +350,7 @@ private[kafka010] object KafkaSource {
       | source option "failOnDataLoss" to "false".
     """.stripMargin
 
-  private[kafka010] val VERSION = 1
+  private[kafka011] val VERSION = 1
 
   def getSortedExecutorList(sc: SparkContext): Array[String] = {
     val bm = sc.env.blockManager

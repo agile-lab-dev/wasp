@@ -36,7 +36,7 @@ import org.apache.spark.util.Utils
  * null valued key field will be added to the
  * [[org.apache.kafka.clients.producer.ProducerRecord]].
  */
-private[kafka010] object KafkaWriter extends Logging {
+private[kafka011] object KafkaWriter extends Logging {
   val TOPIC_ATTRIBUTE_NAME: String = "topic"
   val KEY_ATTRIBUTE_NAME: String = "key"
   val VALUE_ATTRIBUTE_NAME: String = "value"

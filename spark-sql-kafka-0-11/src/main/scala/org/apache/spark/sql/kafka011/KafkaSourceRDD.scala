@@ -32,7 +32,7 @@ import org.apache.spark.util.NextIterator
 
 
 /** Offset range that one partition of the KafkaSourceRDD has to read */
-private[kafka010] case class KafkaSourceRDDOffsetRange(
+private[kafka011] case class KafkaSourceRDDOffsetRange(
     topicPartition: TopicPartition,
     fromOffset: Long,
     untilOffset: Long,
@@ -44,7 +44,7 @@ private[kafka010] case class KafkaSourceRDDOffsetRange(
 
 
 /** Partition of the KafkaSourceRDD */
-private[kafka010] case class KafkaSourceRDDPartition(
+private[kafka011] case class KafkaSourceRDDPartition(
   index: Int, offsetRange: KafkaSourceRDDOffsetRange) extends Partition
 
 
@@ -58,7 +58,7 @@ private[kafka010] case class KafkaSourceRDDPartition(
  * @param executorKafkaParams Kafka configuration for creating KafkaConsumer on the executors
  * @param offsetRanges Offset ranges that define the Kafka data belonging to this RDD
  */
-private[kafka010] class KafkaSourceRDD(
+private[kafka011] class KafkaSourceRDD(
     sc: SparkContext,
     executorKafkaParams: ju.Map[String, Object],
     offsetRanges: Seq[KafkaSourceRDDOffsetRange],

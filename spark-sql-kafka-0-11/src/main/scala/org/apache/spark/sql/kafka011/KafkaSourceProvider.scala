@@ -38,7 +38,7 @@ import org.apache.spark.sql.types.StructType
  * IllegalArgumentException when the Kafka Dataset is created, so that it can catch
  * missing options even before the query is started.
  */
-private[kafka010] class KafkaSourceProvider extends DataSourceRegister
+private[kafka011] class KafkaSourceProvider extends DataSourceRegister
     with StreamSourceProvider
     with StreamSinkProvider
     with RelationProvider
@@ -366,10 +366,10 @@ private[kafka010] class KafkaSourceProvider extends DataSourceRegister
   }
 }
 
-private[kafka010] object KafkaSourceProvider extends Logging {
+private[kafka011] object KafkaSourceProvider extends Logging {
   private val STRATEGY_OPTION_KEYS = Set("subscribe", "subscribepattern", "assign")
-  private[kafka010] val STARTING_OFFSETS_OPTION_KEY = "startingoffsets"
-  private[kafka010] val ENDING_OFFSETS_OPTION_KEY = "endingoffsets"
+  private[kafka011] val STARTING_OFFSETS_OPTION_KEY = "startingoffsets"
+  private[kafka011] val ENDING_OFFSETS_OPTION_KEY = "endingoffsets"
   private val FAIL_ON_DATA_LOSS_OPTION_KEY = "failondataloss"
   val TOPIC_OPTION_KEY = "topic"
 

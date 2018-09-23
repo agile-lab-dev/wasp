@@ -35,7 +35,7 @@ import org.apache.spark.util.UninterruptibleThread
  * Underlying consumer is not threadsafe, so neither is this,
  * but processing the same topicpartition and group id in multiple threads is usually bad anyway.
  */
-private[kafka010] case class CachedKafkaConsumer private(
+private[kafka011] case class CachedKafkaConsumer private(
     topicPartition: TopicPartition,
     kafkaParams: ju.Map[String, Object]) extends Logging {
   import CachedKafkaConsumer._
@@ -301,7 +301,7 @@ private[kafka010] case class CachedKafkaConsumer private(
   }
 }
 
-private[kafka010] object CachedKafkaConsumer extends Logging {
+private[kafka011] object CachedKafkaConsumer extends Logging {
 
   private val UNKNOWN_OFFSET = -2L
 

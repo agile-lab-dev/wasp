@@ -32,7 +32,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 
 
-private[kafka010] class KafkaRelation(
+private[kafka011] class KafkaRelation(
     override val sqlContext: SQLContext,
     strategy: ConsumerStrategy,
     sourceOptions: Map[String, String],

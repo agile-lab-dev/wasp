@@ -30,7 +30,7 @@ import org.apache.spark.sql.types.{BinaryType, StringType}
  * to commit or abort tasks. Exceptions thrown by the implementation of this class will
  * automatically trigger task aborts.
  */
-private[kafka010] class KafkaWriteTask(
+private[kafka011] class KafkaWriteTask(
     producerConfiguration: ju.Map[String, Object],
     inputSchema: Seq[Attribute],
     topic: Option[String]) {

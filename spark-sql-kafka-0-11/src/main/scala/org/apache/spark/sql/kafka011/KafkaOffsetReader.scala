@@ -38,12 +38,12 @@ import org.apache.spark.util.{ThreadUtils, UninterruptibleThread}
  * by this source. These strategies directly correspond to the different consumption options
  * in. This class is designed to return a configured [[KafkaConsumer]] that is used by the
  * [[KafkaSource]] to query for the offsets. See the docs on
- * [[org.apache.spark.sql.kafka010.ConsumerStrategy]]
+ * [[org.apache.spark.sql.kafka011.ConsumerStrategy]]
  * for more details.
  *
  * Note: This class is not ThreadSafe
  */
-private[kafka010] class KafkaOffsetReader(
+private[kafka011] class KafkaOffsetReader(
     consumerStrategy: ConsumerStrategy,
     driverKafkaParams: ju.Map[String, Object],
     readerOptions: Map[String, String],
@@ -303,7 +303,7 @@ private[kafka010] class KafkaOffsetReader(
   }
 }
 
-private[kafka010] object KafkaOffsetReader {
+private[kafka011] object KafkaOffsetReader {
 
   def kafkaSchema: StructType = StructType(Seq(
     StructField("key", BinaryType),

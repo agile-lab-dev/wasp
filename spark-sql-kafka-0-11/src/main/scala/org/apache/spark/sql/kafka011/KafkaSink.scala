@@ -23,7 +23,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.execution.streaming.Sink
 
-private[kafka010] class KafkaSink(
+private[kafka011] class KafkaSink(
     sqlContext: SQLContext,
     executorKafkaParams: ju.Map[String, Object],
     topic: Option[String]) extends Sink with Logging {

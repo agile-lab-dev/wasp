@@ -29,7 +29,7 @@ import scala.util.control.NonFatal
 import org.apache.spark.SparkEnv
 import org.apache.spark.internal.Logging
 
-private[kafka010] object CachedKafkaProducer extends Logging {
+private[kafka011] object CachedKafkaProducer extends Logging {
 
   private type Producer = KafkaProducer[Array[Byte], Array[Byte]]
 
@@ -70,7 +70,7 @@ private[kafka010] object CachedKafkaProducer extends Logging {
    * exist, a new KafkaProducer will be created. KafkaProducer is thread safe, it is best to keep
    * one instance per specified kafkaParams.
    */
-  private[kafka010] def getOrCreate(kafkaParams: ju.Map[String, Object]): Producer = {
+  private[kafka011] def getOrCreate(kafkaParams: ju.Map[String, Object]): Producer = {
     val paramsSeq: Seq[(String, Object)] = paramsToSeq(kafkaParams)
     try {
       guavaCache.get(paramsSeq)
@@ -87,7 +87,7 @@ private[kafka010] object CachedKafkaProducer extends Logging {
   }
 
   /** For explicitly closing kafka producer */
-  private[kafka010] def close(kafkaParams: ju.Map[String, Object]): Unit = {
+  private[kafka011] def close(kafkaParams: ju.Map[String, Object]): Unit = {
     val paramsSeq = paramsToSeq(kafkaParams)
     guavaCache.invalidate(paramsSeq)
   }
