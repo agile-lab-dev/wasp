@@ -60,6 +60,13 @@ object Dependencies {
 			module
 				.exclude("org.apache.kafka", "kafka_2.11")
 		
+		// these are needed just in the tests, to avoid a jackson compatibility exception
+		def kafkaTestExclusions: ModuleID =
+			module
+	  	  .exclude("com.fasterxml.jackson.core", "jackson-core")
+				.exclude("com.fasterxml.jackson.core", "jackson-databind")
+				.exclude("com.fasterxml.jackson.core", "jackson-annotations")
+		
 		def camelKafkaExclusions: ModuleID =
 			module
 				.exclude("org.apache.kafka", "kafka-clients")
@@ -168,7 +175,7 @@ object Dependencies {
 	val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % Test
 	val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test
 	val joptSimpleTests = "net.sf.jopt-simple" % "jopt-simple" % Versions.jopt % Test
-	val kafkaTests = kafka % Test
+	val kafkaTests = kafka % Test kafkaTestExclusions
 	val scalaCheck = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck % Test
 	val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
 	val scalaTest2 = "org.scalatest" %% "scalatest" % Versions.scalaTest2 % Test
