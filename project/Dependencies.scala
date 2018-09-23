@@ -109,8 +109,8 @@ object Dependencies {
 	val json4sCore = "org.json4s" %% "json4s-core" % Versions.json4s
 	val json4sJackson = "org.json4s" %% "json4s-jackson" % Versions.json4s
 	val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
-  val kafka = "org.apache.kafka" %% "kafka" % Versions.kafka kafkaExclusions
-  val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.kafka kafkaExclusions
+  val kafka = "org.apache.kafka" %% "kafka" % Versions.cdk kafkaExclusions
+  val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.cdk kafkaExclusions
   val kafkaStreaming = ("org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark).sparkExclusions.kafka8Exclusions
   val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
 	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
