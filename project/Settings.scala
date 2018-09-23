@@ -62,8 +62,7 @@ object Settings {
 			"-Xlint:unchecked"),
 		scalaVersion := Versions.scala
 	)
-
-
+	
 	val jfrogOssSnapshotRepo = "Agile Lab JFrog Snapshot OSS" at "https://oss.jfrog.org/artifactory/oss-snapshot-local"
 	val jfrogOssReleaseRepo = "Agile Lab JFrog Release OSS" at "https://oss.jfrog.org/artifactory/oss-release-local"
 
@@ -88,24 +87,27 @@ object Settings {
 
 	/** common settings for all modules */
 	lazy val commonSettings = projectSettings ++ buildSettings ++ publishSettings
-
 	
 	/** sbt-buildinfo action to get current git commit */
 	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") {
 		scala.sys.process.Process("git rev-parse HEAD").lineStream.head
 	}
-
-
+	
 	/** sbt-buildinfo action to get git working directory status */
 	val gitWorkDirStatusAction = BuildInfoKey.action[Boolean]("gitWorkDirStatus") {
 		scala.sys.process.Process("git status --porcelain").lineStream.isEmpty
 	}
-
 	
 	/** sbt-buildinfo plugin configuration */
 	lazy val sbtBuildInfoSettings = Seq(
 		buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, ("jdkVersion", Versions.jdk), sbtVersion, gitCommitAction, gitWorkDirStatusAction),
 		buildInfoOptions += BuildInfoOption.BuildTime,
 		buildInfoPackage := "it.agilelab.bigdata.wasp.core.build"
+	)
+	
+	/** settings to disable parallel execution of tests, for Spark & co */
+	lazy val disableParallelTests = Seq(
+		logBuffered in Test := false,
+		parallelExecution in Test := false
 	)
 }

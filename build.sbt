@@ -10,6 +10,7 @@
 
 lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark-sql-kafka-0-11"))
 	.settings(Settings.commonSettings: _*)
+	.settings(Settings.disableParallelTests: _*)
 	.settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
 
 /* Framework */
