@@ -59,7 +59,7 @@ object Dependencies {
 		def kafka8Exclusions: ModuleID =
 			module
 				.exclude("org.apache.kafka", "kafka_2.11")
-
+		
 		def camelKafkaExclusions: ModuleID =
 			module
 				.exclude("org.apache.kafka", "kafka-clients")
@@ -79,6 +79,7 @@ object Dependencies {
 			sbt.ExclusionRule(organization = "io.netty", name = "netty-all")
 			//sbt.ExclusionRule(organization = "com.google.guava", name = "guava")
 		)
+	
 	// ===================================================================================================================
 	// Compile dependencies
 	// ===================================================================================================================
@@ -125,12 +126,14 @@ object Dependencies {
 	val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
 	val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
 	val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
-	val solr = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
+	val solrj = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
 	val solrCore = "org.apache.solr" % "solr-core" % Versions.solr solrExclusion
-  val sparkSolr = ("it.agilelab.bigdata.spark" % "spark-solr" % Versions.solrSpark).sparkExclusions.solrExclusion /*classifier "spark-2.2-scala-2.11"*/
-  val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
-  val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
-  val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
+	val sparkCatalyst = "org.apache.spark" %% "spark-catalyst" % Versions.spark
+	val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
+	val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
+	val sparkSolr = ("it.agilelab.bigdata.spark" % "spark-solr" % Versions.sparkSolr).sparkExclusions.solrExclusion
+	val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
+	val sparkTags = "org.apache.spark" %% "spark-tags" % Versions.spark sparkExclusions
   val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
 	val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
@@ -164,14 +167,38 @@ object Dependencies {
 	// ===================================================================================================================
 	val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % Test
 	val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test
-	val scalatest = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
+	val joptSimpleTests = "net.sf.jopt-simple" % "jopt-simple" % Versions.jopt % Test
+	val kafkaTests = kafka % Test
+	val scalaCheck = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck % Test
+	val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
+	val sparkCatalystTests = sparkCatalyst % Test classifier "tests"
+	val sparkCoreTests = sparkCore % Test classifier "tests"
+	val sparkSQLTests = sparkSQL % Test classifier "tests"
+	val sparkTagsTests = sparkTags % Test classifier "tests"
 
 	// grouped dependencies, for convenience =============================================================================
-  val test = Seq(akkaTestKit, akkaClusterTestKit, scalatest)
+	val test = Seq(akkaTestKit, akkaClusterTestKit, scalaTest)
 
 	// ===================================================================================================================
 	// Module dependencies
 	// ===================================================================================================================
+	
+	val spark_sql_kafka_0_11 = Seq( // normal dependencies
+		guava,
+		kafkaClients,
+		sparkSQL,
+		sparkTags
+	) ++ Seq( // test dependencies
+		joptSimpleTests,
+		kafkaTests,
+		scalaCheck,
+		sparkCatalystTests,
+		sparkCoreTests,
+		sparkSQLTests,
+		sparkTagsTests,
+		scalaTest
+	)
+	
 	val core = (akka ++
 		logging ++
 		time ++
@@ -229,7 +256,7 @@ object Dependencies {
 	
   val plugin_hbase_spark = (
 		hbase :+
-		scalatest
+		scalaTest
 	).map(excludeNetty)
 	
 	val plugin_kafka_spark = Seq(
@@ -238,7 +265,7 @@ object Dependencies {
 	).map(excludeLog4j).map(excludeNetty)
 	
 	val plugin_solr_spark = Seq(
-		solr,
+		solrj,
 		sparkSolr
 	).map(excludeNetty)
 }

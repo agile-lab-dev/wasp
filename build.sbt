@@ -6,6 +6,12 @@
  * See project/Versions.scala for the versions definitions.
  */
 
+/* Libraries */
+
+lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark-sql-kafka-0-11"))
+	.settings(Settings.commonSettings: _*)
+	.settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
+
 /* Framework */
 
 lazy val core = Project("wasp-core", file("core"))
@@ -76,7 +82,7 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
 
 lazy val wasp = Project("wasp", file("."))
 	.settings(Settings.commonSettings: _*)
-	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, plugin_jdbc_spark)
+	.aggregate(spark_sql_kafka_0_11, core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, plugin_jdbc_spark)
 
 /* WhiteLabel */
 

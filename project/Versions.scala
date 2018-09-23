@@ -17,8 +17,10 @@ object Versions {
 	val guava = "14.0.1"
 	val hbase = s"1.2.0-$cdh"
 	val jdk = "1.8"
+	val jetty = "9.3.20.v20170531"
 	val jodaConvert = "1.8.1"
 	val jodaTime = "2.8.2"
+	val jopt = "3.2"
 	val json4s = "3.2.11"
 	val kryo = "3.0.0"
 	val log4j = "2.9.1"  // keep compatible with elastic
@@ -28,9 +30,10 @@ object Versions {
 	val nettyAllSpark = "4.0.43.Final"
 	val quartz = "2.3.0"
 	val scala = "2.11.11"
+	val scalaCheck = "1.13.5"
 	val scalaTest = "3.0.4"
 	val slf4j = "1.7.12"
-	val solrSpark = "1.2.9"
 	val solr = s"4.10.3-$cdh"
 	val spark = s"2.2.0.$cds"
+	val sparkSolr = "1.2.9"
 }
