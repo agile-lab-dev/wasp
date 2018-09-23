@@ -295,6 +295,7 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
     props.put("replica.socket.timeout.ms", "1500")
     props.put("delete.topic.enable", "true")
     props.put("offsets.topic.num.partitions", "1")
+    props.put("offsets.topic.replication.factor", "1")
     props.putAll(withBrokerProps.asJava)
     props
   }
