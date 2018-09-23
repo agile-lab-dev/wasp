@@ -171,6 +171,7 @@ object Dependencies {
 	val kafkaTests = kafka % Test
 	val scalaCheck = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck % Test
 	val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
+	val scalaTest2 = "org.scalatest" %% "scalatest" % Versions.scalaTest2 % Test
 	val sparkCatalystTests = sparkCatalyst % Test classifier "tests"
 	val sparkCoreTests = sparkCore % Test classifier "tests"
 	val sparkSQLTests = sparkSQL % Test classifier "tests"
@@ -196,7 +197,7 @@ object Dependencies {
 		sparkCoreTests,
 		sparkSQLTests,
 		sparkTagsTests,
-		scalaTest
+		scalaTest2
 	)
 	
 	val core = (akka ++

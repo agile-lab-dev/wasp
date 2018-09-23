@@ -32,6 +32,7 @@ object Versions {
 	val scala = "2.11.11"
 	val scalaCheck = "1.13.5"
 	val scalaTest = "3.0.4"
+	val scalaTest2 = "2.2.6"
 	val slf4j = "1.7.12"
 	val solr = s"4.10.3-$cdh"
 	val spark = s"2.2.0.$cds"
