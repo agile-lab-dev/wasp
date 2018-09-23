@@ -142,6 +142,7 @@ abstract class KafkaSourceTest extends StreamTest with SharedSQLContext {
 class KafkaSourceSuite extends KafkaSourceTest {
 
   import testImplicits._
+	import KafkaSourceProvider._
 
   private val topicId = new AtomicInteger(0)
 

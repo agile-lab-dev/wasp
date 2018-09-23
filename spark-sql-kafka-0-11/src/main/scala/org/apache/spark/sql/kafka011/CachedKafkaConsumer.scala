@@ -38,7 +38,9 @@ import org.apache.spark.util.UninterruptibleThread
 private[kafka011] case class CachedKafkaConsumer private(
     topicPartition: TopicPartition,
     kafkaParams: ju.Map[String, Object]) extends Logging {
+  
   import CachedKafkaConsumer._
+  import KafkaSource._
 
   private val groupId = kafkaParams.get(ConsumerConfig.GROUP_ID_CONFIG).asInstanceOf[String]
 

@@ -77,6 +77,8 @@ private[kafka011] class KafkaSource(
     startingOffsets: KafkaOffsetRangeLimit,
     failOnDataLoss: Boolean)
   extends Source with Logging {
+  
+  import KafkaSource._
 
   private val sc = sqlContext.sparkContext
 
