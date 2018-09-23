@@ -84,9 +84,14 @@ object Settings {
 		},
 		credentials := Seq(jfrogOssCredentials)
 	)
+	
+	/** settings for tests */
+	lazy val testSettings = Seq(
+		logBuffered in Test := false // disable buffering to make scalatest output immediate
+	)
 
 	/** common settings for all modules */
-	lazy val commonSettings = projectSettings ++ buildSettings ++ publishSettings
+	lazy val commonSettings = projectSettings ++ buildSettings ++ publishSettings ++ testSettings
 	
 	/** sbt-buildinfo action to get current git commit */
 	val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") {
@@ -107,7 +112,6 @@ object Settings {
 	
 	/** settings to disable parallel execution of tests, for Spark & co */
 	lazy val disableParallelTests = Seq(
-		logBuffered in Test := false,
 		parallelExecution in Test := false
 	)
 }
