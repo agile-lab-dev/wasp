@@ -184,9 +184,8 @@ class KafkaSourceSuite extends KafkaSourceTest {
         "kafka.bootstrap.servers" -> testUtils.brokerAddress,
         "subscribe" -> topic
       )
-
-      val from = new File(
-        getClass.getResource("/kafka-source-initial-offset-version-2.1.0.bin").toURI).toPath
+  
+      val from = getClass.getResourceAsStream("/kafka-source-initial-offset-version-2.1.0.bin")
       val to = Paths.get(s"${metadataPath.getAbsolutePath}/0")
       Files.copy(from, to)
 

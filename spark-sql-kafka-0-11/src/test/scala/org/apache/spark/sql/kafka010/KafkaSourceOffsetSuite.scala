@@ -98,8 +98,8 @@ class KafkaSourceOffsetSuite extends OffsetSuite with SharedSQLContext {
 
   private def readFromResource(file: String): SerializedOffset = {
     import scala.io.Source
-    val input = getClass.getResource(s"/$file").toURI
-    val str = Source.fromFile(input).mkString
+    val input = getClass.getResourceAsStream(s"/$file")
+    val str = Source.fromInputStream(input).mkString
     SerializedOffset(str)
   }
 }
