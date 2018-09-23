@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql.kafka010
+package org.apache.spark.sql.kafka011
 
 import java.{util => ju}
 import java.io._
@@ -31,7 +31,6 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.execution.streaming._
-import org.apache.spark.sql.kafka010.KafkaSource._
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 

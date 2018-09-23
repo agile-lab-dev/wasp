@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql.kafka010
+package org.apache.spark.sql.kafka011
 
 import java.{util => ju}
 import java.util.concurrent.TimeoutException
@@ -27,7 +27,6 @@ import org.apache.kafka.common.TopicPartition
 
 import org.apache.spark.{SparkEnv, SparkException, TaskContext}
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.kafka010.KafkaSource._
 import org.apache.spark.util.UninterruptibleThread
 
 
