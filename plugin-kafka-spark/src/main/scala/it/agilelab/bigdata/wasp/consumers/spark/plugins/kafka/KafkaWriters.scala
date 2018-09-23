@@ -185,19 +185,3 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       .options(kafkaConfigMap.map(_.toTupla).toMap)
   }
 }
-
-object WorkerKafkaWriter {
-	//lazy producer creation allows to create a kafka conection per worker instead of per partition
-	def writer(config: TinyKafkaConfig): WaspKafkaWriter[String, Array[Byte]] = {
-		ProducerObject.config = config
-		//thread safe
-		ProducerObject.writer
-	}
-	
-	object ProducerObject {
-		var config: TinyKafkaConfig = _
-    // TODO unused!
-		lazy val writer = new WaspKafkaWriter[String, Array[Byte]](config)
-	}
-	
-}
