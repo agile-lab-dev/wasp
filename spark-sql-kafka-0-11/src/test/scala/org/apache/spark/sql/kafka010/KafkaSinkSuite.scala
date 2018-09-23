@@ -372,7 +372,8 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     val options = new java.util.HashMap[String, Object]
     options.put("bootstrap.servers", testUtils.brokerAddress)
     options.put("buffer.memory", "16384") // min buffer size
-    options.put("block.on.buffer.full", "true")
+    // this emulates the pre-0.11 "block.on.buffer.full" configuration by setting the longest max blocking time possible
+    options.put("max.block.ms", Long.MaxValue.toString)
     options.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[ByteArraySerializer].getName)
     options.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[ByteArraySerializer].getName)
     val inputSchema = Seq(AttributeReference("value", BinaryType)())
