@@ -18,4 +18,4 @@
 /**
  * Structured Streaming Data Source for Kafka 0.10
  */
-package org.apache.spark.sql.kafka010;
+package org.apache.spark.sql.kafka011;
