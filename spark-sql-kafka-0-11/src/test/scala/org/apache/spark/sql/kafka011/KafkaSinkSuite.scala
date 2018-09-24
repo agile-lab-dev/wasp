@@ -291,21 +291,6 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     assert(ex.getMessage.toLowerCase(Locale.ROOT).contains("topic type must be a string"))
 
     try {
-      /* value field wrong type */
-      ex = intercept[StreamingQueryException] {
-        writer = createKafkaWriter(input.toDF())(
-          withSelectExpr = s"'$topic' as topic", "CAST(value as INT) as value"
-        )
-        input.addData("1", "2", "3", "4", "5")
-        writer.processAllAvailable()
-      }
-    } finally {
-      writer.stop()
-    }
-    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains(
-      "value attribute type must be a string or binarytype"))
-
-    try {
       ex = intercept[StreamingQueryException] {
         /* key field wrong type */
         writer = createKafkaWriter(input.toDF())(
@@ -319,6 +304,42 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     }
     assert(ex.getMessage.toLowerCase(Locale.ROOT).contains(
       "key attribute type must be a string or binarytype"))
+    
+    try {
+      /* value field wrong type */
+      ex = intercept[StreamingQueryException] {
+        writer = createKafkaWriter(input.toDF())(
+          withSelectExpr = s"'$topic' as topic", "CAST(value as INT) as value"
+        )
+        input.addData("1", "2", "3", "4", "5")
+        writer.processAllAvailable()
+      }
+    } finally {
+      writer.stop()
+    }
+    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains(
+      "value attribute type must be a string or binarytype"))
+    
+    try {
+      /* header field wrong type */
+      ex = intercept[StreamingQueryException] {
+        val inputWithHeaders = input
+          .toDF()
+          .withColumn("headers", array(struct(lit("1").as("headerKey").cast("INT"), // should be string
+                                              lit(Array('1'.toByte)).as("headerValue"))))
+        inputWithHeaders.printSchema()
+        writer = createKafkaWriter(inputWithHeaders)(
+          withSelectExpr = s"'$topic' as topic", "headers", "value"
+        )
+        input.addData("1", "2", "3", "4", "5")
+        writer.processAllAvailable()
+      }
+     } finally {
+       writer.stop()
+     }
+     assert(ex.getMessage.toLowerCase(Locale.ROOT).contains(
+       "headers attribute type must be an arraytype of non-null elements of type structtype with a field named " +
+       "headerkey of type stringtype key and a field named headervalue of type binarytype"))
   }
 
   test("streaming - write to non-existing topic") {
