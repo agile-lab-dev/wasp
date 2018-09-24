@@ -138,7 +138,7 @@ abstract class KafkaSourceTest extends StreamTest with SharedSQLContext {
   }
 }
 
-
+@Slow
 class KafkaSourceSuite extends KafkaSourceTest {
 
   import testImplicits._
@@ -858,7 +858,7 @@ object KafkaSourceSuite {
   val collectedData = new ConcurrentLinkedQueue[Any]()
 }
 
-
+@MightNeverTerminate
 class KafkaSourceStressSuite extends KafkaSourceTest {
 
   import testImplicits._
@@ -933,6 +933,7 @@ class KafkaSourceStressSuite extends KafkaSourceTest {
   }
 }
 
+@MightNeverTerminate
 class KafkaSourceStressForDontFailOnDataLossSuite extends StreamTest with SharedSQLContext {
 
   import testImplicits._
