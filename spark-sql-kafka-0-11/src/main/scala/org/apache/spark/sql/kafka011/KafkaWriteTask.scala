@@ -55,16 +55,21 @@ private[kafka011] class KafkaWriteTask(
       val projectedRow = projection(currentRow)
       val topic = projectedRow.getUTF8String(0)
       val key = projectedRow.getBinary(1)
-      val headers = projectedRow.getArray(2).toArray[UnsafeRow](KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE)
+      val headers = projectedRow.getArray(2)
       val value = projectedRow.getBinary(3)
+      
       if (topic == null) {
         throw new NullPointerException(s"null topic present in the data. Use the " +
         s"${KafkaSourceProvider.TOPIC_OPTION_KEY} option for setting a default topic.")
       }
-      val kafkaHeaders = headers
-        .map(r => new RecordHeader(r.getString(0), r.getBinary(1)): Header)
-        .toIterable
+      
+      // unpack the headers
+      val numHeaders = headers.numElements()
+      val kafkaHeaders = (1 to numHeaders) // start from 1 so if the array is empty we don't do anything
+        .map(num => headers.getStruct(num - 1, 2)) // num - 1 because ordinals are 0-based
+        .map(r => new RecordHeader(r.getString(0), r.getBinary(1)): Header) // unpack each header
         .asJava
+      
       val record = new ProducerRecord[Array[Byte], Array[Byte]](topic.toString,
                                                                 null.asInstanceOf[Int],
                                                                 key,
@@ -77,6 +82,7 @@ private[kafka011] class KafkaWriteTask(
           }
         }
       }
+      
       producer.send(record, callback)
     }
   }
