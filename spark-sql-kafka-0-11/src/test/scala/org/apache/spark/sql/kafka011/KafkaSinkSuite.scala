@@ -76,7 +76,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
       .map(v => (topic, v))
       .toDF("topic", "value")
       .withColumn("headers",
-                  array(struct(lit("key").as("headerKey"), lit(Array("value".getBytes)).as("headerValue"))))
+                  array(struct(lit("key").as("headerKey"), lit("value".getBytes).as("headerValue"))))
     df.write
       .format("kafka")
       .option("kafka.bootstrap.servers", testUtils.brokerAddress)
@@ -184,7 +184,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     val dfWithHeaders = input
       .toDF()
       .withColumn("headers",
-                  array(struct(lit("key").as("headerKey"), lit(Array("value".getBytes)).as("headerValue"))))
+                  array(struct(lit("key").as("headerKey"), lit("value".getBytes).as("headerValue"))))
     
     val writer = createKafkaWriter(
       dfWithHeaders,
@@ -384,8 +384,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
         val inputWithHeaders = input
           .toDF()
           .withColumn("headers", array(struct(lit("1").as("headerKey").cast("INT"), // should be string
-                                              lit(Array('1'.toByte)).as("headerValue"))))
-        inputWithHeaders.printSchema()
+                                              lit("1".getBytes)).as("headerValue")))
         writer = createKafkaWriter(inputWithHeaders)(
           withSelectExpr = s"'$topic' as topic", "headers", "value"
         )
