@@ -44,9 +44,15 @@ private[kafka011] object KafkaWriter extends Logging {
   val HEADER_VALUE_ATTRIBUTE_NAME: String = "headerValue"
   val VALUE_ATTRIBUTE_NAME: String = "value"
   
-  val HEADER_DATA_TYPE = ArrayType(StructType(Seq(StructField("key", StringType, nullable = false),
-                                                  StructField("value", BinaryType, nullable = true))),
-                                   containsNull = false)
+  // header data types, with either nullable or non nullable headerValue
+  val HEADER_DATA_TYPE_NULL_VALUE = ArrayType(
+    StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
+                   StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = true))),
+    containsNull = false)
+  val HEADER_DATA_TYPE_NON_NULL_VALUE = ArrayType(
+    StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
+                   StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = false))),
+    containsNull = false)
 
   override def toString: String = "KafkaWriter"
 
@@ -77,9 +83,9 @@ private[kafka011] object KafkaWriter extends Logging {
           s"must be a String or BinaryType")
     }
     schema.find(_.name == HEADER_ATTRIBUTE_NAME).getOrElse(
-      Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE)
+      Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE)
     ).dataType match {
-      case HEADER_DATA_TYPE => // good
+      case HEADER_DATA_TYPE_NULL_VALUE | HEADER_DATA_TYPE_NON_NULL_VALUE => // good
       case _ =>
         throw new AnalysisException(s"$HEADER_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
           s" of type StructType with a field named $HEADER_KEY_ATTRIBUTE_NAME of type StringType key and a field" +
