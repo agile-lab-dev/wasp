@@ -39,7 +39,9 @@ import org.apache.spark.util.Utils
 private[kafka011] object KafkaWriter extends Logging {
   val TOPIC_ATTRIBUTE_NAME: String = "topic"
   val KEY_ATTRIBUTE_NAME: String = "key"
-  val HEADER_ATTRIBUTE_NAME: String = "header"
+  val HEADER_ATTRIBUTE_NAME: String = "headers"
+  val HEADER_KEY_ATTRIBUTE_NAME: String = "headerKey"
+  val HEADER_VALUE_ATTRIBUTE_NAME: String = "headerValue"
   val VALUE_ATTRIBUTE_NAME: String = "value"
   
   val HEADER_DATA_TYPE = ArrayType(StructType(Seq(StructField("key", StringType, nullable = false),
@@ -80,8 +82,8 @@ private[kafka011] object KafkaWriter extends Logging {
       case HEADER_DATA_TYPE => // good
       case _ =>
         throw new AnalysisException(s"$HEADER_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
-          s"of type StructType with a field named key of type StringType key and a nullable field named value of type" +
-          s" BinaryType")
+          s" of type StructType with a field named $HEADER_KEY_ATTRIBUTE_NAME of type StringType key and a field" +
+          s" named $HEADER_VALUE_ATTRIBUTE_NAME of type BinaryType")
     }
     schema.find(_.name == VALUE_ATTRIBUTE_NAME).getOrElse(
       throw new AnalysisException(s"Required attribute '$VALUE_ATTRIBUTE_NAME' not found")
