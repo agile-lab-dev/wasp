@@ -20,10 +20,16 @@ package org.apache.spark.sql.kafka011
 import java.{util => ju}
 
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
-
+import org.apache.kafka.common.header.Header
+import org.apache.kafka.common.header.internals.RecordHeader
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection}
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection, UnsafeRow}
+import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types.{BinaryType, StringType}
+
+import scala.collection.JavaConverters._
+
 
 /**
  * A simple trait for writing out data in a single Spark task, without any concerns about how
@@ -49,12 +55,21 @@ private[kafka011] class KafkaWriteTask(
       val projectedRow = projection(currentRow)
       val topic = projectedRow.getUTF8String(0)
       val key = projectedRow.getBinary(1)
-      val value = projectedRow.getBinary(2)
+      val headers = projectedRow.getArray(2).toArray[UnsafeRow](KafkaWriter.HEADER_DATA_TYPE)
+      val value = projectedRow.getBinary(3)
       if (topic == null) {
         throw new NullPointerException(s"null topic present in the data. Use the " +
         s"${KafkaSourceProvider.TOPIC_OPTION_KEY} option for setting a default topic.")
       }
-      val record = new ProducerRecord[Array[Byte], Array[Byte]](topic.toString, key, value)
+      val kafkaHeaders = headers
+        .map(r => new RecordHeader(r.getString(0), r.getBinary(1)): Header)
+        .toIterable
+        .asJava
+      val record = new ProducerRecord[Array[Byte], Array[Byte]](topic.toString,
+                                                                null.asInstanceOf[Int],
+                                                                key,
+                                                                value,
+                                                                kafkaHeaders)
       val callback = new Callback() {
         override def onCompletion(recordMetadata: RecordMetadata, e: Exception): Unit = {
           if (failedWrite == null && e != null) {
@@ -97,6 +112,14 @@ private[kafka011] class KafkaWriteTask(
         throw new IllegalStateException(s"${KafkaWriter.KEY_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")
     }
+    val headerExpression = inputSchema.find(_.name == KafkaWriter.HEADER_ATTRIBUTE_NAME)
+      .getOrElse(Literal(new GenericArrayData(Array.empty[Row]), KafkaWriter.HEADER_DATA_TYPE))
+    headerExpression.dataType match {
+      case KafkaWriter.HEADER_DATA_TYPE => // good
+      case t =>
+        throw new IllegalStateException(s"${KafkaWriter.HEADER_ATTRIBUTE_NAME} " +
+          s"attribute unsupported type $t")
+    }
     val valueExpression = inputSchema
       .find(_.name == KafkaWriter.VALUE_ATTRIBUTE_NAME).getOrElse(
       throw new IllegalStateException("Required attribute " +
@@ -108,9 +131,12 @@ private[kafka011] class KafkaWriteTask(
         throw new IllegalStateException(s"${KafkaWriter.VALUE_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")
     }
-    UnsafeProjection.create(
-      Seq(topicExpression, Cast(keyExpression, BinaryType),
-        Cast(valueExpression, BinaryType)), inputSchema)
+    val expressions = Seq(
+      topicExpression,
+      Cast(keyExpression, BinaryType),
+      Cast(headerExpression, KafkaWriter.HEADER_DATA_TYPE),
+      Cast(valueExpression, BinaryType))
+    UnsafeProjection.create(expressions, inputSchema)
   }
 
   private def checkForErrors(): Unit = {

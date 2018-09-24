@@ -20,11 +20,11 @@ package org.apache.spark.sql.kafka011
 import java.{util => ju}
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.{AnalysisException, SparkSession}
+import org.apache.spark.sql.{AnalysisException, Row, SparkSession}
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.execution.{QueryExecution, SQLExecution}
-import org.apache.spark.sql.types.{BinaryType, StringType}
+import org.apache.spark.sql.types._
 import org.apache.spark.util.Utils
 
 /**
@@ -39,7 +39,12 @@ import org.apache.spark.util.Utils
 private[kafka011] object KafkaWriter extends Logging {
   val TOPIC_ATTRIBUTE_NAME: String = "topic"
   val KEY_ATTRIBUTE_NAME: String = "key"
+  val HEADER_ATTRIBUTE_NAME: String = "header"
   val VALUE_ATTRIBUTE_NAME: String = "value"
+  
+  val HEADER_DATA_TYPE = ArrayType(StructType(Seq(StructField("key", StringType, nullable = false),
+                                                  StructField("value", BinaryType, nullable = true))),
+                                   containsNull = false)
 
   override def toString: String = "KafkaWriter"
 
@@ -68,6 +73,15 @@ private[kafka011] object KafkaWriter extends Logging {
       case _ =>
         throw new AnalysisException(s"$KEY_ATTRIBUTE_NAME attribute type " +
           s"must be a String or BinaryType")
+    }
+    schema.find(_.name == HEADER_ATTRIBUTE_NAME).getOrElse(
+      Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE)
+    ).dataType match {
+      case HEADER_DATA_TYPE => // good
+      case _ =>
+        throw new AnalysisException(s"$HEADER_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
+          s"of type StructType with a field named key of type StringType key and a nullable field named value of type" +
+          s" BinaryType")
     }
     schema.find(_.name == VALUE_ATTRIBUTE_NAME).getOrElse(
       throw new AnalysisException(s"Required attribute '$VALUE_ATTRIBUTE_NAME' not found")
