@@ -23,13 +23,12 @@ import java.nio.charset.StandardCharsets
 
 import org.apache.commons.io.IOUtils
 import org.apache.kafka.common.TopicPartition
-
 import org.apache.spark.SparkContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler.ExecutorCacheTaskLocation
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.util.DateTimeUtils
+import org.apache.spark.sql.catalyst.util.{ArrayData, DateTimeUtils}
 import org.apache.spark.sql.execution.streaming._
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
@@ -289,13 +288,18 @@ private[kafka011] class KafkaSource(
       }
     }.toArray
 
-    // Create an RDD that reads from Kafka and get the (key, value) pair as byte arrays.
+    // Create an RDD that reads from Kafka and get all the contents of the messages
     val rdd = new KafkaSourceRDD(
       sc, executorKafkaParams, offsetRanges, pollTimeoutMs, failOnDataLoss,
       reuseKafkaConsumer = true).map { cr =>
+      // convert Kafka's Headers into a Spark SQL array of Rows, one per header
+      val headersRowArray =cr.headers.toArray.map(h => Row(h.key(), h.value()))
+      val headersArrayData = ArrayData.toArrayData(headersRowArray)
+      // build the Row from the ConsumerRecord
       InternalRow(
         cr.key,
         cr.value,
+        headersArrayData,
         UTF8String.fromString(cr.topic),
         cr.partition,
         cr.offset,

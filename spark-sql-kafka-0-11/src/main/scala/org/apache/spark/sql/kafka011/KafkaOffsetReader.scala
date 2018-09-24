@@ -308,6 +308,7 @@ private[kafka011] object KafkaOffsetReader {
   def kafkaSchema: StructType = StructType(Seq(
     StructField("key", BinaryType),
     StructField("value", BinaryType),
+    StructField("headers", KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE),
     StructField("topic", StringType),
     StructField("partition", IntegerType),
     StructField("offset", LongType),
