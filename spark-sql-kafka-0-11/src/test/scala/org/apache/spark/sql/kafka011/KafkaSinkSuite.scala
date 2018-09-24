@@ -190,7 +190,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
       dfWithHeaders,
       withTopic = None,
       withOutputMode = Some(OutputMode.Append))(
-      withSelectExpr = s"'$topic' as topic", "headers", "value")
+      withSelectExpr = s"'$topic' as topic", "value", "headers")
 
     val reader = createKafkaReader(topic)
       .selectExpr("CAST(key as STRING) key", "CAST(value as STRING) value")
@@ -386,7 +386,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
           .withColumn("headers", array(struct(lit("1").as("headerKey").cast("INT"), // should be string
                                               lit("1".getBytes)).as("headerValue")))
         writer = createKafkaWriter(inputWithHeaders)(
-          withSelectExpr = s"'$topic' as topic", "headers", "value"
+          withSelectExpr = s"'$topic' as topic", "value", "headers"
         )
         input.addData("1", "2", "3", "4", "5")
         writer.processAllAvailable()

@@ -55,8 +55,8 @@ private[kafka011] class KafkaWriteTask(
       val projectedRow = projection(currentRow)
       val topic = projectedRow.getUTF8String(0)
       val key = projectedRow.getBinary(1)
-      val headers = projectedRow.getArray(2)
-      val value = projectedRow.getBinary(3)
+      val value = projectedRow.getBinary(2)
+      val headers = projectedRow.getArray(3)
       
       if (topic == null) {
         throw new NullPointerException(s"null topic present in the data. Use the " +
@@ -118,14 +118,6 @@ private[kafka011] class KafkaWriteTask(
         throw new IllegalStateException(s"${KafkaWriter.KEY_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")
     }
-    val headerExpression = inputSchema.find(_.name == KafkaWriter.HEADER_ATTRIBUTE_NAME)
-      .getOrElse(Literal(new GenericArrayData(Array.empty[Row]), KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE))
-    headerExpression.dataType match {
-      case KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE | KafkaWriter.HEADER_DATA_TYPE_NON_NULL_VALUE => // good
-      case t =>
-        throw new IllegalStateException(s"${KafkaWriter.HEADER_ATTRIBUTE_NAME} " +
-          s"attribute unsupported type $t")
-    }
     val valueExpression = inputSchema
       .find(_.name == KafkaWriter.VALUE_ATTRIBUTE_NAME).getOrElse(
       throw new IllegalStateException("Required attribute " +
@@ -137,11 +129,19 @@ private[kafka011] class KafkaWriteTask(
         throw new IllegalStateException(s"${KafkaWriter.VALUE_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")
     }
+    val headerExpression = inputSchema.find(_.name == KafkaWriter.HEADER_ATTRIBUTE_NAME)
+      .getOrElse(Literal(new GenericArrayData(Array.empty[Row]), KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE))
+    headerExpression.dataType match {
+      case KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE | KafkaWriter.HEADER_DATA_TYPE_NON_NULL_VALUE => // good
+      case t =>
+        throw new IllegalStateException(s"${KafkaWriter.HEADER_ATTRIBUTE_NAME} " +
+          s"attribute unsupported type $t")
+    }
     val expressions = Seq(
       topicExpression,
       Cast(keyExpression, BinaryType),
-      Cast(headerExpression, KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE),
-      Cast(valueExpression, BinaryType))
+      Cast(valueExpression, BinaryType),
+      Cast(headerExpression, KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE))
     UnsafeProjection.create(expressions, inputSchema)
   }
 

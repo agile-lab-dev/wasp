@@ -39,12 +39,12 @@ import org.apache.spark.util.Utils
 private[kafka011] object KafkaWriter extends Logging {
   val TOPIC_ATTRIBUTE_NAME: String = "topic"
   val KEY_ATTRIBUTE_NAME: String = "key"
+  val VALUE_ATTRIBUTE_NAME: String = "value"
   val HEADER_ATTRIBUTE_NAME: String = "headers"
   val HEADER_KEY_ATTRIBUTE_NAME: String = "headerKey"
   val HEADER_VALUE_ATTRIBUTE_NAME: String = "headerValue"
-  val VALUE_ATTRIBUTE_NAME: String = "value"
   
-  // header data types, with either nullable or non nullable headerValue
+  // header data types, with either nullable or non nullable headerValue, so we can accept both in validateQuery & co
   val HEADER_DATA_TYPE_NULL_VALUE = ArrayType(
     StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
                    StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = true))),
@@ -82,6 +82,14 @@ private[kafka011] object KafkaWriter extends Logging {
         throw new AnalysisException(s"$KEY_ATTRIBUTE_NAME attribute type " +
           s"must be a String or BinaryType")
     }
+    schema.find(_.name == VALUE_ATTRIBUTE_NAME).getOrElse(
+      throw new AnalysisException(s"Required attribute '$VALUE_ATTRIBUTE_NAME' not found")
+    ).dataType match {
+      case StringType | BinaryType => // good
+      case _ =>
+        throw new AnalysisException(s"$VALUE_ATTRIBUTE_NAME attribute type " +
+          s"must be a String or BinaryType")
+    }
     schema.find(_.name == HEADER_ATTRIBUTE_NAME).getOrElse(
       Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE)
     ).dataType match {
@@ -90,14 +98,6 @@ private[kafka011] object KafkaWriter extends Logging {
         throw new AnalysisException(s"$HEADER_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
           s" of type StructType with a field named $HEADER_KEY_ATTRIBUTE_NAME of type StringType key and a field" +
           s" named $HEADER_VALUE_ATTRIBUTE_NAME of type BinaryType")
-    }
-    schema.find(_.name == VALUE_ATTRIBUTE_NAME).getOrElse(
-      throw new AnalysisException(s"Required attribute '$VALUE_ATTRIBUTE_NAME' not found")
-    ).dataType match {
-      case StringType | BinaryType => // good
-      case _ =>
-        throw new AnalysisException(s"$VALUE_ATTRIBUTE_NAME attribute type " +
-          s"must be a String or BinaryType")
     }
   }
 
