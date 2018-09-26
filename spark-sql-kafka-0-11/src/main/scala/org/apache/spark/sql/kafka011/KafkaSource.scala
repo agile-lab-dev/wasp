@@ -293,7 +293,10 @@ private[kafka011] class KafkaSource(
       sc, executorKafkaParams, offsetRanges, pollTimeoutMs, failOnDataLoss,
       reuseKafkaConsumer = true).map { cr =>
       // convert Kafka's Headers into a Spark SQL array of Rows, one per header
-      val headersRowArray =cr.headers.toArray.map(h => Row(h.key(), h.value()))
+      val headersRowArray = cr
+        .headers
+        .toArray
+        .map(h => InternalRow(UTF8String.fromString(h.key()), h.value()))
       val headersArrayData = ArrayData.toArrayData(headersRowArray)
       // build the Row from the ConsumerRecord
       InternalRow(

@@ -21,12 +21,11 @@ import java.{util => ju}
 import java.util.UUID
 
 import org.apache.kafka.common.TopicPartition
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.util.DateTimeUtils
+import org.apache.spark.sql.catalyst.util.{ArrayData, DateTimeUtils}
 import org.apache.spark.sql.sources.{BaseRelation, TableScan}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
@@ -106,9 +105,17 @@ private[kafka011] class KafkaRelation(
     val rdd = new KafkaSourceRDD(
       sqlContext.sparkContext, executorKafkaParams, offsetRanges,
       pollTimeoutMs, failOnDataLoss, reuseKafkaConsumer = false).map { cr =>
+      // convert Kafka's Headers into a Spark SQL array of Rows, one per header
+      val headersRowArray = cr
+        .headers
+        .toArray
+        .map(h => InternalRow(UTF8String.fromString(h.key()), h.value()))
+      val headersArrayData = ArrayData.toArrayData(headersRowArray)
+      // build the Row from the ConsumerRecord
       InternalRow(
         cr.key,
         cr.value,
+        headersArrayData,
         UTF8String.fromString(cr.topic),
         cr.partition,
         cr.offset,
