@@ -384,7 +384,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
         val inputWithHeaders = input
           .toDF()
           .withColumn("headers", array(struct(lit("1").as("headerKey").cast("INT"), // should be string
-                                              lit("1".getBytes)).as("headerValue")))
+                                              lit("1".getBytes).as("headerValue"))))
         writer = createKafkaWriter(inputWithHeaders)(
           withSelectExpr = s"'$topic' as topic", "value", "headers"
         )
