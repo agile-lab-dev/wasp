@@ -25,7 +25,7 @@ import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection, UnsafeRow}
-import org.apache.spark.sql.catalyst.util.GenericArrayData
+import org.apache.spark.sql.catalyst.util.{ArrayData, GenericArrayData}
 import org.apache.spark.sql.types.{BinaryType, StringType}
 
 import scala.collection.JavaConverters._
@@ -130,7 +130,7 @@ private[kafka011] class KafkaWriteTask(
           s"attribute unsupported type $t")
     }
     val headerExpression = inputSchema.find(_.name == KafkaWriter.HEADER_ATTRIBUTE_NAME)
-      .getOrElse(Literal(new GenericArrayData(Array.empty[Row]), KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE))
+      .getOrElse(Literal(ArrayData.toArrayData(Array.empty[Row]), KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE))
     headerExpression.dataType match {
       case KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE | KafkaWriter.HEADER_DATA_TYPE_NON_NULL_VALUE => // good
       case t =>
@@ -141,7 +141,7 @@ private[kafka011] class KafkaWriteTask(
       topicExpression,
       Cast(keyExpression, BinaryType),
       Cast(valueExpression, BinaryType),
-      Cast(headerExpression, KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE))
+      headerExpression)
     UnsafeProjection.create(expressions, inputSchema)
   }
 
