@@ -27,6 +27,7 @@ import org.scalatest.time.SpanSugar._
 import org.apache.spark.SparkException
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.{AttributeReference, SpecificInternalRow, UnsafeProjection}
+import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming._
@@ -72,20 +73,36 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
   test("batch - write to kafka with headers") {
     val topic = newTopic()
     testUtils.createTopic(topic)
+
     val df = Seq("1", "2", "3", "4", "5")
       .map(v => (topic, v))
       .toDF("topic", "value")
       .withColumn("headers",
-                  array(struct(lit("key").as("headerKey"), lit("value".getBytes).as("headerValue"))))
+                  array(struct(lit("key").as("headerKey"), lit("value".getBytes).as("headerValue")),
+                        struct(lit("key2").as("headerKey"), lit("value2".getBytes).as("headerValue"))))
+
     df.write
       .format("kafka")
       .option("kafka.bootstrap.servers", testUtils.brokerAddress)
       .option("topic", topic)
       .save()
-    // TODO add header check
+
+    val messagesFromKafka = createKafkaReader(topic)
+      .selectExpr("CAST(value as STRING) value", "explode(headers) as header")
+      .selectExpr("value", "header.headerKey", "CAST(header.headerValue as STRING) headerValue")
+
     checkAnswer(
-      createKafkaReader(topic).selectExpr("CAST(value as STRING) value"),
-      Row("1") :: Row("2") :: Row("3") :: Row("4") :: Row("5") :: Nil)
+      messagesFromKafka,
+      Row("1", "key", "value") ::
+        Row("1",  "key2", "value2") ::
+        Row("2",  "key", "value") ::
+        Row("2",  "key2", "value2") ::
+        Row("3",  "key", "value") ::
+        Row("3",  "key2", "value2") ::
+        Row("4",  "key", "value") ::
+        Row("4",  "key2", "value2") ::
+        Row("5",  "key", "value") ::
+        Row("5",  "key2", "value2") :: Nil)
    }
 
   test("batch - null topic field value, and no topic option") {
@@ -184,7 +201,8 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     val dfWithHeaders = input
       .toDF()
       .withColumn("headers",
-                  array(struct(lit("key").as("headerKey"), lit("value".getBytes).as("headerValue"))))
+                  array(struct(lit("key").as("headerKey"), lit("value".getBytes).as("headerValue")),
+                        struct(lit("key2").as("headerKey"), lit("value2".getBytes).as("headerValue"))))
     
     val writer = createKafkaWriter(
       dfWithHeaders,
@@ -193,23 +211,27 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
       withSelectExpr = s"'$topic' as topic", "value", "headers")
 
     val reader = createKafkaReader(topic)
-      .selectExpr("CAST(key as STRING) key", "CAST(value as STRING) value")
-      .selectExpr("CAST(key as INT) key", "CAST(value as INT) value")
-      .as[(Int, Int)]
-      .map(_._2)
+      .selectExpr("CAST(value as STRING) value", "explode(headers) as header")
+      .selectExpr("CAST(value as INT) value", "header.headerKey", "CAST(header.headerValue as STRING) headerValue")
+      .as[(Int, String, String)]
 
-    // TODO add header check
     try {
-      input.addData("1", "2", "3", "4", "5")
+      val data = 1 to 10
+      val expectedData = data.flatMap(n => Seq((n, "key", "value"), (n, "key2", "value2"))).toList
+      val firstBatchData = data.slice(0, 5).map(_.toString)
+      val firstBatchExpected = expectedData.slice(0, 10)
+      input.addData(firstBatchData)
       failAfter(streamingTimeout) {
         writer.processAllAvailable()
       }
-      checkDatasetUnorderly(reader, 1, 2, 3, 4, 5)
-      input.addData("6", "7", "8", "9", "10")
+      checkDatasetUnorderly(reader, firstBatchExpected: _*)
+      val secondBatchData = data.slice(5, 10).map(_.toString)
+      val secondBatchExpected = expectedData
+      input.addData(secondBatchData)
       failAfter(streamingTimeout) {
         writer.processAllAvailable()
       }
-      checkDatasetUnorderly(reader, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+      checkDatasetUnorderly(reader, secondBatchExpected: _*)
     } finally {
       writer.stop()
     }
