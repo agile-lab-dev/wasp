@@ -10,8 +10,9 @@ import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil, RowToAvro}
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, RowToAvro, StringToByteArrayUtil}
 import org.apache.spark.sql.streaming.DataStreamWriter
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -71,11 +72,14 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                           ss: SparkSession)
   extends SparkStructuredStreamingWriter
     with Logging {
-
+  import KafkaSparkStructuredStreamingWriter._
+  
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
 
     import ss.implicits._
 
+    val sqlContext = stream.sqlContext
+    
     val kafkaConfig = ConfigManager.getKafkaConfig
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
@@ -84,60 +88,69 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     if (topicOpt.isDefined) {
 
       val topic = topicOpt.get
-      val topicDataTypeB = ss.sparkContext.broadcast(topic.topicDataType)
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
         logger.debug(s"Schema DF spark, topic name ${topic.name}:\n${stream.schema.treeString}")
 
-        val pkf = topic.keyFieldName
+        val keyFieldName = topic.keyFieldName
+        val headersFieldName = topic.headersFieldName
         
+        def convertInputToKafkaMessage(dataConverter: Row => Array[Byte]) = {
+          // generate temporary field names
+          val tempKeyFieldName = s"key_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
+          val tempHeadersFieldName = s"headers_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
+  
+          // generate select expressions to clone metadata columns while keeping the rest
+          val selectExpressionsForTempColumns =
+            keyFieldName.map(kfn => s"$kfn AS $tempKeyFieldName").toList ++
+            headersFieldName.map(hfn => s"$hfn AS $tempHeadersFieldName").toList :+
+            "*"
+  
+          // project the data so we have a known order for the metadata columns with the rest of the data after
+          val streamWithTempColumns = stream.selectExpr(selectExpressionsForTempColumns: _*)
+  
+          // this tells us where the data starts, everything eventually present before is metadata
+          val dataOffset = Seq(keyFieldName, headersFieldName).count(_.isDefined)
+  
+          // process the stream, extracting the data and converting it, and leaving metadata as is
+          val processedStream = streamWithTempColumns map { row =>
+            val inputElements = row.toSeq
+            val data = inputElements.drop(dataOffset)
+            val convertedData = dataConverter(Row(data))
+            val outputElements = inputElements.take(dataOffset) :+ convertedData
+            Row(outputElements)
+          }
+  
+          // generate a schema for the metadata & data
+          val schema = StructType(
+            keyFieldName.map(_ => StructField("key", StringType, nullable = false)).toList ++
+            headersFieldName.map(_ => StructField("headers", headerDataType, nullable = false)).toList :+
+            StructField("value", StringType, nullable = false)
+          )
+  
+          sqlContext.createDataFrame(processedStream.rdd, schema)
+        }
         
-        
-        val dswParsed = topicDataTypeB.value match {
+        val finalStream = topic.topicDataType match {
           case "avro" => {
-            val converter: RowToAvro = RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema))
-            logger.debug(s"Schema Avro, topic name ${topic.name}:\n${converter.getSchema().toString(true)}")
-
-            if (pkf.isDefined) {
-              /* create a temp key (its name is not really relevant but have to be unique)
-                  e.g. pkf = "aaa.bbb" => key = "key_aaa_bbb__<UUID>" (UUID "underscored" instead "dotted")
-
-                  N.B. pkf have to be related to a String field
-               */
-              val tempKey = s"key_${pkf.get}__${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
-              logger.debug(s"tempKey: $tempKey")
-
-              val streamWithKey = stream.selectExpr(s"${pkf.get} AS $tempKey", "*")
-              logger.debug(s"SchemaWithKey DF spark, topic name ${topic.name}:\n${streamWithKey.schema.treeString}")
-
-              streamWithKey.map(r => {
-                val keyAndData = r.toSeq
-                val key: String = keyAndData.head.asInstanceOf[String]  // have to be string
-                val dataRow = Row.fromSeq(keyAndData.tail)
-
-                (key, converter.write(dataRow))
-              }).toDF("key", "value")
+            // generate avro converter
+            val converter = (row: Row) => {
+              RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema)).write(row)
             }
-            else {
-              stream.map(r => {
-                val key: String = null
-
-                (key, converter.write(r))
-              }).toDF("key", "value")
-            }
+            
+            // convert input
+            convertInputToKafkaMessage(converter)
           }
           case "json" => {
+            // generate select expressions to rename matadata columns and convert everything to json
+            val selectExpressions =
+              keyFieldName.map(kfn => s"$kfn AS key").toList ++
+              headersFieldName.map(hfn => s"$hfn AS headers").toList :+
+              "to_json(struct(*)) AS value"
             
-            // json conversion
-            if (pkf.isDefined) {
-              val streamWithKey = stream.selectExpr(s"${pkf.get} AS key", "to_json(struct(*)) AS value")
-              logger.debug(s"SchemaWithKey DF spark, topic name ${topic.name}:\n${streamWithKey.schema.treeString}")
-
-              streamWithKey
-            }
-            else
-              stream.selectExpr("to_json(struct(*)) AS value")
+            // convert input
+            stream.selectExpr(selectExpressions: _*)
           }
           case "plaintext" | _ =>
             if (pkf.isDefined) {
@@ -151,7 +164,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
         }
 
-        val partialStreamWriter = dswParsed
+        val partialStreamWriter = finalStream
           .writeStream
           .format("kafka")
           .option("topic", topic.name)
@@ -187,4 +200,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       .option("kafka.acks", tkc.acks)
       .options(kafkaConfigMap.map(_.toTupla).toMap)
   }
+}
+
+object KafkaSparkStructuredStreamingWriter {
+  val headerDataType = ArrayType(
+    StructType(Seq(StructField("headerKey", StringType, nullable = false),
+                   StructField("headerValue", BinaryType, nullable = true))),
+    containsNull = false)
 }
