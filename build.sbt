@@ -68,6 +68,7 @@ lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc
 lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-kafka-spark"))
 	.settings(Settings.commonSettings: _*)
 	.dependsOn(consumers_spark)
+	.dependsOn(spark_sql_kafka_0_11)
 	.settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
 lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
@@ -83,7 +84,7 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
 
 lazy val wasp = Project("wasp", file("."))
 	.settings(Settings.commonSettings: _*)
-	.aggregate(spark_sql_kafka_0_11, core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, plugin_jdbc_spark)
+	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, plugin_jdbc_spark)
 
 /* WhiteLabel */
 

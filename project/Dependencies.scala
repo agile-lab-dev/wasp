@@ -268,8 +268,7 @@ object Dependencies {
 	).map(excludeNetty)
 	
 	val plugin_kafka_spark = Seq(
-		kafkaStreaming,
-		kafkaSparkSql
+		kafkaStreaming
 	).map(excludeLog4j).map(excludeNetty)
 	
 	val plugin_solr_spark = Seq(
