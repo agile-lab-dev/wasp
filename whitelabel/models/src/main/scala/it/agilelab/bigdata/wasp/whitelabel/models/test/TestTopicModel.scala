@@ -14,8 +14,8 @@ private[wasp] object TestTopicModel {
                              partitions = 3,
                              replicas = 1,
                              topicDataType = "json",
-                             partitionKeyField = None,
-                             headersColumnName = None,
+                             keyFieldName = None,
+                             headersFieldName = None,
                              schema = JsonConverter
                                .fromString(topicSchema)
                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -25,8 +25,8 @@ private[wasp] object TestTopicModel {
                                          partitions = 3,
                                          replicas = 1,
                                          topicDataType = "json",
-                                         partitionKeyField = None,
-                                         headersColumnName = None,
+                                         keyFieldName = None,
+                                         headersFieldName = None,
                                          schema = JsonConverter
                                            .fromString(withMetadataSchema)
                                            .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -36,8 +36,8 @@ private[wasp] object TestTopicModel {
                               partitions = 3,
                               replicas = 1,
                               topicDataType = "json",
-                              partitionKeyField = Some("nested.field3"),
-                              headersColumnName = None,
+                              keyFieldName = Some("nested.field3"),
+                              headersFieldName = None,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -47,8 +47,8 @@ private[wasp] object TestTopicModel {
                                        partitions = 3,
                                        replicas = 1,
                                        topicDataType = "json",
-                                       partitionKeyField = None,
-                                       headersColumnName = None,
+                                       keyFieldName = None,
+                                       headersFieldName = None,
                                        schema = JsonConverter
                                          .fromString(topicCheckpointSchema)
                                          .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -58,8 +58,8 @@ private[wasp] object TestTopicModel {
                              partitions = 3,
                              replicas = 1,
                              topicDataType = "avro",
-                             partitionKeyField = None,
-                             headersColumnName = None,
+                             keyFieldName = None,
+                             headersFieldName = None,
                              schema = JsonConverter
                                .fromString(topicSchema)
                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -69,8 +69,8 @@ private[wasp] object TestTopicModel {
                               partitions = 3,
                               replicas = 1,
                               topicDataType = "avro",
-                              partitionKeyField = Some("nested.field3"),
-                              headersColumnName = None,
+                              keyFieldName = Some("nested.field3"),
+                              headersFieldName = None,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -80,7 +80,7 @@ private[wasp] object TestTopicModel {
                                        partitions = 3,
                                        replicas = 1,
                                        topicDataType = "avro",
-                                       partitionKeyField = None,
+                                       keyFieldName = None,
                                        None,
                                        schema = JsonConverter
                                          .fromString(topicCheckpointSchema)

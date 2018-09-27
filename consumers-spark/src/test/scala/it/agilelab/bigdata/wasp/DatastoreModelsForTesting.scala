@@ -79,8 +79,8 @@ object DatastoreModelsForTesting {
 		                           partitions = 3,
 		                           replicas = 1,
 		                           topicDataType = "json",
-		                           partitionKeyField = None,
-		                           headersColumnName = None,
+		                           keyFieldName = None,
+		                           headersFieldName = None,
 		                           schema = JsonConverter
 			                           .fromString(topicSchema)
 			                           .getOrElse(org.mongodb.scala.bson.BsonDocument()))

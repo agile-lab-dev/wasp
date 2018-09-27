@@ -41,8 +41,8 @@ case class TopicModel(override val name: String,
                       partitions: Int,
                       replicas: Int,
                       topicDataType: String,
-                      partitionKeyField: Option[String],
-                      headersColumnName: Option[String],
+                      keyFieldName: Option[String],
+                      headersFieldName: Option[String],
                       schema: BsonDocument)
     extends DatastoreModel[TopicCategory] {
   def getJsonSchema: String = schema.toJson

@@ -90,8 +90,10 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
         logger.debug(s"Schema DF spark, topic name ${topic.name}:\n${stream.schema.treeString}")
 
-        val pkf = topic.partitionKeyField
-        //val pkfIndex: Option[Int] = pkf.map(k => stream.schema.fieldIndex(k))
+        val pkf = topic.keyFieldName
+        
+        
+        
         val dswParsed = topicDataTypeB.value match {
           case "avro" => {
             val converter: RowToAvro = RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema))
@@ -126,6 +128,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             }
           }
           case "json" => {
+            
             // json conversion
             if (pkf.isDefined) {
               val streamWithKey = stream.selectExpr(s"${pkf.get} AS key", "to_json(struct(*)) AS value")

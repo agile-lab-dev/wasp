@@ -23,12 +23,12 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
                    t.get("partitions").asInt32().getValue,
                    t.get("replicas").asInt32().getValue,
                    t.get("topicDataType").asString().getValue,
-                   if (t.containsKey("partitionKeyField"))
-                     Some(t.get("partitionKeyField").asString().getValue)
+                   if (t.containsKey("keyFieldName"))
+                     Some(t.get("keyFieldName").asString().getValue)
                    else
                      None,
-                   if (t.containsKey("headersColumnName"))
-                     Some(t.get("headersColumnName").asString().getValue)
+                   if (t.containsKey("headersFieldName"))
+                     Some(t.get("headersFieldName").asString().getValue)
                    else
                      None,
                    t.get("schema").asDocument())
