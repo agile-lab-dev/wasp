@@ -17,12 +17,21 @@ trait TopicBL {
 
 class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
 
-  private def factory(t: BsonDocument): TopicModel = new TopicModel(t.get("name").asString().getValue, t.get("creationTime").asInt64().getValue,
-      t.get("partitions").asInt32().getValue, t.get("replicas").asInt32().getValue,
-    t.get("topicDataType").asString().getValue ,
-      if (t.containsKey("partitionKeyField")) Some(t.get("partitionKeyField").asString().getValue)
-      else None
-    , t.get("schema").asDocument())
+  private def factory(t: BsonDocument): TopicModel =
+    new TopicModel(t.get("name").asString().getValue,
+                   t.get("creationTime").asInt64().getValue,
+                   t.get("partitions").asInt32().getValue,
+                   t.get("replicas").asInt32().getValue,
+                   t.get("topicDataType").asString().getValue,
+                   if (t.containsKey("partitionKeyField"))
+                     Some(t.get("partitionKeyField").asString().getValue)
+                   else
+                     None,
+                   if (t.containsKey("headersColumnName"))
+                     Some(t.get("headersColumnName").asString().getValue)
+                   else
+                     None,
+                   t.get("schema").asDocument())
 
   def getByName(name: String): Option[TopicModel] = {
     waspDB.getDocumentByFieldRaw[TopicModel]("name", new BsonString(name)).map(topic => {

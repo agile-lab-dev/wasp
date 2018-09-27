@@ -74,14 +74,15 @@ object DatastoreModelsForTesting {
 					|        }
 				""".stripMargin))
 		
-		lazy val json = TopicModel(
-			name = TopicModel.name(topic_name + "_json"),
-			creationTime = System.currentTimeMillis,
-			partitions = 3,
-			replicas = 1,
-			topicDataType = "json",
-			partitionKeyField = None,
-			schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-		)
+		lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
+		                           creationTime = System.currentTimeMillis,
+		                           partitions = 3,
+		                           replicas = 1,
+		                           topicDataType = "json",
+		                           partitionKeyField = None,
+		                           headersColumnName = None,
+		                           schema = JsonConverter
+			                           .fromString(topicSchema)
+			                           .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 	}
 }

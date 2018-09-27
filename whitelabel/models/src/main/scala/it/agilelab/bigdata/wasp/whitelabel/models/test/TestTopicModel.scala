@@ -9,75 +9,82 @@ private[wasp] object TestTopicModel {
   private val topic2_name = "test2"
   private val topicCheckpoint_name = "testCheckpoint"
 
-  lazy val json = TopicModel(
-    name = TopicModel.name(topic_name + "_json"),
-    creationTime = System.currentTimeMillis,
-    partitions = 3,
-    replicas = 1,
-    topicDataType = "json",
-    partitionKeyField = None,
-    schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-  )
+  lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
+                             creationTime = System.currentTimeMillis,
+                             partitions = 3,
+                             replicas = 1,
+                             topicDataType = "json",
+                             partitionKeyField = None,
+                             headersColumnName = None,
+                             schema = JsonConverter
+                               .fromString(topicSchema)
+                               .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
-  lazy val jsonWithMetadata = TopicModel(
-    name = TopicModel.name(topic_name + "_with_metadata_json"),
-    creationTime = System.currentTimeMillis,
-    partitions = 3,
-    replicas = 1,
-    topicDataType = "json",
-    partitionKeyField = None,
-    schema = JsonConverter.fromString(withMetadataSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-  )
+  lazy val jsonWithMetadata = TopicModel(name = TopicModel.name(topic_name + "_with_metadata_json"),
+                                         creationTime = System.currentTimeMillis,
+                                         partitions = 3,
+                                         replicas = 1,
+                                         topicDataType = "json",
+                                         partitionKeyField = None,
+                                         headersColumnName = None,
+                                         schema = JsonConverter
+                                           .fromString(withMetadataSchema)
+                                           .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
-  lazy val json2 = TopicModel(
-    name = TopicModel.name(topic2_name + "_json"),
-    creationTime = System.currentTimeMillis,
-    partitions = 3,
-    replicas = 1,
-    topicDataType = "json",
-    partitionKeyField = Some("nested.field3"), // useful to test with a specified nested kafka partitionKey
-    schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-  )
+  lazy val json2 = TopicModel(name = TopicModel.name(topic2_name + "_json"),
+                              creationTime = System.currentTimeMillis,
+                              partitions = 3,
+                              replicas = 1,
+                              topicDataType = "json",
+                              partitionKeyField = Some("nested.field3"),
+                              headersColumnName = None,
+                              schema = JsonConverter
+                                .fromString(topicSchema)
+                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
-  lazy val jsonCheckpoint = TopicModel(
-    name = TopicModel.name(topicCheckpoint_name + "_json"),
-    creationTime = System.currentTimeMillis,
-    partitions = 3,
-    replicas = 1,
-    topicDataType = "json",
-    partitionKeyField = None,
-    schema = JsonConverter.fromString(topicCheckpointSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-  )
+  lazy val jsonCheckpoint = TopicModel(name = TopicModel.name(topicCheckpoint_name + "_json"),
+                                       creationTime = System.currentTimeMillis,
+                                       partitions = 3,
+                                       replicas = 1,
+                                       topicDataType = "json",
+                                       partitionKeyField = None,
+                                       headersColumnName = None,
+                                       schema = JsonConverter
+                                         .fromString(topicCheckpointSchema)
+                                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
-  lazy val avro = TopicModel(
-    name = TopicModel.name(topic_name + "_avro"),
-    creationTime = System.currentTimeMillis,
-    partitions = 3,
-    replicas = 1,
-    topicDataType = "avro",
-    partitionKeyField = None,
-    schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-  )
+  lazy val avro = TopicModel(name = TopicModel.name(topic_name + "_avro"),
+                             creationTime = System.currentTimeMillis,
+                             partitions = 3,
+                             replicas = 1,
+                             topicDataType = "avro",
+                             partitionKeyField = None,
+                             headersColumnName = None,
+                             schema = JsonConverter
+                               .fromString(topicSchema)
+                               .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
-  lazy val avro2 = TopicModel(
-    name = TopicModel.name(topic2_name + "_avro"),
-    creationTime = System.currentTimeMillis,
-    partitions = 3,
-    replicas = 1,
-    topicDataType = "avro",
-    partitionKeyField = Some("nested.field3"), // useful to test with a specified nested kafka partitionKey
-    schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-  )
+  lazy val avro2 = TopicModel(name = TopicModel.name(topic2_name + "_avro"),
+                              creationTime = System.currentTimeMillis,
+                              partitions = 3,
+                              replicas = 1,
+                              topicDataType = "avro",
+                              partitionKeyField = Some("nested.field3"),
+                              headersColumnName = None,
+                              schema = JsonConverter
+                                .fromString(topicSchema)
+                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
-  lazy val avroCheckpoint = TopicModel(
-    name = TopicModel.name(topicCheckpoint_name + "_avro"),
-    creationTime = System.currentTimeMillis,
-    partitions = 3,
-    replicas = 1,
-    topicDataType = "avro",
-    partitionKeyField = None,
-    schema = JsonConverter.fromString(topicCheckpointSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-  )
+  lazy val avroCheckpoint = TopicModel(name = TopicModel.name(topicCheckpoint_name + "_avro"),
+                                       creationTime = System.currentTimeMillis,
+                                       partitions = 3,
+                                       replicas = 1,
+                                       topicDataType = "avro",
+                                       partitionKeyField = None,
+                                       None,
+                                       schema = JsonConverter
+                                         .fromString(topicCheckpointSchema)
+                                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
   private val topicSchema =
     TopicModel.generateField("test", "test", Some(

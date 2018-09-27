@@ -28,15 +28,16 @@ private[wasp] object LoggerTopicModel {
 
 	private val topic_name = "logger"
 
-	def apply() = TopicModel(
-		name = TopicModel.name(topic_name),
-		creationTime = System.currentTimeMillis,
-		partitions = 3,
-		replicas = 1,
-		topicDataType = "avro",
-		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-	)
+	def apply() = TopicModel(name = TopicModel.name(topic_name),
+	                         creationTime = System.currentTimeMillis,
+	                         partitions = 3,
+	                         replicas = 1,
+	                         topicDataType = "avro",
+	                         partitionKeyField = None,
+	                         headersColumnName = None,
+	                         schema = JsonConverter
+		                         .fromString(topicSchema)
+		                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
 	private val topicSchema =
 		TopicModel.generateField("logging", "logging", Some(
@@ -83,15 +84,16 @@ private[wasp] object TelemetryTopicModel {
 
 	private val topic_name = "telemetry"
 
-	def apply() = TopicModel(
-		name = TopicModel.name(topic_name),
-		creationTime = System.currentTimeMillis,
-		partitions = 3,
-		replicas = 1,
-		topicDataType = "json",
-		partitionKeyField = None,
-		schema = JsonConverter.fromString(topicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
-	)
+	def apply() = TopicModel(name = TopicModel.name(topic_name),
+	                         creationTime = System.currentTimeMillis,
+	                         partitions = 3,
+	                         replicas = 1,
+	                         topicDataType = "json",
+	                         partitionKeyField = None,
+	                         headersColumnName = None,
+	                         schema = JsonConverter
+		                         .fromString(topicSchema)
+		                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
 	private val topicSchema =
 		TopicModel.generateField("telemetry", "telemetry", Some(
