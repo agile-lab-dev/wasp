@@ -152,16 +152,16 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             // convert input
             stream.selectExpr(selectExpressions: _*)
           }
-          case "plaintext" | _ =>
-            if (pkf.isDefined) {
-              val streamWithKey = stream.selectExpr(s"${pkf.get} AS key", "* AS value")
+          case "plaintext" => // TODO this is broken
+            if (keyFieldName.isDefined) {
+              val streamWithKey = stream.selectExpr(s"${keyFieldName.get} AS key", "* AS value")
               logger.debug(s"SchemaWithKey DF spark, topic name ${topic.name}:\n${streamWithKey.schema.treeString}")
 
               streamWithKey
             }
             else
               stream.selectExpr("* AS value")
-
+          case topicDataType => throw new UnsupportedOperationException(s"Unknown topic data type $topicDataType")
         }
 
         val partialStreamWriter = finalStream
