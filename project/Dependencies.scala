@@ -60,8 +60,9 @@ object Dependencies {
 			module
 				.exclude("org.apache.kafka", "kafka_2.11")
 		
-		// these are needed just in the tests, to avoid a jackson compatibility exception
-		def kafkaTestExclusions: ModuleID =
+		// these are needed because kafka brings in jackson-core/databind 2.8.5, which are incompatible with Spark
+		// and otherwise cause a jackson compatibility exception
+		def kafkaJacksonExclusions: ModuleID =
 			module
 	  	  .exclude("com.fasterxml.jackson.core", "jackson-core")
 				.exclude("com.fasterxml.jackson.core", "jackson-databind")
@@ -117,8 +118,8 @@ object Dependencies {
 	val json4sCore = "org.json4s" %% "json4s-core" % Versions.json4s
 	val json4sJackson = "org.json4s" %% "json4s-jackson" % Versions.json4s
 	val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
-  val kafka = "org.apache.kafka" %% "kafka" % Versions.cdk kafkaExclusions
-  val kafkaClients = "org.apache.kafka" % "kafka-clients" % Versions.cdk kafkaExclusions
+  val kafka = ("org.apache.kafka" %% "kafka" % Versions.cdk).kafkaExclusions.kafkaJacksonExclusions
+  val kafkaClients = ("org.apache.kafka" % "kafka-clients" % Versions.cdk).kafkaExclusions.kafkaJacksonExclusions
   val kafkaStreaming = ("org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark).sparkExclusions.kafka8Exclusions
   val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
 	val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
@@ -175,7 +176,7 @@ object Dependencies {
 	val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % Test
 	val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test
 	val joptSimpleTests = "net.sf.jopt-simple" % "jopt-simple" % Versions.jopt % Test
-	val kafkaTests = kafka % Test kafkaTestExclusions
+	val kafkaTests = kafka % Test kafkaJacksonExclusions
 	val scalaCheck = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck % Test
 	val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
 	val scalaTest2 = "org.scalatest" %% "scalatest" % Versions.scalaTest2 % Test
