@@ -106,7 +106,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           // prepare the udf
           val avroToRow = AvroToRow(topic.getJsonSchema)
           val avroToRowConversion: Array[Byte] => Row = avroToRow.read
-          val avroToRowConversionUDF = udf(avroToRow, avroToRow.getSchemaSpark())
+          val avroToRowConversionUDF = udf(avroToRowConversion, avroToRow.getSchemaSpark())
 
           // parse avro bytes into a column, lift the contents up one level and push metadata into nested column
           df.withColumn("value_parsed", avroToRowConversionUDF(col("value")))
