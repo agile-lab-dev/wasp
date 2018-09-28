@@ -11,6 +11,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, RowToAvro, StringToByteArrayUtil}
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
@@ -113,23 +114,24 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
           // this tells us where the data starts, everything eventually present before is metadata
           val dataOffset = Seq(keyFieldName, headersFieldName).count(_.isDefined)
   
+          // generate a schema and encoder for the metadata & data
+          val schema = StructType(
+            keyFieldName.map(_ => StructField("key", StringType, nullable = false)).toList ++
+              headersFieldName.map(_ => StructField("headers", headerDataType, nullable = false)).toList :+
+              StructField("value", StringType, nullable = false)
+          )
+          val encoder = RowEncoder(schema)
+          
           // process the stream, extracting the data and converting it, and leaving metadata as is
-          val processedStream = streamWithTempColumns.rdd.map { row =>
+          val processedStream = streamWithTempColumns.map(row => {
             val inputElements = row.toSeq
             val data = inputElements.drop(dataOffset)
             val convertedData = dataConverter(Row(data))
             val outputElements = inputElements.take(dataOffset) :+ convertedData
             Row(outputElements)
-          }
-  
-          // generate a schema for the metadata & data
-          val schema = StructType(
-            keyFieldName.map(_ => StructField("key", StringType, nullable = false)).toList ++
-            headersFieldName.map(_ => StructField("headers", headerDataType, nullable = false)).toList :+
-            StructField("value", StringType, nullable = false)
-          )
-  
-          sqlContext.createDataFrame(processedStream, schema)
+          })(encoder)
+          
+          processedStream
         }
         
         val finalStream = topic.topicDataType match {
