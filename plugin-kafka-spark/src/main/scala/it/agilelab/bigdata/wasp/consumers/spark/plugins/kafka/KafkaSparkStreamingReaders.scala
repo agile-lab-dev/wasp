@@ -101,6 +101,8 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       
       val ret: DataFrame = topic.topicDataType match {
         case "avro" => {
+          logger.debug(s"AVRO schema: ${new Schema.Parser().parse(topic.getJsonSchema).toString(true)}")
+          
           // prepare the udf
           val avroToRow = AvroToRow(topic.getJsonSchema)
           val avroToRowConversion: Array[Byte] => Row = avroToRow.read
@@ -132,12 +134,12 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           df.withColumn("value_parsed", byteArrayToStringUDF(col("value")))
             .selectExpr(metadataSelectExpr, "value")
         }
-        case _ => throw new Exception(s"No such topic data type ${topic.topicDataType}")
+        case _ => throw new UnsupportedOperationException(s"""Unsupported topic data type "${topic.topicDataType}"""")
       }
-      logger.debug(s"Kafka reader avro schema: ${new Schema.Parser().parse(topic.getJsonSchema).toString(true)}")
-      logger.debug(s"Kafka reader spark schema: ${ret.schema.treeString}")
+  
+      logger.debug(s"DataFrame schema: ${ret.schema.treeString}")
+      
       ret
-
     } else {
       val msg = s"Topic not found on Kafka: $topic"
       logger.error(msg)
