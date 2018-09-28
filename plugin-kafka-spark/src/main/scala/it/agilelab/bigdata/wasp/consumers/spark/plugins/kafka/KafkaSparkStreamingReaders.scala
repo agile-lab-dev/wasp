@@ -9,12 +9,10 @@ import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils._
-import it.agilelab.bigdata.wasp.spark.kafka011.KafkaSparkSQLSchemas._
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
