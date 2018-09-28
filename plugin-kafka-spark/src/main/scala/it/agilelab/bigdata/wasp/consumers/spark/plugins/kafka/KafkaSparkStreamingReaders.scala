@@ -9,9 +9,11 @@ import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils._
+import it.agilelab.bigdata.wasp.spark.kafka011.KafkaSparkSQLSchemas._
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
@@ -24,13 +26,24 @@ import scala.collection.mutable
 object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReader with Logging {
 
   /**
+    * Creates a streaming DataFrame from a Kafka streaming source.
     *
-    * Create a Dataframe from a streaming source
+    * The returned DataFrame will contain a column named "kafkaMetadata" column with message metadata and the message
+    * contents either as a single column named "value" or as multiple columns named after the value contents depending
+    * on the topic data type.
     *
-    * @param etl
-    * @param streamingReaderModel
-    * @param ss
-    * @return
+    * The "kafkaMetadata" column contains the following:
+    * - key: bytes
+    * - headers: array of {headerKey: string, headerValue: bytes}
+    * - topic: string
+    * - partition: int
+    * - offset: long
+    * - timestamp: timestamp
+    * - timestampType: int
+    *
+    * The behaviour for message contents column(s) is the following:
+    * - the "avro" and "json" topic data types will output the columns specified by their schemas
+    * - the "plaintext" and "bytes" topic data types output a "value" column with the contents as string or bytes respectively
     */
   override def createStructuredStream(etl: StructuredStreamingETLModel,
                                       streamingReaderModel: StreamingReaderModel)
@@ -80,32 +93,46 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         .format("kafka")
         .options(options)
         .load()
-
-      // prepare the udf
-      val byteArrayToJson: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
-
-      import org.apache.spark.sql.functions._
-
-      val byteArrayToJsonUDF = udf(byteArrayToJson)
-
+  
+      // find all kafka metadata (non-value) columns so we can keep them in the final select
+      val allColumnsButValue = INPUT_SCHEMA.map(_.name).filter(_ != VALUE_ATTRIBUTE_NAME)
+  
+      // create select expression to push all kafka metadata columns under a single complex column called
+      // "kafkaMetadata"
+      val metadataSelectExpr = s"struct(${allColumnsButValue.mkString(", ")}) as kafkaMetadata"
+      
       val ret: DataFrame = topic.topicDataType match {
         case "avro" => {
-          val rowConverter = AvroToRow(topic.getJsonSchema)
-          val encoderForDataColumns = RowEncoder(rowConverter.getSchemaSpark().asInstanceOf[StructType])
-          df.select("value").map((r: Row) => {
-            val avroByteValue = r.getAs[Array[Byte]](0)
-            rowConverter.read(avroByteValue)
-          })(encoderForDataColumns)
+          // prepare the udf
+          val avroToRow = AvroToRow(topic.getJsonSchema)
+          val avroToRowConversion: Array[Byte] => Row = avroToRow.read
+          val avroToRowConversionUDF = udf(avroToRow, avroToRow.getSchemaSpark())
+
+          // parse avro bytes into a column, lift the contents up one level and push metadata into nested column
+          df.withColumn("value_parsed", avroToRowConversionUDF(col("value")))
+            .drop("value")
+            .selectExpr(metadataSelectExpr, "value_parsed.*")
         }
         case "json" => {
+          // prepare the udf
+          val byteArrayToJson: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
+          val byteArrayToJsonUDF = udf(byteArrayToJson)
+          
+          // convert bytes to json string, parse the json into a column, lift the contents up one level and push
+          // metadata into nested column
           df.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
             .drop("value")
-            .select(from_json(col("value_parsed"), topic.getDataType).alias("value"))
-            .select(col("value.*"))
+            .withColumn("value", from_json(col("value_parsed"), topic.getDataType))
+            .selectExpr(metadataSelectExpr, "value.*")
         }
         case "plaintext" => {
-          df
-            .select(col("value"))
+          // prepare the udf
+          val byteArrayToString: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
+          val byteArrayToStringUDF = udf(byteArrayToString)
+          
+          // convert bytes to string and push metadata into nested column
+          df.withColumn("value_parsed", byteArrayToStringUDF(col("value")))
+            .selectExpr(metadataSelectExpr, "value")
         }
         case _ => throw new Exception(s"No such topic data type ${topic.topicDataType}")
       }
