@@ -114,7 +114,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
           val dataOffset = Seq(keyFieldName, headersFieldName).count(_.isDefined)
   
           // process the stream, extracting the data and converting it, and leaving metadata as is
-          val processedStream = streamWithTempColumns map { row =>
+          val processedStream = streamWithTempColumns.rdd.map { row =>
             val inputElements = row.toSeq
             val data = inputElements.drop(dataOffset)
             val convertedData = dataConverter(Row(data))
@@ -129,7 +129,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             StructField("value", StringType, nullable = false)
           )
   
-          sqlContext.createDataFrame(processedStream.rdd, schema)
+          sqlContext.createDataFrame(processedStream, schema)
         }
         
         val finalStream = topic.topicDataType match {
