@@ -84,7 +84,7 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
 
 lazy val wasp = Project("wasp", file("."))
 	.settings(Settings.commonSettings: _*)
-	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_raw_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_solr_spark, plugin_console_spark, plugin_jdbc_spark)
+	.aggregate(core, master, producers, consumers_spark, consumers_rt, plugin_console_spark, plugin_elastic_spark, plugin_hbase_spark, plugin_jdbc_spark, plugin_kafka_spark, plugin_raw_spark, plugin_solr_spark)
 
 /* WhiteLabel */
 
