@@ -19,13 +19,14 @@ package org.apache.spark.sql.kafka011
 
 import java.{util => ju}
 
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.header.Header
 import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection, UnsafeRow}
-import org.apache.spark.sql.catalyst.util.{ArrayData, GenericArrayData}
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection}
+import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.types.{BinaryType, StringType}
 
 import scala.collection.JavaConverters._
@@ -98,43 +99,43 @@ private[kafka011] class KafkaWriteTask(
 
   private def createProjection: UnsafeProjection = {
     val topicExpression = topic.map(Literal(_)).orElse {
-      inputSchema.find(_.name == KafkaWriter.TOPIC_ATTRIBUTE_NAME)
+      inputSchema.find(_.name == TOPIC_ATTRIBUTE_NAME)
     }.getOrElse {
       throw new IllegalStateException(s"topic option required when no " +
-        s"'${KafkaWriter.TOPIC_ATTRIBUTE_NAME}' attribute is present")
+        s"'${TOPIC_ATTRIBUTE_NAME}' attribute is present")
     }
     topicExpression.dataType match {
       case StringType => // good
       case t =>
-        throw new IllegalStateException(s"${KafkaWriter.TOPIC_ATTRIBUTE_NAME} " +
-          s"attribute unsupported type $t. ${KafkaWriter.TOPIC_ATTRIBUTE_NAME} " +
+        throw new IllegalStateException(s"${TOPIC_ATTRIBUTE_NAME} " +
+          s"attribute unsupported type $t. ${TOPIC_ATTRIBUTE_NAME} " +
           "must be a StringType")
     }
-    val keyExpression = inputSchema.find(_.name == KafkaWriter.KEY_ATTRIBUTE_NAME)
+    val keyExpression = inputSchema.find(_.name == KEY_ATTRIBUTE_NAME)
       .getOrElse(Literal(null, BinaryType))
     keyExpression.dataType match {
       case StringType | BinaryType => // good
       case t =>
-        throw new IllegalStateException(s"${KafkaWriter.KEY_ATTRIBUTE_NAME} " +
+        throw new IllegalStateException(s"${KEY_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")
     }
     val valueExpression = inputSchema
-      .find(_.name == KafkaWriter.VALUE_ATTRIBUTE_NAME).getOrElse(
+      .find(_.name == VALUE_ATTRIBUTE_NAME).getOrElse(
       throw new IllegalStateException("Required attribute " +
-        s"'${KafkaWriter.VALUE_ATTRIBUTE_NAME}' not found")
+        s"'${VALUE_ATTRIBUTE_NAME}' not found")
     )
     valueExpression.dataType match {
       case StringType | BinaryType => // good
       case t =>
-        throw new IllegalStateException(s"${KafkaWriter.VALUE_ATTRIBUTE_NAME} " +
+        throw new IllegalStateException(s"${VALUE_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")
     }
-    val headerExpression = inputSchema.find(_.name == KafkaWriter.HEADER_ATTRIBUTE_NAME)
-      .getOrElse(Literal(ArrayData.toArrayData(Array.empty[Row]), KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE))
+    val headerExpression = inputSchema.find(_.name == HEADERS_ATTRIBUTE_NAME)
+      .getOrElse(Literal(ArrayData.toArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE))
     headerExpression.dataType match {
-      case KafkaWriter.HEADER_DATA_TYPE_NULL_VALUE | KafkaWriter.HEADER_DATA_TYPE_NON_NULL_VALUE => // good
+      case HEADER_DATA_TYPE_NULL_VALUE | HEADER_DATA_TYPE_NON_NULL_VALUE => // good
       case t =>
-        throw new IllegalStateException(s"${KafkaWriter.HEADER_ATTRIBUTE_NAME} " +
+        throw new IllegalStateException(s"${HEADERS_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")
     }
     val expressions = Seq(

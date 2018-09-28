@@ -20,6 +20,7 @@ package org.apache.spark.sql.kafka011
 import java.{util => ju}
 import java.util.UUID
 
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
@@ -50,7 +51,7 @@ private[kafka011] class KafkaRelation(
     sqlContext.sparkContext.conf.getTimeAsMs("spark.network.timeout", "120s").toString
   ).toLong
 
-  override def schema: StructType = KafkaOffsetReader.kafkaSchema
+  override def schema: StructType = KafkaSparkSQLSchemas.INPUT_SCHEMA
 
   override def buildScan(): RDD[Row] = {
     // Each running query should use its own group id. Otherwise, the query may be only assigned

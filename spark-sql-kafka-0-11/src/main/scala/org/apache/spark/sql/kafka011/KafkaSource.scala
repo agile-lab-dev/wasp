@@ -21,6 +21,7 @@ import java.{util => ju}
 import java.io._
 import java.nio.charset.StandardCharsets
 
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas
 import org.apache.commons.io.IOUtils
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.SparkContext
@@ -155,7 +156,7 @@ private[kafka011] class KafkaSource(
 
   private var currentPartitionOffsets: Option[Map[TopicPartition, Long]] = None
 
-  override def schema: StructType = KafkaOffsetReader.kafkaSchema
+  override def schema: StructType = KafkaSparkSQLSchemas.INPUT_SCHEMA
 
   /** Returns the maximum available offset for this source. */
   override def getOffset: Option[Offset] = {

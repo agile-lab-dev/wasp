@@ -19,6 +19,7 @@ package org.apache.spark.sql.kafka011
 
 import java.{util => ju}
 
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{AnalysisException, Row, SparkSession}
 import org.apache.spark.sql.catalyst.expressions._
@@ -37,22 +38,6 @@ import org.apache.spark.util.Utils
  * [[org.apache.kafka.clients.producer.ProducerRecord]].
  */
 private[kafka011] object KafkaWriter extends Logging {
-  val TOPIC_ATTRIBUTE_NAME: String = "topic"
-  val KEY_ATTRIBUTE_NAME: String = "key"
-  val VALUE_ATTRIBUTE_NAME: String = "value"
-  val HEADER_ATTRIBUTE_NAME: String = "headers"
-  val HEADER_KEY_ATTRIBUTE_NAME: String = "headerKey"
-  val HEADER_VALUE_ATTRIBUTE_NAME: String = "headerValue"
-  
-  // header data types, with either nullable or non nullable headerValue, so we can accept both in validateQuery & co
-  val HEADER_DATA_TYPE_NULL_VALUE = ArrayType(
-    StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
-                   StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = true))),
-    containsNull = false)
-  val HEADER_DATA_TYPE_NON_NULL_VALUE = ArrayType(
-    StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
-                   StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = false))),
-    containsNull = false)
 
   override def toString: String = "KafkaWriter"
 
@@ -90,12 +75,12 @@ private[kafka011] object KafkaWriter extends Logging {
         throw new AnalysisException(s"$VALUE_ATTRIBUTE_NAME attribute type " +
           s"must be a String or BinaryType")
     }
-    schema.find(_.name == HEADER_ATTRIBUTE_NAME).getOrElse(
+    schema.find(_.name == HEADERS_ATTRIBUTE_NAME).getOrElse(
       Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE)
     ).dataType match {
       case HEADER_DATA_TYPE_NULL_VALUE | HEADER_DATA_TYPE_NON_NULL_VALUE => // good
       case _ =>
-        throw new AnalysisException(s"$HEADER_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
+        throw new AnalysisException(s"$HEADERS_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
           s" of type StructType with a field named $HEADER_KEY_ATTRIBUTE_NAME of type StringType key and a field" +
           s" named $HEADER_VALUE_ATTRIBUTE_NAME of type BinaryType")
     }

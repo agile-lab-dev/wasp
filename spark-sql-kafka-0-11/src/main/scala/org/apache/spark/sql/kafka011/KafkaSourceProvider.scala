@@ -22,10 +22,10 @@ import java.util.{Locale, UUID}
 
 import scala.collection.JavaConverters._
 
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{AnalysisException, DataFrame, SaveMode, SQLContext}
 import org.apache.spark.sql.execution.streaming.{Sink, Source}
@@ -59,7 +59,7 @@ private[kafka011] class KafkaSourceProvider extends DataSourceRegister
       parameters: Map[String, String]): (String, StructType) = {
     validateStreamOptions(parameters)
     require(schema.isEmpty, "Kafka source has a fixed schema and cannot be set with a custom one")
-    (shortName(), KafkaOffsetReader.kafkaSchema)
+    (shortName(), KafkaSparkSQLSchemas.INPUT_SCHEMA)
   }
 
   override def createSource(
