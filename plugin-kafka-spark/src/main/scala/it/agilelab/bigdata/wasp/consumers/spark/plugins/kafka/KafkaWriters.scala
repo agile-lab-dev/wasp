@@ -11,6 +11,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, RowToAvro, StringToByteArrayUtil}
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.HEADER_DATA_TYPE_NULL_VALUE
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types._
@@ -73,7 +74,6 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                           ss: SparkSession)
   extends SparkStructuredStreamingWriter
     with Logging {
-  import KafkaSparkStructuredStreamingWriter._
   
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
 
@@ -92,12 +92,12 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-        logger.debug(s"Schema DF spark, topic name ${topic.name}:\n${stream.schema.treeString}")
+        logger.info(s"Input schema:\n${stream.schema.treeString}")
 
         val keyFieldName = topic.keyFieldName
         val headersFieldName = topic.headersFieldName
         
-        def convertInputToKafkaMessage(dataConverter: Row => Array[Byte]) = {
+        def convertInputToKafkaMessage() = {
           // generate temporary field names
           val tempKeyFieldName = s"key_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
           val tempHeadersFieldName = s"headers_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
@@ -107,20 +107,28 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             keyFieldName.map(kfn => s"$kfn AS $tempKeyFieldName").toList ++
             headersFieldName.map(hfn => s"$hfn AS $tempHeadersFieldName").toList :+
             "*"
+          logger.info(s"Generated select expressions: ${selectExpressionsForTempColumns.mkString("[", "], [", "]")}")
   
           // project the data so we have a known order for the metadata columns with the rest of the data after
           val streamWithTempColumns = stream.selectExpr(selectExpressionsForTempColumns: _*)
+          
+          logger.info(s"Stream with temp columns schema:\n${streamWithTempColumns.schema.treeString}")
   
           // this tells us where the data starts, everything eventually present before is metadata
           val dataOffset = Seq(keyFieldName, headersFieldName).count(_.isDefined)
   
           // generate a schema and encoder for the metadata & data
           val schema = StructType(
-            keyFieldName.map(_ => StructField("key", StringType, nullable = false)).toList ++
-              headersFieldName.map(_ => StructField("headers", headerDataType, nullable = false)).toList :+
-              StructField("value", StringType, nullable = false)
+            keyFieldName.map(_ => StructField("key", StringType, nullable = true)).toList ++
+            headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE_NULL_VALUE, nullable = false)).toList :+
+            StructField("value", BinaryType, nullable = false)
           )
+          logger.info(s"Generated schema:\n${schema.treeString}")
           val encoder = RowEncoder(schema)
+  
+          // generate avro converter
+          val converter = RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema))
+          val dataConverter: Row => Array[Byte] = converter.write
           
           // process the stream, extracting the data and converting it, and leaving metadata as is
           val processedStream = streamWithTempColumns.map(row => {
@@ -136,13 +144,8 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
         
         val finalStream = topic.topicDataType match {
           case "avro" => {
-            // generate avro converter
-            val converter = (row: Row) => {
-              RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema)).write(row)
-            }
-            
             // convert input
-            convertInputToKafkaMessage(converter)
+            convertInputToKafkaMessage()
           }
           case "json" => {
             // generate select expressions to rename matadata columns and convert everything to json
@@ -202,11 +205,4 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       .option("kafka.acks", tkc.acks)
       .options(kafkaConfigMap.map(_.toTupla).toMap)
   }
-}
-
-object KafkaSparkStructuredStreamingWriter {
-  val headerDataType = ArrayType(
-    StructType(Seq(StructField("headerKey", StringType, nullable = false),
-                   StructField("headerValue", BinaryType, nullable = true))),
-    containsNull = false)
 }
