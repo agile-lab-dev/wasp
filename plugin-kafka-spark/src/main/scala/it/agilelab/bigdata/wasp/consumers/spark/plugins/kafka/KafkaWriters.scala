@@ -89,47 +89,54 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     if (topicOpt.isDefined) {
 
       val topic = topicOpt.get
+      
+      logger.info(s"Writing with topic model: $topic")
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
-        logger.info(s"Input schema:\n${stream.schema.treeString}")
+        logger.debug(s"Input schema:\n${stream.schema.treeString}")
 
         val keyFieldName = topic.keyFieldName
         val headersFieldName = topic.headersFieldName
+        val valueFieldsNames = topic.valueFieldsNames
         
         def convertInputToKafkaMessage() = {
           // generate temporary field names
           val tempKeyFieldName = s"key_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
           val tempHeadersFieldName = s"headers_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
   
-          // generate select expressions to clone metadata columns while keeping the rest
+          // generate select expressions to clone metadata columns and keep only the values specified
           val selectExpressionsForTempColumns =
             keyFieldName.map(kfn => s"$kfn AS $tempKeyFieldName").toList ++
             headersFieldName.map(hfn => s"$hfn AS $tempHeadersFieldName").toList :+
-            "*"
-          logger.info(s"Generated select expressions: ${selectExpressionsForTempColumns.mkString("[", "], [", "]")}")
+            valueFieldsNames.map(vfn => vfn).getOrElse(Seq("*"))
+          logger.debug(s"Generated select expressions: ${selectExpressionsForTempColumns.mkString("[", "], [", "]")}")
   
           // project the data so we have a known order for the metadata columns with the rest of the data after
           val streamWithTempColumns = stream.selectExpr(selectExpressionsForTempColumns: _*)
-          
-          logger.info(s"Stream with temp columns schema:\n${streamWithTempColumns.schema.treeString}")
+          logger.debug(s"Stream with temp columns schema:\n${streamWithTempColumns.schema.treeString}")
   
           // this tells us where the data starts, everything eventually present before is metadata
           val dataOffset = Seq(keyFieldName, headersFieldName).count(_.isDefined)
   
-          // generate a schema and encoder for the metadata & data
-          val schema = StructType(
-            keyFieldName.map(_ => StructField("key", StringType, nullable = true)).toList ++
-            headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE_NULL_VALUE, nullable = false)).toList :+
-            StructField("value", BinaryType, nullable = false)
+          // generate a schema and avro converter for the values
+          val valueSchema = StructType(
+            streamWithTempColumns.schema.drop(dataOffset)
           )
-          logger.info(s"Generated schema:\n${schema.treeString}")
+          logger.debug(s"Generated value schema:\n${valueSchema.treeString}")
+          // TODO use sensible namespace instead of wasp
+          val converter = RowToAvro(valueSchema, topic.name, "wasp", None, Some(topic.getJsonSchema))
+          val dataConverter: Row => Array[Byte] = converter.write
+  
+          // generate a schema and encoder for final metadata & data
+          val schema = StructType(
+            keyFieldName.map(_ => StructField("key", BinaryType, nullable = true)).toList ++
+              headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE_NULL_VALUE, nullable = false)).toList :+
+              StructField("value", BinaryType, nullable = false)
+          )
+          logger.debug(s"Generated final schema:\n${schema.treeString}")
           val encoder = RowEncoder(schema)
   
-          // generate avro converter
-          val converter = RowToAvro(stream.schema, topic.name, "wasp", None, Some(topic.getJsonSchema))
-          val dataConverter: Row => Array[Byte] = converter.write
-          
           // process the stream, extracting the data and converting it, and leaving metadata as is
           val processedStream = streamWithTempColumns.map(row => {
             val inputElements = row.toSeq
