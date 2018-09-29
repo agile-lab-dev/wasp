@@ -44,6 +44,18 @@ private[wasp] object TestTopicModel {
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+  
+  lazy val json2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_json"),
+                                             creationTime = System.currentTimeMillis,
+                                             partitions = 3,
+                                             replicas = 1,
+                                             topicDataType = "json",
+                                             keyFieldName = Some("nested.field3"),
+                                             headersFieldName = Some("headers"),
+                                             valueFieldsNames = Some(List("id", "number", "nested")),
+                                             schema = JsonConverter
+                                               .fromString(topicSchema)
+                                               .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
   lazy val jsonCheckpoint = TopicModel(name = TopicModel.name(topicCheckpoint_name + "_json"),
                                        creationTime = System.currentTimeMillis,
@@ -80,6 +92,18 @@ private[wasp] object TestTopicModel {
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+  
+  lazy val avro2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_avro"),
+                                             creationTime = System.currentTimeMillis,
+                                             partitions = 3,
+                                             replicas = 1,
+                                             topicDataType = "avro",
+                                             keyFieldName = Some("nested.field3"),
+                                             headersFieldName = Some("headers"),
+                                             valueFieldsNames = Some(List("id", "number", "nested")),
+                                             schema = JsonConverter
+                                               .fromString(topicSchema)
+                                               .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
   lazy val avroCheckpoint = TopicModel(name = TopicModel.name(topicCheckpoint_name + "_avro"),
                                        creationTime = System.currentTimeMillis,

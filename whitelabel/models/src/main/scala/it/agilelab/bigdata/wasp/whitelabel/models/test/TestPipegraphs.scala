@@ -83,6 +83,39 @@ private[wasp] object TestPipegraphs {
 
         dashboard = None
       )
+  
+      lazy val kafkaHeaders = PipegraphModel(
+        name = "TestKafkaWriterWithHeadersStructuredJSONPipegraph",
+        description = "Test for reading/writing headers from/to Kafka for JSON topics",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "InsertKafkaHeaders",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.json2ForKafkaHeaders),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaHeaders),
+            triggerIntervalMs = None,
+            options = Map()
+          ),
+          StructuredStreamingETLModel(
+            name = "ShowKafkaMetadata",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json2, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Write to console"),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaMetadata),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
 
       lazy val solr = PipegraphModel(
         name = "TestSolrWriterStructuredJSONPipegraph",
@@ -438,6 +471,39 @@ private[wasp] object TestPipegraphs {
         ),
         rtComponents = List(),
 
+        dashboard = None
+      )
+  
+      lazy val kafkaHeaders = PipegraphModel(
+        name = "TestKafkaWriterWithHeadersStructuredAVROPipegraph",
+        description = "Test for reading/writing headers from/to Kafkafor AVRO topics",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "InsertKafkaHeaders",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.avro2ForKafkaHeaders),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaHeaders),
+            triggerIntervalMs = None,
+            options = Map()
+          ),
+          StructuredStreamingETLModel(
+            name = "ShowKafkaMetadata",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro2, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Write to console"),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaMetadata),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
         dashboard = None
       )
 

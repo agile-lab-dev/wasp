@@ -32,10 +32,12 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
     waspDB.upsert[TopicModel](TestTopicModel.json2)
+    waspDB.upsert[TopicModel](TestTopicModel.json2ForKafkaHeaders)
     waspDB.upsert[TopicModel](TestTopicModel.jsonWithMetadata)
     waspDB.upsert[TopicModel](TestTopicModel.jsonCheckpoint)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
     waspDB.upsert[TopicModel](TestTopicModel.avro2)
+    waspDB.upsert[TopicModel](TestTopicModel.avro2ForKafkaHeaders)
     waspDB.upsert[TopicModel](TestTopicModel.avroCheckpoint)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
@@ -55,6 +57,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.consoleWithMetadata)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafka)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaHeaders)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
@@ -70,6 +73,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafka)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafkaHeaders)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hdfs)
