@@ -2,8 +2,10 @@ package it.agilelab.bigdata.wasp.core.bl
 
 import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import org.bson.BsonValue
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString}
+import org.mongodb.scala.bson.{BsonDocument, BsonString}
+
+import scala.collection.JavaConverters._
+
 
 trait TopicBL {
 
@@ -29,6 +31,10 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
                      None,
                    if (t.containsKey("headersFieldName"))
                      Some(t.get("headersFieldName").asString().getValue)
+                   else
+                     None,
+                   if (t.containsKey("valueFieldNames"))
+                     Some(t.getArray("valueFieldNames").getValues.asScala.toList.map(_.asString().getValue))
                    else
                      None,
                    t.get("schema").asDocument())

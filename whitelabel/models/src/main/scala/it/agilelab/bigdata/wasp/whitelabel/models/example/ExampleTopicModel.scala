@@ -14,6 +14,7 @@ private[wasp] object ExampleTopicModel {
                               topicDataType = "json",
                               keyFieldName = None,
                               headersFieldName = None,
+                              valueFieldsNames = None,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))

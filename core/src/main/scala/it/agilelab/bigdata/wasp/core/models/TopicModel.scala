@@ -35,7 +35,19 @@ object TopicModel {
   }
 }
 
-
+/**
+  * A model for a topic, that is, a message queue of some sort. Right now this means just Kafka topics.
+  *
+  * @param name name of the topic
+  * @param creationTime time at which the model was created
+  * @param partitions number or partitions for the topic if/when the framework creates
+  * @param replicas number or replicas for the topic if/when the framework creates
+  * @param topicDataType format for encoding/decoding the data
+  * @param keyFieldName optional name of the field to use as key for the messages when writing
+  * @param headersFieldName optional name of the field to use as headers for the messages when writing
+  * @param valueFieldsNames optional (sub)list of field names to be encoded in the message value when writing
+  * @param schema schema for encoding/decoding the data
+  */
 case class TopicModel(override val name: String,
                       creationTime: Long,
                       partitions: Int,
@@ -43,6 +55,7 @@ case class TopicModel(override val name: String,
                       topicDataType: String,
                       keyFieldName: Option[String],
                       headersFieldName: Option[String],
+                      valueFieldsNames: Option[List[String]],
                       schema: BsonDocument)
     extends DatastoreModel[TopicCategory] {
   def getJsonSchema: String = schema.toJson

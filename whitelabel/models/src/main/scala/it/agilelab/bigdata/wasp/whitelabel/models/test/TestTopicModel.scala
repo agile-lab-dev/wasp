@@ -16,6 +16,7 @@ private[wasp] object TestTopicModel {
                              topicDataType = "json",
                              keyFieldName = None,
                              headersFieldName = None,
+                             valueFieldsNames = None,
                              schema = JsonConverter
                                .fromString(topicSchema)
                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -27,6 +28,7 @@ private[wasp] object TestTopicModel {
                                          topicDataType = "json",
                                          keyFieldName = None,
                                          headersFieldName = None,
+                                         valueFieldsNames = None,
                                          schema = JsonConverter
                                            .fromString(withMetadataSchema)
                                            .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -38,6 +40,7 @@ private[wasp] object TestTopicModel {
                               topicDataType = "json",
                               keyFieldName = Some("nested.field3"),
                               headersFieldName = None,
+                              valueFieldsNames = None,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -49,6 +52,7 @@ private[wasp] object TestTopicModel {
                                        topicDataType = "json",
                                        keyFieldName = None,
                                        headersFieldName = None,
+                                       valueFieldsNames = None,
                                        schema = JsonConverter
                                          .fromString(topicCheckpointSchema)
                                          .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -60,6 +64,7 @@ private[wasp] object TestTopicModel {
                              topicDataType = "avro",
                              keyFieldName = None,
                              headersFieldName = None,
+                             valueFieldsNames = None,
                              schema = JsonConverter
                                .fromString(topicSchema)
                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -71,6 +76,7 @@ private[wasp] object TestTopicModel {
                               topicDataType = "avro",
                               keyFieldName = Some("nested.field3"),
                               headersFieldName = None,
+                              valueFieldsNames = None,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -81,7 +87,8 @@ private[wasp] object TestTopicModel {
                                        replicas = 1,
                                        topicDataType = "avro",
                                        keyFieldName = None,
-                                       None,
+                                       headersFieldName = None,
+                                       valueFieldsNames = None,
                                        schema = JsonConverter
                                          .fromString(topicCheckpointSchema)
                                          .getOrElse(org.mongodb.scala.bson.BsonDocument()))

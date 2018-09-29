@@ -35,6 +35,7 @@ private[wasp] object LoggerTopicModel {
 	                         topicDataType = "avro",
 	                         keyFieldName = None,
 	                         headersFieldName = None,
+	                         valueFieldsNames = None,
 	                         schema = JsonConverter
 		                         .fromString(topicSchema)
 		                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -91,6 +92,7 @@ private[wasp] object TelemetryTopicModel {
 	                         topicDataType = "json",
 	                         keyFieldName = None,
 	                         headersFieldName = None,
+	                         valueFieldsNames = None,
 	                         schema = JsonConverter
 		                         .fromString(topicSchema)
 		                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))
