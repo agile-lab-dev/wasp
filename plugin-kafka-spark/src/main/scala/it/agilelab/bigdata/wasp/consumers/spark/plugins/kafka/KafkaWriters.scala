@@ -107,8 +107,8 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
   
           // generate select expressions to clone metadata columns and keep only the values specified
           val selectExpressionsForTempColumns =
-            keyFieldName.map(kfn => s"$kfn AS $tempKeyFieldName").toList ++
-            headersFieldName.map(hfn => s"$hfn AS $tempHeadersFieldName").toList :+
+            keyFieldName.map(kfn => s"CAST($kfn AS binary) $tempKeyFieldName").toList ++
+            headersFieldName.map(hfn => s"$hfn AS $tempHeadersFieldName").toList ++
             valueFieldsNames.map(vfn => vfn).getOrElse(Seq("*"))
           logger.debug(s"Generated select expressions: ${selectExpressionsForTempColumns.mkString("[", "], [", "]")}")
   
@@ -140,10 +140,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
           // process the stream, extracting the data and converting it, and leaving metadata as is
           val processedStream = streamWithTempColumns.map(row => {
             val inputElements = row.toSeq
+            val metadata = inputElements.take(dataOffset)
             val data = inputElements.drop(dataOffset)
-            val convertedData = dataConverter(Row(data))
-            val outputElements = inputElements.take(dataOffset) :+ convertedData
-            Row(outputElements)
+            val convertedData = dataConverter(Row.fromSeq(data))
+            val outputElements = metadata :+ convertedData
+            Row.fromSeq(outputElements)
           })(encoder)
           
           processedStream
