@@ -33,8 +33,8 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
                      Some(t.get("headersFieldName").asString().getValue)
                    else
                      None,
-                   if (t.containsKey("valueFieldNames"))
-                     Some(t.getArray("valueFieldNames").getValues.asScala.toList.map(_.asString().getValue))
+                   if (t.containsKey("valueFieldsNames"))
+                     Some(t.getArray("valueFieldsNames").getValues.asScala.toList.map(_.asString().getValue))
                    else
                      None,
                    t.get("schema").asDocument())
