@@ -7,6 +7,7 @@ private[wasp] object TestTopicModel {
 
   private val topic_name = "test"
   private val topic2_name = "test2"
+  private val topic3_name = "test3"
   private val topicCheckpoint_name = "testCheckpoint"
 
   lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
@@ -44,6 +45,12 @@ private[wasp] object TestTopicModel {
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+  
+  lazy val json3 = json.copy(name = TopicModel.name(topic3_name + "_json"))
+  
+  lazy val jsonMultitopic = MultiTopicModel.fromTopicModels("multitopic_json",
+                                                            "topic",
+                                                            Seq(json, json3))
   
   lazy val json2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_json"),
                                              creationTime = System.currentTimeMillis,
