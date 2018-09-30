@@ -4,10 +4,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingRea
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
-import it.agilelab.bigdata.wasp.core.bl.TopicBLImp
+import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{MultiTopicModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
 import kafka.serializer.{DefaultDecoder, StringDecoder}
@@ -50,18 +50,26 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     logger.info(s"Creating stream from input: $streamingReaderModel of ETL: $etl")
     
     // extract the topic model
-    logger.info(s"""Retrieving topic model with name "${streamingReaderModel.datastoreModelName}"""")
-    val topic = new TopicBLImp(WaspDB.getDB).getByName(streamingReaderModel.datastoreModelName).get
-    logger.info(s"Retrieved topic model: $topic")
+    logger.info(s"""Retrieving topic datastore model with name "${streamingReaderModel.datastoreModelName}"""")
+    val topicBL = new TopicBLImp(WaspDB.getDB)
+    val topics = retrieveTopicModelsRecursively(topicBL, streamingReaderModel.datastoreModelName)
+    logger.info(s"Retrieved topic model(s): $topics")
     
     // get the config
     val kafkaConfig = ConfigManager.getKafkaConfig
     logger.info(s"Kafka configuration: $kafkaConfig")
 
     // check or create
-    if (??[Boolean](
-          WaspSystem.kafkaAdminActor,
-          CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
+    val allCheckOrCreateResult = topics map { topic =>
+      ??[Boolean](
+        WaspSystem.kafkaAdminActor,
+        CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))
+    } reduce (_ && _)
+    
+    if (allCheckOrCreateResult) {
+      // extract a prototype topic to use for data type, schema etc
+      val prototypeTopic = topics.head
+      
       // calculate maxOffsetsPerTrigger from trigger interval and rate limit
       // if the rate limit is set, calculate maxOffsetsPerTrigger as follows: if the trigger interval is unset, use
       // rate limit as is, otherwise multiply by triggerIntervalMs/1000
@@ -74,7 +82,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       val options = mutable.Map.empty[String, String]
       // start with the base options
       options ++= Seq(
-        "subscribe" -> topic.name,
+        "subscribe" -> topics.map(_.name).mkString(","),
         "kafka.bootstrap.servers" -> kafkaConfig.connections.map(_.toString).mkString(","),
         "kafkaConsumer.pollTimeoutMs" -> kafkaConfig.ingestRateToMills().toString
       )
@@ -99,12 +107,12 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       // "kafkaMetadata"
       val metadataSelectExpr = s"struct(${allColumnsButValue.mkString(", ")}) as kafkaMetadata"
       
-      val ret: DataFrame = topic.topicDataType match {
+      val ret: DataFrame = prototypeTopic.topicDataType match {
         case "avro" => {
-          logger.debug(s"AVRO schema: ${new Schema.Parser().parse(topic.getJsonSchema).toString(true)}")
+          logger.debug(s"AVRO schema: ${new Schema.Parser().parse(prototypeTopic.getJsonSchema).toString(true)}")
           
           // prepare the udf
-          val avroToRow = AvroToRow(topic.getJsonSchema)
+          val avroToRow = AvroToRow(prototypeTopic.getJsonSchema)
           val avroToRowConversion: Array[Byte] => Row = avroToRow.read
           val avroToRowConversionUDF = udf(avroToRowConversion, avroToRow.getSchemaSpark())
 
@@ -122,7 +130,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           // metadata into nested column
           df.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
             .drop("value")
-            .withColumn("value", from_json(col("value_parsed"), topic.getDataType))
+            .withColumn("value", from_json(col("value_parsed"), prototypeTopic.getDataType))
             .selectExpr(metadataSelectExpr, "value.*")
         }
         case "plaintext" => {
@@ -134,17 +142,32 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           df.withColumn("value_parsed", byteArrayToStringUDF(col("value")))
             .selectExpr(metadataSelectExpr, "value")
         }
-        case _ => throw new UnsupportedOperationException(s"""Unsupported topic data type "${topic.topicDataType}"""")
+        case _ => throw new UnsupportedOperationException(s"""Unsupported topic data type "${prototypeTopic.topicDataType}"""")
       }
   
       logger.debug(s"DataFrame schema: ${ret.schema.treeString}")
       
       ret
     } else {
-      val msg = s"Topic not found on Kafka: $topic"
+      val msg = s"Topic(s) not found on Kafka"
       logger.error(msg)
       throw new Exception(msg)
     }
+  }
+  
+  private def retrieveTopicModelsRecursively(topicBL: TopicBL, topicDatastoreModelName: String): Seq[TopicModel] = {
+    def innerRetrieveTopicModelsRecursively(topicDatastoreModelName: String): Seq[TopicModel] = {
+      val topicDatastoreModel = topicBL.getByName(topicDatastoreModelName).get
+      topicDatastoreModel match {
+        case topicModel: TopicModel => Seq(topicModel)
+        case multiTopicModel: MultiTopicModel =>
+          multiTopicModel
+            .topicModelNames
+            .flatMap(innerRetrieveTopicModelsRecursively)
+      }
+    }
+    
+    innerRetrieveTopicModelsRecursively(topicDatastoreModelName)
   }
 }
 
