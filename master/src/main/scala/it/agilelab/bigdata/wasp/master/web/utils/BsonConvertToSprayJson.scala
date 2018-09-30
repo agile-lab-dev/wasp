@@ -63,7 +63,15 @@ class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
   *
   * @author Nicolò Bidotti
   */
-class TopicDatastoreModelJsonFormat extends RootJsonFormat[DatastoreModel[TopicCategory]] with JsonSupport {
+class TopicDatastoreModelJsonFormat
+    extends RootJsonFormat[DatastoreModel[TopicCategory]]
+      with SprayJsonSupport
+      with DefaultJsonProtocol {
+  import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
+  
+  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat9(TopicModel.apply)
+  implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
+  
   override def write(obj: DatastoreModel[TopicCategory]): JsValue = {
     obj match {
       case topicModel: TopicModel => topicModel.toJson
@@ -85,8 +93,7 @@ class TopicDatastoreModelJsonFormat extends RootJsonFormat[DatastoreModel[TopicC
 // collect your json format instances into a support trait:
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
-  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat9(TopicModel.apply)
-  implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
+  
   implicit val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] = new TopicDatastoreModelJsonFormat
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat8(IndexModel.apply)
   implicit val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
