@@ -150,7 +150,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       
       ret
     } else {
-      val msg = s"Topic(s) not found on Kafka"
+      val msg = s"Unable to check/create one or more topic; topics: $topics"
       logger.error(msg)
       throw new Exception(msg)
     }
