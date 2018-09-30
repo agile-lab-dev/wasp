@@ -17,12 +17,14 @@ object MultiTopicModel {
 	}
 	
 	/**
-		* Checks that the topic models:
-		* - are all different models
-		* - refer to different topics
-		* - use the same settings for everything but partitions and replicas
+		* Checks that:
+		* - there is at least one topic model
+		* - the topic models are all different models
+		* - the topic models refer to different topics
+		* - the topic models use the same settings for everything but partitions and replicas
 		*/
 	private[wasp] def validateTopicModels(models: Seq[TopicModel]): Unit = {
+		require(models.size >= 1, "There must be at least one topic model")
 		require(models.size == models.distinct.size, "Each topic model can only appear once")
 		require(models.size == models.map(_.name).distinct.size, "Each topic can only appear once")
 		require(models.map(_.topicDataType).distinct.length == 1, "All topic models must have the same topic data type")
