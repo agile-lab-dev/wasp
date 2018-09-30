@@ -159,10 +159,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
           }
           case "json" => {
             // generate select expressions to rename matadata columns and convert everything to json
+            val valueSelectExpression = valueFieldsNames.map(vfn => vfn).getOrElse(Seq("*")).mkString(", ")
             val selectExpressions =
-              keyFieldName.map(kfn => s"$kfn AS key").toList ++
+              keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
               headersFieldName.map(hfn => s"$hfn AS headers").toList :+
-              "to_json(struct(*)) AS value"
+              s"to_json(struct($valueSelectExpression)) AS value"
             
             // convert input
             stream.selectExpr(selectExpressions: _*)
