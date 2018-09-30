@@ -46,6 +46,8 @@ object ReaderModel {
     apply(name, topicModel, GenericTopicProduct, options)
 	def kafkaReader(name: String, topicModel: TopicModel, options: Map[String, String] = Map.empty) =
     apply(name, topicModel, KafkaProduct, options)
+	def kafkaReaderMultitopic(name: String, multiTopicModel: MultiTopicModel, options: Map[String, String] = Map.empty) =
+		apply(name, multiTopicModel, KafkaProduct, options)
 	def rawReader(name: String, rawModel: RawModel, options: Map[String, String] = Map.empty) =
     apply(name, rawModel, RawProduct, options)
 	def websocketReader(name: String, websocketModel: WebsocketModel, options: Map[String, String] = Map.empty) =

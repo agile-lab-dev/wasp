@@ -31,6 +31,11 @@ object StreamingReaderModel {
                   rateLimit: Option[Int],
                   options: Map[String, String] = Map.empty) =
     apply(name, topicModel, KafkaProduct, rateLimit, options)
+  def kafkaReaderMultitopic(name: String,
+                  multiTopicModel: MultiTopicModel,
+                  rateLimit: Option[Int],
+                  options: Map[String, String] = Map.empty) =
+    apply(name, multiTopicModel, KafkaProduct, rateLimit, options)
   def websocketReader(name: String,
                       websocketModel: WebsocketModel,
                       rateLimit: Option[Int],
