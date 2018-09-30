@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.utils
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, DatastoreProductJsonFormat, ZookeeperConnectionsConfig}
@@ -58,11 +58,36 @@ class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
   }
 }
 
+/**
+  * RootJsonFormat for topic datastore models.
+  *
+  * @author Nicolò Bidotti
+  */
+class TopicDatastoreModelJsonFormat extends RootJsonFormat[DatastoreModel[TopicCategory]] with JsonSupport {
+  override def write(obj: DatastoreModel[TopicCategory]): JsValue = {
+    obj match {
+      case topicModel: TopicModel => topicModel.toJson
+      case multiTopicModel: MultiTopicModel => multiTopicModel.toJson
+    }
+  }
+  
+  override def read(json: JsValue): DatastoreModel[TopicCategory] = {
+    val obj = json.asJsObject
+    val fields = obj.fields
+    obj match {
+      case topicModel if fields.contains("partitions") => topicModel.convertTo[TopicModel]
+      case multiTopicModel if fields.contains("topicNameField") => multiTopicModel.convertTo[MultiTopicModel]
+    }
+  }
+}
+
+
 // collect your json format instances into a support trait:
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
   implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat9(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
+  implicit val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] = new TopicDatastoreModelJsonFormat
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat8(IndexModel.apply)
   implicit val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
   implicit val streamingReaderModelFormat: RootJsonFormat[StreamingReaderModel] = jsonFormat5(

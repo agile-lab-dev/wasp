@@ -2,7 +2,8 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
+import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, TopicModel}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
@@ -19,7 +20,7 @@ object Topic_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              getJsonArrayOrEmpty[TopicModel](ConfigBL.topicBL.getAll, _.toJson, pretty)
+              getJsonArrayOrEmpty[DatastoreModel[TopicCategory]](ConfigBL.topicBL.getAll, _.toJson, pretty)
             }
           }
         } ~
@@ -27,7 +28,7 @@ object Topic_C extends Directives with JsonSupport {
             get {
               complete {
                 // complete with serialized Future result
-                getJsonOrNotFound[TopicModel](ConfigBL.topicBL.getByName(name), name, "Topic model", _.toJson, pretty)
+                getJsonOrNotFound[DatastoreModel[TopicCategory]](ConfigBL.topicBL.getByName(name), name, "Topic model", _.toJson, pretty)
               }
             }
           }
