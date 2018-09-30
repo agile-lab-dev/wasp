@@ -94,7 +94,7 @@ class RTActor(env: {val topicBL: TopicBL; val websocketBL: WebsocketBL; val inde
     typeOpt match {
       case Some(topicDataType) => topicDataType // found in cache, simply return it
       case None => { // not found, get from db, add to cache, return it
-        val topicOpt: Option[TopicModel] = env.topicBL.getByName(input.datastoreModelName)
+        val topicOpt: Option[TopicModel] = env.topicBL.getTopicModelByName(input.datastoreModelName)
 
         topicDataTypes += topicName -> topicOpt.get
 

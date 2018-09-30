@@ -29,7 +29,7 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
     val kafkaConfig = ConfigManager.getKafkaConfig
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
-    val topicOpt: Option[TopicModel] = topicBL.getByName(name)
+    val topicOpt: Option[TopicModel] = topicBL.getTopicModelByName(name)
     topicOpt.foreach(topic => {
 
       if (??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
@@ -84,7 +84,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val kafkaConfig = ConfigManager.getKafkaConfig
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
-    val topicOpt: Option[TopicModel] = topicBL.getByName(name)
+    val topicOpt: Option[TopicModel] = topicBL.getTopicModelByName(name)
 
     if (topicOpt.isDefined) {
 

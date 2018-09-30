@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core.bl
 
+import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.BsonObjectId
@@ -115,14 +116,14 @@ class AllBLsTestWrapper {
   }
 
   val topicBL = new TopicBL {
-    val database = new ListBuffer[TopicModel]
-    override def getByName(name: String): Option[TopicModel] = database.find(_.name == name)
-
-    override def persist(topicModel: TopicModel): Unit = {
+    val database = new ListBuffer[DatastoreModel[TopicCategory]]
+    override def getByName(name: String): Option[DatastoreModel[TopicCategory]] = database.find(_.name == name)
+    
+    override def persist(topicModel: DatastoreModel[TopicCategory]): Unit = {
       database.+=(topicModel)
     }
 
-    override def getAll: Seq[TopicModel] = database
+    override def getAll: Seq[DatastoreModel[TopicCategory]] = database
   }
 
   val producerBL = new ProducerBL {
@@ -146,7 +147,7 @@ class AllBLsTestWrapper {
 
     override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
       if (producerModel.hasOutput)
-        topicBL.getByName(producerModel.topicName.get)
+        topicBL.getTopicModelByName(producerModel.topicName.get)
       else
         None
     }

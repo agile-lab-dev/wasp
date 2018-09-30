@@ -121,7 +121,7 @@ class LegacyStreamingETLActor(env: {
     legacyStreamingETL.inputs
       .flatMap({
         case ReaderModel(name, datastoreModelName, KafkaProduct, options) =>
-          val topicOpt = env.topicBL.getByName(datastoreModelName)
+          val topicOpt = env.topicBL.getTopicModelByName(datastoreModelName)
           Some(topicOpt)
         case _ => None
       })

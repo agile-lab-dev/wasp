@@ -11,6 +11,18 @@ import scala.collection.JavaConverters._
 trait TopicBL {
 
   def getByName(name: String): Option[DatastoreModel[TopicCategory]]
+	
+	/**
+		* Gets a TopicModel by name; an exception is thrown if a MultiTopicModel or anything else is found instead.
+		*/
+	@throws[Exception]
+	def getTopicModelByName(name: String): Option[TopicModel] = {
+		getByName(name) map {
+			case topicModel: TopicModel => topicModel
+			case multiTopicModel: MultiTopicModel =>
+				throw new Exception(s"Found MultiTopicModel instead of TopicModel for name $name")
+		}
+	}
 
   def getAll : Seq[DatastoreModel[TopicCategory]]
 
@@ -57,10 +69,10 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
   }
   
   override def getByName(name: String): Option[DatastoreModel[TopicCategory]] = {
-    // the type argument to getDocumentByFieldRaw is only used for collection lookup, so using TopicModel is fine
-    waspDB.getDocumentByFieldRaw[TopicModel]("name", new BsonString(name)).map(topic => {
-      factory(topic)
-    })
+	  // the type argument to getDocumentByFieldRaw is only used for collection lookup, so using TopicModel is fine
+	  waspDB.getDocumentByFieldRaw[TopicModel]("name", new BsonString(name)).map(topic => {
+		  factory(topic)
+	  })
   }
 
   override def getAll: Seq[DatastoreModel[TopicCategory]] = {

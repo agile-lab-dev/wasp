@@ -58,7 +58,7 @@ class ProducerBLImp(waspDB: WaspDB) extends  ProducerBL {
 
   def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
     if (producerModel.hasOutput)
-      topicBL.getByName(producerModel.topicName.get)
+      topicBL.getTopicModelByName(producerModel.topicName.get)
     else
         None
   }

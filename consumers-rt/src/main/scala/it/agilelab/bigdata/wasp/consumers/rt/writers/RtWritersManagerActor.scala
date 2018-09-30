@@ -61,7 +61,7 @@ class RtWritersManagerActor(env: {
 class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
 
   //TODO: Configurazione completa?
-  val kafkaTopic: TopicModel = topicBL.getByName(writer.datastoreModelName).get
+  val kafkaTopic: TopicModel = topicBL.getTopicModelByName(writer.datastoreModelName).get
   val topicSchema = kafkaTopic.getJsonSchema
   val topicDataType = kafkaTopic.topicDataType
 
