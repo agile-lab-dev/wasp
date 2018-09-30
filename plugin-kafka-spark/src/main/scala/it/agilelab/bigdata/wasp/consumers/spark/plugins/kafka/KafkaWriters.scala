@@ -164,7 +164,9 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
               keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
               headersFieldName.map(hfn => s"$hfn AS headers").toList :+
               s"to_json(struct($valueSelectExpression)) AS value"
-            
+  
+            logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
+  
             // convert input
             stream.selectExpr(selectExpressions: _*)
           }
