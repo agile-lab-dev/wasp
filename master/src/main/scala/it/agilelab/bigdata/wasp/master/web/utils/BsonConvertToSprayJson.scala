@@ -25,7 +25,7 @@ object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol 
 
     def read(value: JsValue): BsonObjectId = value match {
       case JsString(objectId) => BsonObjectId(objectId)
-      case _ => deserializationError("Color expected")
+      case _ => deserializationError("String expected")
     }
   }
 }
@@ -62,6 +62,7 @@ class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
   implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat9(TopicModel.apply)
+  implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
   implicit val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat8(IndexModel.apply)
   implicit val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
   implicit val streamingReaderModelFormat: RootJsonFormat[StreamingReaderModel] = jsonFormat5(
@@ -110,6 +111,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat7(BatchJobInstanceModel.apply)
   implicit val pipegraphStatusFormat: RootJsonFormat[PipegraphStatus.PipegraphStatus] = new EnumJsonConverter(PipegraphStatus)
   implicit val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat6(PipegraphInstanceModel.apply)
-
 }
 
