@@ -53,6 +53,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     logger.info(s"""Retrieving topic datastore model with name "${streamingReaderModel.datastoreModelName}"""")
     val topicBL = new TopicBLImp(WaspDB.getDB)
     val topics = retrieveTopicModelsRecursively(topicBL, streamingReaderModel.datastoreModelName)
+    MultiTopicModel.validateTopicModels(topics)
     logger.info(s"Retrieved topic model(s): $topics")
     
     // get the config
