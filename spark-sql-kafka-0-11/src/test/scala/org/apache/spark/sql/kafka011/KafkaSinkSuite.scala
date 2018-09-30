@@ -367,7 +367,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     } finally {
       writer.stop()
     }
-    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains("topic type must be a string"))
+    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains("topic type must be a stringtype"))
 
     try {
       ex = intercept[StreamingQueryException] {
@@ -381,8 +381,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     } finally {
       writer.stop()
     }
-    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains(
-      "key attribute type must be a string or binarytype"))
+    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains("key attribute type must be a stringtype or binarytype"))
     
     try {
       /* value field wrong type */
@@ -396,8 +395,7 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
     } finally {
       writer.stop()
     }
-    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains(
-      "value attribute type must be a string or binarytype"))
+    assert(ex.getMessage.toLowerCase(Locale.ROOT).contains("value attribute type must be a stringtype or binarytype"))
     
     try {
       /* header field wrong type */
@@ -416,8 +414,8 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
        writer.stop()
      }
      assert(ex.getMessage.toLowerCase(Locale.ROOT).contains(
-       "headers attribute type must be an arraytype of non-null elements of type structtype with a field named " +
-       "headerkey of type stringtype key and a field named headervalue of type binarytype"))
+       "headers attribute type must be an arraytype of non-null elements of type structtype with a non-null field " +
+       "named headerkey of type stringtype and a field named headervalue of type binarytype"))
   }
 
   test("streaming - write to non-existing topic") {

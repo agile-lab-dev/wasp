@@ -147,6 +147,8 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             Row.fromSeq(outputElements)
           })(encoder)
           
+          logger.debug(s"Actual final schema:\n${processedStream.schema.treeString}")
+          
           processedStream
         }
         

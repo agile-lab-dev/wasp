@@ -21,7 +21,7 @@ object KafkaSparkSQLSchemas {
 	val TIMESTAMP_ATTRIBUTE_NAME: String = "timestamp"
 	val TIMESTAMP_TYPE_ATTRIBUTE_NAME: String = "timestampType"
 	
-	// header data types, with either nullable or non nullable headerValue, so we can accept both in validateQuery & co
+	// header data types, with variations on the nullability of fields, so we can accept all in validateQuery & co
 	val HEADER_DATA_TYPE_NULL_VALUE = ArrayType(
 		StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
 		               StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = true))),
@@ -30,6 +30,14 @@ object KafkaSparkSQLSchemas {
 		StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
 		               StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = false))),
 		containsNull = false)
+	val HEADER_DATA_TYPE_NULL_ELEMENTS_NULL_VALUE = ArrayType(
+		StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
+		               StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = true))),
+		containsNull = true)
+	val HEADER_DATA_TYPE_NULL_ELEMENTS_NON_NULL_VALUE = ArrayType(
+		StructType(Seq(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, nullable = false),
+		               StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, nullable = false))),
+		containsNull = true)
 	
 	// complete kafka input data type
 	val INPUT_SCHEMA = StructType(Seq(

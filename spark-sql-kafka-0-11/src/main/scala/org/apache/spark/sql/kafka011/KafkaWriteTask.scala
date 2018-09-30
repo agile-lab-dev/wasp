@@ -27,6 +27,7 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection}
 import org.apache.spark.sql.catalyst.util.ArrayData
+import org.apache.spark.sql.kafka011.KafkaWriter.log
 import org.apache.spark.sql.types.{BinaryType, StringType}
 
 import scala.collection.JavaConverters._
@@ -134,6 +135,9 @@ private[kafka011] class KafkaWriteTask(
       .getOrElse(Literal(ArrayData.toArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE))
     headerExpression.dataType match {
       case HEADER_DATA_TYPE_NULL_VALUE | HEADER_DATA_TYPE_NON_NULL_VALUE => // good
+      case HEADER_DATA_TYPE_NULL_ELEMENTS_NULL_VALUE | HEADER_DATA_TYPE_NULL_ELEMENTS_NON_NULL_VALUE => // not so good
+      // we accept these because https://issues.apache.org/jira/browse/SPARK-16167 is triggered by WASP's Kafka
+      // support of the AVRO encoded-topic when writing from Spark
       case t =>
         throw new IllegalStateException(s"${HEADERS_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")

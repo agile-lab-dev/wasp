@@ -56,33 +56,36 @@ private[kafka011] object KafkaWriter extends Logging {
       }
     ).dataType match {
       case StringType => // good
-      case _ =>
-        throw new AnalysisException(s"Topic type must be a String")
+      case dt =>
+        throw new AnalysisException(s"Topic type must be a StringType; actual type was: $dt")
     }
     schema.find(_.name == KEY_ATTRIBUTE_NAME).getOrElse(
       Literal(null, StringType)
     ).dataType match {
       case StringType | BinaryType => // good
-      case _ =>
+      case dt =>
         throw new AnalysisException(s"$KEY_ATTRIBUTE_NAME attribute type " +
-          s"must be a String or BinaryType")
+          s"must be a StringType or BinaryType; actual type was: $dt")
     }
     schema.find(_.name == VALUE_ATTRIBUTE_NAME).getOrElse(
       throw new AnalysisException(s"Required attribute '$VALUE_ATTRIBUTE_NAME' not found")
     ).dataType match {
       case StringType | BinaryType => // good
-      case _ =>
+      case dt =>
         throw new AnalysisException(s"$VALUE_ATTRIBUTE_NAME attribute type " +
-          s"must be a String or BinaryType")
+          s"must be a StringType or BinaryType; actual type was: $dt")
     }
     schema.find(_.name == HEADERS_ATTRIBUTE_NAME).getOrElse(
       Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE)
     ).dataType match {
       case HEADER_DATA_TYPE_NULL_VALUE | HEADER_DATA_TYPE_NON_NULL_VALUE => // good
-      case _ =>
+      case HEADER_DATA_TYPE_NULL_ELEMENTS_NULL_VALUE | HEADER_DATA_TYPE_NULL_ELEMENTS_NON_NULL_VALUE => // not so good
+        // we accept these because https://issues.apache.org/jira/browse/SPARK-16167 is triggered by WASP's Kafka
+        // support of the AVRO encoded-topic when writing from Spark
+      case dt =>
         throw new AnalysisException(s"$HEADERS_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
-          s" of type StructType with a field named $HEADER_KEY_ATTRIBUTE_NAME of type StringType key and a field" +
-          s" named $HEADER_VALUE_ATTRIBUTE_NAME of type BinaryType")
+          s" of type StructType with a non-null field named $HEADER_KEY_ATTRIBUTE_NAME of type StringType and a" +
+          s" field named $HEADER_VALUE_ATTRIBUTE_NAME of type BinaryType; actual type was: $dt")
     }
   }
 

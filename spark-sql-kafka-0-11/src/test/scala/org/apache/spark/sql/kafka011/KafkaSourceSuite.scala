@@ -26,13 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.mutable
 import scala.util.Random
-
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.TopicPartition
-import org.scalatest.concurrent.Eventually._
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.time.SpanSugar._
-
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.ForeachWriter
 import org.apache.spark.sql.execution.streaming._
@@ -712,6 +709,8 @@ class KafkaSourceSuite extends KafkaSourceTest {
     val row = rows(0)
     assert(row.getAs[Array[Byte]]("key") === null, s"Unexpected results: $row")
     assert(row.getAs[Array[Byte]]("value") === "1".getBytes(UTF_8), s"Unexpected results: $row")
+    // we cannot check headers here because we didn't send them, we'll just check that the column is there
+    assert(row.getAs[mutable.WrappedArray[AnyRef]]("headers").array.length >= 0, s"Unexpected results: $row")
     assert(row.getAs[String]("topic") === topic, s"Unexpected results: $row")
     assert(row.getAs[Int]("partition") === 0, s"Unexpected results: $row")
     assert(row.getAs[Long]("offset") === 0L, s"Unexpected results: $row")
