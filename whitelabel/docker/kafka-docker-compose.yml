@@ -13,7 +13,7 @@ services:
       - "./zookeeper:/opt/zookeeper-3.4.6/conf"
 
   kafka:
-    image: wurstmeister/kafka:0.10.2.1
+    image: wurstmeister/kafka:2.11-0.11.0.3
     container_name: kafka
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka
@@ -27,7 +27,7 @@ services:
     entrypoint: [ # change the entrypoint of the image; this starts the boker only when its Zookeeper node for the id disappears
       "bash",
       "-c",
-      "set -e; while [[ $$(echo get /brokers/ids/$${KAFKA_BROKER_ID} | opt/kafka_2.12-0.10.2.1/bin/zookeeper-shell.sh $${KAFKA_ZOOKEEPER_CONNECT} 2>&1 | grep \"Node does not exist\" | wc -l) -eq 0 ]]; do echo \"Sleeping for $$((KAFKA_SESSION_TIMEOUT_MS/1000)) seconds waiting for the Zookeeper node for this broker (id $${KAFKA_BROKER_ID}) to expire...\"; sleep $$((KAFKA_SESSION_TIMEOUT_MS/1000)); done; echo \"No Zookeeper node for this broker (id $${KAFKA_BROKER_ID}) found, starting...\"; start-kafka.sh"]
+      "set -e; while [[ $$(echo get /brokers/ids/$${KAFKA_BROKER_ID} | opt/kafka_2.11-0.11.0.3/bin/zookeeper-shell.sh $${KAFKA_ZOOKEEPER_CONNECT} 2>&1 | grep \"Node does not exist\" | wc -l) -eq 0 ]]; do echo \"Sleeping for $$((KAFKA_SESSION_TIMEOUT_MS/1000)) seconds waiting for the Zookeeper node for this broker (id $${KAFKA_BROKER_ID}) to expire...\"; sleep $$((KAFKA_SESSION_TIMEOUT_MS/1000)); done; echo \"No Zookeeper node for this broker (id $${KAFKA_BROKER_ID}) found, starting...\"; start-kafka.sh"]
     mem_limit: 1024m
     depends_on:
       - zookeeper
