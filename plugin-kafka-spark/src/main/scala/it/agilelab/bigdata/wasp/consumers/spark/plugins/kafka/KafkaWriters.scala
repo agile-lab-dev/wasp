@@ -141,15 +141,14 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                              stream,
                              prototypeTopicModel)
       }
-      case "plaintext" => // TODO this is broken
-        if (keyFieldName.isDefined) {
-          val streamWithKey = stream.selectExpr(s"${keyFieldName.get} AS key", "* AS value")
-          logger.debug(s"SchemaWithKey DF spark, topic name ${prototypeTopicModel.name}:\n${streamWithKey.schema.treeString}")
-
-          streamWithKey
-        }
-        else
-          stream.selectExpr("* AS value")
+      case "plaintext" => {
+        convertStreamForPlaintext(keyFieldName,
+                                  headersFieldName,
+                                  topicFieldName,
+                                  valueFieldsNames,
+                                  stream,
+                                  prototypeTopicModel)
+      }
       case "binary" => {
         convertStreamForBinary(keyFieldName,
                                headersFieldName,
@@ -260,6 +259,40 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     stream.selectExpr(selectExpressions: _*)
   }
   
+  private def convertStreamForPlaintext(keyFieldName: Option[String],
+                                        headersFieldName: Option[String],
+                                        topicFieldName: Option[String],
+                                        valueFieldsNames: Option[Seq[String]],
+                                        stream: DataFrame,
+                                        prototypeTopicModel: TopicModel) = {
+    // there must be exactly one value field name and it must be a column of type string
+    require(valueFieldsNames.isDefined && valueFieldsNames.get.size == 1,
+            "Exactly one value field name must be defined for plaintext topic data type but zero or more than one " +
+              s"were specified; value field names: ${valueFieldsNames.get.mkString("\"","\", \"","\"")}")
+    val valueFieldName = valueFieldsNames.get.head
+    val maybeValueColumn = stream.schema.find(_.name == valueFieldName)
+    require(maybeValueColumn.isDefined,
+            s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
+              s"""${stream.schema.map(_.name).mkString("[","], [","]")}""")
+    val valueColumn = maybeValueColumn.get
+    val valueColumnDataType = valueColumn.dataType
+    require(valueColumnDataType == StringType,
+            s"""The specified value field name "$valueFieldName" matches a column with a type that is not string; """ +
+              s"incompatible type $valueColumnDataType found")
+    
+    // generate select expressions to rename matadata columns and convert everything to json
+    val selectExpressions =
+      keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
+        headersFieldName.map(hfn => s"$hfn AS headers").toList ++
+        topicFieldName.map(tfn => s"$tfn AS topic").toList :+
+        s"$valueFieldName AS value"
+    
+    logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
+    
+    // convert input
+    stream.selectExpr(selectExpressions: _*)
+  }
+  
   private def convertStreamForBinary(keyFieldName: Option[String],
                                      headersFieldName: Option[String],
                                      topicFieldName: Option[String],
@@ -278,8 +311,8 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val valueColumn = maybeValueColumn.get
     val valueColumnDataType = valueColumn.dataType
     require(valueColumnDataType == BinaryType,
-            s"""The specified value field name "$valueFieldName" matches a column with incompatible type """ +
-              s"$valueColumnDataType")
+            s"""The specified value field name "$valueFieldName" matches a column with a type that is not binary; """ +
+              s"incompatible type $valueColumnDataType found")
     
     // generate select expressions to rename matadata columns and convert everything to json
     val selectExpressions =
