@@ -8,6 +8,7 @@ private[wasp] object TestTopicModel {
   private val topic_name = "test"
   private val topic2_name = "test2"
   private val topic3_name = "test3"
+  private val topic4_name = "test4"
   private val topicCheckpoint_name = "testCheckpoint"
 
   lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
@@ -48,9 +49,16 @@ private[wasp] object TestTopicModel {
   
   lazy val json3 = json.copy(name = TopicModel.name(topic3_name + "_json"))
   
-  lazy val jsonMultitopic = MultiTopicModel.fromTopicModels("multitopic_json",
-                                                            "topic",
-                                                            Seq(json, json3))
+  lazy val json4 = json.copy(name = TopicModel.name(topic4_name + "_json"))
+  
+  lazy val jsonMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_json",
+                                                                "topic",
+                                                                Seq(json, json3))
+  
+  
+  lazy val jsonMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_json",
+                                                                 "topic",
+                                                                 Seq(json4, json3))
   
   lazy val json2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_json"),
                                              creationTime = System.currentTimeMillis,
@@ -99,6 +107,18 @@ private[wasp] object TestTopicModel {
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+  
+  lazy val avro3 = avro.copy(name = TopicModel.name(topic3_name + "_avro"))
+  
+  lazy val avro4 = avro.copy(name = TopicModel.name(topic4_name + "_avro"))
+  
+  lazy val avroMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_avro",
+                                                                "topic",
+                                                                Seq(avro, avro3))
+  
+  lazy val avroMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_avro",
+                                                                "topic",
+                                                                Seq(avro4, avro3))
   
   lazy val avro2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_avro"),
                                              creationTime = System.currentTimeMillis,
