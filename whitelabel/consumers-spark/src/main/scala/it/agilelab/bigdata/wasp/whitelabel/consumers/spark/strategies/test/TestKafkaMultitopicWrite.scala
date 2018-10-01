@@ -20,8 +20,8 @@ class TestKafkaMultitopicWrite extends Strategy {
 		val avroOrJson = configuration.getString("format")
 		
 		df.drop("kafkaMetadata")
-			.withColumn("topics", array(lit("test3_" + avroOrJson + ".topic"), lit("test4_" + avroOrJson + ".topic")))
-	  	.selectExpr("explode(topics) as topic", "*")
+		  .withColumn("topics", array(lit("test5_" + avroOrJson + ".topic"), lit("test4_" + avroOrJson + ".topic")))
+		  .selectExpr("explode(topics) as topic", "*")
 		  .drop("topics")
 	}
 }

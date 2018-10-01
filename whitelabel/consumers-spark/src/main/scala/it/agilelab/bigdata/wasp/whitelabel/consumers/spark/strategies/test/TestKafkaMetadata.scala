@@ -17,6 +17,6 @@ class TestKafkaMetadata extends Strategy {
 		val df = dataFrames.head._2
 		
 		df.selectExpr("kafkaMetadata.*", "*")
-	  	.drop("kafkaMetadata")
+		  .drop("kafkaMetadata")
 	}
 }

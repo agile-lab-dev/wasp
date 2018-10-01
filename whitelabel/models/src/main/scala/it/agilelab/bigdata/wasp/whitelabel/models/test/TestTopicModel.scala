@@ -9,6 +9,7 @@ private[wasp] object TestTopicModel {
   private val topic2_name = "test2"
   private val topic3_name = "test3"
   private val topic4_name = "test4"
+  private val topic5_name = "test5"
   private val topicCheckpoint_name = "testCheckpoint"
 
   lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
@@ -47,10 +48,12 @@ private[wasp] object TestTopicModel {
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
   
-  lazy val json3 = json.copy(name = TopicModel.name(topic3_name + "_json"),
-                             valueFieldsNames = Some(List("id", "number", "nested")))
+  lazy val json3 = json.copy(name = TopicModel.name(topic3_name + "_json"))
   
   lazy val json4 = json.copy(name = TopicModel.name(topic4_name + "_json"),
+                             valueFieldsNames = Some(List("id", "number", "nested")))
+  
+  lazy val json5 = json.copy(name = TopicModel.name(topic5_name + "_json"),
                              valueFieldsNames = Some(List("id", "number", "nested")))
   
   lazy val jsonMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_json",
@@ -60,7 +63,7 @@ private[wasp] object TestTopicModel {
   
   lazy val jsonMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_json",
                                                                  "topic",
-                                                                 Seq(json4, json3))
+                                                                 Seq(json4, json5))
   
   lazy val json2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_json"),
                                              creationTime = System.currentTimeMillis,
@@ -110,10 +113,12 @@ private[wasp] object TestTopicModel {
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
   
-  lazy val avro3 = avro.copy(name = TopicModel.name(topic3_name + "_avro"),
-                             valueFieldsNames = Some(List("id", "number", "nested")))
+  lazy val avro3 = avro.copy(name = TopicModel.name(topic3_name + "_avro"))
   
   lazy val avro4 = avro.copy(name = TopicModel.name(topic4_name + "_avro"),
+                             valueFieldsNames = Some(List("id", "number", "nested")))
+  
+  lazy val avro5 = avro.copy(name = TopicModel.name(topic5_name + "_avro"),
                              valueFieldsNames = Some(List("id", "number", "nested")))
   
   lazy val avroMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_avro",
@@ -122,7 +127,7 @@ private[wasp] object TestTopicModel {
   
   lazy val avroMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_avro",
                                                                 "topic",
-                                                                Seq(avro4, avro3))
+                                                                Seq(avro4, avro5))
   
   lazy val avro2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_avro"),
                                              creationTime = System.currentTimeMillis,
