@@ -16,6 +16,7 @@ class TestKafkaMetadata extends Strategy {
 	override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
 		val df = dataFrames.head._2
 		
-		df.selectExpr("kafkaMetadata.*")
+		df.selectExpr("kafkaMetadata.*", "*")
+	  	.drop("kafkaMetadata")
 	}
 }

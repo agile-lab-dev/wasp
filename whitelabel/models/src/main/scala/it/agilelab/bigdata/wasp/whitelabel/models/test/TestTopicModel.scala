@@ -47,9 +47,11 @@ private[wasp] object TestTopicModel {
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
   
-  lazy val json3 = json.copy(name = TopicModel.name(topic3_name + "_json"))
+  lazy val json3 = json.copy(name = TopicModel.name(topic3_name + "_json"),
+                             valueFieldsNames = Some(List("id", "number", "nested")))
   
-  lazy val json4 = json.copy(name = TopicModel.name(topic4_name + "_json"))
+  lazy val json4 = json.copy(name = TopicModel.name(topic4_name + "_json"),
+                             valueFieldsNames = Some(List("id", "number", "nested")))
   
   lazy val jsonMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_json",
                                                                 "topic",
@@ -108,9 +110,11 @@ private[wasp] object TestTopicModel {
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
   
-  lazy val avro3 = avro.copy(name = TopicModel.name(topic3_name + "_avro"))
+  lazy val avro3 = avro.copy(name = TopicModel.name(topic3_name + "_avro"),
+                             valueFieldsNames = Some(List("id", "number", "nested")))
   
-  lazy val avro4 = avro.copy(name = TopicModel.name(topic4_name + "_avro"))
+  lazy val avro4 = avro.copy(name = TopicModel.name(topic4_name + "_avro"),
+                             valueFieldsNames = Some(List("id", "number", "nested")))
   
   lazy val avroMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_avro",
                                                                 "topic",

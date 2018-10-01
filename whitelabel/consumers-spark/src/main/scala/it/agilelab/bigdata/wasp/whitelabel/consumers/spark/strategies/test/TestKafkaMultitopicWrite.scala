@@ -21,6 +21,7 @@ class TestKafkaMultitopicWrite extends Strategy {
 		
 		df.drop("kafkaMetadata")
 			.withColumn("topics", array(lit("test3_" + avroOrJson + ".topic"), lit("test4_" + avroOrJson + ".topic")))
-	  	.selectExpr("explode(topics) as topic")
+	  	.selectExpr("explode(topics) as topic", "*")
+		  .drop("topics")
 	}
 }
