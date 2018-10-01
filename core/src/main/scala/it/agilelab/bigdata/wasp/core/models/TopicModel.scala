@@ -38,15 +38,30 @@ object TopicModel {
 /**
   * A model for a topic, that is, a message queue of some sort. Right now this means just Kafka topics.
   *
-  * @param name name of the topic
-  * @param creationTime time at which the model was created
-  * @param partitions number or partitions for the topic if/when the framework creates
-  * @param replicas number or replicas for the topic if/when the framework creates
-  * @param topicDataType format for encoding/decoding the data
-  * @param keyFieldName optional name of the field to use as key for the messages when writing
-  * @param headersFieldName optional name of the field to use as headers for the messages when writing
-  * @param valueFieldsNames optional (sub)list of field names to be encoded in the message value when writing
-  * @param schema schema for encoding/decoding the data
+  * The `name` field specifies the name of the topic, and doubles as the unique identifier for the model in the
+  * models database.
+  *
+  * The `creationTime` marks the time at which the model was generated.
+  *
+  * The `partitions` and `replicas` fields are used the configure the topic when the framework creates it.
+  *
+  * The `topicDataType` field specifies the format to use when encoding/decoding data to/from messages.
+  *
+  * The `keyFieldName` field allows you to optionally specify a field whose contents will be used as a message key when
+  * writing to Kafka. The field must be of type string or binary. The original field will be left as-is, so you schema
+  * must handle it (or you can use `valueFieldsNames`).
+  *
+  * The `headersFieldName` field allows you to optionally specify a field whose contents will be used as message headers
+  * when writing to Kafka. The field must contain an array of non-null objects which  must have a non-null field
+  * `headerKey` of type string and a field `headerValue` of type binary. The original field will be left as-is, so your
+  * schema must handle it (or you can use `valueFieldsNames`).
+  *
+  * The `valueFieldsNames` field allows you to optionally specify a list of field names to be used to filter the fields
+  * that get passed to the value encoding; with this you can filter out fields that you don't need in the value,
+  * obviating the need to handle them in the schema. This is especially useful when specifying the `keyFieldName` or
+  * `headersFieldName`.
+  *
+  * The `schema` field contains the schema to use when encoding the value.
   */
 case class TopicModel(override val name: String,
                       creationTime: Long,

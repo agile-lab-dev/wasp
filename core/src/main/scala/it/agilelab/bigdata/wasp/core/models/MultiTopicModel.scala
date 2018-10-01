@@ -3,7 +3,22 @@ package it.agilelab.bigdata.wasp.core.models
 import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
 
 /**
-	* @author Nicolò Bidotti
+	* A model for grouping of topics.
+	*
+	* The `name` field specifies the name of the model, which is used as the unique identifier for the model in the
+	* models database.
+	*
+	* The `topicNameField` field specifies the field whose contents will be used as the name of the topic to which the
+	* message will be sent when writing to Kafka. The field must be of type string. The original field will be left as-is,
+	* so your schema must handle it (or you can use `valueFieldsNames`).
+	*
+	* The `topicModelNames` contains the names of the topic model that constitute this grouping of topics.
+	*
+	* The topic models that constitute this grouping of topics must:
+	* - consist of at least one topic model
+	* - be all different models
+	* - refer to different topics
+	* - use the same settings for everything but partitions and replicas
 	*/
 case class MultiTopicModel private[wasp] (override val name: String,
                                           topicNameField: String,
