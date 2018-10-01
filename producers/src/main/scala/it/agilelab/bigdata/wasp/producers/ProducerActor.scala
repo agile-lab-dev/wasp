@@ -16,9 +16,30 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
 
   implicit val system = context.system
   var task: Option[Cancellable] = None
-
+  
+  /**
+    * Used when writing to topics with data type "json" or "avro"
+    */
   def generateOutputJsonMessage(input: T): String
-
+  
+  /**
+    * Used when writing to topics with data type "plaintext"
+    */
+  def generateOutputPlaintextMessage(input: T): String = {
+    // TODO sorry for this default implementation, but we needed to add support without modifying existing producers :(
+    throw new NotImplementedError("This producer is unable to write to topics with data type \"plaintext\" because" +
+                                    "generateOutputPlaintextMessage is not implemented")
+  }
+  
+  /**
+    * Used when writing to topics with data type "binary"
+    */
+  def generateOutputBinaryMessage(input: T): Array[Byte] = {
+    // TODO sorry for this default implementation, but we needed to add support without modifying existing producers :(
+    throw new NotImplementedError("This producer is unable to write to topics with data type \"binary\" because" +
+                                    "generateOutputBinaryMessage is not implemented")
+  }
+  
   val generateOutputMessage: Option[(T) => Array[Byte]] = None
 
   def stopMainTask() = task.map(_.cancel())
@@ -50,13 +71,28 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
    */
   def sendMessage(input: T) = {
     topic.foreach { p =>
-      val msg = generateOutputJsonMessage(input)
-
       try {
         topicSchemaType match {
-          case "avro" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
-          case "json" | "plaintext" => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), StringToByteArrayUtil.stringToByteArray(msg))
-          case _ => kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), AvroToJsonUtil.jsonToAvro(msg, topicSchema))
+          case "avro" => {
+            val json = generateOutputJsonMessage(input)
+            val avroBytes = AvroToJsonUtil.jsonToAvro(json, topicSchema)
+            kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), avroBytes)
+          }
+          case "json" => {
+            val json = generateOutputJsonMessage(input)
+            val jsonBytes = StringToByteArrayUtil.stringToByteArray(json)
+            kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), jsonBytes)
+          }
+          case "plaintext" => {
+            val plaintext = generateOutputPlaintextMessage(input)
+            val plaintextBytes = StringToByteArrayUtil.stringToByteArray(plaintext)
+            kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), plaintextBytes)
+          }
+          case "binary" => {
+            val bytes = generateOutputBinaryMessage(input)
+            kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), bytes)
+          }
+          case topicDataType => throw new UnsupportedOperationException(s"Unknown topic data type $topicDataType")
         }
 
       } catch {
