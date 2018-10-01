@@ -16,9 +16,12 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   private def addExamplePipegraphs(): Unit = {
 
     /* standalone applications should prefer waspDB.insertIfNotExist() instead of waspDB.upsert() */
-    
 
-    /* Example */
+    /*
+     * =================================================================================================================
+     * Examples
+     * =================================================================================================================
+     */
 
     /* Topic for Producers, Pipegraphs */
     waspDB.upsert[TopicModel](ExampleTopicModel.topic)
@@ -26,19 +29,28 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](ExamplePipegraphModel.pipegraph)
 
-
-    /** Test */
+    /*
+     * =================================================================================================================
+     * Tests
+     * =================================================================================================================
+     */
 
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     waspDB.upsert[TopicModel](TestTopicModel.json)
     waspDB.upsert[TopicModel](TestTopicModel.json2)
     waspDB.upsert[TopicModel](TestTopicModel.json3)
-    waspDB.upsert[MultiTopicModel](TestTopicModel.jsonMultitopic)
+    waspDB.upsert[TopicModel](TestTopicModel.json4)
+    waspDB.upsert[MultiTopicModel](TestTopicModel.jsonMultitopicRead)
+    waspDB.upsert[MultiTopicModel](TestTopicModel.jsonMultitopicWrite)
     waspDB.upsert[TopicModel](TestTopicModel.json2ForKafkaHeaders)
     waspDB.upsert[TopicModel](TestTopicModel.jsonWithMetadata)
     waspDB.upsert[TopicModel](TestTopicModel.jsonCheckpoint)
     waspDB.upsert[TopicModel](TestTopicModel.avro)
     waspDB.upsert[TopicModel](TestTopicModel.avro2)
+    waspDB.upsert[TopicModel](TestTopicModel.avro3)
+    waspDB.upsert[TopicModel](TestTopicModel.avro4)
+    waspDB.upsert[MultiTopicModel](TestTopicModel.avroMultitopicRead)
+    waspDB.upsert[MultiTopicModel](TestTopicModel.avroMultitopicWrite)
     waspDB.upsert[TopicModel](TestTopicModel.avro2ForKafkaHeaders)
     waspDB.upsert[TopicModel](TestTopicModel.avroCheckpoint)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
@@ -60,7 +72,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.consoleWithMetadata)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaHeaders)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaMultitopic)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaMultitopicRead)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaMultitopicWrite)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
@@ -77,6 +90,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafkaHeaders)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafkaMultitopicRead)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafkaMultitopicWrite)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hdfs)
