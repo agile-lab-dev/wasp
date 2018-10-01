@@ -44,6 +44,8 @@ object WriterModel {
     apply(name, topicModel, GenericTopicProduct, options)
 	def kafkaWriter(name: String, topicModel: TopicModel, options: Map[String, String] = Map.empty) =
     apply(name, topicModel, KafkaProduct, options)
+	def kafkaMultitopicWriter(name: String, multiTopicModel: MultiTopicModel, options: Map[String, String] = Map.empty) =
+		apply(name, multiTopicModel, KafkaProduct, options)
 	def rawWriter(name: String, rawModel: RawModel, options: Map[String, String] = Map.empty) =
     apply(name, rawModel, RawProduct, options)
 	def websocketWriter(name: String, websocketModel: WebsocketModel, options: Map[String, String] = Map.empty) =
