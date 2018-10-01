@@ -280,17 +280,24 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             s"""The specified value field name "$valueFieldName" matches a column with a type that is not string; """ +
               s"incompatible type $valueColumnDataType found")
     
-    // generate select expressions to rename matadata columns and convert everything to json
+    // generate select expressions to rename metadata and data columns
     val selectExpressions =
       keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
         headersFieldName.map(hfn => s"$hfn AS headers").toList ++
         topicFieldName.map(tfn => s"$tfn AS topic").toList :+
-        s"$valueFieldName AS value"
-    
+        s"$valueFieldName AS value_string"
+  
     logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
+  
+    // prepare the udf
+    val stringToByteArray: String => Array[Byte] = StringToByteArrayUtil.stringToByteArray
+    val stringToByteArrayUDF = udf(stringToByteArray)
     
     // convert input
-    stream.selectExpr(selectExpressions: _*)
+    stream
+      .selectExpr(selectExpressions: _*)
+      .withColumn("value", stringToByteArrayUDF(col("value_string")))
+      .drop("value_string")
   }
   
   private def convertStreamForBinary(keyFieldName: Option[String],
@@ -314,7 +321,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
             s"""The specified value field name "$valueFieldName" matches a column with a type that is not binary; """ +
               s"incompatible type $valueColumnDataType found")
     
-    // generate select expressions to rename matadata columns and convert everything to json
+    // generate select expressions to rename metadata and data columns
     val selectExpressions =
       keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
         headersFieldName.map(hfn => s"$hfn AS headers").toList ++

@@ -140,8 +140,8 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           val byteArrayToStringUDF = udf(byteArrayToString)
           
           // convert bytes to string and push metadata into nested column
-          df.withColumn("value_parsed", byteArrayToStringUDF(col("value")))
-            .selectExpr(metadataSelectExpr, "value")
+          df.withColumn("value_string", byteArrayToStringUDF(col("value")))
+            .selectExpr(metadataSelectExpr, "value_string AS value")
         }
         case "binary" => {
           // push metadata into nested column and keep value as is
