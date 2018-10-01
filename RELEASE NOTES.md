@@ -1434,3 +1434,112 @@ Branch: feature/147-fix-setup-py-for-wasprng
 Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
 
 Closes #147
+
+# WASP 2.17.0
+
+### Resolve "Add ability to specify a different destination topic per each row in the strategies"
+
+[Merge request 78](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/78)
+
+Created at: 2018-09-18T17:06:40.014Z
+
+Updated at: 2018-10-01T10:20:07.001Z
+
+Branch: feature/142-add-ability-to-specify-a-different-destination-topic-per-each-row-in-the-strategies
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #142
+
+#### New features and improvements
+
+- the Spark Structured Streaming Kafka writer now supports wrtiting to a different topic on a per-row basis using a MultiTopicModel instead of a TopicModel as the DatastoreModel for the WriterModel
+
+### Resolve "Support raw bytes as Kafka output format"
+
+[Merge request 81](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/81)
+
+Created at: 2018-09-18T17:16:59.400Z
+
+Updated at: 2018-10-01T17:25:04.565Z
+
+Branch: feature/149-support-raw-bytes-as-kafka-output-format
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #149
+
+Closes #157
+
+#### New features and improvements
+
+- WASP now supports a new topic data type, "binary", for directly reading and writing binary data to/from Kafka when using the Producers and Spark Structured Streaming
+
+#### Bug fixes
+
+- fixed reading and writing with "plaintext" topic data type support in Producers and Spark Structured Streaming
+
+
+### Resolve "Support subscribing to multiple topics form a single streaming input"
+
+[Merge request 82](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/82)
+
+Created at: 2018-09-20T08:55:12.108Z
+
+Updated at: 2018-09-30T18:28:16.180Z
+
+Branch: feature/150-suport-subscribing-to-multiple-topics-form-a-single-streaming-input
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #150
+
+#### New features and improvements
+
+- the Spark Structured Streaming Kafka reader now supports reading from multiple topics at once using a MultiTopicModel instead of a TopicModel as the DatastoreModel for the StreamingReaderModel
+
+### Resolve "Support for Kafka message headers"
+
+[Merge request 83](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/83)
+
+Created at: 2018-09-20T09:17:50.323Z
+
+Updated at: 2018-10-01T17:34:17.559Z
+
+Branch: feature/151-support-for-kafka-message-headers
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #151
+
+#### Breaking changes:
+
+- the Kafka Spark reader/writer code has been moved to the plugin-kafka-spark module. TO use Kafka you will have to add the wasp-plugin-kafka-spark artifact to the dependencies of your consumer-spark module
+- the Kafka version has changed from 0.10.2.1 to 0.11.0-kafka-3.0.0. WASP is now based on the Cloudera Distribution of Kafka.
+- in order to supports Kafka message headers (added in 0.11 with KIP-82), the Kafka Spark Structured Streaming reader now also returns all message metadata into a "kafkaMetadata" column: you may have to explicitly drop it, which for no-strategy kafka-to-kafka ETLs means adding a strategy
+- the type of the value column returned by the plaintext format changed from bytes to actual text: you may have to remove any explicit conversion/casting that you did in the strategies
+
+
+#### New features and improvements:
+
+- the Kafka Spark Structured Streaming writer now supports Kafka message headers (added in 0.11 with KIP-82)
+- the Kafka Spark Structured Streaming reader now supports Kafka message headers (added in 0.11 with KIP-82)
+
+### Resolve "Update Docker image for Kafka service to >= 0.11"
+
+[Merge request 86](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/86)
+
+Created at: 2018-09-30T08:01:44.270Z
+
+Updated at: 2018-09-30T08:11:13.874Z
+
+Branch: feature/155-update-docker-image-for-kafka-service-to-0-11
+
+Author: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #155
+
+#### New features and improvements
+
+- the Kafka service container now runs Kafka 0.11.0.3
+
