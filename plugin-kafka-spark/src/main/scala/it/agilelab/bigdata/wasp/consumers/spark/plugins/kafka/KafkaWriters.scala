@@ -14,6 +14,7 @@ import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, Tin
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, RowToAvro, StringToByteArrayUtil}
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.HEADER_DATA_TYPE_NULL_VALUE
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
@@ -99,6 +100,8 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     }
     val mainTopicModel = topicOpt.get
     val prototypeTopicModel = topics.head
+    
+    MultiTopicModel.validateTopicModels(topics)
   
     logger.info(s"Writing with topic model: $mainTopicModel")
     if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
@@ -121,7 +124,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val headersFieldName = prototypeTopicModel.headersFieldName
     val valueFieldsNames = prototypeTopicModel.valueFieldsNames
     
-    val finalStream = prototypeTopicModel.topicDataType match {
+    val convertedStream = prototypeTopicModel.topicDataType match {
       case "avro" => {
         convertStreamForAvro(keyFieldName,
                              headersFieldName,
@@ -150,7 +153,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       case topicDataType => throw new UnsupportedOperationException(s"Unknown topic data type $topicDataType")
     }
     
-    // TODO add check that only topics in MultiTopicModel appear in topics column
+    val finalStream = addTopicNameCheckIfNeeded(topicFieldName, topics, convertedStream)
 
     val partialDataStreamWriter = finalStream
       .writeStream
@@ -247,6 +250,24 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     stream.selectExpr(selectExpressions: _*)
   }
 
+  private def addTopicNameCheckIfNeeded(topicFieldName: Option[String], topics: Seq[TopicModel], stream: DataFrame) = {
+    if (topicFieldName.isEmpty) {
+      // no checks to be done as there is no per-row topic selection
+      stream
+    } else {
+      // check that the topic specified appears in the models
+      val acceptedTopicNames = topics.map(_.name).toSet
+      val checkTopicName =
+        (topicName: String) => {
+          if (!acceptedTopicNames(topicName))
+            throw new Exception(s"""Topic name "$topicName" is not in the topic models for the MultiTopicModel used""")
+          else
+            topicName
+        }
+      val checkTopicNameUdf = udf(checkTopicName)
+      stream.withColumn("topic", checkTopicNameUdf(col("topic")))
+    }
+  }
   private def addKafkaConf(dsw: DataStreamWriter[Row], tkc: TinyKafkaConfig): DataStreamWriter[Row] = {
 
     val connectionString = tkc.connections.map{
