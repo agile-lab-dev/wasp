@@ -56,10 +56,12 @@ object TopicModel {
   * `headerKey` of type string and a field `headerValue` of type binary. The original field will be left as-is, so your
   * schema must handle it (or you can use `valueFieldsNames`).
   *
-  * The `valueFieldsNames` field allows you to optionally specify a list of field names to be used to filter the fields
-  * that get passed to the value encoding; with this you can filter out fields that you don't need in the value,
-  * obviating the need to handle them in the schema. This is especially useful when specifying the `keyFieldName` or
-  * `headersFieldName`.
+  * The `valueFieldsNames` field allows you to specify a list of field names to be used to filter the fields that get
+  * passed to the value encoding; with this you can filter out fields that you don't need in the value, obviating the
+  * need to handle them in the schema. This is especially useful when specifying the `keyFieldName` or
+  * `headersFieldName`. For the avro and json topic data type this is optional; for the plaintext and binary topic data
+  * types this field is mandatory and the list must contain a single value field name that has the proper type (string
+  * for plaintext and binary for binary).
   *
   * The `schema` field contains the schema to use when encoding the value.
   */
