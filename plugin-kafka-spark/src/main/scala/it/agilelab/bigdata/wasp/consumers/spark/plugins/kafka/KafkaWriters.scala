@@ -150,6 +150,14 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
         }
         else
           stream.selectExpr("* AS value")
+      case "binary" => {
+        convertStreamForBinary(keyFieldName,
+                               headersFieldName,
+                               topicFieldName,
+                               valueFieldsNames,
+                               stream,
+                               prototypeTopicModel)
+      }
       case topicDataType => throw new UnsupportedOperationException(s"Unknown topic data type $topicDataType")
     }
     
@@ -246,6 +254,42 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
   
     logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
   
+    // TODO check that json produced matches schema
+    
+    // convert input
+    stream.selectExpr(selectExpressions: _*)
+  }
+  
+  private def convertStreamForBinary(keyFieldName: Option[String],
+                                     headersFieldName: Option[String],
+                                     topicFieldName: Option[String],
+                                     valueFieldsNames: Option[Seq[String]],
+                                     stream: DataFrame,
+                                     prototypeTopicModel: TopicModel) = {
+    // there must be exactly one value field name and it must be a column of type binary
+    require(valueFieldsNames.isDefined && valueFieldsNames.get.size == 1,
+            "Exactly one value field name must be defined for binary topic data type but zero or more than one were " +
+              s"specified; value field names: ${valueFieldsNames.get.mkString("\"","\", \"","\"")}")
+    val valueFieldName = valueFieldsNames.get.head
+    val maybeValueColumn = stream.schema.find(_.name == valueFieldName)
+    require(maybeValueColumn.isDefined,
+            s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
+              s"""${stream.schema.map(_.name).mkString("[","], [","]")}""")
+    val valueColumn = maybeValueColumn.get
+    val valueColumnDataType = valueColumn.dataType
+    require(valueColumnDataType == BinaryType,
+            s"""The specified value field name "$valueFieldName" matches a column with incompatible type """ +
+              s"$valueColumnDataType")
+    
+    // generate select expressions to rename matadata columns and convert everything to json
+    val selectExpressions =
+      keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
+        headersFieldName.map(hfn => s"$hfn AS headers").toList ++
+        topicFieldName.map(tfn => s"$tfn AS topic").toList :+
+        s"$valueFieldName AS value"
+    
+    logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
+    
     // convert input
     stream.selectExpr(selectExpressions: _*)
   }

@@ -143,6 +143,10 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           df.withColumn("value_parsed", byteArrayToStringUDF(col("value")))
             .selectExpr(metadataSelectExpr, "value")
         }
+        case "binary" => {
+          // push metadata into nested column and keep value as is
+          df.selectExpr(metadataSelectExpr, "value")
+        }
         case _ => throw new UnsupportedOperationException(s"""Unsupported topic data type "${prototypeTopic.topicDataType}"""")
       }
   
