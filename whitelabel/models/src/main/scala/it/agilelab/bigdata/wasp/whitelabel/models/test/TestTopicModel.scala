@@ -152,6 +152,38 @@ private[wasp] object TestTopicModel {
                                        schema = JsonConverter
                                          .fromString(topicCheckpointSchema)
                                          .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+  
+  lazy val plaintext1 = TopicModel(name = TopicModel.name(topic_name + "_plaintext"),
+                                   creationTime = System.currentTimeMillis,
+                                   partitions = 3,
+                                   replicas = 1,
+                                   topicDataType = "plaintext",
+                                   keyFieldName = Some("myKey"),
+                                   headersFieldName = Some("myHeaders"),
+                                   valueFieldsNames = Some(List("myValue")),
+                                   schema = org.mongodb.scala.bson.BsonDocument())
+  
+  lazy val plaintext2 = plaintext1.copy(name = TopicModel.name(topic2_name + "_plaintext"))
+  
+  lazy val plaintextMultitopic = MultiTopicModel.fromTopicModels("multitopic_plaintext",
+                                                                 "myTopic",
+                                                                 Seq(plaintext1, plaintext2))
+  
+  lazy val binary1 = TopicModel(name = TopicModel.name(topic_name + "_binary"),
+                                creationTime = System.currentTimeMillis,
+                                partitions = 3,
+                                replicas = 1,
+                                topicDataType = "binary",
+                                keyFieldName = Some("myKey"),
+                                headersFieldName = Some("myHeaders"),
+                                valueFieldsNames = Some(List("myValue")),
+                                schema = org.mongodb.scala.bson.BsonDocument())
+  
+  lazy val binary2 = binary1.copy(name = TopicModel.name(topic2_name + "_binary"))
+  
+  lazy val binaryMultitopic = MultiTopicModel.fromTopicModels("multitopic_binary",
+                                                              "myTopic",
+                                                              Seq(binary1, binary2))
 
   private val topicSchema =
     TopicModel.generateField("test", "test", Some(

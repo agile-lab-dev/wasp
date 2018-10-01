@@ -26,4 +26,14 @@ object TestStrategies {
 		className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestKafkaMultitopicWrite",
 		configuration = Some(ConfigFactory.empty().withValue("format", ConfigValueFactory.fromAnyRef("avro")).root().render())
 	)
+	
+	lazy val testKafkaPlaintext = StrategyModel(
+		className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestKafkaPlaintext",
+		configuration = None
+	)
+	
+	lazy val testKafkaBinary = StrategyModel(
+		className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestKafkaBinary",
+		configuration = None
+	)
 }

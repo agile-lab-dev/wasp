@@ -941,6 +941,88 @@ private[wasp] object TestPipegraphs {
     }
   }
 
+  object Plaintext {
+    
+    object Structured {
+      
+      lazy val kafkaMultitopicWrite = PipegraphModel(
+        name = "TestKafkaPlaintextStructuredStreaming",
+        description = "Test for reading/writing to multiple topics with key and headers for plaintext topics",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "GenerateAndWriteKafkaData",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.kafkaMultitopicWriter("Kafka Writer", TestTopicModel.plaintextMultitopic),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaPlaintext),
+            triggerIntervalMs = None,
+            options = Map()
+          ),
+          StructuredStreamingETLModel(
+            name = "ReadAndShowKafkaData",
+            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.plaintextMultitopic, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Write to console"),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaMetadata),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+      
+    }
+    
+  }
+  
+  object Binary {
+  
+    object Structured {
+    
+      lazy val kafkaMultitopicWrite = PipegraphModel(
+        name = "TestKafkaBinaryStructuredStreaming",
+        description = "Test for reading/writing to multiple topics with key and headers for binary topics",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "GenerateAndWriteKafkaData",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.kafkaMultitopicWriter("Kafka Writer", TestTopicModel.binaryMultitopic),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaBinary),
+            triggerIntervalMs = None,
+            options = Map()
+          ),
+          StructuredStreamingETLModel(
+            name = "ReadAndShowKafkaData",
+            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.binaryMultitopic, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Write to console"),
+            mlModels = List(),
+            strategy = Some(TestStrategies.testKafkaMetadata),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+    
+    }
+    
+  }
+  
   object ERROR {
 
     lazy val multiETL = PipegraphModel(

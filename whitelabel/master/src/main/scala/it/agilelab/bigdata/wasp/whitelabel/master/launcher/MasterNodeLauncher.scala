@@ -55,6 +55,12 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[MultiTopicModel](TestTopicModel.avroMultitopicWrite)
     waspDB.upsert[TopicModel](TestTopicModel.avro2ForKafkaHeaders)
     waspDB.upsert[TopicModel](TestTopicModel.avroCheckpoint)
+    waspDB.upsert[TopicModel](TestTopicModel.plaintext1)
+    waspDB.upsert[TopicModel](TestTopicModel.plaintext2)
+    waspDB.upsert[MultiTopicModel](TestTopicModel.plaintextMultitopic)
+    waspDB.upsert[TopicModel](TestTopicModel.binary1)
+    waspDB.upsert[TopicModel](TestTopicModel.binary2)
+    waspDB.upsert[MultiTopicModel](TestTopicModel.binaryMultitopic)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
@@ -106,7 +112,12 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.hdfs)
-
+  
+    waspDB.upsert[PipegraphModel](TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
+  
+    waspDB.upsert[PipegraphModel](TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
+  
+  
     /* BatchJobs */
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromElastic.toHdfsNested)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfsFlat)
