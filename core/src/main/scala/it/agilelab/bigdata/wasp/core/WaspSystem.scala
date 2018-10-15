@@ -47,6 +47,8 @@ object WaspSystem extends WaspConfiguration with Logging {
   
   // producers topic for distributed publish subscribe
   val producersPubSubTopic = "producers"
+  // BacklogSizeAnalizer Actor Path for messages redirection
+  val telemetryPubSubTopic = "telemetryStreamingQueryProgress"
   
   // WASP actor system
   private var actorSystem_ : ActorSystem = _
