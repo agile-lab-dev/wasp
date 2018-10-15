@@ -303,7 +303,7 @@ private[wasp] object LoggerPipegraph {
 	      staticInputs = List.empty,
 	      streamingOutput = writer,
 	      mlModels = List(),
-	      strategy = None,
+	      strategy = Some(StrategyModel(className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.DropKafkaMetadata")),
 	      triggerIntervalMs = None,
 	      options = Map())
     ),
@@ -356,7 +356,7 @@ private[wasp] object TelemetryPipegraph {
 				staticInputs = List.empty,
 				streamingOutput = writer,
 				mlModels = List(),
-				strategy = None,
+				strategy = Some(StrategyModel(className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.DropKafkaMetadata")),
 				triggerIntervalMs = None,
 				options = Map())
 		),
