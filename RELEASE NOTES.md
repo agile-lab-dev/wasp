@@ -1543,3 +1543,17 @@ Closes #155
 
 - the Kafka service container now runs Kafka 0.11.0.3
 
+### Resolve "Get informations about Streaming Query in Spark Structured Streaming"
+
+[Merge request 90](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/90)
+
+Created at: 2018-10-15T08:20:50.323Z
+
+Updated at: 2018-10-15T10:28:17.559Z
+
+Branch: feature/166-add-informations-about-sources-in-streaming
+
+Author: [Eugenio Liso](https://gitlab.com/Warrior92)
+
+Now the Telemetry actor can send the TelemetryMessageSource message (that contains informations about the Streaming Query) to another actor, in order to allow the analysis of the Streaming Query. The Telemetry actor sends a message on a publishSubscribe topic regularly and, when it receives a connection from another actor, it will begin to send the TelemetryMessageSource message also to the other actor.
+
