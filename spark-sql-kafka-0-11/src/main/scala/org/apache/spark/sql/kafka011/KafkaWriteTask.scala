@@ -73,7 +73,7 @@ private[kafka011] class KafkaWriteTask(
         .asJava
       
       val record = new ProducerRecord[Array[Byte], Array[Byte]](topic.toString,
-                                                                null.asInstanceOf[Int],
+                                                                null,
                                                                 key,
                                                                 value,
                                                                 kafkaHeaders)
