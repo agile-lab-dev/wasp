@@ -19,6 +19,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.FiniteDuration
 import scala.util.parsing.json.{JSONFormat, JSONObject}
+import scala.util.{Success, Try}
 
 class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKafkaConfig) extends Actor {
 
@@ -101,29 +102,40 @@ class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKa
                   metric(header, "inputRowsPerSecond", progress.inputRowsPerSecond) :+
                   metric(header, "processedRowsPerSecond", progress.processedRowsPerSecond)
 
-
-    val sources: Seq[TelemetryMessageSource] = progress.sources.map(sourceProgress => {
-      TelemetryMessageSource(
-        messageId = messageId,
-        sourceId = sourceId,
-        timestamp = timestamp,
-        description = sourceProgress.description,
-        startOffset = sourceProgress.startOffset.parseJson.convertTo[Map[String, Map[String, Long]]],
-        endOffset = sourceProgress.endOffset.parseJson.convertTo[Map[String, Map[String, Long]]]
-      )
-    }).toSeq
-
-    val overallSources: TelemetryMessageSourcesSummary = TelemetryMessageSourcesSummary(sources)
     metrics.filter(isValidMetric)
            .map(toMessage)
            .foreach(send(UUID.randomUUID().toString, _))
 
-    val streamingQueryProgressMessage: String = toMessage(overallSources)
+    //Try needed because sometimes spark sends not correctly formatted JSONs
+    Try {
+      val sources: Seq[TelemetryMessageSource] = progress.sources.map(sourceProgress => {
+        TelemetryMessageSource(
+          messageId = messageId,
+          sourceId = sourceId,
+          timestamp = timestamp,
+          description = sourceProgress.description,
+          startOffset = sourceProgress.startOffset.parseJson.convertTo[Map[String, Map[String, Long]]],
+          endOffset = sourceProgress.endOffset.parseJson.convertTo[Map[String, Map[String, Long]]]
+        )
+      }).toSeq
 
-    //Message sent to the Kafka telemetry topic
-    send(UUID.randomUUID().toString, streamingQueryProgressMessage)
+      sources
 
-    if(actorRefMessagesRedirect != Actor.noSender) actorRefMessagesRedirect ! overallSources
+    } match {
+
+      case Success(sources) =>
+        val overallSources: TelemetryMessageSourcesSummary = TelemetryMessageSourcesSummary(sources)
+
+        val streamingQueryProgressMessage: String = toMessage(overallSources)
+
+        //Message sent to the Kafka telemetry topic
+        send(UUID.randomUUID().toString, streamingQueryProgressMessage)
+
+        if(actorRefMessagesRedirect != Actor.noSender) actorRefMessagesRedirect ! overallSources
+
+      case _ =>
+    }
+
   }
 
 
