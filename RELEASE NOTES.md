@@ -1557,3 +1557,104 @@ Author: [Eugenio Liso](https://gitlab.com/Warrior92)
 
 Now the Telemetry actor can send the TelemetryMessageSource message (that contains informations about the Streaming Query) to another actor, in order to allow the analysis of the Streaming Query. The Telemetry actor sends a message on a publishSubscribe topic regularly and, when it receives a connection from another actor, it will begin to send the TelemetryMessageSource message also to the other actor.
 
+
+# WASP 2.19.0
+
+### Feature/168 schema registry
+
+[Merge request 99](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/99)
+
+Created at: 2018-11-06T21:41:14.743Z
+
+Updated at: 2018-11-08T18:31:12.615Z
+
+Branch: feature/168-schema-registry
+
+Author: [Andrea L.](https://gitlab.com/andreaL)
+
+Integration of Darwin in WASP.
+
+To use darwin in our project  it is necessary to add a connector implementation.
+In this release two connectors are supported, you have to choose one of them:
+
+ 1) `"it.agilelab" %% "darwin-hbase-connector" % "1.0.3"`
+ 2) `"it.agilelab" %% "darwin-postgres-connector" % "1.0.3"`
+
+
+The chosen connector should be added to the following modules of your project xxx:
+- `xxx-master`
+- `xxx-producers`
+- `xxx-consumers-spark`
+
+Here an example:
+
+```scala
+lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/master"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(whiteLabelModels)
+	.dependsOn(master)
+	.dependsOn(plugin_hbase_spark)
+	.settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector)
+	.enablePlugins(JavaAppPackaging)
+```
+
+If you use `darwin-hbase-connector`, it is necessary to add `dependsOn(plugin_hbase_spark)` in each module.
+
+In your configuration file add the following option under the path `wasp` (insert only configuration for connector chosen)
+```
+  #possible value is hbase or postgres
+  darwinConnector = "" 
+  avroSchemaManager {
+    wasp-manages-darwin-connectors-conf = #true/false
+
+    #darwin {                                       #hbase-conf
+      #namespace  = "AVRO"                          #optional
+      #table      = "SCHEMA_REPOSITORY"             #optional
+      #hbaseSite  = "path/to/hbase-site-xml"        #required if wasp-manages-darwin-connectors-conf= false
+      #coreSite   = "path/to/core-site-xml" 	    #required if wasp-manages-darwin-connectors-conf= false
+      #isSecure   = true/false                      #required if wasp-manages-darwin-connectors-conf= false
+      #principal  = "user@REALM"                    #required if wasp-manages-darwin-connectors-conf= false
+      #keytabPath = "path/to/keytab"                #required if wasp-manages-darwin-connectors-conf= false
+    #}
+
+    #darwin {                                       #postgres-conf
+      #table =                                      #optional
+      #host =                                       #required
+      #db =                                         #required
+      #user =                                       #required
+      #password =                                   #required
+    #}
+  }
+```
+
+IF `wasp-manages-darwin-connectors-conf` is set to `true`, it allows WASP to set some configurations in the automatic mode (only for hbase-connector), retrieving from other configurations or from enviornment variables.
+E.g for hbase-connector the values `hbaseSite` and `coreSite` will be filled from path `wasp.hbase`, while the `security` option will be filled from these environment variables: `WASP_SECURITY`, `PRINCIPAL_NAME`, `KEYTAB_FILE_NAME`.
+Instead if you set `false` this settings will be mandatory in configuration.
+
+The schema can be added to the registry in the `it.agilelab.bigdata.wasp.xxx.master.launcherMasterNodeLauncher` class in the following way:
+
+```scala
+  import org.apache.avro.Schema
+  object MasterNodeLauncher extends MasterNodeLauncherTrait {
+
+    [...]
+
+
+    override def launch(commandLine: CommandLine): Unit = {
+      super.launch(commandLine)
+      addExamplePipegraphs()
+      addExampleRegisterAvroSchema()
+    }
+
+    private def addExampleRegisterAvroSchema(): Unit = {
+        val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2])
+        val configAvroSchemaManager = ConfigFactory.parseMap(ConfigManager.getAvroSchemaManagerConfig)
+        AvroSchemaManager(configAvroSchemaManager).registerAll(schemas)
+    }
+
+    [...]
+  }
+```
+
+TopicModel and KeyValueModel classes have a new `useAvroSchemaManager` `boolean` field. If this field is set to `true`, the avro will be serialized and deserialized using darwin.
+
