@@ -20,6 +20,7 @@ private[wasp] object TestTopicModel {
                              keyFieldName = None,
                              headersFieldName = None,
                              valueFieldsNames = None,
+                             useAvroSchemaManager = false,
                              schema = JsonConverter
                                .fromString(topicSchema)
                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -32,6 +33,7 @@ private[wasp] object TestTopicModel {
                                          keyFieldName = None,
                                          headersFieldName = None,
                                          valueFieldsNames = None,
+                                         useAvroSchemaManager = false,
                                          schema = JsonConverter
                                            .fromString(withMetadataSchema)
                                            .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -44,6 +46,7 @@ private[wasp] object TestTopicModel {
                               keyFieldName = Some("nested.field3"),
                               headersFieldName = None,
                               valueFieldsNames = None,
+                              useAvroSchemaManager = false,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -73,6 +76,7 @@ private[wasp] object TestTopicModel {
                                              keyFieldName = Some("nested.field3"),
                                              headersFieldName = Some("headers"),
                                              valueFieldsNames = Some(List("id", "number", "nested")),
+                                             useAvroSchemaManager = false,
                                              schema = JsonConverter
                                                .fromString(topicSchema)
                                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -85,6 +89,7 @@ private[wasp] object TestTopicModel {
                                        keyFieldName = None,
                                        headersFieldName = None,
                                        valueFieldsNames = None,
+                                       useAvroSchemaManager = false,
                                        schema = JsonConverter
                                          .fromString(topicCheckpointSchema)
                                          .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -97,6 +102,7 @@ private[wasp] object TestTopicModel {
                              keyFieldName = None,
                              headersFieldName = None,
                              valueFieldsNames = None,
+                             useAvroSchemaManager = true,
                              schema = JsonConverter
                                .fromString(topicSchema)
                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -109,6 +115,7 @@ private[wasp] object TestTopicModel {
                               keyFieldName = Some("nested.field3"),
                               headersFieldName = None,
                               valueFieldsNames = None,
+                              useAvroSchemaManager = true,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -137,6 +144,7 @@ private[wasp] object TestTopicModel {
                                              keyFieldName = Some("nested.field3"),
                                              headersFieldName = Some("headers"),
                                              valueFieldsNames = Some(List("id", "number", "nested")),
+                                             useAvroSchemaManager = true,
                                              schema = JsonConverter
                                                .fromString(topicSchema)
                                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -149,6 +157,7 @@ private[wasp] object TestTopicModel {
                                        keyFieldName = None,
                                        headersFieldName = None,
                                        valueFieldsNames = None,
+                                       useAvroSchemaManager = true,
                                        schema = JsonConverter
                                          .fromString(topicCheckpointSchema)
                                          .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -161,6 +170,7 @@ private[wasp] object TestTopicModel {
                                    keyFieldName = Some("myKey"),
                                    headersFieldName = Some("myHeaders"),
                                    valueFieldsNames = Some(List("myValue")),
+                                   useAvroSchemaManager = false,
                                    schema = org.mongodb.scala.bson.BsonDocument())
   
   lazy val plaintext2 = plaintext1.copy(name = TopicModel.name(topic2_name + "_plaintext"))
@@ -177,6 +187,7 @@ private[wasp] object TestTopicModel {
                                 keyFieldName = Some("myKey"),
                                 headersFieldName = Some("myHeaders"),
                                 valueFieldsNames = Some(List("myValue")),
+                                useAvroSchemaManager = false,
                                 schema = org.mongodb.scala.bson.BsonDocument())
   
   lazy val binary2 = binary1.copy(name = TopicModel.name(topic2_name + "_binary"))

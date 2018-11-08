@@ -17,6 +17,7 @@ object TestKeyValueModel {
       KeyValueOption("newtable", "5"), //org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.newTable
       KeyValueOption("nestedSchema", nestedAvroSchema)
     )),
+    useAvroSchemaManager = false,
     avroSchemas = None
   )
 

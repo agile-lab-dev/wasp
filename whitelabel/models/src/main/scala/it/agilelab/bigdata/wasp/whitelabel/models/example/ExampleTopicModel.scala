@@ -15,6 +15,7 @@ private[wasp] object ExampleTopicModel {
                               keyFieldName = None,
                               headersFieldName = None,
                               valueFieldsNames = None,
+                              useAvroSchemaManager = false,
                               schema = JsonConverter
                                 .fromString(topicSchema)
                                 .getOrElse(org.mongodb.scala.bson.BsonDocument()))

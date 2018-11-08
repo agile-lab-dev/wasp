@@ -21,6 +21,8 @@ import java.io.File
 import java.util
 import java.util.concurrent.ConcurrentLinkedQueue
 
+import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase._
@@ -42,6 +44,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
 
 import scala.collection.mutable
+import scala.collection.JavaConverters._
 
 /**
   * DefaultSource for integration with Spark's dataframe datasources.
@@ -156,6 +159,13 @@ case class HBaseRelation(
   @transient val encoder = JavaBytesEncoder.create(encoderClsName)
 
   val catalog = HBaseTableCatalog(parameters)
+
+  val darwinConf = if (parameters.get("useavroschemamanager").map(_.toBoolean).getOrElse(false)) {
+    Some(ConfigManager.getAvroSchemaManagerConfig)
+  } else {
+    None
+  }
+
 
   def tableName = catalog.name
 
@@ -287,7 +297,7 @@ case class HBaseRelation(
     def convertToPut(row: Row): (ImmutableBytesWritable, Put) = {
       // construct bytes for row key
       val rowBytes = rkIdxedFields.map { case (x, y) =>
-        Utils.toBytes(row(x), y)
+        Utils.toBytes(row(x), y, catalog.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false), darwinConf)
       }
       val rLen = rowBytes.foldLeft(0) { case (x, y) =>
         x + y.length
@@ -310,7 +320,7 @@ case class HBaseRelation(
         case (_, f) => isStandardColumnFamily(f)
       }.foreach { case (colIndex, field) =>
         if (!row.isNullAt(colIndex)) {
-          val b = Utils.toBytes(row(colIndex), field)
+          val b = Utils.toBytes(row(colIndex), field, catalog.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false), darwinConf)
           put.addColumn(Bytes.toBytes(field.cf), Bytes.toBytes(field.col), b)
         }
       }
@@ -336,7 +346,7 @@ case class HBaseRelation(
             val cf = Bytes.toBytes(field.cf)
             // Compose final denormalized cq
             val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}|${field.col}")
-            val data = Utils.toBytes(row(colIndex), field)
+            val data = Utils.toBytes(row(colIndex), field, catalog.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false), darwinConf)
 
             put.addColumn(cf, finalCq, data)
           }

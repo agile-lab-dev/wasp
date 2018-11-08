@@ -37,13 +37,15 @@ class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel,
                                      ss: SparkSession)
   extends SparkStructuredStreamingWriter {
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
-    val options: Map[String, String] = hbaseModel.getOptionsMap ++
-    hbaseModel.avroSchemas.getOrElse(Map()) ++
-    Seq(
-      HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
-      KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
-      HBaseTableCatalog.newTable -> "4"
-    )
+    val options: Map[String, String] =
+      hbaseModel.getOptionsMap ++
+      hbaseModel.avroSchemas.getOrElse(Map()) ++
+      Seq(
+        HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
+        KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
+        HBaseTableCatalog.newTable -> "4",
+        "useAvroSchemaManager" -> hbaseModel.useAvroSchemaManager.toString
+      )
 
     stream.writeStream
       .options(options)
@@ -74,7 +76,8 @@ class HBaseStreamingWriter(hbaseModel: KeyValueModel,
       Seq(
         HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
         KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
-        HBaseTableCatalog.newTable -> "4"
+        HBaseTableCatalog.newTable -> "4",
+        "useAvroSchemaManager" -> hbaseModel.useAvroSchemaManager.toString
       )
     stream.foreachRDD {
       rdd =>
@@ -101,12 +104,14 @@ class HBaseBatchWriter(hbaseModel: KeyValueModel,
   extends SparkBatchWriter {
 
   override def write(df: DataFrame): Unit = {
+
     val options: Map[String, String] = hbaseModel.getOptionsMap ++
     hbaseModel.avroSchemas.getOrElse(Map()) ++
     Seq(
       HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
       KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
-      HBaseTableCatalog.newTable -> "4"
+      HBaseTableCatalog.newTable -> "4",
+      "useAvroSchemaManager" -> hbaseModel.useAvroSchemaManager.toString
     )
 
     df.write

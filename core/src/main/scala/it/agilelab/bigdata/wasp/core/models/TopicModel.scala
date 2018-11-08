@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
 import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
-import it.agilelab.bigdata.wasp.core.utils.SchemaConverters
-import org.apache.avro.Schema
-import org.apache.spark.sql.types.DataType
 import org.bson.BsonDocument
 
 object TopicModel {
@@ -73,11 +70,9 @@ case class TopicModel(override val name: String,
                       keyFieldName: Option[String],
                       headersFieldName: Option[String],
                       valueFieldsNames: Option[Seq[String]],
+                      useAvroSchemaManager: Boolean,
                       schema: BsonDocument)
     extends DatastoreModel[TopicCategory] {
   def getJsonSchema: String = schema.toJson
-  def getDataType: DataType = {
-    val schemaAvro = new Schema.Parser().parse(this.getJsonSchema)
-    SchemaConverters.toSqlType(schemaAvro).dataType
-  }
+
 }

@@ -21,7 +21,8 @@ case class WaspConfigModel(
 														restHttpsConf: Option[RestHttpsConfigModel],
 														environmentPrefix: String,
 														validationRulesToIgnore: Seq[String],
-														environmentMode: String
+														environmentMode: String,
+														darwinConnector: String
                           )
 
 object WaspConfigModel {

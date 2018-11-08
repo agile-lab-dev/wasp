@@ -1,15 +1,16 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.sql.{Date, Timestamp}
 import java.util
 
+import com.typesafe.config.Config
+import it.agilelab.darwin.manager.AvroSchemaManager
 import org.apache.avro.Schema.Type
-import org.apache.avro.file.DataFileWriter
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
-import org.apache.avro.io.{DecoderFactory, EncoderFactory}
+import org.apache.avro.io.EncoderFactory
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
@@ -30,9 +31,14 @@ import scala.collection.immutable.Map
   */
 case class RowToAvro(schema: StructType,
                      structName: String,
+                     useAvroSchemaManager: Boolean,
                      recordNamespace: String,
                      fieldsToWrite: Option[Set[String]] = None,
-                     schemaAvroJson: Option[String] = None) {
+                     schemaAvroJson: Option[String] = None,
+                     avroSchemaManagerConfig: Option[Config] = None) {
+
+  require(!useAvroSchemaManager || useAvroSchemaManager && avroSchemaManagerConfig.isDefined,
+    "if useAvroSchemaManager is true avroSchemaManagerConfig must have a value")
 
   import RowToAvro._
 
@@ -51,17 +57,29 @@ case class RowToAvro(schema: StructType,
     )
   }
 
+  /** Serialize Avro.
+    * If use [[AvroSchemaManager]], first 2 byte is a MAGIC NUMBER (C3 01), 8 byte is a hash of [[Schema]] and other is avro serialized.
+    *
+    * @param row
+    * @return avro serialize
+    */
   def write(row: Row): Array[Byte] = {
     val output = new ByteArrayOutputStream()
     val value: GenericRecord = converter(row).asInstanceOf[GenericRecord]
 
     val encoder = EncoderFactory.get.binaryEncoder(output, null)
-    val writer =new GenericDatumWriter[GenericRecord](actualSchema)
+    val writer = new GenericDatumWriter[GenericRecord](actualSchema)
     writer.write(value, encoder)
 
     encoder.flush()
     output.toByteArray
 
+    if (useAvroSchemaManager) {
+      AvroSchemaManager.instance(avroSchemaManagerConfig.get)
+      AvroSchemaManager.generateAvroSingleObjectEncoded(output.toByteArray, AvroSchemaManager.getId(actualSchema))
+    }
+    else
+      output.toByteArray
   }
 
 
@@ -70,11 +88,11 @@ case class RowToAvro(schema: StructType,
     * writing Avro records out to disk
     */
   private def createConverterToAvro(
-                                     dataType: DataType,
-                                     structName: String,
-                                     recordNamespace: String,
-                                     fieldsToWrite: Option[Set[String]],
-                                     externalSchema: Option[Schema]): (Any) => Any = {
+                                       dataType: DataType,
+                                       structName: String,
+                                       recordNamespace: String,
+                                       fieldsToWrite: Option[Set[String]],
+                                       externalSchema: Option[Schema]): (Any) => Any = {
     dataType match {
       case BinaryType => (item: Any) =>
         item match {
@@ -186,11 +204,13 @@ object RowToAvro {
     */
   def checkSchemas(schemaSpark: StructType,
                    schemaAvroJson: String): Unit = {
+
     // parse avro schema from json
     val schemaAvro: Schema = new Schema.Parser().parse(schemaAvroJson)
 
     // flatten schemas, convert spark field list into a map
-    val sparkFields: Map[String, String] = flattenSparkSchema(schemaSpark).toMap // the key is the field name, the value is the field type
+    val sparkFields: Map[String, String] = flattenSparkSchema(schemaSpark).toMap
+    // the key is the field name, the value is the field type
     val avroFields: List[(String, String)] = flattenAvroSchema(schemaAvro)
 
     // iterate over the Avro field list. If any is missing from the Spark schema, or has a different type, throw an exception.
@@ -219,10 +239,12 @@ object RowToAvro {
       field => {
         val name = prefix + field.name
         val dataType = field.dataType
-        if (dataType.isInstanceOf[StructType]) { // complex type: recurse
+        if (dataType.isInstanceOf[StructType]) {
+          // complex type: recurse
           val prefix = name + "."
           flattenSparkSchema(dataType.asInstanceOf[StructType], prefix)
-        } else { // simple type: create tuple
+        } else {
+          // simple type: create tuple
           val tpe = sparkTypeToString(dataType)
           Seq((name, tpe)) // sequence with a single element because we're in a flatMap
         }
@@ -252,10 +274,12 @@ object RowToAvro {
       field => {
         val name = prefix + field.name
         val schemaType = field.schema().getType
-        if (schemaType == Type.RECORD) { // complex type: recurse
+        if (schemaType == Type.RECORD) {
+          // complex type: recurse
           val prefix = name + "."
           flattenAvroSchema(field.schema, prefix)
-        } else if (schemaType == Type.UNION) { // union type: check that is simple enough, recurse if necessary
+        } else if (schemaType == Type.UNION) {
+          // union type: check that is simple enough, recurse if necessary
           // drop NullSchema, fail if more than one Schema remains afterwards
           val nonNullSchemas = field.schema().getTypes.asScala.filter(_.getType != Type.NULL)
           if (nonNullSchemas.length > 1) {
@@ -263,14 +287,17 @@ object RowToAvro {
           }
           val remainingSchema = nonNullSchemas.head
           // recurse if necessary
-          if (remainingSchema.getType == Type.RECORD) { // nullable record, recurse
+          if (remainingSchema.getType == Type.RECORD) {
+            // nullable record, recurse
             val prefix = name + "."
             flattenAvroSchema(remainingSchema, prefix)
-          } else { // simple type: create tuple
+          } else {
+            // simple type: create tuple
             val tpe = avroTypeToString(remainingSchema.getType)
             Seq((name, tpe)) // sequence with a single element because we're in a flatMap
           }
-        } else { // simple type: create tuple
+        } else {
+          // simple type: create tuple
           val tpe = avroTypeToString(schemaType)
           Seq((name, tpe)) // sequence with a single element because we're in a flatMap
         }
@@ -288,4 +315,5 @@ object RowToAvro {
     case Type.STRING => stringType
     case Type.ARRAY => arrayType
   }
+
 }

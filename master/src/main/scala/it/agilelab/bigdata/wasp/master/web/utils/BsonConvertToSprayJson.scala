@@ -69,7 +69,7 @@ class TopicDatastoreModelJsonFormat
       with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
   
-  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat9(TopicModel.apply)
+  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat10(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
   
   override def write(obj: DatastoreModel[TopicCategory]): JsValue = {

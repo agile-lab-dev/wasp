@@ -1,31 +1,36 @@
 package it.agilelab.bigdata.wasp.master.launcher
 
-import java.io.{FileInputStream, InputStream}
+import java.io.FileInputStream
 import java.security.{KeyStore, SecureRandom}
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import akka.actor.{ActorSystem, Props}
-import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
 import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
-import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.httpResponseJson
+import it.agilelab.darwin.manager.AvroSchemaManager
+import org.apache.avro.Schema
 import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang.exception.ExceptionUtils
 
+import scala.collection.JavaConversions._
 import scala.io.Source
+
 
 /**
 	* Launcher for the MasterGuardian and REST Server.
@@ -36,11 +41,22 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
 	override def launch(commandLine: CommandLine): Unit = {
 		addSystemPipegraphs()
+    registerSchema()
 		super.launch(commandLine)
 		startRestServer(WaspSystem.actorSystem, getRoutes)
 		logger.info(s"MasterNode has been launched with WaspConfig ${waspConfig.toString}")
 	}
-	
+
+  /** Add system's schema to AvroSchemaManager.
+    *
+    * @return [[Seq[(Key, Schema)]]
+    */
+  def registerSchema(): Seq[(Long, Schema)] = {
+    val schemas = Seq.empty[Schema]
+		val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
+		AvroSchemaManager(configAvroSchemaManager).registerAll(schemas)
+  }
+
 	override def getSingletonProps: Props = Props(new MasterGuardian(ConfigBL))
 	
 	override def getSingletonName: String = WaspSystem.masterGuardianName

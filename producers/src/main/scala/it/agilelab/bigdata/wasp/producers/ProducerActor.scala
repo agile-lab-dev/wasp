@@ -75,7 +75,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
         topicSchemaType match {
           case "avro" => {
             val json = generateOutputJsonMessage(input)
-            val avroBytes = AvroToJsonUtil.jsonToAvro(json, topicSchema)
+            val avroBytes = AvroToJsonUtil.jsonToAvro(json, topicSchema, topic.get.useAvroSchemaManager)
             kafka_router ! WaspMessageEnvelope[String, Array[Byte]](p.name, retrievePartitionKey(input), avroBytes)
           }
           case "json" => {

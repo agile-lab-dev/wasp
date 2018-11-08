@@ -1,7 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils
+import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroToRow, SchemaConverters, SparkUtils}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
@@ -13,6 +14,7 @@ import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
@@ -20,6 +22,7 @@ import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
 import scala.collection.mutable
+import scala.collection.JavaConverters._
 
 object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReader with Logging {
 
@@ -48,14 +51,14 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
                                      (implicit ss: SparkSession): DataFrame = {
 
     logger.info(s"Creating stream from input: $streamingReaderModel of ETL: $etl")
-    
+
     // extract the topic model
     logger.info(s"""Retrieving topic datastore model with name "${streamingReaderModel.datastoreModelName}"""")
     val topicBL = new TopicBLImp(WaspDB.getDB)
     val topics = retrieveTopicModelsRecursively(topicBL, streamingReaderModel.datastoreModelName)
     MultiTopicModel.validateTopicModels(topics)
     logger.info(s"Retrieved topic model(s): $topics")
-    
+
     // get the config
     val kafkaConfig = ConfigManager.getKafkaConfig
     logger.info(s"Kafka configuration: $kafkaConfig")
@@ -66,19 +69,19 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         WaspSystem.kafkaAdminActor,
         CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))
     } reduce (_ && _)
-    
+
     if (allCheckOrCreateResult) {
       // extract a prototype topic to use for data type, schema etc
       val prototypeTopic = topics.head
-      
+
       // calculate maxOffsetsPerTrigger from trigger interval and rate limit
       // if the rate limit is set, calculate maxOffsetsPerTrigger as follows: if the trigger interval is unset, use
       // rate limit as is, otherwise multiply by triggerIntervalMs/1000
       // if the rate limit is not set, do not set maxOffsetsPerTrigger
       val triggerIntervalMs = SparkUtils.getTriggerIntervalMs(ConfigManager.getSparkStreamingConfig, etl)
-      val maybeRateLimit: Option[Long] = streamingReaderModel.rateLimit.map(x => if (triggerIntervalMs == 0l) x else (triggerIntervalMs/1000d * x).toLong)
+      val maybeRateLimit: Option[Long] = streamingReaderModel.rateLimit.map(x => if (triggerIntervalMs == 0l) x else (triggerIntervalMs / 1000d * x).toLong)
       val maybeMaxOffsetsPerTrigger = maybeRateLimit.map(rateLimit => ("maxOffsetsPerTrigger", rateLimit.toString))
-      
+
       // calculate the options for the DataStreamReader
       val options = mutable.Map.empty[String, String]
       // start with the base options
@@ -100,20 +103,24 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         .format("kafka")
         .options(options)
         .load()
-  
+
       // find all kafka metadata (non-value) columns so we can keep them in the final select
       val allColumnsButValue = INPUT_SCHEMA.map(_.name).filter(_ != VALUE_ATTRIBUTE_NAME)
-  
+
       // create select expression to push all kafka metadata columns under a single complex column called
       // "kafkaMetadata"
       val metadataSelectExpr = s"struct(${allColumnsButValue.mkString(", ")}) as kafkaMetadata"
-      
+
       val ret: DataFrame = prototypeTopic.topicDataType match {
         case "avro" => {
           logger.debug(s"AVRO schema: ${new Schema.Parser().parse(prototypeTopic.getJsonSchema).toString(true)}")
-          
+          val darwinConf = if (prototypeTopic.useAvroSchemaManager) {
+            Some(ConfigManager.getAvroSchemaManagerConfig)
+          } else {
+            None
+          }
           // prepare the udf
-          val avroToRow = AvroToRow(prototypeTopic.getJsonSchema)
+          val avroToRow = AvroToRow(prototypeTopic.getJsonSchema, prototypeTopic.useAvroSchemaManager, darwinConf)
           val avroToRowConversion: Array[Byte] => Row = avroToRow.read
           val avroToRowConversionUDF = udf(avroToRowConversion, avroToRow.getSchemaSpark())
 
@@ -126,19 +133,19 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           // prepare the udf
           val byteArrayToJson: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
           val byteArrayToJsonUDF = udf(byteArrayToJson)
-          
+
           // convert bytes to json string, parse the json into a column, lift the contents up one level and push
           // metadata into nested column
           df.withColumn("value_parsed", byteArrayToJsonUDF(col("value")))
             .drop("value")
-            .withColumn("value", from_json(col("value_parsed"), prototypeTopic.getDataType))
+            .withColumn("value", from_json(col("value_parsed"), getDataType(prototypeTopic.getJsonSchema)))
             .selectExpr(metadataSelectExpr, "value.*")
         }
         case "plaintext" => {
           // prepare the udf
           val byteArrayToString: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
           val byteArrayToStringUDF = udf(byteArrayToString)
-          
+
           // convert bytes to string and push metadata into nested column
           df.withColumn("value_string", byteArrayToStringUDF(col("value")))
             .selectExpr(metadataSelectExpr, "value_string AS value")
@@ -149,9 +156,9 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         }
         case _ => throw new UnsupportedOperationException(s"""Unsupported topic data type "${prototypeTopic.topicDataType}"""")
       }
-  
+
       logger.debug(s"DataFrame schema: ${ret.schema.treeString}")
-      
+
       ret
     } else {
       val msg = s"Unable to check/create one or more topic; topics: $topics"
@@ -159,7 +166,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       throw new Exception(msg)
     }
   }
-  
+
   private def retrieveTopicModelsRecursively(topicBL: TopicBL, topicDatastoreModelName: String): Seq[TopicModel] = {
     def innerRetrieveTopicModelsRecursively(topicDatastoreModelName: String): Seq[TopicModel] = {
       val topicDatastoreModel = topicBL.getByName(topicDatastoreModelName).get
@@ -171,8 +178,13 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
             .flatMap(innerRetrieveTopicModelsRecursively)
       }
     }
-    
+
     innerRetrieveTopicModelsRecursively(topicDatastoreModelName)
+  }
+
+  private def getDataType(schema: String): DataType = {
+    val schemaAvro = new Schema.Parser().parse(schema)
+    SchemaConverters.toSqlType(schemaAvro).dataType
   }
 }
 
@@ -198,15 +210,15 @@ object KafkaSparkLegacyStreamingReader extends SparkLegacyStreamingReader with L
       .toMap
 
     if (??[Boolean](
-          WaspSystem.kafkaAdminActor,
-          CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
+      WaspSystem.kafkaAdminActor,
+      CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
 
       val receiver: DStream[(String, Array[Byte])] = accessType match {
         case "direct" =>
           KafkaUtils.createDirectStream[String,
-                                        Array[Byte],
-                                        StringDecoder,
-                                        DefaultDecoder](
+            Array[Byte],
+            StringDecoder,
+            DefaultDecoder](
             ssc,
             kafkaConfigMap + ("group.id" -> group) + ("metadata.broker.list" -> kafkaConfig.connections
               .mkString(",")),
@@ -215,11 +227,11 @@ object KafkaSparkLegacyStreamingReader extends SparkLegacyStreamingReader with L
         case "receiver-based" | _ =>
           KafkaUtils
             .createStream[String, Array[Byte], StringDecoder, DefaultDecoder](
-              ssc,
-              kafkaConfigMap + ("group.id" -> group),
-              Map(topic.name -> 3),
-              StorageLevel.MEMORY_AND_DISK_2
-            )
+            ssc,
+            kafkaConfigMap + ("group.id" -> group),
+            Map(topic.name -> 3),
+            StorageLevel.MEMORY_AND_DISK_2
+          )
       }
       val topicSchema = JsonConverter.toString(topic.schema.asDocument())
       topic.topicDataType match {

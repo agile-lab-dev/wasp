@@ -56,6 +56,7 @@ case class KeyValueModel(override val name: String,
 												 tableCatalog: String,
 												 dataFrameSchema: Option[String],
 												 options: Option[Seq[KeyValueOption]],
+												 useAvroSchemaManager: Boolean,
 												 avroSchemas: Option[Map[String, String]])
 	  extends DatastoreModel[KeyValueCategory] {
 

@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.core.utils;
 
+import it.agilelab.darwin.manager.AvroSchemaManager;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -22,18 +23,25 @@ public class JsonAvroConverter {
         this.recordReader = new JsonGenericRecordReader(objectMapper);
     }
 
-    public byte[] convertToAvro(byte[] data, String schema) {
-        return convertToAvro(data, new Schema.Parser().parse(schema));
+    public byte[] convertToAvro(byte[] data, String schema, boolean useSchemaAvroManager) {
+        return convertToAvro(data, new Schema.Parser().parse(schema), useSchemaAvroManager);
     }
 
-    public byte[] convertToAvro(byte[] data, Schema schema) {
+    public byte[] convertToAvro(byte[] data, Schema schema, boolean useSchemaAvroManager) {
         try {
+
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
             GenericDatumWriter<Object> writer = new GenericDatumWriter<>(schema);
             writer.write(convertToGenericDataRecord(data, schema), encoder);
             encoder.flush();
-            return outputStream.toByteArray();
+
+            if(useSchemaAvroManager)
+                return AvroSchemaManager.generateAvroSingleObjectEncoded(outputStream.toByteArray(), schema);
+            else
+                return outputStream.toByteArray();
+
+
         } catch (IOException e) {
             throw new AvroConversionException("Failed to convert to AVRO.", e);
         }

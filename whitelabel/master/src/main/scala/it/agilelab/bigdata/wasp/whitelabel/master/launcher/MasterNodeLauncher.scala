@@ -1,16 +1,34 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
+import com.sksamuel.avro4s.AvroSchema
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
-import org.apache.commons.cli.CommandLine
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
+import it.agilelab.darwin.manager.AvroSchemaManager
+import org.apache.avro.Schema
+import org.apache.commons.cli.CommandLine
+
+import scala.collection.JavaConversions._
 
 object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
   override def launch(commandLine: CommandLine): Unit = {
     super.launch(commandLine)
     addExamplePipegraphs()
+    addExampleRegisterAvroSchema()
+  }
+
+  /** Add schema to AvroSchemaManager.
+    *
+    * @return [[Seq[(Key, Schema)]]
+    */
+  private def addExampleRegisterAvroSchema(): Unit = {
+    val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2])
+    val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
+    AvroSchemaManager(configAvroSchemaManager).registerAll(schemas)
   }
 
   private def addExamplePipegraphs(): Unit = {
@@ -124,5 +142,16 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.flatToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromJdbc.mySqlToConsole)
+
+
+    /* Test SchemaAvroManager */
+    waspDB.upsert[TopicModel](TestSchemaAvroManager.topicAvro_v1)
+    waspDB.upsert[TopicModel](TestSchemaAvroManager.topicAvro_v2)
+    waspDB.upsert[TopicModel](TestSchemaAvroManager.topicAvro_v3)
+    waspDB.upsert[ProducerModel](TestSchemaAvroManager.producer_v1)
+    waspDB.upsert[ProducerModel](TestSchemaAvroManager.producer_v2)
+    waspDB.upsert[KeyValueModel](TestSchemaAvroManagerKeyValueModel.avroSchemaManagerHBaseModel)
+    waspDB.upsert[PipegraphModel](TestSchemaAvroManager.pipegraph)
+
   }
 }

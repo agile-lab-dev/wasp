@@ -55,10 +55,10 @@ object DatastoreModelsForTesting {
 					)
 			)
 	}
-	
+
 	object TopicModels {
 		private val topic_name = "test"
-		
+
 		private val topicSchema =
 			TopicModel.generateField("test", "test", Some(
 				"""
@@ -73,7 +73,7 @@ object DatastoreModelsForTesting {
 					|            "doc": ""
 					|        }
 				""".stripMargin))
-		
+
 		lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
 		                           creationTime = System.currentTimeMillis,
 		                           partitions = 3,
@@ -84,6 +84,7 @@ object DatastoreModelsForTesting {
 		                           valueFieldsNames = None,
 		                           schema = JsonConverter
 			                           .fromString(topicSchema)
-			                           .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+			                           .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+			                         useAvroSchemaManager = false)
 	}
 }

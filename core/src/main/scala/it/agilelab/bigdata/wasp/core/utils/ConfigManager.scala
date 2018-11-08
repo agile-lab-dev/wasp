@@ -122,6 +122,7 @@ object ConfigManager {
   private var solrConfig: SolrConfigModel = _
   private var hbaseConfig: HBaseConfigModel = _
   private var jdbcConfig: JdbcConfigModel = _
+  private var avroSchemaManagerConfig: Config = _
 
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
     (globalValidationRules ++ pluginsValidationRules)
@@ -150,11 +151,61 @@ object ConfigManager {
       readRestHttpsConfig(),
       environmentSubConfig.getString("prefix"),
       readValidationRulesToIgnore(environmentSubConfig, "validationRulesToIgnore"),
-      environmentSubConfig.getString("mode")
+      environmentSubConfig.getString("mode"),
+      conf.getString("darwinConnector")
     )
   }
 
-  private def initializaTelemetryConfig(): Unit = {
+  def initializeAvroSchemaManagerConfig(): Unit = {
+
+    avroSchemaManagerConfig =
+      waspConfig.darwinConnector match {
+
+        case "hbase" => ConfigFactory.parseMap(getAvroSchemaManagerConfigHbaseConnector.asJava)
+        case _ => conf.getConfig("avroSchemaManager.darwin")
+
+      }
+
+  }
+
+  private def getAvroSchemaManagerConfigHbaseConnector: Map[String, Any] = {
+
+    val avroSchemaManagerSubConfig = conf.getConfig("avroSchemaManager")
+    val darwinConfig = avroSchemaManagerSubConfig.getConfig("darwin")
+
+    if(avroSchemaManagerSubConfig.getBoolean("wasp-manages-darwin-connectors-conf")) {
+      val env = System.getenv()
+      val hbaseSubConfig = conf.getConfig("hbase")
+      val isSecure = if(env.containsKey("WASP_SECURITY")) env.get("WASP_SECURITY") else false
+      val principal = if(env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
+      val keytabPath = if(env.containsKey("KEYTAB_FILE_NAME")) env.get("KEYTAB_FILE_NAME") else ""
+
+      Map(
+        "namespace" -> darwinConfig.getString("namespace"),
+        "table" -> darwinConfig.getString("table"),
+        "hbaseSite" -> hbaseSubConfig.getString("hbase-site-xml-path"),
+        "coreSite" -> hbaseSubConfig.getString("core-site-xml-path"),
+        "isSecure" -> isSecure ,
+        "principal" -> principal,
+        "keytabPath" -> keytabPath
+      )
+    }
+    else
+
+      Map(
+        "namespace" -> darwinConfig.getString("namespace"),
+        "table" -> darwinConfig.getString("table"),
+        "hbaseSite" -> darwinConfig.getString("hbaseSite"),
+        "coreSite" -> darwinConfig.getString("coreSite"),
+        "isSecure" ->  darwinConfig.getString("isSecure"),
+        "principal" -> darwinConfig.getString("principal"),
+        "keytabPath" -> darwinConfig.getString("keytabPath")
+      )
+
+
+  }
+
+  private def initializeTelemetryConfig(): Unit = {
     telemetryConfig = getDefaultTelemetryConfig
   }
 
@@ -348,7 +399,7 @@ object ConfigManager {
       initializeWaspConfig() // already initialized within WaspDB.initializeDB() due to logger.info()
     }
 
-    initializaTelemetryConfig()
+    initializeTelemetryConfig()
     initializeKafkaConfig()
     initializeElasticConfig()
     initializeSolrConfig()
@@ -356,6 +407,7 @@ object ConfigManager {
     initializeJdbcConfig()
     initializeSparkStreamingConfig()
     initializeSparkBatchConfig()
+    initializeAvroSchemaManagerConfig()
   }
 
   def getWaspConfig: WaspConfigModel = {
@@ -367,7 +419,7 @@ object ConfigManager {
 
   def getTelemetryConfig: TelemetryConfigModel = {
     if (telemetryConfig == null) {
-      initializaTelemetryConfig()
+      initializeTelemetryConfig()
     }
     telemetryConfig
   }
@@ -427,6 +479,13 @@ object ConfigManager {
       throw new Exception("The jdbc configuration was not initialized")
     }
     jdbcConfig
+  }
+
+  def getAvroSchemaManagerConfig: Config = {
+    if (avroSchemaManagerConfig == null) {
+      throw new Exception("The avroSchemaManagerConfigHbaseConnector configuration was not initialized")
+    }
+    avroSchemaManagerConfig
   }
 
   private def readJdbcConfig(name: String, config: Config): JdbcConnectionConfig = {

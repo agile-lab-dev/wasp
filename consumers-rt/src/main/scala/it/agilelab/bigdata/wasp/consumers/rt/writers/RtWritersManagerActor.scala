@@ -80,7 +80,7 @@ class CamelKafkaWriter(topicBL: TopicBL, writer: WriterModel) extends Producer {
   override def transformOutgoingMessage(msg: Any): Any = {
     msg match {
       case m: String => topicDataType match {
-        case "avro" => AvroToJsonUtil.jsonToAvro(m, topicSchema)
+        case "avro" => AvroToJsonUtil.jsonToAvro(m, topicSchema, false)
         case "json" => m.getBytes
       }
       case camel: CamelMessage => {

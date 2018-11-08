@@ -6,12 +6,14 @@ object Versions {
 	val akkaHttp = "10.0.9" // keep in sync with akka
 	val apacheCommonsLang3Version = "3.4"
 	val avro = "1.7.7"
+	val avro4sVersion = "1.8.3"
 	val avroSpark = "3.2.0"
 	val camel = "2.17.7"
 	val cdh = "cdh5.13.1" // Cloudera Distribution of Hadoop
 	val cdk = "0.11.0-kafka-3.0.0" // Cloudera Distribution of Kafka
 	val cds = "cloudera3" // Cloudera Distribution of Spark
 	val commonsCli = "1.4"
+	val darwin = "1.0.1"
 	val elasticSearch = "6.1.2"
 	val elasticSearchSpark = "6.1.2"
 	val guava = "14.0.1"

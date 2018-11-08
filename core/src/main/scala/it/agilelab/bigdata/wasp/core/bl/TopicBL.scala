@@ -59,6 +59,7 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
                      Some(bsonDocument.getArray("valueFieldsNames").getValues.asScala.toList.map(_.asString().getValue))
                    else
                      None,
+                   bsonDocument.get("useAvroSchemaManager").asBoolean().getValue,
                    bsonDocument.get("schema").asDocument())
   }
   

@@ -2,6 +2,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import java.util.UUID
 
+import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.wasp.consumers.spark.utils.RowToAvro
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
@@ -9,9 +11,9 @@ import it.agilelab.bigdata.wasp.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, RowToAvro, StringToByteArrayUtil}
+import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil}
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.HEADER_DATA_TYPE
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.functions.{col, udf}
@@ -20,6 +22,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+import scala.collection.JavaConverters._
 
 class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
                                       ssc: StreamingContext,
@@ -39,7 +42,7 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
         val schemaB = ssc.sparkContext.broadcast(topic.getJsonSchema)
         val configB = ssc.sparkContext.broadcast(tinyKafkaConfig)
         val topicNameB = ssc.sparkContext.broadcast(topic.name)
-	      val topicDataTypeB = ssc.sparkContext.broadcast(topic.topicDataType)
+        val topicDataTypeB = ssc.sparkContext.broadcast(topic.topicDataType)
 
         stream.foreachRDD(rdd => {
           rdd.foreachPartition(partitionOfRecords => {
@@ -52,8 +55,8 @@ class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
             partitionOfRecords.foreach(record => {
               val bytes = topicDataTypeB.value match {
                 case "json" | "plaintext" => StringToByteArrayUtil.stringToByteArray(record)
-                case "avro" => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
-                case _ => AvroToJsonUtil.jsonToAvro(record, schemaB.value)
+                case "avro" => AvroToJsonUtil.jsonToAvro(record, schemaB.value, topic.useAvroSchemaManager)
+                case _ => AvroToJsonUtil.jsonToAvro(record, schemaB.value, topic.useAvroSchemaManager)
               }
               writer.send(topicNameB.value, null, bytes)
 
@@ -76,11 +79,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                           ss: SparkSession)
   extends SparkStructuredStreamingWriter
     with Logging {
-  
+
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
-    
+
     val sqlContext = stream.sqlContext
-    
+
     val kafkaConfig = ConfigManager.getKafkaConfig
     val tinyKafkaConfig = kafkaConfig.toTinyConfig()
 
@@ -100,21 +103,21 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     }
     val mainTopicModel = topicOpt.get
     val prototypeTopicModel = topics.head
-    
+
     MultiTopicModel.validateTopicModels(topics)
-  
+
     logger.info(s"Writing with topic model: $mainTopicModel")
     if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
       logger.info(s"""Topic model "${mainTopicModel.name}" is a MultiTopicModel for topics: $topics""")
     }
-    
+
     logger.info(s"Creating topics $topics")
-    
+
     topics.foreach(topic =>
       if (! ??[Boolean](WaspSystem.kafkaAdminActor,
-                      CheckOrCreateTopic(topic.name,
-                                         topic.partitions,
-                                         topic.replicas)))
+        CheckOrCreateTopic(topic.name,
+          topic.partitions,
+          topic.replicas)))
         throw new Exception(s"""Error creating topic "${prototypeTopicModel.name}"""")
     )
 
@@ -123,49 +126,47 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val keyFieldName = prototypeTopicModel.keyFieldName
     val headersFieldName = prototypeTopicModel.headersFieldName
     val valueFieldsNames = prototypeTopicModel.valueFieldsNames
-    
+
     val convertedStream = prototypeTopicModel.topicDataType match {
-      case "avro" => {
+      case "avro" =>
         convertStreamForAvro(keyFieldName,
-                             headersFieldName,
-                             topicFieldName,
-                             valueFieldsNames,
-                             stream,
-                             prototypeTopicModel)
-      }
-      case "json" => {
+          headersFieldName,
+          topicFieldName,
+          valueFieldsNames,
+          stream,
+          prototypeTopicModel)
+      case "json" =>
         convertStreamForJson(keyFieldName,
-                             headersFieldName,
-                             topicFieldName,
-                             valueFieldsNames,
-                             stream,
-                             prototypeTopicModel)
-      }
-      case "plaintext" => {
+          headersFieldName,
+          topicFieldName,
+          valueFieldsNames,
+          stream,
+          prototypeTopicModel)
+      case "plaintext" =>
         convertStreamForPlaintext(keyFieldName,
-                                  headersFieldName,
-                                  topicFieldName,
-                                  valueFieldsNames,
-                                  stream,
-                                  prototypeTopicModel)
-      }
-      case "binary" => {
+          headersFieldName,
+          topicFieldName,
+          valueFieldsNames,
+          stream,
+          prototypeTopicModel)
+      case "binary" =>
         convertStreamForBinary(keyFieldName,
-                               headersFieldName,
-                               topicFieldName,
-                               valueFieldsNames,
-                               stream,
-                               prototypeTopicModel)
-      }
-      case topicDataType => throw new UnsupportedOperationException(s"Unknown topic data type $topicDataType")
+          headersFieldName,
+          topicFieldName,
+          valueFieldsNames,
+          stream,
+          prototypeTopicModel)
+
+      case topicDataType =>
+        throw new UnsupportedOperationException(s"Unknown topic data type $topicDataType")
     }
-    
+
     val finalStream = addTopicNameCheckIfNeeded(topicFieldName, topics, convertedStream)
 
     val partialDataStreamWriter = finalStream
       .writeStream
       .format("kafka")
-    
+
     val partialDataStreamWriterAfterTopicConf =
       if (topicFieldName.isDefined)
         partialDataStreamWriter
@@ -176,7 +177,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
     finalDataStreamWriter
   }
-  
+
   private def convertStreamForAvro(keyFieldName: Option[String],
                                    headersFieldName: Option[String],
                                    topicFieldName: Option[String],
@@ -187,7 +188,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val tempKeyFieldName = s"key_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
     val tempHeadersFieldName = s"headers_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
     val tempTopicFieldName = s"topic_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
-  
+
     // generate select expressions to clone metadata columns and keep only the values specified
     val selectExpressionsForTempColumns =
       keyFieldName.map(kfn => s"CAST($kfn AS binary) $tempKeyFieldName").toList ++
@@ -195,33 +196,39 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
         topicFieldName.map(tfn => s"$tfn AS $tempTopicFieldName").toList ++
         valueFieldsNames.map(vfn => vfn).getOrElse(Seq("*"))
     logger.debug(s"Generated select expressions: ${selectExpressionsForTempColumns.mkString("[", "], [", "]")}")
-  
+
     // project the data so we have a known order for the metadata columns with the rest of the data after
     val streamWithTempColumns = stream.selectExpr(selectExpressionsForTempColumns: _*)
     logger.debug(s"Stream with temp columns schema:\n${streamWithTempColumns.schema.treeString}")
-  
+
     // this tells us where the data starts, everything eventually present before is metadata
     val dataOffset = Seq(keyFieldName, headersFieldName, topicFieldName).count(_.isDefined)
-  
+
     // generate a schema and avro converter for the values
     val valueSchema = StructType(
       streamWithTempColumns.schema.drop(dataOffset)
     )
     logger.debug(s"Generated value schema:\n${valueSchema.treeString}")
+    val darwinConf = if (prototypeTopicModel.useAvroSchemaManager) {
+      Some(ConfigManager.getAvroSchemaManagerConfig)
+    } else {
+      None
+    }
     // TODO use sensible namespace instead of wasp
-    val converter = RowToAvro(valueSchema, prototypeTopicModel.name, "wasp", None, Some(prototypeTopicModel.getJsonSchema))
+    val converter = RowToAvro(valueSchema, prototypeTopicModel.name, prototypeTopicModel.useAvroSchemaManager, "wasp",
+      None, Some(prototypeTopicModel.getJsonSchema), darwinConf)
     val dataConverter: Row => Array[Byte] = converter.write
-  
+
     // generate a schema and encoder for final metadata & data
     val schema = StructType(
       keyFieldName.map(_ => StructField("key", BinaryType, nullable = true)).toList ++
         headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE, nullable = false)).toList ++
-        topicFieldName.map(_ => StructField("topic", StringType, nullable = false)).toList:+
+        topicFieldName.map(_ => StructField("topic", StringType, nullable = false)).toList :+
         StructField("value", BinaryType, nullable = false)
     )
     logger.debug(s"Generated final schema:\n${schema.treeString}")
     val encoder = RowEncoder(schema)
-  
+
     // process the stream, extracting the data and converting it, and leaving metadata as is
     val processedStream = streamWithTempColumns.map(row => {
       val inputElements = row.toSeq
@@ -231,12 +238,12 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       val outputElements = metadata :+ convertedData
       Row.fromSeq(outputElements)
     })(encoder)
-  
+
     logger.debug(s"Actual final schema:\n${processedStream.schema.treeString}")
-  
+
     processedStream
   }
-  
+
   private def convertStreamForJson(keyFieldName: Option[String],
                                    headersFieldName: Option[String],
                                    topicFieldName: Option[String],
@@ -250,15 +257,15 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
         headersFieldName.map(hfn => s"$hfn AS headers").toList ++
         topicFieldName.map(tfn => s"$tfn AS topic").toList :+
         s"to_json(struct($valueSelectExpression)) AS value"
-  
+
     logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
-  
+
     // TODO check that json produced matches schema
-    
+
     // convert input
     stream.selectExpr(selectExpressions: _*)
   }
-  
+
   private def convertStreamForPlaintext(keyFieldName: Option[String],
                                         headersFieldName: Option[String],
                                         topicFieldName: Option[String],
@@ -267,39 +274,39 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                         prototypeTopicModel: TopicModel) = {
     // there must be exactly one value field name and it must be a column of type string
     require(valueFieldsNames.isDefined && valueFieldsNames.get.size == 1,
-            "Exactly one value field name must be defined for plaintext topic data type but zero or more than one " +
-              s"were specified; value field names: ${valueFieldsNames.get.mkString("\"","\", \"","\"")}")
+      "Exactly one value field name must be defined for plaintext topic data type but zero or more than one " +
+        s"were specified; value field names: ${valueFieldsNames.get.mkString("\"", "\", \"", "\"")}")
     val valueFieldName = valueFieldsNames.get.head
     val maybeValueColumn = stream.schema.find(_.name == valueFieldName)
     require(maybeValueColumn.isDefined,
-            s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
-              s"""${stream.schema.map(_.name).mkString("[","], [","]")}""")
+      s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
+        s"""${stream.schema.map(_.name).mkString("[", "], [", "]")}""")
     val valueColumn = maybeValueColumn.get
     val valueColumnDataType = valueColumn.dataType
     require(valueColumnDataType == StringType,
-            s"""The specified value field name "$valueFieldName" matches a column with a type that is not string; """ +
-              s"incompatible type $valueColumnDataType found")
-    
+      s"""The specified value field name "$valueFieldName" matches a column with a type that is not string; """ +
+        s"incompatible type $valueColumnDataType found")
+
     // generate select expressions to rename metadata and data columns
     val selectExpressions =
       keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
         headersFieldName.map(hfn => s"$hfn AS headers").toList ++
         topicFieldName.map(tfn => s"$tfn AS topic").toList :+
         s"$valueFieldName AS value_string"
-  
+
     logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
-  
+
     // prepare the udf
     val stringToByteArray: String => Array[Byte] = StringToByteArrayUtil.stringToByteArray
     val stringToByteArrayUDF = udf(stringToByteArray)
-    
+
     // convert input
     stream
       .selectExpr(selectExpressions: _*)
       .withColumn("value", stringToByteArrayUDF(col("value_string")))
       .drop("value_string")
   }
-  
+
   private def convertStreamForBinary(keyFieldName: Option[String],
                                      headersFieldName: Option[String],
                                      topicFieldName: Option[String],
@@ -308,28 +315,28 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                      prototypeTopicModel: TopicModel) = {
     // there must be exactly one value field name and it must be a column of type binary
     require(valueFieldsNames.isDefined && valueFieldsNames.get.size == 1,
-            "Exactly one value field name must be defined for binary topic data type but zero or more than one were " +
-              s"specified; value field names: ${valueFieldsNames.get.mkString("\"","\", \"","\"")}")
+      "Exactly one value field name must be defined for binary topic data type but zero or more than one were " +
+        s"specified; value field names: ${valueFieldsNames.get.mkString("\"", "\", \"", "\"")}")
     val valueFieldName = valueFieldsNames.get.head
     val maybeValueColumn = stream.schema.find(_.name == valueFieldName)
     require(maybeValueColumn.isDefined,
-            s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
-              s"""${stream.schema.map(_.name).mkString("[","], [","]")}""")
+      s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
+        s"""${stream.schema.map(_.name).mkString("[", "], [", "]")}""")
     val valueColumn = maybeValueColumn.get
     val valueColumnDataType = valueColumn.dataType
     require(valueColumnDataType == BinaryType,
-            s"""The specified value field name "$valueFieldName" matches a column with a type that is not binary; """ +
-              s"incompatible type $valueColumnDataType found")
-    
+      s"""The specified value field name "$valueFieldName" matches a column with a type that is not binary; """ +
+        s"incompatible type $valueColumnDataType found")
+
     // generate select expressions to rename metadata and data columns
     val selectExpressions =
       keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
         headersFieldName.map(hfn => s"$hfn AS headers").toList ++
         topicFieldName.map(tfn => s"$tfn AS topic").toList :+
         s"$valueFieldName AS value"
-    
+
     logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
-    
+
     // convert input
     stream.selectExpr(selectExpressions: _*)
   }
@@ -352,9 +359,10 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       stream.withColumn("topic", checkTopicNameUdf(col("topic")))
     }
   }
+
   private def addKafkaConf(dsw: DataStreamWriter[Row], tkc: TinyKafkaConfig): DataStreamWriter[Row] = {
 
-    val connectionString = tkc.connections.map{
+    val connectionString = tkc.connections.map {
       conn => s"${conn.host}:${conn.port}"
     }.mkString(",")
 

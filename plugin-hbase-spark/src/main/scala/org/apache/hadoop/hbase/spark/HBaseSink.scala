@@ -1,5 +1,7 @@
 package org.apache.hadoop.hbase.spark
 
+import com.typesafe.config.{Config, ConfigFactory}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
@@ -11,6 +13,8 @@ import org.apache.spark.sql.execution.streaming.Sink
 import org.apache.spark.sql.execution.{QueryExecution, SQLExecution}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+
+import scala.collection.JavaConverters._
 
 /**
   * Created by Agile Lab s.r.l. on 04/11/2017.
@@ -26,6 +30,7 @@ class HBaseSink(sparkSession: SparkSession, parameters: Map[String, String], hBa
     * @param data
     */
   override def addBatch(batchId: Long, data: DataFrame): Unit = {
+
     val queryExecution: QueryExecution = data.queryExecution
     val schema: StructType = data.schema
     val putConverterFactory = PutConverterFactory(parameters, schema)
@@ -92,6 +97,14 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
                                   |""".stripMargin
   )
 
+  val useSchemaAvroManager: Boolean = catalog.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false)
+
+  val darwinConf = if (parameters.get("useavroschemamanager").map(_.toBoolean).getOrElse(false)) {
+    Some(ConfigManager.getAvroSchemaManagerConfig)
+  } else {
+    None
+  }
+
   val colsIdxedFields: Seq[(Int, Field)] = schema
     .fieldNames
     .partition(x => rkFields.map(_.colName).contains(x))
@@ -106,7 +119,7 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
   def convertToPut(row: Row): Put = {
     // construct bytes for row key
     val rowBytes = rkIdxedFields.map { case (x, y) =>
-      Utils.toBytes(row(x), y)
+      Utils.toBytes(row(x), y, useSchemaAvroManager, darwinConf)
     }
     val rLen = rowBytes.foldLeft(0) { case (x, y) =>
       x + y.length
@@ -136,7 +149,7 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
       case (_, f) => isStandardColumnFamily(f)
     }.foreach { case (colIndex, field) =>
       if (!row.isNullAt(colIndex)) {
-        val b = Utils.toBytes(row(colIndex), field)
+        val b = Utils.toBytes(row(colIndex), field, useSchemaAvroManager, darwinConf)
         put.addColumn(Bytes.toBytes(field.cf), Bytes.toBytes(field.col), b)
       }
     }
@@ -162,7 +175,7 @@ case class PutConverterFactory(@transient parameters: Map[String, String],
           val cf = Bytes.toBytes(field.cf)
           // Compose final denormalized cq
           val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}|${field.col}")
-          val data = Utils.toBytes(row(colIndex), field)
+          val data = Utils.toBytes(row(colIndex), field, useSchemaAvroManager, darwinConf)
 
           put.addColumn(cf, finalCq, data)
         }

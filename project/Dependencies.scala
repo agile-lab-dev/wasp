@@ -103,6 +103,10 @@ object Dependencies {
 	val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
 	val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
 	val avro = "org.apache.avro" % "avro" % Versions.avro
+	val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion
+	val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion
+	val darwinCore = "it.agilelab" %% "darwin-core" % Versions.darwin
+	val darwinHBaseConnector = "it.agilelab" %% "darwin-hbase-connector" % Versions.darwin
 	val camelKafka = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
 	val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
@@ -147,6 +151,7 @@ object Dependencies {
 	val zkclient = "com.101tec" % "zkclient" % "0.3"
 
 
+
 	// grouped dependencies, for convenience =============================================================================
 	val akka = Seq(
 		akkaActor,
@@ -168,6 +173,10 @@ object Dependencies {
 	val spark = Seq(sparkCore, sparkMLlib, sparkSQL, sparkYarn)
 
 	val time = Seq(jodaConvert, jodaTime)
+
+	val schemaRegistry = Seq(darwinCore, darwinHBaseConnector)
+
+	val avro4s = Seq(avro4sCore, avro4sJson)
 
 
 	// ===================================================================================================================

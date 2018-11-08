@@ -36,6 +36,7 @@ private[wasp] object LoggerTopicModel {
 	                         keyFieldName = None,
 	                         headersFieldName = None,
 	                         valueFieldsNames = None,
+		                       useAvroSchemaManager=false,
 	                         schema = JsonConverter
 		                         .fromString(topicSchema)
 		                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))
@@ -93,6 +94,7 @@ private[wasp] object TelemetryTopicModel {
 	                         keyFieldName = None,
 	                         headersFieldName = None,
 	                         valueFieldsNames = None,
+		                       useAvroSchemaManager=false,
 	                         schema = JsonConverter
 		                         .fromString(topicSchema)
 		                         .getOrElse(org.mongodb.scala.bson.BsonDocument()))

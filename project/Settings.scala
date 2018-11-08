@@ -27,6 +27,7 @@ object Settings {
 	val mavenLocalRepo = Resolver.mavenLocal
 	val sonatypeReleaseRepo = Resolver.sonatypeRepo("releases")
 	val bintraySparkSolrRepo = Resolver.bintrayRepo("agile-lab-dev", "Spark-Solr")
+        val bintrayDarwinRepo = Resolver.bintrayRepo("agile-lab-dev", "Darwin")
 	val typesafeReleaseRepo = "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
 	val restletMavenRepo = "Restlet Maven repository" at "https://maven.restlet.com/"
 	val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
@@ -36,6 +37,7 @@ object Settings {
 		//mavenLocalRepo,
 		sonatypeReleaseRepo,
 		bintraySparkSolrRepo,
+                bintrayDarwinRepo,
 		typesafeReleaseRepo,
 		restletMavenRepo,
 		clouderaHadoopReleaseRepo
@@ -52,6 +54,7 @@ object Settings {
 			"-language:_",
 			"-deprecation",
 			"-unchecked",
+			"-Ylog-classpath",
 			"-Xlint",
 			"-Xmax-classfile-name", "72"),
 		javacOptions ++= Seq(
