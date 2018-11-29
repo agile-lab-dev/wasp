@@ -122,6 +122,7 @@ object Dependencies {
 	val json4sCore = "org.json4s" %% "json4s-core" % Versions.json4s
 	val json4sJackson = "org.json4s" %% "json4s-jackson" % Versions.json4s
 	val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
+	val jacksonModule = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.4"
   val kafka = ("org.apache.kafka" %% "kafka" % Versions.cdk).kafkaExclusions.kafkaJacksonExclusions
   val kafkaClients = ("org.apache.kafka" % "kafka-clients" % Versions.cdk).kafkaExclusions.kafkaJacksonExclusions
   val kafkaStreaming = ("org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark).sparkExclusions.kafka8Exclusions
@@ -164,7 +165,7 @@ object Dependencies {
 
 	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer)
 
-	val json = Seq(json4sCore, json4sJackson, json4sNative)
+	val json = Seq(json4sCore, json4sJackson, json4sNative, jacksonModule)
 
 	val logging = Seq(slf4jApi)
 
