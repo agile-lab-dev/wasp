@@ -9,9 +9,11 @@ FROM library/ubuntu:16.04
 MAINTAINER AgileLab <infra@agilelab.it>
 
 # Define helpful variables
-ENV JAVA_VERSION 8u181
+ENV JAVA_VERSION 8u191
 ENV JAVA_PKG="jdk-${JAVA_VERSION}-linux-x64.tar.gz"
-ENV JAVA_PKG_DOWNLOAD_URL="http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/${JAVA_PKG}"
+
+
+ENV JAVA_PKG_DOWNLOAD_URL="https://download.oracle.com/otn-pub/java/jdk/8u191-b12/2787e4a523244c269598db4e85c51e0c/$JAVA_PKG"
 
 # Prepare, download, extract, configure, cleanup
 RUN apt-get update && \
@@ -19,7 +21,7 @@ RUN apt-get update && \
     apt-get install -y curl wget tcpdump iputils-ping krb5-kdc krb5-admin-server python gettext-base && \
     mkdir /usr/java/ && \
     echo "Downloading Oracle JDK from ${JAVA_PKG_DOWNLOAD_URL}" && \
-    wget --no-cookies -q --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" ${JAVA_PKG_DOWNLOAD_URL} && \
+    wget --no-cookies -q --no-check-certificate --header "Cookie: gpw_e24=https%3A%2F%2Fwww.oracle.com%2Ftechnetwork%2Fjava%2Fjavase%2Fdownloads%2Fjdk8-downloads-2133151.html; oraclelicense=accept-securebackup-cookie" ${JAVA_PKG_DOWNLOAD_URL} && \
     echo "Extracting archive ${JAVA_PKG}" && \
     tar -xvzf ${JAVA_PKG}  -C /usr/java/ && \
     echo "Configuring" && \
