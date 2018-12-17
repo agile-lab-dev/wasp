@@ -289,6 +289,21 @@ object HBaseTableCatalog {
           schemaMap.+=((name, f))
       }
     }
+
+    val clusteringColumns: Iterable[String] = clusteringFieldsMap.values.flatten
+
+    //Check if all the clustering columns are of type string
+    clusteringColumns.foreach(clColumn => {
+      val fieldTypeOpt: Option[String] = schemaMap(clColumn).sType
+
+      if(fieldTypeOpt.isDefined) {
+        val fieldType = fieldTypeOpt.get
+
+        if(fieldType != "string")
+          throw new IllegalArgumentException(s"The clustering columns must be of type string. The column $clColumn is of type $fieldType instead.")
+      }
+    })
+
     val rKey = RowKey(map.get(rowKey).get.asInstanceOf[String])
 
     HBaseTableCatalog(nSpace, tName, rKey, SchemaMap(schemaMap), clusteringFieldsMap.toMap, parameters)
