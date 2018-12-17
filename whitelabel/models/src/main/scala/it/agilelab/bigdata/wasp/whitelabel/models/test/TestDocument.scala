@@ -6,6 +6,11 @@ case class TestDocument(id: String,
                         number: Int,
                         nested: TestNestedDocument)
 
+case class TestDocumentHbaseMultiClustering(id: String,
+                                            number: Int,
+                                            nested: TestNestedDocument,
+                                            number_clustering: Int)
+
 case class TestNestedDocument(field1: String,
                               field2: Long,
                               field3: Option[String])

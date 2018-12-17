@@ -283,6 +283,31 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val hbaseMultipleClustering = PipegraphModel(
+        name = "TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
+        description = "Description of TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json6, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbaseMultipleClusteringKeyValueModel),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None
+      )
+
       lazy val multiETL = PipegraphModel(
         name = "TestMultiEtlJSONPipegraph",
         description = "Description of TestMultiEtlJSONPipegraph",

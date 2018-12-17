@@ -10,6 +10,7 @@ private[wasp] object TestTopicModel {
   private val topic3_name = "test3"
   private val topic4_name = "test4"
   private val topic5_name = "test5"
+  private val topic6_name = "test6"
   private val topicCheckpoint_name = "testCheckpoint"
 
   lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
@@ -24,6 +25,19 @@ private[wasp] object TestTopicModel {
                              schema = JsonConverter
                                .fromString(topicSchema)
                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+
+  lazy val json6 = TopicModel(name = TopicModel.name(topic6_name + "_json"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "json",
+    keyFieldName = None,
+    headersFieldName = None,
+    valueFieldsNames = None,
+    useAvroSchemaManager = false,
+    schema = JsonConverter
+      .fromString(topicSchemaHbaseMultipleClustering)
+      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
 
   lazy val jsonWithMetadata = TopicModel(name = TopicModel.name(topic_name + "_with_metadata_json"),
                                          creationTime = System.currentTimeMillis,
@@ -225,6 +239,43 @@ private[wasp] object TestTopicModel {
         |                             "type" : "string"}
         |                          ]
         |                      }
+        |        }
+      """.stripMargin))
+
+  private val topicSchemaHbaseMultipleClustering =
+    TopicModel.generateField("test", "test", Some(
+      """
+        |        {
+        |            "name": "id",
+        |            "type": "string",
+        |            "doc": ""
+        |        },
+        |        {
+        |            "name": "number",
+        |            "type": "int",
+        |            "doc": ""
+        |        },
+        |        {
+        |            "name": "nested",
+        |            "type" : {
+        |                         "type" : "record",
+        |                         "name" : "nested_document",
+        |                         "fields" : [
+        |                            {"name" : "field1",
+        |                             "type" : "string"},
+        |
+        |                            {"name" : "field2",
+        |                             "type" : "long"},
+        |
+        |                            {"name" : "field3",
+        |                             "type" : "string"}
+        |                          ]
+        |                      }
+        |        },
+        |        {
+        |            "name": "number_clustering",
+        |            "type": "int",
+        |            "doc": ""
         |        }
       """.stripMargin))
 
