@@ -103,8 +103,10 @@ object Dependencies {
 	val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
 	val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
 	val avro = "org.apache.avro" % "avro" % Versions.avro
-	val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion
-	val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion
+	// avro4s requires a json4s version incompatible with wasp, downstream projects confirmed that this exclusion does
+	// not create issues with darwin and avro parsing
+	val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion excludeAll ExclusionRule("org.json4s")
+	val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion excludeAll ExclusionRule("org.json4s")
 	val darwinCore = "it.agilelab" %% "darwin-core" % Versions.darwin
 	val darwinHBaseConnector = "it.agilelab" %% "darwin-hbase-connector" % Versions.darwin
 	val camelKafka = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
@@ -122,7 +124,6 @@ object Dependencies {
 	val json4sCore = "org.json4s" %% "json4s-core" % Versions.json4s
 	val json4sJackson = "org.json4s" %% "json4s-jackson" % Versions.json4s
 	val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
-	val jacksonModule = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.4"
   val kafka = ("org.apache.kafka" %% "kafka" % Versions.cdk).kafkaExclusions.kafkaJacksonExclusions
   val kafkaClients = ("org.apache.kafka" % "kafka-clients" % Versions.cdk).kafkaExclusions.kafkaJacksonExclusions
   val kafkaStreaming = ("org.apache.spark" %% "spark-streaming-kafka-0-8" % Versions.spark).sparkExclusions.kafka8Exclusions
@@ -165,7 +166,7 @@ object Dependencies {
 
 	val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer)
 
-	val json = Seq(json4sCore, json4sJackson, json4sNative, jacksonModule)
+	val json = Seq(json4sCore, json4sJackson, json4sNative)
 
 	val logging = Seq(slf4jApi)
 
