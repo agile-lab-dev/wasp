@@ -32,6 +32,7 @@ object Dependencies {
 
 		def solrExclusion: ModuleID =
 			module.log4jExclude
+				.excludeAll("org.apache.spark")
 				.exclude("org.objenesis", "objenesis")
 				.exclude("org.apache.zookeeper", "zookeeper")
 
@@ -118,6 +119,8 @@ object Dependencies {
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase hbaseExclusion
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase hbaseExclusion
 	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase hbaseExclusion
+	val httpClient = "org.apache.httpcomponents" % "httpclient" % Versions.httpClient
+	val httpCore = "org.apache.httpcomponents" % "httpclient" % Versions.httpClient
 	val httpmime = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
 	val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
 	val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
@@ -284,6 +287,8 @@ object Dependencies {
 	).map(excludeLog4j).map(excludeNetty)
 	
 	val plugin_solr_spark = Seq(
+		httpClient,
+		httpCore,
 		solrj,
 		sparkSolr
 	).map(excludeNetty)
