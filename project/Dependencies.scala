@@ -119,8 +119,8 @@ object Dependencies {
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase hbaseExclusion
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase hbaseExclusion
 	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase hbaseExclusion
-	val httpClient = "org.apache.httpcomponents" % "httpclient" % Versions.httpClient
-	val httpCore = "org.apache.httpcomponents" % "httpclient" % Versions.httpClient
+	val httpClient = "org.apache.httpcomponents" % "httpclient" % Versions.httpcomponents
+	val httpCore = "org.apache.httpcomponents" % "httpcore" % Versions.httpcomponents
 	val httpmime = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
 	val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
 	val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime

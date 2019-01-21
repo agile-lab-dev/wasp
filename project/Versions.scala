@@ -18,7 +18,7 @@ object Versions {
 	val elasticSearchSpark = "6.1.2"
 	val guava = "14.0.1"
 	val hbase = s"1.2.0-$cdh"
-	val httpClient = "4.3.6"
+	val httpcomponents = "4.3.3"
 	val jdk = "1.8"
 	val jetty = "9.3.20.v20170531"
 	val jodaConvert = "1.8.1"
