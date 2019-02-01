@@ -21,7 +21,7 @@ import java.io.File
 import java.util
 import java.util.concurrent.ConcurrentLinkedQueue
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -44,7 +44,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
 
 import scala.collection.mutable
-import scala.collection.JavaConverters._
 
 /**
   * DefaultSource for integration with Spark's dataframe datasources.
@@ -160,14 +159,16 @@ case class HBaseRelation(
 
   val catalog = HBaseTableCatalog(parameters)
 
-  val darwinConf = if (parameters.get("useavroschemamanager").map(_.toBoolean).getOrElse(false)) {
+  val useSchemaAvroManager: Boolean = parameters.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false)
+
+  val darwinConf: Option[Config] = if (useSchemaAvroManager) {
     Some(ConfigManager.getAvroSchemaManagerConfig)
   } else {
     None
   }
 
 
-  def tableName = catalog.name
+  def tableName: String = catalog.namespace + ":" + catalog.name
 
   val configResources = parameters.getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
   val useHBaseContext = parameters.get(HBaseSparkConf.USE_HBASECONTEXT).map(_.toBoolean).getOrElse(HBaseSparkConf.DEFAULT_USE_HBASECONTEXT)
@@ -244,7 +245,7 @@ case class HBaseRelation(
           val tableDesc = new HTableDescriptor(tName)
           cfs.foreach { x =>
             val cf = new HColumnDescriptor(x.getBytes())
-            logDebug(s"add family $x to ${catalog.name}")
+            logDebug(s"add family $x to $tableName")
             tableDesc.addFamily(cf)
           }
           val splitKeys = Bytes.split(startKey, endKey, numReg);
@@ -282,7 +283,7 @@ case class HBaseRelation(
   override def insert(data: DataFrame, overwrite: Boolean): Unit = {
     val jobConfig: JobConf = new JobConf(hbaseConf, this.getClass)
     jobConfig.setOutputFormat(classOf[TableOutputFormat])
-    jobConfig.set(TableOutputFormat.OUTPUT_TABLE, catalog.name)
+    jobConfig.set(TableOutputFormat.OUTPUT_TABLE, tableName)
     var count = 0
     val rkFields = catalog.getRowKey
     val rkIdxedFields = rkFields.map { case x =>
@@ -297,7 +298,7 @@ case class HBaseRelation(
     def convertToPut(row: Row): (ImmutableBytesWritable, Put) = {
       // construct bytes for row key
       val rowBytes = rkIdxedFields.map { case (x, y) =>
-        Utils.toBytes(row(x), y, catalog.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false), darwinConf)
+        Utils.toBytes(row(x), y, useSchemaAvroManager, darwinConf)
       }
       val rLen = rowBytes.foldLeft(0) { case (x, y) =>
         x + y.length
@@ -320,7 +321,7 @@ case class HBaseRelation(
         case (_, f) => isStandardColumnFamily(f)
       }.foreach { case (colIndex, field) =>
         if (!row.isNullAt(colIndex)) {
-          val b = Utils.toBytes(row(colIndex), field, catalog.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false), darwinConf)
+          val b = Utils.toBytes(row(colIndex), field, useSchemaAvroManager, darwinConf)
           put.addColumn(Bytes.toBytes(field.cf), Bytes.toBytes(field.col), b)
         }
       }
@@ -346,7 +347,7 @@ case class HBaseRelation(
             val cf = Bytes.toBytes(field.cf)
             // Compose final denormalized cq
             val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}|${field.col}")
-            val data = Utils.toBytes(row(colIndex), field, catalog.get("useAvroSchemaManager").map(_.toBoolean).getOrElse(false), darwinConf)
+            val data = Utils.toBytes(row(colIndex), field, useSchemaAvroManager, darwinConf)
 
             put.addColumn(cf, finalCq, data)
           }
