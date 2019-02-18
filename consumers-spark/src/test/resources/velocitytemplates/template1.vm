@@ -1,0 +1,10 @@
+TEMPLATE 1
+eventId = ${eventId}
+eventType = ${eventType}
+severity = ${severity}
+payload = ${payload}
+timestamp = ${timestamp}
+source = ${source}
+sourceId = ${sourceId}
+ruleName = ${ruleName}
+

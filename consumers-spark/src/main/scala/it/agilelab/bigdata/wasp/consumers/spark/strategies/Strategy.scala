@@ -29,7 +29,7 @@ trait Strategy extends Serializable {
    */
   def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame
 
-  //TODO Implement join in ConsumenrETLActor
+  //TODO Implement join in ConsumerETLActor
   def join(dsStreams: Map[ReaderKey, DStream[String]]): DStream[String] = dsStreams.head._2
 
 

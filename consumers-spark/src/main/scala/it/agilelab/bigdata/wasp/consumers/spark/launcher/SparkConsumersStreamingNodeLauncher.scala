@@ -13,6 +13,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.PluginBasedSparkReaderFa
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.WebMailProduct
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager

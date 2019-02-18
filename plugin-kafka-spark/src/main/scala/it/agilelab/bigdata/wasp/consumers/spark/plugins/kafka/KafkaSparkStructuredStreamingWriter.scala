@@ -48,7 +48,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       headersFieldName,
       valueFieldsNames)
 
-    val partialDataStreamWriter = stream
+    val partialDataStreamWriter = finalDf
       .writeStream
       .format("kafka")
 

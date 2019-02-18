@@ -19,6 +19,7 @@ trait KeyValueCategory  extends DatastoreCategory with StreamingSink with BatchS
 trait RawCategory       extends DatastoreCategory with StreamingSink with BatchSourceAndSink { override val categoryName = "raw"       }
 trait TopicCategory     extends DatastoreCategory with StreamingAndBatchSourceAndSink        { override val categoryName = "topic"     }
 trait WebSocketCategory extends DatastoreCategory with StreamingSourceAndSink                { override val categoryName = "websocket" }
+trait WebMailCategory 	extends DatastoreCategory with StreamingSink												 { override val categoryName = "webmail"   }
 trait DocumentCategory  extends DatastoreCategory with StreamingSink with BatchSourceAndSink { override val categoryName = "document"  }
 
 /**
@@ -57,6 +58,7 @@ sealed trait DatastoreProduct extends DatastoreCategory {
 			case _: RawCategory       => RawProduct.productName.get
 			case _: TopicCategory     => KafkaProduct.productName.get
 			case _: WebSocketCategory => WebSocketProduct.productName.get
+			case _: WebMailCategory   => WebMailProduct.productName.get
 			case _: DocumentCategory  => MongoDbProduct.productName.get
 			case _                    =>
 				throw new IllegalArgumentException(s"""Unknown datastore category "$categoryName" of $this, unable to provide
@@ -88,7 +90,8 @@ object DatastoreProduct {
 	object GenericIndexProduct    extends IndexCategory     with DatastoreProduct { override val productName = None              }
 	object GenericKeyValueProduct extends KeyValueCategory  with DatastoreProduct { override val productName = None              }
 	object GenericTopicProduct    extends TopicCategory     with DatastoreProduct { override val productName = None              }
-	
+	object WebMailProduct					extends WebMailCategory   with DatastoreProduct { override val productName = Some("webmail")   }
+
 	// product lookup map for default datastore resolution
 	private val productsLookupMap = buildProductsLookupMap()
 	

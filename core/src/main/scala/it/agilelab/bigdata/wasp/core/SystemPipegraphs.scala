@@ -1,27 +1,37 @@
 package it.agilelab.bigdata.wasp.core
 
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, GenericIndexProduct, SolrProduct}
+import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingPipegraphModel
+import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventPipegraphModel
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
-import org.json4s.JObject
 
 /**
 	* Default system pipegraphs.
 	*/
 object SystemPipegraphs {
 	/** Logger  */
-	lazy val loggerTopic = LoggerTopicModel()
-	lazy val solrLoggerIndex = SolrLoggerIndex()
-  lazy val elasticLoggerIndex = ElasticLoggerIndexModel()
-	lazy val loggerProducer = LoggerProducer()
-	lazy val loggerPipegraph = LoggerPipegraph()
+	lazy val loggerTopic: TopicModel = LoggerTopicModel()
+	lazy val solrLoggerIndex: IndexModel = SolrLoggerIndex()
+  lazy val elasticLoggerIndex: IndexModel = ElasticLoggerIndexModel()
+	lazy val loggerProducer: ProducerModel = LoggerProducer()
+	lazy val loggerPipegraph: PipegraphModel = LoggerPipegraph()
 
 	
 	/** Telemetry  */
-	lazy val telemetryTopic = TelemetryTopicModel()
-	lazy val solrTelemetryIndex = SolrTelemetryIndexModel()
-  lazy val elasticTelemetryIndex = ElasticLatencyIndexModel()
-  lazy val telemetryPipegraph = TelemetryPipegraph()
+	lazy val telemetryTopic: TopicModel = TelemetryTopicModel()
+	lazy val solrTelemetryIndex: IndexModel = SolrTelemetryIndexModel()
+  lazy val elasticTelemetryIndex: IndexModel = ElasticLatencyIndexModel()
+  lazy val telemetryPipegraph: PipegraphModel = TelemetryPipegraph()
+
+
+
+	/** Event */
+	lazy val eventPipraph: PipegraphModel = EventPipegraphModel.eventPipegraph
+	lazy val mailerPipegraph: PipegraphModel = MailingPipegraphModel.mailingPipegraph
+	lazy val eventTopicModels: Seq[TopicModel] = EventPipegraphModel.outputTopicModels
+  //lazy val mailerInputTopics = null ==> nothing to do because it's a subset of eventOutputTopics
+
 }
 
 private[wasp] object LoggerTopicModel {

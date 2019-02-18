@@ -92,6 +92,12 @@ lazy val plugin_mongo_spark = Project("wasp-plugin-mongo-spark", file("plugin-mo
   .dependsOn(consumers_spark)
   .settings(libraryDependencies ++= Dependencies.plugin_mongo_spark)
 
+lazy val plugin_mailer_spark = Project("wasp-plugin-mailer-spark", file("plugin-mailer-spark"))
+	.settings(Settings.commonSettings: _*)
+	.dependsOn(consumers_spark)
+	.settings(libraryDependencies ++= Dependencies.plugin_mailer_spark)
+
+
 /* Yarn  */
 
 
@@ -128,23 +134,23 @@ lazy val spark = Project("wasp-spark", file("spark"))
 /* Framework + Plugins */
 
 lazy val wasp = Project("wasp", file("."))
-  .settings(Settings.commonSettings: _*)
-  .aggregate(core,
-    master,
-    producers,
-    consumers_spark,
-    consumers_rt,
-    plugin_console_spark,
-    plugin_elastic_spark,
-    plugin_hbase_spark,
-    plugin_jdbc_spark,
-    plugin_kafka_spark,
-    plugin_raw_spark,
-    plugin_solr_spark,
-    plugin_mongo_spark,
-    spark_sql_kafka_0_11,
-    yarn,
-    spark)
+	.settings(Settings.commonSettings: _*)
+	.aggregate(core,
+	           master,
+	           producers,
+	           consumers_spark,
+	           consumers_rt,
+	           plugin_console_spark,
+	           plugin_elastic_spark,
+	           plugin_hbase_spark,
+	           plugin_jdbc_spark,
+	           plugin_kafka_spark,
+	           plugin_raw_spark,
+	           plugin_solr_spark,
+		         yarn,
+					   spark,
+             plugin_mailer_spark,
+             spark_sql_kafka_0_11)
 
 /* WhiteLabel */
 
@@ -178,13 +184,14 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_hbase_spark)
   .dependsOn(plugin_jdbc_spark)
   .dependsOn(plugin_kafka_spark)
-  .dependsOn(plugin_raw_spark)
+  .dependsOn(plugin_mailer_spark)
+	.dependsOn(plugin_raw_spark)
   .dependsOn(plugin_solr_spark)
   .dependsOn(plugin_mongo_spark)
   .dependsOn(spark_telemetry_plugin)
-  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector 
-    :+ "mysql" % "mysql-connector-java" % "5.1.6" 
-    :+ Dependencies.scalaTest 
+  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector
+    :+ "mysql" % "mysql-connector-java" % "5.1.6"
+    :+ Dependencies.scalaTest
     :+ Dependencies.darwinMockConnector)
   .enablePlugins(JavaAppPackaging)
 

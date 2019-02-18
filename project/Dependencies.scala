@@ -37,7 +37,6 @@ object Dependencies {
         .exclude("org.objenesis", "objenesis")
         .exclude("org.apache.zookeeper", "zookeeper")
 
-
     def sparkExclusions: ModuleID =
       module.log4jExclude
         .exclude("io.netty", "netty")
@@ -125,6 +124,7 @@ object Dependencies {
   val httpClient = "org.apache.httpcomponents" % "httpclient" % Versions.httpcomponents
   val httpCore = "org.apache.httpcomponents" % "httpcore" % Versions.httpcomponents
   val httpmime = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
+  val javaxMail = "javax.mail" % "mail" % "1.4"
   val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
   val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
   val json4sCore = "org.json4s" %% "json4s-core" % Versions.json4s
@@ -156,6 +156,7 @@ object Dependencies {
   val sparkTags = "org.apache.spark" %% "spark-tags" % Versions.spark sparkExclusions
   val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
   val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
+	val velocity = "org.apache.velocity" % "velocity" % "1.7"
   val zkclient = "com.101tec" % "zkclient" % "0.3"
   val mySql = "mysql" % "mysql-connector-java" % "5.1.6"
   val nameOf = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
@@ -229,6 +230,7 @@ object Dependencies {
   )).map(excludeLog4j) ++ log4j
 
   val core = (akka ++
+		avro4s ++
     logging ++
     time ++
     json ++
@@ -260,7 +262,8 @@ object Dependencies {
       hbase ++
       spark :+
       quartz :+
-      nameOf
+      nameOf :+
+      velocity    //TODO: evaluate this is legal
     ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
     nettySpark :+
@@ -308,6 +311,11 @@ object Dependencies {
 		"org.mongodb.spark" %% "mongo-spark-connector" % "2.2.7",
 		"org.mongodb" % "mongo-java-driver" % "3.12.0"
 	).map(excludeNetty)
+
+	val plugin_mailer_spark = Seq (
+    javaxMail,
+    scalaTest
+	)
 
 
 	def kmsTest = Seq(

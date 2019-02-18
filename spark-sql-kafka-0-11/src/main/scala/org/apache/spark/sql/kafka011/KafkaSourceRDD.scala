@@ -143,6 +143,7 @@ private[kafka011] class KafkaSourceRDD(
     if (range.fromOffset == range.untilOffset) {
       logInfo(s"Beginning offset ${range.fromOffset} is the same as ending offset " +
         s"skipping ${range.topic} ${range.partition}")
+      consumer.close()
       Iterator.empty
     } else {
       val underlying = new NextIterator[ConsumerRecord[Array[Byte], Array[Byte]]]() {
@@ -166,13 +167,30 @@ private[kafka011] class KafkaSourceRDD(
           }
         }
 
+        // @OLD
+//        override protected def close(): Unit = {
+//          if (!reuseKafkaConsumer) {
+//            // Don't forget to close non-reuse KafkaConsumers. You may take down your cluster!
+//            consumer.close()
+//          } else {
+//            // Indicate that we're no longer using this consumer
+//            CachedKafkaConsumer.releaseKafkaConsumer(topic, kafkaPartition, executorKafkaParams)
+//          }
+//        }
+
+        // @NEW
         override protected def close(): Unit = {
           if (!reuseKafkaConsumer) {
             // Don't forget to close non-reuse KafkaConsumers. You may take down your cluster!
             consumer.close()
           } else {
+            //
             // Indicate that we're no longer using this consumer
-            CachedKafkaConsumer.releaseKafkaConsumer(topic, kafkaPartition, executorKafkaParams)
+            if(consumer.isMarkedForClose()){
+              consumer.close()
+            }else {
+              CachedKafkaConsumer.releaseKafkaConsumer(topic, kafkaPartition, executorKafkaParams)
+            }
           }
         }
       }

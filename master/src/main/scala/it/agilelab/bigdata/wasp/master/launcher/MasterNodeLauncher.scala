@@ -10,7 +10,10 @@ import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExcepti
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
+import com.sksamuel.avro4s.AvroSchema
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.core.eventengine.Event
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
 import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
@@ -51,7 +54,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     * @return [[Seq[(Key, Schema)]]
     */
   def registerSchema(): Seq[(Long, Schema)] = {
-    val schemas = Seq.empty[Schema]
+    val schemas = Seq(AvroSchema[Event])
     if (schemas.isEmpty) {
       Seq.empty
     } else {
@@ -78,8 +81,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.solrTelemetryIndex)
     waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.elasticTelemetryIndex)
 
-    /* Producers */
-    waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
+		/* Event Engine */
+		SystemPipegraphs.eventTopicModels.foreach(topicModel => waspDB.upsert[TopicModel](topicModel))
+		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.eventPipraph)
+		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.mailerPipegraph)
+
+		/* Producers */
+		waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
 
     /* Pipegraphs */
     waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)

@@ -1,17 +1,14 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
 import com.sksamuel.avro4s.AvroSchema
-import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
-import it.agilelab.darwin.manager.{AvroSchemaManager, AvroSchemaManagerFactory}
+import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import org.apache.avro.Schema
 import org.apache.commons.cli.CommandLine
-
-import scala.collection.JavaConversions._
 
 object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
@@ -26,7 +23,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     * @return [[Seq[(Key, Schema)]]
     */
   private def addExampleRegisterAvroSchema(): Unit = {
-    val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2], new Schema.Parser().parse(TestTopicModel.avro.schema.toJson))
+    val schemas: Seq[Schema] = Seq(AvroSchema[FakeData], AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2], new Schema.Parser().parse(TestTopicModel.avro.schema.toJson))
     val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
     AvroSchemaManagerFactory.initialize(configAvroSchemaManager).registerAll(schemas)
   }
@@ -100,6 +97,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[ProducerModel](TestProducerModel.avro)
     waspDB.upsert[ProducerModel](TestProducerModel.avroCheckpoint)
     waspDB.upsert[ProducerModel](TestProducerModel.jsonHbaseMultipleClustering)
+    waspDB.upsert[ProducerModel](FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
+    waspDB.upsert[TopicModel](FakeDataTopicModel.fakeDataTopicModel) //EVENT ENGINE
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)

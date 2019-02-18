@@ -50,6 +50,8 @@ object WriterModel {
     apply(name, rawModel, RawProduct, options)
 	def websocketWriter(name: String, websocketModel: WebsocketModel, options: Map[String, String] = Map.empty) =
     apply(name, websocketModel, WebSocketProduct, options)
+	def webMailWriter(name: String, webMailModel: WebMailModel, options: Map[String, String] = Map.empty) =
+		apply(name, webMailModel, WebMailProduct, options)
 	def consoleWriter(name: String, options: Map[String, String] = Map.empty) =
     apply(name, ConsoleProduct.getActualProductName, ConsoleProduct, options)
 	def mongoDbWriter(name: String, documentModel: DocumentModel, options: Map[String, String]): WriterModel =

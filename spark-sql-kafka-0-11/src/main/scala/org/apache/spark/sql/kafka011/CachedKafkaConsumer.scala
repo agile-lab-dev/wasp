@@ -17,14 +17,13 @@
 
 package org.apache.spark.sql.kafka011
 
+import java.util.UUID
 import java.{util => ju}
 import java.util.concurrent.TimeoutException
 
 import scala.collection.JavaConverters._
-
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer, OffsetOutOfRangeException}
 import org.apache.kafka.common.TopicPartition
-
 import org.apache.spark.{SparkEnv, SparkException, TaskContext}
 import org.apache.spark.internal.Logging
 import org.apache.spark.util.UninterruptibleThread
@@ -38,7 +37,13 @@ import org.apache.spark.util.UninterruptibleThread
 private[kafka011] case class CachedKafkaConsumer private(
     topicPartition: TopicPartition,
     kafkaParams: ju.Map[String, Object]) extends Logging {
-  
+
+  val uuid = UUID.randomUUID()
+
+  // @NEW counter-hook
+  ConsumerCounter.increment(this)
+
+
   import CachedKafkaConsumer._
   import KafkaSource._
 
@@ -47,7 +52,12 @@ private[kafka011] case class CachedKafkaConsumer private(
   private var consumer = createConsumer
 
   /** indicates whether this consumer is in use or not */
-  private var inuse = true
+  // private var inuse = true  @OLD
+  @volatile private var inuse = true  // @NEW
+
+  @volatile private var markedForClose = false // @NEW
+  def markForClose(): Unit = markedForClose = true // @NEW
+  def isMarkedForClose(): Boolean = markedForClose // @ NEW
 
   /** Iterator to the already fetch data */
   private var fetchedData = ju.Collections.emptyIterator[ConsumerRecord[Array[Byte], Array[Byte]]]
@@ -288,7 +298,10 @@ private[kafka011] case class CachedKafkaConsumer private(
     reportDataLoss0(failOnDataLoss, finalMessage, cause)
   }
 
-  def close(): Unit = consumer.close()
+  def close(): Unit = {
+    ConsumerCounter.decrement(this)
+    consumer.close()
+  }
 
   private def seek(offset: Long): Unit = {
     logDebug(s"Seeking to $groupId $topicPartition $offset")
@@ -383,6 +396,23 @@ private[kafka011] object CachedKafkaConsumer extends Logging {
 
     // If this is reattempt at running the task, then invalidate cache and start with
     // a new consumer
+    // @OLD
+//    if (TaskContext.get != null && TaskContext.get.attemptNumber >= 1) {
+//      removeKafkaConsumer(topic, partition, kafkaParams)
+//      val consumer = new CachedKafkaConsumer(topicPartition, kafkaParams)
+//      consumer.inuse = true
+//      cache.put(key, consumer)
+//      consumer
+//    } else {
+//      if (!cache.containsKey(key)) {
+//        cache.put(key, new CachedKafkaConsumer(topicPartition, kafkaParams))
+//      }
+//      val consumer = cache.get(key)
+//      consumer.inuse = true
+//      consumer
+//    }
+
+    // @NEW
     if (TaskContext.get != null && TaskContext.get.attemptNumber >= 1) {
       removeKafkaConsumer(topic, partition, kafkaParams)
       val consumer = new CachedKafkaConsumer(topicPartition, kafkaParams)
@@ -391,11 +421,22 @@ private[kafka011] object CachedKafkaConsumer extends Logging {
       consumer
     } else {
       if (!cache.containsKey(key)) {
-        cache.put(key, new CachedKafkaConsumer(topicPartition, kafkaParams))
+        val cons = new CachedKafkaConsumer(topicPartition, kafkaParams)
+        cons.inuse = false
+        cache.put(key, cons)
       }
+
       val consumer = cache.get(key)
-      consumer.inuse = true
-      consumer
+
+      if(consumer.inuse) {
+        val newNonCachedKafkaConsumer = new CachedKafkaConsumer(topicPartition, kafkaParams)
+        newNonCachedKafkaConsumer.markedForClose = true
+        newNonCachedKafkaConsumer.inuse = true
+        newNonCachedKafkaConsumer
+      } else {
+        consumer.inuse = true
+        consumer
+      }
     }
   }
 
