@@ -8,6 +8,7 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.*;
 import org.codehaus.jackson.map.ObjectMapper;
+import scala.Option;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,11 +24,11 @@ public class JsonAvroConverter {
         this.recordReader = new JsonGenericRecordReader(objectMapper);
     }
 
-    public byte[] convertToAvro(byte[] data, String schema, boolean useSchemaAvroManager) {
-        return convertToAvro(data, new Schema.Parser().parse(schema), useSchemaAvroManager);
+    public byte[] convertToAvro(byte[] data, String schema, Option<AvroSchemaManager> avroSchemaManagerOption) {
+        return convertToAvro(data, new Schema.Parser().parse(schema), avroSchemaManagerOption);
     }
 
-    public byte[] convertToAvro(byte[] data, Schema schema, boolean useSchemaAvroManager) {
+    public byte[] convertToAvro(byte[] data, Schema schema, Option<AvroSchemaManager> avroSchemaManagerOption) {
         try {
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -35,12 +36,10 @@ public class JsonAvroConverter {
             GenericDatumWriter<Object> writer = new GenericDatumWriter<>(schema);
             writer.write(convertToGenericDataRecord(data, schema), encoder);
             encoder.flush();
-
-            if(useSchemaAvroManager)
-                return AvroSchemaManager.generateAvroSingleObjectEncoded(outputStream.toByteArray(), schema);
+            if (avroSchemaManagerOption.isDefined())
+                return avroSchemaManagerOption.get().generateAvroSingleObjectEncoded(outputStream.toByteArray(), schema);
             else
                 return outputStream.toByteArray();
-
 
         } catch (IOException e) {
             throw new AvroConversionException("Failed to convert to AVRO.", e);

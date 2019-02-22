@@ -6,7 +6,7 @@ import java.sql.{Date, Timestamp}
 import java.util
 
 import com.typesafe.config.Config
-import it.agilelab.darwin.manager.AvroSchemaManager
+import it.agilelab.darwin.manager.{AvroSchemaManager, AvroSchemaManagerFactory}
 import org.apache.avro.Schema.Type
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
@@ -50,6 +50,15 @@ case class RowToAvro(schema: StructType,
   private lazy val converter: (Any) => Any = createConverterToAvro(schema, structName, recordNamespace, fieldsToWrite, externalSchema)
   private lazy val actualSchema: Schema = getSchema()
 
+  // this is None if useAvroSchemaManager is false, even if the config has a value, so in the following code we do not
+  // need to check both
+  @transient
+  lazy val darwin = if (useAvroSchemaManager) {
+    Some(AvroSchemaManagerFactory.initialize(avroSchemaManagerConfig.get))
+  } else {
+    None
+  }
+
   def getSchema(): Schema = {
     val builder = SchemaBuilder.record(structName).namespace(recordNamespace)
     schemaAvroJson.map(s => new Schema.Parser().parse(s)).getOrElse(
@@ -74,12 +83,7 @@ case class RowToAvro(schema: StructType,
     encoder.flush()
     output.toByteArray
 
-    if (useAvroSchemaManager) {
-      AvroSchemaManager.instance(avroSchemaManagerConfig.get)
-      AvroSchemaManager.generateAvroSingleObjectEncoded(output.toByteArray, AvroSchemaManager.getId(actualSchema))
-    }
-    else
-      output.toByteArray
+    darwin.fold(output.toByteArray)(_.generateAvroSingleObjectEncoded(output.toByteArray, actualSchema))
   }
 
 

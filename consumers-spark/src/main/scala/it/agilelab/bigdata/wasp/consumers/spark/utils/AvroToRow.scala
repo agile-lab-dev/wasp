@@ -1,7 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import com.typesafe.config.Config
-import it.agilelab.darwin.manager.AvroSchemaManager
+import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
+import it.agilelab.darwin.manager.{AvroSchemaManager, AvroSchemaManagerFactory}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.DecoderFactory
@@ -9,7 +10,7 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.types.DataType
 
-import scala.collection.mutable
+import scala.collection.concurrent.TrieMap
 
 
 case class AvroToRow(schemaAvroJson: String,
@@ -19,7 +20,16 @@ case class AvroToRow(schemaAvroJson: String,
   require(!useAvroSchemaManager || useAvroSchemaManager && avroSchemaManagerConfig.isDefined,
     "if useAvroSchemaManager is true avroSchemaManagerConfig must have a value")
 
-  val mapDatumReader: mutable.Map[Long, GenericDatumReader[GenericRecord]] = mutable.Map.empty
+  // this is None if useAvroSchemaManager is false, even if the config has a value, so in the following code we do not
+  // need to check both
+  @transient
+  lazy val darwin = if (useAvroSchemaManager) {
+    Some(AvroSchemaManagerFactory.initialize(avroSchemaManagerConfig.get))
+  } else {
+    None
+  }
+
+  val mapDatumReader: TrieMap[Long, GenericDatumReader[GenericRecord]] = TrieMap.empty
 
   private lazy val datumReader = new GenericDatumReader[GenericRecord](userSchema)
   private lazy val requiredSchema: DataType = getSchemaSpark()
@@ -37,22 +47,13 @@ case class AvroToRow(schemaAvroJson: String,
     */
   def read(avroValue: Array[Byte]): Row = {
 
-
-    val reader = useAvroSchemaManager match {
-
-      case true =>
-        AvroSchemaManager.instance(avroSchemaManagerConfig.get)
-
-        AvroSchemaManager.isAvroSingleObjectEncoded(avroValue) match {
-
-          case true => foundGenericDatumReaderInMap(avroValue)
-
-          case false => (avroValue, datumReader)
-        }
-
-      case false => (avroValue, datumReader)
-    }
-
+    val reader = darwin.map { schemaManager: AvroSchemaManager =>
+      if (AvroSingleObjectEncodingUtils.isAvroSingleObjectEncoded(avroValue)) {
+        foundGenericDatumReaderInMap(avroValue, schemaManager)
+      } else {
+        (avroValue, datumReader)
+      }
+    }.getOrElse((avroValue, datumReader))
 
     val decoder = DecoderFactory.get.binaryDecoder(reader._1, null)
     val record: GenericRecord = reader._2.read(null, decoder)
@@ -65,25 +66,13 @@ case class AvroToRow(schemaAvroJson: String,
   }
 
 
-  def foundGenericDatumReaderInMap(avroValue: Array[Byte]): (Array[Byte], GenericDatumReader[GenericRecord]) = {
+  def foundGenericDatumReaderInMap(fullPayload: Array[Byte],
+                                   schemaManager: AvroSchemaManager): (Array[Byte], GenericDatumReader[GenericRecord]) = {
+    val (schema, avro) = schemaManager.retrieveSchemaAndAvroPayload(fullPayload)
 
-    //AvroSchemaManager.instance(avroSchemaManagerConfig) NO need here since it is called at line 44
+    val schemaId: Long = schemaManager.getId(schema)
 
-    val schemaAndAvro: (Schema, Array[Byte]) = AvroSchemaManager.retrieveSchemaAndAvroPayload(avroValue)
+    avro -> mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[GenericRecord](schema, userSchema))
 
-    val schemaId: Long = AvroSchemaManager.getId(schemaAndAvro._1)
-    val datum: Option[GenericDatumReader[GenericRecord]] = mapDatumReader.get(schemaId)
-
-    if (datum.isDefined) {
-      (schemaAndAvro._2, datum.get)
-    }
-
-    else {
-      val newdatum: GenericDatumReader[GenericRecord] = new GenericDatumReader[GenericRecord](schemaAndAvro._1, userSchema)
-      mapDatumReader += (schemaId -> newdatum)
-      (schemaAndAvro._2, newdatum)
-    }
   }
 }
-
-object AvroToRow

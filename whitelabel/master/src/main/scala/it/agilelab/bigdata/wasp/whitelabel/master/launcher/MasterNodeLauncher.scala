@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
-import it.agilelab.darwin.manager.AvroSchemaManager
+import it.agilelab.darwin.manager.{AvroSchemaManager, AvroSchemaManagerFactory}
 import org.apache.avro.Schema
 import org.apache.commons.cli.CommandLine
 
@@ -28,7 +28,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   private def addExampleRegisterAvroSchema(): Unit = {
     val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2])
     val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
-    AvroSchemaManager(configAvroSchemaManager).registerAll(schemas)
+    AvroSchemaManagerFactory.initialize(configAvroSchemaManager).registerAll(schemas)
   }
 
   private def addExamplePipegraphs(): Unit = {

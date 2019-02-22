@@ -13,7 +13,7 @@ object Versions {
 	val cdk = "0.11.0-kafka-3.0.0" // Cloudera Distribution of Kafka
 	val cds = "cloudera3" // Cloudera Distribution of Spark
 	val commonsCli = "1.4"
-	val darwin = "1.0.1"
+	val darwin = "1.0.7"
 	val elasticSearch = "6.1.2"
 	val elasticSearchSpark = "6.1.2"
 	val guava = "14.0.1"
