@@ -80,6 +80,29 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
 	.dependsOn(consumers_spark)
 	.settings(libraryDependencies ++= Dependencies.plugin_solr_spark)
 
+/* Yarn  */
+
+
+lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
+	.settings(Settings.commonSettings: _*)
+	.settings(libraryDependencies += Dependencies.sparkYarn)
+
+lazy val yarn_auth_hbase = Project("wasp-yarn-auth-hbase", file("yarn/auth/hbase"))
+	.settings(Settings.commonSettings: _*)
+	.settings(libraryDependencies += Dependencies.sparkYarn)
+  .settings(libraryDependencies += Dependencies.hbaseServer)
+	.settings(libraryDependencies += Dependencies.hbaseCommon)
+
+lazy val yarn_auth = Project("wasp-yarn-auth", file("yarn/auth"))
+	.settings(Settings.commonSettings: _*)
+	.aggregate(yarn_auth_hbase, yarn_auth_hdfs)
+
+lazy val yarn = Project("wasp-yarn", file("yarn"))
+	.settings(Settings.commonSettings: _*)
+	.aggregate(yarn_auth)
+
+
+
 /* Framework + Plugins */
 
 lazy val wasp = Project("wasp", file("."))
@@ -96,7 +119,8 @@ lazy val wasp = Project("wasp", file("."))
 	           plugin_kafka_spark,
 	           plugin_raw_spark,
 	           plugin_solr_spark,
-	           spark_sql_kafka_0_11)
+	           spark_sql_kafka_0_11,
+		         yarn)
 
 /* WhiteLabel */
 
