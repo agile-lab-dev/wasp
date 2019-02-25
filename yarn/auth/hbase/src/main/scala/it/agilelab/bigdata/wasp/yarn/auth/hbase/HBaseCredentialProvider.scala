@@ -34,7 +34,7 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 
       val tokenIdentifier = token.decodeIdentifier()
 
-      creds.addToken(token.getService, token)
+      creds.addToken(HbaseTokenIdentifier.AUTH_TOKEN_TYPE, token)
 
       logInfo(s"Token renewed ${stringifyToken(tokenIdentifier)}")
 
@@ -71,11 +71,14 @@ object HBaseWaspCredentialsProvider {
 
 case class HbaseCredentialsProviderConfiguration(configurationFiles: Seq[Path],
                                                  failFast: Boolean,
-                                                 other: Seq[(String, String)])
+                                                 other: Seq[(String, String)],
+                                                 renew: Long)
 
 
 object HbaseCredentialsProviderConfiguration {
 
+  private val RENEW_KEY = "spark.wasp.yarn.security.tokens.hbase.renew"
+  private val RENEW_DEFAULT = 600000
   private val HADOOP_CONF_TO_LOAD_KEY = "spark.wasp.yarn.security.tokens.hbase.config.files"
   private val HADOOP_CONF_TO_LOAD_DEFAULT = ""
   private val HADOOP_CONF_TO_LOAD_SEPARATOR_KEY = "spark.wasp.yarn.security.tokens.hbase.config.separator"
@@ -97,7 +100,9 @@ object HbaseCredentialsProviderConfiguration {
 
     val failFast = conf.getBoolean(HADOOP_CONF_FAILFAST_KEY, HADOOP_CONF_FAILFAST_DEFAULT)
 
-    HbaseCredentialsProviderConfiguration(filesToLoad, failFast, other)
+    val renew = conf.getLong(RENEW_KEY, RENEW_DEFAULT)
+
+    HbaseCredentialsProviderConfiguration(filesToLoad, failFast, other, renew)
   }
 
 

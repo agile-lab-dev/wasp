@@ -70,12 +70,12 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
             throw e
         }
     }
-    None
+    Some(hdfsCredentialProviderConfiguration.renew)
   }
 }
 
 
-case class HdfsCredentialProviderConfiguration(kms: Seq[URI], fs: Seq[Path])
+case class HdfsCredentialProviderConfiguration(kms: Seq[URI], fs: Seq[Path], renew: Long)
 
 object HdfsCredentialProviderConfiguration {
 
@@ -90,6 +90,8 @@ object HdfsCredentialProviderConfiguration {
   private val FS_URIS_KEY = "spark.wasp.yarn.security.tokens.hdfs.fs.uris"
   private val FS_URIS_VALUE = ""
 
+  private val RENEW_KEY = "spark.wasp.yarn.security.tokens.hdfs.renew"
+  private val RENEW_DEFAULT = 600000
 
   def fromSpark(conf: SparkConf): HdfsCredentialProviderConfiguration = {
 
@@ -109,6 +111,8 @@ object HdfsCredentialProviderConfiguration {
       .map(new Path(_))
       .toVector
 
-    HdfsCredentialProviderConfiguration(kmsUris, fsUris)
+    val renew = conf.getLong(RENEW_KEY, RENEW_DEFAULT)
+
+    HdfsCredentialProviderConfiguration(kmsUris, fsUris, renew)
   }
 }
