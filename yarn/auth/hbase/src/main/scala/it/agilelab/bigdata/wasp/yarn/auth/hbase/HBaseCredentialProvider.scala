@@ -76,12 +76,12 @@ case class HbaseCredentialsProviderConfiguration(configurationFiles: Seq[Path],
 
 object HbaseCredentialsProviderConfiguration {
 
-  private val HADOOP_CONF_TO_LOAD_KEY = "wasp.yarn.security.tokens.hbase.config.files"
+  private val HADOOP_CONF_TO_LOAD_KEY = "spark.wasp.yarn.security.tokens.hbase.config.files"
   private val HADOOP_CONF_TO_LOAD_DEFAULT = ""
-  private val HADOOP_CONF_TO_LOAD_SEPARATOR_KEY = "wasp.yarn.security.tokens.hbase.config.separator"
+  private val HADOOP_CONF_TO_LOAD_SEPARATOR_KEY = "spark.wasp.yarn.security.tokens.hbase.config.separator"
   private val HADOOP_CONF_TO_LOAD_SEPARATOR_DEFAULT = "|"
-  private val HADOOP_CONF_TO_LOAD_INLINE_PREFIX = "wasp.yarn.security.tokens.hbase.config.inline"
-  private val HADOOP_CONF_FAILFAST_KEY = "wasp.yarn.security.tokens.hbase.failfast"
+  private val HADOOP_CONF_TO_LOAD_INLINE_PREFIX = "spark.wasp.yarn.security.tokens.hbase.config.inline"
+  private val HADOOP_CONF_FAILFAST_KEY = "spark.wasp.yarn.security.tokens.hbase.failfast"
   private val HADOOP_CONF_FAILFAST_DEFAULT = true
 
   def fromSpark(conf: SparkConf): HbaseCredentialsProviderConfiguration = {

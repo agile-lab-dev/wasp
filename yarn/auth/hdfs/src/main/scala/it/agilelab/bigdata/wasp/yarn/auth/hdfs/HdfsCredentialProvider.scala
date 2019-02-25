@@ -79,15 +79,15 @@ case class HdfsCredentialProviderConfiguration(kms: Seq[URI], fs: Seq[Path])
 
 object HdfsCredentialProviderConfiguration {
 
-  private val KMS_SEPARATOR_KEY = "wasp.yarn.security.tokens.hdfs.kms.separator"
+  private val KMS_SEPARATOR_KEY = "spark.wasp.yarn.security.tokens.hdfs.kms.separator"
   private val KMS_SEPARATOR_DEFAULT = "|"
-  private val KMS_URIS_KEY = "wasp.yarn.security.tokens.hdfs.kms.uris"
+  private val KMS_URIS_KEY = "spark.wasp.yarn.security.tokens.hdfs.kms.uris"
   private val KMS_URIS_VALUE = ""
 
 
   private val FS_SEPARATOR_KEY = "wasp.yarn.security.tokens.hdfs.fs.separator"
   private val FS_SEPARATOR_DEFAULT = "|"
-  private val FS_URIS_KEY = "wasp.yarn.security.tokens.hdfs.fs.uris"
+  private val FS_URIS_KEY = "spark.wasp.yarn.security.tokens.hdfs.fs.uris"
   private val FS_URIS_VALUE = ""
 
 
