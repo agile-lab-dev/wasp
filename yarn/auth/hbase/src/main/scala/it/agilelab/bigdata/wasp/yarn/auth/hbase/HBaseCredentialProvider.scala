@@ -32,7 +32,7 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
       //we want this behavior in order to be able to renew tokens
       val token = TokenUtil.obtainToken(hbaseConf)
 
-      val tokenIdentifier = token.asInstanceOf[HbaseTokenIdentifier]
+      val tokenIdentifier = token.decodeIdentifier()
 
       creds.addToken(token.getService, token)
 
