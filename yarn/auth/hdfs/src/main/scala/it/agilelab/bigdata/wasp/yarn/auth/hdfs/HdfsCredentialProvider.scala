@@ -70,7 +70,7 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
             throw e
         }
     }
-    Some(hdfsCredentialProviderConfiguration.renew)
+    Some(System.currentTimeMillis() + hdfsCredentialProviderConfiguration.renew)
   }
 }
 

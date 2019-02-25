@@ -45,8 +45,7 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
         logError("Something went really bad while authenticating via hbase", e)
     }
 
-    //renewal is not supported, another token should be obtained
-    None
+    Some(System.currentTimeMillis() + providerConfig.renew)
   }
 
   override def credentialsRequired(sparkConf: SparkConf, hadoopConf: Configuration): Boolean = super.credentialsRequired(sparkConf, hadoopConf)
