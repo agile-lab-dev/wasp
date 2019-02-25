@@ -20,12 +20,16 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 
   override def obtainCredentials(hadoopConf: Configuration, sparkConf: SparkConf, creds: Credentials): Option[Long] = {
 
-    val hbaseConf = createHBaseConfFromSparkConf(sparkConf)
+    val providerConfig = HbaseCredentialsProviderConfiguration.fromSpark(sparkConf)
+
+    logInfo(s"Provider config is: $providerConfig")
+
+    val hbaseConf = HbaseCredentialsProviderConfiguration.toHbaseConf(providerConfig)
 
     try {
-
       logInfo("Renewing token")
-
+      //this method is deprecaded because it opens and closes a new connection
+      //we want this behavior in order to be able to renew tokens
       val token = TokenUtil.obtainToken(hbaseConf)
 
       val tokenIdentifier = token.asInstanceOf[HbaseTokenIdentifier]
@@ -49,13 +53,6 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 }
 
 object HBaseWaspCredentialsProvider {
-  val HADOOP_CONF_TO_LOAD_KEY = "wasp.yarn.security.tokens.hbase.config.files"
-  val HADOOP_CONF_TO_LOAD_KEY_DEFAULT = ""
-  val HADOOP_CONF_TO_LOAD_SEPARATOR_KEY = "wasp.yarn.security.tokens.hbase.config.separator"
-  val HADOOP_CONF_TO_LOAD_SEPARATOR_DEFAULT = "|"
-  val HADOOP_CONF_TO_LOAD_INLINE_PREFIX = "wasp.yarn.security.tokens.hbase.config.inline"
-  val HADOOP_CONF_FAILFAST_KEY = "wasp.yarn.security.tokens.hbase.failfast"
-  val HADOOP_CONF_FAILFAST_DEFAULT = true
 
 
   def stringifyToken(tokenIdentifier: HbaseTokenIdentifier): String = {
@@ -70,29 +67,52 @@ object HBaseWaspCredentialsProvider {
     }.mkString(", ")
   }
 
-  def createHBaseConfFromSparkConf(sparkConf: SparkConf): Configuration = {
+}
 
-    val config = HBaseConfiguration.create()
+case class HbaseCredentialsProviderConfiguration(configurationFiles: Seq[Path],
+                                                 failFast: Boolean,
+                                                 other: Seq[(String, String)])
 
-    val actualSeparator = sparkConf.get(HADOOP_CONF_TO_LOAD_SEPARATOR_KEY, HADOOP_CONF_TO_LOAD_SEPARATOR_DEFAULT)
 
-    val filesToLoad = sparkConf.get(HADOOP_CONF_TO_LOAD_KEY, HADOOP_CONF_TO_LOAD_KEY_DEFAULT)
+object HbaseCredentialsProviderConfiguration {
+
+  private val HADOOP_CONF_TO_LOAD_KEY = "wasp.yarn.security.tokens.hbase.config.files"
+  private val HADOOP_CONF_TO_LOAD_DEFAULT = ""
+  private val HADOOP_CONF_TO_LOAD_SEPARATOR_KEY = "wasp.yarn.security.tokens.hbase.config.separator"
+  private val HADOOP_CONF_TO_LOAD_SEPARATOR_DEFAULT = "|"
+  private val HADOOP_CONF_TO_LOAD_INLINE_PREFIX = "wasp.yarn.security.tokens.hbase.config.inline"
+  private val HADOOP_CONF_FAILFAST_KEY = "wasp.yarn.security.tokens.hbase.failfast"
+  private val HADOOP_CONF_FAILFAST_DEFAULT = true
+
+  def fromSpark(conf: SparkConf): HbaseCredentialsProviderConfiguration = {
+
+    val actualSeparator = conf.get(HADOOP_CONF_TO_LOAD_SEPARATOR_KEY, HADOOP_CONF_TO_LOAD_SEPARATOR_DEFAULT)
+
+    val filesToLoad = conf.get(HADOOP_CONF_TO_LOAD_KEY, HADOOP_CONF_TO_LOAD_DEFAULT)
       .split(Pattern.quote(actualSeparator))
       .filterNot(_.isEmpty)
+      .map(new Path(_))
 
-    filesToLoad.foreach { f =>
-      config.addResource(new Path(f))
-    }
+    val other = conf.getAllWithPrefix(HADOOP_CONF_TO_LOAD_INLINE_PREFIX)
 
-    sparkConf.getAllWithPrefix(HADOOP_CONF_TO_LOAD_INLINE_PREFIX).foreach {
-      case (k, v) => config.set(k, v)
-    }
+    val failFast = conf.getBoolean(HADOOP_CONF_FAILFAST_KEY, HADOOP_CONF_FAILFAST_DEFAULT)
 
-    if (sparkConf.getBoolean(HADOOP_CONF_FAILFAST_KEY, HADOOP_CONF_FAILFAST_DEFAULT)) {
-      config.set("hbase.client.retries.number ", "1")
-    }
-
-    config
+    HbaseCredentialsProviderConfiguration(filesToLoad, failFast, other)
   }
 
+
+  def toHbaseConf(conf: HbaseCredentialsProviderConfiguration): Configuration = {
+    val hbaseConfig = HBaseConfiguration.create()
+
+    conf.configurationFiles.foreach(hbaseConfig.addResource)
+    conf.other.foreach {
+      case (k, v) => hbaseConfig.set(k, v)
+    }
+
+    if (conf.failFast) {
+      hbaseConfig.set("hbase.client.retries.number ", "1")
+    }
+
+    hbaseConfig
+  }
 }
