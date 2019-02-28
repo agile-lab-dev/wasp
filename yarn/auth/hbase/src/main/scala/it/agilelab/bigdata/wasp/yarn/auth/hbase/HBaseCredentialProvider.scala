@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.yarn.auth.hbase
 
-import java.sql.Date
+import java.util.Date
 import java.util.regex.Pattern
 
 import org.apache.hadoop.conf.Configuration
