@@ -2,14 +2,17 @@ package it.agilelab.bigdata.wasp.yarn.auth.hdfs
 
 
 import java.net.URI
+import java.util.Date
 import java.util.regex.Pattern
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension
 import org.apache.hadoop.crypto.key.kms.KMSClientProvider
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifier
 import org.apache.hadoop.mapred.Master
 import org.apache.hadoop.security.Credentials
+import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier
 import org.apache.spark.deploy.yarn.security.ServiceCredentialProvider
 import org.apache.spark.internal.Logging
 import org.apache.spark.{SparkConf, SparkException}
@@ -37,14 +40,13 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
 
 
     val hdfsCredentialProviderConfiguration = HdfsCredentialProviderConfiguration.fromSpark(sparkConf)
+    logInfo(s"Provider config is: $hdfsCredentialProviderConfiguration")
 
-    hdfsCredentialProviderConfiguration.fs.foreach {
-      fsPath =>
-        val obtained = fsPath.getFileSystem(hadoopConf).addDelegationTokens(renewer, creds)
-        obtained.foreach(t => logInfo(s"token: $t"))
+    val hdfsTokens = hdfsCredentialProviderConfiguration.fs.flatMap {
+      fsPath => fsPath.getFileSystem(hadoopConf).addDelegationTokens(renewer, creds)
     }
 
-    hdfsCredentialProviderConfiguration.kms.foreach {
+    val kmsTokens = hdfsCredentialProviderConfiguration.kms.flatMap {
       kmsUri: URI =>
 
         val provider = fact.createProvider(kmsUri, hadoopConf)
@@ -59,18 +61,50 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
 
         try {
           val ableToRenewProvider = provider.asInstanceOf[KeyProviderDelegationTokenExtension.DelegationTokenExtension]
-
-
-          val obtained = ableToRenewProvider.addDelegationTokens(renewer, creds)
-
-          obtained.foreach(t => logInfo(s"token: $t"))
+          ableToRenewProvider.addDelegationTokens(renewer, creds)
         } catch {
           case e: Exception =>
             provider.close()
             throw e
         }
     }
-    Some(System.currentTimeMillis() + hdfsCredentialProviderConfiguration.renew)
+
+    hdfsTokens.foreach { t =>
+      logInfo(s"obtained HDFS delegation token $t")
+    }
+
+    kmsTokens.foreach { t =>
+      logInfo(s"obtained KMS delegation token $t")
+    }
+
+
+    val hdfsTokenNextRenewalDeadline = hdfsTokens.map(t => t.decodeIdentifier())
+      .filter(_.isInstanceOf[AbstractDelegationTokenIdentifier])
+      .map(_.asInstanceOf[AbstractDelegationTokenIdentifier])
+      .map(_.getMaxDate)
+      .min
+
+
+    val hdfsTokenNextRenewalDeadlineDate = new Date(hdfsTokenNextRenewalDeadline)
+
+    logInfo(s"renewal of hdfs tokens calculated from token info will happen before $hdfsTokenNextRenewalDeadlineDate")
+
+    //kms token does not report the renewal deadline
+    val kmsNextRenewalDeadline = System.currentTimeMillis() + hdfsCredentialProviderConfiguration.renew
+
+    val kmsNextRenewalDeadlineDate = new Date(kmsNextRenewalDeadline)
+
+    logInfo(s"renewal of kms tokens cannot be calculated from tokens, using spark.wasp.yarn.security.tokens.hdfs" +
+      s".renew as a static renewal interval  $kmsNextRenewalDeadlineDate")
+
+    val renewalDeadline = Seq(hdfsTokenNextRenewalDeadline, kmsNextRenewalDeadline).min
+
+    val renewalDeadlineDate = new Date(renewalDeadline)
+
+    logInfo(s"Final renewal deadline will be $renewalDeadlineDate")
+
+    //renewal time should be absolute
+    Some(renewalDeadline)
   }
 }
 

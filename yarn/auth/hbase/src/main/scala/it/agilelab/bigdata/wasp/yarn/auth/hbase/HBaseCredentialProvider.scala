@@ -38,14 +38,23 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 
       logInfo(s"Token renewed ${stringifyToken(tokenIdentifier)}")
 
+      val renewDeadline = tokenIdentifier.getExpirationDate
+
+      val renewDeadlineDate = new Date(renewDeadline)
+
+      logInfo(s"renewal of hbase token calculated from token info will happen before $renewDeadlineDate")
+
+
+      Some(renewDeadline)
+
     } catch {
       case e: Exception =>
         //this exception is catched here and not rethrown because spark will catch it and then abort renewal for
         // 1HOUR, we should abort but its currently not clear how to do this from the application master
         logError("Something went really bad while authenticating via hbase", e)
+        None
     }
 
-    Some(System.currentTimeMillis() + providerConfig.renew)
   }
 
   override def credentialsRequired(sparkConf: SparkConf, hadoopConf: Configuration): Boolean = super.credentialsRequired(sparkConf, hadoopConf)
@@ -70,14 +79,11 @@ object HBaseWaspCredentialsProvider {
 
 case class HbaseCredentialsProviderConfiguration(configurationFiles: Seq[Path],
                                                  failFast: Boolean,
-                                                 other: Seq[(String, String)],
-                                                 renew: Long)
+                                                 other: Seq[(String, String)])
 
 
 object HbaseCredentialsProviderConfiguration {
 
-  private val RENEW_KEY = "spark.wasp.yarn.security.tokens.hbase.renew"
-  private val RENEW_DEFAULT = 600000
   private val HADOOP_CONF_TO_LOAD_KEY = "spark.wasp.yarn.security.tokens.hbase.config.files"
   private val HADOOP_CONF_TO_LOAD_DEFAULT = ""
   private val HADOOP_CONF_TO_LOAD_SEPARATOR_KEY = "spark.wasp.yarn.security.tokens.hbase.config.separator"
@@ -99,9 +105,7 @@ object HbaseCredentialsProviderConfiguration {
 
     val failFast = conf.getBoolean(HADOOP_CONF_FAILFAST_KEY, HADOOP_CONF_FAILFAST_DEFAULT)
 
-    val renew = conf.getLong(RENEW_KEY, RENEW_DEFAULT)
-
-    HbaseCredentialsProviderConfiguration(filesToLoad, failFast, other, renew)
+    HbaseCredentialsProviderConfiguration(filesToLoad, failFast, other)
   }
 
 
