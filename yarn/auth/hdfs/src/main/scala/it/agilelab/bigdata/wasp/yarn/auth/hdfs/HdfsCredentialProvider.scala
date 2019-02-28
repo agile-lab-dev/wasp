@@ -6,10 +6,8 @@ import java.util.Date
 import java.util.regex.Pattern
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension
-import org.apache.hadoop.crypto.key.kms.KMSClientProvider
+import org.apache.hadoop.crypto.key.kms.{KMSClientProvider, LoadBalancingKMSClientProvider}
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifier
 import org.apache.hadoop.mapred.Master
 import org.apache.hadoop.security.Credentials
 import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier
@@ -51,7 +49,12 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
 
         val provider = fact.createProvider(kmsUri, hadoopConf)
 
-        val didWeGotTheCorrectProvider = provider.isInstanceOf[KeyProviderDelegationTokenExtension.DelegationTokenExtension]
+        val didWeGotTheCorrectProvider = provider match {
+          case _: LoadBalancingKMSClientProvider => true
+          case _: KMSClientProvider => true
+          case _ => false
+        }
+
 
         if (!didWeGotTheCorrectProvider) {
           provider.close()
@@ -60,8 +63,12 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
         }
 
         try {
-          val ableToRenewProvider = provider.asInstanceOf[KeyProviderDelegationTokenExtension.DelegationTokenExtension]
-          ableToRenewProvider.addDelegationTokens(renewer, creds)
+          provider match {
+            case p: LoadBalancingKMSClientProvider => p.addDelegationTokens(renewer, creds)
+            case p: KMSClientProvider => p.addDelegationTokens(renewer, creds)
+            case p => throw new Exception(s"unexpected key provider, ${p.getClass.getName}")
+          }
+
         } catch {
           case e: Exception =>
             provider.close()
@@ -78,33 +85,23 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
     }
 
 
-    val hdfsTokenNextRenewalDeadline = hdfsTokens.map(t => t.decodeIdentifier())
+    val maybeNextRenewalDeadline = (hdfsTokens ++ kmsTokens)
+      .map(t => t.decodeIdentifier())
       .filter(_.isInstanceOf[AbstractDelegationTokenIdentifier])
       .map(_.asInstanceOf[AbstractDelegationTokenIdentifier])
       .map(_.getMaxDate)
-      .min
+      .reduceOption[Long] {
+        case (a, b) if a < b => a
+        case (a, b) if b < a => b
+        case (a, b) if a == b => a
+      }
 
 
-    val hdfsTokenNextRenewalDeadlineDate = new Date(hdfsTokenNextRenewalDeadline)
+    maybeNextRenewalDeadline.map(new Date(_)).foreach { deadline =>
+      logInfo(s"Final renewal deadline will be $deadline")
+    }
 
-    logInfo(s"renewal of hdfs tokens calculated from token info will happen before $hdfsTokenNextRenewalDeadlineDate")
-
-    //kms token does not report the renewal deadline
-    val kmsNextRenewalDeadline = System.currentTimeMillis() + hdfsCredentialProviderConfiguration.renew
-
-    val kmsNextRenewalDeadlineDate = new Date(kmsNextRenewalDeadline)
-
-    logInfo(s"renewal of kms tokens cannot be calculated from tokens, using spark.wasp.yarn.security.tokens.hdfs" +
-      s".renew as a static renewal interval  $kmsNextRenewalDeadlineDate")
-
-    val renewalDeadline = Seq(hdfsTokenNextRenewalDeadline, kmsNextRenewalDeadline).min
-
-    val renewalDeadlineDate = new Date(renewalDeadline)
-
-    logInfo(s"Final renewal deadline will be $renewalDeadlineDate")
-
-    //renewal time should be absolute
-    Some(renewalDeadline)
+    maybeNextRenewalDeadline
   }
 }
 
@@ -148,5 +145,14 @@ object HdfsCredentialProviderConfiguration {
     val renew = conf.getLong(RENEW_KEY, RENEW_DEFAULT)
 
     HdfsCredentialProviderConfiguration(kmsUris, fsUris, renew)
+  }
+
+  def toSpark(conf: HdfsCredentialProviderConfiguration): SparkConf = {
+    val c = new SparkConf()
+
+    c.set(RENEW_KEY, conf.renew.toString)
+    c.set(KMS_URIS_KEY, conf.kms.map(_.toString).mkString(KMS_SEPARATOR_DEFAULT))
+    c.set(FS_URIS_KEY, conf.fs.map(_.toString).mkString(FS_URIS_VALUE))
+
   }
 }

@@ -1,3 +1,5 @@
+import Dependencies.scalaTest
+
 /*
  * Main build definition.
  *
@@ -85,6 +87,8 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
 
 lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
 	.settings(Settings.commonSettings: _*)
+  .settings(Dependencies.kmsTest: _*)
+	.settings(libraryDependencies += scalaTest)
 	.settings(libraryDependencies += Dependencies.sparkYarn)
 
 lazy val yarn_auth_hbase = Project("wasp-yarn-auth-hbase", file("yarn/auth/hbase"))

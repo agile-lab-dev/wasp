@@ -40,4 +40,5 @@ object Versions {
 	val solr = s"4.10.3-$cdh"
 	val spark = s"2.2.0.$cds"
 	val sparkSolr = "1.2.9"
+	val kms = s"2.6.0-$cdh"
 }

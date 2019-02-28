@@ -1,3 +1,4 @@
+import sbt.Keys.{libraryDependencies, transitiveClassifiers}
 import sbt._
 
 /*
@@ -35,6 +36,9 @@ object Dependencies {
 				.excludeAll("org.apache.spark")
 				.exclude("org.objenesis", "objenesis")
 				.exclude("org.apache.zookeeper", "zookeeper")
+
+
+
 
 		def sparkExclusions: ModuleID =
 			module.log4jExclude
@@ -292,4 +296,17 @@ object Dependencies {
 		solrj,
 		sparkSolr
 	).map(excludeNetty)
+
+
+	def kmsTest = Seq(
+		transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier, "classes"),
+		libraryDependencies  ++= Seq(
+			("org.codehaus.jackson" % "jackson-core-asl" % "1.9.13") % "test",
+			("org.codehaus.jackson" % "jackson-jaxrs" % "1.9.13") % "test",
+			("org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13") % "test",
+			("org.apache.hadoop" % "hadoop-common" % Versions.kms) % "test",
+			("org.apache.hadoop" % "hadoop-kms" % Versions.kms).classifier("classes") % "test",
+			("org.apache.hadoop" % "hadoop-kms" % Versions.kms).classifier("tests") % "test"
+		)
+	)
 }
