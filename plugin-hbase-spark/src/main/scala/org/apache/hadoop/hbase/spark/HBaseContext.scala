@@ -226,7 +226,7 @@ class HBaseContext(@transient sc: SparkContext,
   def applyCreds[T] () {
     //credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
 
-    val close = System.getProperty("it.agilelab.hbase.closeconnections").toBoolean
+    val close = Option(System.getProperty("it.agilelab.bigdata.wasp.hbase.connection.close")).exists(_.toBoolean)
 
     if(close) {
       org.apache.hadoop.hbase.spark.HBaseConnectionCache.performHousekeeping(true)
