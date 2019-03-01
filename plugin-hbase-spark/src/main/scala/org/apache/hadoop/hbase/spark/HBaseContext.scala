@@ -250,7 +250,8 @@ class HBaseContext(@transient sc: SparkContext,
                                         .asScala
                                         .map(_.decodeIdentifier())
                                         .filter(_.isInstanceOf[HbaseTokenIdentifier])
-                                        .map(stringifyToken(_))
+                                        .map(_.asInstanceOf[HbaseTokenIdentifier])
+                                        .map(stringifyToken)
                                         .headOption.getOrElse("NoTokenFound")
 
 
