@@ -44,17 +44,16 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
         .asScala
         .map(_.decodeIdentifier())
 
-      println(identifiers)
+      logger.info(s"all token identifiers : $identifiers")
 
       val filtered =  identifiers.filter(_.isInstanceOf[DelegationTokenIdentifier])
         .map(_.asInstanceOf[DelegationTokenIdentifier])
 
-      println(filtered)
+      logger.info(s"filtered token identifiers : $filtered")
 
       val maybeExpiredToken = filtered.find(_.getMaxDate < System.currentTimeMillis())
 
-
-      println(maybeExpiredToken)
+      logger.info(s"Expired tokens? : $maybeExpiredToken")
 
       maybeExpiredToken match {
         case Some(expired) =>
