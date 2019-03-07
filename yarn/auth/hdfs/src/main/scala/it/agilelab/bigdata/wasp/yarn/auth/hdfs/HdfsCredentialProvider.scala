@@ -11,9 +11,12 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapred.Master
 import org.apache.hadoop.security.Credentials
 import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier
+import org.apache.hadoop.security.token.{Token, TokenIdentifier}
 import org.apache.spark.deploy.yarn.security.ServiceCredentialProvider
 import org.apache.spark.internal.Logging
 import org.apache.spark.{SparkConf, SparkException}
+
+import scala.util.Try
 
 class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
 
@@ -31,20 +34,50 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
     delegTokenRenewer
   }
 
+
   override def obtainCredentials(hadoopConf: Configuration, sparkConf: SparkConf, creds: Credentials): Option[Long] = {
-    val fact = new KMSClientProvider.Factory()
-
-    val renewer = getTokenRenewer(hadoopConf)
-
 
     val hdfsCredentialProviderConfiguration = HdfsCredentialProviderConfiguration.fromSpark(sparkConf)
     logInfo(s"Provider config is: $hdfsCredentialProviderConfiguration")
 
-    val hdfsTokens = hdfsCredentialProviderConfiguration.fs.flatMap {
+    val renewer = getTokenRenewer(hadoopConf)
+
+    val tokens = obtainTokens(hdfsCredentialProviderConfiguration, hadoopConf, sparkConf, creds, renewer)
+
+    val maybeNextExpirationDeadline: Option[Long] = tokens
+      .map(t => t.decodeIdentifier())
+      .filter(_.isInstanceOf[AbstractDelegationTokenIdentifier])
+      .map(_.asInstanceOf[AbstractDelegationTokenIdentifier])
+      .map(_.getMaxDate)
+      .reduceOption[Long](minFunc)
+
+
+    val maybeNextRenewDeadLine = getTokenRenewalInterval(hdfsCredentialProviderConfiguration, hadoopConf, sparkConf)
+
+
+    val maybeFinalDeadline = Seq(maybeNextExpirationDeadline, maybeNextRenewDeadLine).flatten.reduceOption[Long](minFunc)
+
+
+    maybeFinalDeadline.map(new Date(_)).foreach { deadline =>
+      logInfo(s"Final renewal deadline will be $deadline")
+    }
+
+    maybeFinalDeadline
+  }
+
+  private def obtainTokens(provConf: HdfsCredentialProviderConfiguration,
+                           hadoopConf: Configuration,
+                           sparkConf: SparkConf,
+                           creds: Credentials,
+                           renewer: String): Seq[Token[_ <: TokenIdentifier]] = {
+    val fact = new KMSClientProvider.Factory()
+
+
+    val hdfsTokens = provConf.fs.flatMap {
       fsPath => fsPath.getFileSystem(hadoopConf).addDelegationTokens(renewer, creds)
     }
 
-    val kmsTokens = hdfsCredentialProviderConfiguration.kms.flatMap {
+    val kmsTokens = provConf.kms.flatMap {
       kmsUri: URI =>
 
         val provider = fact.createProvider(kmsUri, hadoopConf)
@@ -62,7 +95,7 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
             s"${provider.getClass}")
         }
 
-        try {
+        val result: Array[Token[_ <: TokenIdentifier]] = try {
           provider match {
             case p: LoadBalancingKMSClientProvider => p.addDelegationTokens(renewer, creds)
             case p: KMSClientProvider => p.addDelegationTokens(renewer, creds)
@@ -74,6 +107,8 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
             provider.close()
             throw e
         }
+
+        Option(result).getOrElse(Array.empty[Token[_ <: TokenIdentifier]])
     }
 
     hdfsTokens.foreach { t =>
@@ -84,26 +119,43 @@ class HdfsCredentialProvider extends ServiceCredentialProvider with Logging {
       logInfo(s"obtained KMS delegation token $t")
     }
 
+    hdfsTokens ++ kmsTokens
+  }
 
-    val maybeNextRenewalDeadline = (hdfsTokens ++ kmsTokens)
-      .map(t => t.decodeIdentifier())
-      .filter(_.isInstanceOf[AbstractDelegationTokenIdentifier])
-      .map(_.asInstanceOf[AbstractDelegationTokenIdentifier])
-      .map(_.getMaxDate)
-      .reduceOption[Long] {
-        case (a, b) if a < b => a
-        case (a, b) if b < a => b
-        case (a, b) if a == b => a
+  private def getTokenRenewalInterval(provConf: HdfsCredentialProviderConfiguration,
+                                      hadoopConf: Configuration,
+                                      sparkConf: SparkConf): Option[Long] = {
+    // We cannot use the tokens generated with renewer yarn. Trying to renew
+    // those will fail with an access control issue. So create new tokens with the logged in
+    // user as renewer.
+    sparkConf.getOption("spark.yarn.principal").flatMap { renewer =>
+
+      val creds = new Credentials()
+
+      val tokens = obtainTokens(provConf, hadoopConf, sparkConf, creds, renewer)
+
+      val renewIntervals = tokens.filter {
+        _.decodeIdentifier().isInstanceOf[AbstractDelegationTokenIdentifier]
+      }.flatMap { token =>
+        Try {
+          token.renew(hadoopConf)
+        }.toOption
       }
 
-
-    maybeNextRenewalDeadline.map(new Date(_)).foreach { deadline =>
-      logInfo(s"Final renewal deadline will be $deadline")
+      renewIntervals.reduceOption(minFunc)
     }
+  }
 
-    maybeNextRenewalDeadline
+
+  val minFunc: (Long, Long) => Long = {
+    {
+      case (a, b) if a < b => a
+      case (a, b) if b < a => b
+      case (a, b) if a == b => a
+    }
   }
 }
+
 
 
 case class HdfsCredentialProviderConfiguration(kms: Seq[URI], fs: Seq[Path], renew: Long)
