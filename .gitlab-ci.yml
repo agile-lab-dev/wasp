@@ -24,7 +24,7 @@ test:
   stage: test
   image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
   script:
-    - sbt -v clean coverageOn "testOnly * -- -l org.apache.spark.sql.kafka011.MightNeverTerminate" coverageOff coverageReport coverageAggregate
+    - sbt clean coverageOn "testOnly * -- -l org.apache.spark.sql.kafka011.MightNeverTerminate" coverageOff coverageReport coverageAggregate
 
 deploy:
   tags:
@@ -32,4 +32,4 @@ deploy:
   stage: deploy
   image: "hseeberger/scala-sbt:8u151-2.12.4-1.0.2"
   script:
-    - sbt -v clean publish
+    - sbt clean publish
