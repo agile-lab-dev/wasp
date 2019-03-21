@@ -266,6 +266,8 @@ object RowToAvro {
     case _: StringType => stringType
     case _: ArrayType => arrayType
     case _: BinaryType => binaryType
+    case _: DateType => longType
+    case _: TimestampType => longType
   }
 
   /**

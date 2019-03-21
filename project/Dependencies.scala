@@ -187,6 +187,8 @@ object Dependencies {
 
 	val avro4s = Seq(avro4sCore, avro4sJson)
 
+	val avro4sTest = Seq(avro4sCore % Test, avro4sJson % Test)
+
 
 	// ===================================================================================================================
 	// Test dependencies
@@ -253,6 +255,7 @@ object Dependencies {
 		akka ++
 		json ++
 		test ++
+		avro4sTest ++
 		spark :+
     quartz
 	).map(excludeNetty).map(excludeLog4j) ++

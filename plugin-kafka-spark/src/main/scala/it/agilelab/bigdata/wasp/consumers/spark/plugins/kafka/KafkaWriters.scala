@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.utils.RowToAvro
+import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroConverterExpression, RowToAvro}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
@@ -19,9 +19,10 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+
 import scala.collection.JavaConverters._
 
 class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
@@ -185,59 +186,76 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                    stream: DataFrame,
                                    prototypeTopicModel: TopicModel) = {
     // generate temporary field names
-    val tempKeyFieldName = s"key_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
-    val tempHeadersFieldName = s"headers_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
-    val tempTopicFieldName = s"topic_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
+    //val tempKeyFieldName = s"key_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
+    //val tempHeadersFieldName = s"headers_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
+    //val tempTopicFieldName = s"topic_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
 
     // generate select expressions to clone metadata columns and keep only the values specified
+    /*
     val selectExpressionsForTempColumns =
       keyFieldName.map(kfn => s"CAST($kfn AS binary) $tempKeyFieldName").toList ++
         headersFieldName.map(hfn => s"$hfn AS $tempHeadersFieldName").toList ++
         topicFieldName.map(tfn => s"$tfn AS $tempTopicFieldName").toList ++
         valueFieldsNames.map(vfn => vfn).getOrElse(Seq("*"))
     logger.debug(s"Generated select expressions: ${selectExpressionsForTempColumns.mkString("[", "], [", "]")}")
+    */
 
     // project the data so we have a known order for the metadata columns with the rest of the data after
-    val streamWithTempColumns = stream.selectExpr(selectExpressionsForTempColumns: _*)
-    logger.debug(s"Stream with temp columns schema:\n${streamWithTempColumns.schema.treeString}")
+    // val streamWithTempColumns = stream.selectExpr(selectExpressionsForTempColumns: _*)
+    // logger.debug(s"Stream with temp columns schema:\n${streamWithTempColumns.schema.treeString}")
 
     // this tells us where the data starts, everything eventually present before is metadata
-    val dataOffset = Seq(keyFieldName, headersFieldName, topicFieldName).count(_.isDefined)
-
+    // val dataOffset = Seq(keyFieldName, headersFieldName, topicFieldName).count(_.isDefined)
+    val columnsInValues = valueFieldsNames.getOrElse(stream.columns.toSeq)
     // generate a schema and avro converter for the values
     val valueSchema = StructType(
-      streamWithTempColumns.schema.drop(dataOffset)
+      columnsInValues.map(stream.schema.apply)
     )
-    logger.debug(s"Generated value schema:\n${valueSchema.treeString}")
+    // logger.debug(s"Generated value schema:\n${valueSchema.treeString}")
     val darwinConf = if (prototypeTopicModel.useAvroSchemaManager) {
       Some(ConfigManager.getAvroSchemaManagerConfig)
     } else {
       None
     }
     // TODO use sensible namespace instead of wasp
-    val converter = RowToAvro(valueSchema, prototypeTopicModel.name, prototypeTopicModel.useAvroSchemaManager, "wasp",
-      None, Some(prototypeTopicModel.getJsonSchema), darwinConf)
-    val dataConverter: Row => Array[Byte] = converter.write
+    // val converter = RowToAvro(valueSchema, prototypeTopicModel.name, prototypeTopicModel.useAvroSchemaManager, "wasp",
+    //  None, Some(prototypeTopicModel.getJsonSchema), darwinConf)
+    // val dataConverter: Row => Array[Byte] = converter.write
+    val exprToConvertToAvro = columnsInValues.map(col(_).expr)
+    val rowToAvroExpr = AvroConverterExpression(
+      exprToConvertToAvro,
+      Some(prototypeTopicModel.getJsonSchema),
+      darwinConf,
+      prototypeTopicModel.useAvroSchemaManager,
+      valueSchema,
+      prototypeTopicModel.name,
+      "wasp",
+      None)
+    val metadataCols = (keyFieldName.map(kfn => col(kfn).cast(BinaryType).as("key")) ++
+      headersFieldName.map(col(_).as("headers")) ++
+      topicFieldName.map(col(_).as("topic"))).toSeq
+
+    val processedStream = stream.select(metadataCols ++ Seq(new Column(rowToAvroExpr).as("value")): _*)
 
     // generate a schema and encoder for final metadata & data
-    val schema = StructType(
+    /*val schema = StructType(
       keyFieldName.map(_ => StructField("key", BinaryType, nullable = true)).toList ++
         headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE, nullable = false)).toList ++
         topicFieldName.map(_ => StructField("topic", StringType, nullable = false)).toList :+
         StructField("value", BinaryType, nullable = false)
-    )
-    logger.debug(s"Generated final schema:\n${schema.treeString}")
-    val encoder = RowEncoder(schema)
+    )*/
+    // logger.debug(s"Generated final schema:\n${schema.treeString}")
+    //val encoder = RowEncoder(schema)
 
     // process the stream, extracting the data and converting it, and leaving metadata as is
-    val processedStream = streamWithTempColumns.map(row => {
+    /*val processedStream = streamWithTempColumns.map(row => {
       val inputElements = row.toSeq
       val metadata = inputElements.take(dataOffset)
       val data = inputElements.drop(dataOffset)
       val convertedData = dataConverter(Row.fromSeq(data))
       val outputElements = metadata :+ convertedData
       Row.fromSeq(outputElements)
-    })(encoder)
+    })(encoder)*/
 
     logger.debug(s"Actual final schema:\n${processedStream.schema.treeString}")
 
