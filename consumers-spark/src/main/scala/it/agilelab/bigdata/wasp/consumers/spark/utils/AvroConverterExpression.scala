@@ -21,43 +21,89 @@ import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.SQLDate
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
-import it.agilelab.darwin.manager.{AvroSchemaManager, AvroSchemaManagerFactory}
+import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 
 import scala.collection.JavaConverters._
 
 
-case class AvroConverterExpression(
-    children: Seq[Expression],
-    schemaAvroJson: Option[String] = None,
-    avroSchemaManagerConfig: Option[Config] = None,
-    useAvroSchemaManager: Boolean,
-    inputSchema: StructType,
-    structName: String,
-    namespace: String,
-    fieldsToWrite: Option[Set[String]],
-    timeZoneId: Option[String] = None) extends Expression with TimeZoneAwareExpression {
+object AvroConverterExpression {
 
-  require(!useAvroSchemaManager || useAvroSchemaManager && avroSchemaManagerConfig.isDefined,
-    "if useAvroSchemaManager is true avroSchemaManagerConfig must have a value")
+  def apply(avroSchemaAsJson: Option[String],
+            avroRecordName: String,
+            avroNamespace: String)
+           (children: Seq[Expression],
+            sparkSchema: StructType): AvroConverterExpression = {
 
-  schemaAvroJson.foreach(s => checkSchemas(inputSchema, s))
+    avroSchemaAsJson.foreach(s => RowToAvro.checkSchemas(sparkSchema, s))
 
-  @transient private lazy val externalSchema: Option[Schema] = schemaAvroJson.map(s => new Schema.Parser().parse(s))
+    val maybeAvroSchemaAsJsonWrapped: Option[Either[String, Long]] =
+      avroSchemaAsJson.map(x => Left(x))
 
+    new AvroConverterExpression(children, maybeAvroSchemaAsJsonWrapped, None, false, sparkSchema, avroRecordName, avroNamespace, None, None)
+  }
+
+  def apply(schemaManagerConfig: Config,
+            avroSchema: Schema,
+            avroRecordName: String,
+            avroNamespace: String)
+           (children: Seq[Expression],
+            sparkSchema: StructType): AvroConverterExpression = {
+
+    val fingerprint = AvroSchemaManagerFactory.getInstance(schemaManagerConfig).registerAll(Seq(avroSchema)).head._1
+
+    RowToAvro.checkSchemas(sparkSchema, avroSchema)
+
+    val avroSchemaId: Option[Either[String, Long]] = Some(Right(fingerprint))
+
+    new AvroConverterExpression(children,
+      avroSchemaId,
+      Some(schemaManagerConfig),
+      true,
+      sparkSchema,
+      avroRecordName,
+      avroNamespace,
+      None,
+      None)
+  }
+}
+
+
+case class AvroConverterExpression private(children: Seq[Expression],
+                                           maybeSchemaAvroJsonOrFingerprint: Option[Either[String, Long]],
+                                           avroSchemaManagerConfig: Option[Config],
+                                           useAvroSchemaManager: Boolean,
+                                           inputSchema: StructType,
+                                           structName: String,
+                                           namespace: String,
+                                           fieldsToWrite: Option[Set[String]],
+                                           timeZoneId: Option[String]) extends Expression with TimeZoneAwareExpression {
+
+
+  @transient private lazy val externalSchema: Option[Schema] = maybeSchemaAvroJsonOrFingerprint.map {
+    case Left(json) => new Schema.Parser().parse(json)
+    case Right(fingerprint) =>
+      AvroSchemaManagerFactory.getInstance(avroSchemaManagerConfig.get).getSchema(fingerprint) match {
+        case None => throw new IllegalStateException(s"Schema with fingerprint [$fingerprint] was not found in schema registry")
+        case Some(schema) => schema
+      }
+  }
 
   @transient private lazy val converter =
     createConverterToAvro(inputSchema, structName, namespace, fieldsToWrite, externalSchema)
-  @transient private lazy val actualSchema: Schema = getSchema
-  @transient private lazy val schemaId = {
-    AvroSchemaManagerFactory.getInstance(avroSchemaManagerConfig.get).getId(actualSchema)
+
+  @transient private lazy val actualSchema: Schema = externalSchema.getOrElse {
+    val builder = SchemaBuilder.record(structName).namespace(namespace)
+    SchemaConverters.convertStructToAvro(inputSchema, builder, namespace)
   }
 
-  private def getSchema: Schema = {
-    val builder = SchemaBuilder.record(structName).namespace(namespace)
-    schemaAvroJson.map(s => new Schema.Parser().parse(s)).getOrElse(
-      SchemaConverters.convertStructToAvro(inputSchema, builder, namespace)
-    )
+  private val schemaId = {
+    maybeSchemaAvroJsonOrFingerprint match {
+      case Some(Right(fingerprint)) if useAvroSchemaManager => fingerprint
+      case _ if useAvroSchemaManager => throw new IllegalStateException("We should have a fingerprint because we are using the schema registry")
+      case _ => -1L // we will not access schema id in this case, take care.
+    }
   }
+
 
   override def checkInputDataTypes(): TypeCheckResult = {
     if (children == Nil) {

@@ -9,6 +9,8 @@ import org.apache.avro.Schema
 import org.apache.spark.sql.Column
 import org.scalatest.{Matchers, WordSpec}
 import org.apache.avro.Schema.Field
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.types.StructType
 
 import scala.util.Random
 
@@ -84,25 +86,12 @@ class AvroConverterExpressionSpec extends WordSpec
 
       val df = sc.parallelize(elements).toDF()
 
+      val children = df.columns.map(df.col).map(_.as("serialized").expr).toSeq
+
+      val expr = AvroConverterExpression(Some(SchemaHolder.jsonSchema), "pippo", "wasp")(children, df.schema)
 
 
-
-      val expr = AvroConverterExpression(
-        children = df.columns.map(df.col).map(_.as("serialized").expr).toSeq,
-        schemaAvroJson = Some(SchemaHolder.jsonSchema),
-        avroSchemaManagerConfig = Some(ConfigFactory.empty()),
-        useAvroSchemaManager = false,
-        inputSchema = df.schema,
-        structName = "pippo",
-        namespace = "wasp",
-        fieldsToWrite = None,
-        timeZoneId = None)
-
-
-
-        val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap{ data =>
-
-
+      val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap{ data =>
           implicit object DateTimeToValue extends ToValue[Date] {
             override def apply(value: Date): Long = value.getTime
           }

@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import java.util.UUID
-
-import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroConverterExpression, RowToAvro}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroConverterExpression
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
@@ -14,16 +11,14 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil}
-import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.HEADER_DATA_TYPE
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.avro.Schema
+import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-
-import scala.collection.JavaConverters._
 
 class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
                                       ssc: StreamingContext,
@@ -222,15 +217,19 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     //  None, Some(prototypeTopicModel.getJsonSchema), darwinConf)
     // val dataConverter: Row => Array[Byte] = converter.write
     val exprToConvertToAvro = columnsInValues.map(col(_).expr)
-    val rowToAvroExpr = AvroConverterExpression(
-      exprToConvertToAvro,
-      Some(prototypeTopicModel.getJsonSchema),
-      darwinConf,
-      prototypeTopicModel.useAvroSchemaManager,
-      valueSchema,
-      prototypeTopicModel.name,
-      "wasp",
-      None)
+
+    val avroRecordName = prototypeTopicModel.name
+    val avroRecordNamespace = "wasp"
+
+    val rowToAvroExprFactory: (Seq[Expression], StructType) => AvroConverterExpression = if(prototypeTopicModel.useAvroSchemaManager) {
+      val avroSchema = new Schema.Parser().parse(prototypeTopicModel.getJsonSchema)
+      AvroConverterExpression(darwinConf.get, avroSchema, avroRecordName, avroRecordNamespace)
+    } else {
+      AvroConverterExpression(Some(prototypeTopicModel.getJsonSchema),  avroRecordName, avroRecordNamespace)
+    }
+
+    val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro, valueSchema)
+
     val metadataCols = (keyFieldName.map(kfn => col(kfn).cast(BinaryType).as("key")) ++
       headersFieldName.map(col(_).as("headers")) ++
       topicFieldName.map(col(_).as("topic"))).toSeq

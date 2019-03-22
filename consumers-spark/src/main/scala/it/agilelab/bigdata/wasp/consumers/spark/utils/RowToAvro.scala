@@ -201,16 +201,24 @@ object RowToAvro {
   private val arrayType = "array"
   private val binaryType = "bytes"
 
+
+  def checkSchemas(schemaSpark: StructType,
+                   schemaAvroJson: String): Unit = {
+
+    // parse avro schema from json
+    val schemaAvro: Schema = new Schema.Parser().parse(schemaAvroJson)
+
+    checkSchemas(schemaSpark, schemaAvro)
+  }
+
   /**
     * Ensures schemas are compatible, that is:
     *   - any field appearing int the Avro schema exists in the Spark schema
     *   - any such field has the same type in both schemas
     */
   def checkSchemas(schemaSpark: StructType,
-                   schemaAvroJson: String): Unit = {
+                   schemaAvro: Schema): Unit = {
 
-    // parse avro schema from json
-    val schemaAvro: Schema = new Schema.Parser().parse(schemaAvroJson)
 
     // flatten schemas, convert spark field list into a map
     val sparkFields: Map[String, String] = flattenSparkSchema(schemaSpark).toMap
