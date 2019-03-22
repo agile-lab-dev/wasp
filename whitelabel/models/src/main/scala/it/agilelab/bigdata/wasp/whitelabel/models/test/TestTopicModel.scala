@@ -128,7 +128,7 @@ private[wasp] object TestTopicModel {
                               topicDataType = "avro",
                               keyFieldName = Some("nested.field3"),
                               headersFieldName = None,
-                              valueFieldsNames = None,
+                              valueFieldsNames = Some(List("id", "number", "nested")),
                               useAvroSchemaManager = true,
                               schema = JsonConverter
                                 .fromString(topicSchema)
@@ -150,7 +150,7 @@ private[wasp] object TestTopicModel {
                                                                 "topic",
                                                                 Seq(avro4, avro5))
   
-  lazy val avro2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_avro"),
+  lazy val avro2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "headers_avro"),
                                              creationTime = System.currentTimeMillis,
                                              partitions = 3,
                                              replicas = 1,

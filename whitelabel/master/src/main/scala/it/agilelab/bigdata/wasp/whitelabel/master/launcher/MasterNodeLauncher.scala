@@ -26,7 +26,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     * @return [[Seq[(Key, Schema)]]
     */
   private def addExampleRegisterAvroSchema(): Unit = {
-    val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2])
+    val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2], new Schema.Parser().parse(TestTopicModel.avro.schema.toJson))
     val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
     AvroSchemaManagerFactory.initialize(configAvroSchemaManager).registerAll(schemas)
   }
