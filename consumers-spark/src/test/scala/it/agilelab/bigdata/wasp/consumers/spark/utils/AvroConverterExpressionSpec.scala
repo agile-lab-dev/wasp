@@ -32,6 +32,8 @@ object RowToAvroExpressionTestDataGenerator {
   def generate(random: Random): UglyCaseClass = {
 
     UglyCaseClass(generateByteArray(random),
+      generateIntArray(random),
+      Iterator.continually(generateNestedCaseClass(random)).take(10).toArray,
       generateDate(random),
       generateTimestamp(random),
       generateNestedCaseClass(random))
@@ -42,6 +44,10 @@ object RowToAvroExpressionTestDataGenerator {
     val array = new Array[Byte](25)
     random.nextBytes(array)
     array
+  }
+
+  def generateIntArray(random: Random): Array[Int] = {
+    Iterator.continually(random.nextInt()).take(10).toArray
   }
 
   val freezeNow = System.currentTimeMillis()
@@ -125,11 +131,13 @@ class AvroConverterExpressionSpec extends WordSpec
 
 
         elements.zip(results).foreach {
-          case(UglyCaseClass(a1, b1, c1, d1), UglyCaseClass(a2, b2, c2, d2)) =>
+          case(UglyCaseClass(a1,z1, y1, b1, c1, d1), UglyCaseClass(a2,z2, y2, b2, c2, d2)) =>
             assert(a1 sameElements a2)
             assert(b1.toLocalDate==b2.toLocalDate)
             assert(c1==c2)
             assert(d1==d2)
+            assert(z1 sameElements z2)
+            assert(y1 sameElements y2)
         }
 
     }

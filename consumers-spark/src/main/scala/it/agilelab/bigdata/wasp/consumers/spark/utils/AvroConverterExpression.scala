@@ -166,12 +166,12 @@ case class AvroConverterExpression(
           } else {
             val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
             val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getElementType))
-            val sourceArray = item.asInstanceOf[UnsafeArrayData].array()
-            val sourceArraySize = sourceArray.size
+            val sourceArray = item.asInstanceOf[UnsafeArrayData]
+            val sourceArraySize = sourceArray.numElements()
             val targetArray = new util.ArrayList[Any](sourceArraySize)
             var idx = 0
             while (idx < sourceArraySize) {
-              targetArray.add(idx, elementConverter(sourceArray(idx)))
+              targetArray.add(idx, elementConverter(sourceArray.get(idx, elementType)))
               idx += 1
             }
             targetArray

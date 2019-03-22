@@ -8,7 +8,7 @@ import org.apache.avro.Schema
 
 object SchemaHolder {
 
-  /*
+/*
   lazy implicit val schemaForDate : SchemaFor[Date] = new SchemaFor[Date] {
     override def apply(): Schema = Schema.create(Schema.Type.LONG)
   }
@@ -25,9 +25,9 @@ object SchemaHolder {
 
     println(schema.toString(true))
   }
+  */
 
 
-   */
 
   val jsonSchema = """{
                      |  "type" : "record",
@@ -37,6 +37,31 @@ object SchemaHolder {
                      |    "name" : "a",
                      |    "type" : "bytes"
                      |  }, {
+                     |    "name" : "b",
+                     |    "type" : {
+                     |      "type" : "array",
+                     |      "items" : "int"
+                     |    }
+                     |  }, {
+                     |    "name" : "na",
+                     |    "type" : {
+                     |      "type" : "array",
+                     |      "items" : {
+                     |        "type" : "record",
+                     |        "name" : "NestedCaseClass",
+                     |        "fields" : [ {
+                     |          "name" : "d",
+                     |          "type" : "double"
+                     |        }, {
+                     |          "name" : "l",
+                     |          "type" : "long"
+                     |        }, {
+                     |          "name" : "s",
+                     |          "type" : "string"
+                     |        } ]
+                     |      }
+                     |    }
+                     |  }, {
                      |    "name" : "d",
                      |    "type" : "long"
                      |  }, {
@@ -44,29 +69,17 @@ object SchemaHolder {
                      |    "type" : "long"
                      |  }, {
                      |    "name" : "n",
-                     |    "type" : {
-                     |      "type" : "record",
-                     |      "name" : "NestedCaseClass",
-                     |      "fields" : [ {
-                     |        "name" : "d",
-                     |        "type" : "double"
-                     |      }, {
-                     |        "name" : "l",
-                     |        "type" : "long"
-                     |      }, {
-                     |        "name" : "s",
-                     |        "type" : "string"
-                     |      } ]
-                     |    }
+                     |    "type" : "NestedCaseClass"
                      |  } ]
-                     |}
-                     |""".stripMargin
+                     |}""".stripMargin
 }
 
 
 case class NestedCaseClass(d: Double, l: Long, s: String)
 
 case class UglyCaseClass(a: Array[Byte],
+                         b : Array[Int],
+                         na : Array[NestedCaseClass],
                          d: Date,
                          ts: Timestamp,
                          n: NestedCaseClass
