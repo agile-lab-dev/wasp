@@ -6,22 +6,21 @@ import java.nio.ByteBuffer
 import java.util
 
 import com.typesafe.config.Config
-import it.agilelab.bigdata.wasp.consumers.spark.utils.RowToAvro.checkSchemas
+import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema.Type
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
-import org.apache.avro.io.EncoderFactory
+import org.apache.avro.io.{BinaryEncoder, EncoderFactory}
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.TypeCheckResult
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
-import org.apache.spark.sql.catalyst.expressions.{Expression, GenericInternalRow, TimeZoneAwareExpression, UnsafeArrayData, UnsafeMapData}
-import org.apache.spark.sql.catalyst.util.DateTimeUtils
+import org.apache.spark.sql.catalyst.expressions.{Expression, GenericInternalRow, TimeZoneAwareExpression}
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.SQLDate
+import org.apache.spark.sql.catalyst.util.{ArrayData, DateTimeUtils, MapData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
-import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 
 import scala.collection.JavaConverters._
 
@@ -115,34 +114,51 @@ case class AvroConverterExpression private(children: Seq[Expression],
 
   override def withTimeZone(timeZoneId: String): TimeZoneAwareExpression = copy(timeZoneId = Some(timeZoneId))
 
-  override def nullable: Boolean = true
+  override def nullable: Boolean = false
 
-  def serializeInternalRow(row: InternalRow): Array[Byte] = {
-    val output = new ByteArrayOutputStream()
+  def serializeInternalRow(row: InternalRow,
+                           output: ByteArrayOutputStream,
+                           encoder: BinaryEncoder): Array[Byte] = {
+    if (useAvroSchemaManager) {
+      AvroSingleObjectEncodingUtils.writeHeaderToStream(output, schemaId)
+    }
     val value: GenericRecord = converter(row).asInstanceOf[GenericRecord]
-
-    val encoder = EncoderFactory.get.binaryEncoder(output, null)
     val writer = new GenericDatumWriter[GenericRecord](actualSchema)
     writer.write(value, encoder)
-
     encoder.flush()
-
-    if (useAvroSchemaManager) {
-      AvroSingleObjectEncodingUtils.generateAvroSingleObjectEncoded(output.toByteArray, schemaId)
-    } else {
-      output.toByteArray
-    }
+    output.toByteArray
   }
 
   override def eval(input: InternalRow): Any = {
-    serializeInternalRow(InternalRow.fromSeq(children.map(_.eval(input))))
+    val output = new ByteArrayOutputStream()
+    serializeInternalRow(InternalRow.fromSeq(children.map(_.eval(input))), output,
+      EncoderFactory.get().binaryEncoder(output, null))
   }
 
+
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+    // come se venisse fatto all'inizio di una mapPartitions
+    val bufferClassName = classOf[ByteArrayOutputStream].getName
+    val bufferName = ctx.freshName("buffer")
+    ctx.addMutableState(
+      bufferClassName,
+      bufferName,
+      s"$bufferName = new $bufferClassName();")
+
+    val encoderClassName = classOf[BinaryEncoder].getName()
+    val encoderFactoryClassName = classOf[EncoderFactory].getName()
+    val encoderName = ctx.freshName("encoder")
+    ctx.addMutableState(
+      encoderClassName,
+      encoderName,
+      s"""$encoderName = $encoderFactoryClassName.get().binaryEncoder($bufferName, null);"""
+    )
+    val avroConverterExprName = ctx.freshName("avroConverterExpr")
     val rowClass = classOf[GenericInternalRow].getName
     val values = ctx.freshName("values")
+
     val avroConverterExpression =
-      ctx.addReferenceObj("avroConverterExpr", this, this.getClass.getName)
+      ctx.addReferenceObj(avroConverterExprName, this, this.getClass.getName)
     val valCodes = children.zipWithIndex.map { case (e, i) =>
       val eval = e.genCode(ctx)
       s"""
@@ -154,30 +170,38 @@ case class AvroConverterExpression private(children: Seq[Expression],
          |}
        """.stripMargin
     }
-    val valuesCode = ctx.splitExpressions(
-      expressions = valCodes,
-      funcName = "avroConverterCreateStruct",
-      arguments = ("Object[]", values) :: ("InternalRow", ctx.INPUT_ROW) :: Nil)
+
+    val valuesCode = if (ctx.INPUT_ROW != null && ctx.currentVars == null) {
+      ctx.splitExpressions(
+        expressions = valCodes,
+        funcName = "avroConverterCreateStruct",
+        arguments = ("Object[]", values) :: ("InternalRow", ctx.INPUT_ROW) :: Nil)
+    } else {
+      valCodes.mkString("\n")
+    }
 
     val tmpRow = ctx.freshName("tmpRowAvroConv")
+    val newEncoderName = ctx.freshName("newEncoder")
     ev.copy(code =
       s"""
          |Object[] $values = new Object[${children.size}];
          |$valuesCode
          |final InternalRow $tmpRow = new $rowClass($values);
          |$values = null;
-         |byte[] ${ev.value} = $avroConverterExpression.serializeInternalRow($tmpRow);
+         |$bufferName.reset();
+         |$encoderClassName $newEncoderName = $encoderFactoryClassName.get().binaryEncoder($bufferName, $encoderName);
+         |byte[] ${ev.value} = $avroConverterExpression.serializeInternalRow($tmpRow, $bufferName, $newEncoderName);
        """.stripMargin, isNull = "false")
   }
 
   override def dataType: DataType = BinaryType
 
   private def createConverterToAvro(
-                                     sparkSchema: DataType,
-                                     structName: String,
-                                     recordNamespace: String,
-                                     fieldsToWrite: Option[Set[String]],
-                                     externalSchema: Option[Schema]): Any => Any = {
+                                       sparkSchema: DataType,
+                                       structName: String,
+                                       recordNamespace: String,
+                                       fieldsToWrite: Option[Set[String]],
+                                       externalSchema: Option[Schema]): Any => Any = {
     sparkSchema match {
       case BinaryType => (item: Any) =>
         item match {
@@ -192,7 +216,7 @@ case class AvroConverterExpression private(children: Seq[Expression],
         }
       case ByteType | ShortType | IntegerType | LongType |
            FloatType | DoubleType | BooleanType => identity
-      case TimestampType => (item:Any) =>
+      case TimestampType => (item: Any) =>
         item.asInstanceOf[Long] / 1000
 
       case _: DecimalType => (item: Any) => if (item == null) null else item.toString
@@ -212,7 +236,7 @@ case class AvroConverterExpression private(children: Seq[Expression],
           } else {
             val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
             val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getElementType))
-            val sourceArray = item.asInstanceOf[UnsafeArrayData]
+            val sourceArray = item.asInstanceOf[ArrayData]
             val sourceArraySize = sourceArray.numElements()
             val targetArray = new util.ArrayList[Any](sourceArraySize)
             var idx = 0
@@ -231,8 +255,8 @@ case class AvroConverterExpression private(children: Seq[Expression],
             null
           } else {
             val javaMap = new util.HashMap[String, Any]()
-            val keys = item.asInstanceOf[UnsafeMapData].keyArray()
-            val values = item.asInstanceOf[UnsafeMapData].valueArray()
+            val keys = item.asInstanceOf[MapData].keyArray()
+            val values = item.asInstanceOf[MapData].valueArray()
             var i = 0
             while (i < keys.numElements()) {
               javaMap.put(keys.getUTF8String(i).toString, valueConverter(values.get(i, valueType)))
