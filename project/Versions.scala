@@ -5,7 +5,7 @@ object Versions {
 	val akka = "2.4.19" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
 	val akkaHttp = "10.0.9" // keep in sync with akka
 	val apacheCommonsLang3Version = "3.4"
-	val avro = "1.7.7"
+	val avro = "1.8.2"
 	val avro4sVersion = "1.8.3"
 	val avroSpark = "3.2.0"
 	val camel = "2.17.7"

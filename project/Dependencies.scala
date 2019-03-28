@@ -114,6 +114,7 @@ object Dependencies {
 	val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion excludeAll ExclusionRule("org.json4s")
 	val darwinCore = "it.agilelab" %% "darwin-core" % Versions.darwin
 	val darwinHBaseConnector = "it.agilelab" %% "darwin-hbase-connector" % Versions.darwin
+	val darwinMockConnector = "it.agilelab" %% "darwin-mock-connector" % Versions.darwin
 	val camelKafka = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
 	val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
@@ -187,7 +188,7 @@ object Dependencies {
 
 	val avro4s = Seq(avro4sCore, avro4sJson)
 
-	val avro4sTest = Seq(avro4sCore % Test, avro4sJson % Test)
+	val avro4sTest = Seq(avro4sCore % Test, avro4sJson % Test, darwinMockConnector % Test)
 
 
 	// ===================================================================================================================

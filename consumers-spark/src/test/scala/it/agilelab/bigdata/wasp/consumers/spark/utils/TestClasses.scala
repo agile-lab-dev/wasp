@@ -2,76 +2,45 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.sql.{Date, Timestamp}
 
-import com.sksamuel.avro4s.{AvroSchema, SchemaFor}
+import com.sksamuel.avro4s._
 import org.apache.avro.Schema
+import org.apache.avro.Schema.Field
 
 
-object SchemaHolder {
+object TestSchemas {
 
-/*
-  lazy implicit val schemaForDate : SchemaFor[Date] = new SchemaFor[Date] {
-    override def apply(): Schema = Schema.create(Schema.Type.LONG)
+  object implicits {
+    implicit object DateTimeToValue extends ToValue[Date] {
+      override def apply(value: Date): Long = value.getTime
+    }
+
+    implicit object DateTimeFromValue extends FromValue[Date] {
+      override def apply(value: Any, field: Field): Date = new Date(value.asInstanceOf[Long])
+    }
+
+    implicit object TimestampToValue extends ToValue[Timestamp] {
+      override def apply(value: Timestamp): Long = value.getTime
+    }
+
+    implicit object TimestampFromValue extends FromValue[Timestamp] {
+      override def apply(value: Any, field: Field): Timestamp = new Timestamp(value.asInstanceOf[Long])
+    }
+
+    implicit object SchemaForDate extends SchemaFor[Date] {
+      override def apply(): Schema = Schema.create(Schema.Type.LONG)
+    }
+
+    implicit object SchemaForTimestamp extends SchemaFor[Timestamp] {
+      override def apply(): Schema = Schema.create(Schema.Type.LONG)
+    }
+
   }
 
-  lazy implicit val schemaForTimestamp : SchemaFor[Timestamp] = new SchemaFor[Timestamp] {
-    override def apply(): Schema = Schema.create(Schema.Type.LONG)
+
+  val schema: Schema = {
+    import implicits.{SchemaForDate, SchemaForTimestamp}
+    AvroSchema[UglyCaseClass]
   }
-
-  lazy val schema : Schema = AvroSchema[UglyCaseClass]
-
-
-
-  def main(args: Array[String]): Unit = {
-
-    println(schema.toString(true))
-  }
-  */
-
-
-
-  val jsonSchema = """{
-                     |  "type" : "record",
-                     |  "name" : "UglyCaseClass",
-                     |  "namespace" : "it.agilelab.bigdata.wasp.consumers.spark.utils",
-                     |  "fields" : [ {
-                     |    "name" : "a",
-                     |    "type" : "bytes"
-                     |  }, {
-                     |    "name" : "b",
-                     |    "type" : {
-                     |      "type" : "array",
-                     |      "items" : "int"
-                     |    }
-                     |  }, {
-                     |    "name" : "na",
-                     |    "type" : {
-                     |      "type" : "array",
-                     |      "items" : {
-                     |        "type" : "record",
-                     |        "name" : "NestedCaseClass",
-                     |        "fields" : [ {
-                     |          "name" : "d",
-                     |          "type" : "double"
-                     |        }, {
-                     |          "name" : "l",
-                     |          "type" : "long"
-                     |        }, {
-                     |          "name" : "s",
-                     |          "type" : "string"
-                     |        } ]
-                     |      }
-                     |    }
-                     |  }, {
-                     |    "name" : "d",
-                     |    "type" : "long"
-                     |  }, {
-                     |    "name" : "ts",
-                     |    "type" : "long"
-                     |  }, {
-                     |    "name" : "n",
-                     |    "type" : "NestedCaseClass"
-                     |  } ]
-                     |}""".stripMargin
 }
 
 
@@ -82,5 +51,4 @@ case class UglyCaseClass(a: Array[Byte],
                          na : Array[NestedCaseClass],
                          d: Date,
                          ts: Timestamp,
-                         n: NestedCaseClass
-                        )
+                         n: NestedCaseClass)

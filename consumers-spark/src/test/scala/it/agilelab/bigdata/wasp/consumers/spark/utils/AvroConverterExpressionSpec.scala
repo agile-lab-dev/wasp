@@ -1,76 +1,13 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import java.sql.{Date, Timestamp}
-
 import com.sksamuel.avro4s._
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.utils.SparkTestKit
-import org.apache.avro.Schema
+import it.agilelab.darwin.manager.AvroSchemaManagerFactory
+import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.scalatest.{Matchers, WordSpec}
-import org.apache.avro.Schema.Field
-import org.apache.spark.sql.catalyst.expressions.Expression
-import org.apache.spark.sql.types.StructType
-
-import scala.util.Random
-
-
-
-
-object RowToAvroExpressionTestDataGenerator {
-
-
-  def generate(seed: Long, elements: Int): Seq[UglyCaseClass] = {
-
-    //random number generator with fixed seed to have reproducible tests
-    val random = new Random(seed)
-
-    Iterator.continually {
-      generate(random)
-    }.take(elements).toSeq
-
-  }
-
-  def generate(random: Random): UglyCaseClass = {
-
-    UglyCaseClass(generateByteArray(random),
-      generateIntArray(random),
-      Iterator.continually(generateNestedCaseClass(random)).take(10).toArray,
-      generateDate(random),
-      generateTimestamp(random),
-      generateNestedCaseClass(random))
-
-  }
-
-  def generateByteArray(random: Random): Array[Byte] = {
-    val array = new Array[Byte](25)
-    random.nextBytes(array)
-    array
-  }
-
-  def generateIntArray(random: Random): Array[Int] = {
-    Iterator.continually(random.nextInt()).take(10).toArray
-  }
-
-  val freezeNow = System.currentTimeMillis()
-
-  def generateTimestamp(random: Random): Timestamp =
-    new Timestamp(freezeNow)
-
-  def generateDate(random: Random): Date =
-    new Date(freezeNow)
-
-
-  def generateNestedCaseClass(random: Random): NestedCaseClass =
-    NestedCaseClass(random.nextDouble(), random.nextLong(), random.nextString(30))
-
-
-  def generateMap(random: Random): Map[String, Int] =
-    Iterator.continually {
-      (random.nextString(20), random.nextInt())
-    }.take(20).toMap
-}
-
 
 class AvroConverterExpressionSpec extends WordSpec
   with Matchers
@@ -78,40 +15,22 @@ class AvroConverterExpressionSpec extends WordSpec
 
   "RowToAvroExpression" must {
 
-    "correctly handle" in {
+    "correctly handle serialization when not using darwin" in {
 
       import ss.implicits._
 
-      val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 20)
+      val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
 
-      val df = sc.parallelize(elements).toDF()
+      val df = sc.parallelize(elements, 4).toDF()
 
       val children = df.columns.map(df.col).map(_.as("serialized").expr).toSeq
 
-      val expr = AvroConverterExpression(Some(SchemaHolder.jsonSchema), "pippo", "wasp")(children, df.schema)
+      val expr = AvroConverterExpression(Some(TestSchemas.schema.toString), "pippo", "wasp")(children, df.schema)
 
 
       val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap{ data =>
-          implicit object DateTimeToValue extends ToValue[Date] {
-            override def apply(value: Date): Long = value.getTime
-          }
 
-          implicit object DateTimeFromValue extends FromValue[Date] {
-            override def apply(value: Any, field: Field): Date = new Date(value.asInstanceOf[Long])
-          }
-
-          implicit object TimestampToValue extends ToValue[Timestamp] {
-            override def apply(value: Timestamp): Long = value.getTime
-          }
-
-          implicit object TimestampFromValue extends FromValue[Timestamp] {
-            override def apply(value: Any, field: Field): Timestamp = new Timestamp(value.asInstanceOf[Long])
-          }
-
-          implicit val schemaFor: SchemaFor[UglyCaseClass] = new  SchemaFor[UglyCaseClass] {
-            override def apply(): Schema = new Schema.Parser().parse(SchemaHolder.jsonSchema)
-          }
-          implicit val record: FromRecord[UglyCaseClass] = FromRecord[UglyCaseClass]
+        import TestSchemas.implicits._
 
           AvroInputStream.binary[UglyCaseClass](data.asInstanceOf[Array[Byte]]).iterator.toSeq
         }
@@ -121,13 +40,60 @@ class AvroConverterExpressionSpec extends WordSpec
 
         elements.zip(results).foreach {
           case(UglyCaseClass(a1,z1, y1, b1, c1, d1), UglyCaseClass(a2,z2, y2, b2, c2, d2)) =>
+
+
+
             assert(a1 sameElements a2)
-            assert(b1.toLocalDate==b2.toLocalDate)
+            assert(b1 == b2)
             assert(c1==c2)
             assert(d1==d2)
             assert(z1 sameElements z2)
             assert(y1 sameElements y2)
         }
+
+    }
+
+    "correctly handle serialization when using darwin" in {
+
+      import ss.implicits._
+
+      val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
+
+      val df = sc.parallelize(elements, 4).toDF()
+
+      val children = df.columns.map(df.col).map(_.as("serialized").expr).toSeq
+
+      val darwinConf = ConfigFactory.parseString(
+        """
+          |type: cached_eager
+          |connector: "mock"
+        """.stripMargin)
+
+      AvroSchemaManagerFactory.initialize(darwinConf)
+
+
+      val expr = AvroConverterExpression(darwinConf, TestSchemas.schema, "pippo", "wasp")(children, df.schema)
+
+
+      val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap { data =>
+
+        import TestSchemas.implicits._
+
+        val element = AvroSingleObjectEncodingUtils.dropHeader(data.asInstanceOf[Array[Byte]])
+
+        AvroInputStream.binary[UglyCaseClass](element).iterator.toSeq
+      }
+
+
+      elements.zip(results).foreach {
+        case (UglyCaseClass(a1, z1, y1, b1, c1, d1), UglyCaseClass(a2, z2, y2, b2, c2, d2)) =>
+          assert(a1 sameElements a2)
+          assert(b1 == b2)
+          assert(c1 == c2)
+          assert(d1 == d2)
+          assert(z1 sameElements z2)
+          assert(y1 sameElements y2)
+      }
 
     }
 
