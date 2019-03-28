@@ -48,7 +48,7 @@ object AvroConverterExpression {
            (children: Seq[Expression],
             sparkSchema: StructType): AvroConverterExpression = {
 
-    val fingerprint = AvroSchemaManagerFactory.getInstance(schemaManagerConfig).registerAll(Seq(avroSchema)).head._1
+    val fingerprint = AvroSchemaManagerFactory.initialize(schemaManagerConfig).registerAll(Seq(avroSchema)).head._1
 
     RowToAvro.checkSchemas(sparkSchema, avroSchema)
 
@@ -81,7 +81,7 @@ case class AvroConverterExpression private(children: Seq[Expression],
   @transient private lazy val externalSchema: Option[Schema] = maybeSchemaAvroJsonOrFingerprint.map {
     case Left(json) => new Schema.Parser().parse(json)
     case Right(fingerprint) =>
-      AvroSchemaManagerFactory.getInstance(avroSchemaManagerConfig.get).getSchema(fingerprint) match {
+      AvroSchemaManagerFactory.initialize(avroSchemaManagerConfig.get).getSchema(fingerprint) match {
         case None => throw new IllegalStateException(s"Schema with fingerprint [$fingerprint] was not found in schema registry")
         case Some(schema) => schema
       }
