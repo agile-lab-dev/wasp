@@ -246,12 +246,12 @@ case class AvroConverterExpression private(children: Seq[Expression],
           DateTimeUtils.daysToMillis(item.asInstanceOf[SQLDate], timeZone)
         }
       case ArrayType(elementType, _) =>
+        val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
+        val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getElementType))
         (item: Any) => {
           if (item == null) {
             null
           } else {
-            val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
-            val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getElementType))
             val sourceArray = item.asInstanceOf[ArrayData]
             val sourceArraySize = sourceArray.numElements()
             val targetArray = new util.ArrayList[Any](sourceArraySize)
