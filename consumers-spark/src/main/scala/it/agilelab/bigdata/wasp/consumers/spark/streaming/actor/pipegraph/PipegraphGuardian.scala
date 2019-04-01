@@ -84,7 +84,7 @@ class PipegraphGuardian(private val master: ActorRef,
         case Retry =>
           log.info("[{}] Retry", etl.name)
           goto(Activating) using data.copy(activating = data.activating - association,
-            toBeRetried = data.toBeActivated + etl)
+            toBeRetried = data.toBeRetried + etl)
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
           goto(Activating) using data.copy(activating = data.activating - association,
@@ -217,7 +217,7 @@ class PipegraphGuardian(private val master: ActorRef,
         case Retry =>
           log.info("[{}] Retry", etl.name)
           goto(Monitoring) using data.copy(monitoring = data.monitoring - association,
-            toBeRetried = data.toBeMonitored + association)
+            toBeRetried = data.toBeRetried + association)
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
           goto(Monitoring) using data.copy(monitoring = data.monitoring - association,
