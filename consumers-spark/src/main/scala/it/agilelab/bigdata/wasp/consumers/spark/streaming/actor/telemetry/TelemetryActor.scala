@@ -9,9 +9,10 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutcome
 import it.agilelab.bigdata.wasp.core.messages.TelemetryMessageJsonProtocol._
 import it.agilelab.bigdata.wasp.core.messages.{TelemetryActorRedirection, TelemetryMessageSource, TelemetryMessageSourcesSummary}
-import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
+import it.agilelab.bigdata.wasp.core.models.configuration.KafkaEntryConfig
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
-import org.apache.kafka.clients.producer.{KafkaProducer, Producer, ProducerRecord}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.sql.streaming.StreamingQueryProgress
 import spray.json._
 
@@ -21,37 +22,64 @@ import scala.concurrent.duration.FiniteDuration
 import scala.util.parsing.json.{JSONFormat, JSONObject}
 import scala.util.{Success, Try}
 
-class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKafkaConfig) extends Actor {
+
+object TelemetryActorKafkaProducer {
 
 
-  private var writer: Producer[Array[Byte], Array[Byte]] = _
+  /**
+    * We want one telemetry producer per jvm
+    */
+  private lazy val producer = {
+    val kafkaConfig = ConfigManager.getKafkaConfig
+
+    val telemetryConfig = ConfigManager.getTelemetryConfig
+
+    val connectionString = kafkaConfig.connections.map {
+      conn => s"${conn.host}:${conn.port}"
+    }.mkString(",")
+
+
+    val props = new Properties()
+    props.put("bootstrap.servers", connectionString)
+    props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+    props.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+
+    val notOverridableKeys = props.keySet.asScala
+
+    val merged: Seq[KafkaEntryConfig] = kafkaConfig.others ++ telemetryConfig.telemetryTopicConfigModel.kafkaSettings
+
+    merged.filterNot(notOverridableKeys.contains(_)).foreach {
+      case KafkaEntryConfig(key, value) => props.put(key, value)
+    }
+
+    new KafkaProducer[Array[Byte], Array[Byte]](props)
+  }
+
+
+  def send(key: String, message: String) : Unit = {
+
+    val topic = SystemPipegraphs.telemetryTopic.name
+
+    val record = new ProducerRecord[Array[Byte], Array[Byte]](
+      topic,
+      key.getBytes(StandardCharsets.UTF_8),
+      message.getBytes(StandardCharsets.UTF_8)
+    )
+
+    producer.send(record)
+  }
+}
+
+
+class TelemetryActor private() extends Actor {
+
+
   private val mediator = DistributedPubSub(context.system).mediator
   private var actorRefMessagesRedirect = Actor.noSender
   private var connectionCancellable: Cancellable = _
 
   override def preStart(): Unit = {
-
-    val props = new Properties()
-    props.put("bootstrap.servers", kafkaConnectionString)
-    props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
-    props.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
-    props.put("batch.size", "1048576")
-    props.put("acks", "0")
-
-    val notOverridableKeys = props.keySet.asScala
-
-    kafkaConfig.others.filterNot(notOverridableKeys.contains(_)).foreach {
-      case KafkaEntryConfig(key, value) => props.put(key, value)
-    }
-
-    writer = new KafkaProducer[Array[Byte], Array[Byte]](props)
-
     connectionCancellable = scheduleMessageToRedirectionActor()
-  }
-
-
-  override def postStop(): Unit = {
-    writer.close()
   }
 
 
@@ -104,7 +132,7 @@ class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKa
 
     metrics.filter(isValidMetric)
            .map(toMessage)
-           .foreach(send(UUID.randomUUID().toString, _))
+           .foreach(x => TelemetryActorKafkaProducer.send(UUID.randomUUID().toString, x))
 
     //Try needed because sometimes spark sends not correctly formatted JSONs
     Try {
@@ -129,7 +157,7 @@ class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKa
         val streamingQueryProgressMessage: String = toMessage(overallSources)
 
         //Message sent to the Kafka telemetry topic
-        send(UUID.randomUUID().toString, streamingQueryProgressMessage)
+        TelemetryActorKafkaProducer.send(UUID.randomUUID().toString, streamingQueryProgressMessage)
 
         if(actorRefMessagesRedirect != Actor.noSender) actorRefMessagesRedirect ! overallSources
 
@@ -139,18 +167,6 @@ class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKa
   }
 
 
-  private def send(key: String, message: String) : Unit = {
-
-    val topic = SystemPipegraphs.telemetryTopic.name
-
-    val record = new ProducerRecord[Array[Byte], Array[Byte]](
-      topic,
-      key.getBytes(StandardCharsets.UTF_8),
-      message.getBytes(StandardCharsets.UTF_8)
-    )
-
-    writer.send(record)
-  }
 
   private def scheduleMessageToRedirectionActor(): Cancellable = {
 
@@ -169,8 +185,7 @@ class TelemetryActor private (kafkaConnectionString: String, kafkaConfig: TinyKa
 
 object TelemetryActor {
 
-  def props(kafkaConnectionString:String , kafkaConfig: TinyKafkaConfig): Props =
-    Props(new TelemetryActor(kafkaConnectionString,
-                             kafkaConfig))
+  def props(): Props =
+    Props(new TelemetryActor())
 
 }

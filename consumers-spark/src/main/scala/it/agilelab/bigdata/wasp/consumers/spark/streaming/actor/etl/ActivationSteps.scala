@@ -386,6 +386,9 @@ object MetadataOps {
 
     if (stream.columns.contains("metadata")) {
 
+      //topic should be captured here, it will not be available in executors
+      val topic = SystemPipegraphs.telemetryTopic.name
+
 
       val connectionString = kafkaConfig.connections.map{
         conn => s"${conn.host}:${conn.port}"
@@ -446,7 +449,6 @@ object MetadataOps {
                                       "timestamp" -> collectionTimeAsString)).toString(JSONFormat.defaultFormatter)
 
 
-            val topic = SystemPipegraphs.telemetryTopic.name
 
             val record = new ProducerRecord[Array[Byte], Array[Byte]](topic,
                                                                       messageId.getBytes(StandardCharsets.UTF_8),

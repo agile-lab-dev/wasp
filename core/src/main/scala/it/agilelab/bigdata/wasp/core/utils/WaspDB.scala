@@ -309,7 +309,8 @@ object WaspDB extends Logging {
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[HBaseConfigModel].tpe -> configurationsName,
-    typeTag[JdbcConfigModel].tpe -> configurationsName
+    typeTag[JdbcConfigModel].tpe -> configurationsName,
+    typeTag[TelemetryConfigModel].tpe -> configurationsName
   )
 
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
@@ -353,7 +354,10 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[JdbcConnectionConfig]),
     createCodecProviderIgnoreNone(classOf[JdbcConfigModel]),
     createCodecProviderIgnoreNone(classOf[WebsocketModel]),
-    createCodecProviderIgnoreNone(classOf[BatchSchedulerModel])
+    createCodecProviderIgnoreNone(classOf[BatchSchedulerModel]),
+    createCodecProviderIgnoreNone(classOf[TelemetryTopicConfigModel]),
+    createCodecProviderIgnoreNone(classOf[TelemetryConfigModel])
+
   ).asJava
 
   def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {

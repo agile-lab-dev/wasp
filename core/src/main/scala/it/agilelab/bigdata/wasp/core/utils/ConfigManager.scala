@@ -6,8 +6,8 @@ import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, HBaseProduct, SolrProduct}
-import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.models.Model
+import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
@@ -202,17 +202,24 @@ object ConfigManager {
   }
 
   private def initializeTelemetryConfig(): Unit = {
-    telemetryConfig = getDefaultTelemetryConfig
+    telemetryConfig =
+      retrieveConf[TelemetryConfigModel](getDefaultTelemetryConfig, telemetryConfigName).get
   }
 
 
   private def getDefaultTelemetryConfig: TelemetryConfigModel = {
     val telemetrySubConfig = conf.getConfig("telemetry")
     TelemetryConfigModel(
-      telemetrySubConfig.getString("writer"),
-      telemetrySubConfig.getInt("latency.sample-one-message-every")
+      name = telemetryConfigName,
+      writer = telemetrySubConfig.getString("writer"),
+      sampleOneMessageEvery = telemetrySubConfig.getInt("latency.sample-one-message-every"),
+      telemetryTopicConfigModel = TelemetryTopicConfigModel(
+        topicName = telemetrySubConfig.getString("topic.name"),
+        partitions = telemetrySubConfig.getInt("topic.partitions"),
+        replica = telemetrySubConfig.getInt("topic.replica"),
+        readOthersConfig(telemetrySubConfig.getConfig("topic")).map(e => KafkaEntryConfig(e._1, e._2))
+      )
     )
-
   }
 
   private def initializeMongoDBConfig(): Unit = {
@@ -404,6 +411,7 @@ object ConfigManager {
     initializeSparkStreamingConfig()
     initializeSparkBatchConfig()
     initializeAvroSchemaManagerConfig()
+    initializeTelemetryConfig()
   }
 
   def getWaspConfig: WaspConfigModel = {

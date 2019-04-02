@@ -84,9 +84,9 @@ private[wasp] object LoggerTopicModel {
 
 private[wasp] object TelemetryTopicModel {
 
-	private val topic_name = "telemetry"
 
-	def apply() = TopicModel(name = TopicModel.name(topic_name),
+
+	def apply() = TopicModel(name = TopicModel.name(ConfigManager.getTelemetryConfig.telemetryTopicConfigModel.topicName),
 	                         creationTime = System.currentTimeMillis,
 	                         partitions = 3,
 	                         replicas = 1,
