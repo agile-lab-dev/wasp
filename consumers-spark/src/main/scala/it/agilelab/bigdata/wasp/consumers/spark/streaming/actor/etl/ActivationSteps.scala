@@ -103,7 +103,7 @@ trait ActivationSteps {
     */
   private def createStreamingDataFrameFromStreamingSource(etl: StructuredStreamingETLModel,
                                                           streamingReaderModel: StreamingReaderModel): Try[(ReaderKey, DataFrame)] = Try {
-    val maybeReader = streamingReaderFactory(etl, streamingReaderModel)
+    val maybeReader = streamingReaderFactory(etl, streamingReaderModel, sparkSession)
     val streamingDataFrame = maybeReader match {
       case Some(reader) => reader.createStructuredStream(etl, streamingReaderModel)(sparkSession)
       case None =>
@@ -126,7 +126,7 @@ trait ActivationSteps {
                                                      readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
 
       def createReader(readerModel: ReaderModel): Try[SparkBatchReader] = Try {
-        val maybeReader = staticReaderFactory(etl, readerModel)
+        val maybeReader = staticReaderFactory(etl, readerModel, sparkSession)
         maybeReader match {
           case Some(reader) => reader
           case None =>
@@ -320,7 +320,7 @@ object ActivationSteps {
     *
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
-  type StreamingReaderFactory = (StructuredStreamingETLModel, StreamingReaderModel) => Option[SparkStructuredStreamingReader]
+  type StreamingReaderFactory = (StructuredStreamingETLModel, StreamingReaderModel, SparkSession) => Option[SparkStructuredStreamingReader]
   
   /**
     * A function able to go from a [[StructuredStreamingETLModel]]] and a [[ReaderModel]] to an [[Option]] of
@@ -328,7 +328,7 @@ object ActivationSteps {
     *
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
-  type StaticReaderFactory = (StructuredStreamingETLModel, ReaderModel) => Option[SparkBatchReader]
+  type StaticReaderFactory = (StructuredStreamingETLModel, ReaderModel, SparkSession) => Option[SparkBatchReader]
 }
 
 object MetadataOps {

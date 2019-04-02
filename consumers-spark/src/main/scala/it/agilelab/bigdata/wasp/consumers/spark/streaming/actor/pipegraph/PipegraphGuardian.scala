@@ -481,10 +481,12 @@ object PipegraphGuardian {
 
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
+    val childEtlSparkSession = sparkSession.newSession()
+
     //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
     
-    context.actorOf(StructuredStreamingETLActor.props(sparkSession,
+    context.actorOf(StructuredStreamingETLActor.props(childEtlSparkSession,
                                                       mlModelBl,
                                                       topicsBl,
                                                       streamingReaderFactory,

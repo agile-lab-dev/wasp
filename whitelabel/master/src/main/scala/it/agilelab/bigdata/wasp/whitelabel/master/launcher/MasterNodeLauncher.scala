@@ -138,8 +138,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
   
     waspDB.upsert[PipegraphModel](TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
-  
-  
+    waspDB.upsert[PipegraphModel](TestPipegraphs.SparkSessionErrors.pipegraph)
+
+
     /* BatchJobs */
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromElastic.toHdfsNested)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfsFlat)
