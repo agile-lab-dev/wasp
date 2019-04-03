@@ -48,7 +48,7 @@ object TelemetryActorKafkaProducer {
 
     val merged: Seq[KafkaEntryConfig] = kafkaConfig.others ++ telemetryConfig.telemetryTopicConfigModel.kafkaSettings
 
-    merged.filterNot(notOverridableKeys.contains(_)).foreach {
+    merged.filterNot(x => notOverridableKeys.contains(x.key)).foreach {
       case KafkaEntryConfig(key, value) => props.put(key, value)
     }
 
