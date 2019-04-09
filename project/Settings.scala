@@ -113,6 +113,7 @@ object Settings {
 	
 	/** settings to disable parallel execution of tests, for Spark & co */
 	lazy val disableParallelTests = Seq(
-		parallelExecution in Test := false
+		parallelExecution in Test := false,
+		parallelExecution in IntegrationTest := false
 	)
 }

@@ -1,5 +1,8 @@
 import Dependencies.scalaTest
 
+//integration tests should extend Test configuration and not Runtime configuration
+lazy val IntegrationTest = config("it") extend(Test)
+
 /*
  * Main build definition.
  *
@@ -11,7 +14,9 @@ import Dependencies.scalaTest
 /* Libraries */
 
 lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark-sql-kafka-0-11"))
+  .configs(IntegrationTest)
 	.settings(Settings.commonSettings: _*)
+  .settings(Defaults.itSettings)
 	.settings(Settings.disableParallelTests: _*)
 	.settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
 

@@ -7,6 +7,7 @@ variables:
 
 stages:
   - test
+  - integration
   - deploy
 
 cache:
@@ -24,8 +25,23 @@ test:
   stage: test
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
-    - sbt clean coverageOn "testOnly * -- -l org.apache.spark.sql.kafka011.MightNeverTerminate" coverageOff coverageReport coverageAggregate
+    - sbt clean coverageOn test coverageOff coverageReport coverageAggregate
+  only:
+    - /^develop$/
+    - /(^feature\/.*)/
+    - /(^hotfix\/.*)/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
 
+integration:
+  tags:
+    - cluster01
+  stage: integration
+  image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
+  script:
+    - sbt clean it:test
+  only:
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - /^v([0-9]+)\.([0-9]+)\.([0-9]+)$/
 deploy:
   tags:
     - cluster01

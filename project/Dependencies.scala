@@ -213,7 +213,7 @@ object Dependencies {
 	// Module dependencies
 	// ===================================================================================================================
 	
-	val spark_sql_kafka_0_11 = Seq( // normal dependencies
+	val spark_sql_kafka_0_11 = (Seq( // normal dependencies
 		guava,
 		kafkaClients,
 		sparkSQL,
@@ -227,7 +227,7 @@ object Dependencies {
 		sparkSQLTests,
 		sparkTagsTests,
 		scalaTest2
-	)
+	)).map(excludeLog4j) ++ log4j
 	
 	val core = (akka ++
 		logging ++
