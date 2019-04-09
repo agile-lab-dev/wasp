@@ -7,6 +7,7 @@ import akka.actor.{Actor, Cancellable, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutcome
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.TelemetryMessageJsonProtocol._
 import it.agilelab.bigdata.wasp.core.messages.{TelemetryActorRedirection, TelemetryMessageSource, TelemetryMessageSourcesSummary}
 import it.agilelab.bigdata.wasp.core.models.configuration.KafkaEntryConfig
@@ -23,7 +24,7 @@ import scala.util.parsing.json.{JSONFormat, JSONObject}
 import scala.util.{Success, Try}
 
 
-object TelemetryActorKafkaProducer {
+object TelemetryActorKafkaProducer extends Logging {
 
 
   /**
@@ -48,7 +49,11 @@ object TelemetryActorKafkaProducer {
 
     val merged: Seq[KafkaEntryConfig] = kafkaConfig.others ++ telemetryConfig.telemetryTopicConfigModel.kafkaSettings
 
-    merged.filterNot(x => notOverridableKeys.contains(x.key)).foreach {
+    val resultingConf = merged.filterNot(x => notOverridableKeys.contains(x.key))
+
+    logger.info(s"Telemetry configuration\n${resultingConf.mkString("\n")}" )
+
+    resultingConf.foreach {
       case KafkaEntryConfig(key, value) => props.put(key, value)
     }
 
