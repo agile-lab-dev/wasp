@@ -67,9 +67,20 @@ class TopicDatastoreModelJsonFormat
     extends RootJsonFormat[DatastoreModel[TopicCategory]]
       with SprayJsonSupport
       with DefaultJsonProtocol {
+
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
+
+  implicit lazy val topicCompressionFormat: JsonFormat[TopicCompression] = new JsonFormat[TopicCompression] {
+    override def write(obj: TopicCompression): JsValue =
+      JsString(TopicCompression.asString(obj))
+
+    override def read(json: JsValue): TopicCompression =
+      json match {
+        case JsString(value) => TopicCompression.fromString(value)
+      }
+  }
   
-  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat10(TopicModel.apply)
+  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat11(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
   
   override def write(obj: DatastoreModel[TopicCategory]): JsValue = {
@@ -117,6 +128,9 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
      datastoreModelName: String,
      datastoreProduct: DatastoreProduct,
      options: Map[String, String]) => WriterModel(name, datastoreModelName, datastoreProduct, options))
+
+
+
   implicit lazy val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
   implicit lazy val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
   implicit lazy val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
