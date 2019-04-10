@@ -52,7 +52,7 @@ object Settings {
 			"-language:_",
 			"-deprecation",
 			"-unchecked",
-			"-Ylog-classpath",
+			//"-Ylog-classpath",
 			"-Xlint",
 			"-Xmax-classfile-name", "72"),
 		javacOptions ++= Seq(
