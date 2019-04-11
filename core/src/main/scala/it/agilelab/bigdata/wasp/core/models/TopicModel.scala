@@ -37,17 +37,26 @@ sealed trait TopicCompression
 
 object TopicCompression {
 
-  val asString : Map[TopicCompression, String] = Map(
+
+
+  private val _asString : Map[TopicCompression, String] = Map(
     TopicCompression.Disabled -> "disabled",
     TopicCompression.Gzip -> "gzip",
-    TopicCompression.Snappy -> "snappy"
+    TopicCompression.Snappy -> "snappy",
+    TopicCompression.Lz4 -> "lz4"
   )
 
-  val fromString: Map[String, TopicCompression] = asString.map(_.swap)
+  def asString : PartialFunction[TopicCompression, String] = _asString
+
+  def fromString: PartialFunction[String, TopicCompression] = _fromString
+
+  private val _fromString: Map[String, TopicCompression] = _asString.map(_.swap)
 
   case object Disabled extends TopicCompression
   case object Gzip extends TopicCompression
   case object Snappy extends TopicCompression
+  case object Lz4 extends TopicCompression
+
 }
 
 /**

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.bl
 
 import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
-import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicCompression, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 
@@ -60,7 +60,9 @@ class TopicBLImp(waspDB: WaspDB) extends TopicBL  {
                    else
                      None,
                    bsonDocument.get("useAvroSchemaManager").asBoolean().getValue,
-                   bsonDocument.get("schema").asDocument())
+                   bsonDocument.get("schema").asDocument(),
+                   TopicCompression.fromString(bsonDocument.get("topicCompression").asString().getValue)
+                   )
   }
   
   private def bsonDocumentToMultiTopicModel(bsonDocument: BsonDocument): MultiTopicModel = {

@@ -119,7 +119,8 @@ private[wasp] object TestTopicModel {
                              useAvroSchemaManager = true,
                              schema = JsonConverter
                                .fromString(topicSchema)
-                               .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+                               .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+                             topicCompression = TopicCompression.Disabled)
 
   lazy val avro2 = TopicModel(name = TopicModel.name(topic2_name + "_avro"),
                               creationTime = System.currentTimeMillis,
@@ -132,8 +133,9 @@ private[wasp] object TestTopicModel {
                               useAvroSchemaManager = true,
                               schema = JsonConverter
                                 .fromString(topicSchema)
-                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
-  
+                                .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+                              topicCompression = TopicCompression.Lz4)
+
   lazy val avro3 = avro.copy(name = TopicModel.name(topic3_name + "_avro"))
   
   lazy val avro4 = avro.copy(name = TopicModel.name(topic4_name + "_avro"),

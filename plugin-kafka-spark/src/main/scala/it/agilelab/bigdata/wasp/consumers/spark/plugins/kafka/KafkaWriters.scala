@@ -9,7 +9,7 @@ import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicCompression, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil}
 import org.apache.avro.Schema
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -169,9 +169,21 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       else
         partialDataStreamWriter.option("topic", prototypeTopicModel.name)
 
-    val finalDataStreamWriter = addKafkaConf(partialDataStreamWriterAfterTopicConf, tinyKafkaConfig)
+    val dataStreamWriterAfterKafkaConfig = addKafkaConf(partialDataStreamWriterAfterTopicConf, tinyKafkaConfig)
 
-    finalDataStreamWriter
+    val compressionForKafka = topics.head.topicCompression match {
+      case TopicCompression.Disabled => "none"
+      case TopicCompression.Snappy => "snappy"
+      case TopicCompression.Gzip => "gzip"
+      case TopicCompression.Lz4 => "lz4"
+      case notMatched => throw new Exception(s"$notMatched compression is not supported by kafka writer")
+    }
+
+    val finalDataStreamWriterAfterCompression = dataStreamWriterAfterKafkaConfig
+      .option("kafka.compression.type", compressionForKafka)
+
+
+    finalDataStreamWriterAfterCompression
   }
 
   private def convertStreamForAvro(keyFieldName: Option[String],

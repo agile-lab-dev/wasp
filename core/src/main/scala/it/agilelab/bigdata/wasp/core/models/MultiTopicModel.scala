@@ -30,6 +30,29 @@ object MultiTopicModel {
 		validateTopicModels(topicModels)
 		new MultiTopicModel(name, topicNameField, topicModels.map(_.name))
 	}
+
+
+	type TopicCompressionValidationError = Map[TopicCompression, Seq[TopicModel]]
+
+	def validateTopicModelsHaveSameCompression(topics : Seq[TopicModel]) : Either[TopicCompressionValidationError, Unit] = {
+		val grouped = topics.groupBy(_.topicCompression)
+
+		if(grouped.keySet.size != 1) {
+			Left(grouped)
+		} else {
+			Right(())
+		}
+	}
+
+	def formatTopicCompressionValidationError(error : TopicCompressionValidationError) : String = {
+
+		error.map{
+			case (compression, topics) =>
+				val t = TopicCompression.asString(compression)
+				topics.map(_.name).mkString(s"[",",",s"] use $t")
+		}.mkString("All topic models must have the same compression setting, found settings: ", ",", "")
+
+	}
 	
 	/**
 		* Checks that:
@@ -39,7 +62,7 @@ object MultiTopicModel {
 		* - the topic models use the same settings for everything but partitions and replicas
 		*/
 	private[wasp] def validateTopicModels(models: Seq[TopicModel]): Unit = {
-		require(models.size >= 1, "There must be at least one topic model")
+		require(models.nonEmpty, "There must be at least one topic model")
 		require(models.size == models.distinct.size, "Each topic model can only appear once")
 		require(models.size == models.map(_.name).distinct.size, "Each topic can only appear once")
 		require(models.map(_.topicDataType).distinct.length == 1, "All topic models must have the same topic data type")
@@ -47,5 +70,7 @@ object MultiTopicModel {
 		require(models.map(_.headersFieldName).distinct.length == 1, "All topic models must have the same headers field name")
 		require(models.map(_.valueFieldsNames).distinct.length == 1, "All topic models must have the same value field names")
 		require(models.map(_.getJsonSchema).distinct.size == 1, "All topic models must have the same schema")
+		val validationResult = validateTopicModelsHaveSameCompression(models)
+		require(validationResult.isRight, formatTopicCompressionValidationError(validationResult.left.get))
 	}
 }
