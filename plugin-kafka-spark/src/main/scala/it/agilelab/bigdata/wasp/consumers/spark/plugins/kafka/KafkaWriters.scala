@@ -13,7 +13,7 @@ import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, To
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil}
 import org.apache.avro.Schema
 import org.apache.spark.sql.catalyst.expressions.Expression
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.functions.{col, struct, udf}
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
@@ -202,20 +202,20 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     } else {
       None
     }
-    val exprToConvertToAvro = columnsInValues.map(col(_).expr)
+    val exprToConvertToAvro = struct(columnsInValues.map(col): _*)
 
     val avroRecordName = prototypeTopicModel.name
     // TODO use sensible namespace instead of wasp
     val avroRecordNamespace = "wasp"
 
-    val rowToAvroExprFactory: (Seq[Expression], StructType) => AvroConverterExpression = if(prototypeTopicModel.useAvroSchemaManager) {
+    val rowToAvroExprFactory: (Expression, StructType) => AvroConverterExpression = if(prototypeTopicModel.useAvroSchemaManager) {
       val avroSchema = new Schema.Parser().parse(prototypeTopicModel.getJsonSchema)
       AvroConverterExpression(darwinConf.get, avroSchema, avroRecordName, avroRecordNamespace)
     } else {
       AvroConverterExpression(Some(prototypeTopicModel.getJsonSchema),  avroRecordName, avroRecordNamespace)
     }
 
-    val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro, valueSchema)
+    val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro.expr, valueSchema)
 
     val metadataCols = (keyFieldName.map(kfn => col(kfn).cast(BinaryType).as("key")) ++
       headersFieldName.map(col(_).as("headers")) ++

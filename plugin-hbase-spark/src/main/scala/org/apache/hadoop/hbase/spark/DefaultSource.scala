@@ -36,7 +36,9 @@ import org.apache.hadoop.hbase.util.{Bytes, PositionedByteRange, SimplePositione
 import org.apache.hadoop.mapred.JobConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.datasources.hbase.{Field, HBaseTableCatalog, Utils}
+import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.streaming.Sink
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.streaming.OutputMode
@@ -284,79 +286,18 @@ case class HBaseRelation(
     val jobConfig: JobConf = new JobConf(hbaseConf, this.getClass)
     jobConfig.setOutputFormat(classOf[TableOutputFormat])
     jobConfig.set(TableOutputFormat.OUTPUT_TABLE, tableName)
-    var count = 0
-    val rkFields = catalog.getRowKey
-    val rkIdxedFields = rkFields.map { case x =>
-      (schema.fieldIndex(x.colName), x)
-    }
-    val colsIdxedFields = schema
-      .fieldNames
-      .partition(x => rkFields.map(_.colName).contains(x))
-      ._2.filter(catalog.sMap.exists).map(x => (schema.fieldIndex(x), catalog.getField(x)))
-    val rdd = data.rdd
 
-    def convertToPut(row: Row): (ImmutableBytesWritable, Put) = {
-      // construct bytes for row key
-      val rowBytes = rkIdxedFields.map { case (x, y) =>
-        Utils.toBytes(row(x), y, useSchemaAvroManager, darwinConf)
-      }
-      val rLen = rowBytes.foldLeft(0) { case (x, y) =>
-        x + y.length
-      }
-      val rBytes = new Array[Byte](rLen)
-      var offset = 0
-      rowBytes.foreach { x =>
-        System.arraycopy(x, 0, rBytes, offset, x.length)
-        offset += x.length
-      }
-      val put = timestamp.fold(new Put(rBytes))(new Put(rBytes, _))
+    val df = PutConverterFactory.convertAvroColumns(parameters, data)
+    val putConverterFactory = PutConverterFactory(parameters, df)
 
-      def isClusteringColumnFamily: Field => Boolean = (f: Field) => clusteringCfColumnsMap.contains(f.cf)
-      def isStandardColumnFamily: Field => Boolean = (f: Field) => !isClusteringColumnFamily(f)
-
-      // We generate put in 2 phase.
-      // One for standard cf and static cells
-      // One for cf with "clustering" feature (i.e. denormalization)
-      colsIdxedFields.filter{
-        case (_, f) => isStandardColumnFamily(f)
-      }.foreach { case (colIndex, field) =>
-        if (!row.isNullAt(colIndex)) {
-          val b = Utils.toBytes(row(colIndex), field, useSchemaAvroManager, darwinConf)
-          put.addColumn(Bytes.toBytes(field.cf), Bytes.toBytes(field.col), b)
-        }
-      }
-
-      // Build a map to retrieve for the specific row the column qualifier prefix for cf with "clustering"
-      val clusteringQualifierPrefixMap = clusteringCfColumnsMap.map{
-        case (cf: String, clustFields: Seq[String]) =>
-          val rowSchema = row.schema
-          val cqPrefix = clustFields.map{
-            fieldName =>
-              row.getAs[String](rowSchema.fieldIndex(fieldName))
-          }.mkString("|")
-          cf -> cqPrefix
-      }
-
-      // Process denormalized columns
-      colsIdxedFields.filter{
-        // Take only field of clustering column family that are not in clustering fields
-        case (_, f) => isClusteringColumnFamily(f) && !clusteringCfColumnsMap(f.cf).contains(f.col)
-      }.foreach{
-        case (colIndex, field) =>
-          if (!row.isNullAt(colIndex)) {
-            val cf = Bytes.toBytes(field.cf)
-            // Compose final denormalized cq
-            val finalCq = Bytes.toBytes(s"${clusteringQualifierPrefixMap(field.cf)}|${field.col}")
-            val data = Utils.toBytes(row(colIndex), field, useSchemaAvroManager, darwinConf)
-
-            put.addColumn(cf, finalCq, data)
-          }
-      }
-      count += 1
-      (new ImmutableBytesWritable, put)
+    val convertToPut: InternalRow => (ImmutableBytesWritable, Put) = (row: InternalRow) => {
+      (new ImmutableBytesWritable, putConverterFactory.convertToPut(row))
     }
 
-    rdd.map(convertToPut(_)).saveAsHadoopDataset(jobConfig)
+    val queryExecution = df.queryExecution
+    SQLExecution.withNewExecutionId(data.sparkSession, queryExecution) {
+      queryExecution.toRdd.map(convertToPut).saveAsHadoopDataset(jobConfig)
+    }
   }
 
   def getIndexedProjections(requiredColumns: Array[String]): Seq[(Field, Int)] = {

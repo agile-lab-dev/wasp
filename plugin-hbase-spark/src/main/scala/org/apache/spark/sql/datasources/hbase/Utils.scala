@@ -18,12 +18,9 @@
 
 package org.apache.spark.sql.datasources.hbase
 
-import com.typesafe.config.Config
-import it.agilelab.bigdata.wasp.consumers.spark.utils.RowToAvro
 import org.apache.hadoop.hbase.classification.InterfaceAudience
 import org.apache.hadoop.hbase.spark.datasources.AvroSerdes
 import org.apache.hadoop.hbase.util.Bytes
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -67,7 +64,7 @@ object Utils {
     }
   }
 
-  def toBytesPrimitiveType(input: Any, dt: DataType) = input match {
+  def toBytesPrimitiveType(input: Any, dt: DataType): Array[Byte] = input match {
     case data: Boolean => Bytes.toBytes(data)
     case data: Byte => Array(data)
     case data: Array[Byte] => data
@@ -80,20 +77,6 @@ object Utils {
     case data: String => Bytes.toBytes(data)
     // TODO: add more data type support
     case _ => throw new Exception(s"unsupported data type $dt, $input, ${input.getClass.toString}")
-  }
-
-  // convert input to data type
-  def toBytes(input: Any, field: Field, useAvroSchemaManager:Boolean, darwinConf: Option[Config]): Array[Byte] = {
-    if (field.schema.isDefined) {
-      // Here we assume the top level type is structType
-//      val record = field.catalystToAvro(input)
-      //TODO think about a safer way to manage the any as Row
-      val converter = RowToAvro(input.asInstanceOf[Row].schema, field.colName, useAvroSchemaManager, "wasp", None, field.avroSchema, darwinConf)
-      converter.write(input.asInstanceOf[Row])
-//      AvroSerdes.serialize(record, field.schema.get)
-    } else {
-      toBytesPrimitiveType(input, field.dt)
-    }
   }
 
   def toBoolean(input: Array[Byte], offset: Int): Boolean = {
