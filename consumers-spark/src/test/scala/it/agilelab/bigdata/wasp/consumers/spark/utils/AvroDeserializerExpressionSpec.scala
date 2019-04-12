@@ -5,7 +5,6 @@ import java.sql.{Date, Timestamp}
 
 import com.sksamuel.avro4s._
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.core.utils.SparkTestKit
 import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.{Column, Row}
@@ -13,7 +12,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 class AvroDeserializerExpressionSpec extends WordSpec
   with Matchers
-  with SparkTestKit {
+  with CodegenTester {
 
   def serializeElements(elements: Seq[UglyCaseClass]): Seq[Array[Byte]] = {
     elements.map { e =>
@@ -45,7 +44,7 @@ class AvroDeserializerExpressionSpec extends WordSpec
 
   "AvroToRowExpression" must {
 
-    "correctly handle serialization when not using darwin" in {
+    "correctly handle serialization when not using darwin" in testAllCodegen {
 
       import ss.implicits._
 
@@ -58,7 +57,7 @@ class AvroDeserializerExpressionSpec extends WordSpec
       elements.zip(results).foreach { case (truth, res) => compareRowWithUglyClass(truth, res) }
     }
 
-    "correctly handle serialization when using darwin" in {
+    "correctly handle serialization when using darwin" in testAllCodegen {
 
       import ss.implicits._
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
@@ -77,7 +76,7 @@ class AvroDeserializerExpressionSpec extends WordSpec
       elements.zip(results).foreach { case (truth, res) => compareRowWithUglyClass(truth, res) }
     }
 
-    "correctly handle null" in {
+    "correctly handle null" in testAllCodegen {
       val darwinConf = ConfigFactory.parseString(
         """
           |type: cached_eager

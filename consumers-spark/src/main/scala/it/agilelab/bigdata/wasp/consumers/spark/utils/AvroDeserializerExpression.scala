@@ -123,7 +123,11 @@ case class AvroDeserializerExpression(
          |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
          |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
          |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
-         |  $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
+         |  try {
+         |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
+         |  } catch (java.io.IOException e) {
+         |    throw new java.lang.RuntimeException("Unable to deserialize Avro.", e);
+         |  }
          |  ${ev.value} = $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
          |}
        """.stripMargin, isNull = childEval.isNull)

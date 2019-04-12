@@ -2,7 +2,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import com.sksamuel.avro4s._
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.core.utils.SparkTestKit
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.spark.sql.{Column, Row}
@@ -13,11 +12,11 @@ import org.scalatest.{Matchers, WordSpec}
 
 class AvroSerializerExpressionSpec extends WordSpec
   with Matchers
-  with SparkTestKit {
+  with CodegenTester {
 
   "RowToAvroExpression" must {
 
-    "correctly handle serialization when not using darwin" in {
+    "correctly handle serialization when not using darwin" in testAllCodegen {
 
       import ss.implicits._
 
@@ -46,7 +45,7 @@ class AvroSerializerExpressionSpec extends WordSpec
       }
     }
 
-    "correctly handle serialization when using darwin" in {
+    "correctly handle serialization when using darwin" in testAllCodegen {
 
       import ss.implicits._
 
@@ -83,7 +82,7 @@ class AvroSerializerExpressionSpec extends WordSpec
       }
     }
 
-    "correctly handle null" in {
+    "correctly handle null" in testAllCodegen {
       val darwinConf = ConfigFactory.parseString(
         """
           |type: cached_eager
