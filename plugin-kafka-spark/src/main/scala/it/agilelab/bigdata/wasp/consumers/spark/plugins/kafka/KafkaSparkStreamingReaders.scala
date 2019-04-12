@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroToRow, SchemaConverters, SparkUtils}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroDeserializerExpression, SchemaConverters, SparkUtils}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
@@ -15,7 +15,7 @@ import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -119,13 +119,12 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           } else {
             None
           }
-          // prepare the udf
-          val avroToRow = AvroToRow(prototypeTopic.getJsonSchema, prototypeTopic.useAvroSchemaManager, darwinConf)
-          val avroToRowConversion: Array[Byte] => Row = avroToRow.read
-          val avroToRowConversionUDF = udf(avroToRowConversion, avroToRow.getSchemaSpark())
+
+          val avroToRowConversion = AvroDeserializerExpression(
+            col("value").expr, prototypeTopic.getJsonSchema, darwinConf, avoidReevaluation = true)
 
           // parse avro bytes into a column, lift the contents up one level and push metadata into nested column
-          df.withColumn("value_parsed", avroToRowConversionUDF(col("value")))
+          df.withColumn("value_parsed", new Column(avroToRowConversion))
             .drop("value")
             .selectExpr(metadataSelectExpr, "value_parsed.*")
         }

@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroConverterExpression
+import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroSerializerExpression
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
@@ -208,11 +208,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     // TODO use sensible namespace instead of wasp
     val avroRecordNamespace = "wasp"
 
-    val rowToAvroExprFactory: (Expression, StructType) => AvroConverterExpression = if(prototypeTopicModel.useAvroSchemaManager) {
+    val rowToAvroExprFactory: (Expression, StructType) => AvroSerializerExpression = if(prototypeTopicModel.useAvroSchemaManager) {
       val avroSchema = new Schema.Parser().parse(prototypeTopicModel.getJsonSchema)
-      AvroConverterExpression(darwinConf.get, avroSchema, avroRecordName, avroRecordNamespace)
+      AvroSerializerExpression(darwinConf.get, avroSchema, avroRecordName, avroRecordNamespace)
     } else {
-      AvroConverterExpression(Some(prototypeTopicModel.getJsonSchema),  avroRecordName, avroRecordNamespace)
+      AvroSerializerExpression(Some(prototypeTopicModel.getJsonSchema),  avroRecordName, avroRecordNamespace)
     }
 
     val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro.expr, valueSchema)

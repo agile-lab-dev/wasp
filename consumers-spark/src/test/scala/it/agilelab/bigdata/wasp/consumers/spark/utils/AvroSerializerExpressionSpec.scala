@@ -11,7 +11,7 @@ import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.types._
 import org.scalatest.{Matchers, WordSpec}
 
-class AvroConverterExpressionSpec extends WordSpec
+class AvroSerializerExpressionSpec extends WordSpec
   with Matchers
   with SparkTestKit {
 
@@ -27,7 +27,7 @@ class AvroConverterExpressionSpec extends WordSpec
 
       val child = struct(df.columns.map(df.col): _*).expr
 
-      val expr = AvroConverterExpression(Some(TestSchemas.schema.toString), "pippo", "wasp")(child, df.schema)
+      val expr = AvroSerializerExpression(Some(TestSchemas.schema.toString), "pippo", "wasp")(child, df.schema)
 
       val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap { data =>
         import TestSchemas.implicits._
@@ -64,7 +64,7 @@ class AvroConverterExpressionSpec extends WordSpec
 
       AvroSchemaManagerFactory.initialize(darwinConf)
 
-      val expr = AvroConverterExpression(darwinConf, TestSchemas.schema, "pippo", "wasp")(child, df.schema)
+      val expr = AvroSerializerExpression(darwinConf, TestSchemas.schema, "pippo", "wasp")(child, df.schema)
 
       val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap { data =>
         import TestSchemas.implicits._
@@ -93,8 +93,8 @@ class AvroConverterExpressionSpec extends WordSpec
       val schema = StructType(Seq(StructField("_1", IntegerType, true), StructField("_2", StringType)))
       val avroSchema = AvroSchema[(Int, String)]
       val child = Literal(null, schema)
-      val expr1 = AvroConverterExpression(Some(avroSchema.toString), "pippo", "wasp")(child, schema)
-      val expr2 = AvroConverterExpression(darwinConf, avroSchema, "pippo", "wasp")(child, schema)
+      val expr1 = AvroSerializerExpression(Some(avroSchema.toString), "pippo", "wasp")(child, schema)
+      val expr2 = AvroSerializerExpression(darwinConf, avroSchema, "pippo", "wasp")(child, schema)
       val res = ss.range(1).select(new Column(expr1), new Column(expr2)).collect()
       assert(res sameElements Array(Row(null, null)))
     }

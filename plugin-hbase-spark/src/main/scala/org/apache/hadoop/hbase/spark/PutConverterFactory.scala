@@ -1,6 +1,6 @@
 package org.apache.hadoop.hbase.spark
 
-import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroConverterExpression
+import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroSerializerExpression
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.avro.Schema
 import org.apache.hadoop.hbase.TableName
@@ -126,13 +126,13 @@ object PutConverterFactory {
     val (keyFields, colFields) = getFields(catalog, data.schema)
     val (toAvroFields, otherFields) = (keyFields ++ colFields).partition(_.avroSchema.isDefined)
     val toAvroColumns = toAvroFields.map { f =>
-      val avroConverterExpressionGenerator: (Expression, StructType) => AvroConverterExpression =
+      val avroConverterExpressionGenerator: (Expression, StructType) => AvroSerializerExpression =
         if (catalog.get("useAvroSchemaManager").exists(_.toBoolean)) {
           val avroSchema = new Schema.Parser().parse(f.avroSchema.get)
-          AvroConverterExpression(
+          AvroSerializerExpression(
             ConfigManager.getAvroSchemaManagerConfig, avroSchema, f.colName, "wasp")
         } else {
-          AvroConverterExpression(f.avroSchema, f.colName, "wasp")
+          AvroSerializerExpression(f.avroSchema, f.colName, "wasp")
         }
       // Generating the column with the encoded avro with the same name of the original column
       new Column(avroConverterExpressionGenerator(

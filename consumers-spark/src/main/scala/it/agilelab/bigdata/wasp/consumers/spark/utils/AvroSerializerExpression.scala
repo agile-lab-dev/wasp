@@ -24,20 +24,20 @@ import org.apache.spark.unsafe.types.UTF8String
 import scala.collection.JavaConverters._
 
 
-object AvroConverterExpression {
+object AvroSerializerExpression {
 
   def apply(avroSchemaAsJson: Option[String],
             avroRecordName: String,
             avroNamespace: String)
            (child: Expression,
-            sparkSchema: StructType): AvroConverterExpression = {
+            sparkSchema: StructType): AvroSerializerExpression = {
 
     avroSchemaAsJson.foreach(s => checkSchemas(sparkSchema, new Schema.Parser().parse(s)))
 
     val maybeAvroSchemaAsJsonWrapped: Option[Either[String, Long]] =
       avroSchemaAsJson.map(x => Left(x))
 
-    new AvroConverterExpression(child, maybeAvroSchemaAsJsonWrapped, None, false, sparkSchema, avroRecordName, avroNamespace, None, None)
+    new AvroSerializerExpression(child, maybeAvroSchemaAsJsonWrapped, None, false, sparkSchema, avroRecordName, avroNamespace, None, None)
   }
 
   def apply(schemaManagerConfig: Config,
@@ -45,7 +45,7 @@ object AvroConverterExpression {
             avroRecordName: String,
             avroNamespace: String)
            (child: Expression,
-            sparkSchema: StructType): AvroConverterExpression = {
+            sparkSchema: StructType): AvroSerializerExpression = {
 
     val fingerprint = AvroSchemaManagerFactory.initialize(schemaManagerConfig).registerAll(Seq(avroSchema)).head._1
 
@@ -53,7 +53,7 @@ object AvroConverterExpression {
 
     val avroSchemaId: Option[Either[String, Long]] = Some(Right(fingerprint))
 
-    new AvroConverterExpression(child,
+    new AvroSerializerExpression(child,
       avroSchemaId,
       Some(schemaManagerConfig),
       true,
@@ -181,7 +181,7 @@ object AvroConverterExpression {
 }
 
 
-case class AvroConverterExpression private(child: Expression,
+case class AvroSerializerExpression private(child: Expression,
     maybeSchemaAvroJsonOrFingerprint: Option[Either[String, Long]],
     avroSchemaManagerConfig: Option[Config],
     useAvroSchemaManager: Boolean,
