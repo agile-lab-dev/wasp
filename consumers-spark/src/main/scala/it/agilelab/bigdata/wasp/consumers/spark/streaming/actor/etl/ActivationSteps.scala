@@ -1,10 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
 import java.nio.charset.StandardCharsets
-import java.time.{Clock, Instant}
 import java.time.format.DateTimeFormatter
+import java.time.{Clock, Instant}
 import java.util.Properties
+import java.util.concurrent.Future
 
+import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
@@ -14,20 +16,19 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSt
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.core.SystemPipegraphs
 import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TelemetryConfigModel, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.kafka.clients.producer._
-import org.apache.spark.TaskContext
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Encoder, Row, SparkSession}
+import spray.json._
 
 import scala.collection.JavaConverters._
-import scala.util.parsing.json.{JSONFormat, JSONObject}
 import scala.util.{Failure, Success, Try}
 
 
@@ -50,12 +51,12 @@ trait ActivationSteps {
     * We need access to topics
     */
   protected val topicsBl: TopicBL
-  
+
   /**
     * We need a streaming reader factory
     */
   protected val streamingReaderFactory: StreamingReaderFactory
-  
+
   /**
     * We need a static reader factory
     */
@@ -175,11 +176,11 @@ trait ActivationSteps {
     createStrategy(etl) match {
       case Success(Some(strategy)) =>
         applyTransform(structuredInputStream._1,
-                       structuredInputStream._2,
-                       nonStreamingInputStreams,
-                       strategy,
-                       etl.streamingOutput.datastoreProduct,
-                       etl)
+          structuredInputStream._2,
+          nonStreamingInputStreams,
+          strategy,
+          etl.streamingOutput.datastoreProduct,
+          etl)
       case Success(None) =>
         Success(structuredInputStream._2)
       case Failure(reason) =>
@@ -265,7 +266,7 @@ trait ActivationSteps {
                              datastoreProduct: DatastoreProduct,
                              etl: StructuredStreamingETLModel): Try[DataFrame] = Try {
 
-    val config = ConfigManager.getKafkaConfig.toTinyConfig()
+    val config = TelemetryMetadataProducerConfig(ConfigManager.getKafkaConfig.toTinyConfig(), ConfigManager.getTelemetryConfig)
 
 
     val keyDefaultOneMessageEveryKey = "wasp.telemetry.latency.sample-one-message-every"
@@ -292,7 +293,7 @@ trait ActivationSteps {
 
     val strategyOutputStreamWithExitMetadata = MetadataOps.sendLatencyMessage(MetadataOps.exit(etl.name, strategyOutputStream),config, saneSampleOneMessageEvery)
 
-    val cleanOutputStream: DataFrame = dropMetadataColumn match{
+    val cleanOutputStream: DataFrame = dropMetadataColumn match {
       case true => if(strategyOutputStreamWithExitMetadata.columns.contains("metadata")) strategyOutputStreamWithExitMetadata.drop("metadata") else strategyOutputStreamWithExitMetadata
       case false => strategyOutputStreamWithExitMetadata
     }
@@ -321,7 +322,7 @@ object ActivationSteps {
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
   type StreamingReaderFactory = (StructuredStreamingETLModel, StreamingReaderModel, SparkSession) => Option[SparkStructuredStreamingReader]
-  
+
   /**
     * A function able to go from a [[StructuredStreamingETLModel]]] and a [[ReaderModel]] to an [[Option]] of
     * [[SparkBatchReader]].
@@ -329,6 +330,62 @@ object ActivationSteps {
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
   type StaticReaderFactory = (StructuredStreamingETLModel, ReaderModel, SparkSession) => Option[SparkBatchReader]
+}
+
+
+case class TelemetryMetadataProducerConfig(global: TinyKafkaConfig, telemetry: TelemetryConfigModel)
+
+object TelemetryMetadataProducer {
+
+  @transient private lazy val cache: LoadingCache[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]] = CacheBuilder
+    .newBuilder()
+    .build(load())
+
+
+  def send(kafkaConfig: TelemetryMetadataProducerConfig, key: String, value: JsValue): Future[RecordMetadata] = {
+
+    val record = new ProducerRecord[Array[Byte], Array[Byte]](kafkaConfig.telemetry.telemetryTopicConfigModel.topicName,
+      key.getBytes(StandardCharsets.UTF_8),
+      value.toString().getBytes(StandardCharsets.UTF_8))
+
+    cache.get(kafkaConfig).send(record)
+  }
+
+
+
+  private def load() = new CacheLoader[TelemetryMetadataProducerConfig,KafkaProducer[Array[Byte], Array[Byte]]] {
+
+    override def load(config: TelemetryMetadataProducerConfig): KafkaProducer[Array[Byte], Array[Byte]] = {
+
+      val kafkaConfig = ConfigManager.getKafkaConfig
+
+      val telemetryConfig = ConfigManager.getTelemetryConfig
+
+      val connectionString = kafkaConfig.connections.map {
+        conn => s"${conn.host}:${conn.port}"
+      }.mkString(",")
+
+
+      val props = new Properties()
+      props.put("bootstrap.servers", connectionString)
+      props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+      props.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+
+      val notOverridableKeys = props.keySet.asScala
+
+      val merged: Seq[KafkaEntryConfig] = kafkaConfig.others ++ telemetryConfig.telemetryTopicConfigModel.kafkaSettings
+
+      val resultingConf = merged.filterNot(x => notOverridableKeys.contains(x.key))
+
+      resultingConf.foreach {
+        case KafkaEntryConfig(key, value) => props.put(key, value)
+      }
+
+      new KafkaProducer[Array[Byte], Array[Byte]](props)
+
+    }
+  }
+
 }
 
 object MetadataOps {
@@ -382,38 +439,13 @@ object MetadataOps {
   }
 
 
-  def sendLatencyMessage(stream: DataFrame, kafkaConfig: TinyKafkaConfig, samplingFactor: Int): DataFrame =
+  def sendLatencyMessage(stream: DataFrame, config: TelemetryMetadataProducerConfig, samplingFactor: Int): DataFrame =
 
     if (stream.columns.contains("metadata")) {
-
-      //topic should be captured here, it will not be available in executors
-      val topic = SystemPipegraphs.telemetryTopic.name
-
-
-      val connectionString = kafkaConfig.connections.map{
-        conn => s"${conn.host}:${conn.port}"
-      }.mkString(",")
-
-      val props = new Properties()
-      props.put("bootstrap.servers", connectionString)
-      props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
-      props.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
-      props.put("batch.size", "1048576")
-      props.put("acks", "0")
-
-      val notOverridableKeys = props.keySet.asScala
-
-      kafkaConfig.others.filterNot(notOverridableKeys.contains(_)).foreach {
-        case KafkaEntryConfig(key, value) => props.put(key, value)
-      }
 
       implicit val rowEncoder: Encoder[Row] = RowEncoder(stream.schema)
 
       stream.mapPartitions { partition: Iterator[Row] =>
-
-
-        val writer: Producer[Array[Byte], Array[Byte]] = new KafkaProducer[Array[Byte], Array[Byte]](props)
-        TaskContext.get().addTaskCompletionListener(_ => writer.close())
 
         var counter = 0
 
@@ -441,19 +473,11 @@ object MetadataOps {
 
             val compositeSourceId = path.map(_.name.replace(' ', '-')).mkString("/")
 
+            val message = MetricsTelemetryMessage(messageId, compositeSourceId, "latencyMs", latency, collectionTimeAsString)
 
-            val json = JSONObject(Map("messageId" -> messageId,
-                                      "sourceId" -> compositeSourceId,
-                                      "metric" -> "latencyMs",
-                                      "value" -> latency,
-                                      "timestamp" -> collectionTimeAsString)).toString(JSONFormat.defaultFormatter)
+            val json = MetricsTelemetryMessageFormat.metricsTelemetryMessageFormat.write(message)
 
-
-
-            val record = new ProducerRecord[Array[Byte], Array[Byte]](topic,
-                                                                      messageId.getBytes(StandardCharsets.UTF_8),
-                                                                      json.getBytes(StandardCharsets.UTF_8))
-            writer.send(record)
+            TelemetryMetadataProducer.send(config, messageId, json)
 
           }
 
