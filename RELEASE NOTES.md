@@ -2263,3 +2263,151 @@ Closes #215
 
 Improves performance reading avro serialized data from kafka
 
+
+## WASP 2.20.0
+
+### [#234] Add a way to start singletons services inside executors, develop a jmx scraper as a poc
+
+    commit c4e92fb2ec5cb03b380dba15de626593decb4e6a
+    Author: Andrea Fonti <andrea.fonti@agilelab.it>
+    Date:   Thu Jul 25 16:44:41 2019 +0000
+    
+#### New features and improvements
+
+##### New Whitelabel based on a standalone docker container
+
+Hadoop services and wasp now run in a single container, the wasp deployment is based on supervisord.
+
+##### New spark executor plugin
+
+`it.agilelab.bigdata.wasp.spark.plugins.telemetry.TelemetryPlugin`
+
+To enable the telemetry plugin you need to put the relevant jars on hdfs in `spark-yarn-jar` dir
+
+```
+hdfs dfs -copyFromLocal $WASP_LIB/it.agilelab.wasp-spark-telemetry-plugin-*.jar $SPARK_YARN_JAR_DIR
+hdfs dfs -copyFromLocal $WASP_LIB/org.apache.kafka.kafka-clients-0.11.0-kafka-3.0.0.jar $SPARK_YARN_JAR_DIR
+```
+
+and add an extra spark option to the streaming or batch configuration
+
+```json
+wasp.spark-streaming.others : [
+        {"spark.executor.plugins": "it.agilelab.bigdata.wasp.spark.plugins.telemetry.TelemetryPlugin"}
+        { "spark.executor.extraJavaOptions" : "-Dwasp.plugin.telemetry.collection-interval=\"1 second\"" }
+    ]
+```
+
+or
+
+```json
+wasp.spark-batch.others : [
+        {"spark.executor.plugins": "it.agilelab.bigdata.wasp.spark.plugins.telemetry.TelemetryPlugin"}
+        { "spark.executor.extraJavaOptions" : "-Dwasp.plugin.telemetry.collection-interval=\"1 second\"" }
+    ]
+```
+
+To configure which java mbeans are scraped for telemetry you need to set configuration like this:
+
+```json
+wasp.telemetry.topic.jmx = [
+        {
+            query = "java.lang:*"
+            metricGroupAttribute = "name"
+            sourceIdAttribute = "unknown"
+            metricGroupFallback = "jvm"
+            sourceIdFallback = "jvm"
+        },
+        {
+            query = "kafka.producer:*"
+            metricGroupAttribute = "type"
+            sourceIdAttribute = "client-id"
+        },
+        {
+            query = "kafka.consumer:*"
+            metricGroupAttribute = "type"
+            sourceIdAttribute="client-id"
+        },
+        {
+            query = "\"org.apache.hadoop.hbase.client\":*"
+            metricGroupAttribute ="name"
+            sourceIdAttribute="scope"
+        }
+        ]
+```
+
+telemetry will be scraped from jmx and sent to the telemetry topic in this format
+
+```json
+{
+    "timestamp":"2019-07-25T09:40:57.903Z",
+    "tag":"1",
+    "metric":"org.apache.hadoop.hbase.client.rpc-call-duration-ms-client-service-mutate-increment.50th-percentile",
+    "messageId":"b141091e-5b93-458b-b7ee-905c693c5f7e",
+    "value":0.0,
+    "sourceId":"hconnection-0x6d1e30f7"
+}
+```
+
+for example, the configuration specifies `sourceIdAttribute=scope`
+
+`sourceId` of the telemetry message was derived by the jmx key `scope` of the bean identified by the query  `\"org.apache.hadoop.hbase.client\":*` (yes the quotes are included in the query, hbase registers the bean like that)
+
+the prefix of the `metric` field was derived from the query `org.apache.hadoop.hbase.client` the suffix was derived by concatenating the result of the key `name` specified via `metricGroupAttribute="scope"` and the bean attribute name
+
+#### Breaking changes
+
+No breaking changes
+
+#### Migration
+
+To use the feature please perform all the steps to enable the executor plugin
+
+#### Bug fixes
+
+No bugs fixed
+
+#### Related issue
+
+Closes #234
+
+
+
+### [#202] Don't instantiate one producer per partition in end to end message latency telemetry
+
+    commit 12a3633491ec5b86fe9bd2a9c5f3d852bfdff962
+    Author: Andrea Latella <andrea.latella87@gmail.com>
+    Date:   Thu Jul 18 15:08:42 2019 +0000
+
+#### New features and improvements
+
+Now one kafka producer will be spawned per executor
+
+if you need to send additional telemetry:
+
+1. on the driver side get hold of the configuration needed
+
+    ```
+    val config = TelemetryMetadataProducerConfig(ConfigManager.getKafkaConfig.toTinyConfig(),
+                    ConfigManager.getTelemetryConfig)
+    ```
+
+2. invoke the method `it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.TelemetryMetadataProducer#send`
+
+    In order to provide a JsValue taske a look at `it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MetricsTelemetryMessageFormat$#metricsTelemetryMessageFormat`
+
+#### Breaking changes
+
+No breaking changes
+
+#### Migration
+
+No migration required
+
+#### Bug fixes
+
+Now telemetry producers are shared executor side
+
+#### Related issue
+
+Closes #202
