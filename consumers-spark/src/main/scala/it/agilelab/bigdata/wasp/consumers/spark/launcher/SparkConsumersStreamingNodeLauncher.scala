@@ -31,7 +31,7 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 	var plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin] = Map()
 
 	override def launch(commandLine: CommandLine): Unit = {
-		SparkSingletons.initializeSpark(ConfigManager.getSparkStreamingConfig)
+		SparkSingletons.initializeSpark(ConfigManager.getSparkStreamingConfig, ConfigManager.getTelemetryConfig, ConfigManager.getKafkaConfig)
 		SparkSingletons.initializeSparkStreaming(ConfigManager.getSparkStreamingConfig)
 
 		super.launch(commandLine)

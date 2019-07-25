@@ -2,12 +2,16 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.io.File
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 
+import com.google.gson.JsonObject
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SparkStreamingConfiguration, WaspConfiguration}
-import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.io.Source
 
@@ -22,7 +26,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
   /**
     * Builds a SparkConf from the supplied SparkConfigModel
     */
-  def buildSparkConfFromSparkConfigModel(sparkConfigModel: SparkConfigModel): SparkConf = {
+  def buildSparkConfFromSparkConfigModel(sparkConfigModel: SparkConfigModel,telemetryConfig: TelemetryConfigModel, kafkaConfigModel: KafkaConfigModel): SparkConf = {
     logger.info("Building Spark configuration from configuration model")
     
     logger.info(s"Starting from SparkConfigModel:\n\t$sparkConfigModel")
@@ -56,6 +60,9 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
       .setAll(sparkConfigModel.others.map(v => (v.key, v.value)))
+
+
+
 
     // kryo-related configs
     if (sparkConfigModel.kryoSerializer.enabled) {
@@ -96,6 +103,16 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
     val address = conns.map(e => s"${e.host}:${e.port}").mkString(",")
     sparkConf.set("es.nodes", address)
 
+    val originalExtraJavaOptions = sparkConf.get("spark.executor.extraJavaOptions", "")
+
+    import it.agilelab.bigdata.wasp.core.models.configuration.TelemetryTopicConfigModelMessageFormat._
+
+    val telemetryConfigJSON = Base64.getUrlEncoder.encodeToString(telemetryTopicConfigModelFormat.write(telemetryConfig.telemetryTopicConfigModel).toString().getBytes(StandardCharsets.UTF_8))
+    val kafkaTinyConfigJSON = Base64.getUrlEncoder.encodeToString(tinyKafkaConfigFormat.write(kafkaConfigModel.toTinyConfig()).toString().getBytes(StandardCharsets.UTF_8))
+
+    val newExtraJavaOptions = s"""$originalExtraJavaOptions -Dwasp.plugin.telemetry.kafka="$kafkaTinyConfigJSON" -Dwasp.plugin.telemetry.topic="$telemetryConfigJSON""""
+
+    sparkConf.set("spark.executor.extraJavaOptions", newExtraJavaOptions)
 
     logger.info(s"Resulting SparkConf:\n\t${sparkConf.toDebugString.replace("\n", "\n\t")}")
 
@@ -145,3 +162,4 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .getOrElse(0l) // this is the same default that Spark uses, see org.apache.spark.sql.streaming.DataStreamWriter
   }
 }
+

@@ -4,7 +4,7 @@ import java.lang
 
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.{logger, _}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.{SparkConfigModel, SparkStreamingConfigModel}
+import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
@@ -35,7 +35,7 @@ object SparkSingletons extends Logging {
     * @throws IllegalStateException if Spark was already initialized but <b>not by using this method</b>
     */
   @throws[lang.IllegalStateException]
-  def initializeSpark(sparkConfigModel: SparkConfigModel): Boolean =
+  def initializeSpark(sparkConfigModel: SparkConfigModel, telemetryConfig: TelemetryConfigModel, kafkaConfigModel: KafkaConfigModel): Boolean =
     SparkSingletons.synchronized {
       if (sparkSession == null) { // we don't have a singleton ready
         // TODO fix race condition: SparkSession being created after this check is false but before we do it in the else branch
@@ -48,7 +48,7 @@ object SparkSingletons extends Logging {
         } else { // no global default session
           logger.info("Initializing Spark...")
           
-          val sparkConf = buildSparkConfFromSparkConfigModel(sparkConfigModel)
+          val sparkConf = buildSparkConfFromSparkConfigModel(sparkConfigModel, telemetryConfig, kafkaConfigModel)
           
           // try and build SparkContext even if the SparkSession would do it anyway
           // to ensure we are the one initializing Spark

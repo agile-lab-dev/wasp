@@ -356,6 +356,7 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[JdbcConfigModel]),
     createCodecProviderIgnoreNone(classOf[WebsocketModel]),
     createCodecProviderIgnoreNone(classOf[BatchSchedulerModel]),
+    createCodecProviderIgnoreNone(classOf[JMXTelemetryConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryTopicConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryConfigModel])
 

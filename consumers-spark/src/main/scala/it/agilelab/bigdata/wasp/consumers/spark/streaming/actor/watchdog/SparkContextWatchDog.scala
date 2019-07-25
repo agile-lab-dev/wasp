@@ -44,25 +44,27 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
         .asScala
         .map(_.decodeIdentifier())
 
-      logger.info(s"all token identifiers : $identifiers")
+      logger.trace(s"all token identifiers : $identifiers")
 
       val filtered =  identifiers.filter(_.isInstanceOf[DelegationTokenIdentifier])
         .map(_.asInstanceOf[DelegationTokenIdentifier])
 
-      logger.info(s"filtered token identifiers : $filtered")
+      logger.trace(s"filtered token identifiers : $filtered")
 
-      val maybeExpiredToken = filtered.find(_.getMaxDate < System.currentTimeMillis())
+      val maybeExpiredToken = filtered.filter(_.getMaxDate < System.currentTimeMillis()).toVector
 
-      logger.info(s"Expired tokens? : $maybeExpiredToken")
 
-      maybeExpiredToken match {
-        case Some(expired) =>
+
+      maybeExpiredToken.foreach { expired =>
           logger.error(s"Delegation token is expired $expired")
-          failureAction()
-        case None =>
-          logger.info("Everything is fine, delegation tokens are ok")
-
       }
+
+      if(maybeExpiredToken.nonEmpty){
+        failureAction()
+      }else {
+        logger.trace("Everything is fine, delegation tokens are ok")
+      }
+
   }
 
   override def receive: Receive = waitForSparkContextToBeAvailable

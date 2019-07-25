@@ -13,7 +13,7 @@ import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkBatchConfiguration}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 
@@ -56,7 +56,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
   override def preStart(): Unit = {
     context.system.scheduler.scheduleOnce(checkInterval, self, BatchJobActor.Tick)(context.system.dispatcher)
 
-    if (!SparkSingletons.initializeSpark(sparkBatchConfig)) {
+    if (!SparkSingletons.initializeSpark(sparkBatchConfig, ConfigManager.getTelemetryConfig, ConfigManager.getKafkaConfig)) {
       logger.warn("The spark context was already initialized: it might not be using the spark batch configuration!")
     }
 

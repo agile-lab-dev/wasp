@@ -343,8 +343,8 @@ object TelemetryMetadataProducer {
 
 
   def send(kafkaConfig: TelemetryMetadataProducerConfig, key: String, value: JsValue): Future[RecordMetadata] = {
-
-    val record = new ProducerRecord[Array[Byte], Array[Byte]](kafkaConfig.telemetry.telemetryTopicConfigModel.topicName,
+    val topicName = TopicModel.name(kafkaConfig.telemetry.telemetryTopicConfigModel.topicName)
+    val record = new ProducerRecord[Array[Byte], Array[Byte]](topicName,
       key.getBytes(StandardCharsets.UTF_8),
       value.toString().getBytes(StandardCharsets.UTF_8))
 
@@ -357,9 +357,9 @@ object TelemetryMetadataProducer {
 
     override def load(config: TelemetryMetadataProducerConfig): KafkaProducer[Array[Byte], Array[Byte]] = {
 
-      val kafkaConfig = ConfigManager.getKafkaConfig
+      val kafkaConfig = config.global
 
-      val telemetryConfig = ConfigManager.getTelemetryConfig
+      val telemetryConfig = config.telemetry
 
       val connectionString = kafkaConfig.connections.map {
         conn => s"${conn.host}:${conn.port}"

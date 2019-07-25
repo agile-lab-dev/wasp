@@ -217,9 +217,18 @@ object ConfigManager {
         topicName = telemetrySubConfig.getString("topic.name"),
         partitions = telemetrySubConfig.getInt("topic.partitions"),
         replica = telemetrySubConfig.getInt("topic.replica"),
-        readOthersConfig(telemetrySubConfig.getConfig("topic")).map(e => KafkaEntryConfig(e._1, e._2))
+        readOthersConfig(telemetrySubConfig.getConfig("topic")).map(e => KafkaEntryConfig(e._1, e._2)),
+        telemetrySubConfig.getConfigList("topic.jmx").asScala.map(readJmxTelemetryConfig)
       )
     )
+  }
+
+  private def readJmxTelemetryConfig(config:Config) : JMXTelemetryConfigModel = {
+    JMXTelemetryConfigModel(query = config.getString("query"),
+                            metricGroupAttribute = config.getString("metricGroupAttribute"),
+                            sourceIdAttribute = config.getString("sourceIdAttribute"),
+                            metricGroupFallback = if(config.hasPath("metricGroupFallback")) config.getString("metricGroupFallback") else "unknown",
+                            sourceIdFallback = if(config.hasPath("sourceIdFallback")) config.getString("metricGroupFallback") else "unknown")
   }
 
   private def initializeMongoDBConfig(): Unit = {
@@ -660,6 +669,8 @@ trait MongoDBConfiguration {
 trait SparkBatchConfiguration {
   lazy val sparkBatchConfig: SparkBatchConfigModel = ConfigManager.getSparkBatchConfig
 }
+
+
 
 trait SparkStreamingConfiguration {
   lazy val sparkStreamingConfig: SparkStreamingConfigModel = ConfigManager.getSparkStreamingConfig

@@ -110,6 +110,14 @@ lazy val yarn = Project("wasp-yarn", file("yarn"))
 	.settings(Settings.commonSettings: _*)
 	.aggregate(yarn_auth)
 
+lazy val spark_telemetry_plugin = Project("wasp-spark-telemetry-plugin", file("spark/telemetry-plugin"))
+	.settings(Settings.commonSettings: _*)
+	.settings(libraryDependencies += Dependencies.sparkCore)
+  .settings(libraryDependencies += Dependencies.kafkaClients)
+
+lazy val spark = Project("wasp-spark", file("spark"))
+	.settings(Settings.commonSettings: _*)
+	.aggregate(spark_telemetry_plugin)
 
 
 /* Framework + Plugins */
@@ -129,7 +137,8 @@ lazy val wasp = Project("wasp", file("."))
 	           plugin_raw_spark,
 	           plugin_solr_spark,
 	           spark_sql_kafka_0_11,
-		         yarn)
+		         yarn,
+						 spark)
 
 /* WhiteLabel */
 
@@ -165,6 +174,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
 	.dependsOn(plugin_kafka_spark)
 	.dependsOn(plugin_raw_spark)
 	.dependsOn(plugin_solr_spark)
+	.dependsOn(spark_telemetry_plugin)
 	.settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector :+ "mysql" % "mysql-connector-java" % "5.1.6")
 	.enablePlugins(JavaAppPackaging)
 

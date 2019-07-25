@@ -105,7 +105,9 @@ class TopicDatastoreModelJsonFormat
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
 
-  implicit lazy val telemetryTopicConfigModel : RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat4(TelemetryTopicConfigModel.apply)
+  implicit lazy val jmxTelemetryTopicConfigModel : RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(JMXTelemetryConfigModel.apply)
+
+  implicit lazy val telemetryTopicConfigModel : RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat5(TelemetryTopicConfigModel.apply)
   implicit lazy val telemetryConfigModel : RootJsonFormat[TelemetryConfigModel] = jsonFormat4(TelemetryConfigModel.apply)
 
   implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] = new TopicDatastoreModelJsonFormat
