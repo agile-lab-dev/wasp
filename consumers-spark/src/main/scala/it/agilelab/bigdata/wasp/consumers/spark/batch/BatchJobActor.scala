@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.batch
 
+import java.io.{PrintStream, PrintWriter}
+
 import akka.actor.{Actor, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB, TransformerWithInfo}
@@ -7,7 +9,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.Tick
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.{HasPostMaterializationHook, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
@@ -20,6 +22,16 @@ import org.apache.spark.sql.DataFrame
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success, Try}
 
+case class AggregateException(msg: String, exs: Seq[Throwable]) extends Exception(msg) {
+
+  override def printStackTrace(w: PrintStream): Unit = exs.foreach(_.printStackTrace(w))
+
+  override def printStackTrace(w: PrintWriter): Unit = exs.foreach(_.printStackTrace(w))
+
+  override def toString: String = exs.foldLeft(super.toString)((string, ex) => string + System.lineSeparator() + ex.toString)
+
+}
+
 object BatchJobActor {
 
   /**
@@ -29,10 +41,11 @@ object BatchJobActor {
 
   /**
     * Props for [[BatchJobActor]].
-    * @param env The environment
+    *
+    * @param env                The environment
     * @param sparkWriterFactory A spark writer factory
-    * @param plugins The plugins
-    * @param checkInterval The interval between requests for job from [[BatchJobActor]] to [[SparkConsumersBatchMasterGuardian]]
+    * @param plugins            The plugins
+    * @param checkInterval      The interval between requests for job from [[BatchJobActor]] to [[SparkConsumersBatchMasterGuardian]]
     * @return exitingWatchdogProps for [[BatchJobActor]]
     */
   def props(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
@@ -42,10 +55,10 @@ object BatchJobActor {
 
 }
 
-class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
-                    sparkWriterFactory: SparkWriterFactory,
-                    plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
-                    checkInterval: FiniteDuration)
+class BatchJobActor private(env: {val batchJobBL: BatchJobBL; val indexBL: IndexBL; val rawBL: RawBL; val keyValueBL: KeyValueBL; val mlModelBL: MlModelBL},
+                            sparkWriterFactory: SparkWriterFactory,
+                            plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin],
+                            checkInterval: FiniteDuration)
   extends Actor
     with Logging
     with SparkBatchConfiguration {
@@ -62,7 +75,7 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
 
     sparkContext = SparkSingletons.getSparkContext
   }
-  
+
   private def stepEnsureReadersAreNotTopicBased(readers: Seq[ReaderModel]): Try[Seq[ReaderModel]] =
     readers.find(_.datastoreProduct.isInstanceOf[TopicCategory])
       .map { _ => Failure(new Exception("No stream readers allowed in batch jobs")) }
@@ -139,19 +152,28 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
     mlModelsDB.write(mlModelsBroadcastDB.getModelsToSave)
   }
 
-  private def stepWriteResult(dataFrame: DataFrame, writerModel: WriterModel): Try[Any] = {
+  private def stepWriteResult(dataFrame: DataFrame, writerModel: WriterModel): Either[(Option[DataFrame], Throwable), DataFrame] = {
 
-    val maybeWriter: Try[Option[SparkBatchWriter]] = Try {
+    val maybeWriter: Either[(Option[DataFrame], Throwable), Option[SparkBatchWriter]] = Try {
       sparkWriterFactory.createSparkWriterBatch(env, sparkContext, writerModel = writerModel)
+    } match {
+      case Failure(exception) => Left(Option.empty[DataFrame] -> exception)
+      case Success(value) => Right(value)
     }
 
-    maybeWriter.flatMap {
-      case Some(writer) => Try(writer.write(dataFrame))
-      case None => Success(None)
+    maybeWriter.right.flatMap {
+      case Some(writer) => Try {
+        writer.write(dataFrame)
+
+      } match {
+        case Failure(exception) => Left(Option(dataFrame) -> exception)
+        case Success(_) => Right(dataFrame)
+      }
+      case None => Right(dataFrame)
     }
   }
 
-  def run(batchJobModel: BatchJobModel, batchJobInstanceModel: BatchJobInstanceModel): Try[Any] = {
+  def run(batchJobModel: BatchJobModel, batchJobInstanceModel: BatchJobInstanceModel): Try[Unit] = {
 
     val mlModelsDB = new MlModelsDB(env)
 
@@ -171,6 +193,18 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
       strategy <- stepCreateStrategy(batchJobModel.etl, sparkContext, batchJobInstanceModel.restConfig).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to create strategy for job ${batchJobModel.name}", e))
       }
+
+      postHookOnWriteSuccess = (s: DataFrame) => strategy match {
+        case Some(hook: HasPostMaterializationHook) =>
+          hook.postMaterialization(Some(s), None)
+        case _ => Success(())
+      }
+
+      postHookOnWriteFailure = (f: (Option[DataFrame], Throwable)) => strategy match {
+        case Some(hook: HasPostMaterializationHook) => hook.postMaterialization(f._1, Some(f._2))
+        case _ => Failure(f._2)
+      }
+
       mlModelsBroadcast <- stepCreateMlModelsBroadcast(mlModelsDB, batchJobModel.etl.mlModels, sparkContext).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to create mlmodelsbroadcast for job ${batchJobModel.name}", e))
       }
@@ -181,12 +215,12 @@ class BatchJobActor private (env: {val batchJobBL: BatchJobBL; val indexBL: Inde
         case e: Throwable => Failure(new Exception(s"Failed to save mlmodels for job ${batchJobModel.name}", e))
       }
       result <- outputDataFrame.map(stepWriteResult(_, writerModel))
-        .getOrElse(Failure(new Exception("Failed to write")))
-        .recoverWith {
-          case e: Throwable => Failure(new Exception(s"Failed to write output for job ${batchJobModel.name}", e))
-        }
+        .getOrElse(Left(None -> new Exception("Failed to write")))
+        .fold(postHookOnWriteFailure, postHookOnWriteSuccess)
+        .recoverWith { case e => Failure(new Exception(s"Failed to write output for job ${batchJobModel.name}", e)) }
     } yield result
   }
+
 
   override def receive: Actor.Receive = {
 

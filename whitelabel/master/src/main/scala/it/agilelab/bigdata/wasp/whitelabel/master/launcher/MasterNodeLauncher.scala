@@ -147,6 +147,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.flatToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromJdbc.mySqlToConsole)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.WithPostHook.nestedToConsole)
 
 
     /* Test SchemaAvroManager */
