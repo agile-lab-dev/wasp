@@ -34,6 +34,31 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val mongo = PipegraphModel(
+        name = "TestMongoWriterStructuredJSONPipegraph",
+        description = "Description of TestMongoWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestConsoleWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.mongoDbWriter("Mongo Writer", TestMongoModel.writeToMongo, Map.empty),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None
+      )
+
       lazy val consoleWithMetadata = PipegraphModel(
         name = "TestConsoleWriterWithMetadataStructuredJSONPipegraph",
         description = "Description of TestConsoleWriterWithMetadataStructuredJSONPipegraph",

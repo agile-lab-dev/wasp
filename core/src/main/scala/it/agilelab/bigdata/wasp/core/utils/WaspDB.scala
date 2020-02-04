@@ -286,6 +286,8 @@ object WaspDB extends Logging {
   val mlModelsName = "mlmodels"
   val websocketsName = "websockets"
   val batchSchedulersName = "batchschedulers"
+  val documentName = "document"
+
 
   val collectionsLookupTable: Map[Type, String] = Map(
     typeTag[PipegraphModel].tpe ->  pipegraphsName,
@@ -310,7 +312,8 @@ object WaspDB extends Logging {
     typeTag[SolrConfigModel].tpe -> configurationsName,
     typeTag[HBaseConfigModel].tpe -> configurationsName,
     typeTag[JdbcConfigModel].tpe -> configurationsName,
-    typeTag[TelemetryConfigModel].tpe -> configurationsName
+    typeTag[TelemetryConfigModel].tpe -> configurationsName,
+    typeTag[DocumentModel].tpe -> documentName
   )
 
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
@@ -358,8 +361,8 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[BatchSchedulerModel]),
     createCodecProviderIgnoreNone(classOf[JMXTelemetryConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryTopicConfigModel]),
-    createCodecProviderIgnoreNone(classOf[TelemetryConfigModel])
-
+    createCodecProviderIgnoreNone(classOf[TelemetryConfigModel]),
+    createCodecProviderIgnoreNone(classOf[DocumentModel])
   ).asJava
 
   def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {

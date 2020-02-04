@@ -20,11 +20,11 @@ class TopicCompressionCodecProviderTest extends FunSuite {
 
     val codec = provider.get(classOf[TopicCompression], null)
 
-    assert(write(codec, TopicCompression.Snappy) === """{ "compression" : "snappy" }""")
+    assert(write(codec, TopicCompression.Snappy) === """{"compression": "snappy"}""")
 
-    assert(write(codec, TopicCompression.Gzip) === """{ "compression" : "gzip" }""")
+    assert(write(codec, TopicCompression.Gzip) === """{"compression": "gzip"}""")
 
-    assert(write(codec, TopicCompression.Disabled) === """{ "compression" : "disabled" }""")
+    assert(write(codec, TopicCompression.Disabled) === """{"compression": "disabled"}""")
   }
 
   private def write(codec: Codec[TopicCompression], compression: TopicCompression) = {
@@ -47,9 +47,9 @@ class TopicCompressionCodecProviderTest extends FunSuite {
 
     val codec = provider.get(classOf[TopicCompression], null)
 
-    assert(read(codec, """{ "compression" : "snappy" }""") === TopicCompression.Snappy)
-    assert(read(codec, """{ "compression" : "gzip" }""") === TopicCompression.Gzip)
-    assert(read(codec, """{ "compression" : "disabled" }""") === TopicCompression.Disabled)
+    assert(read(codec, """{"compression": "snappy"}""") === TopicCompression.Snappy)
+    assert(read(codec, """{"compression": "gzip"}""") === TopicCompression.Gzip)
+    assert(read(codec, """{"compression": "disabled"}""") === TopicCompression.Disabled)
 
 
     assertThrows[IllegalArgumentException](read(codec, """{ "compression" : "pippo" }"""))

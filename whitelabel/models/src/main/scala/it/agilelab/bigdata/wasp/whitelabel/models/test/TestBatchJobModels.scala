@@ -125,6 +125,53 @@ private[wasp] object TestBatchJobModels {
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
+
+
+    /**
+      *  Fail if the HDFS directory does not exist
+      */
+    lazy val nestedToMongo = BatchJobModel(
+      name = "TestBatchJobFromHdfsNestedToMongo",
+      description = "Description of TestBatchJobFromHdfsNestedToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
+        inputs = List(
+          ReaderModel.rawReader("TestRawNestedSchemaModel", TestRawModel.nested)
+        ),
+        output = WriterModel.mongoDbWriter("Console Writer", TestMongoModel.writeToMongo, Map.empty),
+        mlModels = List(),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
+  }
+
+  object FromMongo {
+    /**
+      *  Fail if the HDFS directory does not exist
+      */
+    lazy val nestedToConsole = BatchJobModel(
+      name = "TestBatchJobFromMongoNestedToConsole",
+      description = "Description of TestBatchJobFromHdfsNestedToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
+        inputs = List(
+          ReaderModel.mongoDbReader("TestRawNestedSchemaModel", TestMongoModel.writeToMongo, Map.empty)
+        ),
+        output = WriterModel.consoleWriter("Console Writer"),
+        mlModels = List(),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
   }
 
   object FromJdbc {

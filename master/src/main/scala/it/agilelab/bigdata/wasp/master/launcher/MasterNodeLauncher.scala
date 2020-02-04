@@ -105,6 +105,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Producer_C.getRoute ~
       Topic_C.getRoute ~
       Status_C.getRoute ~
+      Document_C.getRoute ~
       additionalRoutes()
   }
 

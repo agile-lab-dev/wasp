@@ -126,4 +126,4 @@ repositories
 
 
 # lab configuration file
-.lab.yml
+.lab.cache

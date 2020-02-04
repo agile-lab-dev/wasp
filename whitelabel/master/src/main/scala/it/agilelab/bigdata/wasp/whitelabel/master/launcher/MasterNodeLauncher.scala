@@ -87,6 +87,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbase)
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
     waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
+    waspDB.upsert[DocumentModel](TestMongoModel.writeToMongo)
 
     /* Producers */
     waspDB.upsert[ProducerModel](TestProducerModel.json)
@@ -98,6 +99,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.mongo)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.consoleWithMetadata)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaHeaders)
@@ -146,8 +148,10 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfsFlat)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.flatToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToConsole)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToMongo)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromJdbc.mySqlToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.WithPostHook.nestedToConsole)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromMongo.nestedToConsole)
 
 
     /* Test SchemaAvroManager */

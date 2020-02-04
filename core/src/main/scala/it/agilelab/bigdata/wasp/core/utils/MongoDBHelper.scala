@@ -2,11 +2,12 @@ package it.agilelab.bigdata.wasp.core.utils
 
 import java.util.concurrent.TimeUnit
 
-import com.mongodb.ConnectionString
+import com.mongodb.{Block, ConnectionString}
 import com.mongodb.client.model.{CreateCollectionOptions, UpdateOptions}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.MongoDBConfigModel
 import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
+import org.mongodb.scala.connection.SocketSettings.Builder
 import org.mongodb.scala.connection.{ClusterSettings, SocketSettings}
 import org.mongodb.scala.model.UpdateOptions
 import org.mongodb.scala.result.UpdateResult
@@ -162,24 +163,25 @@ object MongoDBHelper extends Logging {
     //return a connection pool
 
     val settingsBuilder = MongoClientSettings.builder()
-      .clusterSettings(ClusterSettings.builder()
-        .applyConnectionString(new ConnectionString(mongoDBConfig.address))
-        .build())
+      .applyToClusterSettings(new Block[ClusterSettings.Builder] {
+        override def apply(t: ClusterSettings.Builder): Unit =
+          t.applyConnectionString(new ConnectionString(mongoDBConfig.address))
+      })
       //we need full consistency so we consider a write on mongo as successful when it lands on disk
       .writeConcern(WriteConcern.ACKNOWLEDGED.withFsync(true))
-      .heartbeatSocketSettings(SocketSettings.builder()
-        .connectTimeout(mongoDBConfig.millisecondsTimeoutConnection,
+      .applyToSocketSettings(new Block[SocketSettings.Builder]{
+        override def apply(t: Builder): Unit = t.connectTimeout(mongoDBConfig.millisecondsTimeoutConnection,
           TimeUnit.MILLISECONDS)
-        .readTimeout(mongoDBConfig.millisecondsTimeoutConnection,
-          TimeUnit.MILLISECONDS)
-        .build())
+          .readTimeout(mongoDBConfig.millisecondsTimeoutConnection,
+            TimeUnit.MILLISECONDS)
+      })
+
 
     val settings = if(mongoDBConfig.username != ""){
-      val credentials = List(MongoCredential.createCredential(
+      settingsBuilder.credential(MongoCredential.createCredential(
         mongoDBConfig.username,
         mongoDBConfig.databaseName,
-        mongoDBConfig.password.toCharArray)).asJava
-      settingsBuilder.credentialList(credentials).build()
+        mongoDBConfig.password.toCharArray)).build()
     } else {
       settingsBuilder.build()
     }

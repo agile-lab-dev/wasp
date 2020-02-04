@@ -19,6 +19,7 @@ trait KeyValueCategory  extends DatastoreCategory with StreamingSink with BatchS
 trait RawCategory       extends DatastoreCategory with StreamingSink with BatchSourceAndSink { override val categoryName = "raw"       }
 trait TopicCategory     extends DatastoreCategory with StreamingAndBatchSourceAndSink        { override val categoryName = "topic"     }
 trait WebSocketCategory extends DatastoreCategory with StreamingSourceAndSink                { override val categoryName = "websocket" }
+trait DocumentCategory  extends DatastoreCategory with StreamingSink with BatchSourceAndSink { override val categoryName = "document"  }
 
 /**
 	* A `DatastoreProduct` identifies either a particular datastore, as in an actual software product, or a generic one,
@@ -56,6 +57,7 @@ sealed trait DatastoreProduct extends DatastoreCategory {
 			case _: RawCategory       => RawProduct.productName.get
 			case _: TopicCategory     => KafkaProduct.productName.get
 			case _: WebSocketCategory => WebSocketProduct.productName.get
+			case _: DocumentCategory  => MongoDbProduct.productName.get
 			case _                    =>
 				throw new IllegalArgumentException(s"""Unknown datastore category "$categoryName" of $this, unable to provide
 					                                    | default datastore product""".stripMargin.filterNot(_.isControl))
@@ -82,6 +84,7 @@ object DatastoreProduct {
 	object RawProduct             extends RawCategory       with DatastoreProduct { override val productName = Some("raw")       }
 	object SolrProduct            extends IndexCategory     with DatastoreProduct { override val productName = Some("solr")      }
 	object WebSocketProduct       extends WebSocketCategory with DatastoreProduct { override val productName = Some("websocket") }
+	object MongoDbProduct         extends DocumentCategory  with DatastoreProduct { override val productName = Some("mongodb")   }
 	object GenericIndexProduct    extends IndexCategory     with DatastoreProduct { override val productName = None              }
 	object GenericKeyValueProduct extends KeyValueCategory  with DatastoreProduct { override val productName = None              }
 	object GenericTopicProduct    extends TopicCategory     with DatastoreProduct { override val productName = None              }

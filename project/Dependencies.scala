@@ -302,6 +302,12 @@ object Dependencies {
 	).map(excludeNetty)
 
 
+	val plugin_mongo_spark = Seq(
+		"org.mongodb.spark" %% "mongo-spark-connector" % "2.2.7",
+		"org.mongodb" % "mongo-java-driver" % "3.12.0"
+	).map(excludeNetty)
+
+
 	def kmsTest = Seq(
 		transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier, "classes"),
 		libraryDependencies  ++= Seq(

@@ -27,7 +27,7 @@ object Versions {
 	val json4s = "3.2.11"
 	val kryo = "3.0.0"
 	val log4j = "2.9.1"  // keep compatible with elastic
-	val mongodbScala = "2.1.0"
+	val mongodbScala = "2.8.0"
 	val netty = "3.10.6.Final"
 	val nettySpark = "3.9.9.Final"
 	val nettyAllSpark = "4.0.43.Final"
