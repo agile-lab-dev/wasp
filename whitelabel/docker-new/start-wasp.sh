@@ -27,6 +27,7 @@ WASP_LAUNCHER_OPTS="--"
 WASP_SECURITY=false
 WASP_YARN=false
 WASP_CONFIGURATION_FILE="docker-environment.conf"
+PERSIST_FLAG=false
 while [[ $# -gt 0 ]]; do
     ARG=$1
     case $ARG in
@@ -39,13 +40,16 @@ while [[ $# -gt 0 ]]; do
             WASP_CONFIGURATION_FILE=$(echo -e "${1}" | sed -e 's/^[[:space:]]*//')
             shift # past argument
         ;;
+       -p|--persist)
+            PERSIST_FLAG=true
+            shift # past argument
+        ;;
         *)
             WASP_LAUNCHER_OPTS+=" $ARG"
             shift # past argument
         ;;
     esac
 done
-
 # prepare binaries for running
 cd $SCRIPT_DIR/../..
 
@@ -58,10 +62,15 @@ cd $SCRIPT_DIR
 source get-docker-cmd.sh
 
 DOCKER_IMAGE=registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:5.16
+NAME_CONTAINER=agile-wasp-2-whitelabel
 
 set -ax
 
-$DOCKER_CMD run -it -v $MASTER_PROJECT_DIRECTORY/target/universal/stage/:/code/master \
+if [ "$PERSIST_FLAG" = false ]
+ then
+  docker rm $NAME_CONTAINER || true
+  $DOCKER_CMD run -it --name $NAME_CONTAINER \
+    -v $MASTER_PROJECT_DIRECTORY/target/universal/stage/:/code/master \
     -v $PRODUCERS_PROJECT_DIRECTORY/target/universal/stage/:/code/producer \
     -v $CONSUMERS_RT_PROJECT_DIRECTORY/target/universal/stage/:/code/consumers-rt \
     -v $CONSUMERS_SPARK_PROJECT_DIRECTORY/target/universal/stage/:/code/consumers-spark \
@@ -70,6 +79,10 @@ $DOCKER_CMD run -it -v $MASTER_PROJECT_DIRECTORY/target/universal/stage/:/code/m
     -v $SCRIPT_DIR/docker-entrypoint.sh:/docker-entrypoint.sh \
     -v $SCRIPT_DIR/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf \
     -v $SCRIPT_DIR/templates/hbase-site.xml:/templates/hbase-site.xml \
-    --network=host \
+    -p 8088:8088 -p 2891:2891 -p 8042:8042 \
     $DOCKER_IMAGE \
     bash /docker-entrypoint.sh
+
+else
+  $DOCKER_CMD start $NAME_CONTAINER -i
+fi

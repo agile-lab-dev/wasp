@@ -131,12 +131,13 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.ERROR.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.CHECKPOINT.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.avroEncoder)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.kafka)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.hdfs)
-  
+
     waspDB.upsert[PipegraphModel](TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
   
     waspDB.upsert[PipegraphModel](TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
