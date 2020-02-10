@@ -16,7 +16,6 @@ class AvroDeserializerExpressionSpec extends WordSpec
 
   def serializeElements(elements: Seq[UglyCaseClass]): Seq[Array[Byte]] = {
     elements.map { e =>
-      import TestSchemas.implicits._
       val out = new ByteArrayOutputStream()
       val avroOut = AvroOutputStream.binary[UglyCaseClass](out)
       avroOut.write(e)
@@ -25,7 +24,7 @@ class AvroDeserializerExpressionSpec extends WordSpec
     }
   }
 
-  def compareRowWithUglyClass(truth: UglyCaseClass, r: Row) = {
+  def compareRowWithUglyClass(truth: UglyCaseClass, r: Row): Unit = {
     assert(truth.a sameElements r.getAs[Array[Byte]](0))
     assert(truth.b sameElements r.getSeq[Int](1))
     val naRow = r.getSeq[Row](2)
@@ -34,12 +33,22 @@ class AvroDeserializerExpressionSpec extends WordSpec
     assert(truth.d == new Date(r.getLong(3)))
     assert(truth.ts == new Timestamp(r.getLong(4)))
     compareRowWithNestedClass(truth.n, r.getStruct(5))
+    assert(truth.sm == r.getMap[String, Int](6))
+    assert(truth.som == r.getMap[String, java.lang.Double](7).mapValues(Option.apply))
+    assert(truth.mm == r.getMap[String, Map[String, java.lang.Double]](8).mapValues(_.mapValues(Option.apply)))
+    assert(truth.m == r.getMap[String, Row](9).mapValues(rowToNestedClass))
   }
 
-  def compareRowWithNestedClass(a: NestedCaseClass, r: Row) = {
-    assert(a.d == r.getDouble(0))
-    assert(a.l == r.getLong(1))
-    assert(a.s == r.getString(2))
+  def compareRowWithNestedClass(a: NestedCaseClass, r: Row): Unit = {
+    assert(a == rowToNestedClass(r))
+  }
+
+  def rowToNestedClass(r: Row): NestedCaseClass = {
+    NestedCaseClass(
+      r.getDouble(0),
+      r.getLong(1),
+      r.getString(2)
+    )
   }
 
   "AvroToRowExpression" must {

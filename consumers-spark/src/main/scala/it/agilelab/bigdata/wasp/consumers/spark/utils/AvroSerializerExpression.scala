@@ -66,13 +66,13 @@ object AvroSerializerExpression {
 
   private def checkSchemas(schemaSpark: StructType, schemaAvro: Schema): Unit = {
     // flatten schemas, convert spark field list into a map
-    val sparkFields: Map[String, String] = flattenSparkSchema(schemaSpark).toMap
+    val sparkFields: Map[String, String] = SchemaFlatteners.Spark.flattenSchema(schemaSpark, "").toMap
     // the key is the field name, the value is the field type
-    val avroFields: List[(String, String)] = flattenAvroSchema(schemaAvro)
+    val avroFields: List[(String, String)] = SchemaFlatteners.Avro.flattenSchema(schemaAvro, "")
 
     // iterate over the Avro field list. If any is missing from the Spark schema, or has a different type, throw an exception.
     avroFields foreach {
-      case (fieldName, fieldAvroType) => {
+      case (fieldName, fieldAvroType) =>
         val maybeFieldSparkType = sparkFields.get(fieldName)
         if (maybeFieldSparkType.isEmpty) {
           // field is missing from the Spark schema
@@ -82,114 +82,20 @@ object AvroSerializerExpression {
           throw new IllegalArgumentException(s"Field $fieldName has a different type in the schemas. " +
             s"Type in Avro: $fieldAvroType, type in Spark: ${maybeFieldSparkType.get}")
         }
-      }
     }
   }
-
-  private def flattenSparkSchema(schema: StructType, prefix: String = ""): List[(String, String)] = {
-    schema.fields.toList.flatMap {
-      field => {
-        val name = prefix + field.name
-        val dataType = field.dataType
-        if (dataType.isInstanceOf[StructType]) {
-          // complex type: recurse
-          val prefix = name + "."
-          flattenSparkSchema(dataType.asInstanceOf[StructType], prefix)
-        } else {
-          // simple type: create tuple
-          val tpe = sparkTypeToString(dataType)
-          Seq((name, tpe)) // sequence with a single element because we're in a flatMap
-        }
-      }
-    }
-  }
-
-  private def flattenAvroSchema(schema: Schema, prefix: String = ""): List[(String, String)] = {
-    schema.getFields.asScala.toList.flatMap {
-      field => {
-        val name = prefix + field.name
-        val schemaType = field.schema().getType
-        if (schemaType == Type.RECORD) {
-          // complex type: recurse
-          val prefix = name + "."
-          flattenAvroSchema(field.schema, prefix)
-        } else if (schemaType == Type.UNION) {
-          // union type: check that is simple enough, recurse if necessary
-          // drop NullSchema, fail if more than one Schema remains afterwards
-          val nonNullSchemas = field.schema().getTypes.asScala.filter(_.getType != Type.NULL)
-          if (nonNullSchemas.length > 1) {
-            throw new IllegalArgumentException(
-              s"Field $name in the Avro schema has UnionSchema ${field.schema()} " +
-                "which is not a simple NullSchema + primitive schema.")
-          }
-          val remainingSchema = nonNullSchemas.head
-          // recurse if necessary
-          if (remainingSchema.getType == Type.RECORD) {
-            // nullable record, recurse
-            val prefix = name + "."
-            flattenAvroSchema(remainingSchema, prefix)
-          } else {
-            // simple type: create tuple
-            val tpe = avroTypeToString(remainingSchema.getType)
-            Seq((name, tpe)) // sequence with a single element because we're in a flatMap
-          }
-        } else {
-          // simple type: create tuple
-          val tpe = avroTypeToString(schemaType)
-          Seq((name, tpe)) // sequence with a single element because we're in a flatMap
-        }
-      }
-    }
-  }
-
-  private val booleanType = "boolean"
-  private val byteType = "byte"
-  private val intType = "int"
-  private val longType = "long"
-  private val floatType = "float"
-  private val doubleType = "double"
-  private val stringType = "string"
-  private val arrayType = "array"
-  private val binaryType = "bytes"
-
-
-  private def sparkTypeToString(dataType: DataType): String = dataType match {
-    case _: BooleanType => booleanType
-    case _: ByteType => byteType
-    case _: IntegerType => intType
-    case _: LongType => longType
-    case _: FloatType => floatType
-    case _: DoubleType => doubleType
-    case _: StringType => stringType
-    case _: ArrayType => arrayType
-    case _: BinaryType => binaryType
-    case _: DateType => longType
-    case _: TimestampType => longType
-  }
-
-  private def avroTypeToString(tpe: Type): String = tpe match {
-    case Type.BOOLEAN => booleanType
-    case Type.BYTES => binaryType
-    case Type.INT => intType
-    case Type.LONG => longType
-    case Type.FLOAT => floatType
-    case Type.DOUBLE => doubleType
-    case Type.STRING => stringType
-    case Type.ARRAY => arrayType
-  }
-
 }
 
 
 case class AvroSerializerExpression private(child: Expression,
-    maybeSchemaAvroJsonOrFingerprint: Option[Either[String, Long]],
-    avroSchemaManagerConfig: Option[Config],
-    useAvroSchemaManager: Boolean,
-    inputSchema: StructType,
-    structName: String,
-    namespace: String,
-    fieldsToWrite: Option[Set[String]],
-    timeZoneId: Option[String]) extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression {
+                                            maybeSchemaAvroJsonOrFingerprint: Option[Either[String, Long]],
+                                            avroSchemaManagerConfig: Option[Config],
+                                            useAvroSchemaManager: Boolean,
+                                            inputSchema: StructType,
+                                            structName: String,
+                                            namespace: String,
+                                            fieldsToWrite: Option[Set[String]],
+                                            timeZoneId: Option[String]) extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression {
 
 
   @transient private lazy val externalSchema: Option[Schema] = maybeSchemaAvroJsonOrFingerprint.map {
@@ -295,23 +201,22 @@ case class AvroSerializerExpression private(child: Expression,
   override def dataType: DataType = BinaryType
 
   private def createConverterToAvro(
-                                       sparkSchema: DataType,
-                                       structName: String,
-                                       recordNamespace: String,
-                                       fieldsToWrite: Option[Set[String]],
-                                       externalSchema: Option[Schema]): Any => Any = {
+                                     sparkSchema: DataType,
+                                     structName: String,
+                                     recordNamespace: String,
+                                     fieldsToWrite: Option[Set[String]],
+                                     externalSchema: Option[Schema]): Any => Any = {
     sparkSchema match {
       case BinaryType => (item: Any) =>
         item match {
           case null => null
           case bytes: Array[Byte] => ByteBuffer.wrap(bytes)
         }
-      case StringType => (item: Any) =>
-        item match {
-          case null => null
-          case u: UTF8String => u.toString
-          case _ => item // never here, I hope
-        }
+      case StringType => {
+        case null => null
+        case u: UTF8String => u.toString
+        case item => item // never here, I hope
+      }
       case ByteType | ShortType | IntegerType | LongType |
            FloatType | DoubleType | BooleanType => identity
       case TimestampType => (item: Any) =>

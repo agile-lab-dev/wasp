@@ -17,7 +17,6 @@ object RowToAvroExpressionTestDataGenerator {
     Iterator.continually {
       generate(random)
     }.take(elements).toSeq
-
   }
 
   def generate(random: Random): UglyCaseClass = {
@@ -27,8 +26,21 @@ object RowToAvroExpressionTestDataGenerator {
       Iterator.continually(generateNestedCaseClass(random)).take(10).toArray,
       generateDate(random),
       generateTimestamp(random),
-      generateNestedCaseClass(random))
+      generateNestedCaseClass(random),
+      Iterator.continually(random.nextString(3) -> random.nextInt()).take(10).toMap,
+      generateMapOfOptionDouble(random, size = 5),
+      Iterator.continually(random.nextString(3) -> generateMapOfOptionDouble(random, size = 5)).take(10).toMap,
+      Iterator.continually(generateNestedCaseClass(random)).take(10).map {
+        random.nextString(5) -> _
+      }.toMap
+    )
 
+  }
+
+  def generateMapOfOptionDouble(random: Random, size: Int): Map[String, Option[Double]] = {
+    Iterator.continually(random.nextBoolean()).take(size).map(i => if (i) Some(random.nextDouble()) else None).map(
+      Random.nextString(5) -> _
+    ).toMap
   }
 
   def generateByteArray(random: Random): Array[Byte] = {

@@ -28,9 +28,9 @@ import scala.collection.mutable
   * An `Expression` which deserializes a binary field encoded in Avro and returns the corresponding
   * representation in Spark.
   *
-  * @param child the `Expression` containing the binary Avro to be deserialized
-  * @param schemaAvroJson the JSON representation of the Avro schema
-  * @param darwinConfig the configuration for the AvroSchemaManager
+  * @param child             the `Expression` containing the binary Avro to be deserialized
+  * @param schemaAvroJson    the JSON representation of the Avro schema
+  * @param darwinConfig      the configuration for the AvroSchemaManager
   * @param avoidReevaluation this filed forces the Expression to be non-deterministic. Setting this to true
   *                          measn that this expression is executed only once even though the Optimizer creates
   *                          several copies of it (eg. it happens usually with CollapseProject if the value
@@ -39,10 +39,10 @@ import scala.collection.mutable
   *                          once for each occurence of ti you see in the physical plan.
   */
 case class AvroDeserializerExpression(
-    child: Expression,
-    schemaAvroJson: String,
-    darwinConfig: Option[Config],
-    avoidReevaluation: Boolean = true) extends UnaryExpression with ExpectsInputTypes {
+                                       child: Expression,
+                                       schemaAvroJson: String,
+                                       darwinConfig: Option[Config],
+                                       avoidReevaluation: Boolean = true) extends UnaryExpression with ExpectsInputTypes {
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
 
@@ -66,7 +66,7 @@ case class AvroDeserializerExpression(
     avroSchemaManager.flatMap { _ =>
       AvroSingleObjectEncodingUtils.extractId(avroValue).right.toOption
     }.map { schemaId =>
-      val schema =  avroSchemaManager.get.getSchema(schemaId).get
+      val schema = avroSchemaManager.get.getSchema(schemaId).get
       mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[GenericRecord](schema, userSchema))
     }.getOrElse(datumReader)
   }
@@ -133,32 +133,37 @@ case class AvroDeserializerExpression(
        """.stripMargin, isNull = childEval.isNull)
   }
 
+  @inline
+  val convertString: Any => AnyRef = { item =>
+    if (item == null) null else {
+      val avroUtf8 = item.asInstanceOf[Utf8]
+      val byteBuffer = if (avroUtf8.getByteLength != avroUtf8.getBytes.length) {
+        avroUtf8.getBytes.take(avroUtf8.getByteLength)
+      } else {
+        avroUtf8.getBytes
+      }
+      UTF8String.fromBytes(byteBuffer)
+    }
+  }
+
   /**
     * Returns a converter function to convert row in avro format to GenericRow of catalyst.
     *
     * @param sourceAvroSchema Source schema before conversion inferred from avro file by passed in
-    *                       by user.
-    * @param targetSqlType Target catalyst sql type after the conversion.
+    *                         by user.
+    * @param targetSqlType    Target catalyst sql type after the conversion.
     * @return returns a converter function to convert row in avro format to GenericRow of catalyst.
     */
   private def createConverterToSQL(
-    sourceAvroSchema: Schema,
-    targetSqlType: DataType): AnyRef => AnyRef = {
+                                    sourceAvroSchema: Schema,
+                                    targetSqlType: DataType): AnyRef => AnyRef = {
 
     def createConverter(avroSchema: Schema,
                         sqlType: DataType, path: List[String]): AnyRef => AnyRef = {
       val avroType = avroSchema.getType
       (sqlType, avroType) match {
         case (StringType, STRING) | (StringType, ENUM) =>
-          (item: AnyRef) => if (item == null) null else {
-            val avroUtf8 = item.asInstanceOf[Utf8]
-            val byteBuffer = if (avroUtf8.getByteLength != avroUtf8.getBytes.length) {
-              avroUtf8.getBytes.take(avroUtf8.getByteLength)
-            } else {
-              avroUtf8.getBytes
-            }
-            UTF8String.fromBytes(byteBuffer)
-          }
+          (item: AnyRef) => convertString(item)
         // Byte arrays are reused by avro, so we have to make a copy of them.
         case (IntegerType, INT) | (BooleanType, BOOLEAN) | (DoubleType, DOUBLE) |
              (FloatType, FLOAT) | (LongType, LONG) =>
@@ -313,7 +318,7 @@ case class AvroDeserializerExpression(
             } else {
               ArrayBasedMapData(
                 item.asInstanceOf[java.util.Map[AnyRef, AnyRef]],
-                (x: Any) => x.toString,
+                convertString,
                 (x: Any) => valueConverter(x.asInstanceOf[AnyRef]))
             }
           }
@@ -351,14 +356,15 @@ case class AvroDeserializerExpression(
                       createConverter(schema, field.dataType, path :+ field.name)
                   }
 
-                  (item: AnyRef) => if (item == null) {
-                    null
-                  } else {
-                    val i = GenericData.get().resolveUnion(avroSchema, item)
-                    val converted = new Array[Any](fieldConverters.length)
-                    converted(i) = fieldConverters(i)(item)
-                    new GenericInternalRow(converted)
-                  }
+                  (item: AnyRef) =>
+                    if (item == null) {
+                      null
+                    } else {
+                      val i = GenericData.get().resolveUnion(avroSchema, item)
+                      val converted = new Array[Any](fieldConverters.length)
+                      converted(i) = fieldConverters(i)(item)
+                      new GenericInternalRow(converted)
+                    }
                 case _ => throw new IncompatibleSchemaException(
                   s"Cannot convert Avro schema to catalyst type because schema at path " +
                     s"${path.mkString(".")} is not compatible " +
