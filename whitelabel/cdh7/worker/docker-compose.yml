@@ -1,0 +1,20 @@
+version: '2'
+services:
+  cdh:
+    hostname: cdh
+    image: registry.gitlab.com/agilefactory/agile.wasp2/cdh7:worker
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - "/Users/andreafonti/projects/gitlab.com/AgileFactory/Agile.Wasp2/whitelabel:/p"
+    ports:
+      - "7180:7180"
+      - "2222:22"
+      - "60010:60010"
+      - "60020:60020"
+      - "8088:8088"
+      - "8042:8042"
+      - "8983:8983"
+      - "27017:27017"
+    privileged: true
+
+    

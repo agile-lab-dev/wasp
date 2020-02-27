@@ -1,0 +1,10 @@
+[Unit]
+Description=Generate SSH host keys
+Before=ssh.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "test -f /etc/ssh/ssh_host_dsa_key || dpkg-reconfigure openssh-server"
+
+[Install]
+RequiredBy=ssh.service
