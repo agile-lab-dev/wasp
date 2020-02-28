@@ -2411,3 +2411,442 @@ Now telemetry producers are shared executor side
 #### Related issue
 
 Closes #202
+
+
+## WASP 2.21.0
+
+### feature: Wasp could expose before and after materialize hooks
+
+[Merge request 152](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/152)
+
+Created at: 2019-10-31T16:20:17.020Z
+
+Updated at: 2020-02-28T16:02:43.448Z
+
+Branch: feature/237-wasp-could-expose-before-and-after-materialize-hooks
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+#### New features and improvements
+
+Strategies can now mix also this trait
+
+```scala
+/**
+  * Mixin this trait to a strategy that needs an hook after the write phase,
+  * the framework will detect this trait and call postMaterialization after the relevant phase
+  */
+trait HasPostMaterializationHook {
+  self: Strategy =>
+
+  /**
+    *
+    * @param maybeDataframe (optional) output dataframe of the strategy (it is None only if the strategy has no writer)
+    * @param maybeError     Some(error) if an error happened during materialization; None otherwise
+    * @return the wanted outcome of the strategy. This means that if the maybeError is not None and the hook does not
+    *         have a "recovery" logic, it should always return a Failure wrapping the input error.
+    */
+  def postMaterialization(maybeDataframe: Option[DataFrame], maybeError: Option[Throwable]): Try[Unit]
+
+
+}
+```
+
+To declare that they need a hook after materialization of batch a job to do cleanup operations, strategies that do not mix this trait will work as usual
+
+#### Breaking changes
+
+No breaking changes
+
+#### Migration
+
+No migration required
+
+#### Bug fixes
+
+No bugs fixed
+
+#### Related issue
+
+Closes #237
+
+### feature: Create spark plugin that writes to mongodb
+
+[Merge request 153](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/153)
+
+Created at: 2020-01-16T17:46:29.678Z
+
+Updated at: 2020-02-28T16:02:44.036Z
+
+Branch: feature/239-create-spark-plugin-that-writes-to-mongodb
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+#### New features and improvements
+
+New Mongo db plugin
+
+Supports:
+
+* Streaming writes to collection
+* Batch reads from collection
+* Batch writes from collection
+
+
+See documentation of spark-mongo for configuration keys
+
+https://docs.mongodb.com/spark-connector/v2.2/
+
+those configuration keys should be added in the ReaderModel and in the WriterModel
+
+
+to demo the functionality via white-label project do the following:
+
+```bash
+cd whitelabel/docker-new/
+./start-wasp.sh -d
+http POST http://andreaf-laptop:2891/producers/TestJSONProducer/start
+http POST http://andreaf-laptop:2891/pipegraphs/TestMongoWriterStructuredJSONPipegraph/start
+http POST http://andreaf-laptop:2891/pipegraphs/TestMongoWriterStructuredJSONPipegraph/stop
+http POST http://andreaf-laptop:2891/batchjobs/TestBatchJobFromMongoNestedToConsole/start
+http POST http://andreaf-laptop:2891/pipegraphs/TestHdfsWriterStructuredJSONPipegraph/start
+http POST http://andreaf-laptop:2891/pipegraphs/TestHdfsWriterStructuredJSONPipegraph/stop
+http POST http://andreaf-laptop:2891/batchjobs/TestBatchJobFromHdfsNestedToMongo/start
+http POST http://andreaf-laptop:2891/producers/TestJSONProducer/stop
+```
+
+example models
+
+```scala
+writeToMongo = DocumentModel(
+    name = "test-write-to-mongo",
+    connectionString = ConfigManager.getMongoDBConfig.address + "/" +  ConfigManager.getMongoDBConfig.databaseName + "." + "TestCollectionStructuredWriteMongo",
+    schema = StructType(Seq(
+      StructField("id", StringType),
+      StructField("number", IntegerType),
+      StructField("nested", StructType(Seq(
+        StructField("field1", StringType),
+        StructField("field2", LongType),
+        StructField("field3", StringType)
+      )))
+    )).json
+  )
+```
+
+```scala
+lazy val mongo = PipegraphModel(
+        name = "TestMongoWriterStructuredJSONPipegraph",
+        description = "Description of TestMongoWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestConsoleWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.mongoDbWriter("Mongo Writer", TestMongoModel.writeToMongo, Map.empty),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None
+      )
+```
+
+```scala
+ lazy val nestedToMongo = BatchJobModel(
+      name = "TestBatchJobFromHdfsNestedToMongo",
+      description = "Description of TestBatchJobFromHdfsNestedToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
+        inputs = List(
+          ReaderModel.rawReader("TestRawNestedSchemaModel", TestRawModel.nested)
+        ),
+        output = WriterModel.mongoDbWriter("Console Writer", TestMongoModel.writeToMongo, Map.empty),
+        mlModels = List(),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
+```
+
+```scala
+/**
+      *  Fail if the HDFS directory does not exist
+      */
+    lazy val nestedToConsole = BatchJobModel(
+      name = "TestBatchJobFromMongoNestedToConsole",
+      description = "Description of TestBatchJobFromHdfsNestedToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
+        inputs = List(
+          ReaderModel.mongoDbReader("TestRawNestedSchemaModel", TestMongoModel.writeToMongo, Map.empty)
+        ),
+        output = WriterModel.consoleWriter("Console Writer"),
+        mlModels = List(),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
+```
+
+#### Breaking changes
+
+None
+
+#### Migration
+
+None
+
+#### Bug fixes
+
+None
+
+#### Related issue
+
+Closes #239
+
+### feature: Implement AvroExpressionEncoder
+
+[Merge request 156](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/156)
+
+Created at: 2020-02-01T15:16:48.600Z
+
+Updated at: 2020-02-28T16:02:44.412Z
+
+Branch: feature/248-implement-avroexpressionencoder
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+#### New features and improvements
+
+
+As of now when anyone develops a Spark Structured Streaming stateful query (this is not limited to Wasp, even if, Wasp puts structured streaming at its core), has to choose encoders for both it's ouput dataframe and the state he wants to keep. Looking at flatMapGroupsWithState signature:
+
+```scala
+  def flatMapGroupsWithState[S: Encoder, U: Encoder](
+      outputMode: OutputMode,
+      timeoutConf: GroupStateTimeout)(
+      func: (K, Iterator[V], GroupState[S]) => Iterator[U]): Dataset[U]
+```
+
+`Encoder[U]` is important for downstream computations but it's never persisted anywhere (except for shuffles and dataframe persistence (i.e. caching)), unless obviously it's directed to the "sink" of the streaming query and explicitly written somewhere explicitly.
+
+`Encoder[S]` is instead persisted by the `StateStore` implementation of choice, which is almost every time, `HDFSBackedStateStore`. This means that if an application evolves and its state evolves with it, there is need for the Encoder to support some kind of schema evolution.
+
+ The current only available choices are for `Encoder[_]`:
+- `Encoders.product`: which encodes the case class as a "well-typed" spark Row (i.e. each field of the case class is a "column" with its spark sql type and metadata attached). The row serialization is very naive and straightforward: every column is transformed into raw bytes and appended, it's mandatory to know the schema to read it back, there is no support to schema evolution whatsoever. If it happens that you append fields, it might work and you will have null values, bettere than nothing, but certainly not an intended feature I would like to rely on.
+- `Encoders.kryo`: which relies upon [Kryo serialization framework](https://github.com/EsotericSoftware/kryo/blob/master/README.md) to create a Spark row with only one column name "value" and of type `Array[Byte]`. This approach has downsides and upsides: having a single column makes the Spark optimizer work worthless but much much faster, the downside is that you cannot apply any sql function to the byte array. This downside is not much of a problem, because the only stateful aggregations that are possible to perform are "typed" i.e. rely on the user to provide an arbitrary scala function that works on JVM objects (i.e. there cannot be use of sql statements and codegen optimization a-priori). Unfortunately it is not clear (to me, at least) how Kryo supports schema evolution. Moreover being based on Java classes, moving the class to a different package (for example) would cause problems.
+
+This pull request implements Avro based Encoders, sample usage is
+
+```scala
+ "correctly handle serialization when not using darwin" in testAllCodegen {
+      val elements = generateData(4, 1000)
+      manager.registerAll(schema1 :: Nil)
+      val encoder = AvroEncoders.avroEncoder(
+        schema1,
+        () => manager,
+        toRecord1,
+        fromRecord1
+      )
+      val df = ss.createDataset(elements)(encoder)
+
+      assert(df.schema.fieldNames.toList == Seq("value"))
+      val result = df.collect()
+      assert(result sameElements elements)
+    }
+```
+
+#### Breaking changes
+
+None
+
+#### Migration
+
+None
+
+#### Bug fixes
+
+None
+
+#### Related issue
+
+Closes #248
+
+### feature: AvroSerDeExpressions cannot deal with Map[String, A]
+
+[Merge request 158](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/158)
+
+Created at: 2020-02-04T10:58:24.047Z
+
+Updated at: 2020-02-28T16:02:44.747Z
+
+Branch: feature/250-avroserdeexpressions-cannot-deal-with-map-string-a
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Assignee: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+#### New features and improvements
+
+`Map[String,A]` where a `A` is a compatible avro <-> catalyst type are now encoded and decoded correctly.
+
+#### Breaking changes
+
+None.
+
+#### Migration
+
+None.
+
+#### Bug fixes
+
+`Map[String,A]` where a `A` is a compatible avro <-> catalyst type are now encoded and decoded correctly.
+
+#### Related issue
+
+Closes #250
+
+### feature: Docker whitelabel on CDH7
+
+[Merge request 160](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/160)
+
+Created at: 2020-02-24T10:49:10.657Z
+
+Updated at: 2020-02-28T16:02:45.108Z
+
+Branch: feature/263-docker-whitelabel-on-cdh7
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+#### New features and improvements
+
+##### Docker CDH 7 Image
+
+###### Installed  services
+
+* Zookeeper
+* Hbase master
+* Hbase region server
+* Hadoop Name Node
+* Hadoop Data Node
+* Solr
+* Mongodb
+* Spark2
+* Kafka
+
+
+###### Run wasp inside cdh7 container
+
+```
+cd Agile.Wasp2/whitelabel/cdh7
+./start-wasp.sh
+```
+
+###### Run the container standalone
+
+```
+cd Agile.Wasp2/whitelabel/cdh7/worker
+docker-compose run --service-ports cdh
+```
+###### Web UI
+ 
+
+- *60010* Hbase Master
+- *60020* Hbase Region server
+- *8088*  Yarn Resource manager
+- *8042* Yarn node manager
+- *8983*  Solr
+- *27017* Mongodb
+
+###### How to build
+
+```
+cd Agile.Wasp2/whitelabel/cdh7
+bash build-and-push.sh
+```
+
+You will be asked for your gitlab username and password, if you want to perform a local build use the following commmand
+
+```
+cd base
+cd cache
+wget https://archive.cloudera.com/cdh7/7.0.3.0/parcels/CDH-7.0.3-1.cdh7.0.3.p0.1635019-el7.parcel
+mv CDH-7.0.3-1.cdh7.0.3.p0.1635019-el7.parcel CDH-7.0.3-1.cdh7.0.3.p0.1635019-el7.parcel.tar.gz
+cd ..
+docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh7:base
+cd ..
+cd worker
+docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh7:worker
+```
+
+##### Caveats
+
+* Data directories of services are not exported as volumes, removing the container will delete all data stored inside services, you can always stop and restart the container without losing data
+
+
+#### Breaking changes
+
+No breaking changes
+
+#### Migration
+
+No migration required
+
+#### Bug fixes
+
+No bug fixes
+
+#### Related issue
+
+Closes #263 
+
+### feature: PipegraphGuardian logs at warn level every unhandled message
+
+[Merge request 161](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/161)
+
+Created at: 2020-02-27T15:45:29.261Z
+
+Updated at: 2020-02-28T16:02:45.436Z
+
+Branch: feature/228-pipegraphguardian-logs-at-warn-level-every-unhandled-message
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Assignee: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+#### New features and improvements
+
+* Minor usability improvements, logs are less spammy
+
+#### Breaking changes
+
+None
+
+#### Migration
+
+None
+
+#### Bug fixes
+
+None
+
+#### Related issue
+
+Closes #228
