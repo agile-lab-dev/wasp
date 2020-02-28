@@ -241,6 +241,9 @@ class PipegraphGuardian(private val master: ActorRef,
       goto(Monitoring) using data.createMonitoringData()
     case Event(MyProtocol.PerformRetry, data: MonitoredData) =>
       goto(Activating) using data.createActivatingData()
+    case event =>
+      log.debug(s"unhandled event $event in state Monitored")
+      stay()
   }
 
   when(Stopping) {
