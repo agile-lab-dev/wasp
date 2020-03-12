@@ -8,7 +8,7 @@ private[wasp] object TestBatchJobModels {
   object FromSolr {
 
     /**
-      *  Fail if the HDFS directory already exists
+      * Fail if the HDFS directory already exists
       */
     lazy val toHdfsFlat = BatchJobModel(
       name = "TestBatchJobFromSolrToHdfs",
@@ -24,7 +24,7 @@ private[wasp] object TestBatchJobModels {
         output = WriterModel.rawWriter("Raw Writer", TestRawModel.flat),
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
-                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -33,7 +33,7 @@ private[wasp] object TestBatchJobModels {
   object FromElastic {
 
     /**
-      *  Fail if the HDFS directory already exists
+      * Fail if the HDFS directory already exists
       */
     lazy val toHdfsNested = BatchJobModel(
       name = "TestBatchJobFromElasticToHdfs",
@@ -49,7 +49,7 @@ private[wasp] object TestBatchJobModels {
         output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested),
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
-                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -83,7 +83,7 @@ private[wasp] object TestBatchJobModels {
   object FromHdfs {
 
     /**
-      *  Fail if the HDFS directory does not exist
+      * Fail if the HDFS directory does not exist
       */
     lazy val flatToConsole = BatchJobModel(
       name = "TestBatchJobFromHdfsFlatToConsole",
@@ -99,13 +99,32 @@ private[wasp] object TestBatchJobModels {
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
-                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
+
+    lazy val toKafka = BatchJobModel(
+      name = "TestBatchJobFromHdfsFlatToKafka",
+      description = "Description of TestBatchJobFromHdfsFlatToKafka",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromHdfsFlatToKafka",
+        inputs = List(
+          ReaderModel.rawReader(TestRawModel.text.name, TestRawModel.text)
+        ),
+        output = WriterModel.kafkaWriter(TestTopicModel.plaintext1.name, TestTopicModel.plaintext1),
+        mlModels = List(),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestToKafkaPlainStrategy",
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
 
     /**
-      *  Fail if the HDFS directory does not exist
+      * Fail if the HDFS directory does not exist
       */
     lazy val nestedToConsole = BatchJobModel(
       name = "TestBatchJobFromHdfsNestedToConsole",
@@ -121,14 +140,14 @@ private[wasp] object TestBatchJobModels {
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
-                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
 
 
     /**
-      *  Fail if the HDFS directory does not exist
+      * Fail if the HDFS directory does not exist
       */
     lazy val nestedToMongo = BatchJobModel(
       name = "TestBatchJobFromHdfsNestedToMongo",
@@ -152,7 +171,7 @@ private[wasp] object TestBatchJobModels {
 
   object FromMongo {
     /**
-      *  Fail if the HDFS directory does not exist
+      * Fail if the HDFS directory does not exist
       */
     lazy val nestedToConsole = BatchJobModel(
       name = "TestBatchJobFromMongoNestedToConsole",
@@ -190,7 +209,7 @@ private[wasp] object TestBatchJobModels {
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestJdbcMySqlStrategy",
-                                              ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )
@@ -201,7 +220,7 @@ private[wasp] object TestBatchJobModels {
 
 
     /**
-      *  Fail if the HDFS directory does not exist
+      * Fail if the HDFS directory does not exist
       */
     lazy val nestedToConsole = BatchJobModel(
       name = "TestBatchJobFromHdfsNestedToConsolePostHook",
@@ -222,4 +241,5 @@ private[wasp] object TestBatchJobModels {
       )
     )
   }
+
 }

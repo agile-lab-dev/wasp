@@ -8,7 +8,7 @@ private[wasp] object TestRawModel {
   /* for Pipegraph */
   lazy val nested = RawModel(
     name = "TestRawNestedSchemaModel",
-    uri="hdfs://andreaf-laptop:9000/user/root/test_nested/",
+    uri = "hdfs://" + System.getenv("HOSTNAME") + ":9000/user/root/test_nested/",
     timed = true,
     schema = StructType(Seq(
       StructField("id", StringType),
@@ -23,7 +23,7 @@ private[wasp] object TestRawModel {
   /* for BatchJob */
   lazy val flat = RawModel(
     name = "TestRawFlatSchemaModel",
-    uri="hdfs://andreaf-laptop:9000/user/root/test_flat/",
+    uri = "hdfs://" + System.getenv("HOSTNAME") + ":9000/user/root/test_flat/",
     timed = true,
     schema = StructType(Seq(
       StructField("id", StringType),
@@ -32,4 +32,17 @@ private[wasp] object TestRawModel {
       StructField("nested.field2", LongType),
       StructField("nested.field3", StringType)
     )).json)
-  }
+
+  lazy val text = RawModel(
+    name = "TestRawTextSchemaModel",
+    uri = "hdfs://" + System.getenv("HOSTNAME") + ":9000/user/root/test_flat/",
+    timed = false,
+    schema = StructType(Seq(
+      StructField("value", StringType)
+    )).json,
+    options = RawOptions(
+      "append",
+      "text"
+    )
+  )
+}

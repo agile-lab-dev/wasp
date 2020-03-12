@@ -84,6 +84,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
     waspDB.upsert[RawModel](TestRawModel.flat)    // used by TestBatchJobModels.FromHdfs.toConsole
+    waspDB.upsert[RawModel](TestRawModel.text)    // used by TestBatchJobModels.FromHdfs.toConsole
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbase)
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
     waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
@@ -148,6 +149,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromElastic.toHdfsNested)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfsFlat)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.flatToConsole)
+    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.toKafka)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToMongo)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromJdbc.mySqlToConsole)

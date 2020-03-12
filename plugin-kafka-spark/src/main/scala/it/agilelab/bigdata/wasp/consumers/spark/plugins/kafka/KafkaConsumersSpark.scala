@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
+import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
@@ -32,7 +33,7 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info(s"Initialize the kafka spark streaming writer")
     new KafkaSparkLegacyStreamingWriter(topicBL, ssc, writerModel.datastoreModelName)
   }
-  
+
   override def getSparkLegacyStreamingReader(ssc: StreamingContext,
                                              legacyStreamingETLModel: LegacyStreamingETLModel,
                                              readerModel: ReaderModel): SparkLegacyStreamingReader = {
@@ -48,7 +49,7 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info(s"Topic: $topicBL")
     new KafkaSparkStructuredStreamingWriter(topicBL, writerModel.datastoreModelName, ss)
   }
-  
+
   override def getSparkStructuredStreamingReader(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,
                                                  streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
@@ -58,9 +59,7 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
-    val msg = s"The datastore product $datastoreProduct is not a valid batch sink! Writer model $writerModel is not valid."
-    logger.error(msg)
-    throw new UnsupportedOperationException(msg)
+    new KafkaBatchWriter(topicBL, writerModel.datastoreModelName, SparkSingletons.getSparkSession)
   }
 
   override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {

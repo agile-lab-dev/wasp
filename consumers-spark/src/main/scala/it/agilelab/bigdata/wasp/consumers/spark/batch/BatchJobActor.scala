@@ -81,13 +81,14 @@ class BatchJobActor private(env: {val batchJobBL: BatchJobBL; val indexBL: Index
       .map { _ => Failure(new Exception("No stream readers allowed in batch jobs")) }
       .getOrElse(Success(readers))
 
-  private def stepEnsureWritersAreNotTopicBased(writer: WriterModel): Try[WriterModel] =
-    if (writer.datastoreProduct.isInstanceOf[TopicCategory]) {
-      Failure(new Exception("No stream readers allowed in batch jobs"))
-    } else {
-      Success(writer)
+  private def logIfWriterIsTopicBased(writer: WriterModel): Try[WriterModel] = {
+    writer.datastoreProduct match {
+      case _: TopicCategory =>
+        logger.warn("Writing from a Batch to kafka looks like an anti-pattern: use with caution")
+        Success(writer)
+      case _ => Success(writer)
     }
-
+  }
 
   private def stepStaticReaders(readerModels: Seq[ReaderModel]): Try[Seq[SparkBatchReader]] = {
 
@@ -181,7 +182,7 @@ class BatchJobActor private(env: {val batchJobBL: BatchJobBL; val indexBL: Index
       readerModels <- stepEnsureReadersAreNotTopicBased(batchJobModel.etl.inputs).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to retrieve reader models for job ${batchJobModel.name}", e))
       }
-      writerModel <- stepEnsureWritersAreNotTopicBased(batchJobModel.etl.output).recoverWith {
+      writerModel <- logIfWriterIsTopicBased(batchJobModel.etl.output).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to retrieve writer model for job ${batchJobModel.name}", e))
       }
       readers <- stepStaticReaders(readerModels).recoverWith {
