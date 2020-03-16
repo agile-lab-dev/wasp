@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.batch
 import java.io.{PrintStream, PrintWriter}
 
 import akka.actor.{Actor, Props}
-import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB, TransformerWithInfo}
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.batch.BatchJobActor.Tick
@@ -118,36 +117,12 @@ class BatchJobActor private(env: {val batchJobBL: BatchJobBL; val indexBL: Index
 
   }
 
-  private def stepCreateStrategy(etl: BatchETLModel, sparkContext: SparkContext, restConfig: Config): Try[Option[Strategy]] = etl.strategy match {
-    case None => Success(None)
-    case Some(strategyModel) =>
-
-      val result = Try {
-        Class.forName(strategyModel.className)
-          .newInstance()
-          .asInstanceOf[Strategy]
-      }
-
-      val configuration = restConfig.withFallback(strategyModel.configurationConfig().getOrElse(ConfigFactory.empty()))
-
-      result.map(_.configuration = configuration)
-
-      result.map(_.sparkContext = Some(sparkContext))
-
-      result.map(Some(_))
-  }
-
   private def stepApplyStrategy(dataStoreDFs: Map[ReaderKey, DataFrame], mlModelsBroadcast: MlModelsBroadcastDB, maybeStrategy: Option[Strategy]): Try[Option[DataFrame]] = maybeStrategy match {
     case None => Success(None)
     case Some(strategy) =>
       strategy.mlModelsBroadcast = mlModelsBroadcast
       Try(Some(strategy.transform(dataStoreDFs)))
   }
-
-  private def stepCreateMlModelsBroadcast(mlModelsDB: MlModelsDB, mlModelsInfo: List[MlModelOnlyInfo], sparkContext: SparkContext): Try[MlModelsBroadcastDB] =
-    Try {
-      mlModelsDB.createModelsBroadcast(mlModelsInfo)(sparkContext)
-    }
 
   private def stepSaveMlModels(mlModelsDB: MlModelsDB, mlModelsBroadcastDB: MlModelsBroadcastDB): Try[List[TransformerWithInfo]] = Try {
     mlModelsDB.write(mlModelsBroadcastDB.getModelsToSave)
@@ -191,7 +166,7 @@ class BatchJobActor private(env: {val batchJobBL: BatchJobBL; val indexBL: Index
       inputDataFrames <- stepDataFramesForReaders(readers).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to create data frames for job ${batchJobModel.name}", e))
       }
-      strategy <- stepCreateStrategy(batchJobModel.etl, sparkContext, batchJobInstanceModel.restConfig).recoverWith {
+      strategy <- BatchJobEtlExecution.stepCreateStrategy(batchJobModel.etl, batchJobInstanceModel.restConfig, sparkContext).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to create strategy for job ${batchJobModel.name}", e))
       }
 
@@ -206,7 +181,7 @@ class BatchJobActor private(env: {val batchJobBL: BatchJobBL; val indexBL: Index
         case _ => Failure(f._2)
       }
 
-      mlModelsBroadcast <- stepCreateMlModelsBroadcast(mlModelsDB, batchJobModel.etl.mlModels, sparkContext).recoverWith {
+      mlModelsBroadcast <- BatchJobEtlExecution.stepCreateMlModelsBroadcast(mlModelsDB, batchJobModel.etl, sparkContext).recoverWith {
         case e: Throwable => Failure(new Exception(s"Failed to create mlmodelsbroadcast for job ${batchJobModel.name}", e))
       }
       outputDataFrame <- stepApplyStrategy(inputDataFrames, mlModelsBroadcast, strategy).recoverWith {

@@ -158,6 +158,7 @@ object Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
   val zkclient = "com.101tec" % "zkclient" % "0.3"
   val mySql = "mysql" % "mysql-connector-java" % "5.1.6"
+  val nameOf = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
 
 
   // grouped dependencies, for convenience =============================================================================
@@ -239,7 +240,8 @@ object Dependencies {
     kafka :+ // TODO remove when switching to plugins
     mongodbScala :+
     sparkSQL :+
-    typesafeConfig
+    typesafeConfig :+
+    nameOf
     ).map(excludeLog4j).map(excludeNetty)
 
   val producers = (
@@ -255,8 +257,10 @@ object Dependencies {
       json ++
       test ++
       avro4sTest ++
+      hbase ++
       spark :+
-      quartz
+      quartz :+
+      nameOf
     ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
     nettySpark :+

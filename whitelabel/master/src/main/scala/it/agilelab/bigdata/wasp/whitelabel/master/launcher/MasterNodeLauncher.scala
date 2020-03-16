@@ -89,6 +89,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
     waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
     waspDB.upsert[DocumentModel](TestMongoModel.writeToMongo)
+    waspDB.upsert[RawModel](TestGdprBatchJobModels.outputRawModel)
+    waspDB.upsert[RawModel](TestGdprBatchJobModels.inputRawModel)
+    waspDB.upsert[RawModel](TestGdprBatchJobModels.dataRawModel)
 
     /* Producers */
     waspDB.upsert[ProducerModel](TestProducerModel.json)
@@ -155,6 +158,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromJdbc.mySqlToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.WithPostHook.nestedToConsole)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromMongo.nestedToConsole)
+    waspDB.upsert[BatchJobModel](TestGdprBatchJobModels.model)
 
 
     /* Test SchemaAvroManager */

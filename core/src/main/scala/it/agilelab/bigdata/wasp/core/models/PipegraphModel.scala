@@ -13,11 +13,25 @@ object PipegraphStatus extends Enumeration {
 case class DashboardModel(url: String, needsFilterBox: Boolean)
 
 case class StrategyModel(className: String, configuration: Option[String] = None) {
-  def configurationConfig() :Option[Config] = configuration.map(ConfigFactory.parseString)
+  def configurationConfig(): Option[Config] = configuration.map(ConfigFactory.parseString)
 }
 
 object StrategyModel {
   def create(className: String, configuration: Config): StrategyModel = StrategyModel(className, Some(configuration.root().render(ConfigRenderOptions.concise())))
+}
+
+case class GdprStrategyModel(className: String,
+                             dataStoresConf: List[DataStoreConf],
+                             configuration: Option[String] = None) {
+  def configurationConfig(): Option[Config] = configuration.map(ConfigFactory.parseString)
+}
+
+object GdprStrategyModel {
+  def create(className: String,
+             dataStores: List[DataStoreConf],
+             configuration: Config): GdprStrategyModel = {
+    GdprStrategyModel(className, dataStores, Some(configuration.root().render(ConfigRenderOptions.concise())))
+  }
 }
 
 // TODO: move common members from child classes here

@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import java.nio.ByteBuffer
+import java.util
 
 import com.mongodb.ErrorCategory
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
-import it.agilelab.bigdata.wasp.core.datastores._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
@@ -46,7 +46,7 @@ trait WaspDB extends MongoDBHelper {
 
   def insert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
-  def insertRaw[T<:Model](doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]) : Unit
+  def insertRaw[T <: Model](doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
@@ -65,7 +65,9 @@ trait WaspDB extends MongoDBHelper {
   def getFileByID(id: BsonObjectId): Array[Byte]
 
 }
-class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
+
+class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB {
+
   import WaspDB._
 
   /**
@@ -88,24 +90,24 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
 
     val COLLECTION_ALREADY_EXISTS = 48
 
-    val results = collections.map( collection => (collection, Try(mongoDatabase.createCollection(collection, collectionOptions).results())))
-                             .map {
-                               //everything is fine
-                               case (collectionName:String, Success(_)) => Right(collectionName)
-                               //collection already exist, nothing to do
-                               case (collectionName:String, Failure(ex: MongoCommandException))
-                                 if ex.getErrorCode == COLLECTION_ALREADY_EXISTS => Right(collectionName)
-                               //collection correctly created
-                               case (_, Failure(ex: MongoCommandException))
-                                 if ex.getErrorCode != COLLECTION_ALREADY_EXISTS => Left(ex)
-                             }
+    val results = collections.map(collection => (collection, Try(mongoDatabase.createCollection(collection, collectionOptions).results())))
+      .map {
+        //everything is fine
+        case (collectionName: String, Success(_)) => Right(collectionName)
+        //collection already exist, nothing to do
+        case (collectionName: String, Failure(ex: MongoCommandException))
+          if ex.getErrorCode == COLLECTION_ALREADY_EXISTS => Right(collectionName)
+        //collection correctly created
+        case (_, Failure(ex: MongoCommandException))
+          if ex.getErrorCode != COLLECTION_ALREADY_EXISTS => Left(ex)
+      }
 
     val failures = results.filter(_.isLeft)
 
-    if(failures.nonEmpty){
+    if (failures.nonEmpty) {
       val message = failures.map(_.left.get)
-                            .map(_.toString)
-                            .mkString(System.lineSeparator())
+        .map(_.toString)
+        .mkString(System.lineSeparator())
 
       throw new Exception(message)
     }
@@ -119,28 +121,28 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
     val INDEX_ALREADY_EXISTS = 68
 
     val indexResults = createdCollections.map(collectionName => (collectionName, Try(mongoDatabase.getCollection(collectionName)
-                                                                                                  .createIndex(ascending("name"), indexOptions)
-                                                                                                  .results())))
-                                         .map {
-                                           //everything is fine
-                                           case (collectionName:String, Success(_)) => Right(collectionName)
-                                           //collection already exist, nothing to do
-                                           case (collectionName:String, Failure(ex: MongoCommandException))
-                                             if ex.getErrorCode == INDEX_ALREADY_EXISTS => Right(collectionName)
-                                           //collection correctly created
-                                           case (_, Failure(ex: MongoCommandException))
-                                             if ex.getErrorCode != INDEX_ALREADY_EXISTS => Left(ex)
-                                         }
+      .createIndex(ascending("name"), indexOptions)
+      .results())))
+      .map {
+        //everything is fine
+        case (collectionName: String, Success(_)) => Right(collectionName)
+        //collection already exist, nothing to do
+        case (collectionName: String, Failure(ex: MongoCommandException))
+          if ex.getErrorCode == INDEX_ALREADY_EXISTS => Right(collectionName)
+        //collection correctly created
+        case (_, Failure(ex: MongoCommandException))
+          if ex.getErrorCode != INDEX_ALREADY_EXISTS => Left(ex)
+      }
 
 
     val indexFailures = indexResults.filter(_.isLeft)
 
-    if(indexFailures.nonEmpty) {
-        val message = indexFailures.map(_.left.get)
-                                   .map(_.toString)
-                                   .mkString(System.lineSeparator())
+    if (indexFailures.nonEmpty) {
+      val message = indexFailures.map(_.left.get)
+        .map(_.toString)
+        .mkString(System.lineSeparator())
 
-        throw new Exception(message)
+      throw new Exception(message)
     }
 
   }
@@ -186,7 +188,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
 
     logger.info(s"Upserting model '${doc.name}'")
 
-    replaceDocumentToCollection("name", BsonString(doc.name),doc, collectionsLookupTable(typeTag.tpe), upsert=true)
+    replaceDocumentToCollection("name", BsonString(doc.name), doc, collectionsLookupTable(typeTag.tpe), upsert = true)
 
     Unit
   }
@@ -196,7 +198,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
     try {
       mongoDatabase.getCollection[T](collectionsLookupTable(typeTag.tpe)).insertOne(doc).results()
     } catch {
-      case ex : MongoWriteException if ex.getError.getCategory == ErrorCategory.DUPLICATE_KEY  => logger.info("document already present, doing nothing")
+      case ex: MongoWriteException if ex.getError.getCategory == ErrorCategory.DUPLICATE_KEY => logger.info("document already present, doing nothing")
     }
 
     Unit
@@ -205,9 +207,9 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId = {
     val uploadStreamFile = GridFSBucket(mongoDatabase).openUploadStream(file)
     uploadStreamFile.write(ByteBuffer.wrap(arrayBytes)).subscribe(
-      (x: Int) => None, (throwable: Throwable ) => (), () => {
+      (x: Int) => None, (throwable: Throwable) => (), () => {
         uploadStreamFile.close().subscribe(
-          (x: Completed) => None, (throwable: Throwable ) => (), () => {
+          (x: Completed) => None, (throwable: Throwable) => (), () => {
           })
       })
 
@@ -249,7 +251,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB   {
   override def updateByName[T <: Model](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
     replaceDocumentToCollection[T]("name", BsonString(name), doc, collectionsLookupTable(typeTag.tpe))
 
-  override def insertRaw[T<:Model](doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit = {
+  override def insertRaw[T <: Model](doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit = {
 
     val collection = collectionsLookupTable(typeTag.tpe)
     logger.info(s"Adding document to collection $collection")
@@ -290,7 +292,7 @@ object WaspDB extends Logging {
 
 
   val collectionsLookupTable: Map[Type, String] = Map(
-    typeTag[PipegraphModel].tpe ->  pipegraphsName,
+    typeTag[PipegraphModel].tpe -> pipegraphsName,
     typeTag[ProducerModel].tpe -> producersName,
     typeTag[TopicModel].tpe -> topicsName,
     typeTag[MultiTopicModel].tpe -> topicsName,
@@ -341,9 +343,7 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[KeyValueOption]),
     createCodecProviderIgnoreNone(classOf[KeyValueModel]),
     createCodecProviderIgnoreNone(classOf[SqlSourceModel]),
-    createCodecProviderIgnoreNone(classOf[BatchETLModel]),
     createCodecProviderIgnoreNone(classOf[BatchJobExclusionConfig]),
-    createCodecProviderIgnoreNone(classOf[BatchJobModel]),
     createCodecProviderIgnoreNone(classOf[KafkaEntryConfig]),
     createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
     createCodecProviderIgnoreNone(classOf[SparkEntryConfig]),
@@ -362,7 +362,28 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[JMXTelemetryConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryTopicConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryConfigModel]),
-    createCodecProviderIgnoreNone(classOf[DocumentModel])
+    createCodecProviderIgnoreNone(classOf[DocumentModel]),
+    createCodecProviderIgnoreNone(classOf[BatchETLModel])
+  ).asJava
+
+  private lazy val gdprCodecProviders: util.List[CodecProvider] = List(
+    DatastoreProductCodecProvider,
+    createCodecProviderIgnoreNone(classOf[ExactKeyValueMatchingStrategy]),
+    createCodecProviderIgnoreNone(classOf[PrefixKeyValueMatchingStrategy]),
+    createCodecProviderIgnoreNone(classOf[PrefixAndTimeBoundKeyValueMatchingStrategy]),
+    createCodecProviderIgnoreNone(classOf[TimeBasedBetweenPartitionPruningStrategy]),
+    createCodecProviderIgnoreNone(classOf[NoPartitionPruningStrategy]),
+    createCodecProviderIgnoreNone(classOf[ExactRawMatchingStrategy]),
+    createCodecProviderIgnoreNone(classOf[PrefixRawMatchingStrategy]),
+    DataStoreConfCodecProviders.PartitionPruningStrategyCodecProvider,
+    DataStoreConfCodecProviders.RawMatchingStrategyCodecProvider,
+    DataStoreConfCodecProviders.KeyValueMatchingStrategyCodecProvider,
+    DataStoreConfCodecProviders.DataStoreConfCodecProvider,
+    DataStoreConfCodecProviders.RawDataStoreConfCodecProvider,
+    DataStoreConfCodecProviders.KeyValueDataStoreConfCodecProvider,
+    BatchGdprETLModelCodecProvider,
+    BatchETLCodecProvider,
+    BatchJobModelCodecProvider
   ).asJava
 
   def initializeConnectionAndDriver(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {
@@ -385,7 +406,11 @@ object WaspDB extends Logging {
     val mongoDBConfig = ConfigManager.getMongoDBConfig
     logger.info(s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}")
 
-    val codecRegistry = fromRegistries(fromProviders(codecProviders), DEFAULT_CODEC_REGISTRY)
+    val codecRegistry = fromRegistries(
+      fromProviders(codecProviders),
+      fromProviders(gdprCodecProviders),
+      DEFAULT_CODEC_REGISTRY
+    )
 
     val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig).withCodecRegistry(codecRegistry)
     val completewaspDB = new WaspDBImp(mongoDBDatabase)

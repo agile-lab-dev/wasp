@@ -15,19 +15,20 @@ import spray.json.{JsValue, RootJsonFormat, _}
 object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit object JsonFormatDocument extends RootJsonFormat[BsonDocument] {
-    def write(c: BsonDocument): JsValue =  c.toJson.parseJson
+    def write(c: BsonDocument): JsValue = c.toJson.parseJson
 
     def read(value: JsValue): BsonDocument = BsonDocument(value.toString())
   }
 
   implicit object JsonFormatObjectId extends RootJsonFormat[BsonObjectId] {
-    def write(c: BsonObjectId): JsValue =  c.getValue.toHexString.toJson
+    def write(c: BsonObjectId): JsValue = c.getValue.toHexString.toJson
 
     def read(value: JsValue): BsonObjectId = value match {
       case JsString(objectId) => BsonObjectId(objectId)
       case _ => deserializationError("String expected")
     }
   }
+
 }
 
 
@@ -64,9 +65,9 @@ class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
   * @author Nicolò Bidotti
   */
 class TopicDatastoreModelJsonFormat
-    extends RootJsonFormat[DatastoreModel[TopicCategory]]
-      with SprayJsonSupport
-      with DefaultJsonProtocol {
+  extends RootJsonFormat[DatastoreModel[TopicCategory]]
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
 
@@ -79,17 +80,17 @@ class TopicDatastoreModelJsonFormat
         case JsString(value) => TopicCompression.fromString(value)
       }
   }
-  
+
   implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat11(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
-  
+
   override def write(obj: DatastoreModel[TopicCategory]): JsValue = {
     obj match {
       case topicModel: TopicModel => topicModel.toJson
       case multiTopicModel: MultiTopicModel => multiTopicModel.toJson
     }
   }
-  
+
   override def read(json: JsValue): DatastoreModel[TopicCategory] = {
     val obj = json.asJsObject
     val fields = obj.fields
@@ -102,13 +103,14 @@ class TopicDatastoreModelJsonFormat
 
 
 // collect your json format instances into a support trait:
-trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataStoreConfJsonSupport with BatchJobJsonSupport {
+
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
 
-  implicit lazy val jmxTelemetryTopicConfigModel : RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(JMXTelemetryConfigModel.apply)
+  implicit lazy val jmxTelemetryTopicConfigModel: RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(JMXTelemetryConfigModel.apply)
 
-  implicit lazy val telemetryTopicConfigModel : RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat5(TelemetryTopicConfigModel.apply)
-  implicit lazy val telemetryConfigModel : RootJsonFormat[TelemetryConfigModel] = jsonFormat4(TelemetryConfigModel.apply)
+  implicit lazy val telemetryTopicConfigModel: RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat5(TelemetryTopicConfigModel.apply)
+  implicit lazy val telemetryConfigModel: RootJsonFormat[TelemetryConfigModel] = jsonFormat4(TelemetryConfigModel.apply)
 
   implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] = new TopicDatastoreModelJsonFormat
   implicit lazy val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat8(IndexModel.apply)
@@ -132,7 +134,6 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
      options: Map[String, String]) => WriterModel(name, datastoreModelName, datastoreProduct, options))
 
 
-
   implicit lazy val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
   implicit lazy val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
   implicit lazy val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
@@ -153,8 +154,20 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit lazy val hbaseConfigModelConfigFormat: RootJsonFormat[HBaseConfigModel] = jsonFormat4(HBaseConfigModel.apply)
   implicit lazy val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat2(ElasticConfigModel.apply)
   implicit lazy val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat2(SolrConfigModel.apply)
-  implicit lazy val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)
   implicit lazy val batchJobExclusionConfig: RootJsonFormat[BatchJobExclusionConfig] = jsonFormat2(BatchJobExclusionConfig.apply)
+  implicit lazy val dataStoreConfFormat: RootJsonFormat[DataStoreConf] = createDataStoreConfFormat
+  implicit lazy val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)
+  implicit lazy val batchETLGdprModelFormat: RootJsonFormat[BatchGdprETLModel] =
+    jsonFormat(
+      BatchGdprETLModel.apply,
+      "name",
+      "dataStores",
+      "strategyConfig",
+      "inputs",
+      "output",
+      "group",
+      "isActive")
+  implicit lazy val batchETLFormat: RootJsonFormat[BatchETL] = createBatchETLFormat
   implicit lazy val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat7(BatchJobModel.apply)
   implicit lazy val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat7(ProducerModel.apply)
   implicit lazy val jobStatusFormat: RootJsonFormat[JobStatus.JobStatus] = new EnumJsonConverter(JobStatus)
@@ -166,3 +179,74 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
 }
 
+/*trait GdprJsonSupport extends DefaultJsonProtocol {
+  implicit lazy val exactKeyValueMatchingStrategyFormat: RootJsonFormat[ExactKeyValueMatchingStrategy] = jsonFormat1(ExactKeyValueMatchingStrategy.apply)
+  implicit lazy val prefixKeyValueMatchingStrategyFormat: RootJsonFormat[PrefixKeyValueMatchingStrategy] = jsonFormat1(PrefixKeyValueMatchingStrategy.apply)
+  implicit lazy val prefixAndTimeBoundKeyValueMatchingStrategyFormat: RootJsonFormat[PrefixAndTimeBoundKeyValueMatchingStrategy] = jsonFormat4(PrefixAndTimeBoundKeyValueMatchingStrategy.apply)
+  implicit lazy val keyValueMatchingStrategyFormat: RootJsonFormat[KeyValueMatchingStrategy] = new RootJsonFormat[KeyValueMatchingStrategy] {
+    override def read(json: JsValue): KeyValueMatchingStrategy = {
+      json.asJsObject.getFields("type") match {
+        case Seq(JsString("ExactKeyValueMatchingStrategy")) => json.convertTo[ExactKeyValueMatchingStrategy]
+        case Seq(JsString("PrefixKeyValueMatchingStrategy")) => json.convertTo[PrefixKeyValueMatchingStrategy]
+        case Seq(JsString("PrefixAndTimeBoundKeyValueMatchingStrategy")) => json.convertTo[PrefixAndTimeBoundKeyValueMatchingStrategy]
+        case _ => throw DeserializationException("Unknown json")
+      }
+    }
+
+    override def write(obj: KeyValueMatchingStrategy): JsValue = JsObject((obj match {
+      case e: ExactKeyValueMatchingStrategy => e.toJson
+      case p: PrefixKeyValueMatchingStrategy => p.toJson
+      case pt: PrefixAndTimeBoundKeyValueMatchingStrategy => pt.toJson
+    }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+  }
+
+  implicit lazy val keyValueOptionFormat: RootJsonFormat[KeyValueOption] = jsonFormat2(KeyValueOption.apply)
+  implicit lazy val keyValueModelFormat: RootJsonFormat[KeyValueModel] = jsonFormat6(KeyValueModel.apply)
+  implicit lazy val keyValueDataStoreConfFormat: RootJsonFormat[KeyValueDataStoreConf] = jsonFormat2(KeyValueDataStoreConf.apply)
+
+  implicit lazy val timeBasedBetweenPartitionPruningStrategyFormat: RootJsonFormat[TimeBasedBetweenPartitionPruningStrategy] =
+    jsonFormat3(TimeBasedBetweenPartitionPruningStrategy)
+  implicit lazy val partitionPruningFormat: RootJsonFormat[PartitionPruningStrategy] = new RootJsonFormat[PartitionPruningStrategy] {
+    override def read(json: JsValue): PartitionPruningStrategy = json.asJsObject.getFields("type") match {
+      case Seq(JsString("TimeBasedBetweenPartitionPruningStrategy")) => json.convertTo[TimeBasedBetweenPartitionPruningStrategy]
+      case Seq(JsString("NoPartitionPruningStrategy")) => NoPartitionPruningStrategy
+      case _ => throw DeserializationException("Unknown json")
+    }
+
+    override def write(obj: PartitionPruningStrategy): JsValue = JsObject((obj match {
+      case timeBased: TimeBasedBetweenPartitionPruningStrategy => timeBased.toJson
+      case NoPartitionPruningStrategy => JsObject()
+    }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+  }
+
+  implicit lazy val exactRawMatchingStrategyFormat: RootJsonFormat[ExactRawMatchingStrategy] = jsonFormat2(ExactRawMatchingStrategy)
+  implicit lazy val prefixRawMatchingStrategyFormat: RootJsonFormat[PrefixRawMatchingStrategy] = jsonFormat2(PrefixRawMatchingStrategy)
+  implicit lazy val rawMatchingStrategyFormat: RootJsonFormat[RawMatchingStrategy] = new RootJsonFormat[RawMatchingStrategy] {
+    override def read(json: JsValue): RawMatchingStrategy = json.asJsObject.getFields("type") match {
+      case Seq(JsString("ExactRawMatchingStrategy")) => json.convertTo[ExactRawMatchingStrategy]
+      case Seq(JsString("PrefixRawMatchingStrategy")) => json.convertTo[PrefixRawMatchingStrategy]
+      case _ => throw DeserializationException("Unknown json")
+    }
+
+    override def write(obj: RawMatchingStrategy): JsValue = JsObject((obj match {
+      case exact: ExactRawMatchingStrategy => exact.toJson
+      case prefix: PrefixRawMatchingStrategy => prefix.toJson
+    }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+  }
+//  implicit lazy val rawOptionsFormat: RootJsonFormat[RawOptions] = jsonFormat4(RawOptions.apply)
+//  implicit lazy val rawModelFormat: RootJsonFormat[RawModel] = jsonFormat5(RawModel.apply)
+  implicit lazy val rawDataStoreConfFormat: RootJsonFormat[RawDataStoreConf] = jsonFormat3(RawDataStoreConf)
+  implicit lazy val dataStoreConfFormat: RootJsonFormat[DataStoreConf] = new RootJsonFormat[DataStoreConf] {
+    override def read(json: JsValue): DataStoreConf = json.asJsObject.getFields("type") match {
+      case Seq(JsString("KeyValueDataStoreConf")) => json.convertTo[KeyValueDataStoreConf]
+      case Seq(JsString("RawDataStoreConf")) => json.convertTo[RawDataStoreConf]
+      case _ => throw DeserializationException("Unknown json")
+    }
+
+    override def write(obj: DataStoreConf): JsValue = JsObject((obj match {
+      case kv: KeyValueDataStoreConf => kv.toJson
+      case raw: RawDataStoreConf => raw.toJson
+    }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+  }
+
+}*/
