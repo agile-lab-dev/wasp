@@ -18,7 +18,7 @@ import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Encoder, Encoders}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers, TryValues}
+import org.scalatest._
 
 import scala.util.{Failure, Try}
 
@@ -40,11 +40,13 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
   val inputUri: String = tmpUri + "/gdpr/input"
   val stagingUri: String = tmpUri + "/gdpr/staging"
   val backupUri: String = tmpUri + "/gdpr/backup"
+  val correlationIdColumn: String = "correlationId"
 
   val target = new HdfsDataDeletion(fs)
   implicit val dataEncoder: Encoder[Data] = Encoders.product[Data]
   implicit val dataWithDateEncoder: Encoder[DataWithDate] = Encoders.product[DataWithDate]
   implicit val dataWithDateNumericEncoder: Encoder[DataWithDateNumeric] = Encoders.product[DataWithDateNumeric]
+  implicit val keyWithCorrelationEncoder: Encoder[KeyWithCorrelation] = Encoders.product[KeyWithCorrelation]
 
   it should "correctly delete data from flat RawModel" in {
     val data: Seq[Data] = Seq(
@@ -52,13 +54,13 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k2", "222L", "mario"),
       Data("k3", "333L", "luigi")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k4")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k4", "id3")
     )
     val expectedData: Seq[Data] = data.filterNot { d =>
-      keysToDelete.contains(Key(d.id))
+      keysToDelete.exists(k => k.key == d.id)
     }
 
     writeTestData(data, 3, List.empty)
@@ -78,13 +80,14 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
+      correlationIdColumn,
       rawModel,
       ExactRawMatchingStrategy(keyColumn),
       NoPartitionPruningStrategy()
     )
 
     val config = createConfig(None)
-    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete.map(_.key))
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)
 
@@ -94,7 +97,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       keysToDelete.map { k =>
         val keyExists = data.exists(d => d.id == k.key)
         DeletionOutput(
-          k.key,
+          k,
           HdfsExactColumnMatch(keyColumn),
           if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
           if (keyExists) DeletionSuccess else DeletionNotFound
@@ -111,13 +114,13 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val expectedData: Seq[Data] = data.filterNot { d =>
-      keysToDelete.contains(Key(d.id))
+      keysToDelete.exists(k => k.key == d.id)
     }
     val partitionBy = List("category")
 
@@ -138,13 +141,14 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
+      correlationIdColumn,
       rawModel,
       ExactRawMatchingStrategy(keyColumn),
       NoPartitionPruningStrategy()
     )
 
     val config = createConfig(None)
-    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete.map(_.key))
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)
 
@@ -153,7 +157,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       keysToDelete.map { k =>
         val keyExists = data.exists(d => d.id == k.key)
         DeletionOutput(
-          k.key,
+          k,
           HdfsExactColumnMatch(keyColumn),
           if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
           if (keyExists) DeletionSuccess else DeletionNotFound
@@ -171,13 +175,12 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       DataWithDate("k5", "222", "201910201140", "eee"),
       DataWithDate("k6", "333", "201910121140", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val expectedData: Seq[DataWithDate] = data.filterNot(d => d.id == "k2" || d.id == "k3suffix" || d.id == "k3suffix2")
-    val expectedDataDeleted: Seq[String] = Seq("k2", "k3suffix", "k3suffix2")
 
     val partitionBy = List("category")
 
@@ -198,26 +201,27 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
+      correlationIdColumn,
       rawModel,
       PrefixRawMatchingStrategy(keyColumn),
       TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDate](_.date), isDateNumeric = false, "yyyyMMddHHmm")
     )
 
     val config = createConfig(Some(1570658400000L, 1571090400000L))
-    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete.map(_.key))
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)
 
     readData[DataWithDate] should contain theSameElementsAs expectedData
-/*
-    val toMatch = Seq(
+    val expectedDeletions = Seq(
       DeletionOutput(
         "k1",
         HdfsPrefixColumnMatch(
           keyColumn,
           None),
         NoSourceFound,
-        DeletionNotFound
+        DeletionNotFound,
+        "id1"
       ),
       DeletionOutput(
         "k2",
@@ -225,7 +229,8 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
           keyColumn,
           Some(Seq("k2"))),
         HdfsParquetSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
-        DeletionSuccess
+        DeletionSuccess,
+        "id2"
       ),
       DeletionOutput(
         "k3",
@@ -233,52 +238,30 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
           keyColumn,
           Some(Seq("k3suffix", "k3suffix2"))),
         HdfsParquetSource(fileNames.filter { case (_, key) => key == "k3suffix" || key == "k3suffix2" }.map(_._1)),
-        DeletionSuccess
+        DeletionSuccess,
+        "id3"
       )
     )
 
-    deletionResult.get should contain theSameElementsAs
-     Seq(
-       DeletionOutput(
-         "k1",
-         HdfsPrefixColumnMatch(
-           keyColumn,
-           None),
-         NoSourceFound,
-         DeletionNotFound
-       ),
-       DeletionOutput(
-         "k2",
-         HdfsPrefixColumnMatch(
-           keyColumn,
-           Some(Seq("k2"))),
-         HdfsParquetSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
-         DeletionSuccess
-       ),
-       DeletionOutput(
-         "k3",
-         HdfsPrefixColumnMatch(
-           keyColumn,
-           Some(Seq("k3suffix", "k3suffix2"))),
-         HdfsParquetSource(fileNames.filter { case (_, key) => key == "k3suffix" || key == "k3suffix2" }.map(_._1)),
-         DeletionSuccess
-       )
-     )*/
+    deletionResult.get.foreach { toCompare =>
+      val expected = expectedDeletions.find(d => d.key == toCompare.key).get
+      compareOutput(toCompare, expected)
+    }
   }
 
   it should "correctly delete data using time strategy with a numeric date" in {
     val data: Seq[DataWithDateNumeric] = Seq(
-      DataWithDateNumeric("k1", "111", 1570258400000L, "aaa"),
-      DataWithDateNumeric("k2", "222", 1570758400001L, "bbb"),
-      DataWithDateNumeric("k3", "333", 1570258400000L, "ccc"),
-      DataWithDateNumeric("k3suffix", "111", 1570258400000L, "ddd"),
-      DataWithDateNumeric("k5", "222", 1570258400000L, "eee"),
-      DataWithDateNumeric("k6", "333", 1570258400000L, "fff")
+      DataWithDateNumeric("k1", "111", 1570258400000L, "aaa"), // Sat Oct 05 2019 06:53:20
+      DataWithDateNumeric("k2", "222", 1570758400001L, "bbb"), // Fri Oct 11 2019 01:46:40
+      DataWithDateNumeric("k3", "333", 1570258400000L, "ccc"), // Sat Oct 05 2019 06:53:20
+      DataWithDateNumeric("k3suffix", "111", 1570258400000L, "ddd"), // Sat Oct 05 2019 06:53:20
+      DataWithDateNumeric("k5", "222", 1570258400000L, "eee"), // Sat Oct 05 2019 06:53:20
+      DataWithDateNumeric("k6", "333", 1570258400000L, "fff") // Sat Oct 05 2019 06:53:20
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val expectedData: Seq[DataWithDateNumeric] = data.filterNot(_.id == "k2")
     val partitionBy = List("category")
@@ -300,6 +283,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
+      correlationIdColumn,
       rawModel,
       ExactRawMatchingStrategy(keyColumn),
       TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDateNumeric](_.date), isDateNumeric = true, "yyyyMMddHHmm")
@@ -307,30 +291,39 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     // 201910100000 - 201910150000
     val config = createConfig(Some((1570658400000L, 1571090400000L)))
-    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete.map(_.key))
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)
 
+    val expectedDeletions = Seq(
+      DeletionOutput(
+        "k1",
+        HdfsExactColumnMatch(keyColumn),
+        NoSourceFound,
+        DeletionNotFound,
+        "id1"
+      ),
+      DeletionOutput(
+        "k2",
+        HdfsExactColumnMatch(keyColumn),
+        HdfsParquetSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
+        DeletionSuccess,
+        "id2"
+      ),
+      DeletionOutput(
+        "k3",
+        HdfsExactColumnMatch(keyColumn),
+        NoSourceFound,
+        DeletionNotFound,
+        "id3"
+      )
+    )
+
     readData[DataWithDateNumeric] should contain theSameElementsAs expectedData
-    /*    deletionResult.get should contain theSameElementsAs
-        data.map { d =>
-          val keyExists = d.id == "k2" || d.id == "k3suffix" || d.id == "k3suffix2"
-          DeletionOutput(
-            k.key,
-            HdfsExactColumnMatch(keyColumn),
-            if (keyExists) HdfsParquetSource(fileNames.find { case (_, key) => k.key == key }.get._1) else NoSourceFound,
-            if (keyExists) DeletionSuccess else DeletionNotFound
-          )
-        }
-          keysToDelete.map { k =>
-            val keyExists = k.key == "k2"
-            DeletionOutput(
-              k.key,
-              HdfsExactColumnMatch(keyColumn),
-              if (keyExists) HdfsParquetSource(fileNames.find { case (_, key) => k.key == key }.get._1) else NoSourceFound,
-              if (keyExists) DeletionSuccess else DeletionNotFound
-            )
-          }*/
+    deletionResult.get.foreach { toCompare =>
+      val expected = expectedDeletions.find(d => d.key == toCompare.key).get
+      compareOutput(toCompare, expected)
+    }
   }
 
   it should "should work when uris contain trailing slashes" in {
@@ -342,13 +335,13 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val expectedData: Seq[Data] = data.filterNot { d =>
-      keysToDelete.contains(Key(d.id))
+      keysToDelete.exists(k => k.key == d.id)
     }
     val partitionBy = List("category")
 
@@ -369,12 +362,13 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
+      correlationIdColumn,
       rawModel,
       ExactRawMatchingStrategy(keyColumn),
       NoPartitionPruningStrategy()
     )
 
-    val deletionConfig = HdfsDeletionConfig.create(createConfig(None), rawDataStoreConf, keysToDelete.map(_.key))
+    val deletionConfig = HdfsDeletionConfig.create(createConfig(None), rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)
 
@@ -383,14 +377,13 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       keysToDelete.map { k =>
         val keyExists = data.exists(d => d.id == k.key)
         DeletionOutput(
-          k.key,
+          k,
           HdfsExactColumnMatch(keyColumn),
           if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
           if (keyExists) DeletionSuccess else DeletionNotFound
         )
       }
   }
-
 
   it should "correctly delete data from partitioned RawModel with prefix strategy" in {
     val data: Seq[Data] = Seq(
@@ -401,10 +394,10 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val expectedData: Seq[Data] = data.filterNot { d =>
       d.id == "k1|asd" || d.id == "k2|asd" || d.id == "k3"
@@ -426,30 +419,48 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     import spark.implicits._
     val fileNames = readFileNameAndId
     println(fileNames)
-    /*val expectedKeysDeleted =
-      keysToDelete.map { k =>
-        val keyExists = data.exists(d => d.id.startsWith(k.key))
-        DeletionOutput(
-          k.key,
-          HdfsPrefixColumnMatch(keyColumn, (data.map(_.id).find(_.startsWith(k.key))),
-          if (keyExists) HdfsParquetSource(fileNames.find { case (_, keyFromFile) => keyFromFile.startsWith(k.key) }.get._1) else NoSourceFound,
-          if (keyExists) DeletionSuccess else DeletionNotFound
-        )
-      }*/
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
+      correlationIdColumn,
       rawModel,
       PrefixRawMatchingStrategy(keyColumn),
       NoPartitionPruningStrategy()
     )
 
-    val deletionConfig = HdfsDeletionConfig.create(createConfig(None), rawDataStoreConf, keysToDelete.map(_.key))
+    val expectedDeletions = Seq(
+      DeletionOutput(
+        "k1",
+        HdfsPrefixColumnMatch(keyColumn, Some(Seq("k1|asd"))),
+        HdfsParquetSource(fileNames.filter { case (_, key) => key.startsWith("k1") }.map(_._1)),
+        DeletionSuccess,
+        "id1"
+      ),
+      DeletionOutput(
+        "k2",
+        HdfsPrefixColumnMatch(keyColumn, Some(Seq("k2|asd"))),
+        HdfsParquetSource(fileNames.filter { case (_, key) => key.startsWith("k2") }.map(_._1)),
+        DeletionSuccess,
+        "id2"
+      ),
+      DeletionOutput(
+        "k3",
+        HdfsPrefixColumnMatch(keyColumn, Some(Seq("k3"))),
+        HdfsParquetSource(fileNames.filter { case (_, key) => key.startsWith("k3") }.map(_._1)),
+        DeletionSuccess,
+        "id3"
+      )
+    )
 
-    val deletionResult = target.delete(deletionConfig, spark).get
+    val deletionConfig = HdfsDeletionConfig.create(createConfig(None), rawDataStoreConf, keysToDelete)
+
+    val deletionResult = target.delete(deletionConfig, spark)
 
     readData[Data] should contain theSameElementsAs expectedData
-//    deletionResult should contain theSameElementsAs expectedKeysDeleted
+    deletionResult.get.foreach { toCompare =>
+      val expected = expectedDeletions.find(d => d.key == toCompare.key).get
+      compareOutput(toCompare, expected)
+    }
   }
 
   it should "fail during backup" in {
@@ -461,10 +472,10 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val partitionBy = List("category")
 
@@ -481,7 +492,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete.map(_.key), rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
     )
 
     val backupHandler = new HdfsBackupHandler(fs, dataPath.getParent, dataPath) {
@@ -504,10 +515,10 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val partitionBy = List("category")
 
@@ -524,7 +535,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete.map(_.key), rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
     )
 
     val deletionHandler = new HdfsDeletionHandler(fs, config, spark) {
@@ -547,10 +558,10 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val partitionBy = List("category")
 
@@ -567,7 +578,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete.map(_.key), rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
     )
 
     val deletionHandler = new HdfsDeletionHandler(fs, config, spark) {
@@ -591,10 +602,10 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val partitionBy = List("category")
 
@@ -611,7 +622,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete.map(_.key), rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
     )
 
     val deletionHandler = new HdfsDeletionHandler(new MockFileSystem(), config, spark) {
@@ -636,13 +647,13 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       Data("k5", "222", "eee"),
       Data("k6", "333", "fff")
     )
-    val keysToDelete: Seq[Key] = Seq(
-      Key("k1"),
-      Key("k2"),
-      Key("k3")
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
     )
     val expectedData: Seq[Data] = data.filterNot { d =>
-      keysToDelete.contains(Key(d.id))
+      keysToDelete.exists(k => k.key == d.id)
     }
     val partitionBy = List("category")
 
@@ -659,11 +670,12 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
+      correlationIdColumn,
       rawModel,
       ExactRawMatchingStrategy(keyColumn),
       NoPartitionPruningStrategy()
     )
-    val deletionConfig = HdfsDeletionConfig.create(createConfig(None), rawDataStoreConf, keysToDelete.map(_.key))
+    val deletionConfig = HdfsDeletionConfig.create(createConfig(None), rawDataStoreConf, keysToDelete)
 
     val deletionHandler = new HdfsDeletionHandler(fs, deletionConfig, spark)
     val backupHandler = new HdfsBackupHandler(fs, dataPath.getParent, dataPath) {
@@ -676,10 +688,12 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     readData[Data] should contain theSameElementsAs expectedData
   }
 
+
   private def createConfig(startAndEnd: Option[(Long, Long)]): Config = {
-    val string = s""" { "$RAW_CONF_KEY" { """ +
-      startAndEnd.fold("") { case (start, end) => s""" "$START_PERIOD_KEY" = $start, "$END_PERIOD_KEY" = $end, """ } +
-      s""" "backupDir" = $backupUri, "stagingDir" = $stagingUri } } """
+    val string =
+      s""" { "$RAW_CONF_KEY" { """ +
+        startAndEnd.fold("") { case (start, end) => s""" "$START_PERIOD_KEY" = $start, "$END_PERIOD_KEY" = $end, """ } +
+        s""" "backupDir" = $backupUri, "stagingDir" = $stagingUri } } """
     ConfigFactory.parseString(string)
   }
 
@@ -725,9 +739,30 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       .parquet(dataUri)
   }
 
-}
+  private def compareOutput(toCompare: DeletionOutput, expected: DeletionOutput): Assertion = {
+    toCompare.key shouldBe expected.key
+    expected.keyMatchType match {
+      case hdfs: HdfsMatchType => hdfs match {
+        case HdfsExactColumnMatch(columnName) => toCompare.keyMatchType.asInstanceOf[HdfsExactColumnMatch].columnName shouldBe columnName
+        case HdfsPrefixColumnMatch(columnName, Some(matchedValues)) =>
+          toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].columnName shouldBe columnName
+          toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].matchedValues.get should contain theSameElementsAs matchedValues
+        case HdfsPrefixColumnMatch(columnName, None) =>
+          toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].columnName shouldBe columnName
+          toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].matchedValues shouldBe None
+      }
+      case _ => fail("unexpected HBaseMatchType")
+    }
+    expected.source match {
+      case HdfsParquetSource(fileNames) => toCompare.source.asInstanceOf[HdfsParquetSource].fileNames should contain theSameElementsAs fileNames
+      case NoSourceFound => toCompare.source shouldBe NoSourceFound
+      case _ => fail("unexpected HBaseTableSource")
+    }
+    toCompare.result shouldBe expected.result
+    toCompare.correlationId shouldBe expected.correlationId
+  }
 
-case class Key(key: String)
+}
 
 case class Data(id: String, category: String, name: String)
 

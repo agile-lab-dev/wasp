@@ -63,7 +63,7 @@ class BatchETLCodecProviderTest extends FunSuite {
       )).json)
 
     val dataStores: List[DataStoreConf] = List(
-      RawDataStoreConf("id", dataRawModel, ExactRawMatchingStrategy("key"), NoPartitionPruningStrategy())
+      RawDataStoreConf("id", "correlationId", dataRawModel, ExactRawMatchingStrategy("key"), NoPartitionPruningStrategy())
     )
 
     lazy val inputRawModel: RawModel = RawModel(

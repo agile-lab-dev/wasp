@@ -41,6 +41,7 @@ object DataStoreConfCodecProviders {
 
       RawDataStoreConf(
         reader.readString(nameOf[RawDataStoreConf](_.inputKeyColumn)),
+        reader.readString(nameOf[RawDataStoreConf](_.correlationIdColumn)),
         readObject(nameOf[RawDataStoreConf](_.rawModel), registry.get(classOf[RawModel])),
         readObject(nameOf[RawDataStoreConf](_.rawMatchingStrategy), registry.get(classOf[RawMatchingStrategy])),
         readObject(nameOf[RawDataStoreConf](_.partitionPruningStrategy), registry.get(classOf[PartitionPruningStrategy]))
@@ -52,6 +53,7 @@ object DataStoreConfCodecProviders {
       writer.writeString(TYPE_FIELD, RawDataStoreConf.TYPE)
 
       writer.writeString(nameOf[RawDataStoreConf](_.inputKeyColumn), rawDataStoreConf.inputKeyColumn)
+      writer.writeString(nameOf[RawDataStoreConf](_.correlationIdColumn), rawDataStoreConf.correlationIdColumn)
       writeObject(nameOf[RawDataStoreConf](_.rawModel), rawDataStoreConf.rawModel, registry.get(classOf[RawModel]))
       writeObject(nameOf[RawDataStoreConf](_.rawMatchingStrategy), rawDataStoreConf.rawMatchingStrategy, registry.get(classOf[RawMatchingStrategy]))
       writeObject(nameOf[RawDataStoreConf](_.partitionPruningStrategy), rawDataStoreConf.partitionPruningStrategy, registry.get(classOf[PartitionPruningStrategy]))
@@ -67,6 +69,7 @@ object DataStoreConfCodecProviders {
 
       KeyValueDataStoreConf(
         reader.readString(nameOf[KeyValueDataStoreConf](_.inputKeyColumn)),
+        reader.readString(nameOf[KeyValueDataStoreConf](_.correlationIdColumn)),
         readObject(nameOf[KeyValueDataStoreConf](_.keyValueModel), registry.get(classOf[KeyValueModel])),
         readObject(nameOf[KeyValueDataStoreConf](_.keyValueMatchingStrategy), registry.get(classOf[KeyValueMatchingStrategy]))
       )
@@ -77,6 +80,7 @@ object DataStoreConfCodecProviders {
       writer.writeString(TYPE_FIELD, KeyValueDataStoreConf.TYPE)
 
       writer.writeString(nameOf[KeyValueDataStoreConf](_.inputKeyColumn), keyValueDataStoreConf.inputKeyColumn)
+      writer.writeString(nameOf[KeyValueDataStoreConf](_.correlationIdColumn), keyValueDataStoreConf.correlationIdColumn)
       writeObject(nameOf[KeyValueDataStoreConf](_.keyValueModel), keyValueDataStoreConf.keyValueModel, registry.get(classOf[KeyValueModel]))
       writeObject(nameOf[KeyValueDataStoreConf](_.keyValueMatchingStrategy), keyValueDataStoreConf.keyValueMatchingStrategy, registry.get(classOf[KeyValueMatchingStrategy]))
     }

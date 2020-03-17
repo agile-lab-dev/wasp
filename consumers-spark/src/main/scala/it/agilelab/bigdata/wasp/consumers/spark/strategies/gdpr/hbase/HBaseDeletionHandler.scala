@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config.HBaseDele
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hbase.HBaseDeletionHandler.RowKeyMatched
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hbase.HBaseUtils
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hbase.HBaseUtils._
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.utils.HBaseConnection
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
@@ -29,18 +29,18 @@ object HBaseDeletionHandler extends Logging {
 
   def delete(tableName: String,
              hbaseConfig: Option[HBaseConfigModel],
-             keysWithScanRDD: RDD[(KeyToMatch, Scan)],
+             keysWithScanRDD: RDD[(KeyWithCorrelation, Scan)],
              keyValueMatchingStrategy: KeyValueMatchingStrategy): Seq[DeletionOutput] = {
-    keysWithScanRDD.mapPartitions { keysWithScan: Iterator[(KeyToMatch, Scan)] =>
+    keysWithScanRDD.mapPartitions { keysWithScan: Iterator[(KeyWithCorrelation, Scan)] =>
       val hBaseConnection = new HBaseConnection(hbaseConfig)
       TaskContext.get().addTaskCompletionListener(_ => hBaseConnection.closeConnection())
       hBaseConnection.withTable(tableName) { table =>
         keyValueMatchingStrategy match {
           case _: ExactKeyValueMatchingStrategy =>
-            keysWithScan.map { case (key, scan) =>
-              deleteRowKey(table)(scan, key) match {
-                case Failure(exception) => createOutput(table, key, HBaseExactRowKeyMatch, DeletionFailure(exception))
-                case Success(result) => createOutput(table, key, HBaseExactRowKeyMatch, result)
+            keysWithScan.map { case (keyWithCorrelation, scan) =>
+              deleteRowKey(table)(scan, keyWithCorrelation.key.asRowKey) match {
+                case Failure(exception) => createOutput(table, keyWithCorrelation, HBaseExactRowKeyMatch, DeletionFailure(exception))
+                case Success(result) => createOutput(table, keyWithCorrelation, HBaseExactRowKeyMatch, result)
               }
             }
           case _: PrefixKeyValueMatchingStrategy =>
@@ -131,8 +131,8 @@ object HBaseDeletionHandler extends Logging {
     }
   }
 
-  private def createOutput(table: Table, key: KeyToMatch, keyMatchType: KeyMatchType, result: DeletionResult) = {
-    DeletionOutput(key.asString, keyMatchType, HBaseTableSource(table.getName.getNameAsString), result)
+  private def createOutput(table: Table, keyWithCorrelation: KeyWithCorrelation, keyMatchType: KeyMatchType, result: DeletionResult) = {
+    DeletionOutput(keyWithCorrelation.key, keyMatchType, HBaseTableSource(table.getName.getNameAsString), result, keyWithCorrelation.correlationId)
   }
 
 

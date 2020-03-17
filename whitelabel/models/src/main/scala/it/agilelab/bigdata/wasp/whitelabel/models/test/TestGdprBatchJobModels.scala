@@ -44,18 +44,21 @@ object TestGdprBatchJobModels {
   val dataStores: List[DataStoreConf] = List(
     RawDataStoreConf(
       "key",
+      "correlationId",
       dataWithDateRawModel,
       PrefixRawMatchingStrategy("id"),
       TimeBasedBetweenPartitionPruningStrategy("date", isDateNumeric = false, "yyyyMMddHHmm")
     ),
     RawDataStoreConf(
       "key",
+      "correlationId",
       dataRawModel,
       PrefixRawMatchingStrategy("id"),
       NoPartitionPruningStrategy()
     ),
     KeyValueDataStoreConf(
       "key",
+      "correlationId",
       dataKeyValueModel,
       PrefixAndTimeBoundKeyValueMatchingStrategy("|", isDateFirst = false, "yyyyMMddHHmm", "IT")
     )
@@ -65,7 +68,10 @@ object TestGdprBatchJobModels {
     name = "GdprInputRawModel",
     uri = s"hdfs://$hostname:9000/user/root/gdpr/input",
     timed = false,
-    schema = StructType(Seq(StructField("key", StringType))).json)
+    schema = StructType(Seq(
+      StructField("key", StringType),
+      StructField("correlationId", StringType)
+    )).json)
 
   lazy val inputs = List(
     ReaderModel.rawReader(

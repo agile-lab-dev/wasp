@@ -1,9 +1,5 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, ZoneId, ZonedDateTime}
-import java.util.Locale
-
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsObject, JsString, JsValue, RootJsonFormat, _}
@@ -14,6 +10,7 @@ sealed trait DataStoreConf {
 }
 
 final case class KeyValueDataStoreConf(inputKeyColumn: String,
+                                       correlationIdColumn: String,
                                        keyValueModel: KeyValueModel, // here we retrieve tablename and namespace
                                        keyValueMatchingStrategy: KeyValueMatchingStrategy
                                       ) extends DataStoreConf
@@ -23,6 +20,7 @@ object KeyValueDataStoreConf {
 }
 
 final case class RawDataStoreConf(inputKeyColumn: String,
+                                  correlationIdColumn: String,
                                   rawModel: RawModel, // here we retrieve location, schema, format and partitioning
                                   rawMatchingStrategy: RawMatchingStrategy,
                                   partitionPruningStrategy: PartitionPruningStrategy
@@ -130,7 +128,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
     implicit val keyValueOptionFormat: RootJsonFormat[KeyValueOption] = jsonFormat2(KeyValueOption.apply)
     implicit val keyValueModelFormat: RootJsonFormat[KeyValueModel] = jsonFormat6(KeyValueModel.apply)
     implicit val keyValueDataStoreConfFormat: RootJsonFormat[KeyValueDataStoreConf] =
-      jsonFormat(KeyValueDataStoreConf.apply, "inputKeyColumn", "keyValueModel", "keyMatchingStrategy")
+      jsonFormat(KeyValueDataStoreConf.apply, "inputKeyColumn", "correlationIdColumn", "keyValueModel", "keyMatchingStrategy")
 
     // RawDataStoreConf section
     implicit val timeBasedBetweenPartitionPruningStrategyFormat: RootJsonFormat[TimeBasedBetweenPartitionPruningStrategy] =
@@ -164,7 +162,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
     implicit val rawOptionsFormat: RootJsonFormat[RawOptions] = jsonFormat4(RawOptions.apply)
     implicit val rawModelFormat: RootJsonFormat[RawModel] = jsonFormat5(RawModel.apply)
     implicit val rawDataStoreConfFormat: RootJsonFormat[RawDataStoreConf] =
-      jsonFormat(RawDataStoreConf.apply, "inputKeyColumn", "rawModel", "rawMatchingStrategy", "partitionPruningStrategy")
+      jsonFormat(RawDataStoreConf.apply, "inputKeyColumn", "correlationIdColumn", "rawModel", "rawMatchingStrategy", "partitionPruningStrategy")
 
     new RootJsonFormat[DataStoreConf] {
       override def read(json: JsValue): DataStoreConf = json.asJsObject.getFields("type") match {

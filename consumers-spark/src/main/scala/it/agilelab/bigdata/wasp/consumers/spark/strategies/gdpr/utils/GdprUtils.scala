@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils
 
+import java.nio.charset.StandardCharsets
+
 import scala.util.{Failure, Success, Try}
 
 object GdprUtils {
@@ -38,6 +40,14 @@ object GdprUtils {
     } else {
       Failure(new Exception(errorMessage))
     }
+  }
+
+  implicit class RowKeyToString(rowKey: Array[Byte]) {
+    def asString: String = new String(rowKey, StandardCharsets.UTF_8)
+  }
+
+  implicit class StringToRowKey(string: String) {
+    def asRowKey: Array[Byte] = string.getBytes(StandardCharsets.UTF_8)
   }
 
 }

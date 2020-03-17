@@ -1,6 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils
 
+import java.util.UUID
+
 import com.typesafe.config.{Config, ConfigException}
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.KeyWithCorrelation
 import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
@@ -8,18 +11,36 @@ import scala.collection.JavaConverters._
 object ConfigUtils {
 
   /* Gets keys from config if they are specified, else gets them from `inputKeys` */
-  def keysToDelete(inputKeys: => Seq[String], maybeConfig: Option[Config], configKey: String): Seq[String] = {
+  def keysToDelete(inputKeys: => Seq[KeyWithCorrelation],
+                   maybeConfig: Option[Config],
+                   configKey: String,
+                   correlationIdConfigKey: String): Seq[KeyWithCorrelation] = {
     maybeConfig
-      .flatMap(getOptionalStringSeq(_, configKey))
+      .flatMap { config =>
+        getOptionalStringSeq(config, configKey).map {
+          _.map(key => KeyWithCorrelation(key, getCorrelationId(config, correlationIdConfigKey)))
+        }
+      }
       .getOrElse(inputKeys)
   }
 
   /* Gets keys from config if they are specified, else gets them from `inputKeysRDD` */
-  def keysToDeleteRDD(inputKeysRDD: RDD[String], maybeConfig: Option[Config], configKey: String): RDD[String] = {
+  def keysToDeleteRDD(inputKeysRDD: RDD[KeyWithCorrelation],
+                      maybeConfig: Option[Config],
+                      configKey: String,
+                      correlationIdConfigKey: String): RDD[KeyWithCorrelation] = {
     maybeConfig
-      .flatMap(getOptionalStringSeq(_, configKey))
-      .map(inputKeysRDD.sparkContext.parallelize(_))
+      .flatMap { config =>
+        getOptionalStringSeq(config, configKey).map {
+          _.map(key => KeyWithCorrelation(key, getCorrelationId(config, correlationIdConfigKey)))
+        }
+      }.map(inputKeysRDD.sparkContext.parallelize(_))
       .getOrElse(inputKeysRDD)
+  }
+
+  private def getCorrelationId(config: Config, correlationIdKey: String) = {
+    getOptionalString(config, correlationIdKey)
+      .getOrElse(UUID.randomUUID().toString)
   }
 
   def getOptionalString(config: Config, key: String): Option[String] = {

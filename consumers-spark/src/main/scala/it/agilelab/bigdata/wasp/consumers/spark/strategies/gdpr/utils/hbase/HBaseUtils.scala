@@ -17,12 +17,4 @@ object HBaseUtils {
     Try(table.delete(new Delete(rowKey)))
   }
 
-  implicit class RowKeyToString(rowKey: Array[Byte]) {
-    def asString: String = new String(rowKey, StandardCharsets.UTF_8)
-  }
-
-  implicit class StringToRowKey(string: String) {
-    def asRowKey: Array[Byte] = string.getBytes(StandardCharsets.UTF_8)
-  }
-
 }

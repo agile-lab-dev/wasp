@@ -1,16 +1,18 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config
 
 import java.nio.charset.StandardCharsets
-import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.Locale
 
 import com.typesafe.config.{Config, ConfigException}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.exception.ConfigExceptions.{KeyValueConfigException, RawDataConfigException}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.ConfigUtils
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.{KeyWithCorrelation, RowKeyWithCorrelation}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
-import it.agilelab.bigdata.wasp.core.models.{ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, KeyValueDataStoreConf, KeyValueMatchingStrategy, KeyValueModel, NoPartitionPruningStrategy, PartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawMatchingStrategy, RawModel, TimeBasedBetweenPartitionPruningStrategy}
+import it.agilelab.bigdata.wasp.core.models._
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.filter.{FilterList, FirstKeyOnlyFilter, KeyOnlyFilter, PrefixFilter}
@@ -26,14 +28,14 @@ sealed trait DeletionConfig
 /**
   * Contains the configuration settings for an HBase Deletion Job
   *
-  * @param keysWithScan list of distinct keys to delete (from config or input model), together with the HBase scan
-  *                     that will be used to match the HBase rowKeys to delete
-  * @param tableName  namespace:table name of the HBase table to handle derived from the KeyValueModel
-  * @param hbaseConfigModel HBaseConfigModel that will be used to create an HBaseConnection inside the executors
+  * @param keysWithScan             list of distinct keys to delete (from config or input model), together with the HBase scan
+  *                                 that will be used to match the HBase rowKeys to delete
+  * @param tableName                namespace:table name of the HBase table to handle derived from the KeyValueModel
+  * @param hbaseConfigModel         HBaseConfigModel that will be used to create an HBaseConnection inside the executors
   * @param keyValueMatchingStrategy KeyValueMatchingStrategy defined in the BatchJobModel
   */
 case class HBaseDeletionConfig(
-                                keysWithScan: RDD[(Array[Byte], Scan)],
+                                keysWithScan: RDD[(KeyWithCorrelation, Scan)],
                                 tableName: String,
                                 hbaseConfigModel: Option[HBaseConfigModel],
                                 keyValueMatchingStrategy: KeyValueMatchingStrategy
@@ -42,7 +44,7 @@ case class HBaseDeletionConfig(
 /**
   * Contains the configuration settings for an Hdfs Deletion Job
   *
-  * @param keysToDelete              list of distinct keys to delete (from config or input model)
+  * @param keysToDeleteWithCorrelation              list of distinct keys to delete (from config or input model)
   * @param rawModel                  RawModel to handle
   * @param rawMatchingStrategy       RawMatchingStrategy defined in the BatchJobModel
   * @param rawMatchingCondition      WHERE condition derived from the RawMatchingStrategy
@@ -51,7 +53,7 @@ case class HBaseDeletionConfig(
   * @param backupDirUri              backup directory parent path to use (from config or default = rawModel.uri.parent + "/staging")
   */
 case class HdfsDeletionConfig(
-                               keysToDelete: Seq[String],
+                               keysToDeleteWithCorrelation: Seq[KeyWithCorrelation],
                                rawModel: RawModel,
                                rawMatchingStrategy: RawMatchingStrategy,
                                rawMatchingCondition: Column,
@@ -66,6 +68,7 @@ object HdfsDeletionConfig {
   val STAGING_DIR_KEY = "stagingDir"
   val BACKUP_DIR_KEY = "backupDir"
   val KEYS_TO_DELETE_KEY = "keys"
+  val CORRELATION_ID_KEY = "correlationId"
   val START_PERIOD_KEY = "start"
   val END_PERIOD_KEY = "end"
   val TIMEZONE_PERIOD_KEY = "timeZone"
@@ -73,15 +76,15 @@ object HdfsDeletionConfig {
 
   def create(rootConfig: Config,
              rawDataStoreConf: RawDataStoreConf,
-             inputKeys: => Seq[String]): HdfsDeletionConfig = {
+             inputKeys: => Seq[KeyWithCorrelation]): HdfsDeletionConfig = {
     val maybeConfig: Option[Config] = ConfigUtils.getOptionalConfig(rootConfig, RAW_CONF_KEY)
-    val keysToDelete = ConfigUtils.keysToDelete(inputKeys, maybeConfig, KEYS_TO_DELETE_KEY).distinct
+    val keysToDelete = ConfigUtils.keysToDelete(inputKeys, maybeConfig, KEYS_TO_DELETE_KEY, CORRELATION_ID_KEY).distinct
 
     new HdfsDeletionConfig(
       keysToDelete,
       rawDataStoreConf.rawModel,
       rawDataStoreConf.rawMatchingStrategy,
-      rawMatchingCondition(keysToDelete, rawDataStoreConf.rawMatchingStrategy),
+      rawMatchingCondition(keysToDelete.map(_.key), rawDataStoreConf.rawMatchingStrategy),
       partitionPruningCondition(maybeConfig, rawDataStoreConf.partitionPruningStrategy),
       stagingDirUri(maybeConfig, rawDataStoreConf.rawModel),
       backupDirUri(maybeConfig, rawDataStoreConf.rawModel)
@@ -154,18 +157,21 @@ object HdfsDeletionConfig {
 object HBaseDeletionConfig extends Logging {
   val KV_CONF_KEY = "hbase"
   val KEYS_TO_DELETE_KEY = "keys"
+  val CORRELATION_ID_KEY = "correlationId"
   val START_PERIOD_KEY = "start"
   val END_PERIOD_KEY = "end"
   val TIMEZONE_PERIOD_KEY = "timeZone"
 
   def create(rootConfig: Config,
              keyValueDataStoreConf: KeyValueDataStoreConf,
-             inputKeys: RDD[String],
+             inputKeys: RDD[KeyWithCorrelation],
              hBaseConfigModel: Option[HBaseConfigModel]): HBaseDeletionConfig = {
     val maybeConfig: Option[Config] = ConfigUtils.getOptionalConfig(rootConfig, KV_CONF_KEY)
-    val rowKeys = ConfigUtils.keysToDeleteRDD(inputKeys, maybeConfig, KEYS_TO_DELETE_KEY).distinct.map(_.getBytes(StandardCharsets.UTF_8))
+    val rowKeys = ConfigUtils.keysToDeleteRDD(inputKeys, maybeConfig, KEYS_TO_DELETE_KEY, CORRELATION_ID_KEY).distinct.map {
+      case KeyWithCorrelation(key, correlationId) => RowKeyWithCorrelation(key.asRowKey, correlationId)
+    }
 
-    val keysWithScan = keyValueDataStoreConf.keyValueMatchingStrategy match {
+    val keysWithScan: RDD[(RowKeyWithCorrelation, Scan)] = keyValueDataStoreConf.keyValueMatchingStrategy match {
       case _: ExactKeyValueMatchingStrategy => scanExact(rowKeys)
       case _: PrefixKeyValueMatchingStrategy => scanPrefix(rowKeys)
       case prefixAndTime: PrefixAndTimeBoundKeyValueMatchingStrategy =>
@@ -182,7 +188,7 @@ object HBaseDeletionConfig extends Logging {
     }
 
     new HBaseDeletionConfig(
-      keysWithScan,
+      keysWithScan.map { case (rowKeyWithCorrelation, scan) => rowKeyWithCorrelation.asKey -> scan },
       tableName,
       hBaseConfigModel,
       keyValueDataStoreConf.keyValueMatchingStrategy
@@ -190,10 +196,10 @@ object HBaseDeletionConfig extends Logging {
   }
 
   /* For each key to delete inside the RDD, creates an HBase Scan that matches it exactly with a rowkey */
-  private def scanExact(keysToDelete: RDD[Array[Byte]]): RDD[(Array[Byte], Scan)] = {
-    keysToDelete.map { row =>
-      val scan = new Scan(row, row)
-      row -> scan.setFilter(
+  private def scanExact(keysToDelete: RDD[RowKeyWithCorrelation]): RDD[(RowKeyWithCorrelation, Scan)] = {
+    keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
+      val scan = new Scan(rowKey, rowKey)
+      rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
           new KeyOnlyFilter(),
           new FirstKeyOnlyFilter()
@@ -203,12 +209,12 @@ object HBaseDeletionConfig extends Logging {
   }
 
   /* For each key to delete inside the RDD, creates an HBase Scan that matches any rowkey that has the same prefix of the key to delete */
-  private def scanPrefix(keysToDelete: RDD[Array[Byte]]): RDD[(Array[Byte], Scan)] = {
-    keysToDelete.map { row =>
-      val scan = new Scan(row, row ++ Array(Byte.MaxValue))
-      row -> scan.setFilter(
+  private def scanPrefix(keysToDelete: RDD[RowKeyWithCorrelation]): RDD[(RowKeyWithCorrelation, Scan)] = {
+    keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
+      val scan = new Scan(rowKey, rowKey ++ Array(Byte.MaxValue))
+      rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
-          new PrefixFilter(row)
+          new PrefixFilter(rowKey)
         )
       )
     }
@@ -219,8 +225,8 @@ object HBaseDeletionConfig extends Logging {
      Example: key to delete = "k1", start = 201910100000, end = 201910202359, separator = "|", pattern = "yyyMMddHHmm"
               rowkey = "k1|201910152256" is matched */
   private def scanPrefixWithTime(config: Config,
-                                 keysToDelete: RDD[Array[Byte]],
-                                 matchingStrategy: PrefixAndTimeBoundKeyValueMatchingStrategy): RDD[(Array[Byte], Scan)] = {
+                                 keysToDelete: RDD[RowKeyWithCorrelation],
+                                 matchingStrategy: PrefixAndTimeBoundKeyValueMatchingStrategy): RDD[(RowKeyWithCorrelation, Scan)] = {
     val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern(matchingStrategy.pattern, new Locale(matchingStrategy.locale))
 
     val startDate = wrapConfigException(config.getLong(START_PERIOD_KEY))
@@ -234,7 +240,7 @@ object HBaseDeletionConfig extends Logging {
     val endDateString = formatMillis(formatter, endDate, zoneId)
     val startDateBytes = Bytes.toBytes(startDateString)
     val endDateBytes = Bytes.toBytes(endDateString)
-    keysToDelete.map { rowKey =>
+    keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
       val scan = new Scan()
       val (startRow, stopRow) = if (matchingStrategy.isDateFirst) {
         (
@@ -250,7 +256,7 @@ object HBaseDeletionConfig extends Logging {
       logger.info(s"Scan start: '${new String(startRow, StandardCharsets.UTF_8)}', scan stop: '${new String(stopRow, StandardCharsets.UTF_8)}'")
       scan.setStartRow(startRow)
       scan.setStopRow(stopRow)
-      rowKey -> scan.setFilter(
+      rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
           new KeyOnlyFilter()
         )

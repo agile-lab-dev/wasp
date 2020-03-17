@@ -1,23 +1,38 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr
 
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.GdprStrategy.CorrelationId
+
 /**
   * Represents the output result of the deletion process for a single key
+ *
   * @param key Key that was requested to be handled
   * @param keyMatchType Type of match used to delete data about this key
   * @param source Source of data deleted
   * @param result Result of the deletion process
+  * @param correlationId String that correlates multiple keys
   */
-case class DeletionOutput(key: String, keyMatchType: KeyMatchType, source: DeletionSource, result: DeletionResult) {
+case class DeletionOutput(key: String,
+                          keyMatchType: KeyMatchType,
+                          source: DeletionSource,
+                          result: DeletionResult,
+                          correlationId: CorrelationId) {
   def toOutputDF: DeletionOutputDataFrame = {
     DeletionOutputDataFrame(
       key,
       keyMatchType.print,
       source.print,
-      result.print
+      result.print,
+      correlationId
     )
   }
 }
-case class DeletionOutputDataFrame(key: String, keyMatchType: String, source: String, result: String)
+
+object DeletionOutput {
+  def apply(keyWithCorrelation: KeyWithCorrelation, keyMatchType: KeyMatchType, source: DeletionSource, result: DeletionResult): DeletionOutput = {
+    new DeletionOutput(keyWithCorrelation.key, keyMatchType, source, result, keyWithCorrelation.correlationId)
+  }
+}
+case class DeletionOutputDataFrame(key: String, keyMatchType: String, source: String, result: String, correlationId: CorrelationId)
 
 sealed trait DeletionResult { def print: String }
 
