@@ -2850,3 +2850,297 @@ None
 #### Related issue
 
 Closes #228
+
+## WASP 2.22.0
+
+### Resolve "GDPR - Data Deletion"
+
+[Merge request 159](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/159)
+
+Created at: 2020-02-14T16:46:25.361Z
+
+Updated at: 2020-03-19T09:57:56.742Z
+
+Branch: feature/246-gdpr-data-deletion
+
+Author: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+## GDPR deletion feature inside Wasp
+
+This functionality will be provided as a special Wasp BatchJob.
+
+### `BatchGdprETLModel`
+
+A Batch job ETL specialized for data deletion will be available:
+
+```scala
+sealed trait BatchETL {
+  val name: String
+  val inputs: List[ReaderModel]
+  val output: WriterModel
+  val group: String
+  var isActive: Boolean
+}
+
+case class BatchETLModel(name: String,
+                         inputs: List[ReaderModel],
+                         output: WriterModel,
+                         mlModels: List[MlModelOnlyInfo],
+                         strategy: Option[StrategyModel],
+                         kafkaAccessType: String,
+                         group: String = "default",
+                         var isActive: Boolean = false) extends BatchETL
+
+case class BatchGdprETLModel(name: String,
+                             dataStores: List[DataStoreConf],
+                             strategyConfig: Config,
+                             inputs: List[ReaderModel],
+                             output: WriterModel,
+                             group: String,
+                             var isActive: Boolean = false) extends BatchETL {
+  val strategy: GdprStrategyModel = GdprStrategyModel.create(
+    "it.agilelab.bigdata.wasp.consumers.spark.strategies.GdprStrategy",
+    dataStores,
+    strategyConfig
+  )
+}
+
+
+case class GdprStrategyModel(className: String,
+                             dataStoresConf: List[DataStoreConf],
+                             configuration: Option[String] = None) {
+  def configurationConfig(): Option[Config] = configuration.map(ConfigFactory.parseString)
+}
+
+object GdprStrategyModel {
+  def create(className: String,
+             dataStores: List[DataStoreConf],
+             configuration: Config): GdprStrategyModel = {
+    GdprStrategyModel(className, dataStores, Some(configuration.root().render(ConfigRenderOptions.concise())))
+  }
+}
+```
+
+`BatchGdprETLModel` contains the following informations:
+
+- `inputs: List[ReaderModel]` : these `ReaderModel`s refer to the data that contain the list of keys to be "cleaned".
+  - Example: a RawModel that points to a HDFS file containing all the keys that need to be "cleaned".
+- `dataStores: List[DataStoreConf]` : a list of DataStores where the data to be deleted is stored. These DataStores can be of two different types: KeyValue (HBase) or RawData (Parquet). For each of those types, there can be different strategies for finding the data to delete, encoded as an ADT:
+
+```scala
+sealed trait DataStoreConf {
+  final val storage: String = this.getClass.getSimpleName
+}
+
+final case class KeyValueDataStoreConf(
+                                        keyValueModel: KeyValueModel, // here we retrieve tablename and namespace
+                                        keyMatchingStrategy: KeyValueMatchingStrategy
+                                      ) extends DataStoreConf
+final case class RawDataStoreConf(
+                                   rawModel: RawModel, // here we retrieve location, schema, format and partitioning
+                                   rawMatchingStrategy: RawMatchingStrategy,
+                                   partitionPruningStrategy: PartitionPruningStrategy
+                                 ) extends DataStoreConf
+
+sealed trait KeyValueMatchingStrategy
+final case class ExactKeyValueMatchingStrategy(colName: String)  extends KeyValueMatchingStrategy
+final case class PrefixKeyValueMatchingStrategy(colName: String) extends KeyValueMatchingStrategy
+final case class PrefixAndTimeBoundKeyValueMatchingStrategy(colName: String, separator: String, format: DateFormat)
+  extends KeyValueMatchingStrategy
+
+sealed trait PartitionPruningStrategy
+final case class TimeBasedBetweenPartitionPruningStrategy(colName: String, dateFormat: DateFormat)
+  extends PartitionPruningStrategy
+case object NoPartitionPruningStrategy extends PartitionPruningStrategy
+
+
+sealed trait RawMatchingStrategy
+case class ExactRawMatchingStrategy(dataframeKeyColName: String, inputKeyColName: String) extends RawMatchingStrategy
+case class PrefixRawMatchingStrategy(dataframeKeyColName: String, inputKeyColName: String) extends RawMatchingStrategy
+```
+- `output: WriterModel` : describes how and where to write the result of the job, that will be a list of keys and whether the deletion was successful or not.
+
+### `GdprStrategy`
+
+The heavy lifting of this job will be done inside the `GdprStrategy`.
+
+```scala
+class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy {
+  override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
+    // for each DataStore delete appropriate records
+    ???
+  }
+}
+```
+
+This Strategy has the responsability to read the files according to the `DataStoreConf`s that it receives, delete them, and then return a DataFrame containing all the key processed, together with the result of the operation.
+
+The REST configuration provided to the batch job when it's called will fill the configurations that are not specified inside the `DataStoreConf`, for example the start and end timestamp of the `TimeBasedBetweenPartitionPruningStrategy`
+
+### `BatchJobActor`
+
+In this way, the `BatchJobModel` can have two types of batch ETLs:
+
+```scala
+case class BatchJobModel(override val name: String,
+                         description: String,
+                         owner: String,
+                         system: Boolean,
+                         creationTime: Long,
+                         etl: BatchETL, // BatchETLModel or BatchGdprETLModel
+                         exclusivityConfig: BatchJobExclusionConfig = BatchJobExclusionConfig(
+                           isFullyExclusive = true,
+                           Seq.empty[String])
+                        )
+  extends Model
+```
+
+This will be handled inside the `BatchJobActor.run` method, in particular only in the function that creates the strategy.
+
+---
+
+This design guarantees that all the main models already defined by Wasp will not be altered, and the user will only need to define a new kind of BatchJob, including the information about the structure and the location of the data to be deleted.
+
+## Deletion in details
+
+### HDFS
+
+In order to delete HDFS files the following steps are executed:
+
+1. All the files are scanned in order to identify the ones that match the key(s) to be deleted
+1. The files containing records to be deleted are read and rewritten (without the records to be deleted) to a staging directory
+1. The new files overwrite the "old" files
+1. The backup directory is then deleted
+
+### HBase
+
+In order to delete HBase rows the following steps are executed:
+
+1. All the tables are scanned in order to identify the keys that must be deleted
+1. Each key is then deleted
+
+## Calling the job
+
+OpenAPI model definition:
+
+```
+GdprStrategy:
+    type: "object"
+    properties:
+      runId:
+        type: "string"
+        description: "unique identifier of a deletion job"
+        default: "random UUID"
+      outputPartitions:
+        type: "integer"
+        description: "number of partitions of output DataFrame"
+        default: 1
+      hdfs:
+        type: "object"
+        properties:
+          keys:
+            type: "array"
+            description: "keys to delete. If set these keys will overwrite the keys read from the input model."
+            items:
+              type: "string"
+            example: ["k1", "k2"]
+          stagingDir:
+            type: "string"
+            description: "path to the staging directory where to save temporarly the newly created files"
+            default: "RawModel.uri + '/staging'"
+            example: "hdfs://09ae5edb8dab:9000/user/root/staging"
+          backupDir:
+            type: "string"
+            description: "path to the directory where the backup directory to store the backup of the files to change will be created"
+            default: "parent of RawModel.uri"
+            example: "hdfs://09ae5edb8dab:9000/user/root/backups"
+          start:
+            type: "number"
+            format: "int64"
+            description: "start date of range to select in milliseconds"
+            example: 1570733160000
+          end:
+            type: "number"
+            format: "int64"
+            description: "end date of range to select in milliseconds"
+            example: 1571349600000
+          timeZone:
+            type: "string"
+            description: "time zone of the date to consider"
+            default: "UTC"
+            example: "IT"
+      hbase:
+        type: "object"
+        properties:
+          keys:
+            type: "array"
+            description: "keys to delete. If set these keys will overwrite the keys read from the input model."
+            items:
+              type: "string"
+            example: ["k1", "k2"]
+          start:
+            type: "number"
+            format: "int64"
+            description: "start date of range to select in milliseconds"
+            example: 1570733160000
+          end:
+            type: "number"
+            format: "int64"
+            description: "end date of range to select in milliseconds"
+            example: 1571349600000
+          timeZone:
+            type: "string"
+            description: "time zone of the date to consider"
+            default: "UTC"
+            example: "IT"
+```
+
+Example:
+```json
+{
+    "runId": "201910122046-run1",
+    "outputPartitions": 5,
+    "hbase": {
+        "start": 1570733160000,
+        "end": 1571349600000,
+        "timeZone": "UTC"
+    },
+    "hdfs": {
+        "start": 1570733160000,
+        "end": 1571349600000,
+        "timeZone": "UTC",
+        "backupDir": "hdfs://09ae5edb8dab:9000/user/root/"
+    }
+}
+```
+
+
+### Resolve "Implement KafkaSparkBatchWriter"
+
+[Merge request 164](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/164)
+
+Created at: 2020-03-11T07:44:08.232Z
+
+Updated at: 2020-03-19T09:57:57.095Z
+
+Branch: feature/251-implement-kafkasparkbatchwriter
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Assignee: [Nicolò Bidotti](https://gitlab.com/m1lt0n)
+
+Closes #251
+
+### Resolve "GDPR keys to delete should have a correlation id"
+
+[Merge request 165](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/165)
+
+Created at: 2020-03-16T15:36:02.682Z
+
+Updated at: 2020-03-19T09:57:57.355Z
+
+Branch: feature/277-gdpr-keys-to-delete-should-have-a-correlation-id
+
+Author: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+Closes #277
