@@ -60,10 +60,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
     val dataStreamWriterAfterKafkaConfig = addKafkaConf(partialDataStreamWriterAfterTopicConf, tinyKafkaConfig)
 
-    val compressionForKafka = TopicCompression.asString.applyOrElse(topics.head.topicCompression, {
-      notMatched: TopicCompression =>
-        throw new Exception(s"$notMatched compression is not supported by kafka writer")
-    })
+    val compressionForKafka = topics.head.topicCompression.kafkaProp
 
     val finalDataStreamWriterAfterCompression = dataStreamWriterAfterKafkaConfig
       .option("kafka.compression.type", compressionForKafka)

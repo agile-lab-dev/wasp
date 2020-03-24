@@ -58,10 +58,7 @@ class KafkaBatchWriter(topicBL: TopicBL,
 
     val dataframeWriterAfterKafkaConfig = addKafkaConf(partialDfWriterAfterTopicConf, tinyKafkaConfig)
 
-    val compressionForKafka = TopicCompression.asString.applyOrElse(topics.head.topicCompression, {
-      notMatched: TopicCompression =>
-        throw new Exception(s"$notMatched compression is not supported by kafka writer")
-    })
+    val compressionForKafka = topics.head.topicCompression.kafkaProp
 
     val finalDataframeWriterAfterCompression = dataframeWriterAfterKafkaConfig
       .option("kafka.compression.type", compressionForKafka)

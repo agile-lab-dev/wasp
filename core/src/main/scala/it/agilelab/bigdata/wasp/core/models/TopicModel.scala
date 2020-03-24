@@ -33,11 +33,9 @@ object TopicModel {
 }
 
 
-sealed trait TopicCompression
+sealed abstract class TopicCompression(val kafkaProp: String)
 
 object TopicCompression {
-
-
 
   private val _asString : Map[TopicCompression, String] = Map(
     TopicCompression.Disabled -> "disabled",
@@ -52,10 +50,10 @@ object TopicCompression {
 
   private val _fromString: Map[String, TopicCompression] = _asString.map(_.swap)
 
-  case object Disabled extends TopicCompression
-  case object Gzip extends TopicCompression
-  case object Snappy extends TopicCompression
-  case object Lz4 extends TopicCompression
+  case object Disabled extends TopicCompression("none")
+  case object Gzip extends TopicCompression("gzip")
+  case object Snappy extends TopicCompression("snappy")
+  case object Lz4 extends TopicCompression("lz4")
 
 }
 
