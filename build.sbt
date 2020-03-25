@@ -88,9 +88,9 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
   .settings(libraryDependencies ++= Dependencies.plugin_solr_spark)
 
 lazy val plugin_mongo_spark = Project("wasp-plugin-mongo-spark", file("plugin-mongo-spark"))
-	.settings(Settings.commonSettings: _*)
-	.dependsOn(consumers_spark)
-	.settings(libraryDependencies ++= Dependencies.plugin_mongo_spark)
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(consumers_spark)
+  .settings(libraryDependencies ++= Dependencies.plugin_mongo_spark)
 
 /* Yarn  */
 
@@ -128,23 +128,23 @@ lazy val spark = Project("wasp-spark", file("spark"))
 /* Framework + Plugins */
 
 lazy val wasp = Project("wasp", file("."))
-	.settings(Settings.commonSettings: _*)
-	.aggregate(core,
-	           master,
-	           producers,
-	           consumers_spark,
-	           consumers_rt,
-	           plugin_console_spark,
-	           plugin_elastic_spark,
-	           plugin_hbase_spark,
-	           plugin_jdbc_spark,
-	           plugin_kafka_spark,
-	           plugin_raw_spark,
-	           plugin_solr_spark,
-		         plugin_mongo_spark,
-	           spark_sql_kafka_0_11,
-		         yarn,
-						 spark)
+  .settings(Settings.commonSettings: _*)
+  .aggregate(core,
+    master,
+    producers,
+    consumers_spark,
+    consumers_rt,
+    plugin_console_spark,
+    plugin_elastic_spark,
+    plugin_hbase_spark,
+    plugin_jdbc_spark,
+    plugin_kafka_spark,
+    plugin_raw_spark,
+    plugin_solr_spark,
+    plugin_mongo_spark,
+    spark_sql_kafka_0_11,
+    yarn,
+    spark)
 
 /* WhiteLabel */
 
@@ -170,20 +170,23 @@ lazy val whiteLabelProducers = Project("wasp-whitelabel-producers", file("whitel
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", file("whitelabel/consumers-spark"))
-	.settings(Settings.commonSettings: _*)
-	.dependsOn(whiteLabelModels)
-	.dependsOn(consumers_spark)
-	.dependsOn(plugin_console_spark)
-	.dependsOn(plugin_elastic_spark)
-	.dependsOn(plugin_hbase_spark)
-	.dependsOn(plugin_jdbc_spark)
-	.dependsOn(plugin_kafka_spark)
-	.dependsOn(plugin_raw_spark)
-	.dependsOn(plugin_solr_spark)
-	.dependsOn(plugin_mongo_spark)
-	.dependsOn(spark_telemetry_plugin)
-	.settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector :+ "mysql" % "mysql-connector-java" % "5.1.6")
-	.enablePlugins(JavaAppPackaging)
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(whiteLabelModels)
+  .dependsOn(consumers_spark)
+  .dependsOn(plugin_console_spark)
+  .dependsOn(plugin_elastic_spark)
+  .dependsOn(plugin_hbase_spark)
+  .dependsOn(plugin_jdbc_spark)
+  .dependsOn(plugin_kafka_spark)
+  .dependsOn(plugin_raw_spark)
+  .dependsOn(plugin_solr_spark)
+  .dependsOn(plugin_mongo_spark)
+  .dependsOn(spark_telemetry_plugin)
+  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector 
+    :+ "mysql" % "mysql-connector-java" % "5.1.6" 
+    :+ Dependencies.scalaTest 
+    :+ Dependencies.darwinMockConnector)
+  .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelConsumersRt = Project("wasp-whitelabel-consumers-rt", file("whitelabel/consumers-rt"))
   .settings(Settings.commonSettings: _*)

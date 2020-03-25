@@ -20,8 +20,6 @@ cache:
     - "sbt-cache/coursier"
 
 test:
-  tags:
-    - cluster01
   stage: test
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
