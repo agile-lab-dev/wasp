@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsU
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{ExactRawMatchingStrategy, PrefixRawMatchingStrategy}
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.sql.functions.{col, input_file_name}
+import org.apache.spark.sql.functions.{expr, input_file_name}
 import org.apache.spark.sql.{DataFrame, Encoder, SparkSession}
 
 import scala.util.{Failure, Success, Try}
@@ -111,7 +111,7 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
                              (implicit ev: Encoder[(String, String)]): Try[Map[FileName, KeysMatchedToDelete]] = {
     Try {
       rawDataDF
-        .select(input_file_name(), col(config.rawMatchingStrategy.dataframeKeyColName))
+        .select(input_file_name(), expr(config.rawMatchingStrategy.dataframeKeyMatchingExpression))
         .where(config.rawMatchingCondition.and(config.partitionPruningCondition))
         .as[(FileName, KeyName)]
         .collect()
@@ -138,16 +138,16 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
     }
 
     val keysDeletedOutput: Seq[DeletionOutput] = config.rawMatchingStrategy match {
-      case ExactRawMatchingStrategy(dataframeKeyColName) =>
+      case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) =>
         deletionResults.map { case HdfsDeletionResult(keyToDeleteWithCorrelation, _, fileName) =>
-          DeletionOutput(keyToDeleteWithCorrelation, HdfsExactColumnMatch(dataframeKeyColName), HdfsParquetSource(Seq(fileName)), DeletionSuccess)
+          DeletionOutput(keyToDeleteWithCorrelation, HdfsExactColumnMatch(dataframeKeyMatchingExpression), HdfsParquetSource(Seq(fileName)), DeletionSuccess)
         }.toSeq
-      case PrefixRawMatchingStrategy(dataframeKeyColName) =>
+      case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) =>
         deletionResults.groupBy { case HdfsDeletionResult(keyToDeleteWithCorrelation, _, _) => keyToDeleteWithCorrelation }.map {
           case (keyToDeleteWithCorrelation, results) =>
             val keysMatched = results.map(_.keyMatched).toSeq
             val fileNames = results.map(_.fileName).toSeq
-            DeletionOutput(keyToDeleteWithCorrelation, HdfsPrefixColumnMatch(dataframeKeyColName, Some(keysMatched)), HdfsParquetSource(fileNames), DeletionSuccess)
+            DeletionOutput(keyToDeleteWithCorrelation, HdfsPrefixColumnMatch(dataframeKeyMatchingExpression, Some(keysMatched)), HdfsParquetSource(fileNames), DeletionSuccess)
         }.toSeq
     }
 
@@ -160,8 +160,8 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
         }
       }.map { keyWithCorrelation =>
         val keyMatchType = config.rawMatchingStrategy match {
-          case ExactRawMatchingStrategy(dataframeKeyColName) => HdfsExactColumnMatch(dataframeKeyColName)
-          case PrefixRawMatchingStrategy(dataframeKeyColName) => HdfsPrefixColumnMatch(dataframeKeyColName, None)
+          case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
+          case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression, None)
         }
         DeletionOutput(keyWithCorrelation, keyMatchType, NoSourceFound, DeletionNotFound)
       }

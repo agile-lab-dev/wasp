@@ -5,10 +5,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config.HdfsDelet
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsUtils
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{ExactRawMatchingStrategy, PrefixRawMatchingStrategy}
 import org.apache.hadoop.fs.{FileSystem, LocatedFileStatus, Path}
-import org.apache.spark.sql.functions.{col, lit}
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.util.{Success, Try}
 

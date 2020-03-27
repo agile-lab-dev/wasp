@@ -87,16 +87,16 @@ object NoPartitionPruningStrategy {
 }
 
 sealed trait RawMatchingStrategy {
-  val dataframeKeyColName: String
+  val dataframeKeyMatchingExpression: String
 }
 
-case class ExactRawMatchingStrategy(dataframeKeyColName: String) extends RawMatchingStrategy
+case class ExactRawMatchingStrategy(dataframeKeyMatchingExpression: String) extends RawMatchingStrategy
 
 object ExactRawMatchingStrategy {
   val TYPE = "exact"
 }
 
-case class PrefixRawMatchingStrategy(dataframeKeyColName: String) extends RawMatchingStrategy
+case class PrefixRawMatchingStrategy(dataframeKeyMatchingExpression: String) extends RawMatchingStrategy
 
 object PrefixRawMatchingStrategy {
   val TYPE = "prefix"

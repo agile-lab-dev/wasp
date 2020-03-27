@@ -44,6 +44,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
   val target = new HdfsDataDeletion(fs)
   implicit val dataEncoder: Encoder[Data] = Encoders.product[Data]
+  implicit val dataWithTupleEncoder: Encoder[DataWithKey] = Encoders.product[DataWithKey]
   implicit val dataWithDateEncoder: Encoder[DataWithDate] = Encoders.product[DataWithDate]
   implicit val dataWithDateNumericEncoder: Encoder[DataWithDateNumeric] = Encoders.product[DataWithDateNumeric]
   implicit val keyWithCorrelationEncoder: Encoder[KeyWithCorrelation] = Encoders.product[KeyWithCorrelation]
@@ -103,6 +104,63 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
           if (keyExists) DeletionSuccess else DeletionNotFound
         )
       }
+  }
+
+  it should "correctly delete data from flat RawModel matching with an expression" in {
+    val data: Seq[DataWithKey] = Seq(
+      DataWithKey(KeyWithCorrelation("k1", "1"), "111L", "franco"),
+      DataWithKey(KeyWithCorrelation("k2", "1"), "222L", "mario"),
+      DataWithKey(KeyWithCorrelation("k3", "1"), "333L", "luigi")
+    )
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k4", "id3")
+    )
+    val expectedData: Seq[DataWithKey] = data.filterNot { d =>
+      keysToDelete.exists(k => k.key == d.id.key)
+    }
+
+    writeTestData(data, 3, List.empty)
+
+    val keyColumn = nameOf[DataWithKey](_.id)
+
+    val rawModel = RawModel(
+      "data",
+      dataUri,
+      timed = false,
+      ScalaReflection.schemaFor[DataWithKey].dataType.asInstanceOf[StructType].json,
+      RawOptions("append", "parquet", None, None)
+    )
+
+    import spark.implicits._
+    val fileNames = readFileNameAndExpr("id.key")
+
+    val rawDataStoreConf = RawDataStoreConf(
+      keyColumn,
+      correlationIdColumn,
+      rawModel,
+      ExactRawMatchingStrategy("id.key"),
+      NoPartitionPruningStrategy()
+    )
+
+    val config = createConfig(None)
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
+
+    val deletionResult = target.delete(deletionConfig, spark)
+
+    val expectedDeletions = keysToDelete.map { k =>
+      val keyExists = data.exists(d => d.id.key == k.key)
+      DeletionOutput(
+        k,
+        HdfsExactColumnMatch("id.key"),
+        if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
+        if (keyExists) DeletionSuccess else DeletionNotFound
+      )
+    }
+
+    readData[DataWithKey] should contain theSameElementsAs expectedData
+    deletionResult.get should contain theSameElementsAs expectedDeletions
   }
 
   it should "correctly delete data from partitioned RawModel" in {
@@ -731,6 +789,16 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       .toSeq
   }
 
+  def readFileNameAndExpr(expression: String)(implicit ev: Encoder[(String, String)]): Seq[(FileName, KeyName)] = {
+    spark.read
+      .format("parquet")
+      .load(dataUri)
+      .select(input_file_name(), expr(expression))
+      .as[(String, String)]
+      .collect()
+      .toSeq
+  }
+
   def writeData[T](data: Seq[T], partitions: Int, partitionBy: List[String])(implicit encoder: Encoder[T]): Unit = {
     val ds = spark.createDataset(data)
       .repartition(partitions)
@@ -765,6 +833,8 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 }
 
 case class Data(id: String, category: String, name: String)
+
+case class DataWithKey(id: KeyWithCorrelation, category: String, name: String)
 
 case class DataWithDate(id: String, category: String, date: String, name: String)
 

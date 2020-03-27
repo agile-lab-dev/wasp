@@ -19,7 +19,7 @@ import org.apache.hadoop.hbase.filter.{FilterList, FirstKeyOnlyFilter, KeyOnlyFi
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.functions.{expr, lit}
 
 import scala.util.{Failure, Success}
 
@@ -91,13 +91,13 @@ object HdfsDeletionConfig {
     )
   }
 
-  private def rawMatchingCondition(keysToDelete: Seq[String], rawMatchingStrategy: RawMatchingStrategy) = {
+  private def rawMatchingCondition(keysToDelete: Seq[String], rawMatchingStrategy: RawMatchingStrategy): Column = {
     rawMatchingStrategy match {
-      case ExactRawMatchingStrategy(dataframeKeyColName) =>
-        col(dataframeKeyColName) isin (keysToDelete: _*)
-      case PrefixRawMatchingStrategy(dataframeKeyColName) =>
+      case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) =>
+        expr(dataframeKeyMatchingExpression) isin (keysToDelete: _*)
+      case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) =>
         val regex = keysToDelete.mkString("^", "|^", "")
-        col(dataframeKeyColName) rlike regex
+        expr(dataframeKeyMatchingExpression) rlike regex
     }
   }
 
