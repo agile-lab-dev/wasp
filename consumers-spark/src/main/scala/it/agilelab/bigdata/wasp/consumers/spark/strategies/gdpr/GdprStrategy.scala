@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr
 
-import java.util.UUID
-
 import it.agilelab.bigdata.wasp.consumers.spark.strategies._
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config.{DeletionConfig, HBaseDeletionConfig, HdfsDeletionConfig}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hbase.HBaseDeletionHandler
@@ -34,22 +32,25 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
     lazy val hdfsDataDeletion = new HdfsDataDeletion(fileSystem)
 
     val outputPartitions = ConfigUtils.getOptionalInt(configuration, OUTPUT_PARTITIONS_CONFIG_KEY).getOrElse(1)
-    val runId = ConfigUtils.getOptionalString(configuration, RUN_ID_CONFIG_KEY).getOrElse(UUID.randomUUID().toString)
+    val runId = configuration.getString(RUN_ID_CONFIG_KEY)
+
     implicit val keyWithCorrelationEncoder: Encoder[KeyWithCorrelation] = Encoders.product[KeyWithCorrelation]
+
+    val dataStoresWithRunIdDF = dataStoresDF.where(col("runId").equalTo(runId))
 
     val deletionConfigs: List[DeletionConfig] = dataStores.map {
       case keyValueConf: KeyValueDataStoreConf =>
         HBaseDeletionConfig.create(
           configuration,
           keyValueConf,
-          getKeysRDD(dataStoresDF, keyValueConf.inputKeyColumn, keyValueConf.correlationIdColumn, sparkSession),
+          getKeysRDD(dataStoresWithRunIdDF, keyValueConf.inputKeyColumn, keyValueConf.correlationIdColumn, sparkSession),
           hbaseConfig
         )
       case rawConf: RawDataStoreConf =>
         HdfsDeletionConfig.create(
           configuration,
           rawConf,
-          getKeys(dataStoresDF, rawConf.inputKeyColumn, rawConf.correlationIdColumn, sparkSession)
+          getKeys(dataStoresWithRunIdDF, rawConf.inputKeyColumn, rawConf.correlationIdColumn, sparkSession)
         )
     }
 
@@ -104,7 +105,10 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
   private def getKeys(inputDF: DataFrame, inputKeyColumn: String, correlationIdColumn: String, spark: SparkSession)
                      (implicit ev: Encoder[KeyWithCorrelation]): Seq[KeyWithCorrelation] = {
     inputDF
-      .select(col(inputKeyColumn), col(correlationIdColumn))
+      .select(
+        col(inputKeyColumn).alias("key"),
+        col(correlationIdColumn).alias("correlationId")
+      )
       .as[KeyWithCorrelation]
       .collect()
       .toSeq
@@ -114,7 +118,10 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
   private def getKeysRDD(inputDF: DataFrame, inputKeyColumn: String, correlationIdColumn: String, spark: SparkSession)
                         (implicit ev: Encoder[KeyWithCorrelation]): RDD[KeyWithCorrelation] = {
     inputDF
-      .select(col(inputKeyColumn), col(correlationIdColumn))
+      .select(
+        col(inputKeyColumn).alias("key"),
+        col(correlationIdColumn).alias("correlationId")
+      )
       .as[KeyWithCorrelation]
       .rdd
   }
