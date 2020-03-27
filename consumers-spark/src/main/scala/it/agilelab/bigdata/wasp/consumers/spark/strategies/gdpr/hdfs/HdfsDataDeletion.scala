@@ -28,7 +28,13 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
              dataPath: Path,
              spark: SparkSession): Try[Seq[DeletionOutput]] = {
     for {
-      filesWithKeys <- getFilesToFilter(config, spark)
+      filesWithKeys <- if (config.missingPathFailure || fs.exists(new Path(config.rawModel.uri))) {
+        // if rawModel read can fail for a missing path or we're sure that the path exists then read
+        getFilesToFilter(config, spark)
+      } else {
+        // if rawModel read cannot fail then return an empty Map
+        Success(Map.empty[FileName, KeysMatchedToDelete])
+      }
       files = filesWithKeys.keySet.toList
       backupDir <- backup(backupHandler, files.map(new Path(_)))
       _ <- deleteOrRollback(deletionHandler, files, backupHandler, backupDir, dataPath)
@@ -132,7 +138,7 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
       case (fileName, keysMatchedToDelete) =>
         keysMatchedToDelete.map { keyMatched =>
           val keyToMatch = config.keysToDeleteWithCorrelation.find(keyToDelete => keyMatched.startsWith(keyToDelete.key))
-              .getOrElse(throw new IllegalStateException(s"Cannot find key matched '$keyMatched' among keys submitted to the job to be matched"))
+            .getOrElse(throw new IllegalStateException(s"Cannot find key matched '$keyMatched' among keys submitted to the job to be matched"))
           HdfsDeletionResult(keyToMatch, keyMatched, fileName)
         }
     }
@@ -159,12 +165,12 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
           case _: PrefixRawMatchingStrategy => keysDeleted.exists(_.startsWith(keyToDeleteWithCorrelation.key))
         }
       }.map { keyWithCorrelation =>
-        val keyMatchType = config.rawMatchingStrategy match {
-          case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
-          case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression, None)
-        }
-        DeletionOutput(keyWithCorrelation, keyMatchType, NoSourceFound, DeletionNotFound)
+      val keyMatchType = config.rawMatchingStrategy match {
+        case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
+        case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression, None)
       }
+      DeletionOutput(keyWithCorrelation, keyMatchType, NoSourceFound, DeletionNotFound)
+    }
 
     keysDeletedOutput ++ keysNotFoundOutput
   }

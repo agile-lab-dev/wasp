@@ -746,6 +746,84 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     readData[Data] should contain theSameElementsAs expectedData
   }
 
+  it should "correctly fail when a path is missing and missingPathFailure=true" in {
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k4", "id3")
+    )
+
+    val keyColumn = nameOf[Data](_.id)
+
+    val rawModel = RawModel(
+      "data",
+      dataUri,
+      timed = false,
+      ScalaReflection.schemaFor[Data].dataType.asInstanceOf[StructType].json,
+      RawOptions("append", "parquet", None, None)
+    )
+
+    val rawDataStoreConf = RawDataStoreConf(
+      keyColumn,
+      correlationIdColumn,
+      rawModel,
+      ExactRawMatchingStrategy(keyColumn),
+      NoPartitionPruningStrategy(),
+      missingPathFailure = true
+    )
+
+    val config = createConfig(None)
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
+
+    val deletionResult = target.delete(deletionConfig, spark)
+
+    deletionResult.failure.exception shouldBe a[DeletionException]
+    deletionResult.failure.exception.getMessage should startWith(s"Path does not exist: file:$dataUri")
+  }
+
+  it should "return a NOT_FOUND when a path is missing and missingPathFailure=false" in {
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k4", "id3")
+    )
+
+    val keyColumn = nameOf[Data](_.id)
+
+    val rawModel = RawModel(
+      "data",
+      dataUri,
+      timed = false,
+      ScalaReflection.schemaFor[Data].dataType.asInstanceOf[StructType].json,
+      RawOptions("append", "parquet", None, None)
+    )
+
+    val rawDataStoreConf = RawDataStoreConf(
+      keyColumn,
+      correlationIdColumn,
+      rawModel,
+      ExactRawMatchingStrategy(keyColumn),
+      NoPartitionPruningStrategy(),
+      missingPathFailure = false
+    )
+
+    val config = createConfig(None)
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
+
+    val deletionResult = target.delete(deletionConfig, spark)
+
+    deletionResult.get should contain theSameElementsAs
+      keysToDelete.map { k =>
+        DeletionOutput(
+          k,
+          HdfsExactColumnMatch(keyColumn),
+          NoSourceFound,
+           DeletionNotFound
+        )
+      }
+  }
+
+
 
   private def createConfig(startAndEnd: Option[(Long, Long)]): Config = {
     val string =
@@ -770,7 +848,6 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
   }
 
   def readData[T](implicit encoder: Encoder[T]): Seq[T] = {
-    //    implicit val encoder: Encoder[T] = Encoders.product[T]
     spark.read
       .format("parquet")
       .load(dataUri)

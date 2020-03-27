@@ -51,6 +51,7 @@ case class HBaseDeletionConfig(
   * @param partitionPruningCondition WHERE condition derived from the PartitionPruningStrategy
   * @param stagingDirUri             staging directory path to use (from config or default = rawModel.uri + "/staging")
   * @param backupDirUri              backup directory parent path to use (from config or default = rawModel.uri.parent + "/staging")
+  * @param missingPathFailure        if true a missing path inside [[rawModel]] results in deletion failure
   */
 case class HdfsDeletionConfig(
                                keysToDeleteWithCorrelation: Seq[KeyWithCorrelation],
@@ -59,7 +60,8 @@ case class HdfsDeletionConfig(
                                rawMatchingCondition: Column,
                                partitionPruningCondition: Column,
                                stagingDirUri: String,
-                               backupDirUri: String
+                               backupDirUri: String,
+                               missingPathFailure: Boolean = false
                              ) extends DeletionConfig
 
 object HdfsDeletionConfig {
@@ -87,7 +89,8 @@ object HdfsDeletionConfig {
       rawMatchingCondition(keysToDelete.map(_.key), rawDataStoreConf.rawMatchingStrategy),
       partitionPruningCondition(maybeConfig, rawDataStoreConf.partitionPruningStrategy),
       stagingDirUri(maybeConfig, rawDataStoreConf.rawModel),
-      backupDirUri(maybeConfig, rawDataStoreConf.rawModel)
+      backupDirUri(maybeConfig, rawDataStoreConf.rawModel),
+      rawDataStoreConf.missingPathFailure
     )
   }
 

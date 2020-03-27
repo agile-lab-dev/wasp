@@ -11,7 +11,7 @@ sealed trait DataStoreConf {
 
 final case class KeyValueDataStoreConf(inputKeyColumn: String,
                                        correlationIdColumn: String,
-                                       keyValueModel: KeyValueModel, // here we retrieve tablename and namespace
+                                       keyValueModel: KeyValueModel, // here we retrieve tableName and namespace
                                        keyValueMatchingStrategy: KeyValueMatchingStrategy
                                       ) extends DataStoreConf
 
@@ -23,7 +23,8 @@ final case class RawDataStoreConf(inputKeyColumn: String,
                                   correlationIdColumn: String,
                                   rawModel: RawModel, // here we retrieve location, schema, format and partitioning
                                   rawMatchingStrategy: RawMatchingStrategy,
-                                  partitionPruningStrategy: PartitionPruningStrategy
+                                  partitionPruningStrategy: PartitionPruningStrategy,
+                                  missingPathFailure: Boolean = false // if true a missing path inside `rawModel` results in deletion failure
                                  ) extends DataStoreConf
 
 object RawDataStoreConf {
@@ -162,7 +163,13 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
     implicit val rawOptionsFormat: RootJsonFormat[RawOptions] = jsonFormat4(RawOptions.apply)
     implicit val rawModelFormat: RootJsonFormat[RawModel] = jsonFormat5(RawModel.apply)
     implicit val rawDataStoreConfFormat: RootJsonFormat[RawDataStoreConf] =
-      jsonFormat(RawDataStoreConf.apply, "inputKeyColumn", "correlationIdColumn", "rawModel", "rawMatchingStrategy", "partitionPruningStrategy")
+      jsonFormat(RawDataStoreConf.apply,
+        "inputKeyColumn",
+        "correlationIdColumn",
+        "rawModel",
+        "rawMatchingStrategy",
+        "partitionPruningStrategy",
+        "missingPathFailure")
 
     new RootJsonFormat[DataStoreConf] {
       override def read(json: JsValue): DataStoreConf = json.asJsObject.getFields("type") match {
