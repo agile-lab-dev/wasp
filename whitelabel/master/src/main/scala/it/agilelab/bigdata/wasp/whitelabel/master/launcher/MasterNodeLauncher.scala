@@ -82,9 +82,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[MultiTopicModel](TestTopicModel.binaryMultitopic)
     waspDB.upsert[IndexModel](TestIndexModel.solr)
     waspDB.upsert[IndexModel](TestIndexModel.elastic)
-    waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
-    waspDB.upsert[RawModel](TestRawModel.flat)    // used by TestBatchJobModels.FromHdfs.toConsole
-    waspDB.upsert[RawModel](TestRawModel.text)    // used by TestBatchJobModels.FromHdfs.toConsole
+    waspDB.upsert[RawModel](TestRawModel.nested) // used by TestPipegraphs.JSON.XYZ.hdfs
+    waspDB.upsert[RawModel](TestRawModel.flat) // used by TestBatchJobModels.FromHdfs.toConsole
+    waspDB.upsert[RawModel](TestRawModel.text) // used by TestBatchJobModels.FromHdfs.toConsole
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbase)
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
     waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
@@ -143,7 +143,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.hdfs)
 
     waspDB.upsert[PipegraphModel](TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
-  
+
     waspDB.upsert[PipegraphModel](TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
     waspDB.upsert[PipegraphModel](TestPipegraphs.SparkSessionErrors.pipegraph)
 
@@ -170,5 +170,10 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[KeyValueModel](TestSchemaAvroManagerKeyValueModel.avroSchemaManagerHBaseModel)
     waspDB.upsert[PipegraphModel](TestSchemaAvroManager.pipegraph)
 
+
+    /* Test backlog */
+    waspDB.upsert[TopicModel](TestTopicModel.monitoring)
+    waspDB.upsert[ProducerModel](TestProducerModel.backlog)
+    waspDB.upsert[ProducerModel](TestProducerModel.throughput)
   }
 }

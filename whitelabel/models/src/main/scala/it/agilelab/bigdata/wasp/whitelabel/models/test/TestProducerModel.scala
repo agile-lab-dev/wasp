@@ -14,6 +14,27 @@ private[wasp] object TestProducerModel {
       isSystem = false
     )
 
+  lazy val backlog = ProducerModel(
+    name = "backlog",
+    className = "it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog.ImplBacklogSizeAnalyzerProducerGuardian",
+    topicName = Some(TestTopicModel.monitoring.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
+
+
+  lazy val throughput = ProducerModel(
+    name = "throughput",
+    className = "it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput.ImplKafkaThroughputGuardian",
+    topicName = Some(TestTopicModel.monitoring.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
+
   lazy val jsonHbaseMultipleClustering = ProducerModel(
     name = "TestJSONHbaseMultiClusteringProducer",
     className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestHbaseMultiClusteringProducerGuardian",

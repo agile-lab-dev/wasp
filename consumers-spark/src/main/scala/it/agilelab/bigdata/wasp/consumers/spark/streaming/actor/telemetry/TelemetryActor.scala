@@ -81,10 +81,9 @@ class TelemetryActor private() extends Actor {
 
   private val mediator = DistributedPubSub(context.system).mediator
   private var actorRefMessagesRedirect = Actor.noSender
-  private var connectionCancellable: Cancellable = _
 
   override def preStart(): Unit = {
-    connectionCancellable = scheduleMessageToRedirectionActor()
+    scheduleMessageToRedirectionActor()
   }
 
 
@@ -94,7 +93,6 @@ class TelemetryActor private() extends Actor {
     //Saves the actorRef of the actor that will receive the telemetry messages
     case TelemetryActorRedirection(aRef) =>
       actorRefMessagesRedirect = aRef
-      connectionCancellable.cancel()
     case _ =>
 
   }
@@ -173,7 +171,7 @@ class TelemetryActor private() extends Actor {
 
 
 
-  private def scheduleMessageToRedirectionActor(): Cancellable = {
+  private def scheduleMessageToRedirectionActor(): Unit = {
 
     implicit val ec: ExecutionContextExecutor = context.system.dispatcher
 
@@ -183,8 +181,6 @@ class TelemetryActor private() extends Actor {
       mediator,
       Publish(WaspSystem.telemetryPubSubTopic, TelemetryActorRedirection(self))
     )
-
-    cancellable
   }
 }
 
