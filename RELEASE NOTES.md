@@ -3144,3 +3144,65 @@ Branch: feature/277-gdpr-keys-to-delete-should-have-a-correlation-id
 Author: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
 
 Closes #277
+
+## Wasp 2.23.0
+
+### feature: Implement KafkaBacklogAnalyzer
+
+[Merge request 168](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/168)
+
+Created at: 2020-03-17T18:28:56.004Z
+
+Updated at: 2020-03-30T10:41:28.460Z
+
+Branch: feature/279-implement-kafkabackloganalyzer
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Assignee: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+#### New features and improvements
+
+A new abstract producer that is able to check the backlog size of an Spark Structured Streaming ETL.
+
+
+
+#### Kafka metrics producers
+
+We need to produce a suite of actors able to monitor the metrics of Kafka topics, there are mainly two needs that must be addressed:
+
+- backlog of a list of pipegraphs or etls
+- traffic of a list of topics
+
+#### Backlog size calculator
+
+In order to calculate the backlog of an ETL, the following information are needed:
+
+- the latest offsets consumed by an ETL (provided by TelemetryActor)
+- the latest offsets available in a Kafka topic (provided by KafkaActor)
+
+#### Traffic calculator
+
+In order to calculate the traffic of a kafka topic the following information are needed:
+
+- the latest offsets available in a Kafka topic at the beginning of the time window (provided by KafkaActor)
+- the latest offsets available in a Kafka topic at the end of the time window (provided by KafkaActor)
+
+#### Kafka Actor
+
+Actor tied with a single kafka topic which has the only duty to return the current latest offsets of a Kafka Topic.# Breaking changes
+
+None.
+
+#### Migration
+
+None.
+
+#### Bug fixes
+
+None.
+
+#### Related issue
+
+Closes #279
+Closes #236
