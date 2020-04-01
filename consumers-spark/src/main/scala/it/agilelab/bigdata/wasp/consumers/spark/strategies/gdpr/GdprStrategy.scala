@@ -80,12 +80,9 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
 
 
   private def hdfsFailureOutput(hdfsConfig: HdfsDeletionConfig, exception: Throwable): Seq[DeletionOutput] = {
-    val keyMatchType = hdfsConfig.rawMatchingStrategy match {
-      case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
-      case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression, None)
-    }
+    val keyMatchType = HdfsMatchType.fromRawMatchingStrategy(hdfsConfig.rawMatchingStrategy)
     hdfsConfig.keysToDeleteWithCorrelation.map { keyWithCorrelation =>
-      DeletionOutput(keyWithCorrelation, keyMatchType, HdfsParquetSource(Seq(hdfsConfig.rawModel.uri)), DeletionFailure(exception))
+      DeletionOutput(keyWithCorrelation, keyMatchType, HdfsRawModelSource(hdfsConfig.rawModel.uri), DeletionFailure(exception))
     }
   }
 

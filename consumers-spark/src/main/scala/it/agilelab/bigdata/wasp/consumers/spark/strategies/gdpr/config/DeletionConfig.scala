@@ -62,7 +62,17 @@ case class HdfsDeletionConfig(
                                stagingDirUri: String,
                                backupDirUri: String,
                                missingPathFailure: Boolean = false
-                             ) extends DeletionConfig
+                             ) extends DeletionConfig {
+  // WHERE condition derived from the RawMatchingStrategy
+  def joinCondition(dataKeyColumn: Column, inputKeyColumn: Column): Column = {
+    rawMatchingStrategy match {
+      case ExactRawMatchingStrategy(_) =>
+        dataKeyColumn.equalTo(inputKeyColumn)
+      case PrefixRawMatchingStrategy(_) =>
+        dataKeyColumn.startsWith(inputKeyColumn)
+    }
+  }
+}
 
 object HdfsDeletionConfig {
   val RAW_CONF_KEY = "hdfs"

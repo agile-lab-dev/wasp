@@ -100,7 +100,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
         DeletionOutput(
           k,
           HdfsExactColumnMatch(keyColumn),
-          if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
+          if (keyExists) HdfsFileSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else HdfsRawModelSource(rawModel.uri),
           if (keyExists) DeletionSuccess else DeletionNotFound
         )
       }
@@ -154,7 +154,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       DeletionOutput(
         k,
         HdfsExactColumnMatch("id.key"),
-        if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
+        if (keyExists) HdfsFileSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else HdfsRawModelSource(rawModel.uri),
         if (keyExists) DeletionSuccess else DeletionNotFound
       )
     }
@@ -217,7 +217,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
         DeletionOutput(
           k,
           HdfsExactColumnMatch(keyColumn),
-          if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
+          if (keyExists) HdfsFileSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else HdfsRawModelSource(rawModel.uri),
           if (keyExists) DeletionSuccess else DeletionNotFound
         )
       }
@@ -274,28 +274,22 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     val expectedDeletions = Seq(
       DeletionOutput(
         "k1",
-        HdfsPrefixColumnMatch(
-          keyColumn,
-          None),
-        NoSourceFound,
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsRawModelSource(rawModel.uri),
         DeletionNotFound,
         "id1"
       ),
       DeletionOutput(
         "k2",
-        HdfsPrefixColumnMatch(
-          keyColumn,
-          Some(Seq("k2"))),
-        HdfsParquetSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsFileSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
         DeletionSuccess,
         "id2"
       ),
       DeletionOutput(
         "k3",
-        HdfsPrefixColumnMatch(
-          keyColumn,
-          Some(Seq("k3suffix", "k3suffix2"))),
-        HdfsParquetSource(fileNames.filter { case (_, key) => key == "k3suffix" || key == "k3suffix2" }.map(_._1)),
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsFileSource(fileNames.filter { case (_, key) => key == "k3suffix" || key == "k3suffix2" }.map(_._1)),
         DeletionSuccess,
         "id3"
       )
@@ -357,21 +351,21 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       DeletionOutput(
         "k1",
         HdfsExactColumnMatch(keyColumn),
-        NoSourceFound,
+        HdfsRawModelSource(rawModel.uri),
         DeletionNotFound,
         "id1"
       ),
       DeletionOutput(
         "k2",
         HdfsExactColumnMatch(keyColumn),
-        HdfsParquetSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
+        HdfsFileSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
         DeletionSuccess,
         "id2"
       ),
       DeletionOutput(
         "k3",
         HdfsExactColumnMatch(keyColumn),
-        NoSourceFound,
+        HdfsRawModelSource(rawModel.uri),
         DeletionNotFound,
         "id3"
       )
@@ -437,7 +431,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
         DeletionOutput(
           k,
           HdfsExactColumnMatch(keyColumn),
-          if (keyExists) HdfsParquetSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else NoSourceFound,
+          if (keyExists) HdfsFileSource(fileNames.filter { case (_, key) => k.key == key }.map(_._1)) else HdfsRawModelSource(rawModel.uri),
           if (keyExists) DeletionSuccess else DeletionNotFound
         )
       }
@@ -489,22 +483,22 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     val expectedDeletions = Seq(
       DeletionOutput(
         "k1",
-        HdfsPrefixColumnMatch(keyColumn, Some(Seq("k1|asd"))),
-        HdfsParquetSource(fileNames.filter { case (_, key) => key.startsWith("k1") }.map(_._1)),
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsFileSource(fileNames.filter { case (_, key) => key.startsWith("k1") }.map(_._1)),
         DeletionSuccess,
         "id1"
       ),
       DeletionOutput(
         "k2",
-        HdfsPrefixColumnMatch(keyColumn, Some(Seq("k2|asd"))),
-        HdfsParquetSource(fileNames.filter { case (_, key) => key.startsWith("k2") }.map(_._1)),
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsFileSource(fileNames.filter { case (_, key) => key.startsWith("k2") }.map(_._1)),
         DeletionSuccess,
         "id2"
       ),
       DeletionOutput(
         "k3",
-        HdfsPrefixColumnMatch(keyColumn, Some(Seq("k3"))),
-        HdfsParquetSource(fileNames.filter { case (_, key) => key.startsWith("k3") }.map(_._1)),
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsFileSource(fileNames.filter { case (_, key) => key.startsWith("k3") }.map(_._1)),
         DeletionSuccess,
         "id3"
       )
@@ -817,12 +811,11 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
         DeletionOutput(
           k,
           HdfsExactColumnMatch(keyColumn),
-          NoSourceFound,
-           DeletionNotFound
+          HdfsRawModelSource(rawModel.uri),
+          DeletionNotFound
         )
       }
   }
-
 
 
   private def createConfig(startAndEnd: Option[(Long, Long)]): Config = {
@@ -888,18 +881,16 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     toCompare.key shouldBe expected.key
     expected.keyMatchType match {
       case hdfs: HdfsMatchType => hdfs match {
-        case HdfsExactColumnMatch(columnName) => toCompare.keyMatchType.asInstanceOf[HdfsExactColumnMatch].columnName shouldBe columnName
-        case HdfsPrefixColumnMatch(columnName, Some(matchedValues)) =>
+        case HdfsExactColumnMatch(columnName) =>
+          toCompare.keyMatchType.asInstanceOf[HdfsExactColumnMatch].columnName shouldBe columnName
+        case HdfsPrefixColumnMatch(columnName) =>
           toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].columnName shouldBe columnName
-          toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].matchedValues.get should contain theSameElementsAs matchedValues
-        case HdfsPrefixColumnMatch(columnName, None) =>
-          toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].columnName shouldBe columnName
-          toCompare.keyMatchType.asInstanceOf[HdfsPrefixColumnMatch].matchedValues shouldBe None
       }
       case _ => fail("unexpected HBaseMatchType")
     }
     expected.source match {
-      case HdfsParquetSource(fileNames) => toCompare.source.asInstanceOf[HdfsParquetSource].fileNames should contain theSameElementsAs fileNames
+      case HdfsFileSource(fileNames) => toCompare.source.asInstanceOf[HdfsFileSource].fileNames should contain theSameElementsAs fileNames
+      case HdfsRawModelSource(rawModelUri) => toCompare.source.asInstanceOf[HdfsRawModelSource].rawModelUri shouldBe rawModelUri
       case NoSourceFound => toCompare.source shouldBe NoSourceFound
       case _ => fail("unexpected HBaseTableSource")
     }

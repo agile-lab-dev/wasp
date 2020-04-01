@@ -1,14 +1,14 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hdfs
 
+import com.github.dwickern.macros.NameOf.nameOf
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr._
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config.HdfsDeletionConfig
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.exception._
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hdfs.HdfsDataDeletion._
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsUtils
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{ExactRawMatchingStrategy, PrefixRawMatchingStrategy}
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.sql.functions.{expr, input_file_name}
+import org.apache.spark.sql.functions.{col, expr, input_file_name}
 import org.apache.spark.sql.{DataFrame, Encoder, SparkSession}
 
 import scala.util.{Failure, Success, Try}
@@ -32,10 +32,14 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
         // if rawModel read can fail for a missing path or we're sure that the path exists then read
         getFilesToFilter(config, spark)
       } else {
-        // if rawModel read cannot fail then return an empty Map
-        Success(Map.empty[FileName, KeysMatchedToDelete])
+        // if rawModel read cannot fail then return an empty Array
+        Success(
+          config.keysToDeleteWithCorrelation.map{ keyWithCorrelation =>
+            (None, keyWithCorrelation)
+          }.toArray[(Option[String], KeyWithCorrelation)]
+        )
       }
-      files = filesWithKeys.keySet.toList
+      files = filesWithKeys.collect { case (Some(fileName), _) => fileName }.distinct.toList
       backupDir <- backup(backupHandler, files.map(new Path(_)))
       _ <- deleteOrRollback(deletionHandler, files, backupHandler, backupDir, dataPath)
       _ <- if (files.nonEmpty) {
@@ -43,8 +47,7 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
       } else {
         Success(())
       }
-      output <- createOutput(config, filesWithKeys)
-    } yield output
+    } yield createOutput(config, filesWithKeys)
   }
 
   private def backup(backupHandler: HdfsBackupHandler, pathsToBackup: Seq[Path]): Try[Path] = {
@@ -96,7 +99,7 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
   }
 
   /* Retrieve all parquet files to filter, together with the keys to delete each file contains */
-  private def getFilesToFilter(config: HdfsDeletionConfig, spark: SparkSession): Try[Map[FileName, KeysMatchedToDelete]] = {
+  private def getFilesToFilter(config: HdfsDeletionConfig, spark: SparkSession): Try[Array[(Option[FileName], KeyWithCorrelation)]] = {
     logger.info(s"Searching for parquet files containing the selected keys...")
     import spark.implicits._
     val tryFiles = for {
@@ -114,65 +117,51 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
   /* Filter `rawDataDF` with the RawMatchingStrategy and PartitionPruningStrategy defined in the config,
      returning the parquet files to be handled and the list of keys matched to delete that each of them contains */
   private def filterDataFrame(config: HdfsDeletionConfig, rawDataDF: DataFrame)
-                             (implicit ev: Encoder[(String, String)]): Try[Map[FileName, KeysMatchedToDelete]] = {
+                             (implicit ev: Encoder[(Option[String], String, String)]): Try[Array[(Option[FileName], KeyWithCorrelation)]] = {
     Try {
+      import org.apache.spark.sql.functions.broadcast
+      val broadcastDF = broadcast(rawDataDF.sparkSession.createDataFrame(config.keysToDeleteWithCorrelation))
+
       rawDataDF
-        .select(input_file_name(), expr(config.rawMatchingStrategy.dataframeKeyMatchingExpression))
-        .where(config.rawMatchingCondition.and(config.partitionPruningCondition))
-        .as[(FileName, KeyName)]
+        .select(
+          input_file_name().alias(FILENAME_COLUMN),
+          expr(config.rawMatchingStrategy.dataframeKeyMatchingExpression).alias(DATA_KEY_COLUMN)
+        )
+        .where(config.partitionPruningCondition)
+        .join(
+          broadcastDF,
+          config.joinCondition(col(DATA_KEY_COLUMN), broadcastDF(nameOf[KeyWithCorrelation](_.key))),
+          "right_outer"
+        )
+        .select(
+          col(FILENAME_COLUMN),
+          broadcastDF(nameOf[KeyWithCorrelation](_.key)),
+          broadcastDF(nameOf[KeyWithCorrelation](_.correlationId))
+        )
+        .distinct()
+        .as[(Option[FileName], String, String)]
         .collect()
-        // group by filename
-        .groupBy(_._1)
-        .mapValues { array =>
-          array.map {
-            case (_, key) => key
-          }.toList
+        .map {
+          case (maybeFile, key, corrId) => (maybeFile, KeyWithCorrelation(key, corrId))
         }
     }
 
   }
 
   private def createOutput(config: HdfsDeletionConfig,
-                           filesFilteredAndKeys: Map[FileName, KeysMatchedToDelete]): Try[Seq[DeletionOutput]] = Try {
-    val deletionResults: Iterable[HdfsDeletionResult] = filesFilteredAndKeys.flatMap {
-      case (fileName, keysMatchedToDelete) =>
-        keysMatchedToDelete.map { keyMatched =>
-          val keyToMatch = config.keysToDeleteWithCorrelation.find(keyToDelete => keyMatched.startsWith(keyToDelete.key))
-            .getOrElse(throw new IllegalStateException(s"Cannot find key matched '$keyMatched' among keys submitted to the job to be matched"))
-          HdfsDeletionResult(keyToMatch, keyMatched, fileName)
-        }
-    }
+                           filesFilteredAndKeys: Array[(Option[FileName], KeyWithCorrelation)]): Seq[DeletionOutput] = {
+    val matchType: HdfsMatchType = HdfsMatchType.fromRawMatchingStrategy(config.rawMatchingStrategy)
 
-    val keysDeletedOutput: Seq[DeletionOutput] = config.rawMatchingStrategy match {
-      case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) =>
-        deletionResults.map { case HdfsDeletionResult(keyToDeleteWithCorrelation, _, fileName) =>
-          DeletionOutput(keyToDeleteWithCorrelation, HdfsExactColumnMatch(dataframeKeyMatchingExpression), HdfsParquetSource(Seq(fileName)), DeletionSuccess)
-        }.toSeq
-      case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) =>
-        deletionResults.groupBy { case HdfsDeletionResult(keyToDeleteWithCorrelation, _, _) => keyToDeleteWithCorrelation }.map {
-          case (keyToDeleteWithCorrelation, results) =>
-            val keysMatched = results.map(_.keyMatched).toSeq
-            val fileNames = results.map(_.fileName).toSeq
-            DeletionOutput(keyToDeleteWithCorrelation, HdfsPrefixColumnMatch(dataframeKeyMatchingExpression, Some(keysMatched)), HdfsParquetSource(fileNames), DeletionSuccess)
-        }.toSeq
-    }
-
-    val keysNotFoundOutput: Seq[DeletionOutput] = config.keysToDeleteWithCorrelation
-      .filterNot { keyToDeleteWithCorrelation =>
-        val keysDeleted = keysDeletedOutput.map(_.key)
-        config.rawMatchingStrategy match {
-          case _: ExactRawMatchingStrategy => keysDeleted.contains(keyToDeleteWithCorrelation.key)
-          case _: PrefixRawMatchingStrategy => keysDeleted.exists(_.startsWith(keyToDeleteWithCorrelation.key))
-        }
-      }.map { keyWithCorrelation =>
-      val keyMatchType = config.rawMatchingStrategy match {
-        case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
-        case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression, None)
+    filesFilteredAndKeys.groupBy(_._2).map {
+      case (keyWithCorrelation, fileNames) => fileNames match {
+        case Array((None, _)) =>
+          // not found
+          DeletionOutput(keyWithCorrelation, matchType, HdfsRawModelSource(config.rawModel.uri), DeletionNotFound)
+        case f =>
+          val files = f.collect { case (Some(fileName), _) => fileName }
+          DeletionOutput(keyWithCorrelation, matchType, HdfsFileSource(files), DeletionSuccess)
       }
-      DeletionOutput(keyWithCorrelation, keyMatchType, NoSourceFound, DeletionNotFound)
-    }
-
-    keysDeletedOutput ++ keysNotFoundOutput
+    }.toSeq
   }
 
 }
@@ -182,6 +171,8 @@ object HdfsDataDeletion {
   type FileName = String
   type KeysMatchedToDelete = List[String]
   type FilesToDelete = List[FileName]
+  val FILENAME_COLUMN = "fileName"
+  val DATA_KEY_COLUMN = "dataKeyColumn"
 }
 
 case class HdfsDeletionResult(keyToDeleteWithCorrelation: KeyWithCorrelation, keyMatched: String, fileName: FileName)

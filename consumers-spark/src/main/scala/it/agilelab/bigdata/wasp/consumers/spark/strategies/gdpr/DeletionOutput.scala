@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.GdprStrategy.CorrelationId
+import it.agilelab.bigdata.wasp.core.models.{ExactRawMatchingStrategy, PrefixRawMatchingStrategy, RawMatchingStrategy}
 
 /**
   * Represents the output result of the deletion process for a single key
@@ -10,6 +11,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.GdprStrategy.Cor
   * @param source Source of data deleted
   * @param result Result of the deletion process
   * @param correlationId String that correlates multiple keys
+  *
   */
 case class DeletionOutput(key: String,
                           keyMatchType: KeyMatchType,
@@ -52,8 +54,14 @@ sealed trait HdfsMatchType extends KeyMatchType { val columnName: String }
 case class HdfsExactColumnMatch(columnName: String) extends HdfsMatchType {
   override def print: String = s"EXACT_COLUMN|$columnName"
 }
-case class HdfsPrefixColumnMatch(columnName: String, matchedValues: Option[Seq[String]]) extends HdfsMatchType {
-  override def print: String = s"PREFIX_COLUMN|$columnName" + matchedValues.fold("")(rows => s"|${rows.mkString(",")}")
+case class HdfsPrefixColumnMatch(columnName: String) extends HdfsMatchType {
+  override def print: String = s"PREFIX_COLUMN|$columnName"
+}
+object HdfsMatchType {
+  def fromRawMatchingStrategy(rawMatchingStrategy: RawMatchingStrategy): HdfsMatchType = rawMatchingStrategy match {
+    case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
+    case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression)
+  }
 }
 
 sealed trait HBaseMatchType extends KeyMatchType
@@ -68,8 +76,11 @@ case class HBasePrefixWithTimeRowKeyMatch(matchedRows: Option[Seq[String]]) exte
 }
 
 sealed trait DeletionSource { def print: String }
-case class HdfsParquetSource(fileNames: Seq[String]) extends DeletionSource {
+case class HdfsFileSource(fileNames: Seq[String]) extends DeletionSource {
   override def print: String = s"HDFS|${fileNames.mkString(",")}"
+}
+case class HdfsRawModelSource(rawModelUri: String) extends DeletionSource {
+  override def print: String = s"HDFS|$rawModelUri"
 }
 case class HBaseTableSource(tableName: String) extends DeletionSource {
   override def print: String = s"HBASE|$tableName"

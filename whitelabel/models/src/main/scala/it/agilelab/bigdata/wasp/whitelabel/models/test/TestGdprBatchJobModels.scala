@@ -5,6 +5,14 @@ import java.net.InetAddress
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.spark.sql.types._
 
+
+/*
+Example usage:
+  docker cp Agile.Wasp2/consumers-spark/src/test/resources/gdpr agile-wasp-2-whitelabel:/
+  docker exec -it agile-wasp-2-whitelabel /bin/bash
+  hdfs dfs -put gdpr /user/root
+  curl -X POST 'localhost:2891/batchjobs/gdprBatchJob/start' -H "Content-Type: application/json" --data '{ "runId": "1", "hbase":{"start": 1570733160000, "end": 1571349600000, "timeZone": "UTC"},"hdfs":{"start": 1570733160000, "end": 1571349600000, "timeZone": "UTC"}}'
+*/
 object TestGdprBatchJobModels {
 
   val hostname: String = InetAddress.getLocalHost.getCanonicalHostName
@@ -87,7 +95,9 @@ object TestGdprBatchJobModels {
     schema = StructType(Seq(
       StructField("key", StringType),
       StructField("result", BooleanType)
-    )).json)
+    )).json,
+    options = RawOptions("append", "parquet", None, Some(List("runId")))
+  )
 
   lazy val output: WriterModel = WriterModel.rawWriter(
     name = outputRawModel.name,
