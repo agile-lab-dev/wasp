@@ -132,8 +132,6 @@ object HdfsUtils extends Logging {
   }
 
   def writeRawModel(rawModel: RawModel, df: DataFrame): Try[Unit] = Try {
-    logger.info("writing this df:")
-    df.collect().foreach(s => logger.info(s.toString()))
     logger.info(s"Initializing HDFS writer: $rawModel")
 
     // calculate path

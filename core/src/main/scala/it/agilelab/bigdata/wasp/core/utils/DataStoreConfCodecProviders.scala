@@ -133,6 +133,8 @@ object DataStoreConfCodecProviders {
           registry.get(classOf[ExactRawMatchingStrategy]).decode(bsonReader, decoderContext)
         case PrefixRawMatchingStrategy.TYPE =>
           registry.get(classOf[PrefixRawMatchingStrategy]).decode(bsonReader, decoderContext)
+        case ContainsRawMatchingStrategy.TYPE =>
+          registry.get(classOf[ContainsRawMatchingStrategy]).decode(bsonReader, decoderContext)
       }
     }
 
@@ -145,6 +147,8 @@ object DataStoreConfCodecProviders {
           createBsonDocument(registry.get(classOf[ExactRawMatchingStrategy]), ExactRawMatchingStrategy.TYPE, exact, encoderContext)
         case prefix: PrefixRawMatchingStrategy =>
           createBsonDocument(registry.get(classOf[PrefixRawMatchingStrategy]), PrefixRawMatchingStrategy.TYPE, prefix, encoderContext)
+        case contains: ContainsRawMatchingStrategy =>
+          createBsonDocument(registry.get(classOf[ContainsRawMatchingStrategy]), ContainsRawMatchingStrategy.TYPE, contains, encoderContext)
       }
     }
 

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.GdprStrategy.CorrelationId
-import it.agilelab.bigdata.wasp.core.models.{ExactRawMatchingStrategy, PrefixRawMatchingStrategy, RawMatchingStrategy}
+import it.agilelab.bigdata.wasp.core.models.{ContainsRawMatchingStrategy, ExactRawMatchingStrategy, PrefixRawMatchingStrategy, RawMatchingStrategy}
 
 /**
   * Represents the output result of the deletion process for a single key
@@ -57,10 +57,14 @@ case class HdfsExactColumnMatch(columnName: String) extends HdfsMatchType {
 case class HdfsPrefixColumnMatch(columnName: String) extends HdfsMatchType {
   override def print: String = s"PREFIX_COLUMN|$columnName"
 }
+case class HdfsContainsColumnMatch(columnName: String) extends HdfsMatchType {
+  override def print: String = s"CONTAINS_COLUMN|$columnName"
+}
 object HdfsMatchType {
   def fromRawMatchingStrategy(rawMatchingStrategy: RawMatchingStrategy): HdfsMatchType = rawMatchingStrategy match {
     case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
     case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression)
+    case ContainsRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsContainsColumnMatch(dataframeKeyMatchingExpression)
   }
 }
 

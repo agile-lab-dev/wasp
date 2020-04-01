@@ -1,12 +1,13 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hdfs
 
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.DeletionOutput
+import com.github.dwickern.macros.NameOf.nameOf
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config.HdfsDeletionConfig
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsUtils
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.{DeletionOutput, KeyWithCorrelation}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import org.apache.hadoop.fs.{FileSystem, LocatedFileStatus, Path}
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.{expr, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.util.{Success, Try}

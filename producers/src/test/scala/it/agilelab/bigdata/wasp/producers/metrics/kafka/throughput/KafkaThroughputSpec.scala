@@ -19,7 +19,7 @@ class KafkaThroughputSpec extends TestKit(
     TestKit.shutdownActorSystem(system)
   }
 
-  it should "correctly start and stop all the actors and output a correct throughput through epocs" in {
+  it should "correctly start and stop all the actors and output a correct throughput through epocs" ignore {
     val throughputGuardian = system.actorOf(Props(new TestKafkaThroughputGuardian), "TestKafkaThroughputGuardian")
     throughputGuardian ! Start
     throughputGuardian ! StartMainTask

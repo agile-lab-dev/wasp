@@ -375,6 +375,7 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[NoPartitionPruningStrategy]),
     createCodecProviderIgnoreNone(classOf[ExactRawMatchingStrategy]),
     createCodecProviderIgnoreNone(classOf[PrefixRawMatchingStrategy]),
+    createCodecProviderIgnoreNone(classOf[ContainsRawMatchingStrategy]),
     DataStoreConfCodecProviders.PartitionPruningStrategyCodecProvider,
     DataStoreConfCodecProviders.RawMatchingStrategyCodecProvider,
     DataStoreConfCodecProviders.KeyValueMatchingStrategyCodecProvider,

@@ -103,6 +103,12 @@ object PrefixRawMatchingStrategy {
   val TYPE = "prefix"
 }
 
+case class ContainsRawMatchingStrategy(dataframeKeyMatchingExpression: String) extends RawMatchingStrategy
+
+object ContainsRawMatchingStrategy {
+  val TYPE = "contains"
+}
+
 trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
 
   def createDataStoreConfFormat: RootJsonFormat[DataStoreConf] = {
@@ -148,16 +154,19 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
     }
     implicit val exactRawMatchingStrategyFormat: RootJsonFormat[ExactRawMatchingStrategy] = jsonFormat1(ExactRawMatchingStrategy.apply)
     implicit val prefixRawMatchingStrategyFormat: RootJsonFormat[PrefixRawMatchingStrategy] = jsonFormat1(PrefixRawMatchingStrategy.apply)
+    implicit val containsRawMatchingStrategyFormat: RootJsonFormat[ContainsRawMatchingStrategy] = jsonFormat1(ContainsRawMatchingStrategy.apply)
     implicit val rawMatchingStrategyFormat: RootJsonFormat[RawMatchingStrategy] = new RootJsonFormat[RawMatchingStrategy] {
       override def read(json: JsValue): RawMatchingStrategy = json.asJsObject.getFields("type") match {
         case Seq(JsString("ExactRawMatchingStrategy")) => json.convertTo[ExactRawMatchingStrategy]
         case Seq(JsString("PrefixRawMatchingStrategy")) => json.convertTo[PrefixRawMatchingStrategy]
+        case Seq(JsString("ContainsRawMatchingStrategy")) => json.convertTo[ContainsRawMatchingStrategy]
         case _ => throw DeserializationException("Unknown json")
       }
 
       override def write(obj: RawMatchingStrategy): JsValue = JsObject((obj match {
         case exact: ExactRawMatchingStrategy => exact.toJson
         case prefix: PrefixRawMatchingStrategy => prefix.toJson
+        case contains: ContainsRawMatchingStrategy => contains.toJson
       }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
     }
     implicit val rawOptionsFormat: RootJsonFormat[RawOptions] = jsonFormat4(RawOptions.apply)

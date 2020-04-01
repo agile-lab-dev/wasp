@@ -19,7 +19,11 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
     val dataPath = new Path(config.rawModel.uri)
     val backupHandler = new HdfsBackupHandler(fs, new Path(config.backupDirUri), dataPath)
 
-    delete(handler, backupHandler, config, dataPath, spark)
+    if (config.keysToDeleteWithCorrelation.nonEmpty) {
+      delete(handler, backupHandler, config, dataPath, spark)
+    } else {
+      Success(Seq.empty)
+    }
   }
 
   def delete(deletionHandler: HdfsDeletionHandler,
@@ -106,7 +110,7 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
       rawDataDF <- HdfsUtils.readRawModel(config.rawModel, spark)
       // Retrieve all the parquet files that contain at least on of the key to delete
       filesToFilterAndKeys <- filterDataFrame(config, rawDataDF)
-      _ = logger.info(s"Files to filter: ${filesToFilterAndKeys.mkString("\n", "\n", "")}")
+      _ = logger.info(s"Files to filter: ${filesToFilterAndKeys.collect{ case (Some(x), _) => x }.mkString("\n", "\n", "")}")
     } yield filesToFilterAndKeys
 
     tryFiles.recoverWith {

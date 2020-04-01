@@ -11,14 +11,15 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.ConfigUtil
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.{KeyWithCorrelation, RowKeyWithCorrelation}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
 import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.filter.{FilterList, FirstKeyOnlyFilter, KeyOnlyFilter, PrefixFilter}
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.catalyst.expressions.Contains
 import org.apache.spark.sql.functions.{expr, lit}
 
 import scala.util.{Failure, Success}
@@ -44,14 +45,14 @@ case class HBaseDeletionConfig(
 /**
   * Contains the configuration settings for an Hdfs Deletion Job
   *
-  * @param keysToDeleteWithCorrelation              list of distinct keys to delete (from config or input model)
-  * @param rawModel                  RawModel to handle
-  * @param rawMatchingStrategy       RawMatchingStrategy defined in the BatchJobModel
-  * @param rawMatchingCondition      WHERE condition derived from the RawMatchingStrategy
-  * @param partitionPruningCondition WHERE condition derived from the PartitionPruningStrategy
-  * @param stagingDirUri             staging directory path to use (from config or default = rawModel.uri + "/staging")
-  * @param backupDirUri              backup directory parent path to use (from config or default = rawModel.uri.parent + "/staging")
-  * @param missingPathFailure        if true a missing path inside [[rawModel]] results in deletion failure
+  * @param keysToDeleteWithCorrelation list of distinct keys to delete (from config or input model)
+  * @param rawModel                    RawModel to handle
+  * @param rawMatchingStrategy         RawMatchingStrategy defined in the BatchJobModel
+  * @param rawMatchingCondition        WHERE condition derived from the RawMatchingStrategy
+  * @param partitionPruningCondition   WHERE condition derived from the PartitionPruningStrategy
+  * @param stagingDirUri               staging directory path to use (from config or default = rawModel.uri + "/staging")
+  * @param backupDirUri                backup directory parent path to use (from config or default = rawModel.uri.parent + "/staging")
+  * @param missingPathFailure          if true a missing path inside [[rawModel]] results in deletion failure
   */
 case class HdfsDeletionConfig(
                                keysToDeleteWithCorrelation: Seq[KeyWithCorrelation],
@@ -70,6 +71,9 @@ case class HdfsDeletionConfig(
         dataKeyColumn.equalTo(inputKeyColumn)
       case PrefixRawMatchingStrategy(_) =>
         dataKeyColumn.startsWith(inputKeyColumn)
+      case ContainsRawMatchingStrategy(_) =>
+        new Column(Contains(dataKeyColumn.expr, inputKeyColumn.expr))
+      //        dataKeyColumn.contains(inputKeyColumn)
     }
   }
 }
@@ -111,6 +115,11 @@ object HdfsDeletionConfig {
       case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) =>
         val regex = keysToDelete.mkString("^", "|^", "")
         expr(dataframeKeyMatchingExpression) rlike regex
+      case ContainsRawMatchingStrategy(dataframeKeyMatchingExpression) =>
+        val expression = expr(dataframeKeyMatchingExpression)
+        keysToDelete.foldLeft(lit(false)) {
+          case (acc, key) => acc or expression.contains(key)
+        }
     }
   }
 
