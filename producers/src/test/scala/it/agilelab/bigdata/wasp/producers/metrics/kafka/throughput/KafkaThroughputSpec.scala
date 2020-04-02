@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
@@ -7,6 +9,8 @@ import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 import it.agilelab.bigdata.wasp.producers.StartMainTask
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.Constants
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+
+import scala.concurrent.duration.FiniteDuration
 
 class KafkaThroughputSpec extends TestKit(
   ActorSystem("BacklogSizeAnalyzerSpec",
@@ -19,12 +23,12 @@ class KafkaThroughputSpec extends TestKit(
     TestKit.shutdownActorSystem(system)
   }
 
-  it should "correctly start and stop all the actors and output a correct throughput through epocs" ignore {
+  it should "correctly start and stop all the actors and output a correct throughput through epocs" in {
     val throughputGuardian = system.actorOf(Props(new TestKafkaThroughputGuardian), "TestKafkaThroughputGuardian")
     throughputGuardian ! Start
     throughputGuardian ! StartMainTask
     Constants.testThroughputActor = testActor
-    expectMsg(Right(()))
+    expectMsg(FiniteDuration(20, TimeUnit.SECONDS), Right(()))
     while (!Constants.offsetCheckerPool.contains(Constants.throughputTestTopic)) {}
     Constants.offsetCheckerPool(Constants.throughputTestTopic).offsets = Map(0 -> 0L)
     for {i <- 0 until 10} expectMsg(s"0:$i")

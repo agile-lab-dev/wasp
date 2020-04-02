@@ -15,15 +15,23 @@ import scala.util.{Failure, Success, Try}
 
 class HdfsDataDeletion(fs: FileSystem) extends Logging {
   def delete(config: HdfsDeletionConfig, spark: SparkSession): Try[Seq[DeletionOutput]] = {
+    logger.info("Starting HDFS deletion handling")
     val handler = new HdfsDeletionHandler(fs, config, spark)
     val dataPath = new Path(config.rawModel.uri)
     val backupHandler = new HdfsBackupHandler(fs, new Path(config.backupDirUri), dataPath)
 
-    if (config.keysToDeleteWithCorrelation.nonEmpty) {
+    val output = if (config.keysToDeleteWithCorrelation.nonEmpty) {
       delete(handler, backupHandler, config, dataPath, spark)
     } else {
+      logger.info(s"No keys to delete, completing deletion successfully with no output")
       Success(Seq.empty)
     }
+
+    output match {
+      case Failure(_) => logger.info("Deletion failed")
+      case Success(_) => logger.info("Deletion completed successfully")
+    }
+    output
   }
 
   def delete(deletionHandler: HdfsDeletionHandler,
@@ -70,7 +78,7 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
                                backupHandler: HdfsBackupHandler,
                                backupDir: Path,
                                dataPath: Path): Try[Unit] = {
-    logger.info(s"Performing handling of parquet files found...")
+    logger.info(s"Performing handling of files found...")
     hdfsDeletionHandler.delete(filesToHandle) recoverWith {
       case deletionThrowable =>
         logger.error(s"Error during deletion of model inside $dataPath. Restoring backup from $backupDir...")
@@ -102,13 +110,13 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
     }
   }
 
-  /* Retrieve all parquet files to filter, together with the keys to delete each file contains */
+  /* Retrieve all files to filter, together with the keys to delete each file contains */
   private def getFilesToFilter(config: HdfsDeletionConfig, spark: SparkSession): Try[Array[(Option[FileName], KeyWithCorrelation)]] = {
-    logger.info(s"Searching for parquet files containing the selected keys...")
+    logger.info(s"Searching for files containing the selected keys...")
     import spark.implicits._
     val tryFiles = for {
       rawDataDF <- HdfsUtils.readRawModel(config.rawModel, spark)
-      // Retrieve all the parquet files that contain at least on of the key to delete
+      // Retrieve all the files that contain at least on of the key to delete
       filesToFilterAndKeys <- filterDataFrame(config, rawDataDF)
       _ = logger.info(s"Files to filter: ${filesToFilterAndKeys.collect{ case (Some(x), _) => x }.mkString("\n", "\n", "")}")
     } yield filesToFilterAndKeys
@@ -119,7 +127,7 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
   }
 
   /* Filter `rawDataDF` with the RawMatchingStrategy and PartitionPruningStrategy defined in the config,
-     returning the parquet files to be handled and the list of keys matched to delete that each of them contains */
+     returning the files to be handled and the list of keys matched to delete that each of them contains */
   private def filterDataFrame(config: HdfsDeletionConfig, rawDataDF: DataFrame)
                              (implicit ev: Encoder[(Option[String], String, String)]): Try[Array[(Option[FileName], KeyWithCorrelation)]] = {
     Try {

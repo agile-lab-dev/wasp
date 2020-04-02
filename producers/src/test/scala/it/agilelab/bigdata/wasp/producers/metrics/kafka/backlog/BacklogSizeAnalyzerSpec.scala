@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
@@ -8,6 +9,8 @@ import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.core.messages.{Start, Stop, TelemetryMessageSource, TelemetryMessageSourcesSummary}
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.Constants
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+
+import scala.concurrent.duration.FiniteDuration
 
 class BacklogSizeAnalyzerSpec extends TestKit(
   ActorSystem("BacklogSizeAnalyzerSpec",
@@ -25,7 +28,7 @@ class BacklogSizeAnalyzerSpec extends TestKit(
   it should "start, calculate backlog and then stop gracefully" in {
     val backlogGuardian = system.actorOf(Props(new TestBacklogSizeAnalyzerProducerGuardian(testActor)), "TestBacklogSizeAnalyzerProducerGuardian")
     backlogGuardian ! Start
-    expectMsg(Right(()))
+    expectMsg(FiniteDuration(20, TimeUnit.SECONDS), Right(()))
     backlogGuardian ! telemetryMessageSourcesSummary(0, 0)
     while (!Constants.offsetCheckerPool.contains(Constants.backlogTestTopic)) {}
     Constants.offsetCheckerPool(Constants.backlogTestTopic).offsets = Map(0 -> 0L)

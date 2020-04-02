@@ -1,13 +1,13 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hdfs
 
-import com.github.dwickern.macros.NameOf.nameOf
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.DeletionOutput
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config.HdfsDeletionConfig
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsUtils
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.{DeletionOutput, KeyWithCorrelation}
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.RawModel
 import org.apache.hadoop.fs.{FileSystem, LocatedFileStatus, Path}
-import org.apache.spark.sql.functions.{expr, lit}
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.util.{Success, Try}
@@ -20,7 +20,7 @@ class HdfsDeletionHandler(fs: FileSystem, config: HdfsDeletionConfig, spark: Spa
     * Deletes the keys to delete stored in [[config]].`keysToDelete` from the files `filesToFilter`.
     * All files to filter are read and merged into a DataFrame, and then only the rows that do not match the
     * RawMatchingStrategy and PartitionPruningStrategy defined in [[config]] are written into a staging directory.
-    * Once the new parquet files are correctly written into the staging directory, the original `filesToFilter` are deleted,
+    * Once the new files are correctly written into the staging directory, the original `filesToFilter` are deleted,
     * and the newly written files are moved to the data directory.
     */
   def delete(filesToFilter: List[String]): Try[Unit] = {
@@ -29,7 +29,8 @@ class HdfsDeletionHandler(fs: FileSystem, config: HdfsDeletionConfig, spark: Spa
       case files =>
         for {
           // Read all files into a single DataFrame
-          dfToFilter <- Try(files.map(readParquetWithPartitionColumns(spark)).reduce(_ union _))
+          readDF <- GdprUtils.traverseWithTry(files)(readRawModelWithPartitionColumns(spark, config.rawModel))
+          dfToFilter <- Try(readDF.reduce(_ union _))
           // Select only the rows not to be deleted
           dfToWrite = filterRowsToMaintain(dfToFilter)
           // Write new filtered data into staging dir
@@ -54,12 +55,12 @@ class HdfsDeletionHandler(fs: FileSystem, config: HdfsDeletionConfig, spark: Spa
     dfToFilter.where(!config.rawMatchingCondition.and(config.partitionPruningCondition))
   }
 
-  /* Read a single parquet file, including the partition columns derived from its path inside the dataframe */
-  private def readParquetWithPartitionColumns(spark: SparkSession)(uri: String): DataFrame = {
-    val df = spark.read.parquet(uri)
-
-    HdfsUtils.findPartitionColumns(uri).foldLeft(df) {
-      case (accDf, (colName, colValue)) => accDf.withColumn(colName, lit(colValue))
+  /* Read a single file, including the partition columns derived from its path inside the dataframe */
+  private def readRawModelWithPartitionColumns(spark: SparkSession, rawModel: RawModel)(uri: String): Try[DataFrame] = {
+    HdfsUtils.readRawModel(rawModel.copy(uri = uri), spark).map { df =>
+      HdfsUtils.findPartitionColumns(uri).foldLeft(df) {
+        case (accDf, (colName, colValue)) => accDf.withColumn(colName, lit(colValue))
+      }
     }
   }
 

@@ -27,11 +27,11 @@ object HdfsUtils extends Logging {
     *  - This function creates:
     * `backupDir` = "/user/backup_123'
     *  - then it copies the file into this directory, replacing the prefix "/user/data" with "/user/backup_123":
-    *  "/user/backup_123/p1=a/p2=b/file.parquet"
+    * "/user/backup_123/p1=a/p2=b/file.parquet"
     *
-    * @param filesToBackup Files that should be copied in the backup directory
+    * @param filesToBackup   Files that should be copied in the backup directory
     * @param backupParentDir Base path where to create the backup directory
-    * @param dataPath Path containing the data that will be backup
+    * @param dataPath        Path containing the data that will be backup
     * @return Path of the newly created backup directory
     */
   def backupFiles(fs: FileSystem)
@@ -43,14 +43,19 @@ object HdfsUtils extends Logging {
         if (exists) {
           Failure(new IllegalStateException(s"Backup directory '$backupDirPath' already exists!"))
         } else {
-          logger.info(s"Backupping files ${filesToBackup.mkString("\n", "\n", "")} to '${backupDirPath.toString}'")
-          for {
-            moves <- GdprUtils.traverseTry(filesToBackup) { f =>
-              val newPath = replacePathPrefix(f, prefixPathToChange = dataPath, newPrefix = backupDirPath)
-              FileUtil.copy(fs, f, fs, newPath, false, fs.getConf)
-            }
-            _ <- GdprUtils.recoverFsOperation(moves.forall(identity), s"Cannot copy files into '$backupDirPath")
-          } yield backupDirPath
+          if (filesToBackup.isEmpty) {
+            logger.info(s"Nothing to backup, skipping: $dataPath")
+            Success(backupDirPath)
+          } else {
+            logger.info(s"Backupping files ${filesToBackup.mkString("\n", "\n", "")} to '${backupDirPath.toString}'")
+            for {
+              moves <- GdprUtils.traverseTry(filesToBackup) { f =>
+                val newPath = replacePathPrefix(f, prefixPathToChange = dataPath, newPrefix = backupDirPath)
+                FileUtil.copy(fs, f, fs, newPath, false, fs.getConf)
+              }
+              _ <- GdprUtils.recoverFsOperation(moves.forall(identity), s"Cannot copy files into '$backupDirPath")
+            } yield backupDirPath
+          }
         }
       }
     } yield backupPath
@@ -75,11 +80,11 @@ object HdfsUtils extends Logging {
   }
 
   def deletePath(fs: FileSystem)(sourcePath: Path): Try[Unit] = {
-/*    val iter = fs.listFiles(sourcePath, true)
-    logger.info("deleting path that contains the following files: ")
-    while (iter.hasNext) {
-      logger.info(iter.next().getPath.toString)
-    }*/
+    /*    val iter = fs.listFiles(sourcePath, true)
+        logger.info("deleting path that contains the following files: ")
+        while (iter.hasNext) {
+          logger.info(iter.next().getPath.toString)
+        }*/
     logger.info(s"Deleting path: ${sourcePath.toUri.toString}")
     Try(fs.delete(sourcePath, true)).flatMap {
       case true => Success(())

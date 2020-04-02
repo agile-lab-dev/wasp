@@ -24,7 +24,13 @@ object HBaseDeletionHandler extends Logging {
   type RowKeyMatched = Array[Byte]
 
   def delete(config: HBaseDeletionConfig): Try[Seq[DeletionOutput]] = {
-    Try(delete(config.tableName, config.hbaseConfigModel, config.keysWithScan, config.keyValueMatchingStrategy))
+    logger.info("Starting HBase deletion handling")
+    val output = Try(delete(config.tableName, config.hbaseConfigModel, config.keysWithScan, config.keyValueMatchingStrategy))
+    output match {
+      case Failure(_) => logger.info("Deletion failed")
+      case Success(_) => logger.info("Deletion completed successfully")
+    }
+    output
   }
 
   def delete(tableName: String,
