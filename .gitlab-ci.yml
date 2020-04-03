@@ -6,9 +6,11 @@ variables:
   COURSIER_CACHE: sbt-cache/coursier
 
 stages:
+  - censor # first censor cause it's faster
   - test
   - integration
   - deploy
+  
 
 cache:
   key: "mycachekey"
@@ -21,18 +23,28 @@ cache:
 
 test:
   stage: test
+  interruptible: true
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
     - sbt clean coverageOn test coverageOff coverageReport coverageAggregate
   only:
     - /^develop$/
-    - /(^feature\/.*)/
-    - /(^hotfix\/.*)/
     - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
+
+censor:
+  stage: censor
+  interruptible: true
+  image: "registry.gitlab.com/agilefactory/developers/censor:0.1.0-SNAPSHOT"
+  only: [merge_requests]
+  script:
+    - bash censor.sh
+    
 
 integration:
   tags:
     - cluster01
+  interruptible: true
   stage: integration
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
@@ -41,9 +53,14 @@ integration:
     - /(^release\/v([0-9]+)\.([0-9]+))/
 
 deploy:
+  interruptible: false
   tags:
     - cluster01
   stage: deploy
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
     - sbt clean publish
+  only:
+    - /^develop$/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
