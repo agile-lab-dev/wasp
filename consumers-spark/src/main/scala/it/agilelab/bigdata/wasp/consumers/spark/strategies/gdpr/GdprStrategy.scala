@@ -7,6 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hdfs.HdfsDataDel
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.ConfigUtils
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
 import GdprStrategy._
+import it.agilelab.bigdata.wasp.consumers.spark.batch.AggregateException
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
@@ -14,12 +15,43 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.{col, _}
-import org.apache.spark.sql.{DataFrame, Encoder, Encoders, SparkSession}
+import org.apache.spark.sql.{DataFrame, Encoder, Encoders, Row, SparkSession}
+import org.apache.spark.storage.StorageLevel
 import org.bson.BsonString
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
-class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Logging {
+class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with HasPostMaterializationHook with Logging {
+
+  /**
+    *
+    * @param maybeDataframe (optional) output dataframe of the strategy (it is None only if the strategy has no writer)
+    * @param maybeError     Some(error) if an error happened during materialization; None otherwise
+    * @return the wanted outcome of the strategy. This means that if the maybeError is not None and the hook does not
+    *         have a "recovery" logic, it should always return a Failure wrapping the input error.
+    */
+  override def postMaterialization(maybeDataframe: Option[DataFrame],
+                                   maybeError: Option[Throwable]): Try[Unit] = {
+    val errors = maybeError.map(Failure.apply).toList :::
+      postWriteActions.map(_.apply()).collect { case f@Failure(_) => f }
+    if (errors.isEmpty) {
+      Success(())
+    } else {
+      Failure(AggregateException("At least one shutdown action failed", errors.map(_.exception)))
+    }
+  }
+
+  private var postWriteActions: List[() => Try[Unit]] = List.empty
+
+  private def addPostWriteAction[A](action: () => A): Unit = {
+    addPostWriteAction(() => Try(action.apply()))
+  }
+
+  private def addPostWriteAction[A](action: () => Try[A]): Unit = {
+    val unitAction: () => Try[Unit] = () => action.apply().map(_ => ())
+    postWriteActions = unitAction :: postWriteActions
+  }
+
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
     // for each DataStore delete appropriate files
     val dataStoresDF = dataFrames.head._2
@@ -30,6 +62,15 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
     lazy val fileSystem = FileSystem.get(hadoopConf)
     lazy val hbaseConfig = WaspDB.getDB.getDocumentByField[HBaseConfigModel]("name", new BsonString(ConfigManager.getHBaseConfig.name))
     lazy val hdfsDataDeletion = new HdfsDataDeletion(fileSystem)
+    val STORAGE_LEVEL = "storageLevel"
+    val storageLevel =
+      ConfigUtils.getOptionalString(configuration, STORAGE_LEVEL).flatMap { s =>
+        Try(StorageLevel.fromString(s)).recoverWith {
+          case e =>
+            logger.warn(e.getMessage, e)
+            Failure(e)
+        }.toOption
+      }.getOrElse(StorageLevel.MEMORY_AND_DISK)
 
     val outputPartitions = ConfigUtils.getOptionalInt(configuration, OUTPUT_PARTITIONS_CONFIG_KEY).getOrElse(1)
     val runId = configuration.getString(RUN_ID_CONFIG_KEY)
@@ -37,39 +78,45 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
     implicit val keyWithCorrelationEncoder: Encoder[KeyWithCorrelation] = Encoders.product[KeyWithCorrelation]
 
     val dataStoresWithRunIdDF = dataStoresDF.where(col("runId").equalTo(runId))
+    val seqWithRunIdDF = dataStoresWithRunIdDF.collect().toSeq
 
     val deletionConfigs: List[DeletionConfig] = dataStores.map {
       case keyValueConf: KeyValueDataStoreConf =>
         HBaseDeletionConfig.create(
           configuration,
           keyValueConf,
-          getKeysRDD(dataStoresWithRunIdDF, keyValueConf.inputKeyColumn, keyValueConf.correlationIdColumn, sparkSession),
+          getKeysRDD(seqWithRunIdDF, keyValueConf.inputKeyColumn, keyValueConf.correlationIdColumn, sparkSession),
           hbaseConfig
         )
       case rawConf: RawDataStoreConf =>
         HdfsDeletionConfig.create(
           configuration,
           rawConf,
-          getKeys(dataStoresWithRunIdDF, rawConf.inputKeyColumn, rawConf.correlationIdColumn, sparkSession)
+          getKeys(seqWithRunIdDF, rawConf.inputKeyColumn, rawConf.correlationIdColumn)
         )
     }
 
-    val deletionResults: Seq[DeletionOutput] = deletionConfigs.flatMap {
+    val deletionResults: RDD[DeletionOutput] = deletionConfigs.map {
       case hbaseConfig: HBaseDeletionConfig =>
-        HBaseDeletionHandler.delete(hbaseConfig) match {
+        HBaseDeletionHandler.delete(hbaseConfig, storageLevel) match {
           case Failure(exception) =>
             logger.error(s"Error during HBase deletion of $hbaseConfig", exception)
-            hBaseFailureOutput(hbaseConfig, exception)
-          case Success(value) => value
+            sparkSession.sparkContext.makeRDD(hBaseFailureOutput(hbaseConfig, exception))
+          case Success(value) =>
+            addPostWriteAction { () =>
+              logger.info(s"Unpersisting RDD $value")
+              value.unpersist()
+            }
+            value
         }
       case hdfsConfig: HdfsDeletionConfig =>
         hdfsDataDeletion.delete(hdfsConfig, sparkSession) match {
           case Failure(exception) =>
             logger.error(s"Error during HDFS deletion of $hdfsConfig", exception)
-            hdfsFailureOutput(hdfsConfig, exception)
-          case Success(value) => value
+            sparkSession.sparkContext.makeRDD(hdfsFailureOutput(hdfsConfig, exception))
+          case Success(value) => sparkSession.sparkContext.makeRDD(value)
         }
-    }
+    }.reduce(_ union _)
 
     implicit val outputEncoder: Encoder[DeletionOutputDataFrame] = Encoders.product[DeletionOutputDataFrame]
     deletionResults.map(_.toOutputDF)
@@ -77,7 +124,6 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
       .withColumn(RUN_ID_COLUMN_NAME, lit(runId))
       .repartition(outputPartitions)
   }
-
 
   private def hdfsFailureOutput(hdfsConfig: HdfsDeletionConfig, exception: Throwable): Seq[DeletionOutput] = {
     val keyMatchType = HdfsMatchType.fromRawMatchingStrategy(hdfsConfig.rawMatchingStrategy)
@@ -99,28 +145,21 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with Loggin
   }
 
   /* Collect keys from `inputDF`, reading them from the column `inputKeyColumn` */
-  private def getKeys(inputDF: DataFrame, inputKeyColumn: String, correlationIdColumn: String, spark: SparkSession)
+  private def getKeys(inputRows: Seq[Row], inputKeyColumn: String, correlationIdColumn: String)
                      (implicit ev: Encoder[KeyWithCorrelation]): Seq[KeyWithCorrelation] = {
-    inputDF
-      .select(
-        col(inputKeyColumn).alias("key"),
-        col(correlationIdColumn).alias("correlationId")
+    inputRows.map { r =>
+      KeyWithCorrelation(
+        r.getAs[String](inputKeyColumn),
+        r.getAs[String](correlationIdColumn)
       )
-      .as[KeyWithCorrelation]
-      .collect()
-      .toSeq
+    }
   }
 
   /* Retrieve keys as RDD from `inputDF`, reading them from the column `inputKeyColumn` */
-  private def getKeysRDD(inputDF: DataFrame, inputKeyColumn: String, correlationIdColumn: String, spark: SparkSession)
+  private def getKeysRDD(inputRows: Seq[Row], inputKeyColumn: String, correlationIdColumn: String, spark: SparkSession)
                         (implicit ev: Encoder[KeyWithCorrelation]): RDD[KeyWithCorrelation] = {
-    inputDF
-      .select(
-        col(inputKeyColumn).alias("key"),
-        col(correlationIdColumn).alias("correlationId")
-      )
-      .as[KeyWithCorrelation]
-      .rdd
+
+    spark.sparkContext.makeRDD(getKeys(inputRows, inputKeyColumn, correlationIdColumn))
   }
 
 }

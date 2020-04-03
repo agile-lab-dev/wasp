@@ -934,7 +934,9 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     val deletionResult = target.delete(deletionConfig, spark)
 
     deletionResult.failure.exception shouldBe a[DeletionException]
-    deletionResult.failure.exception.getMessage should startWith(s"Path does not exist: file:$dataUri")
+
+    deletionResult.failure.exception.getMessage should
+      startWith(s"Path does not exist: file:${new Path(dataUri).toString}")
   }
 
   it should "return a NOT_FOUND when a path is missing and missingPathFailure=false" in {
@@ -1013,7 +1015,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     val string =
       s""" { "$RAW_CONF_KEY" { """ +
         startAndEnd.fold("") { case (start, end) => s""" "$START_PERIOD_KEY" = $start, "$END_PERIOD_KEY" = $end, """ } +
-        s""" "backupDir" = $backupUri, "stagingDir" = $stagingUri } } """
+        s""" "backupDir" = "$backupUri", "stagingDir" = "$stagingUri" } } """
     ConfigFactory.parseString(string)
   }
 

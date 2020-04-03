@@ -14,6 +14,7 @@ import org.apache.commons.io.IOUtils
 import org.apache.hadoop.hbase.client.{Scan, Table}
 import org.apache.spark.TaskContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
@@ -23,9 +24,14 @@ object HBaseDeletionHandler extends Logging {
   type KeyToMatch = Array[Byte]
   type RowKeyMatched = Array[Byte]
 
-  def delete(config: HBaseDeletionConfig): Try[Seq[DeletionOutput]] = {
+  /**
+    * Even if this returns an RDD, the RDD has already been computed and persisted, so that if it fails, it fails
+    * eagerly and not lazily (as it would be normally). This is wanted so that the Try can catch the possible exception.
+    * It is mandatory for the caller to take care of the RDD un-cache operation.
+    */
+  def delete(config: HBaseDeletionConfig, storageLevel: StorageLevel): Try[RDD[DeletionOutput]] = {
     logger.info("Starting HBase deletion handling")
-    val output = Try(delete(config.tableName, config.hbaseConfigModel, config.keysWithScan, config.keyValueMatchingStrategy))
+    val output = Try(delete(config.tableName, config.hbaseConfigModel, config.keysWithScan, config.keyValueMatchingStrategy, storageLevel))
     output match {
       case Failure(_) => logger.info("Deletion failed")
       case Success(_) => logger.info("Deletion completed successfully")
@@ -33,11 +39,12 @@ object HBaseDeletionHandler extends Logging {
     output
   }
 
-  def delete(tableName: String,
-             hbaseConfig: Option[HBaseConfigModel],
-             keysWithScanRDD: RDD[(KeyWithCorrelation, Scan)],
-             keyValueMatchingStrategy: KeyValueMatchingStrategy): Seq[DeletionOutput] = {
-    keysWithScanRDD.mapPartitions { keysWithScan: Iterator[(KeyWithCorrelation, Scan)] =>
+  private def delete(tableName: String,
+                     hbaseConfig: Option[HBaseConfigModel],
+                     keysWithScanRDD: RDD[(KeyWithCorrelation, Scan)],
+                     keyValueMatchingStrategy: KeyValueMatchingStrategy,
+                     storageLevel: StorageLevel): RDD[DeletionOutput] = {
+    val persisted = keysWithScanRDD.mapPartitions { keysWithScan: Iterator[(KeyWithCorrelation, Scan)] =>
       val hBaseConnection = new HBaseConnection(hbaseConfig)
       TaskContext.get().addTaskCompletionListener(_ => hBaseConnection.closeConnection())
       hBaseConnection.withTable(tableName) { table =>
@@ -67,7 +74,9 @@ object HBaseDeletionHandler extends Logging {
             }
         }
       }
-    }.collect()
+    }.persist(storageLevel)
+    persisted.foreach(_ => ())
+    persisted
   }
 
   /* Returns true if `keyToMatch` is returned from the provided `scan`, else it returns false */
