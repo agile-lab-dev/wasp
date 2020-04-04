@@ -43,6 +43,7 @@ case class SparkStreamingConfigModel(
 
 																			streamingBatchIntervalMs: Int,
 																			checkpointDir: String,
+																			triggerIntervalMs: Option[Long],
 
 																			others: Seq[SparkEntryConfig],
 																			name: String

@@ -159,6 +159,8 @@ object ConfigManager {
     MongoDBConfigModel(
       mongoDBSubConfig.getString("address"),
       mongoDBSubConfig.getString("db-name"),
+      mongoDBSubConfig.getString("username"),
+      mongoDBSubConfig.getString("password"),
       mongoDBSubConfig.getInt("timeout")
     )
   }
@@ -195,6 +197,8 @@ object ConfigManager {
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
 
+    val triggerInterval = if(sparkSubConfig.hasPath("trigger-interval-ms")) Some(sparkSubConfig.getLong("trigger-interval-ms")) else None
+
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
       readConnectionConfig(sparkSubConfig.getConfig("master")),
@@ -215,6 +219,7 @@ object ConfigManager {
 
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
+      triggerInterval,
       readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
 
       sparkStreamingConfigName
@@ -287,6 +292,7 @@ object ConfigManager {
     HBaseConfigModel(
       hbaseSubConfig.getString("core-site-xml-path"),
       hbaseSubConfig.getString("hbase-site-xml-path"),
+      readOthersConfig(hbaseSubConfig).map(e => HBaseEntryConfig(e._1, e._2)),
       hbaseConfigName
     )
   }

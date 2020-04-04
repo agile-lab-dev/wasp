@@ -6,6 +6,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWri
 import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.KeyValueModel
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client.Put
@@ -13,7 +14,7 @@ import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
 import org.apache.hadoop.hbase.spark.{HBaseContext, PutConverterFactory}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
@@ -44,12 +45,19 @@ class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel,
       KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
       HBaseTableCatalog.newTable -> "4"
     )
-    stream.writeStream
+    val streamWriter = stream.writeStream
       .options(options)
       .option("checkpointLocation", checkpointDir)
       .queryName(queryName)
       .format("org.apache.hadoop.hbase.spark")
-      .start()
+
+    if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
+      streamWriter
+        .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
+        .start()
+    else
+      streamWriter.start()
+
   }
 }
 

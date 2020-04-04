@@ -177,6 +177,7 @@ object RowToAvro {
   private val doubleType = "double"
   private val stringType = "string"
   private val arrayType = "array"
+  private val binaryType = "bytes"
 
   /**
     * Ensures schemas are compatible, that is:
@@ -238,6 +239,7 @@ object RowToAvro {
     case _: DoubleType => doubleType
     case _: StringType => stringType
     case _: ArrayType => arrayType
+    case _: BinaryType => binaryType
   }
 
   /**
@@ -278,7 +280,7 @@ object RowToAvro {
 
   def avroTypeToString(tpe: Type): String = tpe match {
     case Type.BOOLEAN => booleanType
-    case Type.BYTES => byteType
+    case Type.BYTES => binaryType
     case Type.INT => intType
     case Type.LONG => longType
     case Type.FLOAT => floatType

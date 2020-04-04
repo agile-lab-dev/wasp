@@ -9,7 +9,7 @@ import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, ElasticConfiguration}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -110,11 +110,17 @@ class ElasticSparkStructuredStreamingWriter(indexBL: IndexBL,
           index.dataType,
           index.getJsonSchema))) {
 
-        stream.writeStream
+        val streamWriter = stream.writeStream
           .options(options)
           .format("es")
           .queryName(queryName)
-          .start(resource)
+
+        if(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.isDefined)
+          streamWriter
+            .trigger(Trigger.ProcessingTime(ConfigManager.getSparkStreamingConfig.triggerIntervalMs.get))
+            .start(resource)
+        else
+          streamWriter.start(resource)
 
       } else {
         val msg = s"Error creating elastic index: $index with this index name $indexName"
