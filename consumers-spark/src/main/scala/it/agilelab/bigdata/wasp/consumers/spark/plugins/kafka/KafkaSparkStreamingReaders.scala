@@ -56,7 +56,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       // rate limit as is, otherwise multiply by triggerIntervalMs/1000
       // if the rate limit is not set, do not set maxOffsetsPerTrigger
       val triggerIntervalMs = SparkUtils.getTriggerIntervalMs(ConfigManager.getSparkStreamingConfig, etl)
-      val maybeRateLimit = streamingReaderModel.rateLimit.map(x => if (triggerIntervalMs == 0l) x else triggerIntervalMs/1000d * x)
+      val maybeRateLimit: Option[Long] = streamingReaderModel.rateLimit.map(x => if (triggerIntervalMs == 0l) x else (triggerIntervalMs/1000d * x).toLong)
       val maybeMaxOffsetsPerTrigger = maybeRateLimit.map(rateLimit => ("maxOffsetsPerTrigger", rateLimit.toString))
       
       // calculate the options for the DataStreamReader
