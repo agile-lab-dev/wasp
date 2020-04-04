@@ -12,7 +12,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, RowToAvro, StringToByteArrayUtil}
-import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.HEADER_DATA_TYPE_NULL_VALUE
+import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.HEADER_DATA_TYPE
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.streaming.DataStreamWriter
@@ -215,7 +215,7 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     // generate a schema and encoder for final metadata & data
     val schema = StructType(
       keyFieldName.map(_ => StructField("key", BinaryType, nullable = true)).toList ++
-        headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE_NULL_VALUE, nullable = false)).toList ++
+        headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE, nullable = false)).toList ++
         topicFieldName.map(_ => StructField("topic", StringType, nullable = false)).toList:+
         StructField("value", BinaryType, nullable = false)
     )

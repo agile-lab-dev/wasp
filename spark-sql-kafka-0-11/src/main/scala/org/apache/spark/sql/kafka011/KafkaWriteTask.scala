@@ -28,7 +28,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection}
 import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.kafka011.KafkaWriter.log
-import org.apache.spark.sql.types.{BinaryType, StringType}
+import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
 
@@ -132,12 +132,15 @@ private[kafka011] class KafkaWriteTask(
           s"attribute unsupported type $t")
     }
     val headerExpression = inputSchema.find(_.name == HEADERS_ATTRIBUTE_NAME)
-      .getOrElse(Literal(ArrayData.toArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE))
+      .getOrElse(Literal(ArrayData.toArrayData(Array.empty[Row]), HEADER_DATA_TYPE))
     headerExpression.dataType match {
-      case HEADER_DATA_TYPE_NULL_VALUE | HEADER_DATA_TYPE_NON_NULL_VALUE => // good
-      case HEADER_DATA_TYPE_NULL_ELEMENTS_NULL_VALUE | HEADER_DATA_TYPE_NULL_ELEMENTS_NON_NULL_VALUE => // not so good
-      // we accept these because https://issues.apache.org/jira/browse/SPARK-16167 is triggered by WASP's Kafka
-      // support of the AVRO encoded-topic when writing from Spark
+      case HEADER_DATA_TYPE => // good
+      case x @ ArrayType(StructType(Array(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, _, _),
+                                          StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, _, _))), _) => // not so good
+        // one or more of the nullability properties are not what we expect
+        // we accept these anyway because https://issues.apache.org/jira/browse/SPARK-16167 is triggered by WASP's Kafka
+        // support of the AVRO encoded-topic when writing from Spark, and Spark has plenty of other bugs with regards to
+        // nullability that make it otherwise impractical to enforce them
       case t =>
         throw new IllegalStateException(s"${HEADERS_ATTRIBUTE_NAME} " +
           s"attribute unsupported type $t")

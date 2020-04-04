@@ -76,12 +76,17 @@ private[kafka011] object KafkaWriter extends Logging {
           s"must be a StringType or BinaryType; actual type was: $dt")
     }
     schema.find(_.name == HEADERS_ATTRIBUTE_NAME).getOrElse(
-      Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE_NULL_VALUE)
+      Literal(new GenericArrayData(Array.empty[Row]), HEADER_DATA_TYPE)
     ).dataType match {
-      case HEADER_DATA_TYPE_NULL_VALUE | HEADER_DATA_TYPE_NON_NULL_VALUE => // good
-      case HEADER_DATA_TYPE_NULL_ELEMENTS_NULL_VALUE | HEADER_DATA_TYPE_NULL_ELEMENTS_NON_NULL_VALUE => // not so good
-        // we accept these because https://issues.apache.org/jira/browse/SPARK-16167 is triggered by WASP's Kafka
-        // support of the AVRO encoded-topic when writing from Spark
+      case HEADER_DATA_TYPE => // good
+      case x @ ArrayType(StructType(Array(StructField(HEADER_KEY_ATTRIBUTE_NAME, StringType, _, _),
+                                          StructField(HEADER_VALUE_ATTRIBUTE_NAME, BinaryType, _, _))), _) => // not so good
+        // one or more of the nullability properties are not what we expect
+        // we accept these anyway because https://issues.apache.org/jira/browse/SPARK-16167 is triggered by WASP's Kafka
+        // support of the AVRO encoded-topic when writing from Spark, and Spark has plenty of other bugs with regards to
+        // nullability that make it otherwise impractical to enforce them
+        log.warn(s"$HEADERS_ATTRIBUTE_NAME attribute type has different nullability than recommended. Found $x but" +
+                   s" expected $HEADER_DATA_TYPE")
       case dt =>
         throw new AnalysisException(s"$HEADERS_ATTRIBUTE_NAME attribute type must be an ArrayType of non-null elements" +
           s" of type StructType with a non-null field named $HEADER_KEY_ATTRIBUTE_NAME of type StringType and a" +
