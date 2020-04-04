@@ -8,7 +8,7 @@ private[wasp] object TestRawModel {
   /* for Pipegraph */
   lazy val nested = RawModel(
     name = "TestRawNestedSchemaModel",
-    uri="hdfs://namenode:9000/user/test_nested/",
+    uri="hdfs://andreaf-laptop:9000/user/root/test_nested/",
     timed = true,
     schema = StructType(Seq(
       StructField("id", StringType),
@@ -23,7 +23,7 @@ private[wasp] object TestRawModel {
   /* for BatchJob */
   lazy val flat = RawModel(
     name = "TestRawFlatSchemaModel",
-    uri="hdfs://namenode:9000/user/test_flat/",
+    uri="hdfs://andreaf-laptop:9000/user/root/test_flat/",
     timed = true,
     schema = StructType(Seq(
       StructField("id", StringType),

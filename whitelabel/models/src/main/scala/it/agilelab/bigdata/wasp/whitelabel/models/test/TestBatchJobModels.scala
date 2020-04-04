@@ -55,6 +55,31 @@ private[wasp] object TestBatchJobModels {
     )
   }
 
+  object PostMaterializationHook {
+    /**
+      * Fail if the HDFS directory does not exist
+      */
+    lazy val flatToConsole = BatchJobModel(
+      name = "TestBatchJobFromHdfsFlatToConsole",
+      description = "Description of TestBatchJobFromHdfsFlatToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromHdfsFlatToConsole",
+        inputs = List(
+          ReaderModel.rawReader("Raw Reader", TestRawModel.flat)
+        ),
+        output = WriterModel.consoleWriter("Console Writer"),
+        mlModels = List(),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
+  }
+
+
   object FromHdfs {
 
     /**
@@ -91,7 +116,7 @@ private[wasp] object TestBatchJobModels {
       etl = BatchETLModel(
         name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
         inputs = List(
-          ReaderModel.rawReader("Raw Reader", TestRawModel.nested)
+          ReaderModel.rawReader("TestRawNestedSchemaModel", TestRawModel.nested)
         ),
         output = WriterModel.consoleWriter("Console Writer"),
         mlModels = List(),
@@ -119,6 +144,33 @@ private[wasp] object TestBatchJobModels {
         mlModels = List(),
         strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestJdbcMySqlStrategy",
                                               ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+        kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
+      )
+    )
+  }
+
+
+  object WithPostHook {
+
+
+    /**
+      *  Fail if the HDFS directory does not exist
+      */
+    lazy val nestedToConsole = BatchJobModel(
+      name = "TestBatchJobFromHdfsNestedToConsolePostHook",
+      description = "Description of TestBatchJobFromHdfsNestedToConsole",
+      owner = "user",
+      system = false,
+      creationTime = System.currentTimeMillis(),
+      etl = BatchETLModel(
+        name = "EtlModel for TestBatchJobFromHdfsNestedToConsole",
+        inputs = List(
+          ReaderModel.rawReader("TestRawNestedSchemaModel", TestRawModel.nested)
+        ),
+        output = WriterModel.consoleWriter("Console Writer"),
+        mlModels = List(),
+        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategyPostHook",
+          ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
         kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_DIRECT
       )
     )

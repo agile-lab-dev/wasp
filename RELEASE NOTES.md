@@ -2411,3 +2411,54 @@ Now telemetry producers are shared executor side
 #### Related issue
 
 Closes #202
+
+
+## WASP 2.20.1
+
+    commit e72f7c618a028ba723d11c4849d22498302b9f9c
+    Author: Andrea Fonti <andrea.fonti@agilelab.it>
+    Date:   Tue Dec 3 09:26:19 2019 +0000
+
+### [#237] Wasp could expose before and after materialize hooks
+
+#### New features and improvements
+
+Strategies can now mix also this trait
+
+```scala
+/**
+  * Mixin this trait to a strategy that needs an hook after the write phase,
+  * the framework will detect this trait and call postMaterialization after the relevant phase
+  */
+trait HasPostMaterializationHook {
+  self: Strategy =>
+
+  /**
+    *
+    * @param maybeDataframe (optional) output dataframe of the strategy (it is None only if the strategy has no writer)
+    * @param maybeError     Some(error) if an error happened during materialization; None otherwise
+    * @return the wanted outcome of the strategy. This means that if the maybeError is not None and the hook does not
+    *         have a "recovery" logic, it should always return a Failure wrapping the input error.
+    */
+  def postMaterialization(maybeDataframe: Option[DataFrame], maybeError: Option[Throwable]): Try[Unit]
+
+}
+```
+
+To declare that they need a hook after materialization of batch a job to do cleanup operations, strategies that do not mix this trait will work as usual
+
+#### Breaking changes
+
+No breaking changes
+
+#### Migration
+
+No migration required
+
+#### Bug fixes
+
+No bugs fixed
+
+#### Related issue
+
+Closes #237
