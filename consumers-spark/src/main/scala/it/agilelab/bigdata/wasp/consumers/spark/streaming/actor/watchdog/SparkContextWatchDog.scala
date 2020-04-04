@@ -13,14 +13,26 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
   implicit val ec = context.system.dispatcher
   context.system.scheduler.schedule(0.seconds, 1.second, self, MonitorSparkContext)
 
-  override def receive: Receive = {
+
+  def waitForSparkContextToBeAvailable : Receive  = {
+    case MonitorSparkContext if !sc.isStopped =>
+      logger.info("Spark context came up, beginning watchdog")
+      context.become(superviseSparkContext)
+    case MonitorSparkContext if sc.isStopped =>
+      logger.trace("spark context has not started yet, giving it some slack")
+  }
+
+
+  def superviseSparkContext: Receive = {
     case MonitorSparkContext if sc.isStopped =>
       logger.trace("Spark context is dead")
+      failureAction()
 
     case MonitorSparkContext if !sc.isStopped =>
       logger.trace("Everything is fine, spark context is alive")
-      failureAction()
   }
+
+  override def receive: Receive = superviseSparkContext
 }
 
 object SparkContextWatchDog extends Logging {

@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.UUID
 
 import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
 import State._
@@ -477,7 +478,9 @@ object PipegraphGuardian {
                           sparkSession: SparkSession,
                           mlModelBl: MlModelBL,
                           topicsBl: TopicBL,
-                          writerFactory: WriterFactory): ChildFactory = { (pipegraph,name, context) =>
+                          writerFactory: WriterFactory): ChildFactory = { (pipegraph,suppliedName, context) =>
+
+    val name = s"$suppliedName-${UUID.randomUUID()}"
 
     //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
