@@ -283,6 +283,31 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val hbaseMultipleClustering = PipegraphModel(
+        name = "TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
+        description = "Description of TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json6, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbaseMultipleClusteringKeyValueModel),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None
+      )
+
       lazy val multiETL = PipegraphModel(
         name = "TestMultiEtlJSONPipegraph",
         description = "Description of TestMultiEtlJSONPipegraph",
@@ -1043,5 +1068,42 @@ private[wasp] object TestPipegraphs {
 
       dashboard = None
     )
+  }
+
+  object SparkSessionErrors {
+
+    lazy val pipegraph = PipegraphModel(
+      name = "TestStrategiesSettingSparkSessionConf",
+      description = "Two strategies setting different spark.sql.shuffle.partitions, should create independent values for each one",
+      owner = "user",
+      isSystem = false,
+      creationTime = System.currentTimeMillis,
+
+      legacyStreamingComponents = List(),
+      structuredStreamingComponents = List(StructuredStreamingETLModel(
+        name = "TestSetShufflePartitionsTo10ETL",
+        streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro, None),
+        staticInputs = List.empty,
+        streamingOutput = WriterModel.consoleWriter("Console Writer"),
+        mlModels = List(),
+        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestSetShufflePartitionsTo10Strategy")),
+        triggerIntervalMs = None,
+        options = Map()
+      ),
+        StructuredStreamingETLModel(
+          name = "TestSetShufflePartitionsTo20ETL",
+          streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro, None),
+          staticInputs = List.empty,
+          streamingOutput = WriterModel.consoleWriter("Console Writer"),
+          mlModels = List(),
+          strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestSetShufflePartitionsTo20Strategy")),
+          triggerIntervalMs = None,
+          options = Map()
+        )),
+      rtComponents = List(),
+
+      dashboard = None
+    )
+
   }
 }

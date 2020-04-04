@@ -121,13 +121,7 @@ object StructuredStreamingETLActor {
 
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
-    val kafkaConfig = ConfigManager.getKafkaConfig
-
-    val connectionString = kafkaConfig.connections.map{
-      conn => s"${conn.host}:${conn.port}"
-    }.mkString(",")
-
-    context.actorOf(TelemetryActor.props(connectionString, kafkaConfig.toTinyConfig()), name)
+    context.actorOf(TelemetryActor.props(), name)
 
   }
 

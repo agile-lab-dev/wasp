@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.spark
 
 import java.io._
+import java.util.Date
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -36,6 +37,8 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.{SerializableWritable, SparkContext}
+import org.apache.hadoop.hbase.security.token.{TokenUtil, AuthenticationTokenIdentifier => HbaseTokenIdentifier}
+import scala.collection.JavaConverters._
 
 import scala.reflect.ClassTag
 
@@ -53,13 +56,13 @@ class HBaseContext(@transient sc: SparkContext,
                    val tmpHdfsConfgFile: String = null)
   extends Serializable with Logging {
 
-  @transient var credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
+  //  @transient var credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
   @transient var tmpHdfsConfiguration:Configuration = config
   @transient var appliedCredentials = false
   @transient val job = Job.getInstance(config)
-  TableMapReduceUtil.initCredentials(job)
+  //TableMapReduceUtil.initCredentials(job)
   val broadcastedConf = sc.broadcast(new SerializableWritable(config))
-  val credentialsConf = sc.broadcast(new SerializableWritable(job.getCredentials))
+  //  val credentialsConf = sc.broadcast(new SerializableWritable(job.getCredentials))
 
   LatestHBaseContextCache.latest = this
 
@@ -221,11 +224,43 @@ class HBaseContext(@transient sc: SparkContext,
   }
 
   def applyCreds[T] () {
-    credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
+    //credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
 
-    logDebug("appliedCredentials:" + appliedCredentials + ",credentials:" + credentials)
+    val close = Option(System.getProperty("it.agilelab.bigdata.wasp.hbase.connection.close")).exists(_.toBoolean)
 
-    if (!appliedCredentials && credentials != null) {
+    if(close) {
+      org.apache.hadoop.hbase.spark.HBaseConnectionCache.performHousekeeping(true)
+    }
+
+    def stringifyToken(tokenIdentifier: HbaseTokenIdentifier): String = {
+      Seq(
+        ("Username", tokenIdentifier.getUsername),
+        ("SequenceNumber", tokenIdentifier.getSequenceNumber),
+        ("KeyId", tokenIdentifier.getKeyId),
+        ("IssueDate", new Date(tokenIdentifier.getIssueDate)),
+        ("ExpirationDate", new Date(tokenIdentifier.getExpirationDate))
+      ).map {
+        case (name, value) => s"$name=$value"
+      }.mkString(", ")
+    }
+
+    val tokenInfo = UserGroupInformation.getCurrentUser
+                                        .getCredentials
+                                        .getAllTokens
+                                        .asScala
+                                        .map(_.decodeIdentifier())
+                                        .filter(_.isInstanceOf[HbaseTokenIdentifier])
+                                        .map(_.asInstanceOf[HbaseTokenIdentifier])
+                                        .map(stringifyToken)
+                                        .headOption.getOrElse("NoTokenFound")
+
+
+    logInfo(s"Tokens -> $tokenInfo")
+
+
+    // logDebug("appliedCredentials:" + appliedCredentials + ",credentials:" + credentials)
+
+    /*if (!appliedCredentials && credentials != null) {
       appliedCredentials = true
 
       @transient val ugi = UserGroupInformation.getCurrentUser
@@ -234,7 +269,7 @@ class HBaseContext(@transient sc: SparkContext,
       ugi.setAuthenticationMethod(AuthenticationMethod.PROXY)
 
       ugi.addCredentials(credentialsConf.value.value)
-    }
+    }*/
   }
 
   /**
@@ -503,11 +538,11 @@ class HBaseContext(@transient sc: SparkContext,
     *
     */
   def hbaseMapPartition[K, U](
-                                       configBroadcast:
-                                       Broadcast[SerializableWritable[Configuration]],
-                                       it: Iterator[K],
-                                       mp: (Iterator[K], Connection) =>
-                                         Iterator[U]): Iterator[U] = {
+                               configBroadcast:
+                               Broadcast[SerializableWritable[Configuration]],
+                               it: Iterator[K],
+                               mp: (Iterator[K], Connection) =>
+                                 Iterator[U]): Iterator[U] = {
 
     val config = getConf(configBroadcast)
     applyCreds

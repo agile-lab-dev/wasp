@@ -38,6 +38,7 @@ import org.apache.spark.sql.streaming.{ProcessingTime, StreamTest}
 import org.apache.spark.sql.streaming.util.StreamManualClock
 import org.apache.spark.sql.test.{SharedSQLContext, TestSparkSession}
 import org.apache.spark.util.Utils
+import org.scalatest.Ignore
 
 abstract class KafkaSourceTest extends StreamTest with SharedSQLContext {
 
@@ -857,6 +858,7 @@ object KafkaSourceSuite {
   val collectedData = new ConcurrentLinkedQueue[Any]()
 }
 
+@Ignore
 @MightNeverTerminate
 class KafkaSourceStressSuite extends KafkaSourceTest {
 
@@ -932,6 +934,7 @@ class KafkaSourceStressSuite extends KafkaSourceTest {
   }
 }
 
+@Ignore
 @MightNeverTerminate
 class KafkaSourceStressForDontFailOnDataLossSuite extends StreamTest with SharedSQLContext {
 

@@ -2,8 +2,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.watchdog
 
 import akka.actor.{Actor, Props}
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import org.apache.hadoop.security.UserGroupInformation
 import org.apache.spark.SparkContext
+import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifier
 
+import scala.collection.JavaConverters._
 
 class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) extends Actor with Logging {
 
@@ -12,12 +15,13 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
 
   implicit val ec = context.system.dispatcher
   context.system.scheduler.schedule(0.seconds, 1.second, self, MonitorSparkContext)
+  context.system.scheduler.schedule(0.seconds, 1.second, self, MonitorHdfTokens)
 
 
   def waitForSparkContextToBeAvailable : Receive  = {
     case MonitorSparkContext if !sc.isStopped =>
       logger.info("Spark context came up, beginning watchdog")
-      context.become(superviseSparkContext)
+      context.become(superviseSparkContext.orElse(superviseDelegationTokens))
     case MonitorSparkContext if sc.isStopped =>
       logger.trace("spark context has not started yet, giving it some slack")
   }
@@ -32,12 +36,43 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
       logger.trace("Everything is fine, spark context is alive")
   }
 
-  override def receive: Receive = superviseSparkContext
+  def superviseDelegationTokens : Receive = {
+    case MonitorHdfTokens =>
+      val identifiers = UserGroupInformation.getCurrentUser
+        .getCredentials
+        .getAllTokens
+        .asScala
+        .map(_.decodeIdentifier())
+
+      logger.info(s"all token identifiers : $identifiers")
+
+      val filtered =  identifiers.filter(_.isInstanceOf[DelegationTokenIdentifier])
+        .map(_.asInstanceOf[DelegationTokenIdentifier])
+
+      logger.info(s"filtered token identifiers : $filtered")
+
+      val maybeExpiredToken = filtered.find(_.getMaxDate < System.currentTimeMillis())
+
+      logger.info(s"Expired tokens? : $maybeExpiredToken")
+
+      maybeExpiredToken match {
+        case Some(expired) =>
+          logger.error(s"Delegation token is expired $expired")
+          failureAction()
+        case None =>
+          logger.info("Everything is fine, delegation tokens are ok")
+
+      }
+  }
+
+  override def receive: Receive = waitForSparkContextToBeAvailable
 }
 
 object SparkContextWatchDog extends Logging {
 
   case object MonitorSparkContext
+
+  case object MonitorHdfTokens
 
   private def exitAction(exitCode: Int)(): Unit = {
 
@@ -63,3 +98,4 @@ object SparkContextWatchDog extends Logging {
 
 
 }
+

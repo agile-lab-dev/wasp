@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import java.util.UUID
-
-import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.utils.RowToAvro
+import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroSerializerExpression
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem._
@@ -12,17 +9,16 @@ import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicCompression, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil}
-import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.HEADER_DATA_TYPE
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.avro.Schema
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.functions.{col, struct, udf}
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import scala.collection.JavaConverters._
 
 class KafkaSparkLegacyStreamingWriter(topicBL: TopicBL,
                                       ssc: StreamingContext,
@@ -173,9 +169,21 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
       else
         partialDataStreamWriter.option("topic", prototypeTopicModel.name)
 
-    val finalDataStreamWriter = addKafkaConf(partialDataStreamWriterAfterTopicConf, tinyKafkaConfig)
+    val dataStreamWriterAfterKafkaConfig = addKafkaConf(partialDataStreamWriterAfterTopicConf, tinyKafkaConfig)
 
-    finalDataStreamWriter
+    val compressionForKafka = topics.head.topicCompression match {
+      case TopicCompression.Disabled => "none"
+      case TopicCompression.Snappy => "snappy"
+      case TopicCompression.Gzip => "gzip"
+      case TopicCompression.Lz4 => "lz4"
+      case notMatched => throw new Exception(s"$notMatched compression is not supported by kafka writer")
+    }
+
+    val finalDataStreamWriterAfterCompression = dataStreamWriterAfterKafkaConfig
+      .option("kafka.compression.type", compressionForKafka)
+
+
+    finalDataStreamWriterAfterCompression
   }
 
   private def convertStreamForAvro(keyFieldName: Option[String],
@@ -184,60 +192,36 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
                                    valueFieldsNames: Option[Seq[String]],
                                    stream: DataFrame,
                                    prototypeTopicModel: TopicModel) = {
-    // generate temporary field names
-    val tempKeyFieldName = s"key_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
-    val tempHeadersFieldName = s"headers_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
-    val tempTopicFieldName = s"topic_${UUID.randomUUID().toString}".replaceAll("[\\.-]", "_")
-
-    // generate select expressions to clone metadata columns and keep only the values specified
-    val selectExpressionsForTempColumns =
-      keyFieldName.map(kfn => s"CAST($kfn AS binary) $tempKeyFieldName").toList ++
-        headersFieldName.map(hfn => s"$hfn AS $tempHeadersFieldName").toList ++
-        topicFieldName.map(tfn => s"$tfn AS $tempTopicFieldName").toList ++
-        valueFieldsNames.map(vfn => vfn).getOrElse(Seq("*"))
-    logger.debug(s"Generated select expressions: ${selectExpressionsForTempColumns.mkString("[", "], [", "]")}")
-
-    // project the data so we have a known order for the metadata columns with the rest of the data after
-    val streamWithTempColumns = stream.selectExpr(selectExpressionsForTempColumns: _*)
-    logger.debug(s"Stream with temp columns schema:\n${streamWithTempColumns.schema.treeString}")
-
-    // this tells us where the data starts, everything eventually present before is metadata
-    val dataOffset = Seq(keyFieldName, headersFieldName, topicFieldName).count(_.isDefined)
-
+    val columnsInValues = valueFieldsNames.getOrElse(stream.columns.toSeq)
     // generate a schema and avro converter for the values
     val valueSchema = StructType(
-      streamWithTempColumns.schema.drop(dataOffset)
+      columnsInValues.map(stream.schema.apply)
     )
-    logger.debug(s"Generated value schema:\n${valueSchema.treeString}")
     val darwinConf = if (prototypeTopicModel.useAvroSchemaManager) {
       Some(ConfigManager.getAvroSchemaManagerConfig)
     } else {
       None
     }
+    val exprToConvertToAvro = struct(columnsInValues.map(col): _*)
+
+    val avroRecordName = prototypeTopicModel.name
     // TODO use sensible namespace instead of wasp
-    val converter = RowToAvro(valueSchema, prototypeTopicModel.name, prototypeTopicModel.useAvroSchemaManager, "wasp",
-      None, Some(prototypeTopicModel.getJsonSchema), darwinConf)
-    val dataConverter: Row => Array[Byte] = converter.write
+    val avroRecordNamespace = "wasp"
 
-    // generate a schema and encoder for final metadata & data
-    val schema = StructType(
-      keyFieldName.map(_ => StructField("key", BinaryType, nullable = true)).toList ++
-        headersFieldName.map(_ => StructField("headers", HEADER_DATA_TYPE, nullable = false)).toList ++
-        topicFieldName.map(_ => StructField("topic", StringType, nullable = false)).toList :+
-        StructField("value", BinaryType, nullable = false)
-    )
-    logger.debug(s"Generated final schema:\n${schema.treeString}")
-    val encoder = RowEncoder(schema)
+    val rowToAvroExprFactory: (Expression, StructType) => AvroSerializerExpression = if(prototypeTopicModel.useAvroSchemaManager) {
+      val avroSchema = new Schema.Parser().parse(prototypeTopicModel.getJsonSchema)
+      AvroSerializerExpression(darwinConf.get, avroSchema, avroRecordName, avroRecordNamespace)
+    } else {
+      AvroSerializerExpression(Some(prototypeTopicModel.getJsonSchema),  avroRecordName, avroRecordNamespace)
+    }
 
-    // process the stream, extracting the data and converting it, and leaving metadata as is
-    val processedStream = streamWithTempColumns.map(row => {
-      val inputElements = row.toSeq
-      val metadata = inputElements.take(dataOffset)
-      val data = inputElements.drop(dataOffset)
-      val convertedData = dataConverter(Row.fromSeq(data))
-      val outputElements = metadata :+ convertedData
-      Row.fromSeq(outputElements)
-    })(encoder)
+    val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro.expr, valueSchema)
+
+    val metadataCols = (keyFieldName.map(kfn => col(kfn).cast(BinaryType).as("key")) ++
+      headersFieldName.map(col(_).as("headers")) ++
+      topicFieldName.map(col(_).as("topic"))).toSeq
+
+    val processedStream = stream.select(metadataCols ++ Seq(new Column(rowToAvroExpr).as("value")): _*)
 
     logger.debug(s"Actual final schema:\n${processedStream.schema.treeString}")
 

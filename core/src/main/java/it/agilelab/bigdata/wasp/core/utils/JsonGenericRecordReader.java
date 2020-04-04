@@ -7,14 +7,14 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.codehaus.jackson.map.ObjectMapper;
+import scala.io.Codec;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Function;
 
-import static it.agilelab.bigdata.wasp.core.utils.AvroTypeExceptions.enumException;
-import static it.agilelab.bigdata.wasp.core.utils.AvroTypeExceptions.typeException;
-import static it.agilelab.bigdata.wasp.core.utils.AvroTypeExceptions.unionException;
+import static it.agilelab.bigdata.wasp.core.utils.AvroTypeExceptions.*;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -73,6 +73,9 @@ public class JsonGenericRecordReader {
             case ARRAY:
                 result = onValidType(value, List.class, path, silently, list -> readArray(field, schema, list, path));
                 break;
+            case BYTES:
+                result = onValidType(value, String.class, path, silently, string -> convertToByte(string));
+                break;
             case MAP:
                 result = onValidType(value, Map.class, path, silently, map -> readMap(field, schema, map, path));
                 break;
@@ -111,6 +114,14 @@ public class JsonGenericRecordReader {
             path.pop();
         }
         return result;
+    }
+
+    private ByteBuffer convertToByte(String string) {
+        try {
+            return ByteBuffer.wrap(string.getBytes(Codec.ISO8859().name()));
+        } catch (Exception e) {
+            throw new AvroConversionException(e.getMessage(), e);
+        }
     }
 
     private List<Object> readArray(Schema.Field field, Schema schema, List<Object> items, Deque<String> path) {

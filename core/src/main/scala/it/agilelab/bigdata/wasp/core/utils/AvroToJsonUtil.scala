@@ -1,21 +1,23 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import com.typesafe.config.ConfigFactory
-import it.agilelab.darwin.manager.AvroSchemaManager
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import collection.JavaConversions._
+import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 
 
 object AvroToJsonUtil extends Logging {
 
-  val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
+  lazy val darwin = AvroSchemaManagerFactory.initialize(ConfigManager.getAvroSchemaManagerConfig)
 
-  AvroSchemaManager.instance(configAvroSchemaManager)
   val jsonAvroConverter = new JsonAvroConverter()
 
-  def jsonToAvro(json: String, schemaStr: String, useAvroSchemaManager: Boolean): Array[Byte] = {
+  def jsonToAvro(json: String,
+                 schemaStr: String,
+                 useAvroSchemaManager: Boolean): Array[Byte] = {
     logger.debug("Starting jsonToAvro encoding ...")
-    jsonAvroConverter.convertToAvro(json.getBytes, schemaStr, useAvroSchemaManager)
+    jsonAvroConverter.convertToAvro(
+      json.getBytes,
+      schemaStr,
+      if (useAvroSchemaManager) Some(darwin) else None)
   }
 
   def avroToJson(avro: Array[Byte], schemaStr: String): String = {

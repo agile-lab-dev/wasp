@@ -32,6 +32,33 @@ object TopicModel {
   }
 }
 
+
+sealed trait TopicCompression
+
+object TopicCompression {
+
+
+
+  private val _asString : Map[TopicCompression, String] = Map(
+    TopicCompression.Disabled -> "disabled",
+    TopicCompression.Gzip -> "gzip",
+    TopicCompression.Snappy -> "snappy",
+    TopicCompression.Lz4 -> "lz4"
+  )
+
+  def asString : PartialFunction[TopicCompression, String] = _asString
+
+  def fromString: PartialFunction[String, TopicCompression] = _fromString
+
+  private val _fromString: Map[String, TopicCompression] = _asString.map(_.swap)
+
+  case object Disabled extends TopicCompression
+  case object Gzip extends TopicCompression
+  case object Snappy extends TopicCompression
+  case object Lz4 extends TopicCompression
+
+}
+
 /**
   * A model for a topic, that is, a message queue of some sort. Right now this means just Kafka topics.
   *
@@ -71,7 +98,8 @@ case class TopicModel(override val name: String,
                       headersFieldName: Option[String],
                       valueFieldsNames: Option[Seq[String]],
                       useAvroSchemaManager: Boolean,
-                      schema: BsonDocument)
+                      schema: BsonDocument,
+                      topicCompression: TopicCompression = TopicCompression.Disabled)
     extends DatastoreModel[TopicCategory] {
   def getJsonSchema: String = schema.toJson
 

@@ -1,3 +1,4 @@
+import sbt.Keys.{libraryDependencies, transitiveClassifiers}
 import sbt._
 
 /*
@@ -32,8 +33,12 @@ object Dependencies {
 
 		def solrExclusion: ModuleID =
 			module.log4jExclude
+				.excludeAll("org.apache.spark")
 				.exclude("org.objenesis", "objenesis")
 				.exclude("org.apache.zookeeper", "zookeeper")
+
+
+
 
 		def sparkExclusions: ModuleID =
 			module.log4jExclude
@@ -103,10 +108,13 @@ object Dependencies {
 	val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
 	val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
 	val avro = "org.apache.avro" % "avro" % Versions.avro
-	val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion
-	val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion
+	// avro4s requires a json4s version incompatible with wasp, downstream projects confirmed that this exclusion does
+	// not create issues with darwin and avro parsing
+	val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion excludeAll ExclusionRule("org.json4s")
+	val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion excludeAll ExclusionRule("org.json4s")
 	val darwinCore = "it.agilelab" %% "darwin-core" % Versions.darwin
 	val darwinHBaseConnector = "it.agilelab" %% "darwin-hbase-connector" % Versions.darwin
+	val darwinMockConnector = "it.agilelab" %% "darwin-mock-connector" % Versions.darwin
 	val camelKafka = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
 	val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
 	val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
@@ -116,6 +124,8 @@ object Dependencies {
 	val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase hbaseExclusion
 	val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase hbaseExclusion
 	val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase hbaseExclusion
+	val httpClient = "org.apache.httpcomponents" % "httpclient" % Versions.httpcomponents
+	val httpCore = "org.apache.httpcomponents" % "httpcore" % Versions.httpcomponents
 	val httpmime = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
 	val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
 	val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
@@ -178,6 +188,8 @@ object Dependencies {
 
 	val avro4s = Seq(avro4sCore, avro4sJson)
 
+	val avro4sTest = Seq(avro4sCore % Test, avro4sJson % Test, darwinMockConnector % Test)
+
 
 	// ===================================================================================================================
 	// Test dependencies
@@ -201,7 +213,7 @@ object Dependencies {
 	// Module dependencies
 	// ===================================================================================================================
 	
-	val spark_sql_kafka_0_11 = Seq( // normal dependencies
+	val spark_sql_kafka_0_11 = (Seq( // normal dependencies
 		guava,
 		kafkaClients,
 		sparkSQL,
@@ -215,7 +227,7 @@ object Dependencies {
 		sparkSQLTests,
 		sparkTagsTests,
 		scalaTest2
-	)
+	)).map(excludeLog4j) ++ log4j
 	
 	val core = (akka ++
 		logging ++
@@ -244,6 +256,7 @@ object Dependencies {
 		akka ++
 		json ++
 		test ++
+		avro4sTest ++
 		spark :+
     quartz
 	).map(excludeNetty).map(excludeLog4j) ++
@@ -282,7 +295,22 @@ object Dependencies {
 	).map(excludeLog4j).map(excludeNetty)
 	
 	val plugin_solr_spark = Seq(
+		httpClient,
+		httpCore,
 		solrj,
 		sparkSolr
 	).map(excludeNetty)
+
+
+	def kmsTest = Seq(
+		transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier, "classes"),
+		libraryDependencies  ++= Seq(
+			("org.codehaus.jackson" % "jackson-core-asl" % "1.9.13") % "test",
+			("org.codehaus.jackson" % "jackson-jaxrs" % "1.9.13") % "test",
+			("org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13") % "test",
+			("org.apache.hadoop" % "hadoop-common" % Versions.kms) % "test",
+			("org.apache.hadoop" % "hadoop-kms" % Versions.kms).classifier("classes") % "test",
+			("org.apache.hadoop" % "hadoop-kms" % Versions.kms).classifier("tests") % "test"
+		)
+	)
 }

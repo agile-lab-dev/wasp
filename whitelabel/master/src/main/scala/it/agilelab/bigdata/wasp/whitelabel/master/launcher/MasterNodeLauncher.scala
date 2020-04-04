@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
-import it.agilelab.darwin.manager.AvroSchemaManager
+import it.agilelab.darwin.manager.{AvroSchemaManager, AvroSchemaManagerFactory}
 import org.apache.avro.Schema
 import org.apache.commons.cli.CommandLine
 
@@ -26,9 +26,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     * @return [[Seq[(Key, Schema)]]
     */
   private def addExampleRegisterAvroSchema(): Unit = {
-    val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2])
+    val schemas: Seq[Schema] = Seq(AvroSchema[TopicAvro_v1], AvroSchema[TopicAvro_v2], new Schema.Parser().parse(TestTopicModel.avro.schema.toJson))
     val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
-    AvroSchemaManager(configAvroSchemaManager).registerAll(schemas)
+    AvroSchemaManagerFactory.initialize(configAvroSchemaManager).registerAll(schemas)
   }
 
   private def addExamplePipegraphs(): Unit = {
@@ -59,6 +59,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[TopicModel](TestTopicModel.json3)
     waspDB.upsert[TopicModel](TestTopicModel.json4)
     waspDB.upsert[TopicModel](TestTopicModel.json5)
+    waspDB.upsert[TopicModel](TestTopicModel.json6)
     waspDB.upsert[MultiTopicModel](TestTopicModel.jsonMultitopicRead)
     waspDB.upsert[MultiTopicModel](TestTopicModel.jsonMultitopicWrite)
     waspDB.upsert[TopicModel](TestTopicModel.json2ForKafkaHeaders)
@@ -84,6 +85,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[RawModel](TestRawModel.nested)  // used by TestPipegraphs.JSON.XYZ.hdfs
     waspDB.upsert[RawModel](TestRawModel.flat)    // used by TestBatchJobModels.FromHdfs.toConsole
     waspDB.upsert[KeyValueModel](TestKeyValueModel.hbase)
+    waspDB.upsert[KeyValueModel](TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
     waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
 
     /* Producers */
@@ -92,6 +94,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[ProducerModel](TestProducerModel.jsonCheckpoint)
     waspDB.upsert[ProducerModel](TestProducerModel.avro)
     waspDB.upsert[ProducerModel](TestProducerModel.avroCheckpoint)
+    waspDB.upsert[ProducerModel](TestProducerModel.jsonHbaseMultipleClustering)
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
@@ -104,6 +107,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbase)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbaseMultipleClustering)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.ERROR.multiETL)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.CHECKPOINT.console)
@@ -134,8 +138,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     waspDB.upsert[PipegraphModel](TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
   
     waspDB.upsert[PipegraphModel](TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
-  
-  
+    waspDB.upsert[PipegraphModel](TestPipegraphs.SparkSessionErrors.pipegraph)
+
+
     /* BatchJobs */
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromElastic.toHdfsNested)
     waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfsFlat)

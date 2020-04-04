@@ -53,6 +53,14 @@ object Configuration_C extends Directives with JsonSupport {
                 ConfigManager.getSolrConfig.toJson.toAngularOkResponse(pretty)
               }
             }
+          } ~
+          path("telemetry") {
+            get {
+              complete {
+                // complete with serialized Future result
+                ConfigManager.getTelemetryConfig.toJson.toAngularOkResponse(pretty)
+              }
+            }
           }
       }
     }

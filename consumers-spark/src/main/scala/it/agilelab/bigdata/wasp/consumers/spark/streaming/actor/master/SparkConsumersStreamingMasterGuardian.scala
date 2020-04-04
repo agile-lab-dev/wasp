@@ -278,16 +278,16 @@ object SparkConsumersStreamingMasterGuardian  {
 
     val name = s"$suppliedName-${UUID.randomUUID()}"
   
-    val streamingReaderFactory: ActivationSteps.StreamingReaderFactory = { (structuredStreamingETLModel, streamingReaderModel) =>
-      sparkReaderFactory.createSparkStructuredStreamingReader(env, sparkSession, structuredStreamingETLModel, streamingReaderModel)
+    val streamingReaderFactory: ActivationSteps.StreamingReaderFactory = { (structuredStreamingETLModel, streamingReaderModel, session) =>
+      sparkReaderFactory.createSparkStructuredStreamingReader(env, session, structuredStreamingETLModel, streamingReaderModel)
     }
   
-    val staticReaderFactory: ActivationSteps.StaticReaderFactory = { (structuredStreamingETLModel, readerModel) =>
-      sparkReaderFactory.createSparkBatchReader(env, sparkSession.sparkContext, readerModel)
+    val staticReaderFactory: ActivationSteps.StaticReaderFactory = { (structuredStreamingETLModel, readerModel, session) =>
+      sparkReaderFactory.createSparkBatchReader(env, session.sparkContext, readerModel)
     }
     
-    val writerFactory: MaterializationSteps.WriterFactory = { (structuredStreamingETLModel, writerModel) =>
-      sparkWriterFactory.createSparkWriterStructuredStreaming(env, sparkSession, structuredStreamingETLModel, writerModel)
+    val writerFactory: MaterializationSteps.WriterFactory = { (structuredStreamingETLModel, writerModel, session) =>
+      sparkWriterFactory.createSparkWriterStructuredStreaming(env, session, structuredStreamingETLModel, writerModel)
     }
 
     val defaultGrandChildrenCreator = PipegraphGuardian.defaultChildFactory(sparkSession,

@@ -14,6 +14,16 @@ private[wasp] object TestProducerModel {
       isSystem = false
     )
 
+  lazy val jsonHbaseMultipleClustering = ProducerModel(
+    name = "TestJSONHbaseMultiClusteringProducer",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestHbaseMultiClusteringProducerGuardian",
+    topicName = Some(TestTopicModel.json6.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
+
   lazy val jsonWithMetadata = ProducerModel(
     name = "TestJSONProducerWithMetadata",
     className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestDocumentWithMetadataProducerGuardian",

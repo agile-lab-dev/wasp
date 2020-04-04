@@ -84,7 +84,7 @@ class PipegraphGuardian(private val master: ActorRef,
         case Retry =>
           log.info("[{}] Retry", etl.name)
           goto(Activating) using data.copy(activating = data.activating - association,
-            toBeRetried = data.toBeActivated + etl)
+            toBeRetried = data.toBeRetried + etl)
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
           goto(Activating) using data.copy(activating = data.activating - association,
@@ -217,7 +217,7 @@ class PipegraphGuardian(private val master: ActorRef,
         case Retry =>
           log.info("[{}] Retry", etl.name)
           goto(Monitoring) using data.copy(monitoring = data.monitoring - association,
-            toBeRetried = data.toBeMonitored + association)
+            toBeRetried = data.toBeRetried + association)
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
           goto(Monitoring) using data.copy(monitoring = data.monitoring - association,
@@ -481,10 +481,12 @@ object PipegraphGuardian {
 
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
+    val childEtlSparkSession = sparkSession.newSession()
+
     //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
     
-    context.actorOf(StructuredStreamingETLActor.props(sparkSession,
+    context.actorOf(StructuredStreamingETLActor.props(childEtlSparkSession,
                                                       mlModelBl,
                                                       topicsBl,
                                                       streamingReaderFactory,

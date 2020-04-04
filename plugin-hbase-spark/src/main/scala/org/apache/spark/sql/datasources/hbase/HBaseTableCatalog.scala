@@ -25,6 +25,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.types._
 import org.json4s.jackson.JsonMethods._
+import scala.util.matching.Regex
 
 import scala.collection.mutable
 
@@ -237,7 +238,7 @@ object HBaseTableCatalog {
   val delimiter: Byte = 0
   val serdes = "serdes"
   val length = "length"
-  val clustering = "clustering"
+  val clusteringRegex: Regex = "clustering_([0-9]+)".r
 
   /**
     * User provide table schema definition
@@ -258,34 +259,51 @@ object HBaseTableCatalog {
     val schemaMap = mutable.HashMap.empty[String, Field]
     val clusteringFieldsMap = mutable.HashMap.empty[String, Seq[String]]
     cIter.foreach { case (name, column) =>
-      if(name == clustering){
-        //Save clustering informations
-        if(column.get(cf).isEmpty){
-          throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
-        }
-        val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
-        if(clusteringColumns.isEmpty){
-          throw new IllegalArgumentException(
-            """column "clustering" must have columns parameter defined with
-              |at least one element. Elements are splitted by colons (e.g. "col1:col2:col3")
-              |""".stripMargin)
-        }
-        clusteringFieldsMap.+=((column(cf), clusteringColumns))
-      } else {
-        val sd = {
-          column.get(serdes).asInstanceOf[Option[String]].map(n =>
-            Class.forName(n).newInstance().asInstanceOf[SerDes]
-          )
-        }
-        val len = column.get(length).map(_.toInt).getOrElse(-1)
-        val sAvro = column.get(avro).map(parameters(_))
-        val f = Field(name, column.getOrElse(cf, rowKey),
-          column.get(col).get,
-          column.get(`type`),
-          sAvro, sd, len)
-        schemaMap.+=((name, f))
+      clusteringRegex.findFirstIn(name) match {
+        case Some(_) =>
+          //Save clustering informations
+          if(column.get(cf).isEmpty){
+            throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
+          }
+          val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
+          if(clusteringColumns.isEmpty){
+            throw new IllegalArgumentException(
+              """column "clustering" must have columns parameter defined with
+                |at least one element. Elements are splitted by colons (e.g. "col1:col2:col3")
+                |""".stripMargin)
+          }
+          clusteringFieldsMap.+=((column(cf), clusteringColumns))
+
+        case None =>
+          val sd = {
+            column.get(serdes).asInstanceOf[Option[String]].map(n =>
+              Class.forName(n).newInstance().asInstanceOf[SerDes]
+            )
+          }
+          val len = column.get(length).map(_.toInt).getOrElse(-1)
+          val sAvro = column.get(avro).map(parameters(_))
+          val f = Field(name, column.getOrElse(cf, rowKey),
+            column.get(col).get,
+            column.get(`type`),
+            sAvro, sd, len)
+          schemaMap.+=((name, f))
       }
     }
+
+    val clusteringColumns: Iterable[String] = clusteringFieldsMap.values.flatten
+
+    //Check if all the clustering columns are of type string
+    clusteringColumns.foreach(clColumn => {
+      val fieldTypeOpt: Option[String] = schemaMap(clColumn).sType
+
+      if(fieldTypeOpt.isDefined) {
+        val fieldType = fieldTypeOpt.get
+
+        if(fieldType != "string")
+          throw new IllegalArgumentException(s"The clustering columns must be of type string. The column $clColumn is of type $fieldType instead.")
+      }
+    })
+
     val rKey = RowKey(map.get(rowKey).get.asInstanceOf[String])
 
     HBaseTableCatalog(nSpace, tName, rKey, SchemaMap(schemaMap), clusteringFieldsMap.toMap, parameters)

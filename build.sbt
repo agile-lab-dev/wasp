@@ -1,3 +1,8 @@
+import Dependencies.scalaTest
+
+//integration tests should extend Test configuration and not Runtime configuration
+lazy val IntegrationTest = config("it") extend(Test)
+
 /*
  * Main build definition.
  *
@@ -9,7 +14,9 @@
 /* Libraries */
 
 lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark-sql-kafka-0-11"))
+  .configs(IntegrationTest)
 	.settings(Settings.commonSettings: _*)
+  .settings(Defaults.itSettings)
 	.settings(Settings.disableParallelTests: _*)
 	.settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
 
@@ -80,6 +87,31 @@ lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr
 	.dependsOn(consumers_spark)
 	.settings(libraryDependencies ++= Dependencies.plugin_solr_spark)
 
+/* Yarn  */
+
+
+lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
+	.settings(Settings.commonSettings: _*)
+  .settings(Dependencies.kmsTest: _*)
+	.settings(libraryDependencies += scalaTest)
+	.settings(libraryDependencies += Dependencies.sparkYarn)
+
+lazy val yarn_auth_hbase = Project("wasp-yarn-auth-hbase", file("yarn/auth/hbase"))
+	.settings(Settings.commonSettings: _*)
+	.settings(libraryDependencies += Dependencies.sparkYarn)
+  .settings(libraryDependencies += Dependencies.hbaseServer)
+	.settings(libraryDependencies += Dependencies.hbaseCommon)
+
+lazy val yarn_auth = Project("wasp-yarn-auth", file("yarn/auth"))
+	.settings(Settings.commonSettings: _*)
+	.aggregate(yarn_auth_hbase, yarn_auth_hdfs)
+
+lazy val yarn = Project("wasp-yarn", file("yarn"))
+	.settings(Settings.commonSettings: _*)
+	.aggregate(yarn_auth)
+
+
+
 /* Framework + Plugins */
 
 lazy val wasp = Project("wasp", file("."))
@@ -96,7 +128,8 @@ lazy val wasp = Project("wasp", file("."))
 	           plugin_kafka_spark,
 	           plugin_raw_spark,
 	           plugin_solr_spark,
-	           spark_sql_kafka_0_11)
+	           spark_sql_kafka_0_11,
+		         yarn)
 
 /* WhiteLabel */
 
@@ -126,12 +159,12 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
 	.dependsOn(whiteLabelModels)
 	.dependsOn(consumers_spark)
 	.dependsOn(plugin_console_spark)
-	//.dependsOn(plugin_elastic_spark)
+	.dependsOn(plugin_elastic_spark)
 	.dependsOn(plugin_hbase_spark)
-	//.dependsOn(plugin_jdbc_spark)
+	.dependsOn(plugin_jdbc_spark)
 	.dependsOn(plugin_kafka_spark)
 	.dependsOn(plugin_raw_spark)
-	//.dependsOn(plugin_solr_spark)
+	.dependsOn(plugin_solr_spark)
 	.settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector :+ "mysql" % "mysql-connector-java" % "5.1.6")
 	.enablePlugins(JavaAppPackaging)
 

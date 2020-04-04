@@ -1658,3 +1658,608 @@ The schema can be added to the registry in the `it.agilelab.bigdata.wasp.xxx.mas
 
 TopicModel and KeyValueModel classes have a new `useAvroSchemaManager` `boolean` field. If this field is set to `true`, the avro will be serialized and deserialized using darwin.
 
+# WASP 2.19.4
+
+### Develop custom Credentials provider for wasp
+
+[Merge request 120](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/120)
+
+Created at: 2019-02-22T16:56:47.465Z
+
+Updated at: 2019-03-01T18:51:01.019Z
+
+Branch: feature/198-authentication-develop-custom-credentials-provider-for-wasp
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+# Delegation Tokens Renewal in spark 2.2
+
+
+```
+                    ┌───────────────────────────┐                ┌────────────────┐                                                                                                                        
+     ┌───┐          │Driver                     │                │YARN            │                                                                                                                        
+     │KDC│          │(consumers-spark-streaming)│                │Resource manager│                                                                                                                        
+     └─┬─┘          └─────────────┬─────────────┘                └───────┬────────┘                                                                                                                        
+       │      keytab login        │                                      │                                                                                                                                 
+       │<─────────────────────────│                                      │                                                                                                                                 
+       │                          │                                      │                                                                                                                                 
+       │     kerberos ticket      │                                      │                                                                                                                                 
+       │─────────────────────────>│                                      │                                                                                                                                 
+       │                          │                                      │                                                                                                                                 
+       │                          │        Authenticate with yarn        │                                                                                                                                 
+       │                          │──────────────────────────────────────>                                                                                                                                 
+       │                          │                                      │                                                                                                                                 
+       │                          │           DelegationToken            │                                                                                                                                 
+       │                          │<──────────────────────────────────────                                                                                                                                 
+       │                          │                                      │                                                                                                                                 
+       │                          │Negotiate Application master container│                                                                                                                                 
+       │                          │──────────────────────────────────────>                                             │                                                                                   
+       │                          │                                      │                                             │                                                                                   
+       │                          │                                      │ create and pass delegation token ┌──────────────────────┐                                                                       
+       │                          │                                      │ ────────────────────────────────>│SparkApplicationMaster│                                                                       
+       │                          │                                      │                                  └──────────┬───────────┘                                                                       
+       │                          │          distribute keytab           │                                             │                                                                                   
+       │                          │──────────────────────────────────────>                                             │                                                                                   
+       │                          │                                      │                                             │                                                                                   
+       │                          │                                      │              distribute keytab              │                                                                                   
+       │                          │                                      │ ────────────────────────────────────────────>                                                                                   
+       │                          │                                      │                                             │                                                                                   
+       │                          │                                      │                                             │────┐                                                                              
+       │                          │                                      │                                             │    │ Login from keytab                                                            
+       │                          │                                      │                                             │<───┘                                                                              
+       │                          │                                      │                                             │                                                                                   
+       │                          │                                      │                                             │────┐                                                                              
+       │                          │                                      │                                             │    │ Renew all delegation token given by yarn                                     
+       │                          │                                      │                                             │<───┘                                                                              
+       │                          │                                      │                                             │                                                                                   
+       │                          │                                      │        negotiate executors container        │                                                                                   
+       │                          │                                      │ <────────────────────────────────────────────                                             │                                     
+       │                          │                                      │                                             │                                             │                                     
+       │                          │                                      │                                        create                                         ┌────────┐                                
+       │                          │                                      │ ─────────────────────────────────────────────────────────────────────────────────────>│Executor│                                
+       │                          │                                      │                                             │                                         └───┬────┘                                
+       │                          │                                    connect back                                    │                                             │                                     
+       │                          │<────────────────────────────────────────────────────────────────────────────────────                                             │                                     
+       │                          │                                      │                                             │                                             │                                     
+       │                          │                                      │                    connect back             │                                             │                                     
+       │                          │<──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────                                     
+       │                          │                                      │                                             │                                             │                                     
+       │                          ────┐                                  │                                             │                                             │                                     
+       │                              │ Start credential updater thread  │                                             │                                             │                                     
+       │                          <───┘                                  │                                             │                                             │                                     
+       │                          │                                      │                                             │                                             │                                     
+       │                          │                                      │                                             │                                             │────┐                                
+       │                          │                                      │                                             │                                             │    │ Start credential updater thread
+       │                          │                                      │                                             │                                             │<───┘                                
+       │                          │                                      │                                             │                                             │                                     
+       │                          │                                      │                                             │────┐                                        │                                     
+       │                          │                                      │                                             │    │ Start credential renewer thread        │                                     
+       │                          │                                      │                                             │<───┘                                        │                                     
+     ┌─┴─┐          ┌─────────────┴─────────────┐                ┌───────┴────────┐                         ┌──────────┴───────────┐                             ┌───┴────┐                                
+     │KDC│          │Driver                     │                │YARN            │                         │SparkApplicationMaster│                             │Executor│                                
+     └───┘          │(consumers-spark-streaming)│                │Resource manager│                         └──────────────────────┘                             └────────┘  
+```
+
+
+```
+@startuml
+
+participant "KDC" as KDC
+participant "Driver\n(consumers-spark-streaming)" as Driver
+participant "YARN\nResource manager" as YarnRM
+participant "SparkApplicationMaster" as AM
+participant "Executor" as Executor
+
+Driver -> KDC: keytab login
+KDC -> Driver: kerberos ticket
+
+Driver -> YarnRM: Authenticate with yarn
+Driver <- YarnRM : DelegationToken
+Driver -> YarnRM: Negotiate Application master container
+
+YarnRM -> AM **: create and pass delegation token
+
+Driver -> YarnRM: distribute keytab
+YarnRM -> AM: distribute keytab
+
+AM -> AM: Login from keytab
+AM -> AM: Renew all delegation token given by yarn
+
+AM -> YarnRM: negotiate executors container
+
+YarnRM -> Executor **: create
+
+AM -> Driver : connect back
+Executor -> Driver: connect back
+
+
+Driver -> Driver: Start credential updater thread
+Executor -> Executor: Start credential updater thread
+AM -> AM: Start credential renewer thread
+
+
+@enduml
+```
+
+
+```
+                    ,.-^^-._        ,.-^^-._                                                                                                                                                                            
+                   |-.____.-|      |-.____.-|                                                                                                                                                                           
+                   |        |      |        |                                                                                                                                                                           
+                   |        |      |        |                                                                               ┌────────────────────┐          ┌─────────────────┐          ┌─────────────────┐            
+                   |        |      |        |        ┌────────────────────────┐          ┌───────────────────────┐          │[ApplicationMaster] │          │[Driver]         │          │[Executor]       │            
+                   '-.____.-'      '-.____.-'        │HBaseCredentialsProvider│          │HdfsCredentialsProvider│          │AMCredentialsRenewer│          │CredentialUpdater│          │CredentialUpdater│            
+                     HDFS            HBASE           └───────────┬────────────┘          └───────────┬───────────┘          └─────────┬──────────┘          └────────┬────────┘          └────────┬────────┘            
+                      │                │                         │                                   │                                │                              │                            │                     
+          ╔═══════╤═══╪════════════════╪═════════════════════════╪═══════════════════════════════════╪════════════════════════════════╪══════════════════════════════╪════════════════════════════╪════════════════════╗
+          ║ LOOP  │   │                │                         │                                   │                                │                              │                            │                    ║
+          ╟───────┘   │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                   │                                │────┐                         │                            │                    ║
+          ║           │                │                         │                                   │                                │    │ login from keytab       │                            │                    ║
+          ║           │                │                         │                                   │                                │<───┘                         │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                            request token                           │                              │                            │                    ║
+          ║           │                │                         │ <───────────────────────────────────────────────────────────────────                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │     request token       │                                   │                                │                              │                            │                    ║
+          ║           │                │<────────────────────────│                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │         token           │                                   │                                │                              │                            │                    ║
+          ║           │                │────────────────────────>│                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                token                               │                              │                            │                    ║
+          ║           │                │                         │ ───────────────────────────────────────────────────────────────────>                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                   │         request token          │                              │                            │                    ║
+          ║           │                │                         │                                   │<───────────────────────────────│                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │               request token                                 │                                │                              │                            │                    ║
+          ║           │ <────────────────────────────────────────────────────────────────────────────│                                │                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                   token │                                   │                                │                              │                            │                    ║
+          ║           │ ────────────────────────────────────────────────────────────────────────────>│                                │                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                token                               │                              │                            │                    ║
+          ║           │                │                         │ ───────────────────────────────────────────────────────────────────>                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │ write token storage file          │                                │                              │                            │                    ║
+          ║           │ <──────────────────────────────────────────────────────────────────────────────────────────────────────────────                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                read token storage file                             │                              │                            │                    ║
+          ║           │ <────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────│                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │               token storage file content                           │                              │                            │                    ║
+          ║           │ ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────>│                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              ────┐                        │                    ║
+          ║           │                │                         │                                   │                                │                                  │ load tokens            │                    ║
+          ║           │                │                         │                                   │                                │                              <───┘                        │                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                               read token storage file              │                              │                            │                    ║
+          ║           │ <─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────│                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                             token storage file content             │                              │                            │                    ║
+          ║           │ ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────>│                    ║
+          ║           │                │                         │                                   │                                │                              │                            │                    ║
+          ║           │                │                         │                                   │                                │                              │                            ────┐                ║
+          ║           │                │                         │                                   │                                │                              │                                │ load tokens    ║
+          ║           │                │                         │                                   │                                │                              │                            <───┘                ║
+          ╚═══════════╪════════════════╪═════════════════════════╪═══════════════════════════════════╪════════════════════════════════╪══════════════════════════════╪════════════════════════════╪════════════════════╝
+                     HDFS            HBASE           ┌───────────┴────────────┐          ┌───────────┴───────────┐          ┌─────────┴──────────┐          ┌────────┴────────┐          ┌────────┴────────┐            
+                    ,.-^^-._        ,.-^^-._         │HBaseCredentialsProvider│          │HdfsCredentialsProvider│          │[ApplicationMaster] │          │[Driver]         │          │[Executor]       │            
+                   |-.____.-|      |-.____.-|        └────────────────────────┘          └───────────────────────┘          │AMCredentialsRenewer│          │CredentialUpdater│          │CredentialUpdater│            
+                   |        |      |        |                                                                               └────────────────────┘          └─────────────────┘          └─────────────────┘            
+                   |        |      |        |                                                                                                                                                                           
+                   |        |      |        |                                                                                                                                                                           
+                   '-.____.-'      '-.____.-'                                                                                                                                                                           
+
+```
+
+
+## Deploy wasp credential providers:
+
+place `wasp-yarn-auth-hdfs.jar` into the directory pointed by `wasp.spark-streaming.yarn-jar`
+
+place `wasp-yarn-auth-hbase.jar` into the directory pointed by `wasp.spark-streaming.yarn-jar`
+
+place `wasp-yarn-auth-hdfs.jar` into the directory pointed by `wasp.spark-batch.yarn-jar`
+
+place `wasp-yarn-auth-hbase.jar` into the directory pointed by `wasp.spark-batch.yarn-jar`
+
+
+place under freeform configurations (`wasp.spark-batch.others` and `wasp.spark-streaming.others`)
+
+
+```
+ others = [
+        #disable builtin hbase provider
+	{"spark.yarn.security.credentials.hbase.enabled" = false} 
+        #disable builtin hdfs provider
+        {"spark.yarn.security.credentials.hadoopfs.enabled" = false} 
+        #disable caching of FileSystem instances by hadoop code (it would cache expired tokens)
+	{ "spark.hadoop.fs.hdfs.impl.disable.cache" = true} 
+        #am needs to know the principal
+	{ "spark.yarn.principal" = "andrea.fonti@CLUSTER01.ATSCOM.IT"}
+        #am needs a keytab
+        { "spark.yarn.keytab" = "andrea.fonti.2.keytab"}
+        #how often am should check for renewal
+	{ "spark.yarn.credentials.renewalTime" = "10000"}
+        #how often executors and driver should check for renewal
+        { "spark.yarn.credentials.updateTime" = "10000"}
+        #distribute keytab
+        { "spark.yarn.dist.files" = "file:///root/configurations/andrea.fonti.keytab" }
+        #force spark to authenticate
+        { "spark.authenticate" = "true" }
+        #hadoop file system to access (pipe separated uris)
+        { "spark.wasp.yarn.security.tokens.hdfs.fs.uris"="hdfs://nameservice1/user/andrea.fonti" }
+        #place this if you want to debug the application master
+#	{ "spark.yarn.am.extraJavaOptions" = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5008"}
+```
+
+
+## Credentials provider specific configurations
+
+should be placed in the same free form block `others`
+
+code is better than documentation here, sorry
+
+```scala
+object HbaseCredentialsProviderConfiguration {
+
+  private val HADOOP_CONF_TO_LOAD_KEY = "spark.wasp.yarn.security.tokens.hbase.config.files"
+  private val HADOOP_CONF_TO_LOAD_DEFAULT = ""
+  private val HADOOP_CONF_TO_LOAD_SEPARATOR_KEY = "spark.wasp.yarn.security.tokens.hbase.config.separator"
+  private val HADOOP_CONF_TO_LOAD_SEPARATOR_DEFAULT = "|"
+  private val HADOOP_CONF_TO_LOAD_INLINE_PREFIX = "spark.wasp.yarn.security.tokens.hbase.config.inline"
+  private val HADOOP_CONF_FAILFAST_KEY = "spark.wasp.yarn.security.tokens.hbase.failfast"
+  private val HADOOP_CONF_FAILFAST_DEFAULT = true
+
+  def fromSpark(conf: SparkConf): HbaseCredentialsProviderConfiguration = {
+
+    val actualSeparator = conf.get(HADOOP_CONF_TO_LOAD_SEPARATOR_KEY, HADOOP_CONF_TO_LOAD_SEPARATOR_DEFAULT)
+
+    val filesToLoad = conf.get(HADOOP_CONF_TO_LOAD_KEY, HADOOP_CONF_TO_LOAD_DEFAULT)
+      .split(Pattern.quote(actualSeparator))
+      .filterNot(_.isEmpty)
+      .map(new Path(_))
+
+    val other = conf.getAllWithPrefix(HADOOP_CONF_TO_LOAD_INLINE_PREFIX)
+
+    val failFast = conf.getBoolean(HADOOP_CONF_FAILFAST_KEY, HADOOP_CONF_FAILFAST_DEFAULT)
+
+    HbaseCredentialsProviderConfiguration(filesToLoad, failFast, other)
+  }
+
+
+  def toHbaseConf(conf: HbaseCredentialsProviderConfiguration): Configuration = {
+    val hbaseConfig = HBaseConfiguration.create()
+
+    conf.configurationFiles.foreach(hbaseConfig.addResource)
+    conf.other.foreach {
+      case (k, v) => hbaseConfig.set(k, v)
+    }
+
+    if (conf.failFast) {
+      hbaseConfig.set("hbase.client.retries.number ", "1")
+    }
+
+    hbaseConfig
+  }
+}
+```
+
+
+```scala
+
+object HdfsCredentialProviderConfiguration {
+
+  private val KMS_SEPARATOR_KEY = "spark.wasp.yarn.security.tokens.hdfs.kms.separator"
+  private val KMS_SEPARATOR_DEFAULT = "|"
+  private val KMS_URIS_KEY = "spark.wasp.yarn.security.tokens.hdfs.kms.uris"
+  private val KMS_URIS_VALUE = ""
+
+
+  private val FS_SEPARATOR_KEY = "wasp.yarn.security.tokens.hdfs.fs.separator"
+  private val FS_SEPARATOR_DEFAULT = "|"
+  private val FS_URIS_KEY = "spark.wasp.yarn.security.tokens.hdfs.fs.uris"
+  private val FS_URIS_VALUE = ""
+
+  private val RENEW_KEY = "spark.wasp.yarn.security.tokens.hdfs.renew"
+  private val RENEW_DEFAULT = 600000
+
+  def fromSpark(conf: SparkConf): HdfsCredentialProviderConfiguration = {
+
+    val kmsSeparator = conf.get(KMS_SEPARATOR_KEY, KMS_SEPARATOR_DEFAULT)
+
+    val kmsUris = conf.get(KMS_URIS_KEY, KMS_URIS_VALUE)
+      .split(Pattern.quote(kmsSeparator))
+      .filterNot(_.isEmpty)
+      .map(new URI(_))
+      .toVector
+
+    val fsSeparator = conf.get(FS_SEPARATOR_KEY, FS_SEPARATOR_DEFAULT)
+
+    val fsUris = conf.get(FS_URIS_KEY, FS_URIS_VALUE)
+      .split(Pattern.quote(fsSeparator))
+      .filterNot(_.isEmpty)
+      .map(new Path(_))
+      .toVector
+
+    val renew = conf.getLong(RENEW_KEY, RENEW_DEFAULT)
+
+    HdfsCredentialProviderConfiguration(kmsUris, fsUris, renew)
+  }
+
+  def toSpark(conf: HdfsCredentialProviderConfiguration): SparkConf = {
+    val c = new SparkConf()
+
+    c.set(RENEW_KEY, conf.renew.toString)
+    c.set(KMS_URIS_KEY, conf.kms.map(_.toString).mkString(KMS_SEPARATOR_DEFAULT))
+    c.set(FS_URIS_KEY, conf.fs.map(_.toString).mkString(FS_URIS_VALUE))
+
+  }
+}
+```
+
+
+## Check if everything is working
+
+
+Go to the application master log page and search for these logs
+
+```
+
+INFO  2019-03-01 18:35:37,375 o.a.s.d.y.s.AMCredentialRenewer: Credentials have expired, creating new ones now.
+INFO  2019-03-01 18:35:37,376 o.a.s.d.y.s.AMCredentialRenewer: Attempting to login to KDC using principal: andrea.fonti@CLUSTER01.ATSCOM.IT
+INFO  2019-03-01 18:35:37,378 o.a.s.d.y.s.AMCredentialRenewer: Successfully logged into KDC.
+INFO  2019-03-01 18:35:38,165 i.a.b.w.y.a.h.HBaseCredentialsProvider: Provider config is: HbaseCredentialsProviderConfiguration(WrappedArray(),true,WrappedArray())
+INFO  2019-03-01 18:35:38,594 i.a.b.w.y.a.h.HBaseCredentialsProvider: Token renewed Username=andrea.fonti@CLUSTER01.ATSCOM.IT, SequenceNumber=433, KeyId=15343, IssueDate=Fri Mar 01 18:35:38 CET 2019, ExpirationDate=Fri Mar 01 18:37:38 CET 2019
+INFO  2019-03-01 18:35:38,594 i.a.b.w.y.a.h.HBaseCredentialsProvider: renewal of hbase token calculated from token info will happen before Fri Mar 01 18:37:38 CET 2019
+INFO  2019-03-01 18:35:38,606 i.a.b.w.y.a.h.HdfsCredentialProvider: Provider config is: HdfsCredentialProviderConfiguration(Vector(),Vector(hdfs://nameservice1/user/andrea.fonti),130000)
+INFO  2019-03-01 18:35:38,657 o.a.h.h.DFSClient: Created token for andrea.fonti: HDFS_DELEGATION_TOKEN owner=andrea.fonti@CLUSTER01.ATSCOM.IT, renewer=yarn, realUser=, issueDate=1551461738626, maxDate=1551461978626, sequenceNumber=11863, masterKeyId=15324 on ha-hdfs:nameservice1
+INFO  2019-03-01 18:35:38,665 i.a.b.w.y.a.h.HdfsCredentialProvider: obtained HDFS delegation token Kind: HDFS_DELEGATION_TOKEN, Service: ha-hdfs:nameservice1, Ident: (token for andrea.fonti: HDFS_DELEGATION_TOKEN owner=andrea.fonti@CLUSTER01.ATSCOM.IT, renewer=yarn, realUser=, issueDate=1551461738626, maxDate=1551461978626, sequenceNumber=11863, masterKeyId=15324)
+INFO  2019-03-01 18:35:38,668 i.a.b.w.y.a.h.HdfsCredentialProvider: Final renewal deadline will be Fri Mar 01 18:39:38 CET 2019
+INFO  2019-03-01 18:35:38,678 o.a.s.d.y.s.AMCredentialRenewer: Writing out delegation tokens to hdfs://nameservice1/user/andrea.fonti/.sparkStaging/application_1551348340529_0023/credentials-e5ad77a1-b400-443c-91ca-2826a7c2d031-1551461834572-1.tmp
+INFO  2019-03-01 18:35:38,849 o.a.s.d.y.s.AMCredentialRenewer: Delegation Tokens written out successfully. Renaming file to hdfs://nameservice1/user/andrea.fonti/.sparkStaging/application_1551348340529_0023/credentials-e5ad77a1-b400-443c-91ca-2826a7c2d031-1551461834572-1
+INFO  2019-03-01 18:35:38,866 o.a.s.d.y.s.AMCredentialRenewer: Delegation token file rename complete.
+INFO  2019-03-01 18:35:38,881 o.a.s.d.y.s.AMCredentialRenewer: Scheduling login from keytab in 89697 millis.
+```
+
+Check logs of spark-consumers-streaming:
+
+verify thet scheduled refresh is plausible
+
+```
+INFO  2019-03-01 17:36:40,195 o.a.s.d.y.s.CredentialUpdater: Reading new credentials from hdfs://nameservice1/user/andrea.fonti/.sparkStaging/application_1551348340529_0023/credentials-e5ad77a1-b400-443c-91ca-2826a7c2d031-1551461834572-1
+INFO  2019-03-01 17:36:40,239 o.a.s.d.y.s.CredentialUpdater: Credentials updated from credentials file.
+INFO  2019-03-01 17:36:40,239 o.a.s.d.y.s.CredentialUpdater: Scheduling credentials refresh from HDFS in 34333 ms.
+INFO  2019-03-01 17:37:14,613 o.a.s.d.y.s.CredentialUpdater: Reading new credentials from hdfs://nameservice1/user/andrea.fonti/.sparkStaging/application_1551348340529_0023/credentials-e5ad77a1-b400-443c-91ca-2826a7c2d031-1551461924682-2
+```
+
+verify that the watchdog does not report anomalies
+
+```
+INFO  2019-03-01 18:33:05,927 i.a.b.w.c.s.s.a.w.SparkContextWatchDog: Everything is fine, delegation tokens are ok
+INFO  2019-03-01 18:33:06,927 i.a.b.w.c.s.s.a.w.SparkContextWatchDog: all token identifiers : List(org.apache.hadoop.yarn.security.AMRMTokenIdentifier@6a32009d, org.apache.hadoop.hbase.security.token.AuthenticationTokenIdentifier@1d8, token for andrea.fonti: HDFS_DELEGATION_TOKEN owner=andrea.fonti@CLUSTER01.ATSCOM.IT, renewer=yarn, realUser=, issueDate=1551465162963, maxDate=1551465402963, sequenceNumber=11974, masterKeyId=15352)
+INFO  2019-03-01 18:33:06,927 i.a.b.w.c.s.s.a.w.SparkContextWatchDog: filtered token identifiers : List(token for andrea.fonti: HDFS_DELEGATION_TOKEN owner=andrea.fonti@CLUSTER01.ATSCOM.IT, renewer=yarn, realUser=, issueDate=1551465162963, maxDate=1551465402963, sequenceNumber=11974, masterKeyId=15352)
+INFO  2019-03-01 18:33:06,927 i.a.b.w.c.s.s.a.w.SparkContextWatchDog: Expired tokens? : None
+```
+
+check logs of executors
+```
+INFO  2019-03-01 17:36:40,195 o.a.s.d.y.s.CredentialUpdater: Reading new credentials from hdfs://nameservice1/user/andrea.fonti/.sparkStaging/application_1551348340529_0023/credentials-e5ad77a1-b400-443c-91ca-2826a7c2d031-1551461834572-1
+INFO  2019-03-01 17:36:40,239 o.a.s.d.y.s.CredentialUpdater: Credentials updated from credentials file.
+INFO  2019-03-01 17:36:40,239 o.a.s.d.y.s.CredentialUpdater: Scheduling credentials refresh from HDFS in 34333 ms.
+INFO  2019-03-01 17:37:14,613 o.a.s.d.y.s.CredentialUpdater: Reading new credentials from hdfs://nameservice1/user/andrea.fonti/.sparkStaging/application_1551348340529_0023/credentials-e5ad77a1-b400-443c-91ca-2826a7c2d031-1551461924682-2
+```
+
+# WASP 2.19.5
+
+Minor fixes
+
+# WASP 2.19.6
+
+### Perform avro encoding inside spark expression via code generation 3
+
+[Merge request 130](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/130)
+
+Created at: 2019-03-28T18:10:44.426Z
+
+Updated at: 2019-04-01T17:00:49.467Z
+
+Branch: feature/206-perform-avro-encoding-inside-spark-expression-via-code-generation-3
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Avro serialization is now performed in a spark sql expression,
+the sql expression will use the spark codegen creating less serialization boundaries,
+the spark plan will be easier to optimize for the planner.
+
+Various optimization were performed in avro schema handling and serialization exploiting the schema registry caching mechanism to perform less round trips of json schemas (that should be parsed from json, an expensive operation)
+
+Thnx to @mark91  and @antonio.murgia
+
+### Resolve "Pipegraph high availability will sometimes get confused"
+
+[Merge request 131](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/131)
+
+Created at: 2019-04-01T15:11:19.548Z
+
+Updated at: 2019-04-01T17:06:15.371Z
+
+Branch: feature/209-pipegraph-high-availability-will-sometimes-get-confused
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #209
+
+## WASP 2.19.7
+
+### Spark session should be cloned for each etl to prevent global options to affect different strategies in non deterministic order
+
+[Merge request 134](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/134)
+
+Created at: 2019-04-02T13:29:50.281Z
+
+Updated at: 2019-04-02T16:10:45.347Z
+
+Branch: feature/210-spark-session-should-be-cloned-for-each-etl-to-prevent-global-options-to-affect-different-strategies-in-non-deterministic-order
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Structured streaming etls now do not share Spark Sessions.
+
+Closes #210
+
+### Let user configure the name of the telemetry topic
+
+[Merge request 135](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/135)
+
+Created at: 2019-04-02T16:12:20.943Z
+
+Updated at: 2019-04-10T14:27:49.883Z
+
+Branch: feature/205-let-user-configure-the-name-of-the-telemetry-topic
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #205 
+
+Telemetry topic name is now configurable, one producer per process instead of one producer per ETL is instantiated
+
+Telemetry is now configurable via the following HOCON configuration
+
+
+```
+wasp {
+    telemetry{
+        writer = "default"
+        latency.sample-one-message-every = 100
+        topic = {
+        name = "telemetry"
+        partitions = 3
+        replica = 1
+        others = [
+            {"batch.size" = "1048576"}
+            {"acks" = "0" }
+        ]
+        }
+    }
+}
+
+```
+
+
+`wasp.telemetry.writer`: can be "solr", "elastic" or "default"
+
+`wasp.telemetry.latency.sample-one-message-every`: affect sampling of messages in end to end message latency telemetry
+
+`wasp.telemetry.topic.name`: name of the telemetry topic to write to `.topic` will be appended to it by wasp
+
+`wasp.telemetry.topic.partitions`: number of partitions of topic to create if topic is created by wasp
+
+`wasp.telemetry.topic.replica`: number of replica of topic if topic is created by wasp
+
+`wasp.telemetry.topic.others`: list of free form tuples (string, string) that will be appended to the kafka telemetry producer configuration after the global options set by `wasp.kafka.others`
+
+relevant code describing how configurations of KafkaProducer for telemetry are set
+
+```scala
+    val kafkaConfig = ConfigManager.getKafkaConfig
+
+    val telemetryConfig = ConfigManager.getTelemetryConfig
+
+    val connectionString = kafkaConfig.connections.map {
+      conn => s"${conn.host}:${conn.port}"
+    }.mkString(",")
+
+
+    val props = new Properties()
+    props.put("bootstrap.servers", connectionString)
+    props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+    props.put("key.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+
+    val notOverridableKeys = props.keySet.asScala
+
+    val merged: Seq[KafkaEntryConfig] = kafkaConfig.others ++ telemetryConfig.telemetryTopicConfigModel.kafkaSettings
+
+    val resultingConf = merged.filterNot(x => notOverridableKeys.contains(x.key))
+
+    logger.info(s"Telemetry configuration\n${resultingConf.mkString("\n")}" )
+
+    resultingConf.foreach {
+      case KafkaEntryConfig(key, value) => props.put(key, value)
+    }
+
+```
+
+### Let users configure compression on a topic-by-topic basis
+
+[Merge request 141](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/141)
+
+Created at: 2019-04-10T14:25:56.970Z
+
+Updated at: 2019-04-11T13:46:06.005Z
+
+Branch: feature/217-let-users-configure-compression-on-a-topic-by-topic-basis
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+Closes #217 
+
+
+TopicModel now has a new field called topicCompression, it's default value is `TopicCompression.Disabled`
+
+
+To use compression the relevant TopicModels should be updated.
+
+
+Available compression methods are
+
+```scala
+TopicCompression.Disabled // No compression will be used by the producer,
+TopicCompression.Gzip // Gzip compression will be applied by the producer for each sent batch (High CPU usage best compression),
+TopicCompression.Snappy // "snappy" (Medium CPU usage lowest compression),
+TopicCompression.Lz4 // "lz4" (Lower CPU usage than snappy, slightly better compression than snappy)
+```
+
+For convenience an overview of different compression algorithms is available in the following image
+
+![Rplot05](/uploads/00dbaa4abda925effc6bd2172b1196b8/Rplot05.png)
+
+## WASP 2.19.8
+
+### Optimize avro conversions writing to hbase
+
+[Merge request 137](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/137)
+
+Created at: 2019-04-08T08:27:47.268Z
+
+Updated at: 2019-04-11T16:21:49.287Z
+
+Branch: feature/208-optimize-avro-conversions-writing-to-hbase
+
+Author: [Marco](https://gitlab.com/mark91)
+
+The PR leverages the `AvroConverterExpression` when writing to HBase and removes `AvroToRow`: this provides great perf improvements when writing to HBase.
+
+Thanks to @antonio.murgia for the great help on this.
+
+cc @andrea.fonti
+
+### Use native expression in order to convert avro from kafka
+
+[Merge request 139](https://gitlab.com/AgileFactory/Agile.Wasp2/merge_requests/139)
+
+Created at: 2019-04-09T08:46:44.745Z
+
+Updated at: 2019-04-12T08:22:21.543Z
+
+Branch: feature/215-use-native-expression-in-order-to-convert-avro-from-kafka-2
+
+Author: [Marco](https://gitlab.com/mark91)
+
+Closes #215
+
+Improves performance reading avro serialized data from kafka
+

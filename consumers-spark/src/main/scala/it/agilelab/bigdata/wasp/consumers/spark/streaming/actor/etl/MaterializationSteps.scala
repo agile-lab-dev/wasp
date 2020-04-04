@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.genera
 import it.agilelab.bigdata.wasp.core.models.configuration.SparkStreamingConfigModel
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
 
 import scala.util.{Failure, Success, Try}
@@ -23,6 +23,7 @@ trait MaterializationSteps {
     */
   protected val writerFactory: WriterFactory
 
+  protected val sparkSession: SparkSession
   /**
     * Performs materialization of a DataFrame activated from a [[StructuredStreamingETLModel]].
     *
@@ -62,7 +63,7 @@ trait MaterializationSteps {
   }
 
   private def createWriter(etl: StructuredStreamingETLModel): Try[SparkStructuredStreamingWriter] = {
-    Try(writerFactory(etl, etl.streamingOutput)) match {
+    Try(writerFactory(etl, etl.streamingOutput, sparkSession)) match {
       case Success(Some(writer)) => Success(writer)
       case Success(None) => Failure(new Exception("Could not instantiate writer"))
       case failure: Failure[Option[SparkStructuredStreamingWriter]] => Failure(failure.exception)
@@ -102,5 +103,5 @@ object MaterializationSteps {
     *
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
-  type WriterFactory = (StructuredStreamingETLModel, WriterModel) => Option[SparkStructuredStreamingWriter]
+  type WriterFactory = (StructuredStreamingETLModel, WriterModel, SparkSession) => Option[SparkStructuredStreamingWriter]
 }

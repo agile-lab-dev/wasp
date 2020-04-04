@@ -6,8 +6,8 @@ import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, HBaseProduct, SolrProduct}
-import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.models.Model
+import it.agilelab.bigdata.wasp.core.models.configuration._
 import org.bson.BsonString
 
 import scala.collection.JavaConverters._
@@ -112,7 +112,7 @@ object ConfigManager {
     }
   )
 
-  private var waspConfig : WaspConfigModel = _
+  private var waspConfig: WaspConfigModel = _
   private var telemetryConfig: TelemetryConfigModel = _
   private var mongoDBConfig: MongoDBConfigModel = _
   private var kafkaConfig: KafkaConfigModel = _
@@ -168,55 +168,58 @@ object ConfigManager {
 
   }
 
-  private def getAvroSchemaManagerConfigHbaseConnector: Map[String, Any] = {
+  private def getAvroSchemaManagerConfigHbaseConnector: Map[String, AnyRef] = {
 
     val avroSchemaManagerSubConfig = conf.getConfig("avroSchemaManager")
     val darwinConfig = avroSchemaManagerSubConfig.getConfig("darwin")
+    val defaultConf = darwinConfig.root().unwrapped().asScala.toMap
 
-    if(avroSchemaManagerSubConfig.getBoolean("wasp-manages-darwin-connectors-conf")) {
+    if (avroSchemaManagerSubConfig.getBoolean("wasp-manages-darwin-connectors-conf")) {
       val env = System.getenv()
-      val hbaseSubConfig = conf.getConfig("hbase")
-      val isSecure = if(env.containsKey("WASP_SECURITY")) env.get("WASP_SECURITY") else false
-      val principal = if(env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
-      val keytabPath = if(env.containsKey("KEYTAB_FILE_NAME")) env.get("KEYTAB_FILE_NAME") else ""
 
-      Map(
+      val hbaseSubConfig = conf.getConfig("hbase")
+
+      val isSecure: java.lang.Boolean = if (env.containsKey("WASP_SECURITY"))
+        java.lang.Boolean.getBoolean(env.get("WASP_SECURITY"))
+      else
+        java.lang.Boolean.FALSE
+      val principal = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
+      val keytabPath = if (env.containsKey("KEYTAB_FILE_NAME")) env.get("KEYTAB_FILE_NAME") else ""
+
+      defaultConf ++ Map(
         "namespace" -> darwinConfig.getString("namespace"),
         "table" -> darwinConfig.getString("table"),
         "hbaseSite" -> hbaseSubConfig.getString("hbase-site-xml-path"),
         "coreSite" -> hbaseSubConfig.getString("core-site-xml-path"),
-        "isSecure" -> isSecure ,
+        "isSecure" -> isSecure,
         "principal" -> principal,
         "keytabPath" -> keytabPath
       )
     }
-    else
-
-      Map(
-        "namespace" -> darwinConfig.getString("namespace"),
-        "table" -> darwinConfig.getString("table"),
-        "hbaseSite" -> darwinConfig.getString("hbaseSite"),
-        "coreSite" -> darwinConfig.getString("coreSite"),
-        "isSecure" ->  darwinConfig.getString("isSecure"),
-        "principal" -> darwinConfig.getString("principal"),
-        "keytabPath" -> darwinConfig.getString("keytabPath")
-      )
-
-
+    else {
+      defaultConf
+    }
   }
 
   private def initializeTelemetryConfig(): Unit = {
-    telemetryConfig = getDefaultTelemetryConfig
+    telemetryConfig =
+      retrieveConf[TelemetryConfigModel](getDefaultTelemetryConfig, telemetryConfigName).get
   }
 
 
   private def getDefaultTelemetryConfig: TelemetryConfigModel = {
     val telemetrySubConfig = conf.getConfig("telemetry")
     TelemetryConfigModel(
-      telemetrySubConfig.getString("writer"),
-      telemetrySubConfig.getInt("latency.sample-one-message-every")
+      name = telemetryConfigName,
+      writer = telemetrySubConfig.getString("writer"),
+      sampleOneMessageEvery = telemetrySubConfig.getInt("latency.sample-one-message-every"),
+      telemetryTopicConfigModel = TelemetryTopicConfigModel(
+        topicName = telemetrySubConfig.getString("topic.name"),
+        partitions = telemetrySubConfig.getInt("topic.partitions"),
+        replica = telemetrySubConfig.getInt("topic.replica"),
+        readOthersConfig(telemetrySubConfig.getConfig("topic")).map(e => KafkaEntryConfig(e._1, e._2))
+      )
     )
-
   }
 
   private def initializeMongoDBConfig(): Unit = {
@@ -266,7 +269,7 @@ object ConfigManager {
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
 
-    val triggerInterval = if(sparkSubConfig.hasPath("trigger-interval-ms")) Some(sparkSubConfig.getLong("trigger-interval-ms")) else None
+    val triggerInterval = if (sparkSubConfig.hasPath("trigger-interval-ms")) Some(sparkSubConfig.getLong("trigger-interval-ms")) else None
 
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
@@ -374,14 +377,14 @@ object ConfigManager {
   private def getDefaultJdbcConfig: JdbcConfigModel = {
     val jdbcSubConfig = conf.getConfig("jdbc")
     val connectionsMap = jdbcSubConfig
-                            .getObject("connections")
-                            .entrySet()
-                            .asScala
-                            .toSeq
-                            .filter(entry => entry.getValue.isInstanceOf[ConfigObject])
-                            .map(entry => (entry.getKey, entry.getValue.asInstanceOf[ConfigObject].toConfig))
-                            .map(t => (t._1, readJdbcConfig(t._1, t._2)))
-                            .toMap
+      .getObject("connections")
+      .entrySet()
+      .asScala
+      .toSeq
+      .filter(entry => entry.getValue.isInstanceOf[ConfigObject])
+      .map(entry => (entry.getKey, entry.getValue.asInstanceOf[ConfigObject].toConfig))
+      .map(t => (t._1, readJdbcConfig(t._1, t._2)))
+      .toMap
     JdbcConfigModel(
       connectionsMap,
       jdbcConfigName
@@ -390,7 +393,7 @@ object ConfigManager {
 
   /**
     * Initialize the configurations managed by this ConfigManager.
-    * 
+    *
     * Not initialize MongoDB due to already initialized [[WaspDB.initializeDB()]]
     */
   def initializeCommonConfigs(): Unit = {
@@ -408,6 +411,7 @@ object ConfigManager {
     initializeSparkStreamingConfig()
     initializeSparkBatchConfig()
     initializeAvroSchemaManagerConfig()
+    initializeTelemetryConfig()
   }
 
   def getWaspConfig: WaspConfigModel = {
@@ -499,20 +503,20 @@ object ConfigManager {
   }
 
   private def readRestHttpsConfig(): Option[RestHttpsConfigModel] = {
-      val httpsActive = conf.hasPath("rest.server.https.active") && conf.getBoolean("rest.server.https.active")
+    val httpsActive = conf.hasPath("rest.server.https.active") && conf.getBoolean("rest.server.https.active")
 
-      if(httpsActive){
-        val restHttpsSubConf = conf.getConfig("rest.server.https")
-        Some(
-          RestHttpsConfigModel(
-            keystoreLocation = restHttpsSubConf.getString("keystore-location"),
-            passwordLocation = restHttpsSubConf.getString("password-location"),
-            keystoreType = restHttpsSubConf.getString("keystore-type")
-          )
+    if (httpsActive) {
+      val restHttpsSubConf = conf.getConfig("rest.server.https")
+      Some(
+        RestHttpsConfigModel(
+          keystoreLocation = restHttpsSubConf.getString("keystore-location"),
+          passwordLocation = restHttpsSubConf.getString("password-location"),
+          keystoreType = restHttpsSubConf.getString("keystore-type")
         )
-      } else {
-        None
-      }
+      )
+    } else {
+      None
+    }
 
   }
 
@@ -587,7 +591,7 @@ object ConfigManager {
   /**
     * Read the configuration with the specified name from MongoDB or,
     * if it is not present, initialize it with the provided defaults.
-		*/
+    */
   private def retrieveConf[T <: Model](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     WaspDB.getDB.insertIfNotExists[T](default)
 
@@ -596,7 +600,7 @@ object ConfigManager {
 
   def buildTimedName(prefix: String): String = {
     val result = prefix + "-" + new SimpleDateFormat("yyyy.MM.dd")
-        .format(new Date())
+      .format(new Date())
 
     result
   }
