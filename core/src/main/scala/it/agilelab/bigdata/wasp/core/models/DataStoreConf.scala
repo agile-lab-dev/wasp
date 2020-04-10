@@ -1,5 +1,9 @@
 package it.agilelab.bigdata.wasp.core.models
 
+import java.time.format.DateTimeFormatter
+import java.time.temporal.{ChronoUnit, TemporalUnit}
+import java.time.{Instant, ZoneId, ZonedDateTime}
+
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsObject, JsString, JsValue, RootJsonFormat, _}
@@ -56,24 +60,50 @@ object PrefixAndTimeBoundKeyValueMatchingStrategy {
 
 sealed trait PartitionPruningStrategy
 
-final case class TimeBasedBetweenPartitionPruningStrategy(colName: String, isDateNumeric: Boolean, pattern: String)
+final case class TimeBasedBetweenPartitionPruningStrategy(columnName: String,
+                                                          isDateNumeric: Boolean,
+                                                          pattern: String,
+                                                          granularity: String)
   extends PartitionPruningStrategy {
   def condition(start: Long, end: Long, zoneId: String): Column = {
     if (isDateNumeric) {
-      rangeFilterFromMillisLongType(colName, pattern, start, end, zoneId)
+      rangeFilterFromMillisLongType(start, end, zoneId)
     } else {
-      rangeFilterFromStringType(colName, pattern, start, end, zoneId)
+      rangeFilterFromStringType(start, end, zoneId)
     }
   }
 
-  private def rangeFilterFromMillisLongType(columnName: String, dateFormat: String, startTime: Long, endTime: Long, zoneId: String): Column = {
+  private def rangeFilterFromStringType(startTime: Long, endTime: Long, zoneId: String): Column = {
+    val dateFormatter = DateTimeFormatter.ofPattern(pattern)
+    val startRefDate = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of(zoneId))
+    val endRefDate = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of(zoneId))
+    val granularityUnit = ChronoUnit.valueOf(granularity)
+    val datesToConsider = getDatesToConsider(startRefDate, endRefDate, dateFormatter, granularityUnit)
+    col(columnName).isin(datesToConsider: _*)
+  }
+
+  private def rangeFilterFromMillisLongType(startTime: Long, endTime: Long, zoneId: String): Column = {
     unix_timestamp(to_utc_timestamp(to_timestamp(from_unixtime(col(columnName) / 1000)), zoneId))
       .between(lit(startTime / 1000), lit(endTime / 1000))
   }
 
-  protected def rangeFilterFromStringType(columnName: String, dateFormat: String, startTime: Long, endTime: Long, zoneId: String): Column = {
-    unix_timestamp(to_utc_timestamp(to_timestamp(col(columnName), dateFormat), zoneId))
-      .between(lit(startTime / 1000), lit(endTime / 1000))
+  @scala.annotation.tailrec
+  private def getDatesToConsider(startRefDate: ZonedDateTime,
+                                 endRefDate: ZonedDateTime,
+                                 dateFormatter: DateTimeFormatter,
+                                 granularity: TemporalUnit = ChronoUnit.HOURS,
+                                 dateToConsider: List[String] = Nil): List[String] = {
+    if (startRefDate.isAfter(endRefDate)) {
+      dateToConsider.reverse
+    } else {
+      getDatesToConsider(
+        startRefDate.plus(1, granularity),
+        endRefDate,
+        dateFormatter,
+        granularity,
+        dateFormatter.format(startRefDate) :: dateToConsider
+      )
+    }
   }
 }
 
@@ -139,7 +169,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
 
     // RawDataStoreConf section
     implicit val timeBasedBetweenPartitionPruningStrategyFormat: RootJsonFormat[TimeBasedBetweenPartitionPruningStrategy] =
-      jsonFormat(TimeBasedBetweenPartitionPruningStrategy.apply, "colName", "isDateNumeric", "pattern")
+      jsonFormat(TimeBasedBetweenPartitionPruningStrategy.apply, "columnName", "isDateNumeric", "pattern", "granularity")
     implicit val partitionPruningFormat: RootJsonFormat[PartitionPruningStrategy] = new RootJsonFormat[PartitionPruningStrategy] {
       override def read(json: JsValue): PartitionPruningStrategy = json.asJsObject.getFields("type") match {
         case Seq(JsString("TimeBasedBetweenPartitionPruningStrategy")) => json.convertTo[TimeBasedBetweenPartitionPruningStrategy]

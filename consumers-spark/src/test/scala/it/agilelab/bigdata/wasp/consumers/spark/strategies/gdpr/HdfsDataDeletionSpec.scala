@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr
 
 import java.io.IOException
 import java.nio.file.Paths
+import java.time.temporal.ChronoUnit
 
 import com.github.dwickern.macros.NameOf._
 import com.typesafe.config.{Config, ConfigFactory}
@@ -263,7 +264,87 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       correlationIdColumn,
       rawModel,
       PrefixRawMatchingStrategy(keyColumn),
-      TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDate](_.date), isDateNumeric = false, "yyyyMMddHHmm")
+      TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDate](_.date), isDateNumeric = false, "yyyyMMddHHmm", ChronoUnit.MINUTES.name)
+    )
+
+    // Wed Oct 09 2019 22:00:00 - Mon Oct 14 2019 22:00:00
+    val config = createConfig(Some(1570658400000L, 1571090400000L))
+    val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
+
+    val deletionResult = target.delete(deletionConfig, spark)
+
+    readData[DataWithDate] should contain theSameElementsAs expectedData
+    val expectedDeletions = Seq(
+      DeletionOutput(
+        "k1",
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsRawModelSource(rawModel.uri),
+        DeletionNotFound,
+        "id1"
+      ),
+      DeletionOutput(
+        "k2",
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsFileSource(fileNames.filter { case (_, key) => key == "k2" }.map(_._1)),
+        DeletionSuccess,
+        "id2"
+      ),
+      DeletionOutput(
+        "k3",
+        HdfsPrefixColumnMatch(keyColumn),
+        HdfsFileSource(fileNames.filter { case (_, key) => key == "k3suffix" || key == "k3suffix2" }.map(_._1).distinct),
+        DeletionSuccess,
+        "id3"
+      )
+    )
+
+    deletionResult.get.foreach { toCompare =>
+      val expected = expectedDeletions.find(d => d.key == toCompare.key).get
+      compareOutput(toCompare, expected)
+    }
+  }
+
+  it should "correctly delete data using time strategy and prefix matching with a non numeric date with daily granularity" in {
+    val data: Seq[DataWithDate] = Seq(
+      DataWithDate("k1", "111", "20191020", "aaa"),
+      DataWithDate("k2", "222", "20191013", "bbb"),
+      DataWithDate("k3", "333", "20191020", "ccc"),
+      DataWithDate("k3suffix", "111", "20191013", "ddd"),
+      DataWithDate("k3suffix2", "222", "20191013", "ddd"),
+      DataWithDate("prefixk3suffix2", "222", "20191013", "ddd"),
+      DataWithDate("k5", "222", "20191020", "eee"),
+      DataWithDate("k6", "333", "20191012", "fff")
+    )
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
+    )
+    val expectedData: Seq[DataWithDate] = data.filterNot(d => d.id == "k2" || d.id == "k3suffix" || d.id == "k3suffix2")
+
+    val partitionBy = List("category")
+
+    writeTestData(data, 1, partitionBy)
+
+    val keyColumn = nameOf[DataWithDate](_.id)
+
+    val rawModel = RawModel(
+      "data",
+      dataUri,
+      timed = false,
+      ScalaReflection.schemaFor[DataWithDate].dataType.asInstanceOf[StructType].json,
+      RawOptions("append", "parquet", None, Some(partitionBy))
+    )
+
+    import spark.implicits._
+    val fileNames = readFileNameAndId
+
+    val rawDataStoreConf = RawDataStoreConf(
+      keyColumn,
+      correlationIdColumn,
+      rawModel,
+      PrefixRawMatchingStrategy(keyColumn),
+      TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDate](_.date), isDateNumeric = false, "yyyyMMdd", ChronoUnit.DAYS.name)
     )
 
     // Wed Oct 09 2019 22:00:00 - Mon Oct 14 2019 22:00:00
@@ -340,7 +421,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       correlationIdColumn,
       rawModel,
       ExactRawMatchingStrategy(keyColumn),
-      TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDateNumeric](_.date), isDateNumeric = true, "yyyyMMddHHmm")
+      TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDateNumeric](_.date), isDateNumeric = true, "yyyyMMddHHmm", ChronoUnit.MINUTES.name)
     )
 
     // 201910100000 - 201910150000
@@ -421,7 +502,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       correlationIdColumn,
       rawModel,
       ContainsRawMatchingStrategy(keyColumn),
-      TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDate](_.date), isDateNumeric = false, "yyyyMMddHHmm")
+      TimeBasedBetweenPartitionPruningStrategy(nameOf[DataWithDate](_.date), isDateNumeric = false, "yyyyMMddHHmm", ChronoUnit.MINUTES.name)
     )
 
     // Wed Oct 09 2019 22:00:00 - Mon Oct 14 2019 22:00:00

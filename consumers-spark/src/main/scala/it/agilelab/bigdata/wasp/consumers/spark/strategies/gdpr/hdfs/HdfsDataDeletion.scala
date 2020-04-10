@@ -136,12 +136,12 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
       val keysToDeleteWithCorrelation =
         spark.createDataset(config.keysToDeleteWithCorrelation)(Encoders.product).repartition(1)
 
-      val inputFileAndMatchingColumn = rawDataDF
+      val inputFileAndMatchingColumn: DataFrame = rawDataDF
         .select(
           input_file_name().alias(FILENAME_COLUMN),
           expr(config.rawMatchingStrategy.dataframeKeyMatchingExpression).alias(DATA_KEY_COLUMN)
         )
-        .where(config.partitionPruningCondition)
+        .where(config.partitionPruningCondition.and(config.rawMatchingCondition))
 
       val outDf = inputFileAndMatchingColumn.join(
         org.apache.spark.sql.functions.broadcast(keysToDeleteWithCorrelation),
