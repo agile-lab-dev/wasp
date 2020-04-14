@@ -15,7 +15,7 @@
   - [Services](#services)
   - [Using WASP](#using-wasp)
 - [WASP RESTful APIs](documentation/api.md)
-- DevOps on Standalone applications 
+- DevOps on Standalone applications
     - [Development](documentation/dev.md)
     - [Operations](documentation/ops.md)
 
@@ -49,7 +49,7 @@ WASP has been added to Cloudera Solution Gallery as an Open Source tool to simpl
 
 #### Background
 Handling huge streams of data in near real time is a hard task. So we want to build a reference architecture to speed up fast data application development and to avoid common mistakes about fault tolerance and reliability.
-Kafka is the central pillar of the architecture and helps to handle streams in the correct way. We have been inspired by the Kappa architecture definition. 
+Kafka is the central pillar of the architecture and helps to handle streams in the correct way. We have been inspired by the Kappa architecture definition.
 
 #### Architecture
 You can refer to the diagrams ([Wasp1](documentation/diagrams/Wasp1.png) and [Wasp2](documentation/diagrams/Wasp2.png)) to gain a general overview of the architecture.
@@ -59,7 +59,7 @@ The project is divided into sub modules:
 - **wasp-master**: it provides the main entry point to control your application, exposing the WASP REST API. In the future, this will also provide a complete web application for monitoring and configuration.
 - **wasp-producers**: a thin layer to easily expose endpoints for ingestion purposes. Leveraging Akka-Camel we can provide Http, Tcp, ActiveMQ, JMS, File and many other connectors. This ingestion layer pushes data into Kafka.
 - **wasp-consumers-rt**: ...
-- **wasp-consumers-spark**: the consumer layer incapsulates Spark Streaming to dequeue data from Kafka, apply business logic to it and then push the output on a target system. 
+- **wasp-consumers-spark**: the consumer layer incapsulates Spark Streaming to dequeue data from Kafka, apply business logic to it and then push the output on a target system.
 
 All the components are coordinated, monitored and owned by an Akka Cluster layer, that provides scalability and fault tolerance for each component. For example you can spawn multiple identical producers to balance the load on your http endpoint, and then fairly distribute the data on Kafka.
 
@@ -88,7 +88,7 @@ For development purposes, WASP comes with two ways to handle the service depende
 ##### Kafka
 Kafka is the central element of this architecture blue print.
 Each topic must have an associated Avro schema. This enforces type consistency and is the first step towards reliable real time data quality, something we will work on in the next future.
-Avro has been chosen because more typed and descriptive than JSON and because of its compatibility with Spark and the Hadoop world in general. 
+Avro has been chosen because more typed and descriptive than JSON and because of its compatibility with Spark and the Hadoop world in general.
 Kafka decouples the ingestion layer from the analysis one. This allows updating algorithms and models without impacting the ingestion layer, and vice versa.
 
 ##### Spark
@@ -118,8 +118,7 @@ WASP is written in Scala, and the build is managed with SBT.
 The recommended development environment is Linux; developing on Windows or MacOS is certainly possible, but is not supported, sorry about that!
 
 Before starting:
-
-- Install JDK
+- Install JDK 8
 - Install SBT
 - Install Git
 
@@ -128,16 +127,17 @@ The steps to getting WASP up and running for development are pretty simple:
 - Clone this repository:
 
     `git clone https://github.com/agile-lab-dev/wasp.git`
-    
-- Use the scripts to run the service dependencies with Docker:
 
-    `docker/start-services.sh`
-    
-- Start WASP. You can either run WASP inside or outside of a Docker container:
+- If you haven't access to *agilefactory* GitLab docker registry, build the docker image locally:
 
-    - inside a container: `./docker/wasp-docker-image/build-wasp-docker-image.sh && ./docker/wasp-container-all-services.sh`
-    
-    - outside (on the host):     `./docker/wasp-host-all-services.sh`
+```
+cd whitelabel/docker-new/cdh-docker
+docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:5.16
+```
+
+ - Use the scripts to start WASP:
+
+    `whitelabel/docker-new/start-wasp.sh`
 
 
 ##### Extension points
@@ -145,20 +145,20 @@ In order to build you application there are several extension points where to pl
 
 - **Producer**: If your data can flow directly into Kafka, for example if you already have a Flume ingestion layer, you don't need to have producers. Otherwise you should extend WaspProducerActor, maybe leveraging Camel, to expose some kind of endpoint (tcp, http, jms, etc).  
 At this point you only need to worry about formatting your incoming data according to an Avro schema, as the base class will handle the Kafka connectivity for you.
-In order to have each producer acting independently, you should also overwrite WaspProducerNodeGuardian. 
+In order to have each producer acting independently, you should also overwrite WaspProducerNodeGuardian.
 
 An example of an extended WaspProducerNodeGuardian:
 
     final class YahooFinanceProducer(env: {val producerBL: ProducerBL; val topicBL: TopicBL}) extends WaspProducerNodeGuardian(env) {
-    
+
       // TODO verify this assigment (what if more YFP are declared ?)
       val name = YahooFinanceProducer.name
-    
+
       def startChildActors() = {
     	logger.info(s"Starting get data on ${cluster.selfAddress}")
-    
+
     	val stocks = producer.configuration.flatMap(bson => bson.getAs[BSONArray]("stocks").map(array => array.values.map(s => s.seeAsOpt[String].get))).getOrElse(YahooFinanceProducer.stocks)
-    
+
 	    stocks foreach { s =>
 	      println("stock: " + s)
 	      val aRef = context.actorOf(Props(new StockActor(s, kafka_router, associatedTopic)))
@@ -170,40 +170,40 @@ An example of an extended WaspProducerNodeGuardian:
 An example of an extended WaspProducerActor:
 
     private[wasp] class StockActor(stock: String, kafka_router: ActorRef, topic: Option[TopicModel]) extends WaspProducerActor[JsValue](kafka_router, topic) {
-    
-    
+
+
       val builder = new com.ning.http.client.AsyncHttpClientConfig.Builder()
       val client = new play.api.libs.ws.ning.NingWSClient(builder.build())
-    
+
       override def preStart(): Unit = {
     	logger.info(s"Starting $stock")
       }
-    
+
       def mainTask() = {
 	    logger.info(s"Starting main task for actor: ${this.getClass.getName}")
-	    
+
 	    task = Some(context.system.scheduler.schedule(Duration.Zero, 10 seconds) {
-	    
+
 	      val url = s"""https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22$stock%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="""
 	      val res = client.url(url).getStream()
-	    
+
 	      val jsonReturned: Future[String] = res.flatMap {
 	    	case (headers, body) => // Count the number of bytes returned
 	      		body |>>> Iteratee.fold("") { (json, bytes) => json + new String(bytes, "UTF-8") }
       	  }
-    
+
 	      val jsonString = Await.result(jsonReturned, 20 seconds)
 	      val json: JsValue = Json.parse(jsonString)
-	    
+
 	      //val outputJson = generateOutputJsonMessage(json)
 	      logger.debug("Forwarding producer message to Kafka: " + jsonString)
-	    
+
 	      sendMessage(json)
 	    })
       }
-    
+
       def generateOutputJsonMessage(inputJson: JsValue): String = {
-    
+
 		    /* The following mappings are just an example made to show the producer in action */
 		    val id_event = (inputJson \\ "count").map(_.as[Double]).headOption
 		    val source_name = (inputJson \\ "StockExchange").map(t => t.asOpt[String].getOrElse("")).headOption.getOrElse("")
@@ -224,7 +224,7 @@ An example of an extended WaspProducerActor:
 		    val volume = (inputJson \\ "Volume").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
 		    val currency = (inputJson \\ "Currency").map(t => t.asOpt[String].getOrElse("")).headOption.getOrElse("")
 		    val payload = inputJson.toString().replaceAll("\"", "") //Required for string bonification
-		    
+
 		    val myJson = s"""{
 		     "id_event":${id_event.getOrElse("0")},
 		     "source_name":"$source_name",
@@ -242,14 +242,14 @@ An example of an extended WaspProducerActor:
 		     "volume":$volume,
 		     "currency":"$currency"
 		     }"""
-		    
+
 		    myJson
       }
-    
+
       def generateRawOutputJsonMessage(inputJson: JsValue): String = {
-    
+
 		    val format = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-		    
+
 		    /* The following mappings are just an example made to show the producer in action */
 		    val id_event = (inputJson \\ "count").map(_.as[Double]).headOption
 		    val source_name = "SPMIB"
@@ -264,7 +264,7 @@ An example of an extended WaspProducerActor:
 		    val longitude = 0
 		    val value = (inputJson \\ "Bid").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
 		    val payload = inputJson.toString().replaceAll("\"", "") //Required for string bonification
-		    
+
 		    val myJson = s"""{
 		     "id_event":${id_event.getOrElse("0")},
 		     "source_name":"$source_name",
@@ -276,10 +276,10 @@ An example of an extended WaspProducerActor:
 		     "value":$value,
 		     "payload":"$payload"
 		     }"""
-		    
+
 		    myJson
       }
-    
+
     }
 
 - **Consumer**: to create a consumer you only need to implement the Strategy trait with a concrete class. The full qualifier of the class will then be used in the ETL block inside the Pipegraph definition or in the Batch definition.
@@ -293,23 +293,23 @@ An example of an extended WaspProducerActor:
     ![pipegraph](documentation/diagrams/pipegraph.png)
 
     while this is  a more specific model representation of it:
-    
+
     ![pipegraph_model](documentation/diagrams/pipegraph_model.png)
-    
+
     The pipegraph is the core of WASP, because it allows to abstract a pipeline with no coupling between components. It's really easy to change a pipegraph in order to add a datastore or more transformation steps.
     The structure of a Pipegraph forces you to implement in the right direction to avoid architectural mistakes. It forces you to have just one single output for each stream, so if you need to write your data into two datastore you are obliged to redirect the stream to Kafka topic and to consume it with two indipendent consumers.
-    
+
     An example of a Pipegraph definition:
-        
+
         object MetroPipegraphModel {
-        
+
             lazy val metroPipegraphName = "MetroPipegraph6"
             lazy val metroPipegraph = MetroPipegraph()
             lazy val conf: Config = ConfigFactory.load
             lazy val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
-        
+
               private[wasp] object MetroPipegraph {
-            
+
                 def apply() =
                   PipegraphModel(
                       name = MetroPipegraphModel.metroPipegraphName,
@@ -332,26 +332,26 @@ An example of an extended WaspProducerActor:
                       dashboard = None,
                       isActive = false,
                       _id = Some(BSONObjectID.generate))
-            
+
               }}
-    
+
     An other important part of the pipegraph is the strategy. Using strategy, you can apply custom transformation directly to the dataframe, when the DStream is processed with
     Spark.
-    
+
     An example of a Pipegraph strategy definition:
-    
+
         case class MetroStrategy() extends Strategy {
-        
+
           def transform(dataFrames: Map[ReaderKey, DataFrame]) = {
-        
+
             val input = dataFrames.get(ReaderKey(TopicModel.readerType, "metro.topic")).get
-        
+
             /** Put your transformation here. */
-        
+
             input.filter(input("longitude") < -118.451683D)
-        
+
           }
-        
+
         }
 
     In this example the DataFrame is filtered at runtime with a "longitude" condition (i.e. < -118.451683D). Is possible apply more complicated trasformations
@@ -359,9 +359,4 @@ An example of an extended WaspProducerActor:
 
 #### Have a look at what's going on
 - <http://localhost:2891/pipegraphs>, <http://localhost:2891/producers>, <http://localhost:2891/batchjobs> for the current state of your Pipegraphs / Producers / BatchJobs
-- <http://localhost:4040> for Spark Web UI
-- <http://localhost:50071> for HDFS
-- <http://localhost:8983>  for Solr
-- <http://localhost:32770> for Banana (Data visualization plugin for Solr)
-- <http://localhost:9200> for ElasticSearch
-- <http://localhost:5601> for Kibana (Data visualization plugin for ElasticSearch)
+- <http://localhost:8088> YARN Web UI
