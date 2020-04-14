@@ -184,6 +184,7 @@ object HBaseDeletionConfig extends Logging {
   val START_PERIOD_KEY = "start"
   val END_PERIOD_KEY = "end"
   val TIMEZONE_PERIOD_KEY = "timeZone"
+  val BATCH_SIZE = "batchSize"
 
   def create(rootConfig: Config,
              keyValueDataStoreConf: KeyValueDataStoreConf,
@@ -195,8 +196,8 @@ object HBaseDeletionConfig extends Logging {
     }
 
     val keysWithScan: RDD[(RowKeyWithCorrelation, Scan)] = keyValueDataStoreConf.keyValueMatchingStrategy match {
-      case _: ExactKeyValueMatchingStrategy => scanExact(rowKeys)
-      case _: PrefixKeyValueMatchingStrategy => scanPrefix(rowKeys)
+      case _: ExactKeyValueMatchingStrategy => scanExact(rowKeys, maybeConfig)
+      case _: PrefixKeyValueMatchingStrategy => scanPrefix(rowKeys, maybeConfig)
       case prefixAndTime: PrefixAndTimeBoundKeyValueMatchingStrategy =>
         val config = maybeConfig match {
           case Some(x) => x
@@ -219,9 +220,10 @@ object HBaseDeletionConfig extends Logging {
   }
 
   /* For each key to delete inside the RDD, creates an HBase Scan that matches it exactly with a rowkey */
-  private def scanExact(keysToDelete: RDD[RowKeyWithCorrelation]): RDD[(RowKeyWithCorrelation, Scan)] = {
+  private def scanExact(keysToDelete: RDD[RowKeyWithCorrelation], conf: Option[Config]): RDD[(RowKeyWithCorrelation, Scan)] = {
     keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
       val scan = new Scan(rowKey, rowKey)
+      conf.foreach(ConfigUtils.getOptionalInt(_, BATCH_SIZE).foreach(scan.setBatch))
       rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
           new KeyOnlyFilter(),
@@ -232,9 +234,10 @@ object HBaseDeletionConfig extends Logging {
   }
 
   /* For each key to delete inside the RDD, creates an HBase Scan that matches any rowkey that has the same prefix of the key to delete */
-  private def scanPrefix(keysToDelete: RDD[RowKeyWithCorrelation]): RDD[(RowKeyWithCorrelation, Scan)] = {
+  private def scanPrefix(keysToDelete: RDD[RowKeyWithCorrelation], conf: Option[Config]): RDD[(RowKeyWithCorrelation, Scan)] = {
     keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
       val scan = new Scan(rowKey, rowKey ++ Array(Byte.MaxValue))
+      conf.foreach(ConfigUtils.getOptionalInt(_, BATCH_SIZE).foreach(scan.setBatch))
       rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
           new PrefixFilter(rowKey)
@@ -265,17 +268,8 @@ object HBaseDeletionConfig extends Logging {
     val endDateBytes = Bytes.toBytes(endDateString)
     keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
       val scan = new Scan()
-      val (startRow, stopRow) = if (matchingStrategy.isDateFirst) {
-        (
-          startDateBytes ++ Bytes.toBytes(matchingStrategy.separator) ++ rowKey :+ 0x00.toByte,
-          endDateBytes ++ Bytes.toBytes(matchingStrategy.separator) ++ rowKey :+ 0xFF.toByte
-        )
-      } else {
-        (
-          rowKey ++ Bytes.toBytes(matchingStrategy.separator) ++ startDateBytes :+ 0x00.toByte,
-          rowKey ++ Bytes.toBytes(matchingStrategy.separator) ++ endDateBytes :+ 0xFF.toByte
-        )
-      }
+      val startRow = rowKey ++ Bytes.toBytes(matchingStrategy.separator) ++ startDateBytes :+ 0x00.toByte
+      val stopRow = rowKey ++ Bytes.toBytes(matchingStrategy.separator) ++ endDateBytes :+ 0xFF.toByte
       logger.info(s"Scan start: '${new String(startRow, StandardCharsets.UTF_8)}', scan stop: '${new String(stopRow, StandardCharsets.UTF_8)}'")
       scan.setStartRow(startRow)
       scan.setStopRow(stopRow)

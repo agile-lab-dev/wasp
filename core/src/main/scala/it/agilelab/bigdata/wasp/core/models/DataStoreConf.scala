@@ -50,7 +50,6 @@ object PrefixKeyValueMatchingStrategy {
 }
 
 final case class PrefixAndTimeBoundKeyValueMatchingStrategy(separator: String,
-                                                            isDateFirst: Boolean,
                                                             pattern: String,
                                                             locale: String = "UTC") extends KeyValueMatchingStrategy
 
@@ -145,7 +144,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
     // KeyValueDataStoreConf section
     implicit val exactKeyValueMatchingStrategyFormat: RootJsonFormat[ExactKeyValueMatchingStrategy] = jsonFormat0(ExactKeyValueMatchingStrategy.apply)
     implicit val prefixKeyValueMatchingStrategyFormat: RootJsonFormat[PrefixKeyValueMatchingStrategy] = jsonFormat0(PrefixKeyValueMatchingStrategy.apply)
-    implicit val prefixAndTimeBoundKeyValueMatchingStrategyFormat: RootJsonFormat[PrefixAndTimeBoundKeyValueMatchingStrategy] = jsonFormat4(PrefixAndTimeBoundKeyValueMatchingStrategy.apply)
+    implicit val prefixAndTimeBoundKeyValueMatchingStrategyFormat: RootJsonFormat[PrefixAndTimeBoundKeyValueMatchingStrategy] = jsonFormat3(PrefixAndTimeBoundKeyValueMatchingStrategy.apply)
     implicit val keyValueMatchingStrategyFormat: RootJsonFormat[KeyValueMatchingStrategy] = new RootJsonFormat[KeyValueMatchingStrategy] {
       override def read(json: JsValue): KeyValueMatchingStrategy = {
         json.asJsObject.getFields("type") match {

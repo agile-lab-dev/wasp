@@ -68,7 +68,7 @@ object TestGdprBatchJobModels {
       "key",
       "correlationId",
       dataKeyValueModel,
-      PrefixAndTimeBoundKeyValueMatchingStrategy("|", isDateFirst = false, "yyyyMMddHHmm", "IT")
+      PrefixAndTimeBoundKeyValueMatchingStrategy("|", "yyyyMMddHHmm", "IT")
     )
   )
 
