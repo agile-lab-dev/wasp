@@ -2,6 +2,8 @@
 
 # WASP - Wide Analytics Streaming Platform
 
+[![Join the chat at https://gitter.im/agile-lab-dev/wasp](https://badges.gitter.im/agile-lab-dev/wasp.svg)](https://gitter.im/agile-lab-dev/wasp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 ## Table of contents
 
