@@ -3206,3 +3206,347 @@ None.
 
 Closes #279
 Closes #236
+
+## WASP 2.24.0
+
+### Resolve "Remove the detail of all keys to be deleted from HDFS GDPR deletion"
+
+[Merge request 174](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/174)
+
+Created at: 2020-04-01T07:16:58.517Z
+
+Updated at: 2020-04-01T17:40:00.187Z
+
+Branch: feature/288-remove-the-detail-of-all-keys-to-be-deleted-from-hdfs-gdpr-deletion
+
+Author: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+Assignee: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Closes #288
+
+### Resolve "Add a HdfsContainsColumnMatch for GDPR deletion job"
+
+[Merge request 175](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/175)
+
+Created at: 2020-04-01T13:06:37.479Z
+
+Updated at: 2020-04-01T19:12:13.369Z
+
+Branch: feature/289-allow-a-containsrawmatchingstrategy-for-gdpr-deletion-job
+
+Author: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+Assignee: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+# New features and improvements
+
+Add new `HdfsMatchType` for GDPRJob named `HdfsContainsColumnMatch` which matches if the selected field contains the key string.
+
+# Breaking changes
+
+None.
+
+# Migration
+
+None.
+
+# Bug fixes
+
+Remove a `dataframe.collect` that was made before re-writing an entire datastore.
+
+# Related issue
+
+Closes #289
+
+### feature: HdfsDeletionHandler assumes data is in parquet format
+
+[Merge request 176](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/176)
+
+Created at: 2020-04-01T19:38:16.945Z
+
+Updated at: 2020-04-15T16:37:53.890Z
+
+Branch: feature/290-hdfsdeletionhandler-assumes-data-is-in-parquet-format
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Assignee: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+# New features and improvements
+
+GDPRDeletion can be applied to any structured raw model.
+
+# Breaking changes
+
+None.
+
+# Migration
+
+None.
+
+# Bug fixes
+
+- GDPRDeletion now works with any structured raw model and not only on Parquet.
+- Backup phase is fully skipped if there are no files to delete.
+
+# Related issue
+
+Closes #290
+
+### feature: Poor driver memory handling in GdprDeletion
+
+[Merge request 177](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/177)
+
+Created at: 2020-04-02T10:18:35.200Z
+
+Updated at: 2020-04-15T16:37:49.601Z
+
+Branch: feature/291-gdprdeletion-should-keep-hbase-keys-on-executor-memory-instead-of-driver-one
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Assignee: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+# New features and improvements
+
+- HBase deletion output of GDPR are eagearly cached on a RDD, loading executors memory instead of being collected and loading driver's one.
+- The discovery of files to be rewritten now really uses broadcast join.
+
+# Breaking changes
+
+None.
+
+# Migration
+
+None.
+
+# Bug fixes
+
+- Potential OOM when deleting too many keys from HBase.
+- Potential OOM when deleting big files (i.e. always). This was because spark cannot perform a broadcast outer join on the side that is being broadcasted, therefore it broadcasts the other "side" of the join, resulting in OOM due to the *big* dataframes cached on the driver side to be broadcasted.
+
+# Related issue
+
+Closes #291
+
+### feature: Censor CI step is broken
+
+[Merge request 180](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/180)
+
+Created at: 2020-04-07T11:02:05.199Z
+
+Updated at: 2020-04-15T16:37:45.154Z
+
+Branch: feature/292-censor-ci-step-is-broken
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+# New features and improvements
+
+censor step in MR CI builds now works correctly!
+
+# Breaking changes
+
+None.
+
+# Migration
+
+None.
+
+# Bug fixes
+
+Fix MR setup bug that prevented any MR CI Build to pass because the env variable CI_MERGE_REQUEST_TARGET_BRANCH_SHA was always empty.
+
+# Related issue
+
+Closes #292
+
+### Resolve "Add HBase Scan configuration inside GDPR RawModel deletion"
+
+[Merge request 181](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/181)
+
+Created at: 2020-04-08T10:13:32.182Z
+
+Updated at: 2020-04-15T16:37:32.252Z
+
+Branch: feature/287-add-hbase-scan-configuration-inside-gdpr-rawmodel-deletion
+
+Author: [Andrea Consolino](https://gitlab.com/andredc1)
+
+Assignee: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+# New features and improvements
+
+- Add HBase Scan configuration inside GDPR RawModel deletion
+
+# Breaking changes
+
+- Remove `dateIsFirst` use case in GDPR deletion
+
+# Migration
+
+None.
+
+# Bug fixes
+
+None.
+
+# Related issue
+
+Closes #287
+
+### feature: Update Readme - Setting up the development environment
+
+[Merge request 183](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/183)
+
+Created at: 2020-04-09T11:22:59.251Z
+
+Updated at: 2020-04-15T16:37:26.903Z
+
+Branch: feature/294-update-readme-setting-up-the-development-environment
+
+Author: [Fabrizio Spataro](https://gitlab.com/Fabryprog)
+
+# New features and improvements
+
+Add new commands to:
+ - build agilelab CDH docker image
+ - start wasp
+
+Additionally I refactored the links section at the end of page
+
+# Related issue
+
+Closes #294
+
+### Resolve "Set Partition Pruning Condition as IN instead of between timestamps"
+
+[Merge request 184](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/184)
+
+Created at: 2020-04-10T08:40:48.149Z
+
+Updated at: 2020-04-15T16:37:40.990Z
+
+Branch: feature/295-set-partition-pruning-condition-as-in-instead-of-between-timestamps
+
+Author: [Giuseppe Lillo](https://gitlab.com/giuseppe.lillo)
+
+# New features and improvements
+
+Partition pruning strategies are pushed deeper in the plan.
+
+# Breaking changes
+
+`TimeBasedBetweenPartitionPruningStrategy` now has a granularity argument that specifies the granularity of the date field that is used for partitioning (i.e. Hours, days, seconds ...)
+
+# Migration
+
+Add the new argument of `TimeBasedBetweenPartitionPruningStrategy` if used.
+
+# Bug fixes
+
+None.
+
+# Related issue
+
+Closes #295
+
+### feature: Partition filters are not applied in GDPRDeletionJob
+
+[Merge request 185](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/185)
+
+Created at: 2020-04-13T09:18:52.377Z
+
+Updated at: 2020-04-15T16:37:36.875Z
+
+Branch: feature/296-partition-filters-are-not-applied-in-gdprdeletionjob
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+# New features and improvements
+
+Partition Pruning Strategies of GDPRJob now correctly prunes partitions.
+
+# Breaking changes
+
+None.
+
+# Migration
+
+None.
+
+# Bug fixes
+
+Partition Pruning Strategies of GDPRJob now correctly prunes partitions.
+
+# Related issue
+
+Closes #296
+
+### feature: README snippets have comments and are not highlighted
+
+[Merge request 187](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/187)
+
+Created at: 2020-04-15T10:15:55.288Z
+
+Updated at: 2020-04-15T16:37:22.680Z
+
+Branch: feature/301-readme-snippets-have-comments-and-is-not-highlighted
+
+Author: [Antonio Murgia](https://gitlab.com/antonio.murgia)
+
+Assignee: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+# New features and improvements
+
+Remove the comments and turn on syntax highlighting in README.md.
+
+# Breaking changes
+
+None.
+
+# Migration
+
+None.
+
+# Bug fixes
+
+None.
+
+# Related issue
+
+Closes #301
+
+### feature: Promote docker-new whitelabel to official whitelabel
+
+[Merge request 188](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/188)
+
+Created at: 2020-04-15T13:23:33.904Z
+
+Updated at: 2020-04-15T16:37:18.629Z
+
+Branch: feature/302-promote-docker-new-whitelabel-to-official-whitelabel
+
+Author: [Andrea Fonti](https://gitlab.com/andrea.fonti)
+
+# New features and improvements
+
+- Promoted `docker-new` docker local deployment to be the "official" one
+- Updated readme with new gitter room and instructions for new whitelabel
+
+# Breaking changes
+
+None.
+
+# Migration
+
+None.
+
+# Bug fixes
+
+None.
+
+# Related issue
+
+Closes #302
