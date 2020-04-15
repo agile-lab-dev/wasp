@@ -4,7 +4,7 @@ import java.net.InetAddress
 
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.spark.sql.types._
-
+import java.time.temporal.ChronoUnit
 
 /*
 Example usage:
@@ -55,7 +55,7 @@ object TestGdprBatchJobModels {
       "correlationId",
       dataWithDateRawModel,
       PrefixRawMatchingStrategy("id"),
-      TimeBasedBetweenPartitionPruningStrategy("date", isDateNumeric = false, "yyyyMMddHHmm")
+      TimeBasedBetweenPartitionPruningStrategy("date", isDateNumeric = false, "yyyyMMddHHmm", ChronoUnit.HOURS.name)
     ),
     RawDataStoreConf(
       "key",

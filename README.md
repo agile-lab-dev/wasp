@@ -2,11 +2,11 @@
 
 # WASP - Wide Analytics Streaming Platform
 
+[![Join the chat at https://gitter.im/agile-lab-dev/wasp](https://badges.gitter.im/agile-lab-dev/wasp.svg)](https://gitter.im/agile-lab-dev/wasp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Table of contents
 
 - [General](#general)
-  - [Gitter](#gitter)
   - [Overview](#overview)
   - [WASP in the wild](#wasp-in-the-wild)
   - [Background](#background)
@@ -21,9 +21,6 @@
 
 
 ### General
-
-#### Gitter
-[Chat with the team](https://gitter.im/agile-lab-wasp/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 
 #### Overview
 WASP is a framework to build complex real time big data applications.
@@ -124,21 +121,37 @@ Before starting:
 
 
 The steps to getting WASP up and running for development are pretty simple:
+
+*Github mirror*
+
 - Clone this repository:
 
     `git clone https://github.com/agile-lab-dev/wasp.git`
 
-- If you haven't access to *agilefactory* GitLab docker registry, build the docker image locally:
+- Build the image locally (it is a cloudera based deployment so we cannot distribute it)
 
 ```sh
-cd whitelabel/docker-new/cdh-docker
+cd whitelabel/docker/cdh5/cdh-docker
 docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:5.16
 ```
 
  - Use the scripts to start WASP:
 
-    `whitelabel/docker-new/start-wasp.sh`
+    `whitelabel/docker/cdh5/start-wasp.sh`
 
+*Gitlab* 
+
+- Clone this repository:
+
+    `git clone https://gitlab.com/AgileFactory/Agile.Wasp2/` 
+
+- Perform a docker login on gitlab registry:
+  
+    `docker login registry.gitlab.com`
+
+- Use the scripts to start WASP:
+    
+    `whitelabel/docker/cdh5/start-wasp.sh`
 
 ##### Extension points
 In order to build you application there are several extension points where to place your algorithms.

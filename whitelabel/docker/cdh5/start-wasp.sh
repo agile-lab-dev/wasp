@@ -14,10 +14,10 @@ done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 SBT_STAGE_COMMAND_PROJECTID="wasp-whitelabel"
-MASTER_PROJECT_DIRECTORY="$SCRIPT_DIR/../master/"
-PRODUCERS_PROJECT_DIRECTORY="$SCRIPT_DIR/../producers/"
-CONSUMERS_RT_PROJECT_DIRECTORY="$SCRIPT_DIR/../consumers-rt/"
-CONSUMERS_SPARK_PROJECT_DIRECTORY="$SCRIPT_DIR/../consumers-spark/"
+MASTER_PROJECT_DIRECTORY="$SCRIPT_DIR/../../master/"
+PRODUCERS_PROJECT_DIRECTORY="$SCRIPT_DIR/../../producers/"
+CONSUMERS_RT_PROJECT_DIRECTORY="$SCRIPT_DIR/../../consumers-rt/"
+CONSUMERS_SPARK_PROJECT_DIRECTORY="$SCRIPT_DIR/../../consumers-spark/"
 CONSUMERS_SPARK_STREAMING_MAIN_CLASS=""
 CONSUMERS_SPARK_BATCH_MAIN_CLASS=""
 
@@ -51,11 +51,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 # prepare binaries for running
-cd $SCRIPT_DIR/../..
+cd $SCRIPT_DIR/../../..
 
 echo "Running sbt stage task..."
 sbt -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
-#sbt -v -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR
