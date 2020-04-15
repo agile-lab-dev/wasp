@@ -130,7 +130,7 @@ The steps to getting WASP up and running for development are pretty simple:
 
 - If you haven't access to *agilefactory* GitLab docker registry, build the docker image locally:
 
-```
+```sh
 cd whitelabel/docker-new/cdh-docker
 docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:5.16
 ```
@@ -149,83 +149,102 @@ In order to have each producer acting independently, you should also overwrite W
 
 An example of an extended WaspProducerNodeGuardian:
 
-    final class YahooFinanceProducer(env: {val producerBL: ProducerBL; val topicBL: TopicBL}) extends WaspProducerNodeGuardian(env) {
+```scala
+final class YahooFinanceProducer(env: { val producerBL: ProducerBL; val topicBL: TopicBL })
+    extends WaspProducerNodeGuardian(env) {
 
-      // TODO verify this assigment (what if more YFP are declared ?)
-      val name = YahooFinanceProducer.name
+  val name = YahooFinanceProducer.name
 
-      def startChildActors() = {
-    	logger.info(s"Starting get data on ${cluster.selfAddress}")
+  def startChildActors() = {
+    logger.info(s"Starting child actors on ${cluster.selfAddress}")
 
-    	val stocks = producer.configuration.flatMap(bson => bson.getAs[BSONArray]("stocks").map(array => array.values.map(s => s.seeAsOpt[String].get))).getOrElse(YahooFinanceProducer.stocks)
+    val stocks = producer.configuration
+      .flatMap(bson => bson.getAs[BSONArray]("stocks").map(array => array.values.map(s => s.seeAsOpt[String].get)))
+      .getOrElse(YahooFinanceProducer.stocks)
 
-	    stocks foreach { s =>
-	      println("stock: " + s)
-	      val aRef = context.actorOf(Props(new StockActor(s, kafka_router, associatedTopic)))
-	      aRef ! StartMainTask
-	    }
-      }
+    stocks foreach { s =>
+      println("stock: " + s)
+      val aRef = context.actorOf(Props(new StockActor(s, kafka_router, associatedTopic)))
+      aRef ! StartMainTask
     }
+  }
+}
+```
 
 An example of an extended WaspProducerActor:
 
-    private[wasp] class StockActor(stock: String, kafka_router: ActorRef, topic: Option[TopicModel]) extends WaspProducerActor[JsValue](kafka_router, topic) {
+```scala
+case class Envelope(value: JsValue)
+case object Tick
 
+private[wasp] class StockActor(stock: String, kafka_router: ActorRef, topic: Option[TopicModel])
+    extends ProducerActor[JsValue](kafka_router, topic) {
 
-      val builder = new com.ning.http.client.AsyncHttpClientConfig.Builder()
-      val client = new play.api.libs.ws.ning.NingWSClient(builder.build())
+  import system.dispatcher
+  val client = new HttpClient()
+  val url =
+    s"""https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22$stock%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="""
 
-      override def preStart(): Unit = {
-    	logger.info(s"Starting $stock")
-      }
+  override def preStart(): Unit = logger.info(s"Starting $stock")
 
-      def mainTask() = {
-	    logger.info(s"Starting main task for actor: ${this.getClass.getName}")
+  def mainTask(): Unit = {
+    logger.info(s"Starting main task for actor: ${this.getClass.getName}")
+    self ! Tick
+  }
 
-	    task = Some(context.system.scheduler.schedule(Duration.Zero, 10 seconds) {
+  override def receive: Receive = super.receive.orElse {
+    case toSend: Envelope =>
+      // actually send the message to Kafka
+      sendMessage(toSend.value)
+      // schedule the stock fetch in 10 seconds
+      task = Some(context.system.scheduler.scheduleOnce(10.seconds, self, Tick))
+    case Tick =>
+      val jsonToSend = for {
+        res        <- client.url(url).getStream()
+        body       = res._2
+        jsonString <- body |>>> Iteratee.fold("")((json, bytes) => json + new String(bytes, "UTF-8"))
+        jsonValue  = JsonParser(jsonString)
+        _          = logger.debug("Forwarding producer message to Kafka: " + jsonString)
+      } yield Envelope(jsonValue)
+      akka.pattern.pipe(jsonToSend).pipeTo(self)
+    case Status.Failure(f) =>
+      // if the http request failed, retry immediately
+      logger.error(f.getMessage, f)
+      self ! Tick
+  }
 
-	      val url = s"""https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22$stock%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="""
-	      val res = client.url(url).getStream()
+  def generateOutputJsonMessage(inputJson: JsValue): String = {
 
-	      val jsonReturned: Future[String] = res.flatMap {
-	    	case (headers, body) => // Count the number of bytes returned
-	      		body |>>> Iteratee.fold("") { (json, bytes) => json + new String(bytes, "UTF-8") }
-      	  }
+    /* The following mappings are just an example made to show the producer in action */
+    val id_event    = (inputJson \\ "count").map(_.as[Double]).headOption
+    val source_name = (inputJson \\ "StockExchange").map(t => t.asOpt[String].getOrElse("")).headOption.getOrElse("")
+    val topic_name  = topic.map(_.name).getOrElse(YahooTopicModel.yahooTopic.name)
+    val metric_name = stock
 
-	      val jsonString = Await.result(jsonReturned, 20 seconds)
-	      val json: JsValue = Json.parse(jsonString)
+    val ts = (inputJson \\ "created")
+      .map(time =>
+        time.asOpt[String] match {
+          case None    => TimeFormatter.format(new Date())
+          case Some(t) => TimeFormatter.format(t, YahooFinanceProducer.timeFormat)
+        }
+      )
+      .head
+    val latitude   = 0
+    val longitude  = 0
+    val value      = (inputJson \\ "Bid").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
+    val bid        = value
+    val ask        = (inputJson \\ "Ask").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
+    val stock_name = (inputJson \\ "Name").map(t => t.asOpt[String].getOrElse(stock)).headOption.getOrElse(stock)
+    val percent_change = (inputJson \\ "PercentChange")
+      .map(t => t.asOpt[String].map(s => s.replace("%", "").toDouble).getOrElse(0.0))
+      .headOption
+      .getOrElse(0.0)
+    val volume =
+      (inputJson \\ "Volume").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
+    val currency = (inputJson \\ "Currency").map(t => t.asOpt[String].getOrElse("")).headOption.getOrElse("")
+    val payload  = inputJson.toString().replaceAll("\"", "") // String bonification
 
-	      //val outputJson = generateOutputJsonMessage(json)
-	      logger.debug("Forwarding producer message to Kafka: " + jsonString)
-
-	      sendMessage(json)
-	    })
-      }
-
-      def generateOutputJsonMessage(inputJson: JsValue): String = {
-
-		    /* The following mappings are just an example made to show the producer in action */
-		    val id_event = (inputJson \\ "count").map(_.as[Double]).headOption
-		    val source_name = (inputJson \\ "StockExchange").map(t => t.asOpt[String].getOrElse("")).headOption.getOrElse("")
-		    val topic_name = topic.map(_.name).getOrElse(YahooTopicModel.yahooTopic.name)
-		    val metric_name = stock
-		    //val ts = (inputJson \\ "created").map(time => time.asOpt[String].getOrElse(format.format(new Date()))).headOption.getOrElse(format.format(new Date())).replace("Z", ".000Z")
-		    val ts = (inputJson \\ "created").map(time => time.asOpt[String] match {
-		      case None => TimeFormatter.format(new Date())
-		      case Some(t) => TimeFormatter.format(t, YahooFinanceProducer.timeFormat)
-		    }).head
-		    val latitude = 0
-		    val longitude = 0
-		    val value = (inputJson \\ "Bid").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
-		    val bid = value
-		    val ask = (inputJson \\ "Ask").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
-		    val stock_name = (inputJson \\ "Name").map(t => t.asOpt[String].getOrElse(stock)).headOption.getOrElse(stock)
-		    val percent_change = (inputJson \\ "PercentChange").map(t => t.asOpt[String].map(s => s.replace("%", "").toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
-		    val volume = (inputJson \\ "Volume").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
-		    val currency = (inputJson \\ "Currency").map(t => t.asOpt[String].getOrElse("")).headOption.getOrElse("")
-		    val payload = inputJson.toString().replaceAll("\"", "") //Required for string bonification
-
-		    val myJson = s"""{
+    val myJson = s"""{
 		     "id_event":${id_event.getOrElse("0")},
 		     "source_name":"$source_name",
 		     "topic_name":"$topic_name",
@@ -243,44 +262,10 @@ An example of an extended WaspProducerActor:
 		     "currency":"$currency"
 		     }"""
 
-		    myJson
-      }
-
-      def generateRawOutputJsonMessage(inputJson: JsValue): String = {
-
-		    val format = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-
-		    /* The following mappings are just an example made to show the producer in action */
-		    val id_event = (inputJson \\ "count").map(_.as[Double]).headOption
-		    val source_name = "SPMIB"
-		    val topic_name = topic.map(_.name).getOrElse(YahooTopicModel.yahooTopic.name)
-		    val metric_name = stock
-		    //val ts = (inputJson \\ "created").map(time => time.asOpt[String].getOrElse(format.format(new Date()))).headOption.getOrElse(format.format(new Date())).replace("Z", ".000Z")
-		    val ts = (inputJson \\ "created").map(time => time.asOpt[String] match {
-		      case None => TimeFormatter.format(new Date())
-		      case Some(t) => TimeFormatter.format(t, YahooFinanceProducer.timeFormat)
-		    }).head
-		    val latitude = 0
-		    val longitude = 0
-		    val value = (inputJson \\ "Bid").map(t => t.asOpt[String].map(_.toDouble).getOrElse(0.0)).headOption.getOrElse(0.0)
-		    val payload = inputJson.toString().replaceAll("\"", "") //Required for string bonification
-
-		    val myJson = s"""{
-		     "id_event":${id_event.getOrElse("0")},
-		     "source_name":"$source_name",
-		     "topic_name":"$topic_name",
-		     "metric_name":"$metric_name",
-		     "timestamp":"$ts",
-		     "latitude":$latitude,
-		     "longitude":$longitude,
-		     "value":$value,
-		     "payload":"$payload"
-		     }"""
-
-		    myJson
-      }
-
-    }
+    myJson
+  }
+}
+```
 
 - **Consumer**: to create a consumer you only need to implement the Strategy trait with a concrete class. The full qualifier of the class will then be used in the ETL block inside the Pipegraph definition or in the Batch definition.
 
@@ -301,61 +286,65 @@ An example of an extended WaspProducerActor:
 
     An example of a Pipegraph definition:
 
-        object MetroPipegraphModel {
+```scala
+object MetroPipegraphModel {
 
-            lazy val metroPipegraphName = "MetroPipegraph6"
-            lazy val metroPipegraph = MetroPipegraph()
-            lazy val conf: Config = ConfigFactory.load
-            lazy val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
+  lazy val metroPipegraphName      = "MetroPipegraph6"
+  lazy val metroPipegraph          = MetroPipegraph()
+  lazy val conf: Config            = ConfigFactory.load
+  lazy val defaultDataStoreIndexed = conf.getString("default.datastore.indexed")
 
-              private[wasp] object MetroPipegraph {
+  private[wasp] object MetroPipegraph {
 
-                def apply() =
-                  PipegraphModel(
-                      name = MetroPipegraphModel.metroPipegraphName,
-                      description = "Los Angeles Metro Pipegraph",
-                      owner = "user",
-                      system = false,
-                      creationTime = WaspSystem.now,
-                      etl = List(
-                          ETLModel("write on index",
-                                   List(ReaderModel(MetroTopicModel.metroTopic._id.get,
-                                                    MetroTopicModel.metroTopic.name,
-                                                    TopicModel.readerType)),
-                                   WriterModel.IndexWriter(MetroIndexModel.metroIndex._id.get,
-                                                           MetroIndexModel.metroIndex.name, defaultDataStoreIndexed),
-                                   List(),
-                                   Some(StrategyModel("it.agilelab.bigdata.wasp.pipegraph.metro.strategies.MetroStrategy", None))
-                          )
-                      ),
-                      rt = List(),
-                      dashboard = None,
-                      isActive = false,
-                      _id = Some(BSONObjectID.generate))
+    def apply() =
+      PipegraphModel(
+        name = MetroPipegraphModel.metroPipegraphName,
+        description = "Los Angeles Metro Pipegraph",
+        owner = "user",
+        system = false,
+        creationTime = WaspSystem.now,
+        etl = List(
+          ETLModel(
+            "write on index",
+            List(
+              ReaderModel(MetroTopicModel.metroTopic._id.get, MetroTopicModel.metroTopic.name, TopicModel.readerType)
+            ),
+            WriterModel.IndexWriter(
+              MetroIndexModel.metroIndex._id.get,
+              MetroIndexModel.metroIndex.name,
+              defaultDataStoreIndexed
+            ),
+            List(),
+            Some(StrategyModel("it.agilelab.bigdata.wasp.pipegraph.metro.strategies.MetroStrategy", None))
+          )
+        ),
+        rt = List(),
+        dashboard = None,
+        isActive = false,
+        _id = Some(BSONObjectID.generate)
+      )
+  }
+}
+```
 
-              }}
+An other important part of the pipegraph is the strategy. Using strategy, you can apply custom transformation directly to the dataframe, when the DStream is processed with Spark.
 
-    An other important part of the pipegraph is the strategy. Using strategy, you can apply custom transformation directly to the dataframe, when the DStream is processed with
-    Spark.
+An example of a Pipegraph strategy definition:
 
-    An example of a Pipegraph strategy definition:
+```scala
+case class MetroStrategy() extends Strategy {
 
-        case class MetroStrategy() extends Strategy {
+  def transform(dataFrames: Map[ReaderKey, DataFrame]) = {
 
-          def transform(dataFrames: Map[ReaderKey, DataFrame]) = {
+    val input = dataFrames.get(ReaderKey(TopicModel.readerType, "metro.topic")).get
 
-            val input = dataFrames.get(ReaderKey(TopicModel.readerType, "metro.topic")).get
+    /** Put your transformation here. */
+    input.filter(input("longitude") < -118.451683d)
+  }
+}
+```
 
-            /** Put your transformation here. */
-
-            input.filter(input("longitude") < -118.451683D)
-
-          }
-
-        }
-
-    In this example the DataFrame is filtered at runtime with a "longitude" condition (i.e. < -118.451683D). Is possible apply more complicated trasformations
-    using all the Spark DataFrame APIs like select, filter, groupBy and count [Spark DataFrame APIs](https://spark.apache.org/docs/1.6.2/api/scala/index.html#org.apache.spark.sql.DataFrame).
+In this example the DataFrame is filtered at runtime with a "longitude" condition (i.e. < -118.451683D). Is possible apply more complicated trasformations using all the Spark DataFrame APIs like select, filter, groupBy and count [Spark DataFrame APIs](https://spark.apache.org/docs/1.6.2/api/scala/index.html#org.apache.spark.sql.DataFrame).
 
 #### Have a look at what's going on
 - <http://localhost:2891/pipegraphs>, <http://localhost:2891/producers>, <http://localhost:2891/batchjobs> for the current state of your Pipegraphs / Producers / BatchJobs
