@@ -60,13 +60,6 @@ The project is divided into sub modules:
 
 All the components are coordinated, monitored and owned by an Akka Cluster layer, that provides scalability and fault tolerance for each component. For example you can spawn multiple identical producers to balance the load on your http endpoint, and then fairly distribute the data on Kafka.
 
-For distributed deployments, there are two options:
-- standalone: WASP and each service it needs are instantiated and provided using Docker Swarm
-- alongside an Hadoop deployment: Kafka, YARN (for Spark), Solr, Zookeeper and HDFS are provided by an existing cluster; WASP and the remaining services are instantiated via Docker Swarm
-See [Docker Swarm (for deployment)](docker-swarm/README.md) for details. Please note that the distributed deployment is still under development, as we plan on adding Mesos support.
-
-For development purposes, WASP comes with two ways to handle the service dependencies, both leveraging docker-compose: the full one where each service is instantiated and the light one assuming that a Hadoop Cluster is available. See [Docker (for development)](docker/README.md) for details.
-
 #### Glossary
 - **Pipegraph**: a directed acyclic graph of data transformations. Each step is lazy and loosely coupled from previous and the next one. It is basically an ordered list of ETL blocks, with Inputs and Outputs.
 - **ETL**: represents a Spark Streaming job. It can consume data from one or more Inputs, elaborate the incoming data and push it to an Output. You can't have more than an Output for an ETL block, in order to avoid misalignment between outputs. If you want to write the same data on different datastores, you must consume the topic data with two different ETL blocks. Both Streaming and Batch ETLs are supported.
@@ -93,7 +86,7 @@ Spark is the data engine powering WASP, and is used in two components: Streaming
 WASP supports running Spark in three different ways:
 - embedded, using Spark's local mode, which is recommended for development only
 - on YARN, used when running with an existing Hadoop cluster
-- with Spark's standalone clustering (master + workers), used in the standalone, Docker Swarm-based WASP deployment option
+- with Spark's standalone clustering (master + workers)
 
 ##### Akka
 Akka is our middleware: each component of WASP is an actor and relies on a clustered Actor System. In this way each component can be a separate process, and even run on different machines, and we can handle fault tolerance in a trasparent way to the whole application.
@@ -103,9 +96,8 @@ This is a general overview of the [ActorSystem](documentation/diagrams/actor_sys
 MongoDB is the central repository for all configurations, ML models, and entities. It is fault tolerant and it simplifies the deployment in a distributed environment because each node just needs the MongoDB address to be ready to go.
 
 ##### Pluggable Datastore
-WASP system is integrated with Elasticsearch, Solr and HDFS. All data stored inside the datastore is indexed and searchable via the specific query language of the datastore.
-In the next future we will extend the support to Cassandra and HBase datastore.
 
+WASP system is integrated with Elasticsearch, Solr, Kafka, HBase, Mongo, Jdbc Datasources and HDFS. All data stored inside the datastore is indexed and searchable via the specific query language of the datastore.
 
 #### Using WASP
 
