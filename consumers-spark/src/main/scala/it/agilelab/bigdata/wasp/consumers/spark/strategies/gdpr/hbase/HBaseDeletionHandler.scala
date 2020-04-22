@@ -4,8 +4,8 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr._
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config.HBaseDeletionConfig
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hbase.HBaseDeletionHandler.RowKeyMatched
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hbase.HBaseUtils
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hbase.HBaseUtils
 import it.agilelab.bigdata.wasp.consumers.spark.utils.HBaseConnection
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
@@ -31,7 +31,7 @@ object HBaseDeletionHandler extends Logging {
     */
   def delete(config: HBaseDeletionConfig, storageLevel: StorageLevel): Try[RDD[DeletionOutput]] = {
     logger.info("Starting HBase deletion handling")
-    val output = Try(delete(config.tableName, config.hbaseConfigModel, config.keysWithScan, config.keyValueMatchingStrategy, storageLevel))
+    val output = Try(delete(config.tableName, config.hbaseConfigModel, config.keysWithScan, config.keyValueMatchingStrategy, storageLevel, config.dryRun))
     output match {
       case Failure(_) => logger.info("Deletion failed")
       case Success(_) => logger.info("Deletion completed successfully")
@@ -43,7 +43,8 @@ object HBaseDeletionHandler extends Logging {
                      hbaseConfig: Option[HBaseConfigModel],
                      keysWithScanRDD: RDD[(KeyWithCorrelation, Scan)],
                      keyValueMatchingStrategy: KeyValueMatchingStrategy,
-                     storageLevel: StorageLevel): RDD[DeletionOutput] = {
+                     storageLevel: StorageLevel,
+                     dryRun: Boolean) = {
     val persisted = keysWithScanRDD.mapPartitions { keysWithScan: Iterator[(KeyWithCorrelation, Scan)] =>
       val hBaseConnection = new HBaseConnection(hbaseConfig)
       TaskContext.get().addTaskCompletionListener(_ => hBaseConnection.closeConnection())
@@ -51,14 +52,14 @@ object HBaseDeletionHandler extends Logging {
         keyValueMatchingStrategy match {
           case _: ExactKeyValueMatchingStrategy =>
             keysWithScan.map { case (keyWithCorrelation, scan) =>
-              deleteRowKey(table)(scan, keyWithCorrelation.key.asRowKey) match {
+              deleteRowKey(table)(scan, keyWithCorrelation.key.asRowKey, dryRun) match {
                 case Failure(exception) => createOutput(table, keyWithCorrelation, HBaseExactRowKeyMatch, DeletionFailure(exception))
                 case Success(result) => createOutput(table, keyWithCorrelation, HBaseExactRowKeyMatch, result)
               }
             }
           case _: PrefixKeyValueMatchingStrategy =>
             keysWithScan.map { case (key, scan) =>
-              deleteMultipleRowKeys(table)(scan) match {
+              deleteMultipleRowKeys(table)(scan, dryRun) match {
                 case Failure(exception) => createOutput(table, key, HBasePrefixRowKeyMatch(None), DeletionFailure(exception))
                 case Success(MultipleDeletionResult(rowKeysMatched, result)) =>
                   createOutput(table, key, HBasePrefixRowKeyMatch(rowKeysMatched.map(_.map(_.asString))), result)
@@ -66,7 +67,7 @@ object HBaseDeletionHandler extends Logging {
             }
           case _: PrefixAndTimeBoundKeyValueMatchingStrategy =>
             keysWithScan.map { case (key, scan) =>
-              deleteMultipleRowKeys(table)(scan) match {
+              deleteMultipleRowKeys(table)(scan, dryRun) match {
                 case Failure(exception) => createOutput(table, key, HBasePrefixWithTimeRowKeyMatch(None), DeletionFailure(exception))
                 case Success(MultipleDeletionResult(rowKeysMatched, result)) =>
                   createOutput(table, key, HBasePrefixWithTimeRowKeyMatch(rowKeysMatched.map(_.map(_.asString))), result)
@@ -117,11 +118,16 @@ object HBaseDeletionHandler extends Logging {
   }
 
   /* Searches the rowKey using the provided Scan, and if exists deletes it */
-  private def deleteRowKey(table: Table)(scan: Scan, keyToMatch: KeyToMatch): Try[DeletionResult] = {
+  private def deleteRowKey(table: Table)(scan: Scan, keyToMatch: KeyToMatch, dryRun: Boolean): Try[DeletionResult] = {
     for {
       rowKeyExists <- searchSingleRowKey(table)(keyToMatch, scan)
-      deletionResult <- if (rowKeyExists) {
-        HBaseUtils.deleteRow(table)(keyToMatch).map(_ => DeletionSuccess)
+      deletionResult <-
+      if (rowKeyExists) {
+        if (!dryRun) {
+          HBaseUtils.deleteRow(table)(keyToMatch).map(_ => DeletionSuccess)
+        } else {
+          Success(DeletionSuccess)
+        }
       } else {
         Success(DeletionNotFound)
       }
@@ -129,11 +135,16 @@ object HBaseDeletionHandler extends Logging {
   }
 
   /* Searches for multiple matches of the provided Scan, and deletes each of them */
-  private def deleteMultipleRowKeys(table: Table)(scan: Scan): Try[MultipleDeletionResult] = {
+  private def deleteMultipleRowKeys(table: Table)(scan: Scan, dryRun: Boolean): Try[MultipleDeletionResult] = {
     val tryRowKeysDeleted = for {
       rowKeysFound <- searchAndReturnKeys(table)(scan)
-      rowKeysDeleted <- GdprUtils.traverseWithTry(rowKeysFound) { row =>
-        HBaseUtils.deleteRow(table)(row).map(_ => row)
+      rowKeysDeleted <-
+      GdprUtils.traverseWithTry(rowKeysFound) { row =>
+        if (!dryRun) {
+          HBaseUtils.deleteRow(table)(row).map(_ => row)
+        } else {
+          Success(row)
+        }
       }
     } yield rowKeysDeleted
 

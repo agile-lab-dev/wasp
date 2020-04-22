@@ -58,6 +58,13 @@ object ConfigUtils {
       case _: ConfigException.Missing => None
     }
   }
+  def getOptionalBoolean(config: Config, key: String): Option[Boolean] = {
+    try {
+      Option(config.getBoolean(key))
+    } catch {
+      case _: ConfigException.Missing => None
+    }
+  }
 
   def getOptionalConfig(config: Config, key: String): Option[Config] = {
     try {

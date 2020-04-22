@@ -787,7 +787,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri, dryRun = false
     )
 
     val backupHandler = new HdfsBackupHandler(fs, dataPath.getParent, dataPath) {
@@ -830,7 +830,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri, dryRun = false
     )
 
     val deletionHandler = new HdfsDeletionHandler(fs, config, spark) {
@@ -873,7 +873,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri, dryRun = false
     )
 
     val deletionHandler = new HdfsDeletionHandler(fs, config, spark) {
@@ -917,7 +917,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     val config = HdfsDeletionConfig(
-      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri, dryRun = false
     )
 
     val deletionHandler = new HdfsDeletionHandler(new MockFileSystem(), config, spark) {
@@ -1020,6 +1020,49 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       startWith(s"Path does not exist: file:${new Path(dataUri).toString}")
   }
 
+
+  it should "check dryRun == true" in {
+    val data: Seq[Data] = Seq(
+      Data("k1", "111", "aaa"),
+      Data("k2", "222", "bbb"),
+      Data("k3", "333", "ccc"),
+      Data("k4", "111", "ddd"),
+      Data("k5", "222", "eee"),
+      Data("k6", "333", "fff")
+    )
+    val keysToDelete: Seq[KeyWithCorrelation] = Seq(
+      KeyWithCorrelation("k1", "id1"),
+      KeyWithCorrelation("k2", "id2"),
+      KeyWithCorrelation("k3", "id3")
+    )
+    val partitionBy = List("category")
+
+    writeTestData(data, 1, partitionBy)
+
+    val keyColumn = nameOf[Data](_.id)
+
+    val rawModel = RawModel(
+      "data",
+      dataUri,
+      timed = false,
+      ScalaReflection.schemaFor[Data].dataType.asInstanceOf[StructType].json,
+      RawOptions("append", "parquet", None, Some(partitionBy))
+    )
+
+    val config = HdfsDeletionConfig(
+      keysToDelete, rawModel, ExactRawMatchingStrategy(keyColumn), ALWAYS_TRUE_COLUMN, ALWAYS_TRUE_COLUMN, stagingUri, backupUri, dryRun = true
+    )
+
+    val deletionHandler = new HdfsDeletionHandler(fs, config, spark) {
+      override def delete(filesToFilter: List[String]): Try[Unit] = Failure(new IOException("fs exception"))
+    }
+    val backupHandler = new HdfsBackupHandler(fs, new Path("/tmp"), dataPath)
+    target.delete(deletionHandler, backupHandler, config, dataPath, spark).success.get.length shouldEqual keysToDelete.length
+
+    // no key should have been deleted
+    readData[Data] should contain theSameElementsAs data
+  }
+
   it should "return a NOT_FOUND when a path is missing and missingPathFailure=false" in {
     val keysToDelete: Seq[KeyWithCorrelation] = Seq(
       KeyWithCorrelation("k1", "id1"),
@@ -1079,8 +1122,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
       correlationIdColumn,
       rawModel,
       ExactRawMatchingStrategy(keyColumn),
-      NoPartitionPruningStrategy(),
-      missingPathFailure = false
+      NoPartitionPruningStrategy()
     )
 
     val config = createConfig(None)

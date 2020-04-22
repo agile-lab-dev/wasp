@@ -55,7 +55,7 @@ object TestGdprBatchJobModels {
       "correlationId",
       dataWithDateRawModel,
       PrefixRawMatchingStrategy("id"),
-      TimeBasedBetweenPartitionPruningStrategy("date", isDateNumeric = false, "yyyyMMddHHmm", ChronoUnit.HOURS.name)
+      TimeBasedBetweenPartitionPruningStrategy("date", isDateNumeric = false, "yyyyMMddHHmm", ChronoUnit.MINUTES.name)
     ),
     RawDataStoreConf(
       "key",

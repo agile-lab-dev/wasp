@@ -2,8 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.config
 
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
-import java.time.temporal.{ChronoUnit, TemporalUnit}
-import java.time.{Instant, LocalDateTime, ZoneId, ZonedDateTime}
+import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.Locale
 
 import com.typesafe.config.{Config, ConfigException}
@@ -40,7 +39,8 @@ case class HBaseDeletionConfig(
                                 keysWithScan: RDD[(KeyWithCorrelation, Scan)],
                                 tableName: String,
                                 hbaseConfigModel: Option[HBaseConfigModel],
-                                keyValueMatchingStrategy: KeyValueMatchingStrategy
+                                keyValueMatchingStrategy: KeyValueMatchingStrategy,
+                                dryRun: Boolean
                               ) extends DeletionConfig
 
 /**
@@ -63,7 +63,8 @@ case class HdfsDeletionConfig(
                                partitionPruningCondition: Column,
                                stagingDirUri: String,
                                backupDirUri: String,
-                               missingPathFailure: Boolean = false
+                               missingPathFailure: Boolean = false,
+                               dryRun: Boolean
                              ) extends DeletionConfig {
   // WHERE condition derived from the RawMatchingStrategy
   def joinCondition(dataKeyColumn: Column, inputKeyColumn: Column): Column = {
@@ -90,6 +91,7 @@ object HdfsDeletionConfig {
   val END_PERIOD_KEY = "end"
   val TIMEZONE_PERIOD_KEY = "timeZone"
   val ALWAYS_TRUE_COLUMN: Column = lit(true) === lit(true)
+  val dryRun = "dryRun"
 
   def create(rootConfig: Config,
              rawDataStoreConf: RawDataStoreConf,
@@ -97,15 +99,15 @@ object HdfsDeletionConfig {
     val maybeConfig: Option[Config] = ConfigUtils.getOptionalConfig(rootConfig, RAW_CONF_KEY)
     val keysToDelete = ConfigUtils.keysToDelete(inputKeys, maybeConfig, KEYS_TO_DELETE_KEY, CORRELATION_ID_KEY).distinct
 
-    new HdfsDeletionConfig(
-      keysToDelete,
+    new HdfsDeletionConfig(keysToDelete,
       rawDataStoreConf.rawModel,
       rawDataStoreConf.rawMatchingStrategy,
       rawMatchingCondition(keysToDelete.map(_.key), rawDataStoreConf.rawMatchingStrategy),
       partitionPruningCondition(maybeConfig, rawDataStoreConf.partitionPruningStrategy),
       stagingDirUri(maybeConfig, rawDataStoreConf.rawModel),
       backupDirUri(maybeConfig, rawDataStoreConf.rawModel),
-      rawDataStoreConf.missingPathFailure
+      rawDataStoreConf.missingPathFailure,
+      maybeConfig.flatMap(ConfigUtils.getOptionalBoolean(_, dryRun)).getOrElse(false)
     )
   }
 
@@ -185,6 +187,7 @@ object HBaseDeletionConfig extends Logging {
   val END_PERIOD_KEY = "end"
   val TIMEZONE_PERIOD_KEY = "timeZone"
   val BATCH_SIZE = "batchSize"
+  val dryRun = "dryRun"
 
   def create(rootConfig: Config,
              keyValueDataStoreConf: KeyValueDataStoreConf,
@@ -215,7 +218,8 @@ object HBaseDeletionConfig extends Logging {
       keysWithScan.map { case (rowKeyWithCorrelation, scan) => rowKeyWithCorrelation.asKey -> scan },
       tableName,
       hBaseConfigModel,
-      keyValueDataStoreConf.keyValueMatchingStrategy
+      keyValueDataStoreConf.keyValueMatchingStrategy,
+      maybeConfig.flatMap(ConfigUtils.getOptionalBoolean(_, dryRun)).getOrElse(false)
     )
   }
 

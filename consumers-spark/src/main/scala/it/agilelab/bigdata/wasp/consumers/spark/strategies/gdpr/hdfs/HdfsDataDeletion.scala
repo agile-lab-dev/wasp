@@ -52,13 +52,21 @@ class HdfsDataDeletion(fs: FileSystem) extends Logging {
           }.toArray[(KeyWithCorrelation, Option[String])]
         )
       }
-      files = filesWithKeys.collect { case (_, Some(fileName)) => fileName }.distinct.toList
-      backupDir <- backup(backupHandler, files.map(new Path(_)))
-      _ <- deleteOrRollback(deletionHandler, files, backupHandler, backupDir, dataPath)
-      _ <- if (files.nonEmpty) {
-        deleteBackup(backupHandler, backupDir)
-      } else {
-        Success(())
+      _ <- {
+        if (config.dryRun) {
+          Success(())
+        } else {
+          val files = filesWithKeys.collect { case (_, Some(fileName)) => fileName }.distinct.toList
+          for {
+            backupDir <- backup(backupHandler, files.map(new Path(_)))
+            _ <- deleteOrRollback(deletionHandler, files, backupHandler, backupDir, dataPath)
+            res <- if (files.nonEmpty) {
+              deleteBackup(backupHandler, backupDir)
+            } else {
+              Success(())
+            }
+          } yield res
+        }
       }
     } yield createOutput(config, filesWithKeys)
   }
