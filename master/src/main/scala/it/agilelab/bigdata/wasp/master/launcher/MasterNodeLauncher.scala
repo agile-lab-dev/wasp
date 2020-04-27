@@ -105,7 +105,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
   }
 
   private def getRoutes: Route = {
-    BatchJob_C.getRoute ~
+    new BatchJobController(DefaultBatchJobService).getRoute ~
       Configuration_C.getRoute ~
       Index_C.getRoute ~
       MlModels_C.getRoute ~

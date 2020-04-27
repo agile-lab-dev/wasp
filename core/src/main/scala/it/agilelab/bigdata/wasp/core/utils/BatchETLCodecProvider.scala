@@ -93,7 +93,6 @@ object BatchJobModelCodecProvider extends AbstractCodecProvider[BatchJobModel] {
 
   override def encodeClass(registry: CodecRegistry, batchJobModel: BatchJobModel)
                           (implicit writer: BsonWriter, encoderContext: EncoderContext): Unit = {
-    writer.writeObjectId("_id", new ObjectId())
     writer.writeString(nameOf[BatchJobModel](_.name), batchJobModel.name)
     writer.writeString(nameOf[BatchJobModel](_.description), batchJobModel.description)
     writer.writeString(nameOf[BatchJobModel](_.owner), batchJobModel.owner)

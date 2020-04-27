@@ -114,10 +114,10 @@ trait BatchJobJsonSupport extends DefaultJsonProtocol {
         }
       }
 
-      override def write(obj: BatchETL): JsValue = JsObject((obj match {
-        case etl: BatchETLModel => etl.toJson
-        case gdpr: BatchGdprETLModel => gdpr.toJson
-      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+      override def write(obj: BatchETL): JsValue = JsObject(obj match {
+        case etl: BatchETLModel => etl.toJson.asJsObject.fields + ("type" -> JsString("BatchETLModel"))
+        case gdpr: BatchGdprETLModel => gdpr.toJson.asJsObject.fields + ("type" -> JsString("BatchGdprETLModel"))
+      })
     }
   }
 }

@@ -150,7 +150,8 @@ lazy val wasp = Project("wasp", file("."))
 		         yarn,
 					   spark,
              plugin_mailer_spark,
-             spark_sql_kafka_0_11)
+             spark_sql_kafka_0_11,
+					   openapi)
 
 /* WhiteLabel */
 
@@ -206,3 +207,8 @@ lazy val whiteLabelConsumersRt = Project("wasp-whitelabel-consumers-rt", file("w
 lazy val whiteLabel = Project("wasp-whitelabel", file("whitelabel"))
   .settings(Settings.commonSettings: _*)
   .aggregate(whiteLabelModels, whiteLabelMaster, whiteLabelProducers, whiteLabelConsumersSpark, whiteLabelConsumersRt)
+
+lazy val openapi = Project("wasp-openapi", file("openapi"))
+	.settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies += Dependencies.swaggerCore)
+	.dependsOn(core)

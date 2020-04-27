@@ -37,6 +37,7 @@ censor:
   interruptible: true
   image: "registry.gitlab.com/agilefactory/developers/censor:0.1.0-SNAPSHOT"
   only: [merge_requests]
+  allow_failure: true
   script:
     - bash censor.sh
     

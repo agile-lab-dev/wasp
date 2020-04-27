@@ -103,6 +103,8 @@ object Dependencies {
   val akkaRemote = "com.typesafe.akka" %% "akka-remote" % Versions.akka
   val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Versions.akka
   val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
+  val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit" % Versions.akka % Test
+  val akkaHttpTestKit = "com.typesafe.akka" %% "akka-http-testkit" % Versions.akkaHttp % Test
   val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
   val avro = "org.apache.avro" % "avro" % Versions.avro
   // avro4s requires a json4s version incompatible with wasp, downstream projects confirmed that this exclusion does
@@ -155,6 +157,7 @@ object Dependencies {
   val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
   val sparkTags = "org.apache.spark" %% "spark-tags" % Versions.spark sparkExclusions
   val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
+  val swaggerCore = "io.swagger.core.v3" % "swagger-core" % "2.1.2"
   val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 	val velocity = "org.apache.velocity" % "velocity" % "1.7"
   val zkclient = "com.101tec" % "zkclient" % "0.3"
@@ -283,7 +286,10 @@ object Dependencies {
     akka :+
       akkaHttp :+
       akkaHttpSpray :+
-      netty
+      netty :+
+      scalaTest :+
+      akkaHttpTestKit :+
+      akkaStreamTestkit
     ).map(excludeLog4j) ++ log4j
 
   val plugin_elastic_spark = Seq(
@@ -317,6 +323,7 @@ object Dependencies {
     scalaTest
 	)
 
+  val openapi = swaggerCore
 
 	def kmsTest = Seq(
 		transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier, "classes"),

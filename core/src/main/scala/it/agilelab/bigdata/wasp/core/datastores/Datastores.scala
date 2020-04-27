@@ -93,7 +93,7 @@ object DatastoreProduct {
 	object WebMailProduct					extends WebMailCategory   with DatastoreProduct { override val productName = Some("webmail")   }
 
 	// product lookup map for default datastore resolution
-	private val productsLookupMap = buildProductsLookupMap()
+	private[wasp] val productsLookupMap = buildProductsLookupMap()
 	
 	// build products lookup map of the form (("category", "product"), DatastoreProduct)
 	private def buildProductsLookupMap(): Map[(String, String), DatastoreProduct] = {

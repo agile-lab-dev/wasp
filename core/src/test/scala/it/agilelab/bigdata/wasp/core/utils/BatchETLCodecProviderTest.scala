@@ -8,7 +8,7 @@ import org.bson.BsonDocumentWriter
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.{DecoderContext, EncoderContext}
-import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, ObjectId}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
 import org.scalatest.FunSuite
@@ -108,7 +108,7 @@ class BatchETLCodecProviderTest extends FunSuite {
       etl = batchETL
     )
 
-    val writer = new BsonDocumentWriter(new BsonDocument())
+    val writer = new BsonDocumentWriter(new BsonDocument("_id", new BsonObjectId))
     registry.get(classOf[BatchJobModel]).encode(writer, model, EncoderContext.builder().isEncodingCollectibleDocument(true).build())
 
     val doc = writer.getDocument

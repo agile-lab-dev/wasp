@@ -5,7 +5,12 @@ import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.messages.{ModelKey, RestProducerRequest, StartProducer, StopProducer}
+import it.agilelab.bigdata.wasp.core.messages.{
+  ModelKey,
+  RestProducerRequest,
+  StartProducer,
+  StopProducer
+}
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.master.web.models.RestProducerModel
 import it.agilelab.bigdata.wasp.master.web.models.RestProducerModelJsonProtocol._
@@ -16,7 +21,6 @@ import spray.json._
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
   */
-
 object Producer_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
@@ -25,9 +29,23 @@ object Producer_C extends Directives with JsonSupport {
         pathEnd {
           get {
             complete {
-              getJsonArrayOrEmpty[ProducerModel](ConfigBL.producerBL.getAll, _.toJson, pretty)
+              getJsonArrayOrEmpty[ProducerModel](
+                ConfigBL.producerBL.getAll,
+                _.toJson,
+                pretty
+              )
             }
           } ~
+            post {
+              // unmarshal with in-scope unmarshaller
+              entity(as[ProducerModel]) { producerModel =>
+                complete {
+                  // complete with serialized Future result
+                  ConfigBL.producerBL.persist(producerModel)
+                  "OK".toJson.toAngularOkResponse(pretty)
+                }
+              }
+            } ~
             put {
               // unmarshal with in-scope unmarshaller
               entity(as[ProducerModel]) { producerModel =>
@@ -43,16 +61,29 @@ object Producer_C extends Directives with JsonSupport {
             get {
               complete {
                 // complete with serialized Future result
-                getJsonOrNotFound[ProducerModel](ConfigBL.producerBL.getByName(name), name, "Producer model", _.toJson, pretty)
+                getJsonOrNotFound[ProducerModel](
+                  ConfigBL.producerBL.getByName(name),
+                  name,
+                  "Producer model",
+                  _.toJson,
+                  pretty
+                )
               }
             }
           } ~
           path(Segment / "start") { name =>
             post {
               complete {
-                WaspSystem.??[Either[String, String]](masterGuardian, StartProducer(name)) match {
+                WaspSystem.??[Either[String, String]](
+                  masterGuardian,
+                  StartProducer(name)
+                ) match {
                   case Right(s) => s.toJson.toAngularOkResponse(pretty)
-                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                  case Left(s) =>
+                    httpResponseJson(
+                      status = StatusCodes.InternalServerError,
+                      entity = angularErrorBuilder(s).toString
+                    )
                 }
               }
             }
@@ -60,9 +91,16 @@ object Producer_C extends Directives with JsonSupport {
           path(Segment / "stop") { name =>
             post {
               complete {
-                WaspSystem.??[Either[String, String]](masterGuardian, StopProducer(name)) match {
+                WaspSystem.??[Either[String, String]](
+                  masterGuardian,
+                  StopProducer(name)
+                ) match {
                   case Right(s) => s.toJson.toAngularOkResponse(pretty)
-                  case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                  case Left(s) =>
+                    httpResponseJson(
+                      status = StatusCodes.InternalServerError,
+                      entity = angularErrorBuilder(s).toString
+                    )
                 }
               }
             }
@@ -77,9 +115,21 @@ object Producer_C extends Directives with JsonSupport {
                     val data = request.data
 
                     ModelKey
-                    WaspSystem.??[Either[String, String]](masterGuardian, RestProducerRequest(name, httpMethod, data, request.mlModel)) match {
+                    WaspSystem.??[Either[String, String]](
+                      masterGuardian,
+                      RestProducerRequest(
+                        name,
+                        httpMethod,
+                        data,
+                        request.mlModel
+                      )
+                    ) match {
                       case Right(s) => s.toJson.toAngularOkResponse(pretty)
-                      case Left(s) => httpResponseJson(status = StatusCodes.InternalServerError, entity = angularErrorBuilder(s).toString)
+                      case Left(s) =>
+                        httpResponseJson(
+                          status = StatusCodes.InternalServerError,
+                          entity = angularErrorBuilder(s).toString
+                        )
                     }
                   }
                 }

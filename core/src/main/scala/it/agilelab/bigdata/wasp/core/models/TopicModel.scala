@@ -37,7 +37,7 @@ sealed abstract class TopicCompression(val kafkaProp: String)
 
 object TopicCompression {
 
-  private val _asString : Map[TopicCompression, String] = Map(
+  private[wasp] val _asString : Map[TopicCompression, String] = Map(
     TopicCompression.Disabled -> "disabled",
     TopicCompression.Gzip -> "gzip",
     TopicCompression.Snappy -> "snappy",

@@ -159,7 +159,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
         case e: ExactKeyValueMatchingStrategy => e.toJson
         case p: PrefixKeyValueMatchingStrategy => p.toJson
         case pt: PrefixAndTimeBoundKeyValueMatchingStrategy => pt.toJson
-      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getSimpleName)))
     }
     implicit val keyValueOptionFormat: RootJsonFormat[KeyValueOption] = jsonFormat2(KeyValueOption.apply)
     implicit val keyValueModelFormat: RootJsonFormat[KeyValueModel] = jsonFormat6(KeyValueModel.apply)
@@ -179,7 +179,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
       override def write(obj: PartitionPruningStrategy): JsValue = JsObject((obj match {
         case timeBased: TimeBasedBetweenPartitionPruningStrategy => timeBased.toJson
         case _: NoPartitionPruningStrategy => JsObject()
-      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getSimpleName)))
     }
     implicit val exactRawMatchingStrategyFormat: RootJsonFormat[ExactRawMatchingStrategy] = jsonFormat1(ExactRawMatchingStrategy.apply)
     implicit val prefixRawMatchingStrategyFormat: RootJsonFormat[PrefixRawMatchingStrategy] = jsonFormat1(PrefixRawMatchingStrategy.apply)
@@ -196,7 +196,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
         case exact: ExactRawMatchingStrategy => exact.toJson
         case prefix: PrefixRawMatchingStrategy => prefix.toJson
         case contains: ContainsRawMatchingStrategy => contains.toJson
-      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getSimpleName)))
     }
     implicit val rawOptionsFormat: RootJsonFormat[RawOptions] = jsonFormat4(RawOptions.apply)
     implicit val rawModelFormat: RootJsonFormat[RawModel] = jsonFormat5(RawModel.apply)
@@ -219,7 +219,7 @@ trait DataStoreConfJsonSupport extends DefaultJsonProtocol {
       override def write(obj: DataStoreConf): JsValue = JsObject((obj match {
         case kv: KeyValueDataStoreConf => kv.toJson
         case raw: RawDataStoreConf => raw.toJson
-      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getName)))
+      }).asJsObject.fields + ("type" -> JsString(obj.getClass.getSimpleName)))
     }
 
   }

@@ -19,7 +19,11 @@ object MlModels_C extends Directives with JsonSupport {
           get {
             complete {
               val result = ConfigBL.mlModelBL.getAll
-              getJsonArrayOrEmpty[MlModelOnlyInfo](ConfigBL.mlModelBL.getAll, _.toJson, pretty)
+              getJsonArrayOrEmpty[MlModelOnlyInfo](
+                ConfigBL.mlModelBL.getAll,
+                _.toJson,
+                pretty
+              )
               val finalResult: JsValue = if (result.isEmpty) {
                 JsArray()
               } else {
@@ -40,17 +44,46 @@ object MlModels_C extends Directives with JsonSupport {
               }
             }
         } ~
+          post {
+            // unmarshal with in-scope unmarshaller
+            entity(as[MlModelOnlyInfo]) { mlModel =>
+              complete {
+
+                ConfigBL.mlModelBL.saveMlModelOnlyInfo(mlModel)
+                "OK".toJson
+              }
+            }
+          } ~
           path(Segment) { name =>
             path(Segment) { version =>
               get {
                 complete {
-                  getJsonOrNotFound[MlModelOnlyInfo](ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version), s"${name}/${version}", "Machine learning model", _.toJson, pretty)
+                  getJsonOrNotFound[MlModelOnlyInfo](
+                    ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version),
+                    s"${name}/${version}",
+                    "Machine learning model",
+                    _.toJson,
+                    pretty
+                  )
                 }
               } ~
                 delete {
                   complete {
-                    val result = ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version)
-                    runIfExists(result, () => ConfigBL.mlModelBL.delete(result.get.name, result.get.version, result.get.timestamp.getOrElse(0l)), s"${name}/${version}", "Machine learning model", "delete", pretty)
+                    val result =
+                      ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version)
+                    runIfExists(
+                      result,
+                      () =>
+                        ConfigBL.mlModelBL.delete(
+                          result.get.name,
+                          result.get.version,
+                          result.get.timestamp.getOrElse(0l)
+                      ),
+                      s"${name}/${version}",
+                      "Machine learning model",
+                      "delete",
+                      pretty
+                    )
                   }
                 }
             }
