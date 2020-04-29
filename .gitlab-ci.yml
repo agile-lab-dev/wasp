@@ -7,6 +7,7 @@ variables:
 
 stages:
   - censor # first censor cause it's faster
+  - waspctl
   - test
   - integration
   - deploy
@@ -42,8 +43,6 @@ censor:
     
 
 integration:
-  tags:
-    - cluster01
   interruptible: true
   stage: integration
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
@@ -52,10 +51,22 @@ integration:
   only:
     - /(^release\/v([0-9]+)\.([0-9]+))/
 
+waspctl:
+  interruptible: true
+  stage: deploy
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/waspctl-build:0.1.0"
+  script:
+    - bash waspctl/build-for-all-archs.bash
+  artifacts:
+    paths: ['waspctl/output']
+  only:
+    - /^develop$/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
+    - tags
+
 deploy:
   interruptible: false
-  tags:
-    - cluster01
   stage: deploy
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
