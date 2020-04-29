@@ -1,9 +1,13 @@
 package it.agilelab.bigdata.wasp.master.web.utils
 
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.temporal.{TemporalAccessor, TemporalQuery}
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.models.{LogEntry, _}
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, DatastoreProductJsonFormat, ZookeeperConnectionsConfig}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
@@ -107,6 +111,17 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataSto
 
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
 
+  implicit lazy val instant: RootJsonFormat[Instant] = new RootJsonFormat[Instant] {
+    override def write(obj: Instant): JsValue = JsString(DateTimeFormatter.ISO_INSTANT.format(obj))
+
+    override def read(json: JsValue): Instant = json match {
+      case JsString(value) => DateTimeFormatter.ISO_INSTANT.parse(value, new TemporalQuery[Instant] {
+        override def queryFrom(temporal: TemporalAccessor): Instant = Instant.from(temporal)
+      })
+    }
+  }
+
+  implicit lazy val logEntryFormat : RootJsonFormat[LogEntry] = jsonFormat7(LogEntry.apply)
   implicit lazy val jmxTelemetryTopicConfigModel: RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(JMXTelemetryConfigModel.apply)
 
   implicit lazy val telemetryTopicConfigModel: RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat5(TelemetryTopicConfigModel.apply)

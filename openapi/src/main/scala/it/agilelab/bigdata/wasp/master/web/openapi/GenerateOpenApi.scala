@@ -12,7 +12,8 @@ object GenerateOpenApi
     with IndicesRoutesOpenApiDefinition
     with TopicRoutesOpenApiDefinition
     with MlModelsRoutesOpenApiDefinition
-    with ConfigRoutesOpenApiDefinition {
+    with ConfigRoutesOpenApiDefinition
+    with LogsRoutesOpenApiDefinition {
 
   def main(args: Array[String]): Unit = {
 
@@ -21,7 +22,8 @@ object GenerateOpenApi
       val routes = batchJobRoutes(ctx) ++ pipegraphRoutes(ctx) ++
         producersRoutes(ctx) ++ indicesRoutes(ctx) ++
         topicRoute(ctx) ++ documentsRoutes(ctx) ++
-        mlmodelsRoutes(ctx) ++ configRoute(ctx)
+        mlmodelsRoutes(ctx) ++ configRoute(ctx) ++
+        logsRoutes(ctx)
 
       val openapi = new OpenAPI()
         .info(new Info().title("wasp-api").version(BuildInfo.version))
@@ -67,6 +69,12 @@ object GenerateOpenApi
             .name("configuration")
             .description("operation related to configurations management")
         )
+        .addTagsItem(
+          new Tag()
+            .name("logs")
+            .description("operation related to logs inspection")
+        )
+
       routes.foreach {
         case (key, value) => openapi.path(key, value)
       }

@@ -148,8 +148,8 @@ object Dependencies {
   val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
   val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
   val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
-  val solrj = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
   val solrCore = "org.apache.solr" % "solr-core" % Versions.solr solrExclusion
+  val solrj = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
   val sparkCatalyst = "org.apache.spark" %% "spark-catalyst" % Versions.spark
   val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
   val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
@@ -164,6 +164,8 @@ object Dependencies {
   val mySql = "mysql" % "mysql-connector-java" % "5.1.6"
   val nameOf = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
 
+
+  val solrjMasterClient = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(
@@ -289,7 +291,9 @@ object Dependencies {
       netty :+
       scalaTest :+
       akkaHttpTestKit :+
-      akkaStreamTestkit
+      akkaStreamTestkit :+
+      solrjMasterClient :+
+      httpClient
     ).map(excludeLog4j) ++ log4j
 
   val plugin_elastic_spark = Seq(

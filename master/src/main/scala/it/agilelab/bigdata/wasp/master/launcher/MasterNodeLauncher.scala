@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.master.launcher
 
 import java.io.FileInputStream
 import java.security.{KeyStore, SecureRandom}
+import java.util.concurrent.{Executors, ThreadFactory}
 
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.HttpResponse
@@ -30,6 +31,7 @@ import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang.exception.ExceptionUtils
 
+import scala.concurrent.ExecutionContext
 import scala.io.Source
 
 
@@ -104,7 +106,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       }
   }
 
+
+
+
   private def getRoutes: Route = {
+
+    val solrExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4 ))
+
     new BatchJobController(DefaultBatchJobService).getRoute ~
       Configuration_C.getRoute ~
       Index_C.getRoute ~
@@ -114,6 +122,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Topic_C.getRoute ~
       Status_C.getRoute ~
       Document_C.getRoute ~
+      new LogsController(new DefaultSolrLogsService()(solrExecutionContext)).getRoutes ~
       additionalRoutes()
   }
 

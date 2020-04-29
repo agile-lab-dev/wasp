@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.25.0
+  version: 2.26.0
 tags:
   - name: batchjobs
     description: operation related to batchjobs management
@@ -19,6 +19,8 @@ tags:
     description: operation related to machine learning models management
   - name: configuration
     description: operation related to configurations management
+  - name: logs
+    description: operation related to logs inspection
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -161,38 +163,6 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     type: string
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /indices:
-    get:
-      tags:
-        - indices
-      description: Retrieve all models used to read or write indexed Data Stores
-      operationId: ListIndices
-      parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-      responses:
-        "200":
-          description: All indices model
-          content:
-            text/json:
-              schema:
-                required:
-                  - Result
-                  - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/IndexModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -627,21 +597,45 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /documents:
+  /logs:
     get:
       tags:
-        - documents
-      description: Retrieves all models used to write or read from Document Stores
-      operationId: ListDocuments
+        - logs
+      description: Retrieves logs entries
+      operationId: Logs
       parameters:
-        - name: pretty
+        - name: search
           in: query
-          required: false
+          required: true
           schema:
-            type: boolean
+            type: string
+        - name: startTimestamp
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endTimestamp
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: size
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
       responses:
         "200":
-          description: All documents
+          description: All log entries matching query
           content:
             text/json:
               schema:
@@ -655,7 +649,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/DocumentModel'
+                      $ref: '#/components/schemas/LogEntry'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2462,6 +2456,35 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     PrefixKeyValueMatchingStrategy:
       type: object
+    LogEntry:
+      required:
+        - log_source
+        - log_level
+        - message
+        - timestamp
+        - thread
+      type: object
+      properties:
+        log_source:
+          type: string
+        log_level:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        thread:
+          type: string
+        cause:
+          type: string
+          nullable: true
+        stacktrace:
+          type: string
+          nullable: true
+      xml:
+        name: LogEntry
+        namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchJobStartResult:
       required:
         - startResult
@@ -2924,5 +2947,7 @@ components:
         - STOPPING
         - FAILED
         - STOPPED
+
+
 
 
