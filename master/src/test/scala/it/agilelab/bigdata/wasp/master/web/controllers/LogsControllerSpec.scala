@@ -4,10 +4,11 @@ import java.time.Instant
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import it.agilelab.bigdata.wasp.core.models
-import it.agilelab.bigdata.wasp.core.models.LogEntry
+import it.agilelab.bigdata.wasp.core.models.{LogEntry, Logs}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsonFormat, RootJsonFormat}
+
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import akka.testkit.TestDuration
@@ -49,14 +50,15 @@ class MockLogsService extends LogsService {
                     startTimestamp: Instant,
                     endTimestamp: Instant,
                     page: Int,
-                    size: Int): Future[Seq[LogEntry]] = {
+                    size: Int): Future[Logs] = {
+
+    val result = data
+      .filter(x => x.message.contains(search))
+      .filter(x => x.timestamp.isAfter(startTimestamp))
+      .filter(x => x.timestamp.isBefore(endTimestamp))
 
     Future.successful(
-      data
-        .filter(x => x.message.contains(search))
-        .filter(x => x.timestamp.isAfter(startTimestamp))
-        .filter(x => x.timestamp.isBefore(endTimestamp))
-        .take(size)
+      Logs(result.length, result.slice(page * size, page * size + size))
     )
 
   }
@@ -79,10 +81,13 @@ class LogsControllerSpec
     Get(
       s"/logs?search=Call&startTimestamp=2020-04-28T13:35:10.273Z&endTimestamp=${Instant.now().toString}&page=0&size=100"
     ) ~> controller.logs(false) ~> check {
-      val response = responseAs[AngularResponse[Seq[LogEntry]]]
+      val response = responseAs[AngularResponse[Logs]]
 
-      response.data.length should be(1)
-      response.data.head.log_source should be("it.agilelab.bigdata.wasp.master.MasterGuardianExpected")
+      response.data.found should be(1)
+      response.data.entries.length should be(1)
+      response.data.entries.head.log_source should be(
+        "it.agilelab.bigdata.wasp.master.MasterGuardianExpected"
+      )
     }
 
   }

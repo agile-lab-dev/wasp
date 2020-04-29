@@ -13,6 +13,9 @@ lazy val IntegrationTest = config("it") extend (Test)
 
 /* Libraries */
 
+val generateOpenApi: TaskKey[Unit] = TaskKey("generate-open-api", "Updates the generated open api specification")
+
+
 lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark-sql-kafka-0-11"))
   .configs(IntegrationTest)
   .settings(Settings.commonSettings: _*)
@@ -211,4 +214,12 @@ lazy val whiteLabel = Project("wasp-whitelabel", file("whitelabel"))
 lazy val openapi = Project("wasp-openapi", file("openapi"))
 	.settings(Settings.commonSettings: _*)
   .settings(libraryDependencies += Dependencies.swaggerCore)
+  .settings(
+
+		generateOpenApi := {
+			(runMain in Compile).toTask(" it.agilelab.bigdata.wasp.master.web.openapi.GenerateOpenApi documentation/wasp-openapi.yaml").value
+		},
+
+		generateOpenApi := (generateOpenApi dependsOn (compile in Compile)).value
+	)
 	.dependsOn(core)

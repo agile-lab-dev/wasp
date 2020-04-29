@@ -1,6 +1,10 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path, Paths, StandardOpenOption}
+
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.servers.Server
 import io.swagger.v3.oas.models.tags.Tag
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 
@@ -17,6 +21,7 @@ object GenerateOpenApi
 
   def main(args: Array[String]): Unit = {
 
+
     val generate = (ctx: Context) => {
 
       val routes = batchJobRoutes(ctx) ++ pipegraphRoutes(ctx) ++
@@ -26,6 +31,11 @@ object GenerateOpenApi
         logsRoutes(ctx)
 
       val openapi = new OpenAPI()
+        .addServersItem(
+          new Server()
+            .description("default development server, beware of CORS")
+            .url("http://localhost:2891")
+        )
         .info(new Info().title("wasp-api").version(BuildInfo.version))
         .addTagsItem(
           new Tag()
@@ -82,6 +92,13 @@ object GenerateOpenApi
       openapi
     }
 
-    println(OpenApiRenderer.render(generate))
+    Files.write(
+      Paths.get(args(0)),
+      OpenApiRenderer.render(generate).getBytes(StandardCharsets.UTF_8),
+      StandardOpenOption.CREATE,
+      StandardOpenOption.TRUNCATE_EXISTING
+    )
+
+    //println(OpenApiRenderer.render(generate))
   }
 }

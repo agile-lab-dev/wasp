@@ -3,20 +3,16 @@ package it.agilelab.bigdata.wasp.master.web.openapi
 import java.time.Instant
 
 import io.swagger.v3.oas.models.media.{Content, MediaType}
-import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
+import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{
-  DocumentModel,
-  LogEntry,
-  ProducerModel
-}
+import it.agilelab.bigdata.wasp.core.models.{LogEntry, Logs}
 
 trait LogsOpenApiComponentSupport
     extends ProducerOpenApiComponentSupport
     with LangOpenApi
     with CollectionsOpenApi {
-
+  implicit lazy val logsOpenApi: ToOpenApiSchema[Logs] = product2(Logs.apply)
   implicit lazy val logsEntryOpenApi: ToOpenApiSchema[LogEntry] =
     product7(LogEntry.apply)
 }
@@ -83,7 +79,7 @@ trait LogsRoutesOpenApiDefinition
                         "text/json",
                         new MediaType()
                           .schema(
-                            ToOpenApiSchema[AngularResponse[Seq[LogEntry]]]
+                            ToOpenApiSchema[AngularResponse[Logs]]
                               .schema(ctx)
                           )
                       )

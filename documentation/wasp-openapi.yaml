@@ -1,45 +1,48 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0
+  version: 2.26.0-308-add-found-count-to-logging-api-to-ease-pagination-SNAPSHOT
+servers:
+- url: http://localhost:2891
+  description: default development server, beware of CORS
 tags:
-  - name: batchjobs
-    description: operation related to batchjobs management
-  - name: pipegraphs
-    description: operation related to pipegraphs management
-  - name: producers
-    description: operation related to producers management
-  - name: documents
-    description: operation related to documents management
-  - name: topics
-    description: operation related to topics management
-  - name: indices
-    description: operation related to indices management
-  - name: mlmodels
-    description: operation related to machine learning models management
-  - name: configuration
-    description: operation related to configurations management
-  - name: logs
-    description: operation related to logs inspection
+- name: batchjobs
+  description: operation related to batchjobs management
+- name: pipegraphs
+  description: operation related to pipegraphs management
+- name: producers
+  description: operation related to producers management
+- name: documents
+  description: operation related to documents management
+- name: topics
+  description: operation related to topics management
+- name: indices
+  description: operation related to indices management
+- name: mlmodels
+  description: operation related to machine learning models management
+- name: configuration
+  description: operation related to configurations management
+- name: logs
+  description: operation related to logs inspection
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: Deletes a pipegraph
       operationId: DeletePipegraph
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: pipegraphname
-          in: path
-          description: The name of the pipegraph to delete
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: pipegraphname
+        in: path
+        description: The name of the pipegraph to delete
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the operation
@@ -47,8 +50,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -61,21 +64,21 @@ paths:
   /document/{documentname}:
     get:
       tags:
-        - documents
+      - documents
       description: Retrieves the model used to write or read from Document Stores
       operationId: GetDocument
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: documentname
-          in: path
-          description: The name of the document model to retrieve
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: documentname
+        in: path
+        description: The name of the document model to retrieve
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the operation
@@ -83,8 +86,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -97,21 +100,21 @@ paths:
   /producers/{producername}:
     delete:
       tags:
-        - producers
+      - producers
       description: Deletes a producer
       operationId: DeleteProducer
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: producername
-          in: path
-          description: The name of the producer to delete
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: producername
+        in: path
+        description: The name of the producer to delete
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the operation
@@ -119,8 +122,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -133,21 +136,21 @@ paths:
   /producers/{producername}/start:
     post:
       tags:
-        - producers
+      - producers
       description: Start a producer
       operationId: StartProducer
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: producername
-          in: path
-          description: The name of the producer to start
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: producername
+        in: path
+        description: The name of the producer to start
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the producer start operation
@@ -155,8 +158,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -169,27 +172,27 @@ paths:
   /batchjobs/{batchjobname}/instances/{instance}:
     get:
       tags:
-        - batchjobs
+      - batchjobs
       description: Get a batch job instance
       operationId: Get batch job instance
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: batchjobname
-          in: path
-          description: The name of the batch job to list instance for
-          required: true
-          schema:
-            type: string
-        - name: instance
-          in: path
-          description: The name of the batch job instance to list
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: batchjobname
+        in: path
+        description: The name of the batch job to list instance for
+        required: true
+        schema:
+          type: string
+      - name: instance
+        in: path
+        description: The name of the batch job instance to list
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: The instance of the batch job
@@ -197,8 +200,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -211,27 +214,27 @@ paths:
   /mlmodels/{mlmodelname}/{mlmodelversion}:
     get:
       tags:
-        - mlmodels
+      - mlmodels
       description: Retrieves data on a specific Machine Learning model
       operationId: GetMlModel
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: mlmodelname
-          in: path
-          description: The name of the ml model to retrieve
-          required: true
-          schema:
-            type: string
-        - name: mlmodelversion
-          in: path
-          description: The name of the mlmodel to retrieve
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: mlmodelname
+        in: path
+        description: The name of the ml model to retrieve
+        required: true
+        schema:
+          type: string
+      - name: mlmodelversion
+        in: path
+        description: The name of the mlmodel to retrieve
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: The instance of the MlModel
@@ -239,8 +242,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -252,27 +255,27 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     delete:
       tags:
-        - mlmodels
+      - mlmodels
       description: Delete a Machine learning model
       operationId: DeleteMlModel
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: mlmodelname
-          in: path
-          description: The name of the ml model to retrieve
-          required: true
-          schema:
-            type: string
-        - name: mlmodelversion
-          in: path
-          description: The name of the mlmodel to retrieve
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: mlmodelname
+        in: path
+        description: The name of the ml model to retrieve
+        required: true
+        schema:
+          type: string
+      - name: mlmodelversion
+        in: path
+        description: The name of the mlmodel to retrieve
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: The instance of the MlModel
@@ -280,8 +283,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -294,21 +297,21 @@ paths:
   /topics/{topicname}:
     get:
       tags:
-        - topics
+      - topics
       description: Retrieves the model used to write or read from message queues
       operationId: GetTopic
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: topicname
-          in: path
-          description: The name of the topic to retrieve
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: topicname
+        in: path
+        description: The name of the topic to retrieve
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the operation
@@ -316,8 +319,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -330,21 +333,21 @@ paths:
   /pipegraphs/{pipegraphname}/stop:
     post:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: Stops the running instance of a pipegrah
       operationId: StopPipegraph
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: pipegraphname
-          in: path
-          description: The name of the pipegraph to stop
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: pipegraphname
+        in: path
+        description: The name of the pipegraph to stop
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the pipegraph stop operation
@@ -352,8 +355,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -366,15 +369,15 @@ paths:
   /mlmodels:
     get:
       tags:
-        - mlmodels
+      - mlmodels
       description: Retrieve all machine learning models info
       operationId: ListMlModels
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: All mlmodels
@@ -382,8 +385,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -397,24 +400,24 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     put:
       tags:
-        - mlmodels
+      - mlmodels
       description: Updates a machine learning model
       operationId: UpdateMlModels
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - version
-                - favorite
-                - description
+              - name
+              - version
+              - favorite
+              - description
               type: object
               properties:
                 name:
@@ -448,8 +451,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -461,24 +464,24 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     post:
       tags:
-        - mlmodels
+      - mlmodels
       description: Inserts a new MlModel
       operationId: InsertMlModel
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - version
-                - favorite
-                - description
+              - name
+              - version
+              - favorite
+              - description
               type: object
               properties:
                 name:
@@ -512,8 +515,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -526,21 +529,21 @@ paths:
   /pipegraphs/{pipegraphname}/instances:
     post:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: List all instances of a pipegraph
       operationId: ListPipegraphInstances
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: pipegraphname
-          in: path
-          description: The name of the pipegraph whose instances should be listed
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: pipegraphname
+        in: path
+        description: The name of the pipegraph whose instances should be listed
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: All the instances for the requested pipegraph
@@ -548,8 +551,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -564,21 +567,21 @@ paths:
   /index/{indexname}:
     get:
       tags:
-        - indices
+      - indices
       description: Retrieves all models used to read or write Indexed data stores
       operationId: GetIndex
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: indexname
-          in: path
-          description: The name of the index model to retrieve
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: indexname
+        in: path
+        description: The name of the index model to retrieve
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the operation
@@ -586,8 +589,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -600,39 +603,39 @@ paths:
   /logs:
     get:
       tags:
-        - logs
+      - logs
       description: Retrieves logs entries
       operationId: Logs
       parameters:
-        - name: search
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: startTimestamp
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date-time
-        - name: endTimestamp
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date-time
-        - name: page
-          in: query
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: size
-          in: query
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: search
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: startTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: endTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: size
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
       responses:
         "200":
           description: All log entries matching query
@@ -640,31 +643,29 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/LogEntry'
+                    $ref: '#/components/schemas/Logs'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /topics:
     get:
       tags:
-        - topics
+      - topics
       description: Lists all models used to write or read from message queues
       operationId: GetTopics
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: All topics
@@ -672,8 +673,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -688,15 +689,15 @@ paths:
   /document:
     get:
       tags:
-        - documents
+      - documents
       description: Retrieves all models used to write or read from Document Stores
       operationId: ListDocuments
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: All documents
@@ -704,8 +705,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -720,15 +721,15 @@ paths:
   /pipegraphs:
     get:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: Lists all pipegraphs
       operationId: ListPipegraphs
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: All pipegraphs
@@ -736,8 +737,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -751,28 +752,28 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     put:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: updateds a pipegraph
       operationId: Update Pipegraphs
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - description
-                - owner
-                - isSystem
-                - creationTime
-                - legacyStreamingComponents
-                - structuredStreamingComponents
-                - rtComponents
+              - name
+              - description
+              - owner
+              - isSystem
+              - creationTime
+              - legacyStreamingComponents
+              - structuredStreamingComponents
+              - rtComponents
               type: object
               properties:
                 name:
@@ -810,8 +811,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -823,28 +824,28 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     post:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: Inserts a pipegraph
       operationId: InsertPipegraph
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - description
-                - owner
-                - isSystem
-                - creationTime
-                - legacyStreamingComponents
-                - structuredStreamingComponents
-                - rtComponents
+              - name
+              - description
+              - owner
+              - isSystem
+              - creationTime
+              - legacyStreamingComponents
+              - structuredStreamingComponents
+              - rtComponents
               type: object
               properties:
                 name:
@@ -882,8 +883,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -896,15 +897,15 @@ paths:
   /config/sparkbatch:
     get:
       tags:
-        - configuration
+      - configuration
       description: Retrieves the configuration of the Spark Batch context
       operationId: GetSparkBatchConfig
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: spark batch configuration
@@ -912,8 +913,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -926,15 +927,15 @@ paths:
   /producers:
     get:
       tags:
-        - producers
+      - producers
       description: Retrieves all producers
       operationId: GetProducers
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: All producers
@@ -942,8 +943,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -957,25 +958,25 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     put:
       tags:
-        - producers
+      - producers
       description: Updates a new producer
       operationId: UpdateProducer
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - className
-                - isActive
-                - isRemote
-                - isSystem
+              - name
+              - className
+              - isActive
+              - isRemote
+              - isSystem
               type: object
               properties:
                 name:
@@ -1004,8 +1005,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1017,25 +1018,25 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     post:
       tags:
-        - producers
+      - producers
       description: Inserts a producer
       operationId: InsertProducer
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - className
-                - isActive
-                - isRemote
-                - isSystem
+              - name
+              - className
+              - isActive
+              - isRemote
+              - isSystem
               type: object
               properties:
                 name:
@@ -1064,8 +1065,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1078,21 +1079,21 @@ paths:
   /producers/{producername}/stop:
     post:
       tags:
-        - producers
+      - producers
       description: Stop a producerj
       operationId: StopProducer
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: producername
-          in: path
-          description: The name of the producer to stop
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: producername
+        in: path
+        description: The name of the producer to stop
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the producer stop operation
@@ -1100,8 +1101,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1114,15 +1115,15 @@ paths:
   /batchjobs:
     get:
       tags:
-        - batchjobs
+      - batchjobs
       description: Lists all barch jobs
       operationId: GetBarchJobs
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: All batch jobs
@@ -1130,8 +1131,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1145,27 +1146,27 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     put:
       tags:
-        - batchjobs
+      - batchjobs
       description: Inserts a new batch job
       operationId: UpdateBatchJob
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - description
-                - owner
-                - system
-                - creationTime
-                - etl
-                - exclusivityConfig
+              - name
+              - description
+              - owner
+              - system
+              - creationTime
+              - etl
+              - exclusivityConfig
               type: object
               properties:
                 name:
@@ -1183,8 +1184,8 @@ paths:
                   discriminator:
                     propertyName: type
                   oneOf:
-                    - $ref: '#/components/schemas/BatchETLModel'
-                    - $ref: '#/components/schemas/BatchGdprETLModel'
+                  - $ref: '#/components/schemas/BatchETLModel'
+                  - $ref: '#/components/schemas/BatchGdprETLModel'
                 exclusivityConfig:
                   $ref: '#/components/schemas/BatchJobExclusionConfig'
               xml:
@@ -1197,8 +1198,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1210,27 +1211,27 @@ paths:
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
     post:
       tags:
-        - batchjobs
+      - batchjobs
       description: Inserts a new batch job
       operationId: InsertBatchJob
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       requestBody:
         content:
           text/json:
             schema:
               required:
-                - name
-                - description
-                - owner
-                - system
-                - creationTime
-                - etl
-                - exclusivityConfig
+              - name
+              - description
+              - owner
+              - system
+              - creationTime
+              - etl
+              - exclusivityConfig
               type: object
               properties:
                 name:
@@ -1248,8 +1249,8 @@ paths:
                   discriminator:
                     propertyName: type
                   oneOf:
-                    - $ref: '#/components/schemas/BatchETLModel'
-                    - $ref: '#/components/schemas/BatchGdprETLModel'
+                  - $ref: '#/components/schemas/BatchETLModel'
+                  - $ref: '#/components/schemas/BatchGdprETLModel'
                 exclusivityConfig:
                   $ref: '#/components/schemas/BatchJobExclusionConfig'
               xml:
@@ -1262,8 +1263,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1276,21 +1277,21 @@ paths:
   /batchjobs/{batchjobname}:
     delete:
       tags:
-        - batchjobs
+      - batchjobs
       description: Deletes a Batch Job
       operationId: DeleteBatchJob
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: batchjobname
-          in: path
-          description: The name of the batch job to delete
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: batchjobname
+        in: path
+        description: The name of the batch job to delete
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the batch job start operation
@@ -1298,8 +1299,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1312,21 +1313,21 @@ paths:
   /pipegraphs/{pipegraphname}/start:
     post:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: Starts a new instance of pipegraph
       operationId: StartPipegraph
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: pipegraphname
-          in: path
-          description: The name of the pipegraph to start
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: pipegraphname
+        in: path
+        description: The name of the pipegraph to start
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the pipegraph start operation
@@ -1334,8 +1335,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1348,21 +1349,21 @@ paths:
   /batchjobs/{batchjobname}/start:
     post:
       tags:
-        - batchjobs
+      - batchjobs
       description: Starts a batch job
       operationId: StartBatchJob
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: batchjobname
-          in: path
-          description: The name of the batch job to start
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: batchjobname
+        in: path
+        description: The name of the batch job to start
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Outcome of the batch job start operation
@@ -1370,8 +1371,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1384,27 +1385,27 @@ paths:
   /pipegraphs/{pipegraphname}/instances/{instance}:
     get:
       tags:
-        - pipegraphs
+      - pipegraphs
       description: Retrieves a pipegraph instance
       operationId: GetPipegraphInstance
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: pipegraphname
-          in: path
-          description: The name of the pipegraph to list instance for
-          required: true
-          schema:
-            type: string
-        - name: instance
-          in: path
-          description: The name of the pipegraph instance to list
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: pipegraphname
+        in: path
+        description: The name of the pipegraph to list instance for
+        required: true
+        schema:
+          type: string
+      - name: instance
+        in: path
+        description: The name of the pipegraph instance to list
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: The instance of the pipegraph
@@ -1412,8 +1413,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1426,15 +1427,15 @@ paths:
   /config/telemetry:
     get:
       tags:
-        - configuration
+      - configuration
       description: Retrieves the configuration of the telemetry subsystem
       operationId: GetTelelemetryConfig
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: telemetry configuration
@@ -1442,8 +1443,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1456,21 +1457,21 @@ paths:
   /batchjobs/{batchjobname}/instances:
     get:
       tags:
-        - batchjobs
+      - batchjobs
       description: Lists all instances of a batch job
       operationId: GetBatchJobInstances
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
-        - name: batchjobname
-          in: path
-          description: The name of the batch job to start
-          required: true
-          schema:
-            type: string
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: batchjobname
+        in: path
+        description: The name of the batch job to start
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: All the instances for the requested batchjob
@@ -1478,8 +1479,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1494,15 +1495,15 @@ paths:
   /config/kafka:
     get:
       tags:
-        - configuration
+      - configuration
       description: Retrieves the configuration used to connect to Kafka
       operationId: GetKafkaConfig
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: kafka configuration
@@ -1510,8 +1511,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1524,15 +1525,15 @@ paths:
   /config/sparkstreaming:
     get:
       tags:
-        - configuration
+      - configuration
       description: Retrieves the configuration of the Spark Streaming context
       operationId: GetSparkStreamingConfig
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: spark streaming configuration
@@ -1540,8 +1541,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1554,15 +1555,15 @@ paths:
   /config/sorl:
     get:
       tags:
-        - configuration
+      - configuration
       description: Retrieves the configuration used to connect to solr
       operationId: GetSolrConfig
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: solr configuration
@@ -1570,8 +1571,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1584,15 +1585,15 @@ paths:
   /index:
     get:
       tags:
-        - indices
+      - indices
       description: Retrieve all models used to read or write indexed Data Stores
       operationId: ListIndices
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: All indices model
@@ -1600,8 +1601,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1616,15 +1617,15 @@ paths:
   /config/es:
     get:
       tags:
-        - configuration
+      - configuration
       description: Retrieves the configuration used to connect to elastic
       operationId: GetElasticConfig
       parameters:
-        - name: pretty
-          in: query
-          required: false
-          schema:
-            type: boolean
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         "200":
           description: elastic configuration
@@ -1632,8 +1633,8 @@ paths:
             text/json:
               schema:
                 required:
-                  - Result
-                  - data
+                - Result
+                - data
                 type: object
                 properties:
                   Result:
@@ -1647,8 +1648,8 @@ components:
   schemas:
     RawOptions:
       required:
-        - saveMode
-        - format
+      - saveMode
+      - format
       type: object
       properties:
         saveMode:
@@ -1670,13 +1671,13 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     LegacyStreamingETLModel:
       required:
-        - name
-        - inputs
-        - output
-        - mlModels
-        - kafkaAccessType
-        - group
-        - isActive
+      - name
+      - inputs
+      - output
+      - mlModels
+      - kafkaAccessType
+      - group
+      - isActive
       type: object
       properties:
         name:
@@ -1704,13 +1705,13 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchJobModel:
       required:
-        - name
-        - description
-        - owner
-        - system
-        - creationTime
-        - etl
-        - exclusivityConfig
+      - name
+      - description
+      - owner
+      - system
+      - creationTime
+      - etl
+      - exclusivityConfig
       type: object
       properties:
         name:
@@ -1728,8 +1729,8 @@ components:
           discriminator:
             propertyName: type
           oneOf:
-            - $ref: '#/components/schemas/BatchETLModel'
-            - $ref: '#/components/schemas/BatchGdprETLModel'
+          - $ref: '#/components/schemas/BatchETLModel'
+          - $ref: '#/components/schemas/BatchGdprETLModel'
         exclusivityConfig:
           $ref: '#/components/schemas/BatchJobExclusionConfig'
       xml:
@@ -1737,9 +1738,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     KeyValueModel:
       required:
-        - name
-        - tableCatalog
-        - useAvroSchemaManager
+      - name
+      - tableCatalog
+      - useAvroSchemaManager
       type: object
       properties:
         name:
@@ -1766,12 +1767,12 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     RawDataStoreConf:
       required:
-        - inputKeyColumn
-        - correlationIdColumn
-        - rawModel
-        - rawMatchingStrategy
-        - partitionPruningStrategy
-        - missingPathFailure
+      - inputKeyColumn
+      - correlationIdColumn
+      - rawModel
+      - rawMatchingStrategy
+      - partitionPruningStrategy
+      - missingPathFailure
       type: object
       properties:
         inputKeyColumn:
@@ -1784,15 +1785,15 @@ components:
           discriminator:
             propertyName: type
           oneOf:
-            - $ref: '#/components/schemas/ExactRawMatchingStrategy'
-            - $ref: '#/components/schemas/PrefixRawMatchingStrategy'
-            - $ref: '#/components/schemas/ContainsRawMatchingStrategy'
+          - $ref: '#/components/schemas/ExactRawMatchingStrategy'
+          - $ref: '#/components/schemas/PrefixRawMatchingStrategy'
+          - $ref: '#/components/schemas/ContainsRawMatchingStrategy'
         partitionPruningStrategy:
           discriminator:
             propertyName: type
           oneOf:
-            - $ref: '#/components/schemas/ExactKeyValueMatchingStrategy'
-            - $ref: '#/components/schemas/TimeBasedBetweenPartitionPruningStrategy'
+          - $ref: '#/components/schemas/ExactKeyValueMatchingStrategy'
+          - $ref: '#/components/schemas/TimeBasedBetweenPartitionPruningStrategy'
         missingPathFailure:
           type: boolean
       xml:
@@ -1800,8 +1801,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     DashboardModel:
       required:
-        - url
-        - needsFilterBox
+      - url
+      - needsFilterBox
       type: object
       properties:
         url:
@@ -1814,12 +1815,12 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchJobInstanceModel:
       required:
-        - name
-        - instanceOf
-        - startTimestamp
-        - currentStatusTimestamp
-        - status
-        - restConfig
+      - name
+      - instanceOf
+      - startTimestamp
+      - currentStatusTimestamp
+      - status
+      - restConfig
       type: object
       properties:
         name:
@@ -1844,8 +1845,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     KafkaEntryConfig:
       required:
-        - key
-        - value
+      - key
+      - value
       type: object
       properties:
         key:
@@ -1857,9 +1858,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     DocumentModel:
       required:
-        - name
-        - connectionString
-        - schema
+      - name
+      - connectionString
+      - schema
       type: object
       properties:
         name:
@@ -1873,11 +1874,11 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     RawModel:
       required:
-        - name
-        - uri
-        - timed
-        - schema
-        - options
+      - name
+      - uri
+      - timed
+      - schema
+      - options
       type: object
       properties:
         name:
@@ -1895,11 +1896,11 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     JMXTelemetryConfigModel:
       required:
-        - query
-        - metricGroupAttribute
-        - sourceIdAttribute
-        - metricGroupFallback
-        - sourceIdFallback
+      - query
+      - metricGroupAttribute
+      - sourceIdAttribute
+      - metricGroupFallback
+      - sourceIdFallback
       type: object
       properties:
         query:
@@ -1917,13 +1918,13 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     SparkDriverConfig:
       required:
-        - submitDeployMode
-        - cores
-        - memory
-        - host
-        - bindAddress
-        - port
-        - killDriverProcessIfSparkContextStops
+      - submitDeployMode
+      - cores
+      - memory
+      - host
+      - bindAddress
+      - port
+      - killDriverProcessIfSparkContextStops
       type: object
       properties:
         submitDeployMode:
@@ -1947,11 +1948,11 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     PipegraphInstanceModel:
       required:
-        - name
-        - instanceOf
-        - startTimestamp
-        - currentStatusTimestamp
-        - status
+      - name
+      - instanceOf
+      - startTimestamp
+      - currentStatusTimestamp
+      - status
       type: object
       properties:
         name:
@@ -1974,7 +1975,7 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     ContainsRawMatchingStrategy:
       required:
-        - dataframeKeyMatchingExpression
+      - dataframeKeyMatchingExpression
       type: object
       properties:
         dataframeKeyMatchingExpression:
@@ -1984,8 +1985,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     SparkEntryConfig:
       required:
-        - key
-        - value
+      - key
+      - value
       type: object
       properties:
         key:
@@ -1998,19 +1999,19 @@ components:
     DataStoreProductEnum:
       type: string
       enum:
-        - webmail
-        - websocket
-        - mongodb
-        - console
-        - hbase
-        - elastic
-        - solr
-        - kafka
-        - jdbc
-        - raw
+      - webmail
+      - websocket
+      - mongodb
+      - console
+      - hbase
+      - elastic
+      - solr
+      - kafka
+      - jdbc
+      - raw
     StrategyModel:
       required:
-        - className
+      - className
       type: object
       properties:
         className:
@@ -2025,17 +2026,17 @@ components:
     ResultIndicator:
       type: string
       enum:
-        - OK
-        - KO
+      - OK
+      - KO
     BatchGdprETLModel:
       required:
-        - name
-        - dataStores
-        - strategyConfig
-        - inputs
-        - output
-        - group
-        - isActive
+      - name
+      - dataStores
+      - strategyConfig
+      - inputs
+      - output
+      - group
+      - isActive
       type: object
       properties:
         name:
@@ -2046,8 +2047,8 @@ components:
             discriminator:
               propertyName: type
             oneOf:
-              - $ref: '#/components/schemas/RawDataStoreConf'
-              - $ref: '#/components/schemas/KeyValueDataStoreConf'
+            - $ref: '#/components/schemas/RawDataStoreConf'
+            - $ref: '#/components/schemas/KeyValueDataStoreConf'
         strategyConfig:
           type: string
         inputs:
@@ -2068,16 +2069,16 @@ components:
     TopicCompressionEnum:
       type: string
       enum:
-        - disabled
-        - gzip
-        - snappy
-        - lz4
+      - disabled
+      - gzip
+      - snappy
+      - lz4
     MlModelOnlyInfo:
       required:
-        - name
-        - version
-        - favorite
-        - description
+      - name
+      - version
+      - favorite
+      - description
       type: object
       properties:
         name:
@@ -2106,24 +2107,24 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     SparkBatchConfigModel:
       required:
-        - appName
-        - master
-        - driver
-        - executorCores
-        - executorMemory
-        - coresMax
-        - executorInstances
-        - additionalJarsPath
-        - yarnJar
-        - blockManagerPort
-        - retainedStagesJobs
-        - retainedTasks
-        - retainedJobs
-        - retainedExecutions
-        - retainedBatches
-        - kryoSerializer
-        - others
-        - name
+      - appName
+      - master
+      - driver
+      - executorCores
+      - executorMemory
+      - coresMax
+      - executorInstances
+      - additionalJarsPath
+      - yarnJar
+      - blockManagerPort
+      - retainedStagesJobs
+      - retainedTasks
+      - retainedJobs
+      - retainedExecutions
+      - retainedBatches
+      - kryoSerializer
+      - others
+      - name
       type: object
       properties:
         appName:
@@ -2176,19 +2177,35 @@ components:
       xml:
         name: SparkBatchConfigModel
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+    Logs:
+      required:
+      - found
+      - entries
+      type: object
+      properties:
+        found:
+          type: integer
+          format: int64
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEntry'
+      xml:
+        name: Logs
+        namespace: java://it.agilelab.bigdata.wasp.core.models
     JobStatus:
       type: string
       enum:
-        - PENDING
-        - PROCESSING
-        - SUCCESSFUL
-        - FAILED
-        - STOPPED
+      - PENDING
+      - PROCESSING
+      - SUCCESSFUL
+      - FAILED
+      - STOPPED
     KryoSerializerConfig:
       required:
-        - enabled
-        - registrators
-        - strict
+      - enabled
+      - registrators
+      - strict
       type: object
       properties:
         enabled:
@@ -2202,10 +2219,10 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     WriterModel:
       required:
-        - name
-        - datastoreModelName
-        - datastoreProduct
-        - options
+      - name
+      - datastoreModelName
+      - datastoreProduct
+      - options
       type: object
       properties:
         name:
@@ -2224,14 +2241,14 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     PipegraphModel:
       required:
-        - name
-        - description
-        - owner
-        - isSystem
-        - creationTime
-        - legacyStreamingComponents
-        - structuredStreamingComponents
-        - rtComponents
+      - name
+      - description
+      - owner
+      - isSystem
+      - creationTime
+      - legacyStreamingComponents
+      - structuredStreamingComponents
+      - rtComponents
       type: object
       properties:
         name:
@@ -2264,10 +2281,10 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     TimeBasedBetweenPartitionPruningStrategy:
       required:
-        - columnName
-        - isDateNumeric
-        - pattern
-        - granularity
+      - columnName
+      - isDateNumeric
+      - pattern
+      - granularity
       type: object
       properties:
         columnName:
@@ -2283,9 +2300,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     ConnectionConfig:
       required:
-        - protocol
-        - host
-        - port
+      - protocol
+      - host
+      - port
       type: object
       properties:
         protocol:
@@ -2309,26 +2326,26 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.utils
     SparkStreamingConfigModel:
       required:
-        - appName
-        - master
-        - driver
-        - executorCores
-        - executorMemory
-        - coresMax
-        - executorInstances
-        - additionalJarsPath
-        - yarnJar
-        - blockManagerPort
-        - retainedStagesJobs
-        - retainedTasks
-        - retainedJobs
-        - retainedExecutions
-        - retainedBatches
-        - kryoSerializer
-        - streamingBatchIntervalMs
-        - checkpointDir
-        - others
-        - name
+      - appName
+      - master
+      - driver
+      - executorCores
+      - executorMemory
+      - coresMax
+      - executorInstances
+      - additionalJarsPath
+      - yarnJar
+      - blockManagerPort
+      - retainedStagesJobs
+      - retainedTasks
+      - retainedJobs
+      - retainedExecutions
+      - retainedBatches
+      - kryoSerializer
+      - streamingBatchIntervalMs
+      - checkpointDir
+      - others
+      - name
       type: object
       properties:
         appName:
@@ -2392,10 +2409,10 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     KeyValueDataStoreConf:
       required:
-        - inputKeyColumn
-        - correlationIdColumn
-        - keyValueModel
-        - keyValueMatchingStrategy
+      - inputKeyColumn
+      - correlationIdColumn
+      - keyValueModel
+      - keyValueMatchingStrategy
       type: object
       properties:
         inputKeyColumn:
@@ -2408,21 +2425,21 @@ components:
           discriminator:
             propertyName: type
           oneOf:
-            - $ref: '#/components/schemas/ExactKeyValueMatchingStrategy'
-            - $ref: '#/components/schemas/PrefixAndTimeBoundKeyValueMatchingStrategy'
-            - $ref: '#/components/schemas/PrefixKeyValueMatchingStrategy'
+          - $ref: '#/components/schemas/ExactKeyValueMatchingStrategy'
+          - $ref: '#/components/schemas/PrefixAndTimeBoundKeyValueMatchingStrategy'
+          - $ref: '#/components/schemas/PrefixKeyValueMatchingStrategy'
       xml:
         name: KeyValueDataStoreConf
         namespace: java://it.agilelab.bigdata.wasp.core.models
     StructuredStreamingETLModel:
       required:
-        - name
-        - group
-        - streamingInput
-        - staticInputs
-        - streamingOutput
-        - mlModels
-        - options
+      - name
+      - group
+      - streamingInput
+      - staticInputs
+      - streamingOutput
+      - mlModels
+      - options
       type: object
       properties:
         name:
@@ -2458,11 +2475,11 @@ components:
       type: object
     LogEntry:
       required:
-        - log_source
-        - log_level
-        - message
-        - timestamp
-        - thread
+      - log_source
+      - log_level
+      - message
+      - timestamp
+      - thread
       type: object
       properties:
         log_source:
@@ -2487,8 +2504,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchJobStartResult:
       required:
-        - startResult
-        - instance
+      - startResult
+      - instance
       type: object
       properties:
         startResult:
@@ -2501,22 +2518,22 @@ components:
     DataStoreCategoryEnum:
       type: string
       enum:
-        - webmail
-        - websocket
-        - document
-        - console
-        - keyvalue
-        - index
-        - index
-        - topic
-        - database
-        - raw
+      - webmail
+      - websocket
+      - document
+      - console
+      - keyvalue
+      - index
+      - index
+      - topic
+      - database
+      - raw
     BsonDocument:
       type: object
     ElasticConfigModel:
       required:
-        - connections
-        - name
+      - connections
+      - name
       type: object
       properties:
         connections:
@@ -2530,9 +2547,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     PrefixAndTimeBoundKeyValueMatchingStrategy:
       required:
-        - separator
-        - pattern
-        - locale
+      - separator
+      - pattern
+      - locale
       type: object
       properties:
         separator:
@@ -2546,10 +2563,10 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     ReaderModel:
       required:
-        - name
-        - datastoreModelName
-        - datastoreProduct
-        - options
+      - name
+      - datastoreModelName
+      - datastoreProduct
+      - options
       type: object
       properties:
         name:
@@ -2567,7 +2584,7 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     PrefixRawMatchingStrategy:
       required:
-        - dataframeKeyMatchingExpression
+      - dataframeKeyMatchingExpression
       type: object
       properties:
         dataframeKeyMatchingExpression:
@@ -2577,9 +2594,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     IndexModel:
       required:
-        - name
-        - creationTime
-        - rollingIndex
+      - name
+      - creationTime
+      - rollingIndex
       type: object
       properties:
         name:
@@ -2611,19 +2628,19 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     KafkaConfigModel:
       required:
-        - connections
-        - ingest_rate
-        - zookeeperConnections
-        - broker_id
-        - partitioner_fqcn
-        - default_encoder
-        - key_encoder_fqcn
-        - encoder_fqcn
-        - decoder_fqcn
-        - batch_send_size
-        - acks
-        - others
-        - name
+      - connections
+      - ingest_rate
+      - zookeeperConnections
+      - broker_id
+      - partitioner_fqcn
+      - default_encoder
+      - key_encoder_fqcn
+      - encoder_fqcn
+      - decoder_fqcn
+      - batch_send_size
+      - acks
+      - others
+      - name
       type: object
       properties:
         connections:
@@ -2662,14 +2679,14 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     TopicModel:
       required:
-        - name
-        - creationTime
-        - partitions
-        - replicas
-        - topicDataType
-        - useAvroSchemaManager
-        - schema
-        - topicCompression
+      - name
+      - creationTime
+      - partitions
+      - replicas
+      - topicDataType
+      - useAvroSchemaManager
+      - schema
+      - topicCompression
       type: object
       properties:
         name:
@@ -2707,13 +2724,13 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchETLModel:
       required:
-        - name
-        - inputs
-        - output
-        - mlModels
-        - kafkaAccessType
-        - group
-        - isActive
+      - name
+      - inputs
+      - output
+      - mlModels
+      - kafkaAccessType
+      - group
+      - isActive
       type: object
       properties:
         name:
@@ -2743,8 +2760,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchJobExclusionConfig:
       required:
-        - isFullyExclusive
-        - restConfigExclusiveParams
+      - isFullyExclusive
+      - restConfigExclusiveParams
       type: object
       properties:
         isFullyExclusive:
@@ -2758,8 +2775,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     SolrConfigModel:
       required:
-        - zookeeperConnections
-        - name
+      - zookeeperConnections
+      - name
       type: object
       properties:
         zookeeperConnections:
@@ -2771,9 +2788,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     RTModel:
       required:
-        - name
-        - inputs
-        - isActive
+      - name
+      - inputs
+      - isActive
       type: object
       properties:
         name:
@@ -2793,11 +2810,11 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     ProducerModel:
       required:
-        - name
-        - className
-        - isActive
-        - isRemote
-        - isSystem
+      - name
+      - className
+      - isActive
+      - isRemote
+      - isSystem
       type: object
       properties:
         name:
@@ -2830,10 +2847,10 @@ components:
       type: object
     StreamingReaderModel:
       required:
-        - name
-        - datastoreModelName
-        - datastoreProduct
-        - options
+      - name
+      - datastoreModelName
+      - datastoreProduct
+      - options
       type: object
       properties:
         name:
@@ -2855,11 +2872,11 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     TelemetryTopicConfigModel:
       required:
-        - topicName
-        - partitions
-        - replica
-        - kafkaSettings
-        - jmx
+      - topicName
+      - partitions
+      - replica
+      - kafkaSettings
+      - jmx
       type: object
       properties:
         topicName:
@@ -2883,8 +2900,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     ZookeeperConnectionsConfig:
       required:
-        - connections
-        - chRoot
+      - connections
+      - chRoot
       type: object
       properties:
         connections:
@@ -2898,10 +2915,10 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.utils
     TelemetryConfigModel:
       required:
-        - name
-        - writer
-        - sampleOneMessageEvery
-        - telemetryTopicConfigModel
+      - name
+      - writer
+      - sampleOneMessageEvery
+      - telemetryTopicConfigModel
       type: object
       properties:
         name:
@@ -2918,7 +2935,7 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     ExactRawMatchingStrategy:
       required:
-        - dataframeKeyMatchingExpression
+      - dataframeKeyMatchingExpression
       type: object
       properties:
         dataframeKeyMatchingExpression:
@@ -2928,8 +2945,8 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.core.models
     KeyValueOption:
       required:
-        - key
-        - value
+      - key
+      - value
       type: object
       properties:
         key:
@@ -2942,12 +2959,8 @@ components:
     PipegraphStatus:
       type: string
       enum:
-        - PENDING
-        - PROCESSING
-        - STOPPING
-        - FAILED
-        - STOPPED
-
-
-
-
+      - PENDING
+      - PROCESSING
+      - STOPPING
+      - FAILED
+      - STOPPED

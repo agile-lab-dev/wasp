@@ -33,7 +33,7 @@ class LogsController(logs: LogsService) extends Directives with JsonSupport {
                     logs
                       .logs(search, startTimestamp, endTimestamp, page, size)
                       .map { x =>
-                        x.toJson(seqFormat(logEntryFormat))
+                        x.toJson
                           .toAngularOkResponse(pretty)
                       }
                   }

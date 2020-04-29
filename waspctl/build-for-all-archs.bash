@@ -23,8 +23,9 @@ do
         output_name+='.exe'
     fi
 
-    env GOOS=$GOOS GOARCH=$GOARCH go get -v
-    env GOOS=$GOOS GOARCH=$GOARCH go build -v -o "$OUTPUT_DIRECTORY/$output_name" $package
+
+    env CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go get -v
+    env CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -a -installsuffix cgo -v -o "$OUTPUT_DIRECTORY/$output_name" $package
     if [ $? -ne 0 ]; then
         echo 'An error has occurred! Aborting the script execution...'
         exit 1

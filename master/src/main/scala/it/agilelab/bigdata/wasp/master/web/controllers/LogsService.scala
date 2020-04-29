@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.{Date, function}
 
 import it.agilelab.bigdata.wasp.core.{SolrLoggerIndex, models}
-import it.agilelab.bigdata.wasp.core.models.LogEntry
+import it.agilelab.bigdata.wasp.core.models.{LogEntry, Logs}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrServer
@@ -20,7 +20,7 @@ trait LogsService {
            startTimestamp: Instant,
            endTimestamp: Instant,
            page: Int,
-           size: Int): Future[Seq[LogEntry]]
+           size: Int): Future[Logs]
 
 }
 
@@ -39,7 +39,7 @@ class DefaultSolrLogsService(implicit ec: ExecutionContext)
                     startTimestamp: Instant,
                     endTimestamp: Instant,
                     page: Int,
-                    size: Int): Future[Seq[LogEntry]] = {
+                    size: Int): Future[Logs] = {
 
     val client = getOrCreateClient(
       ConfigManager.getSolrConfig.zookeeperConnections.toString
@@ -51,18 +51,22 @@ class DefaultSolrLogsService(implicit ec: ExecutionContext)
 
     runPredicate(client, SolrLoggerIndex().name, query, size, page).map {
       response =>
+        val found = response.getResults.getNumFound
         import scala.collection.JavaConverters._
-        response.getResults.asScala.toList.map { document =>
-          models.LogEntry(
-            document.getFieldValue("log_source").asInstanceOf[String],
-            document.getFieldValue("log_level").asInstanceOf[String],
-            document.getFieldValue("message").asInstanceOf[String],
-            document.getFieldValue("timestamp").asInstanceOf[Date].toInstant,
-            document.getFieldValue("thread").asInstanceOf[String],
-            Option(document.getFieldValue("cause").asInstanceOf[String]),
-            Option(document.getFieldValue("stack_trace").asInstanceOf[String])
-          )
-        }
+        Logs(
+          found,
+          entries = response.getResults.asScala.toList.map { document =>
+            models.LogEntry(
+              document.getFieldValue("log_source").asInstanceOf[String],
+              document.getFieldValue("log_level").asInstanceOf[String],
+              document.getFieldValue("message").asInstanceOf[String],
+              document.getFieldValue("timestamp").asInstanceOf[Date].toInstant,
+              document.getFieldValue("thread").asInstanceOf[String],
+              Option(document.getFieldValue("cause").asInstanceOf[String]),
+              Option(document.getFieldValue("stack_trace").asInstanceOf[String])
+            )
+          }
+        )
 
     }
 
@@ -83,7 +87,6 @@ class DefaultSolrLogsService(implicit ec: ExecutionContext)
       solrServer.query(query)
     }
   }
-
 
   private def getOrCreateClient(zkString: String) =
     solr.computeIfAbsent(zkString, createSolrClient)

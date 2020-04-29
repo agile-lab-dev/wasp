@@ -9,3 +9,5 @@ case class LogEntry(log_source: String,
                     thread: String,
                     cause: Option[String] = None,
                     stacktrace: Option[String] = None)
+
+case class Logs(found: Long, entries: Seq[LogEntry])
