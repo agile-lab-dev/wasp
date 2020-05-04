@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-308-add-found-count-to-logging-api-to-ease-pagination-SNAPSHOT
+  version: 2.26.0-299-implement-rest-apis-for-events-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -24,6 +24,8 @@ tags:
   description: operation related to configurations management
 - name: logs
   description: operation related to logs inspection
+- name: events
+  description: operation related to events inspection
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -94,6 +96,60 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/DocumentModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /events:
+    get:
+      tags:
+      - events
+      description: Retrieves events entries
+      operationId: Events
+      parameters:
+      - name: search
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: startTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: endTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: size
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: All event entries matching query
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/Events'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -1813,6 +1869,38 @@ components:
       xml:
         name: DashboardModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    EventEntry:
+      required:
+      - eventType
+      - eventId
+      - severity
+      - payload
+      - timestamp
+      - source
+      - sourceId
+      - eventRuleName
+      type: object
+      properties:
+        eventType:
+          type: string
+        eventId:
+          type: string
+        severity:
+          type: string
+        payload:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        source:
+          type: string
+        sourceId:
+          type: string
+        eventRuleName:
+          type: string
+      xml:
+        name: EventEntry
+        namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchJobInstanceModel:
       required:
       - name
@@ -2807,6 +2895,22 @@ components:
           $ref: '#/components/schemas/WriterModel'
       xml:
         name: RTModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models
+    Events:
+      required:
+      - found
+      - entries
+      type: object
+      properties:
+        found:
+          type: integer
+          format: int64
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventEntry'
+      xml:
+        name: Events
         namespace: java://it.agilelab.bigdata.wasp.core.models
     ProducerModel:
       required:

@@ -1,12 +1,8 @@
 package it.agilelab.bigdata.wasp.core
 
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{
-  ElasticProduct,
-  GenericIndexProduct,
-  SolrProduct
-}
+import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, GenericIndexProduct, SolrProduct}
 import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingPipegraphModel
-import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventPipegraphModel
+import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.{EventPipegraphModel, SolrEventIndex}
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 
@@ -29,7 +25,10 @@ object SystemPipegraphs {
   lazy val telemetryPipegraph: PipegraphModel = TelemetryPipegraph()
 
   /** Event */
-  lazy val eventPipraph: PipegraphModel = EventPipegraphModel.eventPipegraph
+  lazy val eventPipegraph: PipegraphModel = EventPipegraphModel.eventPipegraph
+  lazy val eventMultiTopicModel : MultiTopicModel = EventPipegraphModel.allEventTopicMultiTopicModel
+  lazy val eventIndex : IndexModel = SolrEventIndex.apply()
+
   lazy val mailerPipegraph: PipegraphModel =
     MailingPipegraphModel.mailingPipegraph
   lazy val eventTopicModels: Seq[TopicModel] =

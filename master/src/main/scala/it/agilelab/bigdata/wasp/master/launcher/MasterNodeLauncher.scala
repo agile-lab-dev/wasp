@@ -15,8 +15,9 @@ import com.sksamuel.avro4s.AvroSchema
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.eventengine.Event
+import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventPipegraphModel
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
-import it.agilelab.bigdata.wasp.core.models.{IndexModel, PipegraphModel, ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{IndexModel, MultiTopicModel, PipegraphModel, ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
@@ -31,7 +32,7 @@ import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang.exception.ExceptionUtils
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.io.Source
 
 
@@ -85,10 +86,11 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
 		/* Event Engine */
 		SystemPipegraphs.eventTopicModels.foreach(topicModel => waspDB.upsert[TopicModel](topicModel))
-		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.eventPipraph)
+		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.eventPipegraph)
+    waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.eventIndex)
 		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.mailerPipegraph)
-
-		/* Producers */
+    waspDB.insertIfNotExists[MultiTopicModel](SystemPipegraphs.eventMultiTopicModel)
+    /* Producers */
 		waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
 
     /* Pipegraphs */
@@ -111,8 +113,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
   private def getRoutes: Route = {
 
-    val solrExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4 ))
-
+    val solrExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4 ))
+    val solrClient = SolrClient(ConfigManager.getSolrConfig)(solrExecutionContext)
     new BatchJobController(DefaultBatchJobService).getRoute ~
       Configuration_C.getRoute ~
       Index_C.getRoute ~
@@ -122,7 +124,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Topic_C.getRoute ~
       Status_C.getRoute ~
       Document_C.getRoute ~
-      new LogsController(new DefaultSolrLogsService()(solrExecutionContext)).getRoutes ~
+      new LogsController(new DefaultSolrLogsService(solrClient)(solrExecutionContext)).getRoutes ~
+      new EventController(new DefaultSolrEventsService(solrClient)(solrExecutionContext)).getRoutes ~
       additionalRoutes()
   }
 

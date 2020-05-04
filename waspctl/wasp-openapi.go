@@ -18,7 +18,13 @@ import (
 var waspOpenapiSubcommand bool
 
 func waspOpenapiServers() []map[string]string {
-	return []map[string]string{}
+	return []map[string]string{
+
+		map[string]string{
+			"description": "default development server, beware of CORS",
+			"url":         "http://localhost:2891",
+		},
+	}
 }
 
 // WaspOpenapiGetBarchJobs GetBarchJobs
@@ -729,6 +735,57 @@ func WaspOpenapiGetDocument(paramDocumentname string, params *viper.Viper) (*gen
 	return resp, decoded, nil
 }
 
+// WaspOpenapiEvents Events
+func WaspOpenapiEvents(paramSearch string, paramStarttimestamp string, paramEndtimestamp string, paramPage string, paramSize string, params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
+	handlerPath := "events"
+	if waspOpenapiSubcommand {
+		handlerPath = "wasp-openapi " + handlerPath
+	}
+
+	server := viper.GetString("server")
+	if server == "" {
+		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
+	}
+
+	url := server + "/events"
+
+	req := cli.Client.Get().URL(url)
+
+	req = req.AddQuery("search", paramSearch)
+
+	req = req.AddQuery("startTimestamp", paramStarttimestamp)
+
+	req = req.AddQuery("endTimestamp", paramEndtimestamp)
+
+	req = req.AddQuery("page", paramPage)
+
+	req = req.AddQuery("size", paramSize)
+
+	cli.HandleBefore(handlerPath, params, req)
+
+	resp, err := req.Do()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Request failed")
+	}
+
+	var decoded map[string]interface{}
+
+	if resp.StatusCode < 400 {
+		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
+			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
+		}
+	} else {
+		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
+	}
+
+	after := cli.HandleAfter(handlerPath, params, resp, decoded)
+	if after != nil {
+		decoded = after.(map[string]interface{})
+	}
+
+	return resp, decoded, nil
+}
+
 // WaspOpenapiListIndices ListIndices
 func WaspOpenapiListIndices(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
 	handlerPath := "listindices"
@@ -873,6 +930,52 @@ func WaspOpenapiLogs(paramSearch string, paramStarttimestamp string, paramEndtim
 	return resp, decoded, nil
 }
 
+// WaspOpenapiListMlModels ListMlModels
+func WaspOpenapiListMlModels(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
+	handlerPath := "listmlmodels"
+	if waspOpenapiSubcommand {
+		handlerPath = "wasp-openapi " + handlerPath
+	}
+
+	server := viper.GetString("server")
+	if server == "" {
+		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
+	}
+
+	url := server + "/mlmodels"
+
+	req := cli.Client.Get().URL(url)
+
+	paramPretty := params.GetBool("pretty")
+	if paramPretty != false {
+		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
+	}
+
+	cli.HandleBefore(handlerPath, params, req)
+
+	resp, err := req.Do()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Request failed")
+	}
+
+	var decoded map[string]interface{}
+
+	if resp.StatusCode < 400 {
+		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
+			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
+		}
+	} else {
+		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
+	}
+
+	after := cli.HandleAfter(handlerPath, params, resp, decoded)
+	if after != nil {
+		decoded = after.(map[string]interface{})
+	}
+
+	return resp, decoded, nil
+}
+
 // WaspOpenapiInsertMlModel InsertMlModel
 func WaspOpenapiInsertMlModel(params *viper.Viper, body string) (*gentleman.Response, map[string]interface{}, error) {
 	handlerPath := "insertmlmodel"
@@ -973,9 +1076,9 @@ func WaspOpenapiUpdateMlModels(params *viper.Viper, body string) (*gentleman.Res
 	return resp, decoded, nil
 }
 
-// WaspOpenapiListMlModels ListMlModels
-func WaspOpenapiListMlModels(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
-	handlerPath := "listmlmodels"
+// WaspOpenapiGetMlModel GetMlModel
+func WaspOpenapiGetMlModel(paramMlmodelname string, paramMlmodelversion string, params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
+	handlerPath := "getmlmodel"
 	if waspOpenapiSubcommand {
 		handlerPath = "wasp-openapi " + handlerPath
 	}
@@ -985,7 +1088,9 @@ func WaspOpenapiListMlModels(params *viper.Viper) (*gentleman.Response, map[stri
 		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
 	}
 
-	url := server + "/mlmodels"
+	url := server + "/mlmodels/{mlmodelname}/{mlmodelversion}"
+	url = strings.Replace(url, "{mlmodelname}", paramMlmodelname, 1)
+	url = strings.Replace(url, "{mlmodelversion}", paramMlmodelversion, 1)
 
 	req := cli.Client.Get().URL(url)
 
@@ -1036,54 +1141,6 @@ func WaspOpenapiDeleteMlModel(paramMlmodelname string, paramMlmodelversion strin
 	url = strings.Replace(url, "{mlmodelversion}", paramMlmodelversion, 1)
 
 	req := cli.Client.Delete().URL(url)
-
-	paramPretty := params.GetBool("pretty")
-	if paramPretty != false {
-		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
-	}
-
-	cli.HandleBefore(handlerPath, params, req)
-
-	resp, err := req.Do()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "Request failed")
-	}
-
-	var decoded map[string]interface{}
-
-	if resp.StatusCode < 400 {
-		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
-			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
-		}
-	} else {
-		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
-	}
-
-	after := cli.HandleAfter(handlerPath, params, resp, decoded)
-	if after != nil {
-		decoded = after.(map[string]interface{})
-	}
-
-	return resp, decoded, nil
-}
-
-// WaspOpenapiGetMlModel GetMlModel
-func WaspOpenapiGetMlModel(paramMlmodelname string, paramMlmodelversion string, params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
-	handlerPath := "getmlmodel"
-	if waspOpenapiSubcommand {
-		handlerPath = "wasp-openapi " + handlerPath
-	}
-
-	server := viper.GetString("server")
-	if server == "" {
-		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
-	}
-
-	url := server + "/mlmodels/{mlmodelname}/{mlmodelversion}"
-	url = strings.Replace(url, "{mlmodelname}", paramMlmodelname, 1)
-	url = strings.Replace(url, "{mlmodelversion}", paramMlmodelversion, 1)
-
-	req := cli.Client.Get().URL(url)
 
 	paramPretty := params.GetBool("pretty")
 	if paramPretty != false {
@@ -2470,6 +2527,40 @@ func waspOpenapiRegister(subcommand bool) {
 		var examples string
 
 		cmd := &cobra.Command{
+			Use:     "events search starttimestamp endtimestamp page size",
+			Short:   "Events",
+			Long:    cli.Markdown("Retrieves events entries"),
+			Example: examples,
+			Args:    cobra.MinimumNArgs(5),
+			Run: func(cmd *cobra.Command, args []string) {
+
+				_, decoded, err := WaspOpenapiEvents(args[0], args[1], args[2], args[3], args[4], params)
+				if err != nil {
+					log.Fatal().Err(err).Msg("Error calling operation")
+				}
+
+				if err := cli.Formatter.Format(decoded); err != nil {
+					log.Fatal().Err(err).Msg("Formatting failed")
+				}
+
+			},
+		}
+		root.AddCommand(cmd)
+
+		cli.SetCustomFlags(cmd)
+
+		if cmd.Flags().HasFlags() {
+			params.BindPFlags(cmd.Flags())
+		}
+
+	}()
+
+	func() {
+		params := viper.New()
+
+		var examples string
+
+		cmd := &cobra.Command{
 			Use:     "listindices",
 			Short:   "ListIndices",
 			Long:    cli.Markdown("Retrieve all models used to read or write indexed Data Stores"),
@@ -2576,6 +2667,42 @@ func waspOpenapiRegister(subcommand bool) {
 		var examples string
 
 		cmd := &cobra.Command{
+			Use:     "listmlmodels",
+			Short:   "ListMlModels",
+			Long:    cli.Markdown("Retrieve all machine learning models info"),
+			Example: examples,
+			Args:    cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+
+				_, decoded, err := WaspOpenapiListMlModels(params)
+				if err != nil {
+					log.Fatal().Err(err).Msg("Error calling operation")
+				}
+
+				if err := cli.Formatter.Format(decoded); err != nil {
+					log.Fatal().Err(err).Msg("Formatting failed")
+				}
+
+			},
+		}
+		root.AddCommand(cmd)
+
+		cmd.Flags().String("pretty", "", "")
+
+		cli.SetCustomFlags(cmd)
+
+		if cmd.Flags().HasFlags() {
+			params.BindPFlags(cmd.Flags())
+		}
+
+	}()
+
+	func() {
+		params := viper.New()
+
+		var examples string
+
+		cmd := &cobra.Command{
 			Use:     "insertmlmodel",
 			Short:   "InsertMlModel",
 			Long:    cli.Markdown("Inserts a new MlModel\n## Request Schema (text/json)\n\nproperties:\n  _id:\n    nullable: true\n    type: string\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
@@ -2656,14 +2783,14 @@ func waspOpenapiRegister(subcommand bool) {
 		var examples string
 
 		cmd := &cobra.Command{
-			Use:     "listmlmodels",
-			Short:   "ListMlModels",
-			Long:    cli.Markdown("Retrieve all machine learning models info"),
+			Use:     "getmlmodel mlmodelname mlmodelversion",
+			Short:   "GetMlModel",
+			Long:    cli.Markdown("Retrieves data on a specific Machine Learning model"),
 			Example: examples,
-			Args:    cobra.MinimumNArgs(0),
+			Args:    cobra.MinimumNArgs(2),
 			Run: func(cmd *cobra.Command, args []string) {
 
-				_, decoded, err := WaspOpenapiListMlModels(params)
+				_, decoded, err := WaspOpenapiGetMlModel(args[0], args[1], params)
 				if err != nil {
 					log.Fatal().Err(err).Msg("Error calling operation")
 				}
@@ -2700,42 +2827,6 @@ func waspOpenapiRegister(subcommand bool) {
 			Run: func(cmd *cobra.Command, args []string) {
 
 				_, decoded, err := WaspOpenapiDeleteMlModel(args[0], args[1], params)
-				if err != nil {
-					log.Fatal().Err(err).Msg("Error calling operation")
-				}
-
-				if err := cli.Formatter.Format(decoded); err != nil {
-					log.Fatal().Err(err).Msg("Formatting failed")
-				}
-
-			},
-		}
-		root.AddCommand(cmd)
-
-		cmd.Flags().String("pretty", "", "")
-
-		cli.SetCustomFlags(cmd)
-
-		if cmd.Flags().HasFlags() {
-			params.BindPFlags(cmd.Flags())
-		}
-
-	}()
-
-	func() {
-		params := viper.New()
-
-		var examples string
-
-		cmd := &cobra.Command{
-			Use:     "getmlmodel mlmodelname mlmodelversion",
-			Short:   "GetMlModel",
-			Long:    cli.Markdown("Retrieves data on a specific Machine Learning model"),
-			Example: examples,
-			Args:    cobra.MinimumNArgs(2),
-			Run: func(cmd *cobra.Command, args []string) {
-
-				_, decoded, err := WaspOpenapiGetMlModel(args[0], args[1], params)
 				if err != nil {
 					log.Fatal().Err(err).Msg("Error calling operation")
 				}

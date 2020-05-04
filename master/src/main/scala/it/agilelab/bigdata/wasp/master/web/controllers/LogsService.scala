@@ -1,19 +1,15 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
-import java.util.{Date, function}
+import java.util.Date
 
+import it.agilelab.bigdata.wasp.core.models.Logs
 import it.agilelab.bigdata.wasp.core.{SolrLoggerIndex, models}
-import it.agilelab.bigdata.wasp.core.models.{LogEntry, Logs}
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.client.solrj.impl.CloudSolrServer
-import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.util.ClientUtils
-import org.apache.solr.common.params.DefaultSolrParams
 
 import scala.concurrent.{ExecutionContext, Future}
+
+
 
 trait LogsService {
   def logs(search: String,
@@ -24,16 +20,8 @@ trait LogsService {
 
 }
 
-class DefaultSolrLogsService(implicit ec: ExecutionContext)
+class DefaultSolrLogsService(client: SolrClient)(implicit ec: ExecutionContext)
     extends LogsService {
-
-  private val solr: ConcurrentHashMap[String, CloudSolrServer] =
-    new ConcurrentHashMap[String, CloudSolrServer]()
-
-  private val createSolrClient =
-    new function.Function[String, CloudSolrServer] {
-      override def apply(t: String): CloudSolrServer = new CloudSolrServer(t)
-    }
 
   override def logs(search: String,
                     startTimestamp: Instant,
@@ -41,15 +29,11 @@ class DefaultSolrLogsService(implicit ec: ExecutionContext)
                     page: Int,
                     size: Int): Future[Logs] = {
 
-    val client = getOrCreateClient(
-      ConfigManager.getSolrConfig.zookeeperConnections.toString
-    )
-
     val query =
       s"timestamp:[${startTimestamp.toString} TO ${endTimestamp.toString}]" +
         s" AND all:*${ClientUtils.escapeQueryChars(search)}*"
 
-    runPredicate(client, SolrLoggerIndex().name, query, size, page).map {
+    client.runPredicate(SolrLoggerIndex().name, query, size, page).map {
       response =>
         val found = response.getResults.getNumFound
         import scala.collection.JavaConverters._
@@ -72,22 +56,4 @@ class DefaultSolrLogsService(implicit ec: ExecutionContext)
 
   }
 
-  def runPredicate(solrServer: CloudSolrServer,
-                   collection: String,
-                   predicate: String,
-                   rows: Int,
-                   page: Int): Future[QueryResponse] = {
-
-    solrServer.setDefaultCollection(collection)
-    val query = new SolrQuery(predicate)
-    val start = rows * page
-    query.setRows(rows)
-    query.setStart(start)
-    Future {
-      solrServer.query(query)
-    }
-  }
-
-  private def getOrCreateClient(zkString: String) =
-    solr.computeIfAbsent(zkString, createSolrClient)
 }

@@ -47,11 +47,15 @@ import it.agilelab.bigdata.wasp.core.models._
 
 object EventPipegraphModel {
 
-  private val eventPipegraphSettings: EventPipegraphSettings = EventPipegraphSettingsFactory.create(ConfigFactory.load())
-  private val isSystem: Boolean = eventPipegraphSettings.isSystem
-  private val eventEngineSettings: Seq[EventProducerETLSettings] = eventPipegraphSettings.eventStrategies
+  private lazy val eventPipegraphSettings: EventPipegraphSettings = EventPipegraphSettingsFactory.create(ConfigFactory.load())
+  private lazy val isSystem: Boolean = eventPipegraphSettings.isSystem
+  private lazy val eventEngineSettings: Seq[EventProducerETLSettings] = eventPipegraphSettings.eventStrategies
 
-  private val tuples: List[(TopicModel, StructuredStreamingETLModel)] =
+  lazy val outputTopicModels: Seq[TopicModel] =  eventEngineSettings.map{ s =>
+     EventTopicModelFactory.create(s.writerModel)
+  }
+
+  private lazy val eventETLModels =
     eventEngineSettings.map(s => {
 
       val outputTopicModel = EventTopicModelFactory.create(s.writerModel)
@@ -70,11 +74,34 @@ object EventPipegraphModel {
       )
 
 
-      (outputTopicModel, etlModel)
+      etlModel
     }).toList
 
-  //Expose both topic models and etl models
-  val (outputTopicModels, eventETLModels) = (tuples.map(_._1), tuples.map(_._2))
+
+  lazy val allEventTopicMultiTopicModel = {
+    val topicsModelsNames = outputTopicModels.map(_.name).distinct
+    MultiTopicModel("event_topics", "sourceTopic", topicsModelsNames )
+  }
+
+  private lazy val storageETLModel =
+
+
+    StructuredStreamingETLModel(
+        name = "IndexEventsToSolr", // Maybe streaming source here?
+        // Defines the endpoint and the source type
+        streamingInput = StreamingReaderModel.kafkaReaderMultitopic("ReadFromEventTopics", allEventTopicMultiTopicModel, None),
+        staticInputs = List.empty,
+        // Defines the endpoint and the sink type
+        streamingOutput = WriterModel.solrWriter("in.name.to.index", SolrEventIndex.apply()),
+        mlModels = List.empty,
+        // Defines what to do with the data retrieved from the source
+        strategy =Some( StrategyModel(
+          className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.EventIndexingStrategy"
+        )),
+        triggerIntervalMs = eventPipegraphSettings.defaultTriggerIntervalMs
+      )
+
+
 
   lazy val eventPipegraph = PipegraphModel (
     name = "EventPipegraph",
@@ -83,8 +110,37 @@ object EventPipegraphModel {
     isSystem = isSystem,
     creationTime = System.currentTimeMillis,
     legacyStreamingComponents = List.empty,
-    structuredStreamingComponents = eventETLModels,
+    structuredStreamingComponents = eventETLModels :+ storageETLModel,
     rtComponents = List.empty,
     dashboard = None)
+
+}
+
+
+private[wasp] object SolrEventIndex{
+
+  val index_name = "event_solr"
+
+  import IndexModelBuilder._
+
+  def apply(): IndexModel =
+    IndexModelBuilder.forSolr
+      .named(index_name)
+      .config(Solr.Config(shards = 1, replica = 1))
+      .schema(
+        Solr.Schema(
+          Solr.Field("eventType", Solr.Type.String),
+          Solr.Field("eventId", Solr.Type.String),
+          Solr.Field("sourceTopic", Solr.Type.String),
+          Solr.Field("severity", Solr.Type.String),
+          Solr.Field("payload", Solr.Type.String),
+          Solr.Field("timestamp", Solr.Type.TrieDate),
+          Solr.Field("source", Solr.Type.String),
+          Solr.Field("sourceId", Solr.Type.String),
+          Solr.Field("eventRuleName", Solr.Type.String),
+          Solr.Field("all", Solr.Type.String)
+        )
+      )
+      .build
 
 }
