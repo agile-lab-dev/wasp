@@ -8,7 +8,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCode, StatusCodes}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
-import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route}
+import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import com.sksamuel.avro4s.AvroSchema
@@ -127,6 +127,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     val rejectionHandler = RejectionHandler
       .newBuilder()
       .handle {
+        case rejection @ ValidationRejection(message, _) =>
+          extractRequest { request =>
+            complete {
+              logger.error(s"request ${request} was rejected with rejection ${rejection}")
+              HttpResponse(StatusCodes.BadRequest, entity = HttpEntity(s"Input validation failed: ${message}"))
+            }
+          }
         case rejection =>
           extractRequest { request =>
             complete {

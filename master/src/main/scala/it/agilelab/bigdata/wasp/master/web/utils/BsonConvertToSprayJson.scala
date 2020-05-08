@@ -158,7 +158,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataSto
      options: Map[String, String]) => WriterModel(name, datastoreModelName, datastoreProduct, options))
 
 
-  implicit lazy val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat8(MlModelOnlyInfo.apply)
+  implicit lazy val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat7(MlModelOnlyInfo.apply)
   implicit lazy val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
   implicit lazy val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
   implicit lazy val etlModelFormat: RootJsonFormat[LegacyStreamingETLModel] = jsonFormat8(LegacyStreamingETLModel.apply)

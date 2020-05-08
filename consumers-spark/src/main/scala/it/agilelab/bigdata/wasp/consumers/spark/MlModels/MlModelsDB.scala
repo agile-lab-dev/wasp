@@ -92,15 +92,10 @@ class MlModelsDB(env: {val mlModelBL: MlModelBL})  {
    * @return an error if something was wrong and the saved model with all the ids initialized
    */
   def write(mlModel: TransformerWithInfo): TransformerWithInfo = {
-    val mlModelWithID = if (mlModel._id.isDefined) {
-      mlModel
-    } else {
-      mlModel.copy(_id = Some(new BsonObjectId()))
-    }
-    val fileId: BsonObjectId = env.mlModelBL.saveTransformer(mlModelWithID.transformer, mlModelWithID.name, mlModelWithID.version, mlModelWithID.timestamp)
+    val fileId: BsonObjectId = env.mlModelBL.saveTransformer(mlModel.transformer, mlModel.name, mlModel.version, mlModel.timestamp)
     env.mlModelBL.saveMlModelOnlyInfo(mlModel.toOnlyInfo(fileId))
     
-    mlModelWithID.copy(modelFileId = Some(fileId))
+    mlModel.copy(modelFileId = Some(fileId))
   }
 
   def write(mlModels: List[TransformerWithInfo]): List[TransformerWithInfo] = {

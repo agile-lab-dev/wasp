@@ -12,83 +12,91 @@ import spray.json._
   */
 object MlModels_C extends Directives with JsonSupport {
 
-  def getRoute: Route = {
-    pathPrefix("mlmodels") {
-      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
-        pathEnd {
-          get {
-            complete {
-              val result = ConfigBL.mlModelBL.getAll
-              getJsonArrayOrEmpty[MlModelOnlyInfo](
-                ConfigBL.mlModelBL.getAll,
-                _.toJson,
-                pretty
-              )
-              val finalResult: JsValue = if (result.isEmpty) {
-                JsArray()
-              } else {
-                result.toJson
-              }
+  def pretty(route: Boolean => Route) = parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+    route(pretty)
+  }
 
-              finalResult.toAngularOkResponse(pretty)
-            }
-          } ~
-            put {
-              // unmarshal with in-scope unmarshaller
-              entity(as[MlModelOnlyInfo]) { mlModel =>
-                complete {
+  def list(pretty: Boolean): Route = path("mlmodels") {
+    get {
+      complete {
+        val result = ConfigBL.mlModelBL.getAll
+        getJsonArrayOrEmpty[MlModelOnlyInfo](
+          ConfigBL.mlModelBL.getAll,
+          _.toJson,
+          pretty
+        )
+        val finalResult: JsValue = if (result.isEmpty) {
+          JsArray()
+        } else {
+          result.toJson
+        }
 
-                  ConfigBL.mlModelBL.updateMlModelOnlyInfo(mlModel)
-                  "OK".toJson
-                }
-              }
-            }
-        } ~
-          post {
-            // unmarshal with in-scope unmarshaller
-            entity(as[MlModelOnlyInfo]) { mlModel =>
-              complete {
-
-                ConfigBL.mlModelBL.saveMlModelOnlyInfo(mlModel)
-                "OK".toJson
-              }
-            }
-          } ~
-          path(Segment) { name =>
-            path(Segment) { version =>
-              get {
-                complete {
-                  getJsonOrNotFound[MlModelOnlyInfo](
-                    ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version),
-                    s"${name}/${version}",
-                    "Machine learning model",
-                    _.toJson,
-                    pretty
-                  )
-                }
-              } ~
-                delete {
-                  complete {
-                    val result =
-                      ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version)
-                    runIfExists(
-                      result,
-                      () =>
-                        ConfigBL.mlModelBL.delete(
-                          result.get.name,
-                          result.get.version,
-                          result.get.timestamp.getOrElse(0l)
-                      ),
-                      s"${name}/${version}",
-                      "Machine learning model",
-                      "delete",
-                      pretty
-                    )
-                  }
-                }
-            }
-          }
+        finalResult.toAngularOkResponse(pretty)
       }
     }
+  }
+
+  def update(pretty: Boolean): Route = path("mlmodels") {
+    put {
+      entity(as[MlModelOnlyInfo]) { mlModel =>
+        complete {
+
+          ConfigBL.mlModelBL.updateMlModelOnlyInfo(mlModel)
+          "OK".toJson
+        }
+      }
+    }
+  }
+
+  def insert(pretty: Boolean) = path("mlmodels" ) {
+    post { // unmarshal with in-scope unmarshaller
+      entity(as[MlModelOnlyInfo]) { mlModel =>
+        complete {
+
+          ConfigBL.mlModelBL.saveMlModelOnlyInfo(mlModel)
+          "OK".toJson
+        }
+      }
+    }
+  }
+
+  def instance(pretty: Boolean): Route = path("mlmodels" / Segment / Segment) { (name, version) =>
+    get {
+      complete {
+        getJsonOrNotFound[MlModelOnlyInfo](
+          ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version),
+          s"${name}/${version}",
+          "Machine learning model",
+          _.toJson,
+          pretty
+        )
+      }
+    }
+  }
+
+  def deleteInstance(pretty: Boolean): Route = path("mlmodels" / Segment / Segment) { (name, version) =>
+    delete {
+      complete {
+        val result =
+          ConfigBL.mlModelBL.getMlModelOnlyInfo(name, version)
+        runIfExists(
+          result,
+          () =>
+            ConfigBL.mlModelBL.delete(
+              result.get.name,
+              result.get.version,
+              result.get.timestamp.getOrElse(0L)
+            ),
+          s"${name}/${version}",
+          "Machine learning model",
+          "delete",
+          pretty
+        )
+      }
+    }
+  }
+
+  def getRoute: Route = pretty { pretty =>
+    list(pretty) ~ update(pretty) ~ insert(pretty) ~ instance(pretty) ~ deleteInstance(pretty)
   }
 }

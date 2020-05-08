@@ -13,8 +13,10 @@ import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
+import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
 import org.mongodb.scala.gridfs.GridFSBucket
+import org.mongodb.scala.model.Indexes
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{Completed, MongoCommandException, MongoDatabase, MongoWriteException}
 
@@ -32,7 +34,7 @@ trait WaspDB extends MongoDBHelper {
 
   def getDocumentByField[T <: Model](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
-  def getDocumentByQueryParams[T <: Model](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
+  def getDocumentByQueryParams[T <: Model](query: Map[String, BsonValue], sort: Option[BsonDocument])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
   def getAllDocumentsByField[T <: Model](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T]
 
@@ -81,7 +83,6 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB {
     */
   def initializeCollections() {
 
-    import org.mongodb.scala.model.Indexes._
 
     val collections = collectionsLookupTable.values.toSet
 
@@ -121,7 +122,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB {
     val INDEX_ALREADY_EXISTS = 68
 
     val indexResults = createdCollections.map(collectionName => (collectionName, Try(mongoDatabase.getCollection(collectionName)
-      .createIndex(ascending("name"), indexOptions)
+      .createIndex(indexKeys(collectionName), indexOptions)
       .results())))
       .map {
         //everything is fine
@@ -156,8 +157,8 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB {
     getDocumentByKey[T](field, value, collectionsLookupTable(typeTag.tpe))
   }
 
-  def getDocumentByQueryParams[T <: Model](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    getDocumentByQueryParams[T](query, collectionsLookupTable(typeTag.tpe))
+  def getDocumentByQueryParams[T <: Model](query: Map[String, BsonValue], sort : Option[BsonDocument])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+    getDocumentByQueryParams[T](query, sort, collectionsLookupTable(typeTag.tpe))
   }
 
   def getAllDocumentsByField[T <: Model](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T] = {
@@ -173,7 +174,7 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB {
   }
 
   def getDocumentByQueryParamsRaw[T <: Model](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
-    getDocumentByQueryParams[BsonDocument](query, collectionsLookupTable(typeTag.tpe))
+    getDocumentByQueryParams[BsonDocument](query, None, collectionsLookupTable(typeTag.tpe))
   }
 
   def getAllDocumentsByFieldRaw[T <: Model](field: String, value: BsonValue)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument] = {
@@ -317,6 +318,10 @@ object WaspDB extends Logging {
     typeTag[TelemetryConfigModel].tpe -> configurationsName,
     typeTag[DocumentModel].tpe -> documentName
   )
+
+  lazy val indexKeys: Map[String, Bson] = collectionsLookupTable.map{
+    case (typ, name) => (name, Indexes.ascending("name"))
+  }.toMap ++ Map(mlModelsName -> Indexes.ascending("name", "version", "timestamp"))
 
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
     DatastoreProductCodecProvider,

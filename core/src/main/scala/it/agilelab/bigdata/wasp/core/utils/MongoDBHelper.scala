@@ -54,13 +54,13 @@ private[utils] trait MongoDBHelper extends Logging {
     documents.headOption
   }
 
-  protected def getDocumentByQueryParams[T](queryParams: Map[String, BsonValue], collection: String)(implicit ct: ClassTag[T]): Option[T] = {
+  protected def getDocumentByQueryParams[T](queryParams: Map[String, BsonValue],sort: Option[BsonDocument], collection: String)(implicit ct: ClassTag[T]): Option[T] = {
 
-    logger.info(s"Locating document(s) by $queryParams on collection $collection")
+    logger.info(s"Locating document(s) by $queryParams on collection $collection with sort: $sort")
 
     val query = BsonDocument(queryParams)
-
-    getCollection(collection).find[T](query).results().headOption
+    val actionBuilder = getCollection(collection).find[T](query)
+    sort.map(predicate => actionBuilder.sort(predicate)).getOrElse(actionBuilder).results().headOption
   }
 
   protected def getAllDocumentsByKey[T](key: String, value: BsonValue, collection: String)(implicit ct: ClassTag[T]): Seq[T] = {

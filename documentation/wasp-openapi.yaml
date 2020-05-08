@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-313-topics-endpoint-returns-some-entities-not-compliant-with-topicmodel-SNAPSHOT
+  version: 2.26.0-312-the-post-mlmodels-api-does-not-work-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -489,14 +489,14 @@ paths:
                   nullable: true
                 modelFileId:
                   type: string
+                  description: Should be a valid mongodb bsonobject formatted as hex
+                    string
                   nullable: true
+                  example: 507f1f77bcf86cd799439011
                 favorite:
                   type: boolean
                 description:
                   type: string
-                _id:
-                  type: string
-                  nullable: true
               xml:
                 name: MlModelOnlyInfo
                 namespace: java://it.agilelab.bigdata.wasp.core.models
@@ -553,14 +553,14 @@ paths:
                   nullable: true
                 modelFileId:
                   type: string
+                  description: Should be a valid mongodb bsonobject formatted as hex
+                    string
                   nullable: true
+                  example: 507f1f77bcf86cd799439011
                 favorite:
                   type: boolean
                 description:
                   type: string
-                _id:
-                  type: string
-                  nullable: true
               xml:
                 name: MlModelOnlyInfo
                 namespace: java://it.agilelab.bigdata.wasp.core.models
@@ -2339,14 +2339,13 @@ components:
           nullable: true
         modelFileId:
           type: string
+          description: Should be a valid mongodb bsonobject formatted as hex string
           nullable: true
+          example: 507f1f77bcf86cd799439011
         favorite:
           type: boolean
         description:
           type: string
-        _id:
-          type: string
-          nullable: true
       xml:
         name: MlModelOnlyInfo
         namespace: java://it.agilelab.bigdata.wasp.core.models

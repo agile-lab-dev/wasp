@@ -2848,7 +2848,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "insertmlmodel",
 			Short:   "InsertMlModel",
-			Long:    cli.Markdown("Inserts a new MlModel\n## Request Schema (text/json)\n\nproperties:\n  _id:\n    nullable: true\n    type: string\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Inserts a new MlModel\n## Request Schema (text/json)\n\nproperties:\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    description: Should be a valid mongodb bsonobject formatted as hex string\n    example: 507f1f77bcf86cd799439011\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -2888,7 +2888,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "updatemlmodels",
 			Short:   "UpdateMlModels",
-			Long:    cli.Markdown("Updates a machine learning model\n## Request Schema (text/json)\n\nproperties:\n  _id:\n    nullable: true\n    type: string\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Updates a machine learning model\n## Request Schema (text/json)\n\nproperties:\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    description: Should be a valid mongodb bsonobject formatted as hex string\n    example: 507f1f77bcf86cd799439011\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
