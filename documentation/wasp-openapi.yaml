@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-297-implement-rest-apis-for-telemetry-SNAPSHOT
+  version: 2.26.0-313-topics-endpoint-returns-some-entities-not-compliant-with-topicmodel-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -348,7 +348,9 @@ paths:
                   Result:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
-                    $ref: '#/components/schemas/TopicModel'
+                    oneOf:
+                    - $ref: '#/components/schemas/MultiTopicModel'
+                    - $ref: '#/components/schemas/TopicModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -773,7 +775,9 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/TopicModel'
+                      oneOf:
+                      - $ref: '#/components/schemas/MultiTopicModel'
+                      - $ref: '#/components/schemas/TopicModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2003,6 +2007,24 @@ components:
       nullable: true
       xml:
         name: DashboardModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models
+    MultiTopicModel:
+      required:
+      - name
+      - topicNameField
+      - topicModelNames
+      type: object
+      properties:
+        name:
+          type: string
+        topicNameField:
+          type: string
+        topicModelNames:
+          type: array
+          items:
+            type: string
+      xml:
+        name: MultiTopicModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
     EventEntry:
       required:

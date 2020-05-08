@@ -1,13 +1,28 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-import io.swagger.v3.oas.models.media.{Schema, StringSchema}
-import it.agilelab.bigdata.wasp.core.models.{TopicCompression, TopicModel}
+import io.swagger.v3.oas.models.media.{ComposedSchema, Discriminator, Schema, StringSchema}
+import it.agilelab.bigdata.wasp.core.models.{MultiTopicModel, TopicCompression, TopicModel}
 import org.mongodb.scala.bson.BsonDocument
 
 trait TopicModelOpenApiComponentSupport
     extends ProducerOpenApiComponentSupport
     with LangOpenApi
     with CollectionsOpenApi {
+
+  sealed trait TopicsResponse
+
+  implicit lazy val topicResponseOpenApi: ToOpenApiSchema[TopicsResponse] = new ToOpenApiSchema[TopicsResponse] {
+    override def schema(ctx: Context): Schema[_] = {
+      new ComposedSchema()
+        .addOneOfItem(
+          shouldBecomeARef(ctx, multiTopicModelOpenApi.schema(ctx))
+        )
+        .addOneOfItem(
+          shouldBecomeARef(ctx, topicModelOpenApi.schema(ctx))
+        )
+    }
+  }
+  implicit lazy val multiTopicModelOpenApi: ToOpenApiSchema[MultiTopicModel] = product3(MultiTopicModel.apply)
 
   implicit lazy val bsonDocumentOpenApi: ToOpenApiSchema[BsonDocument] =
     objectOpenApi.mapSchema((ctx, schema) => schema.name("BsonDocument"))

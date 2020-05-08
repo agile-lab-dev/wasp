@@ -43,7 +43,7 @@ trait TopicRoutesOpenApiDefinition
                         "text/json",
                         new MediaType()
                           .schema(
-                            ToOpenApiSchema[AngularResponse[TopicModel]]
+                            ToOpenApiSchema[AngularResponse[TopicsResponse]]
                               .schema(ctx)
                           )
                       )
@@ -74,7 +74,7 @@ trait TopicRoutesOpenApiDefinition
                         "text/json",
                         new MediaType()
                           .schema(
-                            ToOpenApiSchema[AngularResponse[Seq[TopicModel]]]
+                            ToOpenApiSchema[AngularResponse[Seq[TopicsResponse]]]
                               .schema(ctx)
                           )
                       )
