@@ -16,8 +16,8 @@ trait DocumentRoutesOpenApiDefinition
 
   def documentsRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/document" -> get(ctx),
-      "/document/{documentname}" -> getInstance(ctx)
+      "/documents" -> get(ctx),
+      "/documents/{documentname}" -> getInstance(ctx)
     )
   }
 

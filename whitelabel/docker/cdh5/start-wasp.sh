@@ -54,7 +54,7 @@ done
 cd $SCRIPT_DIR/../../..
 
 echo "Running sbt stage task..."
-sbt -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
+# sbt -mem 2048 ${SBT_STAGE_COMMAND_PROJECTID}/stage
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR

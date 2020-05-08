@@ -178,7 +178,8 @@ private[wasp] object SolrTelemetryIndexModel {
           Solr.Field("timestamp", Solr.Type.TrieDate),
           Solr.Field("sourceId", Solr.Type.String),
           Solr.Field("metric", Solr.Type.String),
-          Solr.Field("value", Solr.Type.TrieDouble)
+          Solr.Field("value", Solr.Type.TrieDouble),
+          Solr.Field("metricSearchKey", Solr.Type.String)
         )
       )
       .build
@@ -392,7 +393,7 @@ private[wasp] object TelemetryPipegraph {
           mlModels = List(),
           strategy = Some(
             StrategyModel(
-              className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.DropKafkaMetadata"
+              className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.TelemetryIndexingStrategy"
             )
           ),
           triggerIntervalMs = None,

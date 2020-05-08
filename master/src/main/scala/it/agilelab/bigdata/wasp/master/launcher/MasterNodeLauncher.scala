@@ -5,10 +5,10 @@ import java.security.{KeyStore, SecureRandom}
 import java.util.concurrent.{Executors, ThreadFactory}
 
 import akka.actor.{ActorSystem, Props}
-import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCode, StatusCodes}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
-import akka.http.scaladsl.server.{ExceptionHandler, Route}
+import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import com.sksamuel.avro4s.AvroSchema
@@ -35,7 +35,6 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.io.Source
 
-
 /**
   * Launcher for the MasterGuardian and REST Server.
   * This trait is useful for who want extend the launcher
@@ -43,6 +42,15 @@ import scala.io.Source
   * @author Nicolò Bidotti
   */
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
+
+  private val myExceptionHandler = ExceptionHandler {
+    case e: Exception =>
+      extractUri { uri =>
+        val resultJson = JsonResultsHelper.angularErrorBuilder(ExceptionUtils.getStackTrace(e)).toString()
+        logger.error(s"Request to $uri could not be handled normally, result: $resultJson", e)
+        complete(HttpResponse(InternalServerError, entity = resultJson))
+      }
+  }
 
   override def launch(commandLine: CommandLine): Unit = {
     addSystemPipegraphs()
@@ -66,14 +74,6 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     }
   }
 
-  override def getSingletonProps: Props = Props(new MasterGuardian(ConfigBL))
-
-  override def getSingletonName: String = WaspSystem.masterGuardianName
-
-  override def getSingletonManagerName: String = WaspSystem.masterGuardianSingletonManagerName
-
-  override def getSingletonRoles: Seq[String] = Seq(WaspSystem.masterGuardianRole)
-
   private def addSystemPipegraphs(): Unit = {
 
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
@@ -84,14 +84,14 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.solrTelemetryIndex)
     waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.elasticTelemetryIndex)
 
-		/* Event Engine */
-		SystemPipegraphs.eventTopicModels.foreach(topicModel => waspDB.upsert[TopicModel](topicModel))
-		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.eventPipegraph)
+    /* Event Engine */
+    SystemPipegraphs.eventTopicModels.foreach(topicModel => waspDB.upsert[TopicModel](topicModel))
+    waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.eventPipegraph)
     waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.eventIndex)
-		waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.mailerPipegraph)
+    waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.mailerPipegraph)
     waspDB.insertIfNotExists[MultiTopicModel](SystemPipegraphs.eventMultiTopicModel)
     /* Producers */
-		waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
+    waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
 
     /* Pipegraphs */
     waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
@@ -99,22 +99,10 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.telemetryPipegraph)
   }
 
-  private val myExceptionHandler = ExceptionHandler {
-    case e: Exception =>
-      extractUri { uri =>
-        val resultJson = JsonResultsHelper.angularErrorBuilder(ExceptionUtils.getStackTrace(e)).toString()
-        logger.error(s"Request to $uri could not be handled normally, result: $resultJson", e)
-        complete(HttpResponse(InternalServerError, entity = resultJson))
-      }
-  }
-
-
-
-
   private def getRoutes: Route = {
 
-    val solrExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4 ))
-    val solrClient = SolrClient(ConfigManager.getSolrConfig)(solrExecutionContext)
+    val solrExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
+    val solrClient                                     = SolrClient(ConfigManager.getSolrConfig)(solrExecutionContext)
     new BatchJobController(DefaultBatchJobService).getRoute ~
       Configuration_C.getRoute ~
       Index_C.getRoute ~
@@ -126,24 +114,48 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Document_C.getRoute ~
       new LogsController(new DefaultSolrLogsService(solrClient)(solrExecutionContext)).getRoutes ~
       new EventController(new DefaultSolrEventsService(solrClient)(solrExecutionContext)).getRoutes ~
+      new TelemetryController(new DefaultSolrTelemetryService(solrClient)(solrExecutionContext)).getRoutes ~
       additionalRoutes()
   }
 
-  def additionalRoutes(): Route = pass(complete(httpResponseJson(entity = helpApi.prettyPrint)))
+  def additionalRoutes(): Route = reject
 
   private def startRestServer(actorSystem: ActorSystem, route: Route): Unit = {
-    implicit val system = actorSystem
+    implicit val system       = actorSystem
     implicit val materializer = ActorMaterializer()
-    val finalRoute = handleExceptions(myExceptionHandler)(route)
+
+    val rejectionHandler = RejectionHandler
+      .newBuilder()
+      .handle {
+        case rejection =>
+          extractRequest { request =>
+            complete {
+              logger.error(s"request ${request} was rejected with rejection ${rejection}")
+              HttpResponse(StatusCodes.BadRequest, entity = HttpEntity("Request was not recognized"))
+            }
+          }
+      }
+      .result()
+
+    val finalRoute = handleExceptions(myExceptionHandler) {
+      handleRejections(rejectionHandler) {
+        route
+      }
+    }
+
     logger.info(s"start rest server and bind on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
 
     val optHttpsContext = createHttpsContext
 
     val bindingFuture = if (optHttpsContext.isDefined) {
-      logger.info(s"Rest API will be available through HTTPS on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
+      logger.info(
+        s"Rest API will be available through HTTPS on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}"
+      )
       Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort, optHttpsContext.get)
     } else {
-      logger.info(s"Rest API will be available through HTTP on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
+      logger.info(
+        s"Rest API will be available through HTTP on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}"
+      )
       Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
     }
   }
@@ -179,6 +191,14 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Some(https)
     }
   }
+
+  override def getSingletonProps: Props = Props(new MasterGuardian(ConfigBL))
+
+  override def getSingletonName: String = WaspSystem.masterGuardianName
+
+  override def getSingletonManagerName: String = WaspSystem.masterGuardianSingletonManagerName
+
+  override def getSingletonRoles: Seq[String] = Seq(WaspSystem.masterGuardianRole)
 
   override def getNodeName: String = "master"
 

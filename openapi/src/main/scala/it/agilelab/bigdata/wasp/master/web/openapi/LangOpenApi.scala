@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.media.{
   BooleanSchema,
   DateTimeSchema,
   IntegerSchema,
+  NumberSchema,
   ObjectSchema,
   Schema,
   StringSchema
@@ -23,7 +24,11 @@ trait LangOpenApi {
       override def schema(ctx: Context): Schema[_] =
         new IntegerSchema().format("int64")
     }
-
+  implicit lazy val doubleOpenApi: ToOpenApiSchema[Double] =
+    new ToOpenApiSchema[Double] {
+      override def schema(ctx: Context): Schema[_] =
+        new NumberSchema().format("double")
+    }
   implicit lazy val integerOpenApi: ToOpenApiSchema[Int] =
     new ToOpenApiSchema[Int] {
       override def schema(ctx: Context): Schema[_] =

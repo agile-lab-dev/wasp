@@ -121,8 +121,14 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataSto
     }
   }
 
+  implicit lazy val telemetryPointFormat: RootJsonFormat[TelemetryPoint] = jsonFormat2(TelemetryPoint.apply)
+  implicit lazy val telemetrySeriesFormat: RootJsonFormat[TelemetrySeries] = jsonFormat3(TelemetrySeries.apply)
+  implicit lazy val metricEntryFormat: RootJsonFormat[MetricEntry] = jsonFormat2(MetricEntry.apply)
+  implicit lazy val metricsFormat: RootJsonFormat[Metrics] = jsonFormat2(Metrics.apply)
   implicit lazy val logsFormat: RootJsonFormat[Logs] = jsonFormat2(Logs.apply)
-  implicit lazy val logEntryFormat : RootJsonFormat[LogEntry] = jsonFormat7(LogEntry.apply)
+  implicit lazy val logEntryFormat: RootJsonFormat[LogEntry] = jsonFormat7(LogEntry.apply)
+  implicit lazy val sourceEntryFormat: RootJsonFormat[SourceEntry] = jsonFormat1(SourceEntry.apply)
+  implicit lazy val sourcesFormat: RootJsonFormat[Sources] = jsonFormat2(Sources.apply)
   implicit lazy val eventsFormat: RootJsonFormat[Events] = jsonFormat2(Events.apply)
   implicit lazy val eventEntryFormat: RootJsonFormat[EventEntry] = jsonFormat8(EventEntry.apply)
   implicit lazy val jmxTelemetryTopicConfigModel: RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(JMXTelemetryConfigModel.apply)

@@ -13,6 +13,7 @@ trait TopicModelOpenApiComponentSupport
     objectOpenApi.mapSchema((ctx, schema) => schema.name("BsonDocument"))
   implicit lazy val topicModelOpenApi: ToOpenApiSchema[TopicModel] =
     product11(TopicModel.apply)
+
   implicit lazy val topicCompressionOpenApi: ToOpenApiSchema[TopicCompression] =
     new ToOpenApiSchema[TopicCompression] {
       override def schema(ctx: Context): Schema[_] = {

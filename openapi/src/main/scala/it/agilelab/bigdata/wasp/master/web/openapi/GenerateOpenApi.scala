@@ -18,7 +18,8 @@ object GenerateOpenApi
     with MlModelsRoutesOpenApiDefinition
     with ConfigRoutesOpenApiDefinition
     with LogsRoutesOpenApiDefinition
-    with EventsRoutesOpenApiDefinition {
+    with EventsRoutesOpenApiDefinition
+    with TelemetrRoutesOpenApiDefinition {
 
   def main(args: Array[String]): Unit = {
 
@@ -28,7 +29,7 @@ object GenerateOpenApi
         producersRoutes(ctx) ++ indicesRoutes(ctx) ++
         topicRoute(ctx) ++ documentsRoutes(ctx) ++
         mlmodelsRoutes(ctx) ++ configRoute(ctx) ++
-        logsRoutes(ctx) ++ eventsRoutes(ctx)
+        logsRoutes(ctx) ++ eventsRoutes(ctx) ++ telemetryRoutes(ctx)
 
       val openapi = new OpenAPI()
         .addServersItem(
@@ -88,6 +89,11 @@ object GenerateOpenApi
           new Tag()
             .name("events")
             .description("operation related to events inspection")
+        )
+        .addTagsItem(
+          new Tag()
+            .name("telemetry")
+            .description("operation related to telemetry inspection")
         )
 
       routes.foreach {

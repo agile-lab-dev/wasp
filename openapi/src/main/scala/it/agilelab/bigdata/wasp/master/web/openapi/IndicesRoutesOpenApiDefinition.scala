@@ -16,8 +16,8 @@ trait IndicesRoutesOpenApiDefinition
 
   def indicesRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/index" -> get(ctx),
-      "/index/{indexname}" -> getInstance(ctx)
+      "/indexes" -> get(ctx),
+      "/indexes/{indexname}" -> getInstance(ctx)
     )
   }
 

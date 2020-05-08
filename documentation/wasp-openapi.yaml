@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-299-implement-rest-apis-for-events-SNAPSHOT
+  version: 2.26.0-297-implement-rest-apis-for-telemetry-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -26,6 +26,8 @@ tags:
   description: operation related to logs inspection
 - name: events
   description: operation related to events inspection
+- name: telemetry
+  description: operation related to telemetry inspection
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -60,42 +62,6 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     type: string
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /document/{documentname}:
-    get:
-      tags:
-      - documents
-      description: Retrieves the model used to write or read from Document Stores
-      operationId: GetDocument
-      parameters:
-      - name: pretty
-        in: query
-        required: false
-        schema:
-          type: boolean
-      - name: documentname
-        in: path
-        description: The name of the document model to retrieve
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Outcome of the operation
-          content:
-            text/json:
-              schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    $ref: '#/components/schemas/DocumentModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -422,6 +388,38 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /indexes:
+    get:
+      tags:
+      - indices
+      description: Retrieve all models used to read or write indexed Data Stores
+      operationId: ListIndices
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: All indices model
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IndexModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /mlmodels:
     get:
       tags:
@@ -620,27 +618,21 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /index/{indexname}:
+  /documents:
     get:
       tags:
-      - indices
-      description: Retrieves all models used to read or write Indexed data stores
-      operationId: GetIndex
+      - documents
+      description: Retrieves all models used to write or read from Document Stores
+      operationId: ListDocuments
       parameters:
       - name: pretty
         in: query
         required: false
         schema:
           type: boolean
-      - name: indexname
-        in: path
-        description: The name of the index model to retrieve
-        required: true
-        schema:
-          type: string
       responses:
         "200":
-          description: Outcome of the operation
+          description: All documents
           content:
             text/json:
               schema:
@@ -652,7 +644,9 @@ paths:
                   Result:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
-                    $ref: '#/components/schemas/IndexModel'
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -710,6 +704,47 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /telemetry/metrics:
+    get:
+      tags:
+      - telemetry
+      description: List top telemetry metrics for source matching search
+      operationId: list-telemetry-metrics
+      parameters:
+      - name: search
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: source
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: size
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Top sources matching query
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/MetricEntry'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /topics:
     get:
       tags:
@@ -739,38 +774,6 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/TopicModel'
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /document:
-    get:
-      tags:
-      - documents
-      description: Retrieves all models used to write or read from Document Stores
-      operationId: ListDocuments
-      parameters:
-      - name: pretty
-        in: query
-        required: false
-        schema:
-          type: boolean
-      responses:
-        "200":
-          description: All documents
-          content:
-            text/json:
-              schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/DocumentModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -1510,6 +1513,134 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /telemetry/sources:
+    get:
+      tags:
+      - telemetry
+      description: List top telemetry sources matching search
+      operationId: list-telemetry-sources
+      parameters:
+      - name: search
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: size
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Top sources matching query
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/SourceEntry'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /indexes/{indexname}:
+    get:
+      tags:
+      - indices
+      description: Retrieves all models used to read or write Indexed data stores
+      operationId: GetIndex
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: indexname
+        in: path
+        description: The name of the index model to retrieve
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Outcome of the operation
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/IndexModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /telemetry/series:
+    get:
+      tags:
+      - telemetry
+      description: Retrieves series data pre aggregated by the server for display
+      operationId: get-telemetry-series
+      parameters:
+      - name: metric
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: source
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: size
+        in: query
+        description: The number of buckets to aggregate data in, the start and end
+          timestamp will be divided in [size] number buckets and data will be averaged
+          inside buckets
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: startTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: endTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      responses:
+        "200":
+          description: Series data matching query
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/TelemetrySeries'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /batchjobs/{batchjobname}/instances:
     get:
       tags:
@@ -1578,6 +1709,42 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /documents/{documentname}:
+    get:
+      tags:
+      - documents
+      description: Retrieves the model used to write or read from Document Stores
+      operationId: GetDocument
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: documentname
+        in: path
+        description: The name of the document model to retrieve
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Outcome of the operation
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/DocumentModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /config/sparkstreaming:
     get:
       tags:
@@ -1635,38 +1802,6 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/SolrConfigModel'
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /index:
-    get:
-      tags:
-      - indices
-      description: Retrieve all models used to read or write indexed Data Stores
-      operationId: ListIndices
-      parameters:
-      - name: pretty
-        in: query
-        required: false
-        schema:
-          type: boolean
-      responses:
-        "200":
-          description: All indices model
-          content:
-            text/json:
-              schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/IndexModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2603,6 +2738,16 @@ components:
       xml:
         name: BatchJobStartResult
         namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+    SourceEntry:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+      xml:
+        name: SourceEntry
+        namespace: java://it.agilelab.bigdata.wasp.core.models
     DataStoreCategoryEnum:
       type: string
       enum:
@@ -2679,6 +2824,19 @@ components:
           type: string
       xml:
         name: PrefixRawMatchingStrategy
+        namespace: java://it.agilelab.bigdata.wasp.core.models
+    MetricEntry:
+      required:
+      - source
+      - name
+      type: object
+      properties:
+        source:
+          $ref: '#/components/schemas/SourceEntry'
+        name:
+          type: string
+      xml:
+        name: MetricEntry
         namespace: java://it.agilelab.bigdata.wasp.core.models
     IndexModel:
       required:
@@ -2912,6 +3070,21 @@ components:
       xml:
         name: Events
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    TelemetryPoint:
+      required:
+      - timestamp
+      - value
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+      xml:
+        name: TelemetryPoint
+        namespace: java://it.agilelab.bigdata.wasp.core.models
     ProducerModel:
       required:
       - name
@@ -2973,6 +3146,24 @@ components:
             type: string
       xml:
         name: StreamingReaderModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models
+    TelemetrySeries:
+      required:
+      - source
+      - metric
+      - series
+      type: object
+      properties:
+        source:
+          $ref: '#/components/schemas/SourceEntry'
+        metric:
+          $ref: '#/components/schemas/MetricEntry'
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryPoint'
+      xml:
+        name: TelemetrySeries
         namespace: java://it.agilelab.bigdata.wasp.core.models
     TelemetryTopicConfigModel:
       required:
