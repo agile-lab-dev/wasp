@@ -261,7 +261,7 @@ private[wasp] object SolrLoggerIndex {
           Solr.Field("thread", Solr.Type.String),
           Solr.Field("cause", Solr.Type.String),
           Solr.Field("stack_trace", Solr.Type.String),
-          Solr.Field("all", Solr.Type.String)
+          Solr.Field("all", Solr.Type.Text)
         )
       )
       .build

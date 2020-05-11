@@ -29,9 +29,11 @@ class DefaultSolrLogsService(client: SolrClient)(implicit ec: ExecutionContext)
                     page: Int,
                     size: Int): Future[Logs] = {
 
+    val stringQuery = if (search.trim.isEmpty) "*" else ClientUtils.escapeQueryChars(search)
+
     val query =
       s"timestamp:[${startTimestamp.toString} TO ${endTimestamp.toString}]" +
-        s" AND all:*${ClientUtils.escapeQueryChars(search)}*"
+        s" AND all:${stringQuery}"
 
     client.runPredicate(SolrLoggerIndex().name, query, size, page).map {
       response =>

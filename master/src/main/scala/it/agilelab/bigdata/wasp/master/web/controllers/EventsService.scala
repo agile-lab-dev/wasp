@@ -29,9 +29,11 @@ class DefaultSolrEventsService(client: SolrClient)(
                       page: Int,
                       size: Int): Future[Events] = {
 
+    val stringQuery = if (search.trim.isEmpty) "*" else ClientUtils.escapeQueryChars(search)
+
     val query =
       s"timestamp:[${startTimestamp.toString} TO ${endTimestamp.toString}]" +
-        s" AND all:*${ClientUtils.escapeQueryChars(search)}*"
+        s" AND all:${stringQuery}"
 
     client.runPredicate(SolrEventIndex().name, query, size, page).map {
       response =>

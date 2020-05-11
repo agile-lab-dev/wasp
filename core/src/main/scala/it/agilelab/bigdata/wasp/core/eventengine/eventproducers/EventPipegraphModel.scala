@@ -138,7 +138,7 @@ private[wasp] object SolrEventIndex{
           Solr.Field("source", Solr.Type.String),
           Solr.Field("sourceId", Solr.Type.String),
           Solr.Field("eventRuleName", Solr.Type.String),
-          Solr.Field("all", Solr.Type.String)
+          Solr.Field("all", Solr.Type.Text)
         )
       )
       .build
