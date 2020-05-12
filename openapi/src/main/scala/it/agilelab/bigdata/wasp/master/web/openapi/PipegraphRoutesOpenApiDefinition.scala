@@ -29,7 +29,7 @@ trait PipegraphRoutesOpenApiDefinition
       .get(
         new Operation()
           .addTagsItem("pipegraphs")
-          .operationId("GetPipegraphInstance")
+          .operationId("get-pipegraph-instance")
           .description("Retrieves a pipegraph instance")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -82,7 +82,7 @@ trait PipegraphRoutesOpenApiDefinition
       .delete(
         new Operation()
           .addTagsItem("pipegraphs")
-          .operationId("DeletePipegraph")
+          .operationId("delete-pipegraph")
           .description("Deletes a pipegraph")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -117,7 +117,7 @@ trait PipegraphRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("ListPipegraphs")
+          .operationId("list-pipegraph")
           .description("Lists all pipegraphs")
           .addTagsItem("pipegraphs")
           .addParametersItem(pretty(ctx))
@@ -144,7 +144,7 @@ trait PipegraphRoutesOpenApiDefinition
       )
       .post(
         new Operation()
-          .operationId("InsertPipegraph")
+          .operationId("insert-pipegraph")
           .description("Insert a pipegraph")
           .addTagsItem("pipegraphs")
           .description("Inserts a pipegraph")
@@ -181,7 +181,7 @@ trait PipegraphRoutesOpenApiDefinition
       .put(
         new Operation()
           .addTagsItem("pipegraphs")
-          .operationId("Update Pipegraphs")
+          .operationId("update-pipegraph")
           .description("updateds a pipegraph")
           .addParametersItem(pretty(ctx))
           .requestBody(
@@ -219,7 +219,7 @@ trait PipegraphRoutesOpenApiDefinition
     new PathItem()
       .post(
         new Operation()
-          .operationId("StartPipegraph")
+          .operationId("start-pipegraph")
           .description("Starts a new instance of pipegraph")
           .addTagsItem("pipegraphs")
           .addParametersItem(pretty(ctx))
@@ -256,7 +256,7 @@ trait PipegraphRoutesOpenApiDefinition
       .post(
         new Operation()
           .addTagsItem("pipegraphs")
-          .operationId("StopPipegraph")
+          .operationId("stop-pipegraph")
           .description("Stops the running instance of a pipegrah")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -291,7 +291,7 @@ trait PipegraphRoutesOpenApiDefinition
     new PathItem()
       .post(
         new Operation()
-          .operationId("ListPipegraphInstances")
+          .operationId("list-pipegraph-instance")
           .description("List all instances of a pipegraph")
           .addTagsItem("pipegraphs")
           .addParametersItem(pretty(ctx))

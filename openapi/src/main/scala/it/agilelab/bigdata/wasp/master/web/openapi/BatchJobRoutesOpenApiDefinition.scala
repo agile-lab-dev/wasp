@@ -28,7 +28,7 @@ trait BatchJobRoutesOpenApiDefinition
       .delete(
         new Operation()
           .addTagsItem("batchjobs")
-          .operationId("DeleteBatchJob")
+          .operationId("delete-batch-job")
           .description("Deletes a Batch Job")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -63,7 +63,7 @@ trait BatchJobRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetBarchJobs")
+          .operationId("list-batch-job")
           .description("Lists all barch jobs")
           .addTagsItem("batchjobs")
           .addParametersItem(pretty(ctx))
@@ -89,7 +89,7 @@ trait BatchJobRoutesOpenApiDefinition
       )
       .post(
         new Operation()
-          .operationId("InsertBatchJob")
+          .operationId("insert-batch-job")
           .description("Inserts a batch job")
           .addTagsItem("batchjobs")
           .description("Inserts a new batch job")
@@ -124,7 +124,7 @@ trait BatchJobRoutesOpenApiDefinition
       )
       .put(
         new Operation()
-          .operationId("UpdateBatchJob")
+          .operationId("update-batch-job")
           .description("Updates a batch job")
           .addTagsItem("batchjobs")
           .description("Inserts a new batch job")
@@ -164,7 +164,7 @@ trait BatchJobRoutesOpenApiDefinition
       .post(
         new Operation()
           .addTagsItem("batchjobs")
-          .operationId("StartBatchJob")
+          .operationId("start-batch-job")
           .description("Starts a batch job")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -209,7 +209,7 @@ trait BatchJobRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetBatchJobInstances")
+          .operationId("list-batch-job-instance")
           .description("Lists all instances of a batch job")
           .addTagsItem("batchjobs")
           .addParametersItem(pretty(ctx))
@@ -247,7 +247,7 @@ trait BatchJobRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("Get batch job instance")
+          .operationId("get-batch-job-instance")
           .description("Get a batch job instance")
           .addTagsItem("batchjobs")
           .addParametersItem(pretty(ctx))

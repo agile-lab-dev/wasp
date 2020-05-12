@@ -107,7 +107,6 @@ object Settings {
 	/** sbt-buildinfo plugin configuration */
 	lazy val sbtBuildInfoSettings = Seq(
 		buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, ("jdkVersion", Versions.jdk), sbtVersion, gitCommitAction, gitWorkDirStatusAction),
-		buildInfoOptions += BuildInfoOption.BuildTime,
 		buildInfoPackage := "it.agilelab.bigdata.wasp.core.build"
 	)
 	

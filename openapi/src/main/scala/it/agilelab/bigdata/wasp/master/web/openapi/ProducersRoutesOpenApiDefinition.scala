@@ -24,7 +24,7 @@ trait ProducersRoutesOpenApiDefinition
     new PathItem()
       .delete(
         new Operation().addTagsItem("producers")
-          .operationId("DeleteProducer").description("Deletes a producer")
+          .operationId("delete-producer").description("Deletes a producer")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
             new Parameter()
@@ -66,7 +66,7 @@ trait ProducersRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation().addTagsItem("producers")
-          .operationId("GetProducers")
+          .operationId("get-producer")
           .description("Retrieves all producers")
           .addParametersItem(pretty(ctx))
           .responses(
@@ -92,7 +92,7 @@ trait ProducersRoutesOpenApiDefinition
       )
       .post(
         new Operation().addTagsItem("producers")
-          .operationId("InsertProducer")
+          .operationId("insert-producer")
           .description("Inserts a producer")
           .addParametersItem(pretty(ctx))
           .requestBody(
@@ -127,7 +127,7 @@ trait ProducersRoutesOpenApiDefinition
       .put(
         new Operation().addTagsItem("producers")
           .description("Updates a new producer")
-          .operationId("UpdateProducer")
+          .operationId("update-producer")
           .addParametersItem(pretty(ctx))
           .requestBody(
             new RequestBody().content(
@@ -164,7 +164,7 @@ trait ProducersRoutesOpenApiDefinition
     new PathItem()
       .post(
         new Operation().addTagsItem("producers")
-          .operationId("StartProducer")
+          .operationId("start-producer")
           .description("Start a producer")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -199,7 +199,7 @@ trait ProducersRoutesOpenApiDefinition
     new PathItem()
       .post(
         new Operation().addTagsItem("producers")
-          .operationId("StopProducer")
+          .operationId("stop-producer")
           .description("Stop a producerj")
           .addParametersItem(pretty(ctx))
           .addParametersItem(

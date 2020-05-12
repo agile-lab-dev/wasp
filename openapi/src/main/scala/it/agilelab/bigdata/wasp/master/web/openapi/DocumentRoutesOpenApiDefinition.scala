@@ -26,7 +26,7 @@ trait DocumentRoutesOpenApiDefinition
       .get(
         new Operation()
           .addTagsItem("documents")
-          .operationId("GetDocument")
+          .operationId("get-document")
           .description("Retrieves the model used to write or read from Document Stores")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -69,7 +69,7 @@ trait DocumentRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("ListDocuments")
+          .operationId("list-document")
           .description("Retrieves all models used to write or read from Document Stores")
           .addTagsItem("documents")
           .addParametersItem(pretty(ctx))

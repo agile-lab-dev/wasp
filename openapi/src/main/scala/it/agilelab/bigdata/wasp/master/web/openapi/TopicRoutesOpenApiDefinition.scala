@@ -18,7 +18,7 @@ trait TopicRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetTopic")
+          .operationId("get-topic")
           .description(
             "Retrieves the model used to write or read from message queues"
           )
@@ -56,7 +56,7 @@ trait TopicRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetTopics")
+          .operationId("list-topic")
           .description(
             "Lists all models used to write or read from message queues"
           )

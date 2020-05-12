@@ -13,7 +13,8 @@ trait BatchOpenApiComponentsSupport
     with WriterModelOpenApiComponentSupport
     with StrategyModelOpenApiComponentSupport
     with MlModelOnlyInfoComponentSupport
-    with OpenApiSchemaSupport {
+    with OpenApiSchemaSupport
+with KeyValueModelOpenApiDefinition {
 
   implicit lazy val typesafeConfig: ToOpenApiSchema[Config] =
     objectOpenApi[Config]
@@ -23,11 +24,7 @@ trait BatchOpenApiComponentsSupport
     : ToOpenApiSchema[BatchJobInstanceModel] =
     product7(BatchJobInstanceModel)
 
-  implicit lazy val keyValueModelOpenApi: ToOpenApiSchema[KeyValueModel] =
-    product6(KeyValueModel.apply)
 
-  implicit lazy val keyValueOptionOpenApi: ToOpenApiSchema[KeyValueOption] =
-    product2(KeyValueOption.apply)
   implicit lazy val batchExclusivityConfigOpenApi
     : ToOpenApiSchema[BatchJobExclusionConfig] = product2(
     BatchJobExclusionConfig

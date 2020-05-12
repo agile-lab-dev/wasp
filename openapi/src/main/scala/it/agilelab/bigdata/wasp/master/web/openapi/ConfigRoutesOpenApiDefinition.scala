@@ -79,7 +79,7 @@ trait ConfigRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetSolrConfig")
+          .operationId("get-solr-config")
           .description("Retrieves the configuration used to connect to solr")
           .addTagsItem("configuration")
           .addParametersItem(pretty(ctx))
@@ -109,7 +109,7 @@ trait ConfigRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetElasticConfig")
+          .operationId("get-elastic-config")
           .description("Retrieves the configuration used to connect to elastic")
           .addTagsItem("configuration")
           .addParametersItem(pretty(ctx))
@@ -138,7 +138,7 @@ trait ConfigRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetKafkaConfig")
+          .operationId("get-kafka-config")
           .description("Retrieves the configuration used to connect to Kafka")
           .addTagsItem("configuration")
           .addParametersItem(pretty(ctx))
@@ -168,7 +168,7 @@ trait ConfigRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetTelelemetryConfig")
+          .operationId("get-telemetry-config")
           .description("Retrieves the configuration of the telemetry subsystem")
           .addTagsItem("configuration")
           .addParametersItem(pretty(ctx))
@@ -198,7 +198,7 @@ trait ConfigRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetSparkBatchConfig")
+          .operationId("get-spark-batch-config")
           .description("Retrieves the configuration of the Spark Batch context")
           .addTagsItem("configuration")
           .addParametersItem(pretty(ctx))
@@ -237,7 +237,7 @@ trait ConfigRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("GetSparkStreamingConfig")
+          .operationId("get-spark-streaming-config")
           .description("Retrieves the configuration of the Spark Streaming context")
           .addTagsItem("configuration")
           .addParametersItem(pretty(ctx))

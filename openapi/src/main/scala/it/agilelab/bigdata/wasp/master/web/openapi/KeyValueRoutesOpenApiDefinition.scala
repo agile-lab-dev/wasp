@@ -1,23 +1,27 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
 import io.swagger.v3.oas.models.media.{Content, MediaType}
-import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
+import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{DocumentModel, IndexModel, ProducerModel}
+import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, KeyValueOption}
 
-trait IndicesModelOpenApiComponentSupport extends ProducerOpenApiComponentSupport with LangOpenApi with CollectionsOpenApi {
+trait KeyValueModelOpenApiDefinition extends ProductOpenApi with LangOpenApi with CollectionsOpenApi {
+  implicit lazy val keyValueModelOpenApi: ToOpenApiSchema[KeyValueModel] =
+    product6(KeyValueModel.apply)
 
-  implicit val indexModelOpenApi: ToOpenApiSchema[IndexModel] = product8(IndexModel)
+  implicit lazy val keyValueOptionOpenApi: ToOpenApiSchema[KeyValueOption] =
+    product2(KeyValueOption.apply)
 }
-trait IndicesRoutesOpenApiDefinition
-    extends IndicesModelOpenApiComponentSupport
+
+trait KeyValueRoutesOpenApiDefinition
+    extends KeyValueModelOpenApiDefinition
     with AngularResponseOpenApiComponentSupport {
 
-  def indicesRoutes(ctx: Context): Map[String, PathItem] = {
+  def keyValueRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/indexes" -> get(ctx),
-      "/indexes/{indexname}" -> getInstance(ctx)
+      "/keyvalue"                -> get(ctx),
+      "/keyvalue/{modelname}" -> getInstance(ctx)
     )
   }
 
@@ -25,15 +29,15 @@ trait IndicesRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("get-index")
-          .description("Retrieves all models used to read or write Indexed data stores")
-          .addTagsItem("indices")
+          .addTagsItem("keyvalue")
+          .operationId("get-keyvalue")
+          .description("Retrieves the model used to write or read from KeyValue Stores")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
             new Parameter()
               .in("path")
-              .name("indexname")
-              .description("The name of the index model to retrieve")
+              .name("modelname")
+              .description("The name of the KeyValue model to retrieve")
               .schema(stringOpenApi.schema(ctx))
           )
           .responses(
@@ -48,7 +52,7 @@ trait IndicesRoutesOpenApiDefinition
                         "text/json",
                         new MediaType()
                           .schema(
-                            ToOpenApiSchema[AngularResponse[IndexModel]]
+                            ToOpenApiSchema[AngularResponse[KeyValueModel]]
                               .schema(ctx)
                           )
                       )
@@ -69,23 +73,23 @@ trait IndicesRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("list-index")
-          .description("Retrieve all models used to read or write indexed Data Stores")
-          .addTagsItem("indices")
+          .operationId("list-keyvalue")
+          .description("Retrieves all models used to write or read from KeyValue Stores")
+          .addTagsItem("documents")
           .addParametersItem(pretty(ctx))
           .responses(
             new ApiResponses()
               .addApiResponse(
                 "200",
                 new ApiResponse()
-                  .description("All indices model")
+                  .description("All key value models")
                   .content(
                     new Content()
                       .addMediaType(
                         "text/json",
                         new MediaType()
                           .schema(
-                            ToOpenApiSchema[AngularResponse[Seq[IndexModel]]]
+                            ToOpenApiSchema[AngularResponse[Seq[KeyValueModel]]]
                               .schema(ctx)
                           )
                       )

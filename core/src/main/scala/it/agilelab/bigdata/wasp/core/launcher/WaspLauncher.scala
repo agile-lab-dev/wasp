@@ -144,7 +144,6 @@ trait WaspLauncher {
 				 |  SBT version     : ${BuildInfo.sbtVersion}
 				 |  Scala version   : ${BuildInfo.scalaVersion}
 				 |  JDK version     : ${BuildInfo.jdkVersion}
-				 |  Build time      : ${BuildInfo.builtAtString} (UNIX time)
 				 |  Git commit hash : ${BuildInfo.gitCommitHash}
 				 |  Git work dir    : ${if (BuildInfo.gitWorkDirStatus) "clean" else "dirty"}
 			 """.stripMargin)

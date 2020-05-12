@@ -28,7 +28,7 @@ trait TelemetrRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("list-telemetry-sources")
+          .operationId("list-telemetry-source")
           .description("List top telemetry sources matching search")
           .addTagsItem("telemetry")
           .addParametersItem(
@@ -71,7 +71,7 @@ trait TelemetrRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("list-telemetry-metrics")
+          .operationId("list-telemetry-metric")
           .description("List top telemetry metrics for source matching search")
           .addTagsItem("telemetry")
           .addParametersItem(

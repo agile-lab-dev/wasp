@@ -29,7 +29,7 @@ trait EventsRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("Events")
+          .operationId("events")
           .description("Retrieves events entries")
           .addTagsItem("events")
           .addParametersItem(

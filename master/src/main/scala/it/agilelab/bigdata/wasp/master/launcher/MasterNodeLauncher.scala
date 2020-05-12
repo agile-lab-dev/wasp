@@ -112,6 +112,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Topic_C.getRoute ~
       Status_C.getRoute ~
       Document_C.getRoute ~
+      KeyValueController.getRoute ~
       new LogsController(new DefaultSolrLogsService(solrClient)(solrExecutionContext)).getRoutes ~
       new EventController(new DefaultSolrEventsService(solrClient)(solrExecutionContext)).getRoutes ~
       new TelemetryController(new DefaultSolrTelemetryService(solrClient)(solrExecutionContext)).getRoutes ~

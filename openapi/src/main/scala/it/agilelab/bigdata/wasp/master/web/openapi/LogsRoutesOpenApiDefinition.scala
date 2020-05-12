@@ -29,7 +29,7 @@ trait LogsRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("Logs")
+          .operationId("logs")
           .description("Retrieves logs entries")
           .addTagsItem("logs")
           .addParametersItem(

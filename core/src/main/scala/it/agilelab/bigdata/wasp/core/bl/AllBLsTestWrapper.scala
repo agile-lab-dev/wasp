@@ -172,6 +172,7 @@ class AllBLsTestWrapper {
 
     override def persist(rawModel: KeyValueModel) = ???
 
+    override def getAll(): Seq[KeyValueModel] = ???
   }
 }
 

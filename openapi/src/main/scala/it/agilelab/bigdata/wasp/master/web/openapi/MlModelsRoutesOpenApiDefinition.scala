@@ -22,7 +22,7 @@ trait MlModelsRoutesOpenApiDefinition
       .get(
         new Operation()
           .addTagsItem("mlmodels")
-          .operationId("GetMlModel")
+          .operationId("get-mlmodel")
               .description("Retrieves data on a specific Machine Learning model")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -62,7 +62,7 @@ trait MlModelsRoutesOpenApiDefinition
       .delete(
         new Operation()
           .addTagsItem("mlmodels")
-        .operationId("DeleteMlModel")
+        .operationId("delete-mlmodel")
           .description("Delete a Machine learning model")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
@@ -113,7 +113,7 @@ trait MlModelsRoutesOpenApiDefinition
     new PathItem()
       .get(
         new Operation()
-          .operationId("ListMlModels")
+          .operationId("list-mlmodel")
           .description("Retrieve all machine learning models info")
           .addTagsItem("mlmodels")
           .addParametersItem(pretty(ctx))
@@ -141,7 +141,7 @@ trait MlModelsRoutesOpenApiDefinition
       .post(
         new Operation()
           .addTagsItem("mlmodels")
-          .operationId("InsertMlModel")
+          .operationId("insert-mlmodel")
           .description("Inserts a new MlModel")
           .addParametersItem(pretty(ctx))
           .requestBody(
@@ -176,7 +176,7 @@ trait MlModelsRoutesOpenApiDefinition
       .put(
         new Operation()
           .addTagsItem("mlmodels")
-          .operationId("UpdateMlModels")
+          .operationId("update-mlmodel")
           .description("Updates a machine learning model")
           .addParametersItem(pretty(ctx))
           .requestBody(

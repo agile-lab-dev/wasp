@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-312-the-post-mlmodels-api-does-not-work-SNAPSHOT
+  version: 2.26.0-316-implement-rest-apis-for-keyvalues-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -28,13 +28,15 @@ tags:
   description: operation related to events inspection
 - name: telemetry
   description: operation related to telemetry inspection
+- name: keyvalue
+  description: operation related to keyvalue models management
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
       tags:
       - pipegraphs
       description: Deletes a pipegraph
-      operationId: DeletePipegraph
+      operationId: delete-pipegraph
       parameters:
       - name: pretty
         in: query
@@ -65,12 +67,44 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /keyvalue:
+    get:
+      tags:
+      - documents
+      description: Retrieves all models used to write or read from KeyValue Stores
+      operationId: list-keyvalue
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: All key value models
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KeyValueModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /events:
     get:
       tags:
       - events
       description: Retrieves events entries
-      operationId: Events
+      operationId: events
       parameters:
       - name: search
         in: query
@@ -124,7 +158,7 @@ paths:
       tags:
       - producers
       description: Deletes a producer
-      operationId: DeleteProducer
+      operationId: delete-producer
       parameters:
       - name: pretty
         in: query
@@ -160,7 +194,7 @@ paths:
       tags:
       - producers
       description: Start a producer
-      operationId: StartProducer
+      operationId: start-producer
       parameters:
       - name: pretty
         in: query
@@ -196,7 +230,7 @@ paths:
       tags:
       - batchjobs
       description: Get a batch job instance
-      operationId: Get batch job instance
+      operationId: get-batch-job-instance
       parameters:
       - name: pretty
         in: query
@@ -238,7 +272,7 @@ paths:
       tags:
       - mlmodels
       description: Retrieves data on a specific Machine Learning model
-      operationId: GetMlModel
+      operationId: get-mlmodel
       parameters:
       - name: pretty
         in: query
@@ -279,7 +313,7 @@ paths:
       tags:
       - mlmodels
       description: Delete a Machine learning model
-      operationId: DeleteMlModel
+      operationId: delete-mlmodel
       parameters:
       - name: pretty
         in: query
@@ -321,7 +355,7 @@ paths:
       tags:
       - topics
       description: Retrieves the model used to write or read from message queues
-      operationId: GetTopic
+      operationId: get-topic
       parameters:
       - name: pretty
         in: query
@@ -359,7 +393,7 @@ paths:
       tags:
       - pipegraphs
       description: Stops the running instance of a pipegrah
-      operationId: StopPipegraph
+      operationId: stop-pipegraph
       parameters:
       - name: pretty
         in: query
@@ -395,7 +429,7 @@ paths:
       tags:
       - indices
       description: Retrieve all models used to read or write indexed Data Stores
-      operationId: ListIndices
+      operationId: list-index
       parameters:
       - name: pretty
         in: query
@@ -427,7 +461,7 @@ paths:
       tags:
       - mlmodels
       description: Retrieve all machine learning models info
-      operationId: ListMlModels
+      operationId: list-mlmodel
       parameters:
       - name: pretty
         in: query
@@ -458,7 +492,7 @@ paths:
       tags:
       - mlmodels
       description: Updates a machine learning model
-      operationId: UpdateMlModels
+      operationId: update-mlmodel
       parameters:
       - name: pretty
         in: query
@@ -522,7 +556,7 @@ paths:
       tags:
       - mlmodels
       description: Inserts a new MlModel
-      operationId: InsertMlModel
+      operationId: insert-mlmodel
       parameters:
       - name: pretty
         in: query
@@ -587,7 +621,7 @@ paths:
       tags:
       - pipegraphs
       description: List all instances of a pipegraph
-      operationId: ListPipegraphInstances
+      operationId: list-pipegraph-instance
       parameters:
       - name: pretty
         in: query
@@ -625,7 +659,7 @@ paths:
       tags:
       - documents
       description: Retrieves all models used to write or read from Document Stores
-      operationId: ListDocuments
+      operationId: list-document
       parameters:
       - name: pretty
         in: query
@@ -657,7 +691,7 @@ paths:
       tags:
       - logs
       description: Retrieves logs entries
-      operationId: Logs
+      operationId: logs
       parameters:
       - name: search
         in: query
@@ -711,7 +745,7 @@ paths:
       tags:
       - telemetry
       description: List top telemetry metrics for source matching search
-      operationId: list-telemetry-metrics
+      operationId: list-telemetry-metric
       parameters:
       - name: search
         in: query
@@ -752,7 +786,7 @@ paths:
       tags:
       - topics
       description: Lists all models used to write or read from message queues
-      operationId: GetTopics
+      operationId: list-topic
       parameters:
       - name: pretty
         in: query
@@ -786,7 +820,7 @@ paths:
       tags:
       - pipegraphs
       description: Lists all pipegraphs
-      operationId: ListPipegraphs
+      operationId: list-pipegraph
       parameters:
       - name: pretty
         in: query
@@ -817,7 +851,7 @@ paths:
       tags:
       - pipegraphs
       description: updateds a pipegraph
-      operationId: Update Pipegraphs
+      operationId: update-pipegraph
       parameters:
       - name: pretty
         in: query
@@ -889,7 +923,7 @@ paths:
       tags:
       - pipegraphs
       description: Inserts a pipegraph
-      operationId: InsertPipegraph
+      operationId: insert-pipegraph
       parameters:
       - name: pretty
         in: query
@@ -962,7 +996,7 @@ paths:
       tags:
       - configuration
       description: Retrieves the configuration of the Spark Batch context
-      operationId: GetSparkBatchConfig
+      operationId: get-spark-batch-config
       parameters:
       - name: pretty
         in: query
@@ -992,7 +1026,7 @@ paths:
       tags:
       - producers
       description: Retrieves all producers
-      operationId: GetProducers
+      operationId: get-producer
       parameters:
       - name: pretty
         in: query
@@ -1023,7 +1057,7 @@ paths:
       tags:
       - producers
       description: Updates a new producer
-      operationId: UpdateProducer
+      operationId: update-producer
       parameters:
       - name: pretty
         in: query
@@ -1083,7 +1117,7 @@ paths:
       tags:
       - producers
       description: Inserts a producer
-      operationId: InsertProducer
+      operationId: insert-producer
       parameters:
       - name: pretty
         in: query
@@ -1144,7 +1178,7 @@ paths:
       tags:
       - producers
       description: Stop a producerj
-      operationId: StopProducer
+      operationId: stop-producer
       parameters:
       - name: pretty
         in: query
@@ -1180,7 +1214,7 @@ paths:
       tags:
       - batchjobs
       description: Lists all barch jobs
-      operationId: GetBarchJobs
+      operationId: list-batch-job
       parameters:
       - name: pretty
         in: query
@@ -1211,7 +1245,7 @@ paths:
       tags:
       - batchjobs
       description: Inserts a new batch job
-      operationId: UpdateBatchJob
+      operationId: update-batch-job
       parameters:
       - name: pretty
         in: query
@@ -1276,7 +1310,7 @@ paths:
       tags:
       - batchjobs
       description: Inserts a new batch job
-      operationId: InsertBatchJob
+      operationId: insert-batch-job
       parameters:
       - name: pretty
         in: query
@@ -1342,7 +1376,7 @@ paths:
       tags:
       - batchjobs
       description: Deletes a Batch Job
-      operationId: DeleteBatchJob
+      operationId: delete-batch-job
       parameters:
       - name: pretty
         in: query
@@ -1378,7 +1412,7 @@ paths:
       tags:
       - pipegraphs
       description: Starts a new instance of pipegraph
-      operationId: StartPipegraph
+      operationId: start-pipegraph
       parameters:
       - name: pretty
         in: query
@@ -1414,7 +1448,7 @@ paths:
       tags:
       - batchjobs
       description: Starts a batch job
-      operationId: StartBatchJob
+      operationId: start-batch-job
       parameters:
       - name: pretty
         in: query
@@ -1450,7 +1484,7 @@ paths:
       tags:
       - pipegraphs
       description: Retrieves a pipegraph instance
-      operationId: GetPipegraphInstance
+      operationId: get-pipegraph-instance
       parameters:
       - name: pretty
         in: query
@@ -1492,7 +1526,7 @@ paths:
       tags:
       - configuration
       description: Retrieves the configuration of the telemetry subsystem
-      operationId: GetTelelemetryConfig
+      operationId: get-telemetry-config
       parameters:
       - name: pretty
         in: query
@@ -1522,7 +1556,7 @@ paths:
       tags:
       - telemetry
       description: List top telemetry sources matching search
-      operationId: list-telemetry-sources
+      operationId: list-telemetry-source
       parameters:
       - name: search
         in: query
@@ -1558,7 +1592,7 @@ paths:
       tags:
       - indices
       description: Retrieves all models used to read or write Indexed data stores
-      operationId: GetIndex
+      operationId: get-index
       parameters:
       - name: pretty
         in: query
@@ -1650,7 +1684,7 @@ paths:
       tags:
       - batchjobs
       description: Lists all instances of a batch job
-      operationId: GetBatchJobInstances
+      operationId: list-batch-job-instance
       parameters:
       - name: pretty
         in: query
@@ -1688,7 +1722,7 @@ paths:
       tags:
       - configuration
       description: Retrieves the configuration used to connect to Kafka
-      operationId: GetKafkaConfig
+      operationId: get-kafka-config
       parameters:
       - name: pretty
         in: query
@@ -1718,7 +1752,7 @@ paths:
       tags:
       - documents
       description: Retrieves the model used to write or read from Document Stores
-      operationId: GetDocument
+      operationId: get-document
       parameters:
       - name: pretty
         in: query
@@ -1754,7 +1788,7 @@ paths:
       tags:
       - configuration
       description: Retrieves the configuration of the Spark Streaming context
-      operationId: GetSparkStreamingConfig
+      operationId: get-spark-streaming-config
       parameters:
       - name: pretty
         in: query
@@ -1779,12 +1813,48 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /keyvalue/{modelname}:
+    get:
+      tags:
+      - keyvalue
+      description: Retrieves the model used to write or read from KeyValue Stores
+      operationId: get-keyvalue
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: modelname
+        in: path
+        description: The name of the KeyValue model to retrieve
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Outcome of the operation
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/KeyValueModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /config/sorl:
     get:
       tags:
       - configuration
       description: Retrieves the configuration used to connect to solr
-      operationId: GetSolrConfig
+      operationId: get-solr-config
       parameters:
       - name: pretty
         in: query
@@ -1814,7 +1884,7 @@ paths:
       tags:
       - configuration
       description: Retrieves the configuration used to connect to elastic
-      operationId: GetElasticConfig
+      operationId: get-elastic-config
       parameters:
       - name: pretty
         in: query
