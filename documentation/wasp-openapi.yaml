@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-316-implement-rest-apis-for-keyvalues-SNAPSHOT
+  version: 2.26.0-320-wrong-openapi-definition-for-telemetry-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -777,7 +777,7 @@ paths:
                   Result:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
-                    $ref: '#/components/schemas/MetricEntry'
+                    $ref: '#/components/schemas/Metrics'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -1583,7 +1583,7 @@ paths:
                   Result:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
-                    $ref: '#/components/schemas/SourceEntry'
+                    $ref: '#/components/schemas/Sources'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -1968,6 +1968,22 @@ components:
       xml:
         name: LegacyStreamingETLModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    Sources:
+      required:
+      - found
+      - entries
+      type: object
+      properties:
+        found:
+          type: integer
+          format: int64
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceEntry'
+      xml:
+        name: Sources
+        namespace: java://it.agilelab.bigdata.wasp.core.models
     BatchJobModel:
       required:
       - name
@@ -2186,6 +2202,22 @@ components:
           type: string
       xml:
         name: DocumentModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models
+    Metrics:
+      required:
+      - found
+      - entries
+      type: object
+      properties:
+        found:
+          type: integer
+          format: int64
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricEntry'
+      xml:
+        name: Metrics
         namespace: java://it.agilelab.bigdata.wasp.core.models
     RawModel:
       required:
