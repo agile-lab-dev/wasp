@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-320-wrong-openapi-definition-for-telemetry-SNAPSHOT
+  version: 2.26.0-317-implement-rest-apis-for-rawdata-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -30,6 +30,8 @@ tags:
   description: operation related to telemetry inspection
 - name: keyvalue
   description: operation related to keyvalue models management
+- name: raw
+  description: operation related to raw models management
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -1849,6 +1851,42 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /raw/{modelname}:
+    get:
+      tags:
+      - raw
+      description: Retrieves the model used to write or read from Raw Stores
+      operationId: get-raw
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: modelname
+        in: path
+        description: The name of the Raw model to retrieve
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Outcome of the operation
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/RawModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /config/sorl:
     get:
       tags:
@@ -1876,6 +1914,38 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/SolrConfigModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /raw:
+    get:
+      tags:
+      - documents
+      description: Retrieves all models used to write or read from Raw Stores
+      operationId: list-raw
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: All key value models
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RawModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi

@@ -166,6 +166,8 @@ class AllBLsTestWrapper {
     override def getByName(name: String): Option[RawModel] = ???
 
     override def persist(rawModel: RawModel): Unit = ???
+
+    override def getAll(): Seq[RawModel] = ???
   }
 
   val keyValueBL = new KeyValueBL {override def getByName(name: String) = ???

@@ -20,7 +20,8 @@ object GenerateOpenApi
     with LogsRoutesOpenApiDefinition
     with EventsRoutesOpenApiDefinition
     with TelemetrRoutesOpenApiDefinition
-    with KeyValueRoutesOpenApiDefinition {
+    with KeyValueRoutesOpenApiDefinition
+    with RawRoutesOpenApiDefinition {
 
   def main(args: Array[String]): Unit = {
 
@@ -30,7 +31,9 @@ object GenerateOpenApi
         producersRoutes(ctx) ++ indicesRoutes(ctx) ++
         topicRoute(ctx) ++ documentsRoutes(ctx) ++
         mlmodelsRoutes(ctx) ++ configRoute(ctx) ++
-        logsRoutes(ctx) ++ eventsRoutes(ctx) ++ telemetryRoutes(ctx) ++ keyValueRoutes(ctx)
+        logsRoutes(ctx) ++ eventsRoutes(ctx) ++
+        telemetryRoutes(ctx) ++ keyValueRoutes(ctx) ++
+        rawRoutes(ctx)
 
       val openapi = new OpenAPI()
         .addServersItem(
@@ -100,6 +103,11 @@ object GenerateOpenApi
           new Tag()
             .name("keyvalue")
             .description("operation related to keyvalue models management")
+        )
+        .addTagsItem(
+          new Tag()
+            .name("raw")
+            .description("operation related to raw models management")
         )
 
       routes.foreach {
