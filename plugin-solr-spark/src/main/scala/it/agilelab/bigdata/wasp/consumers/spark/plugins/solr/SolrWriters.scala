@@ -3,14 +3,15 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 import java.util
 
 import akka.actor.ActorRef
-import com.lucidworks.spark.SolrSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
+import com.lucidworks.spark.util.SolrSupport
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.IndexModel
 import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
-import org.apache.solr.client.solrj.impl.CloudSolrServer
+import org.apache.solr.client.solrj.SolrClient
+import org.apache.solr.client.solrj.impl.CloudSolrClient
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
@@ -20,6 +21,8 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaDStream
 import org.apache.spark.streaming.dstream.DStream
+
+import scala.collection.mutable.ListBuffer
 
 /**
   * Created by matbovet on 02/09/2016.
@@ -118,8 +121,7 @@ class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
 
         SolrSupport.indexDStreamOfDocs(solrConfig.zookeeperConnections.toString,
                                        indexName,
-                                       100,
-                                       new JavaDStream[SolrInputDocument](docs))
+                                       100, docs)
 
       } else {
         val msg = s"Error creating solr index: $index with this index name $indexName"
@@ -186,25 +188,25 @@ class SolrForeachWriter(ss: SparkSession,
                         idFieldOption: Option[String])
   extends ForeachWriter[Row] {
 
-  var solrServer: CloudSolrServer = _
-  var batch: util.ArrayList[SolrInputDocument] = _
+  var solrServer: SolrClient = _
+  var batch: ListBuffer[SolrInputDocument] = _
   val batchSize = 100
 
   override def open(partitionId: Long, version: Long): Boolean = {
 
-    solrServer = SolrSupport.getSolrServer(connection)
-    batch = new util.ArrayList[SolrInputDocument]
+    solrServer = SolrSupport.getCachedCloudClient(connection)
+    batch = new ListBuffer[SolrInputDocument]()
     true
   }
 
   override def process(value: Row): Unit = {
 
     try {
-      val docs = SolrSparkBatchWriter.createSolrDocument(value, idFieldOption)
-      batch.add(docs)
+      val docs: SolrInputDocument = SolrSparkBatchWriter.createSolrDocument(value, idFieldOption)
+      batch += docs
 
-      if (batch.size() > batchSize) {
-        SolrSupport.sendBatchToSolr(solrServer, collection, batch)
+      if (batch.length > batchSize) {
+        SolrSupport.sendBatchToSolr(solrServer, collection, batch.toList)
       }
     } catch {
       case e: Exception =>
@@ -215,8 +217,8 @@ class SolrForeachWriter(ss: SparkSession,
   }
 
   override def close(errorOrNull: Throwable): Unit = {
-    if (batch.size() > 0) {
-      SolrSupport.sendBatchToSolr(solrServer, collection, batch)
+    if (batch.nonEmpty) {
+      SolrSupport.sendBatchToSolr(solrServer, collection, batch.toList)
     }
   }
 }

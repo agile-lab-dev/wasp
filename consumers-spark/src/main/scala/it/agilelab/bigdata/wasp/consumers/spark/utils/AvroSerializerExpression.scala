@@ -14,6 +14,7 @@ import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{BinaryEncoder, EncoderFactory}
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
 import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, TimeZoneAwareExpression, UnaryExpression}
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.SQLDate
@@ -156,45 +157,41 @@ case class AvroSerializerExpression private(child: Expression,
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     // come se venisse fatto all'inizio di una mapPartitions
     val bufferClassName = classOf[ByteArrayOutputStream].getName
-    val bufferName = ctx.freshName("buffer")
-    ctx.addMutableState(
+    val bufferName = ctx.addMutableState(
       bufferClassName,
-      bufferName,
-      s"$bufferName = new $bufferClassName();")
+      "buffer",
+      name => s"$name = new $bufferClassName();")
 
     val encoderClassName = classOf[BinaryEncoder].getName
     val encoderFactoryClassName = classOf[EncoderFactory].getName
-    val encoderName = ctx.freshName("encoder")
-    ctx.addMutableState(
+    val encoderName = ctx.addMutableState(
       encoderClassName,
-      encoderName,
-      s"""$encoderName = $encoderFactoryClassName.get().binaryEncoder($bufferName, null);"""
+      "encoder",
+      encoder => s"""$encoder = $encoderFactoryClassName.get().binaryEncoder($bufferName, null);"""
     )
 
-    val avroConverterExprName = ctx.freshName("avroConverterExpr")
     val avroConverterExpression =
-      ctx.addReferenceObj(avroConverterExprName, this, this.getClass.getName)
+      ctx.addReferenceObj("avroConverterExpr", this, this.getClass.getName)
 
     val genericWriterClassName = classOf[GenericDatumWriter[GenericRecord]].getName
     val genericRecordClassName = classOf[GenericRecord].getName
-    val genericWriterName = ctx.freshName("genericWriter")
-    ctx.addMutableState(
+    val genericWriterName = ctx.addMutableState(
       genericWriterClassName,
-      genericWriterName,
-      s"""$genericWriterName = new $genericWriterClassName<$genericRecordClassName>($avroConverterExpression.getActualSchema());""")
+      "genericWriter",
+      name => s"""$name = new $genericWriterClassName<$genericRecordClassName>($avroConverterExpression.getActualSchema());""")
 
     val childCode = child.genCode(ctx)
     val newEncoderName = ctx.freshName("newEncoder")
     ev.copy(code =
-      s"""
-         |${childCode.code}
-         |byte[] ${ev.value} = null;
-         |if (!${childCode.isNull}) {
-         |  $bufferName.reset();
-         |  $encoderClassName $newEncoderName = $encoderFactoryClassName.get().binaryEncoder($bufferName, $encoderName);
-         |  ${ev.value} = $avroConverterExpression.serializeInternalRow(
-         |    ${childCode.value}, $bufferName, $newEncoderName, $genericWriterName);
-         |}
+      code"""
+            |${childCode.code}
+            |byte[] ${ev.value} = null;
+            |if (!${childCode.isNull}) {
+            |  $bufferName.reset();
+            |  $encoderClassName $newEncoderName = $encoderFactoryClassName.get().binaryEncoder($bufferName, $encoderName);
+            |  ${ev.value} = $avroConverterExpression.serializeInternalRow(
+            |    ${childCode.value}, $bufferName, $newEncoderName, $genericWriterName);
+            |}
        """.stripMargin, isNull = childCode.isNull)
   }
 

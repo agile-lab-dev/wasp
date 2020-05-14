@@ -319,7 +319,7 @@ private[kafka011] class KafkaSource(
       currentPartitionOffsets = Some(untilPartitionOffsets)
     }
 
-    sqlContext.internalCreateDataFrame(rdd, schema)
+    sqlContext.internalCreateDataFrame(rdd, schema, true)
   }
 
   /** Stop this source and free any resources it has allocated. */

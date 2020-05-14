@@ -4,8 +4,8 @@ import java.nio.ByteBuffer
 
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SchemaConverters.IncompatibleSchemaException
-import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
+import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
 import org.apache.avro.file.SeekableByteArrayInput
@@ -14,11 +14,11 @@ import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
 import org.apache.avro.util.Utf8
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
 import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, GenericInternalRow, UnaryExpression}
 import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, ArrayData}
 import org.apache.spark.sql.types._
-import org.apache.spark.unsafe.Platform
 import org.apache.spark.unsafe.types.UTF8String
 
 import scala.collection.JavaConverters._
@@ -60,7 +60,7 @@ case class AvroDeserializerExpression(
 
   // Set as non-deterministic in order to avoid re-execution of the deserialization
   // See CollapseProject + ProjectExec
-  override def deterministic: Boolean = !avoidReevaluation
+  override lazy val deterministic: Boolean = !avoidReevaluation
 
   def avroDatumReader(avroValue: SeekableByteArrayInput): GenericDatumReader[GenericRecord] = {
     avroSchemaManager.flatMap { _ =>
@@ -89,22 +89,20 @@ case class AvroDeserializerExpression(
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     val decoderClassName = classOf[BinaryDecoder].getName
     val decoderFactoryClassName = classOf[DecoderFactory].getName
-    val decoderName = ctx.freshName("decoder")
-    ctx.addMutableState(
-      decoderClassName,
-      decoderName,
-      s"""$decoderName = null;""")
+    val decoderName = ctx.addMutableState(
+        decoderClassName,
+        "decoder",
+        varName => s"""$varName = null;""")
 
     val genericRecordClassName = classOf[GenericRecord].getName
-    val genericRecordName = ctx.freshName("genRecord")
-    ctx.addMutableState(
-      genericRecordClassName,
-      genericRecordName,
-      s"""$genericRecordName = null;""")
+    val genericRecordName =
+      ctx.addMutableState(
+        genericRecordClassName,
+        "genRecord",
+        varName => s"""$varName = null;""")
 
-    val avroDecoderExprName = ctx.freshName("avroDecoderExpr")
     val avroDecoderExpression =
-      ctx.addReferenceObj(avroDecoderExprName, this, this.getClass.getName)
+      ctx.addReferenceObj("avroDecoderExpr", this, this.getClass.getName)
 
     val genericReaderClassName = classOf[GenericDatumReader[GenericRecord]].getName
     val genericReaderName = ctx.freshName("genericReader")
@@ -116,20 +114,20 @@ case class AvroDeserializerExpression(
 
     val childEval = child.genCode(ctx)
     ev.copy(code =
-      s"""
-         |${childEval.code}
-         |$internalRowClassName ${ev.value} = null;
-         |if (!${childEval.isNull}) {
-         |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
-         |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
-         |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
-         |  try {
-         |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
-         |  } catch (java.io.IOException e) {
-         |    throw new java.lang.RuntimeException("Unable to deserialize Avro.", e);
-         |  }
-         |  ${ev.value} = $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
-         |}
+      code"""
+            |${childEval.code}
+            |$internalRowClassName ${ev.value} = null;
+            |if (!${childEval.isNull}) {
+            |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
+            |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
+            |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
+            |  try {
+            |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
+            |  } catch (java.io.IOException e) {
+            |    throw new java.lang.RuntimeException("Unable to deserialize Avro.", e);
+            |  }
+            |  ${ev.value} = $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
+            |}
        """.stripMargin, isNull = childEval.isNull)
   }
 
@@ -381,6 +379,7 @@ case class AvroDeserializerExpression(
               s"Target Catalyst type: $targetSqlType")
       }
     }
+
     createConverter(sourceAvroSchema, targetSqlType, List.empty[String])
   }
 

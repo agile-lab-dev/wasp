@@ -1,3 +1,4 @@
+
 if [ -z "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" ]
 then
   echo "Not something that can be merged with this MR!"

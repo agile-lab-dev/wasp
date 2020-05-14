@@ -19,7 +19,7 @@ package org.apache.hadoop.hbase.spark
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.TableName
-import org.apache.hadoop.hbase.classification.InterfaceAudience
+import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.spark.api.java.function.{FlatMapFunction, Function, VoidFunction}

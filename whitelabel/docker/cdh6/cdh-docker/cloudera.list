@@ -1,0 +1,3 @@
+# Packages for Cloudera's Distribution for cdh, Version 1, on Ubuntu 14.04 amd64
+deb [arch=amd64] https://archive.cloudera.com/cdh6/6.3.2/ubuntu1604/apt/ xenial-cdh6 contrib
+deb-src https://archive.cloudera.com/cdh6/6.3.2/ubuntu1604/apt/ xenial-cdh6 contrib

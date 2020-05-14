@@ -19,7 +19,6 @@ import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.streaming.kafka.KafkaUtils
 
 import scala.collection.mutable
 import scala.collection.JavaConverters._
@@ -193,61 +192,7 @@ object KafkaSparkLegacyStreamingReader extends SparkLegacyStreamingReader with L
     * Kafka configuration
     */
   //TODO: check warning (not understood)
-  def createStream(group: String, accessType: String, topic: TopicModel)(
-      implicit ssc: StreamingContext): DStream[String] = {
-    val kafkaConfig = ConfigManager.getKafkaConfig
+  def createStream(group: String, accessType: String, topic: TopicModel)(implicit ssc: StreamingContext): DStream[String] =
+      throw new Exception("Legacy Streaming was removed, migrate to structured streaming")
 
-    val kafkaConfigMap: Map[String, String] = (
-      Seq(
-        "zookeeper.connect" -> kafkaConfig.zookeeperConnections.toString(),
-        "zookeeper.connection.timeout.ms" ->
-          kafkaConfig.zookeeperConnections.connections.headOption.flatMap(_.timeout)
-            .getOrElse(ConfigManager.getWaspConfig.servicesTimeoutMillis)
-            .toString) ++
-        kafkaConfig.others.map(_.toTupla)
-      )
-      .toMap
-
-    if (??[Boolean](
-      WaspSystem.kafkaAdminActor,
-      CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))) {
-
-      val receiver: DStream[(String, Array[Byte])] = accessType match {
-        case "direct" =>
-          KafkaUtils.createDirectStream[String,
-            Array[Byte],
-            StringDecoder,
-            DefaultDecoder](
-            ssc,
-            kafkaConfigMap + ("group.id" -> group) + ("metadata.broker.list" -> kafkaConfig.connections
-              .mkString(",")),
-            Set(topic.name)
-          )
-        case "receiver-based" | _ =>
-          KafkaUtils
-            .createStream[String, Array[Byte], StringDecoder, DefaultDecoder](
-            ssc,
-            kafkaConfigMap + ("group.id" -> group),
-            Map(topic.name -> 3),
-            StorageLevel.MEMORY_AND_DISK_2
-          )
-      }
-      val topicSchema = JsonConverter.toString(topic.schema.asDocument())
-      topic.topicDataType match {
-        case "avro" =>
-          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)
-        case "json" | "plaintext" =>
-          receiver
-            .map(x => (x._1, StringToByteArrayUtil.byteArrayToString(x._2)))
-            .map(_._2)
-        case _ =>
-          receiver.map(x => (x._1, AvroToJsonUtil.avroToJson(x._2, topicSchema))).map(_._2)
-      }
-
-    } else {
-      val msg = s"Topic not found on Kafka: $topic"
-      logger.error(msg)
-      throw new Exception(msg)
-    }
-  }
 }

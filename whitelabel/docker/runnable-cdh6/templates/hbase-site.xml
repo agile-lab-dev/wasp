@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<configuration>
+    <property>
+        <name>hbase.rootdir</name>
+        <value>hdfs://${HOSTNAME}:9000/hbase</value>
+    </property>
+    <property>
+        <name>hbase.cluster.distributed</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>${HOSTNAME}</value>
+    </property>
+    <property>
+        <name>hbase.client.metrics.enable</name>
+        <value>true</value>
+    </property>
+</configuration>

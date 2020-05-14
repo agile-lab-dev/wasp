@@ -26,7 +26,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase._
-import org.apache.hadoop.hbase.classification.InterfaceAudience
+import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapred.TableOutputFormat

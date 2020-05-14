@@ -10,7 +10,6 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 	* Default system pipegraphs.
 	*/
 object SystemPipegraphs {
-
   /** Logger  */
   lazy val loggerTopic: TopicModel = LoggerTopicModel()
   lazy val solrLoggerIndex: IndexModel = SolrLoggerIndex()
@@ -195,7 +194,8 @@ private[wasp] object ElasticLatencyIndexModel {
   import IndexModelBuilder._
 
   //noinspection ScalaUnnecessaryParentheses
-  private lazy val indexElasticSchema = parse("""
+  private lazy val indexElasticSchema = parse(StringInput(
+    """
         {
           "properties": {
             "messageId": {
@@ -214,7 +214,7 @@ private[wasp] object ElasticLatencyIndexModel {
               "type": "date"
             }
           }
-        }""").asInstanceOf[JObject]
+        }"""), useBigDecimalForDouble = false).asInstanceOf[JObject]
 
   import IndexModelBuilder._
   val index_name = "telemetry_elastic"
@@ -277,7 +277,8 @@ private[wasp] object ElasticLoggerIndexModel {
   import IndexModelBuilder._
 
   //noinspection ScalaUnnecessaryParentheses
-  private lazy val indexElasticSchema = parse("""
+  private lazy val indexElasticSchema = parse(StringInput(
+      """
         {
           "properties": {
             "log_source": {
@@ -305,7 +306,7 @@ private[wasp] object ElasticLoggerIndexModel {
             	"type": "text"
             }
           }
-        }""").asInstanceOf[JObject]
+        }"""), useBigDecimalForDouble = false).asInstanceOf[JObject]
 
   import IndexModelBuilder._
   val index_name = "logger_elastic"

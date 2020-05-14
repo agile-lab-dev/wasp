@@ -1,0 +1,19 @@
+#!/bin/bash
+  # Reference: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+  SOURCE="${BASH_SOURCE[0]}"
+  BIN_DIR="$( dirname "$SOURCE" )"
+  while [ -h "$SOURCE" ]
+  do
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+    BIN_DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd )"
+  done
+  BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  CDH_LIB_DIR=$BIN_DIR/../../CDH/lib
+  LIB_DIR=$BIN_DIR/../lib
+export HADOOP_HOME=$CDH_LIB_DIR/hadoop
+
+# Autodetect JAVA_HOME if not defined
+. bigtop-detect-javahome
+
+exec $LIB_DIR/spark2/bin/spark-shell "$@"

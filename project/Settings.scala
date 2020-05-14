@@ -30,15 +30,18 @@ object Settings {
 	val typesafeReleaseRepo = "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
 	val restletMavenRepo = "Restlet Maven repository" at "https://maven.restlet.com/"
 	val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
-	
+	val clouderaReleaseLocalRepo = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
+	val repo1Maven2 = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
+
 	/** custom resolvers for dependencies */
 	lazy val customResolvers = Seq(
-		//mavenLocalRepo,
+		mavenLocalRepo,
 		sonatypeReleaseRepo,
 		bintraySparkSolrRepo,
 		typesafeReleaseRepo,
 		restletMavenRepo,
-		clouderaHadoopReleaseRepo
+		clouderaHadoopReleaseRepo,
+		repo1Maven2
 	)
 
 	/** base build settings */
@@ -61,7 +64,8 @@ object Settings {
 			"-target", Versions.jdk,
 			"-Xlint:deprecation",
 			"-Xlint:unchecked"),
-		scalaVersion := Versions.scala
+		scalaVersion := Versions.scala,
+		excludeDependencies +=ExclusionRule("javax.ws.rs", "javax.ws.rs-api")
 	)
 	
 	val jfrogOssSnapshotRepo = "Agile Lab JFrog Snapshot OSS" at "https://oss.jfrog.org/artifactory/oss-snapshot-local"

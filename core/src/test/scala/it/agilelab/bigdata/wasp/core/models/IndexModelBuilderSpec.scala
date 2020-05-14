@@ -50,13 +50,7 @@ class IndexModelBuilderSpec extends WordSpec {
                                   .build
 
 
-      val expectedSchema = "[" +
-          "{\"name\":\"binaryField\",\"type\":\"binary\",\"indexed\":true,\"stored\":true,\"required\":false}," +
-          "{\"name\":\"booleanField\",\"type\":\"boolean\",\"indexed\":true,\"stored\":true,\"required\":false}," +
-          "{\"name\":\"textFieldWithDefault\",\"type\":\"text_general\",\"defaultValue\":\"default\",\"indexed\":true,\"stored\":true,\"required\":false}," +
-          "{\"name\":\"intFieldWithSDefault\",\"type\":\"tint\",\"defaultValue\":1,\"indexed\":true,\"stored\":true,\"required\":false}" +
-        "]"
-
+      val expectedSchema = """[{"name":"binaryField","type":"binary","indexed":true,"stored":true,"required":false},{"name":"booleanField","type":"boolean","indexed":true,"stored":true,"required":false},{"name":"textFieldWithDefault","type":"text_general","defaultValue":"default","indexed":true,"stored":true,"required":false},{"name":"intFieldWithSDefault","type":"pint","defaultValue":1,"indexed":true,"stored":true,"required":false}]"""
 
 
       assertResult("test_index")(solr.name)

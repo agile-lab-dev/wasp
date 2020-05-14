@@ -30,7 +30,7 @@ import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericDatumWri
 import org.apache.avro.io._
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.commons.io.output.ByteArrayOutputStream
-import org.apache.hadoop.hbase.classification.InterfaceAudience
+import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._

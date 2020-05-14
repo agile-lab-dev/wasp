@@ -17,7 +17,7 @@
 
 package org.apache.hadoop.hbase.spark.datasources
 
-import org.apache.hadoop.hbase.classification.InterfaceAudience
+import org.apache.hadoop.classification.InterfaceAudience
 
 /**
  * The Bound represent the boudary for the scan

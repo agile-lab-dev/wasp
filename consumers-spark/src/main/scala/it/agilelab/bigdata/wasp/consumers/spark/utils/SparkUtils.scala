@@ -123,7 +123,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
     try {
       val additionalJars = Source.fromFile(additionalJarsPath + File.separator + jarsListFileName)
         .getLines()
-        .map(name => URLEncoder.encode(additionalJarsPath  + File.separator + name, "UTF-8"))
+        .map(name => "file:/" + URLEncoder.encode(additionalJarsPath  + File.separator + name, "UTF-8"))
         .toSeq
 
       additionalJars

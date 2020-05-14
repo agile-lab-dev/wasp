@@ -128,6 +128,7 @@ lazy val spark_telemetry_plugin = Project("wasp-spark-telemetry-plugin", file("s
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies += Dependencies.sparkCore)
   .settings(libraryDependencies += Dependencies.kafkaClients)
+  .settings(libraryDependencies += Dependencies.scalaParserAndCombinators)
 
 lazy val spark = Project("wasp-spark", file("spark"))
   .settings(Settings.commonSettings: _*)
@@ -144,7 +145,6 @@ lazy val wasp = Project("wasp", file("."))
 	           consumers_spark,
 	           consumers_rt,
 	           plugin_console_spark,
-	           plugin_elastic_spark,
 	           plugin_hbase_spark,
 	           plugin_jdbc_spark,
 	           plugin_kafka_spark,
@@ -184,7 +184,6 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(whiteLabelModels)
   .dependsOn(consumers_spark)
   .dependsOn(plugin_console_spark)
-  .dependsOn(plugin_elastic_spark)
   .dependsOn(plugin_hbase_spark)
   .dependsOn(plugin_jdbc_spark)
   .dependsOn(plugin_kafka_spark)

@@ -1,74 +1,77 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
 import java.net.URI
-import java.util
+import java.{lang, util}
 import java.util.Properties
 
 import akka.actor.Actor
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.ActorMaterializer
+import com.lucidworks.spark.util.SolrSupport
+import com.lucidworks.spark.util.SolrSupport.CloudClientParams
 import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.core.models.IndexModelBuilder.Solr
+import it.agilelab.bigdata.wasp.core.models.IndexModelBuilder.Solr.{SolrMissingFieldSort, Type}
 import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.apache.http.client.HttpClient
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.util.EntityUtils
 import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.client.solrj.impl.{CloudSolrServer, HttpClientUtil, Krb5HttpClientConfigurer}
+import org.apache.solr.client.solrj.impl.{CloudSolrClient, HttpClientUtil, Krb5HttpClientBuilder}
+import org.apache.solr.client.solrj.request.schema.SchemaRequest
 import org.apache.solr.client.solrj.request.{CollectionAdminRequest, ConfigSetAdminRequest}
 import org.apache.solr.client.solrj.response.{CollectionAdminResponse, ConfigSetAdminResponse, QueryResponse}
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
 import org.apache.solr.common.params.MapSolrParams
-import spray.json.DefaultJsonProtocol
+import org.json4s.{CustomSerializer, Formats}
+import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 object SolrAdminActor {
-  val name = "SolrAdminActor"
-  val collection = "wasp-def-collection"
-  val alias = "wasp-alias"
-  val configSet = "waspConfigSet"
-  val template = "schemalessTemplate"
-  val numShards = 1
+  val name              = "SolrAdminActor"
+  val collection        = "wasp-def-collection"
+  val alias             = "wasp-alias"
+  val configSet         = "waspConfigSet"
+  val template          = "schemalessTemplate"
+  val numShards         = 1
   val replicationFactor = 1
-  val schema = ""
+  val schema            = ""
 }
 
-class SolrAdminActor
-  extends Actor
-    with SprayJsonSupport
-    with DefaultJsonProtocol
-    with Logging {
+class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtocol with Logging {
 
   var solrConfig: SolrConfigModel = _
-  var solrServer: CloudSolrServer = _
-  var httpClient: HttpClient = _
+  var solrServer: CloudSolrClient = _
+  var httpClient: HttpClient      = _
 
   implicit val materializer = ActorMaterializer()
-  implicit val system = this.context.system
+  implicit val system       = this.context.system
 
   override def receive: Actor.Receive = {
-    case message: Search           => call(message, search)
-    case message: AddCollection    => call(message, addCollection)
-    case message: AddMapping       => call(message, addMapping)
-    case message: AddAlias         => call(message, addAlias)
-    case message: RemoveCollection => call(message, removeCollection)
-    case message: RemoveAlias      => call(message, removeAlias)
-    case message: Initialization   => call(message, initialization)
+    case message: Search                  => call(message, search)
+    case message: AddCollection           => call(message, addCollection)
+    case message: AddMapping              => call(message, addMapping)
+    case message: AddAlias                => call(message, addAlias)
+    case message: RemoveCollection        => call(message, removeCollection)
+    case message: RemoveAlias             => call(message, removeAlias)
+    case message: Initialization          => call(message, initialization)
     case message: CheckOrCreateCollection => call(message, checkOrCreateCollection)
-    case message: CheckCollection => call(message, checkCollection)
-    case message: Any             => logger.error(s"Unknown message: $message")
+    case message: CheckCollection         => call(message, checkCollection)
+    case message: Any                     => logger.error(s"Unknown message: $message")
   }
 
   def initialization(message: Initialization): Boolean = {
 
     if (solrServer != null) {
       logger.warn("Solr - Client re-initialization, the before client will be close")
-      solrServer.shutdown()
+      solrServer.close()
     }
 
     solrConfig = message.solrConfigModel
@@ -78,11 +81,12 @@ class SolrAdminActor
     logger.info(s"Solr Kerberos is enabled with Jaas Path -> ${System.getProperty("java.security.auth.login.config")}")
 
     if (jaasPath != null) {
-      HttpClientUtil.setConfigurer(new Krb5HttpClientConfigurer())
+      HttpClientUtil.setHttpClientBuilder(new Krb5HttpClientBuilder().getBuilder)
     }
     httpClient = HttpClientUtil.createClient(new MapSolrParams(new util.HashMap[String, String]()))
 
-    solrServer = new CloudSolrServer(solrConfig.zookeeperConnections.toString)
+    val solrClientBuilder = CloudClientParams(solrConfig.zookeeperConnections.toString)
+    solrServer = SolrSupport.getNewSolrCloudClient(solrClientBuilder)
 
     try {
       solrServer.connect()
@@ -97,7 +101,7 @@ class SolrAdminActor
 
   override def postStop() = {
     if (solrServer != null)
-      solrServer.shutdown()
+      solrServer.close()
 
     solrServer = null
     logger.info("Solr - client stopped")
@@ -117,16 +121,15 @@ class SolrAdminActor
 
     val retErrors = listConfigSetResponse.getErrorMessages()
 
-    if(retErrors != null && retErrors.size() > 0) {
+    if (retErrors != null && retErrors.size() > 0) {
       logger.error(s"Error listing config sets. ${retErrors.toString}")
       false
-    }
-    else {
+    } else {
       listConfigSetResponse.getConfigSets().contains(name) match {
 
         case true => {
           deleteConfigSet(name, template) match {
-            case true => createConfigSet(name, template)
+            case true  => createConfigSet(name, template)
             case false => false
           }
         }
@@ -151,8 +154,7 @@ class SolrAdminActor
     if (retErrors != null && retErrors.size() > 0) {
       logger.error(s"Collection NOT successfully created. ${retErrors.toString}")
       false
-    }
-    else {
+    } else {
       logger.info("Config Set Created.")
       true
     }
@@ -178,8 +180,7 @@ class SolrAdminActor
     if (retErrors != null && retErrors.size() > 0) {
       logger.error(s"Collection NOT successfully created. ${retErrors.toString}")
       false
-    }
-    else {
+    } else {
       logger.info("Config Set Created.")
       true
     }
@@ -188,17 +189,15 @@ class SolrAdminActor
   private def addCollection(message: AddCollection): Boolean = {
 
     logger.info(
-      s"Add collection with name ${message.collection}, numShards ${message.numShards} and replica factor ${message.replicationFactor}")
+      s"Add collection with name ${message.collection}, numShards ${message.numShards} and replica factor ${message.replicationFactor}"
+    )
 
-    val numShards = message.numShards
+    val numShards         = message.numShards
     val replicationFactor = message.replicationFactor
+    val configName        = s"${SolrAdminActor.configSet}_${message.collection}"
 
-    val createRequest: CollectionAdminRequest.Create = new CollectionAdminRequest.Create()
-
-    createRequest.setConfigName(s"${SolrAdminActor.configSet}_${message.collection}")
-    createRequest.setCollectionName(message.collection)
-    createRequest.setNumShards(numShards)
-    createRequest.setReplicationFactor(replicationFactor)
+    val createRequest: CollectionAdminRequest.Create =
+      CollectionAdminRequest.createCollection(message.collection, configName, numShards, replicationFactor)
 
     val createResponse: CollectionAdminResponse = createRequest.process(solrServer)
 
@@ -209,53 +208,94 @@ class SolrAdminActor
     ret
   }
 
-  private def collectionNameWShardsAndReplica(collectionName: String,
-                                              numShards: Int,
-                                              replicationFactor: Int) =
+  private def collectionNameWShardsAndReplica(collectionName: String, numShards: Int, replicationFactor: Int) =
     s"${collectionName}_shard${numShards}_replica$replicationFactor"
 
   private def addMapping(message: AddMapping): Boolean = {
+    import spray.json
+    import spray.json.{JsValue, RootJsonFormat, _}
 
-    val zkStateReader = solrServer.getZkStateReader
 
-    val liveNodes = zkStateReader.getClusterState.getLiveNodes.asScala.toSeq
+    case class Type(name :String)
+    case class Field (name: String,
+      `type`: String,
+    indexed: Boolean = true,
+    stored: Boolean = true,
+    docValues: Option[Boolean] = None,
+    sortMissing: Option[String] = None,
+    multiValued: Option[Boolean] = None,
+    omitNorms: Option[Boolean] = None,
+    omitTermFreqAndPositions: Option[Boolean] = None,
+    omitPositions: Option[Boolean] = None,
+    termVectors: Option[Boolean] = None,
+    termPositions: Option[Boolean] = None,
+    termOffsets: Option[Boolean] = None,
+    termPayloads: Option[Boolean] = None,
+    required: Boolean = false,
+    useDocValuesAsStored: Option[Boolean] = None,
+    large: Option[Boolean] = None)
 
-    logger.info(s"Retrieved live-nodes from ZooKeeper: $liveNodes")
+    implicit  val fieldFormat: RootJsonFormat[Field] =  jsonFormat17(Field.apply)
 
-    if (liveNodes.isEmpty) {
-      val message = "No live-nodes retrieved from ZooKeeper"
-      logger.error(message)
-      throw new Exception(message)
+    val read = JsonParser(message.schema).convertTo[Seq[Field]]
+
+    val updates: Seq[SchemaRequest.Update] = read.map {
+
+      case Field(
+          name,
+          t,
+          indexed,
+          stored,
+          docValues,
+          sortMissing,
+          multiValued,
+          omitNorms,
+          omitTermFreqAndPositions,
+          omitPositions,
+          termVectors,
+          termPositions,
+          termOffsets,
+          termPayloads,
+          required,
+          useDocValuesAsStored,
+          large
+          ) =>
+        val map = mutable.Map[String, AnyRef]()
+
+        sortMissing.foreach { v =>
+            map += ("sortMissing" -> v)
+        }
+        map += ("name"     -> name)
+        map += ("indexed"  -> new lang.Boolean(indexed))
+        map += ("stored"   -> new lang.Boolean(stored))
+        map += ("required" -> new lang.Boolean(required))
+        map += ("type"     -> t)
+
+        docValues.foreach(v => map += ("docValues"                               -> new java.lang.Boolean(v)))
+        multiValued.foreach(v => map += ("multiValued"                           -> new java.lang.Boolean(v)))
+        omitNorms.foreach(v => map += ("omitNorms"                               -> new java.lang.Boolean(v)))
+        omitTermFreqAndPositions.foreach(v => map += ("omitTermFreqAndPositions" -> new java.lang.Boolean(v)))
+        omitPositions.foreach(v => map += ("omitPositions"                       -> new lang.Boolean(v)))
+        omitPositions.foreach(v => map += ("omitPositions"                       -> new lang.Boolean(v)))
+        termVectors.foreach(v => map += ("termVectors"                           -> new lang.Boolean(v)))
+        termPositions.foreach(v => map += ("termPositions"                       -> new lang.Boolean(v)))
+        termOffsets.foreach(v => map += ("termOffsets"                           -> new lang.Boolean(v)))
+        termPayloads.foreach(v => map += ("termPayloads"                         -> new lang.Boolean(v)))
+        useDocValuesAsStored.foreach(v => map += ("useDocValuesAsStored"         -> new lang.Boolean(v)))
+        large.foreach(v => map += ("large"                                       -> new lang.Boolean(v)))
+
+        new SchemaRequest.AddField(map.asJava)
     }
 
-    val liveNodeHead = zkStateReader.getBaseUrlForNodeName(liveNodes.head)
+    val schemaRequest = new SchemaRequest.MultiUpdate(updates.toList.asJava)
 
-    val uri =
-      s"$liveNodeHead/${collectionNameWShardsAndReplica(message.collection, message.numShards, message.replicationFactor)}/schema/fields"
+    val res = schemaRequest.process(solrServer, message.collection)
 
-    logger.info(s"$message, uri: '$uri'")
-    val httpRequest = new HttpPost(new URI(uri))
-    httpRequest.addHeader("Content-Type", "application/json")
-    httpRequest.addHeader("Accept", "application/json")
-    httpRequest.setEntity(new StringEntity(message.schema, org.apache.http.entity.ContentType.APPLICATION_JSON))
-    val requestConfig = RequestConfig.custom
-                                     .setSocketTimeout(servicesTimeout.duration.toMillis.toInt)
-                                     .setConnectTimeout(servicesTimeout.duration.toMillis.toInt)
-                                     .setConnectionRequestTimeout(servicesTimeout.duration.toMillis.toInt)
-                                     .build
-    httpRequest.setConfig(requestConfig)
-    val httpResponse = httpClient.execute(httpRequest)
-
-    val res = httpResponse.getStatusLine.getStatusCode
-    res match {
-      case HttpStatus.SC_OK =>
-        logger.info(s"Solr - Add Mapping response - statusCode: $res, message: $message")
-        true
-      case _ =>
-        val entityString = EntityUtils.toString(httpResponse.getEntity)
-        EntityUtils.consume(httpResponse.getEntity)
-        logger.error(s"Solr - Schema NOT created - statusCode: $res, message: $message, entity: $entityString")
-        false
+    if (res.getStatus != 200) {
+      logger.error("Cannot set schema for collection")
+      false
+    } else {
+      true
     }
   }
 
@@ -263,10 +303,7 @@ class SolrAdminActor
     logger.info(s"Add alias $message")
 
     val createRequest: CollectionAdminRequest.CreateAlias =
-      new CollectionAdminRequest.CreateAlias()
-
-    createRequest.setCollectionName(message.collection)
-    createRequest.setAliasedCollections(message.alias)
+      CollectionAdminRequest.createAlias(message.alias, message.collection)
 
     val createResponse: CollectionAdminResponse =
       createRequest.process(solrServer)
@@ -282,10 +319,7 @@ class SolrAdminActor
   private def removeCollection(message: RemoveCollection): Boolean = {
     logger.info(s"Remove collection $message")
 
-    val removeRequest: CollectionAdminRequest.Delete =
-      new CollectionAdminRequest.Delete()
-
-    removeRequest.setCollectionName(message.collection)
+    val removeRequest: CollectionAdminRequest.Delete = CollectionAdminRequest.deleteCollection(message.collection)
 
     val removeResponse: CollectionAdminResponse =
       removeRequest.process(solrServer)
@@ -301,10 +335,7 @@ class SolrAdminActor
   private def removeAlias(message: RemoveAlias): Boolean = {
     logger.info(s"Remove alias $message")
 
-    val removeRequest: CollectionAdminRequest.DeleteAlias =
-      new CollectionAdminRequest.DeleteAlias()
-
-    removeRequest.setCollectionName(message.collection)
+    val removeRequest: CollectionAdminRequest.DeleteAlias = CollectionAdminRequest.deleteAlias(message.collection)
 
     val removeResponse: CollectionAdminResponse =
       removeRequest.process(solrServer)
@@ -325,19 +356,12 @@ class SolrAdminActor
     if (!check)
       check =
         manageConfigSet(s"${SolrAdminActor.configSet}_${message.collection}", SolrAdminActor.template) &&
-        addCollection(
-          AddCollection(
-            message.collection,
-            message.numShards,
-            message.replicationFactor)
-        ) &&
-        addMapping(
-          AddMapping(
-            message.collection,
-            message.schema,
-            message.numShards,
-            message.replicationFactor)
-        )
+          addCollection(
+            AddCollection(message.collection, message.numShards, message.replicationFactor)
+          ) &&
+          addMapping(
+            AddMapping(message.collection, message.schema, message.numShards, message.replicationFactor)
+          )
 
     check
   }
@@ -346,7 +370,8 @@ class SolrAdminActor
     logger.info(s"Check collection: $message")
 
     val zkStateReader: ZkStateReader = solrServer.getZkStateReader
-    zkStateReader.updateClusterState(true)
+    zkStateReader.forciblyRefreshAllClusterStateSlow()
+
     val clusterState: ClusterState = zkStateReader.getClusterState
 
     val res = clusterState.getCollectionOrNull(message.collection) != null

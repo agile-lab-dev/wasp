@@ -18,7 +18,7 @@
 package org.apache.spark.sql.datasources.hbase
 
 import org.apache.avro.Schema
-import org.apache.hadoop.hbase.classification.InterfaceAudience
+import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.hbase.spark.datasources._
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.internal.Logging

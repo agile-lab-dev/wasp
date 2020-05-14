@@ -17,9 +17,9 @@
 
 package org.apache.spark.sql.kafka011
 
-import org.scalatest.PrivateMethodTester
 
 import org.apache.spark.sql.test.SharedSQLContext
+import org.scalatest.PrivateMethodTester
 
 class CachedKafkaConsumerSuite extends SharedSQLContext with PrivateMethodTester {
 

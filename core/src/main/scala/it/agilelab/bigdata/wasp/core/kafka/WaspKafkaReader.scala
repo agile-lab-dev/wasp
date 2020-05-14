@@ -6,8 +6,7 @@ import java.util.Properties
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
-import kafka.consumer.{Consumer, ConsumerConfig, KafkaStream}
-import kafka.javaapi.consumer.ConsumerConnector
+import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
 
 import scala.collection.convert.decorateAsScala._
 
@@ -18,29 +17,28 @@ class WaspKafkaReader[K, V](consumerConfig: Properties) extends Logging {
 
   logger.info(s"consumerConfig $consumerConfig")
 
-  private val consumer: ConsumerConnector = Consumer.createJavaConsumerConnector(new ConsumerConfig(consumerConfig))
+  private val consumer = new KafkaConsumer[String, String](consumerConfig)
 
   def subscribe(topic: String, listener: ActorRef) = {
-    val topicCount = new util.HashMap[String, Integer]()
-    topicCount.put(topic, 1)
-    val consumerStreams = consumer.createMessageStreams(topicCount)
-    val streams = consumerStreams.get(topic)
+
+    consumer.subscribe(util.Arrays.asList(topic))
 
     val thread = new Thread {
       override def run {
-        for (stream: KafkaStream[Array[Byte], Array[Byte]] <- streams.asScala ) {
-          val it = stream.iterator()
-          while (it.hasNext()) {
-            listener ! (topic, it.next().message())
+        while (true) {
+          val records: ConsumerRecords[String, String] = consumer.poll(100)
+          for (rec <- records.asScala) {
+            listener ! (topic, rec.value())
           }
         }
       }
     }
-    thread.start
+
+    thread.start()
 
   }
 
-  def close(): Unit = consumer.shutdown()
+  def close(): Unit = consumer.close()
 
 }
 

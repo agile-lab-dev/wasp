@@ -6,6 +6,7 @@ import java.util.regex.Pattern
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.HBaseConfiguration
+import org.apache.hadoop.hbase.client.ConnectionFactory
 import org.apache.hadoop.hbase.security.token.{TokenUtil, AuthenticationTokenIdentifier => HbaseTokenIdentifier}
 import org.apache.hadoop.security.Credentials
 import org.apache.spark.SparkConf
@@ -20,30 +21,26 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 
   override def obtainCredentials(hadoopConf: Configuration, sparkConf: SparkConf, creds: Credentials): Option[Long] = {
 
-    val providerConfig = HbaseCredentialsProviderConfiguration.fromSpark(sparkConf)
-
+    val providerConfig: HbaseCredentialsProviderConfiguration = HbaseCredentialsProviderConfiguration.fromSpark(sparkConf)
     logInfo(s"Provider config is: $providerConfig")
-
-    val hbaseConf = HbaseCredentialsProviderConfiguration.toHbaseConf(providerConfig)
+    val hbaseConf: Configuration = HbaseCredentialsProviderConfiguration.toHbaseConf(providerConfig)
 
     try {
       logInfo("Renewing token")
       //this method is deprecaded because it opens and closes a new connection
       //we want this behavior in order to be able to renew tokens
-      val token = TokenUtil.obtainToken(hbaseConf)
+      val conn = ConnectionFactory.createConnection(hbaseConf)
+      val token = TokenUtil.obtainToken(conn)
+
+      conn.close()
 
       val tokenIdentifier = token.decodeIdentifier()
-
       creds.addToken(HbaseTokenIdentifier.AUTH_TOKEN_TYPE, token)
-
       logInfo(s"Token renewed ${stringifyToken(tokenIdentifier)}")
-
       val renewDeadline = tokenIdentifier.getExpirationDate
-
       val renewDeadlineDate = new Date(renewDeadline)
 
       logInfo(s"renewal of hbase token calculated from token info will happen before $renewDeadlineDate")
-
 
       Some(renewDeadline)
 
@@ -57,7 +54,7 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 
   }
 
-  override def credentialsRequired(sparkConf: SparkConf, hadoopConf: Configuration): Boolean = super.credentialsRequired(sparkConf, hadoopConf)
+  override def credentialsRequired(hadoopConf: Configuration): Boolean = super.credentialsRequired(hadoopConf)
 }
 
 object HBaseWaspCredentialsProvider {

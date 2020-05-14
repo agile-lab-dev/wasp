@@ -23,7 +23,7 @@ object FakeDataTopicModel {
     keyFieldName = None,
     headersFieldName = None,
     valueFieldsNames = None,
-    useAvroSchemaManager = false,
+    useAvroSchemaManager = true,
     schema = JsonConverter.fromString(fakeDataSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 

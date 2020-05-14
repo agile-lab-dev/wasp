@@ -123,13 +123,13 @@ The steps to getting WASP up and running for development are pretty simple:
 - Build the image locally (it is a cloudera based deployment so we cannot distribute it)
 
 ```sh
-cd whitelabel/docker/cdh5/cdh-docker
-docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:5.16
+cd whitelabel/docker/cdh6/cdh-docker
+docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:6.3.2
 ```
 
  - Use the scripts to start WASP:
 
-    `whitelabel/docker/cdh5/start-wasp.sh`
+    `whitelabel/docker/cdh6/start-wasp.sh`
 
 *Gitlab* 
 
@@ -143,7 +143,7 @@ docker build . -t  registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:5.16
 
 - Use the scripts to start WASP:
     
-    `whitelabel/docker/cdh5/start-wasp.sh`
+    `whitelabel/docker/cdh6/start-wasp.sh`
     
 ##### Just try wasp without dev dependencies
 

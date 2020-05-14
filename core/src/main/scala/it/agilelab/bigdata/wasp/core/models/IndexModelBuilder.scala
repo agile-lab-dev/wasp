@@ -420,33 +420,33 @@ object IndexModelBuilder {
         * precisionStep="0" minimizes index size; precisionStep="8" (the default) enables more efficient range queries. For
         * single valued fields, use docValues="true" for efficient sorting.
         */
-      case object TrieDate extends Type[Instant]("date")
+      case object TrieDate extends Type[Instant]("pdate")
 
       /**
         * Double field (64-bit IEEE floating point). precisionStep="0" minimizes index size; precisionStep="8" (the default)
         * enables more efficient range queries. For single valued fields, use docValues="true" for efficient sorting.
         */
-      case object TrieDouble extends Type[Double]("tdouble")
+      case object TrieDouble extends Type[Double]("pdouble")
 
       /**
         * Floating point field (32-bit IEEE floating point) . precisionStep="0" enables efficient numeric sorting and
         * minimizes index size; precisionStep="8" (the default) enables efficient range queries. Use docValues="true"
         * for efficient sorting. For single valued fields, use docValues="true" for efficient sorting.
         */
-      case object TrieFloat extends Type[Float]("tfloat")
+      case object TrieFloat extends Type[Float]("pfloat")
 
       /**
         * Integer field (32-bit signed integer). precisionStep="0" enables efficient numeric sorting and minimizes index size;
         * precisionStep="8" (the default) enables efficient range queries. For single valued fields, use docValues="true"
         * for efficient sorting.
         */
-      case object TrieInt extends Type[Int]("tint")
+      case object TrieInt extends Type[Int]("pint")
 
       /**
         * Long field (64-bit signed integer). precisionStep="0" minimizes index size; precisionStep="8" (the default)
         * enables more efficient range queries. For single valued fields, use docValues="true" for efficient sorting.
         */
-      case object TrieLong extends Type[Double]("tlong")
+      case object TrieLong extends Type[Double]("plong")
 
     }
 

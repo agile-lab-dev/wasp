@@ -2,14 +2,15 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.io.ByteArrayOutputStream
 
+import it.agilelab.bigdata.wasp.consumers.spark.utils.EncodeUsingAvro.AvroSerializer
 import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{BinaryEncoder, EncoderFactory}
-import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression, UnaryExpression}
-import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
+import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
 import org.apache.spark.sql.types.{BinaryType, DataType}
+import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 
 case class EncodeUsingAvro[A](
                                child: Expression,
@@ -18,38 +19,38 @@ case class EncodeUsingAvro[A](
                              ) extends UnaryExpression
   with NonSQLExpression {
 
-  override def eval(input: InternalRow): Any =
-    throw new UnsupportedOperationException("Only code-generated evaluation is supported")
+  private lazy val serializer = new AvroSerializer[A](new Schema.Parser().parse(schema), toGenericRecord)
+
+  override protected def nullSafeEval(input: Any): Any = {
+    serializer.toSingleObjectEncoded(input.asInstanceOf[A])
+  }
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    val serializer = ctx.freshName("serializer")
     val serializerClass = classOf[EncodeUsingAvro.AvroSerializer[A]].getName
     // If a I add a reference to the schema instance I get a TaskNotSerializableException
     // therefore I opted for passing by the string representation, it should be done only
     // once since it is in the mutable variable initialization of the code-gen.
     // I saw that the same has been done in the others AvroSerializerExpressions
     val schemaStringRef = ctx.addReferenceObj("schemaStr", schema, "java.lang.String")
-    val schemaRef = ctx.freshName("schema")
+    val schemaRef = "schema"
     val schemaClass = classOf[Schema].getName
     val toGenericRecordRef =
       ctx.addReferenceObj("toGenericRecord", toGenericRecord, classOf[A => GenericRecord].getName)
 
-    val serializerInit =
-      s"""
-           $schemaClass $schemaRef = new $schemaClass.Parser().parse($schemaStringRef);
-           $serializer = new $serializerClass($schemaRef, $toGenericRecordRef);"""
+    ctx.addImmutableStateIfNotExists(schemaClass, schemaRef,
+      v => s"$v = new $schemaClass.Parser().parse($schemaStringRef);")
 
-    ctx.addMutableState(serializerClass, serializer, serializerInit)
+    val serializer = ctx.addMutableState(serializerClass, "serializer", v =>
+      s"$v = new $serializerClass($schemaRef, $toGenericRecordRef);")
 
     // Code to serialize. this code is copy pasted from kryo expression encoder
     val input = child.genCode(ctx)
-    val javaType = ctx.javaType(dataType)
+    val javaType = CodeGenerator.javaType(dataType)
     val serialize = s"$serializer.toSingleObjectEncoded(${input.value})"
 
-    val code =
-      s"""
-      ${input.code}
-      final $javaType ${ev.value} = ${input.isNull} ? ${ctx.defaultValue(javaType)} : $serialize;
+    val code = input.code +
+      code"""final $javaType ${ev.value} =
+        ${input.isNull} ? ${CodeGenerator.defaultValue(dataType)} : $serialize;
      """
     ev.copy(code = code, isNull = input.isNull)
   }
@@ -57,7 +58,9 @@ case class EncodeUsingAvro[A](
   override def dataType: DataType = BinaryType
 
 }
+
 object EncodeUsingAvro {
+
   /**
     * Stateful avro serializer: NOT thread safe
     */
