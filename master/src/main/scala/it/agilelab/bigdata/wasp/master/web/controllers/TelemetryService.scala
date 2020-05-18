@@ -5,23 +5,26 @@ import java.util.Date
 import java.util.regex.Pattern
 
 import it.agilelab.bigdata.wasp.core.SolrTelemetryIndexModel
-import it.agilelab.bigdata.wasp.core.models.{MetricEntry, Metrics, SourceEntry, Sources, TelemetryPoint, TelemetrySeries}
+import it.agilelab.bigdata.wasp.core.models._
 import org.apache.solr.client.solrj.util.ClientUtils
+import org.apache.solr.common.util.{NamedList, SimpleOrderedMap}
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 trait TelemetryService {
   def sources(search: String, size: Int): Future[Sources]
 
   def metrics(source: SourceEntry, search: String, size: Int): Future[Metrics]
 
-  def values(sourceEntry: SourceEntry,
-             metricEntry: MetricEntry,
-             startTimestamp: Instant,
-             endTimestamp: Instant,
-             size: Int
-            ): Future[TelemetrySeries]
+  def values(
+      sourceEntry: SourceEntry,
+      metricEntry: MetricEntry,
+      startTimestamp: Instant,
+      endTimestamp: Instant,
+      aggregate: Aggregate.Aggregate,
+      size: Int
+  ): Future[TelemetrySeries]
 
 }
 
@@ -43,72 +46,62 @@ class DefaultSolrTelemetryService(solrClient: SolrClient)(implicit ec: Execution
         val terms = response.getTermsResponse.getTerms("metricSearchKey")
         Metrics(
           terms.size(),
-          terms.asScala.map(_.getTerm.replaceAll(Pattern.quote(regex), "")).map(x => MetricEntry(source, x))
+          terms.asScala.map(_.getTerm.replaceAll(Pattern.quote(source.name + "|"), "")).map(x => MetricEntry(source, x))
         )
     }
   }
 
   override def values(
-                       sourceEntry: SourceEntry,
-                       metricEntry: MetricEntry,
-                       startTimestamp: Instant,
-                       endTimestamp: Instant,
-                       size: Int
-                     ): Future[TelemetrySeries] = {
+      sourceEntry: SourceEntry,
+      metricEntry: MetricEntry,
+      startTimestamp: Instant,
+      endTimestamp: Instant,
+      aggregate: Aggregate.Aggregate,
+      size: Int
+  ): Future[TelemetrySeries] = {
 
-    val increment = Duration.between(startTimestamp, endTimestamp).dividedBy(size).toMillis
+    val increment = Duration.between(startTimestamp, endTimestamp).dividedBy(size)
 
     val metricKey = ClientUtils.escapeQueryChars(s"${sourceEntry.name}|${metricEntry.name}")
 
-    val search = s"timestamp:[${startTimestamp} TO ${endTimestamp}] AND metricSearchKey:$metricKey"
+    val predicate = s"metricSearchKey:$metricKey"
 
-    val rowsPerQuery = 10000
+    solrClient
+      .runBucketAggregation(
+        collection = SolrTelemetryIndexModel.apply().name,
+        predicate = predicate,
+        timestampField = "timestamp",
+        valueField = "value",
+        aggregateFunction = aggregate.toString,
+        startTime = startTimestamp,
+        endTime = endTimestamp,
+        increment = increment
+      )
+      .map { response =>
+        val maybeMaxValue = Option(
+          response.getResponse
+            .get("facets")
+            .asInstanceOf[NamedList[Any]]
+            .get(s"${aggregate.toString}_value")
+            .asInstanceOf[NamedList[Any]]
+        )
 
-    def query(current: Long, page: Int, accumulator: Map[Long, (Int, Double)]): Future[Map[Long, (Int, Double)]] = {
-      solrClient.runPredicate(SolrTelemetryIndexModel().name, search, rowsPerQuery, page).flatMap { response =>
+        val maybeBucket = maybeMaxValue.map(_.get("buckets").asInstanceOf[java.util.ArrayList[SimpleOrderedMap[Any]]])
 
-        val total = response.getResults.getNumFound
+        val points = maybeBucket
+          .map { bucket =>
+            bucket.asScala.map { entry =>
+              val timestamp = entry.get("val").asInstanceOf[Date].toInstant
+              val result: java.lang.Double =
+                Option(entry.get(aggregate.toString).asInstanceOf[java.lang.Double]).getOrElse(java.lang.Double.NaN)
 
-        val updatedCounts: Map[Long, (Int, Double)] = response.getResults.asScala.filter(d => d.containsKey("value")).foldLeft(accumulator) {
-          case (acc, document) =>
-            val timestamp = document.getFieldValue("timestamp").asInstanceOf[Date].toInstant
-            val value = document.getFieldValue("value").asInstanceOf[Double]
-            val bucket = Duration.between(startTimestamp, timestamp).toMillis / increment
+              TelemetryPoint(timestamp, result)
+            }.toList
+          }
+          .getOrElse(List.empty)
 
-            val toBeUpdated = accumulator.getOrElse(bucket, (0, 0.0)) match {
-              case (count, total) => (count + 1, total + value)
-            }
-
-            acc + (bucket -> toBeUpdated)
-
-        }
-
-        if (total < current) {
-          query(current + rowsPerQuery, page + 1, updatedCounts)
-        } else {
-          Future.successful(updatedCounts)
-        }
-
+        TelemetrySeries(sourceEntry, metricEntry, points)
       }
-    }
-
-
-    query(0, 0, Map.empty).map { result =>
-
-
-      val series = result.toSeq.sortBy(_._1).map {
-        case (bucket, (samples, sum)) =>
-
-          val timestamp = startTimestamp.plus(Duration.ofMillis(increment * bucket))
-
-          val avg = sum / samples.toDouble
-
-          TelemetryPoint(timestamp, avg)
-      }
-
-      TelemetrySeries(sourceEntry, metricEntry, series)
-    }
-
 
   }
 }

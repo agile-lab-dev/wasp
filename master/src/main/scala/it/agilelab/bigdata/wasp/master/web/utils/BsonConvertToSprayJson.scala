@@ -7,7 +7,7 @@ import java.time.temporal.{TemporalAccessor, TemporalQuery}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
-import it.agilelab.bigdata.wasp.core.models.{LogEntry, _}
+import it.agilelab.bigdata.wasp.core.models.{Counts, LogEntry, _}
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, DatastoreProductJsonFormat, ZookeeperConnectionsConfig}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
@@ -120,6 +120,9 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataSto
       })
     }
   }
+
+  implicit lazy val countEntryFormat : RootJsonFormat[CountEntry] = jsonFormat2(CountEntry.apply)
+  implicit lazy val countsFormat : RootJsonFormat[Counts] = jsonFormat3(Counts.apply)
 
   implicit lazy val telemetryPointFormat: RootJsonFormat[TelemetryPoint] = jsonFormat2(TelemetryPoint.apply)
   implicit lazy val telemetrySeriesFormat: RootJsonFormat[TelemetrySeries] = jsonFormat3(TelemetrySeries.apply)

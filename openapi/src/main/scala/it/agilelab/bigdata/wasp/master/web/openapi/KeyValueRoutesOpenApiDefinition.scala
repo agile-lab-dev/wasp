@@ -75,7 +75,7 @@ trait KeyValueRoutesOpenApiDefinition
         new Operation()
           .operationId("list-keyvalue")
           .description("Retrieves all models used to write or read from KeyValue Stores")
-          .addTagsItem("documents")
+          .addTagsItem("keyvalue")
           .addParametersItem(pretty(ctx))
           .responses(
             new ApiResponses()

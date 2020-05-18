@@ -75,9 +75,9 @@ service hadoop-hdfs-namenode start
 service hadoop-hdfs-datanode start
 service hbase-master start
 service hbase-regionserver start
-# service hadoop-yarn-resourcemanager start
-# service hadoop-yarn-nodemanager start
-# service hadoop-mapreduce-historyserver start
+service hadoop-yarn-resourcemanager start
+service hadoop-yarn-nodemanager start
+service hadoop-mapreduce-historyserver start
 service kafka-server start
 service solr-server start
 service mongod start
@@ -85,7 +85,7 @@ service exim4 start
 
 echo "WAITING FOR HBASE MASTER TO GO UP"
 
-sleep 60
+sleep 60 
 
 echo "create_namespace 'AVRO'" | hbase shell -n
 echo "create 'AVRO:SCHEMA_REPOSITORY', '0'" | hbase shell -n

@@ -6,16 +6,32 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{LogEntry, Logs, MetricEntry, Metrics, SourceEntry, Sources, TelemetryPoint, TelemetrySeries}
+import it.agilelab.bigdata.wasp.core.models.Aggregate
+import it.agilelab.bigdata.wasp.core.models.{
+  LogEntry,
+  Logs,
+  MetricEntry,
+  Metrics,
+  SourceEntry,
+  Sources,
+  TelemetryPoint,
+  TelemetrySeries
+}
 
-trait TelemetryOpenApiComponentSupport extends ProductOpenApi with LangOpenApi with CollectionsOpenApi {
-  implicit lazy val sourcesOpenApi: ToOpenApiSchema[Sources] = product2(Sources.apply)
-  implicit lazy val metricsOpenApi: ToOpenApiSchema[Metrics] = product2(Metrics.apply)
+trait TelemetryOpenApiComponentSupport
+    extends ProductOpenApi
+    with LangOpenApi
+    with CollectionsOpenApi
+    with EnumOpenApi {
+  implicit lazy val sourcesOpenApi: ToOpenApiSchema[Sources]         = product2(Sources.apply)
+  implicit lazy val metricsOpenApi: ToOpenApiSchema[Metrics]         = product2(Metrics.apply)
   implicit lazy val sourceEntryOpenApi: ToOpenApiSchema[SourceEntry] = product1(SourceEntry.apply)
   implicit lazy val metricEntryOpenApi: ToOpenApiSchema[MetricEntry] = product2(MetricEntry.apply)
   implicit lazy val seriesOpenApi: ToOpenApiSchema[TelemetrySeries]  = product3(TelemetrySeries.apply)
   implicit lazy val telemetryPointOpenApi: ToOpenApiSchema[TelemetryPoint] =
     product2(TelemetryPoint.apply)
+
+  implicit lazy val aggregateOpenApi: ToOpenApiSchema[Aggregate.Value] = enumOpenApi(Aggregate)
 }
 
 trait TelemetrRoutesOpenApiDefinition
@@ -146,7 +162,7 @@ trait TelemetrRoutesOpenApiDefinition
               .in("query")
               .description(
                 "The number of buckets to aggregate data in, the start and end timestamp" +
-                  " will be divided in [size] number buckets and data will be averaged inside buckets"
+                  " will be divided in [size] number buckets "
               )
               .required(true)
               .schema(integerOpenApi.schema(ctx))
@@ -164,6 +180,13 @@ trait TelemetrRoutesOpenApiDefinition
               .in("query")
               .required(true)
               .schema(ToOpenApiSchema[Instant].schema(ctx))
+          )
+          .addParametersItem(
+            new Parameter()
+              .name("aggregate")
+              .in("query")
+              .required(true)
+              .schema(aggregateOpenApi.schema(ctx))
           )
           .responses(
             new ApiResponses()

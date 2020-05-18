@@ -4,14 +4,16 @@ import java.time.Instant
 
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
-import it.agilelab.bigdata.wasp.core.models.{MetricEntry, SourceEntry}
+import it.agilelab.bigdata.wasp.core.models.Aggregate.Aggregate
+import it.agilelab.bigdata.wasp.core.models.{Aggregate, MetricEntry, SourceEntry}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 
 class TelemetryController(telemetry: TelemetryService) extends Directives with JsonSupport {
 
   val parseInstant: Unmarshaller[String, Instant] =
     Unmarshaller.identityUnmarshaller[String].map(x => Instant.parse(x))
-
+  val parseAggregate: Unmarshaller[String, Aggregate] =
+    Unmarshaller.identityUnmarshaller[String].map(name => Aggregate.withName(name))
 
   def getRoutes: Route = pretty(events(_))
 
@@ -63,16 +65,25 @@ class TelemetryController(telemetry: TelemetryService) extends Directives with J
           parameter('size.as[Int]) { size =>
             parameter('startTimestamp.as[Instant](parseInstant)) { startTimestamp =>
               parameter('endTimestamp.as[Instant](parseInstant)) { endTimestamp =>
-                extractExecutionContext { implicit ec =>
-                  complete {
-                    import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
-                    import spray.json._
-                    telemetry
-                      .values(SourceEntry(source), MetricEntry(SourceEntry(source), metric), startTimestamp, endTimestamp, size)
-                      .map { x =>
-                        x.toJson
-                          .toAngularOkResponse(pretty)
-                      }
+                parameter('aggregate.as[Aggregate](parseAggregate)) { aggregate =>
+                  extractExecutionContext { implicit ec =>
+                    complete {
+                      import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
+                      import spray.json._
+                      telemetry
+                        .values(
+                          SourceEntry(source),
+                          MetricEntry(SourceEntry(source), metric),
+                          startTimestamp,
+                          endTimestamp,
+                          aggregate,
+                          size
+                        )
+                        .map { x =>
+                          x.toJson
+                            .toAngularOkResponse(pretty)
+                        }
+                    }
                   }
                 }
               }

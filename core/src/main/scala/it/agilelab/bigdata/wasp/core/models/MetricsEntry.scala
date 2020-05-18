@@ -20,3 +20,11 @@ case class TelemetrySeries(source: SourceEntry, metric: MetricEntry, series: Seq
 
 
 case class TelemetryPoint(timestamp: Instant, value: Double)
+
+object Aggregate extends Enumeration {
+  type Aggregate = Value
+  val Max: Aggregate = Value("max")
+  val Min: Aggregate = Value("min")
+  val Avg: Aggregate = Value("avg")
+  val Sum: Aggregate = Value("sum")
+}

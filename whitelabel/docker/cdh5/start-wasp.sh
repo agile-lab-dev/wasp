@@ -54,7 +54,7 @@ done
 cd $SCRIPT_DIR/../../..
 
 echo "Running sbt stage task..."
-# sbt -mem 2048 ${SBT_STAGE_COMMAND_PROJECTID}/stage
+sbt -mem 4096 ${SBT_STAGE_COMMAND_PROJECTID}/stage
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR
@@ -78,7 +78,7 @@ if [ "$PERSIST_FLAG" = false ]
     -v $SCRIPT_DIR/docker-entrypoint.sh:/docker-entrypoint.sh \
     -v $SCRIPT_DIR/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf \
     -v $SCRIPT_DIR/templates/hbase-site.xml:/templates/hbase-site.xml \
-    -p 8088:8088 -p 2891:2891 -p 8042:8042 -p 5005:5005 -p 5006:5006 -p 5007:5007 -p 5008:5008 -p8983:8983 -p4040:4040 -p4041:4041 \
+    -p 8088:8088 -p 20000:20000 -p 2891:2891 -p 8042:8042 -p 5005:5005 -p 5006:5006 -p 5007:5007 -p 5008:5008 -p8983:8983 -p4040:4040 -p4041:4041 \
     $DOCKER_IMAGE \
     bash /docker-entrypoint.sh
 

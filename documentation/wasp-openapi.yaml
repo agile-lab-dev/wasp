@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-317-implement-rest-apis-for-rawdata-SNAPSHOT
+  version: 2.26.0-319-implement-rest-apis-for-counts-summary-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -32,6 +32,8 @@ tags:
   description: operation related to keyvalue models management
 - name: raw
   description: operation related to raw models management
+- name: stats
+  description: Statistics about logs events and metrics
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -72,7 +74,7 @@ paths:
   /keyvalue:
     get:
       tags:
-      - documents
+      - keyvalue
       description: Retrieves all models used to write or read from KeyValue Stores
       operationId: list-keyvalue
       parameters:
@@ -224,6 +226,49 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     type: string
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /stats:
+    get:
+      tags:
+      - stats
+      description: Retrieve stats about logs, events and metrics
+      operationId: stats
+      parameters:
+      - name: startTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: endTimestamp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: size
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: stats matching query
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/Counts'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -1644,9 +1689,8 @@ paths:
           type: string
       - name: size
         in: query
-        description: The number of buckets to aggregate data in, the start and end
-          timestamp will be divided in [size] number buckets and data will be averaged
-          inside buckets
+        description: 'The number of buckets to aggregate data in, the start and end
+          timestamp will be divided in [size] number buckets '
         required: true
         schema:
           type: integer
@@ -1663,6 +1707,11 @@ paths:
         schema:
           type: string
           format: date-time
+      - name: aggregate
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Aggregate'
       responses:
         "200":
           description: Series data matching query
@@ -1920,7 +1969,7 @@ paths:
   /raw:
     get:
       tags:
-      - documents
+      - raw
       description: Retrieves all models used to write or read from Raw Stores
       operationId: list-raw
       parameters:
@@ -2003,6 +2052,23 @@ components:
             type: string
       xml:
         name: RawOptions
+        namespace: java://it.agilelab.bigdata.wasp.core.models
+    CountEntry:
+      required:
+      - timestamp
+      - count
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        count:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+      xml:
+        name: CountEntry
         namespace: java://it.agilelab.bigdata.wasp.core.models
     LegacyStreamingETLModel:
       required:
@@ -2490,6 +2556,28 @@ components:
       - gzip
       - snappy
       - lz4
+    Counts:
+      required:
+      - logs
+      - telemetry
+      - events
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountEntry'
+        telemetry:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountEntry'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountEntry'
+      xml:
+        name: Counts
+        namespace: java://it.agilelab.bigdata.wasp.core.models
     MlModelOnlyInfo:
       required:
       - name
@@ -3306,6 +3394,13 @@ components:
       xml:
         name: ProducerModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    Aggregate:
+      type: string
+      enum:
+      - max
+      - min
+      - avg
+      - sum
     DatastoreProduct:
       type: object
       properties:

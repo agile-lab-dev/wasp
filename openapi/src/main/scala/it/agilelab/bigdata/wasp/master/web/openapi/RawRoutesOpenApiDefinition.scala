@@ -72,7 +72,7 @@ trait RawRoutesOpenApiDefinition extends RawModelOpenApiDefinition with AngularR
         new Operation()
           .operationId("list-raw")
           .description("Retrieves all models used to write or read from Raw Stores")
-          .addTagsItem("documents")
+          .addTagsItem("raw")
           .addParametersItem(pretty(ctx))
           .responses(
             new ApiResponses()
