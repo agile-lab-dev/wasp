@@ -14,6 +14,8 @@ service hadoop-mapreduce-historyserver start
 service kafka-server start
 service solr-server start
 service mongod start
+service nifi start
+service nifi-registry start
 
 echo "WAITING FOR HBASE MASTER TO GO UP"
 

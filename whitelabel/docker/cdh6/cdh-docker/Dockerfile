@@ -100,4 +100,14 @@ RUN set -ax \
     && dpkg --force-confold -i mongo*.deb \
     && chmod +x /etc/init.d/mongod
 
+# NIFI
+
+RUN set -ax \
+    && wget https://mirror.nohup.it/apache/nifi/1.11.4/nifi-1.11.4-bin.tar.gz && tar -xzvf nifi-1.11.4-bin.tar.gz && rm nifi-1.11.4-bin.tar.gz && mv nifi-1.11.4 /nifi \
+    && wget https://mirror.nohup.it/apache/nifi/nifi-registry/nifi-registry-0.6.0/nifi-registry-0.6.0-bin.tar.gz && tar -xzvf nifi-registry-0.6.0-bin.tar.gz && rm nifi-registry-0.6.0-bin.tar.gz && mv nifi-registry-0.6.0 /nifi-registry \
+    && wget https://mirror.nohup.it/apache/nifi/1.11.4/nifi-toolkit-1.11.4-bin.tar.gz && tar -xzvf nifi-toolkit-1.11.4-bin.tar.gz && rm nifi-toolkit-1.11.4-bin.tar.gz && mv nifi-toolkit-1.11.4 /nifi-toolkit
+
+RUN /nifi/bin/nifi.sh install
+RUN /nifi-registry/bin/nifi-registry.sh install
+
 CMD [ "/bin/bash", "/usr/bin/entrypoint.sh" ]
