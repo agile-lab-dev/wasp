@@ -99,82 +99,86 @@ object Dependencies {
   // ===================================================================================================================
   // Compile dependencies
   // ===================================================================================================================
-  val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
-  val akkaCamel = "com.typesafe.akka" %% "akka-camel" % Versions.akka
-  val akkaCluster = "com.typesafe.akka" %% "akka-cluster" % Versions.akka
-  val akkaClusterTools = "com.typesafe.akka" %% "akka-cluster-tools" % Versions.akka
-  val akkaContrib = "com.typesafe.akka" %% "akka-contrib" % Versions.akka
-  val akkaHttp = "com.typesafe.akka" %% "akka-http" % Versions.akkaHttp
-  val akkaHttpSpray = "com.typesafe.akka" %% "akka-http-spray-json" % Versions.akkaHttp
-  val akkaRemote = "com.typesafe.akka" %% "akka-remote" % Versions.akka
-  val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Versions.akka
-  val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka
-  val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit" % Versions.akka % Test
-  val akkaHttpTestKit = "com.typesafe.akka" %% "akka-http-testkit" % Versions.akkaHttp % Test
-  val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
-  val avro = "org.apache.avro" % "avro" % Versions.avro
+  val akkaActor          = "com.typesafe.akka"  %% "akka-actor"           % Versions.akka
+  val akkaCamel          = "com.typesafe.akka"  %% "akka-camel"           % Versions.akka
+  val akkaCluster        = "com.typesafe.akka"  %% "akka-cluster"         % Versions.akka
+  val akkaClusterTools   = "com.typesafe.akka"  %% "akka-cluster-tools"   % Versions.akka
+  val akkaContrib        = "com.typesafe.akka"  %% "akka-contrib"         % Versions.akka
+  val akkaHttp           = "com.typesafe.akka"  %% "akka-http"            % Versions.akkaHttp
+  val akkaHttpSpray      = "com.typesafe.akka"  %% "akka-http-spray-json" % Versions.akkaHttp
+  val akkaRemote         = "com.typesafe.akka"  %% "akka-remote"          % Versions.akka
+  val akkaSlf4j          = "com.typesafe.akka"  %% "akka-slf4j"           % Versions.akka
+  val akkaStream         = "com.typesafe.akka"  %% "akka-stream"          % Versions.akka
+  val akkaStreamTestkit  = "com.typesafe.akka"  %% "akka-stream-testkit"  % Versions.akka % Test
+  val akkaHttpTestKit    = "com.typesafe.akka"  %% "akka-http-testkit"    % Versions.akkaHttp % Test
+  val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3"         % Versions.apacheCommonsLang3Version // remove?
+  val avro               = "org.apache.avro"    % "avro"                  % Versions.avro
   // avro4s requires a json4s version incompatible with wasp, downstream projects confirmed that this exclusion does
   // not create issues with darwin and avro parsing
-  val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion excludeAll ExclusionRule("org.json4s")
-  val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion excludeAll ExclusionRule("org.json4s")
-  val darwinCore = "it.agilelab" %% "darwin-core" % Versions.darwin
+  val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion excludeAll ExclusionRule(
+    "org.json4s"
+  )
+  val avro4sJson = "com.sksamuel.avro4s" % "avro4s-json_2.11" % Versions.avro4sVersion excludeAll ExclusionRule(
+    "org.json4s"
+  )
+  val darwinCore           = "it.agilelab" %% "darwin-core" % Versions.darwin
   val darwinHBaseConnector = "it.agilelab" %% "darwin-hbase-connector" % Versions.darwin
-  val darwinMockConnector = "it.agilelab" %% "darwin-mock-connector" % Versions.darwin
-  val camelKafka = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
-  val camelWebsocket = "org.apache.camel" % "camel-websocket" % Versions.camel
-  val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
-  val elasticSearch = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
-  val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark
-  val guava = "com.google.guava" % "guava" % Versions.guava
-  val hbaseClient = "org.apache.hbase" % "hbase-client" % Versions.hbase hbaseExclusion
-  val hbaseCommon = "org.apache.hbase" % "hbase-common" % Versions.hbase hbaseExclusion
-  val hbaseServer = "org.apache.hbase" % "hbase-server" % Versions.hbase hbaseExclusion
-  val hbaseMapreduce = "org.apache.hbase" % "hbase-mapreduce" % Versions.hbase hbaseExclusion
-  val httpClient = "org.apache.httpcomponents" % "httpclient" % Versions.httpcomponents
-  val httpCore = "org.apache.httpcomponents" % "httpcore" % Versions.httpcomponents
-  val httpmime = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
-  val javaxMail = "javax.mail" % "mail" % "1.4"
-  val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
-  val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
-  val json4sCore = "org.json4s" %% "json4s-core" % Versions.json4s
-  val json4sJackson = "org.json4s" %% "json4s-jackson" % Versions.json4s
-  val json4sNative = "org.json4s" %% "json4s-native" % Versions.json4s
-  val kafka = ("org.apache.kafka" %% "kafka" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
-  val kafkaClients = ("org.apache.kafka" % "kafka-clients" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
+  val darwinMockConnector  = "it.agilelab" %% "darwin-mock-connector" % Versions.darwin
+  val camelKafka           = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
+  val camelWebsocket       = "org.apache.camel" % "camel-websocket" % Versions.camel
+  val commonsCli           = "commons-cli" % "commons-cli" % Versions.commonsCli
+  val elasticSearch        = "org.elasticsearch" % "elasticsearch" % Versions.elasticSearch
+  val elasticSearchSpark   = "org.elasticsearch" %% "elasticsearch-spark-20" % Versions.elasticSearchSpark
+  val guava                = "com.google.guava" % "guava" % Versions.guava
+  val hbaseClient          = "org.apache.hbase" % "hbase-client" % Versions.hbase hbaseExclusion
+  val hbaseCommon          = "org.apache.hbase" % "hbase-common" % Versions.hbase hbaseExclusion
+  val hbaseServer          = "org.apache.hbase" % "hbase-server" % Versions.hbase hbaseExclusion
+  val hbaseMapreduce       = "org.apache.hbase" % "hbase-mapreduce" % Versions.hbase hbaseExclusion
+  val httpClient           = "org.apache.httpcomponents" % "httpclient" % Versions.httpcomponents
+  val httpCore             = "org.apache.httpcomponents" % "httpcore" % Versions.httpcomponents
+  val httpmime             = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
+  val javaxMail            = "javax.mail" % "mail" % "1.4"
+  val jodaConvert          = "org.joda" % "joda-convert" % Versions.jodaConvert
+  val jodaTime             = "joda-time" % "joda-time" % Versions.jodaTime
+  val json4sCore           = "org.json4s" %% "json4s-core" % Versions.json4s
+  val json4sJackson        = "org.json4s" %% "json4s-jackson" % Versions.json4s
+  val json4sNative         = "org.json4s" %% "json4s-native" % Versions.json4s
+  val kafka                = ("org.apache.kafka" %% "kafka" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
+  val kafkaClients         = ("org.apache.kafka" % "kafka-clients" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
 //  val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
-  val log4jApi = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
-  val log4jCore = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional,test"
-  val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional,test"
-  val log4j1 = "log4j" % "log4j" % Versions.log4j1
-  val metrics = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
-  val mongodbScala = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
-  val netty = "io.netty" % "netty" % Versions.netty
-  val nettySpark = "io.netty" % "netty" % Versions.nettySpark
-  val nettyAll = "io.netty" % "netty-all" % Versions.nettyAllSpark
-  val quartz = "org.quartz-scheduler" % "quartz" % Versions.quartz
-  val scalaj = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
-  val scaldi = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
-  val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4j
-  val solrCore = "org.apache.solr" % "solr-core" % Versions.solr solrExclusion
-  val solrj = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
-  val sparkCatalyst = "org.apache.spark" %% "spark-catalyst" % Versions.spark
-  val sparkCore = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
-  val sparkMLlib = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
-  val sparkSolr = ("it.agilelab.bigdata.spark" % "spark-solr" % Versions.sparkSolr).sparkExclusions.solrExclusion
-  val sparkTags = "org.apache.spark" %% "spark-tags" % Versions.spark sparkExclusions
-  val sparkStreaming= "org.apache.spark" %% "spark-streaming" % Versions.spark sparkExclusions
-  val sparkSQL = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
-  val sparkYarn = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
-  val swaggerCore = "io.swagger.core.v3" % "swagger-core" % "2.1.2"
-  val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
-	val velocity = "org.apache.velocity" % "velocity" % "1.7"
-  val zkclient = "com.101tec" % "zkclient" % "0.3"
+  val log4jApi                  = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
+  val log4jCore                 = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional,test"
+  val log4jSlf4jImpl            = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j % "optional,test"
+  val log4j1                    = "log4j" % "log4j" % Versions.log4j1
+  val metrics                   = "com.yammer.metrics" % "metrics-core" % "2.2.0" // TODO upgrade?
+  val mongodbScala              = "org.mongodb.scala" %% "mongo-scala-driver" % Versions.mongodbScala
+  val netty                     = "io.netty" % "netty" % Versions.netty
+  val nettySpark                = "io.netty" % "netty" % Versions.nettySpark
+  val nettyAll                  = "io.netty" % "netty-all" % Versions.nettyAllSpark
+  val quartz                    = "org.quartz-scheduler" % "quartz" % Versions.quartz
+  val scalaj                    = "org.scalaj" %% "scalaj-http" % "1.1.4" // TODO remove?
+  val scaldi                    = "org.scaldi" %% "scaldi-akka" % "0.3.3" // TODO remove?
+  val slf4jApi                  = "org.slf4j" % "slf4j-api" % Versions.slf4j
+  val solrCore                  = "org.apache.solr" % "solr-core" % Versions.solr solrExclusion
+  val solrj                     = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
+  val sparkCatalyst             = "org.apache.spark" %% "spark-catalyst" % Versions.spark
+  val sparkCore                 = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
+  val sparkMLlib                = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
+  val sparkSolr                 = ("it.agilelab.bigdata.spark" % "spark-solr" % Versions.sparkSolr).sparkExclusions.solrExclusion
+  val sparkTags                 = "org.apache.spark" %% "spark-tags" % Versions.spark sparkExclusions
+  val sparkStreaming            = "org.apache.spark" %% "spark-streaming" % Versions.spark sparkExclusions
+  val sparkSQL                  = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
+  val sparkYarn                 = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
+  val swaggerCore               = "io.swagger.core.v3" % "swagger-core" % "2.1.2"
+  val typesafeConfig            = "com.typesafe" % "config" % "1.3.0"
+  val velocity                  = "org.apache.velocity" % "velocity" % "1.7"
+  val zkclient                  = "com.101tec" % "zkclient" % "0.3"
   val scalaParserAndCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % Versions.scalaParserAndCombinators
-  val mySql = "mysql" % "mysql-connector-java" % "5.1.6"
-  val nameOf = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
-
-
-  val solrjMasterClient = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
+  val mySql                     = "mysql" % "mysql-connector-java" % "5.1.6"
+  val nameOf                    = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
+  val solrjMasterClient         = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
+  val sttpCore                  = "com.softwaremill.sttp.client" %% "core" % Versions.sttpVersion
+  val sttpJson4s                = "com.softwaremill.sttp.client" %% "json4s" % Versions.sttpVersion
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(
@@ -210,15 +214,15 @@ object Dependencies {
   // Test dependencies
   // ===================================================================================================================
   val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % Versions.akka % Test
-  val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test
-  val joptSimpleTests = "net.sf.jopt-simple" % "jopt-simple" % Versions.jopt % Test
-  val kafkaTests = kafka % Test kafkaJacksonExclusions
-  val scalaCheck = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck % Test
-  val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
+  val akkaTestKit        = "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test
+  val joptSimpleTests    = "net.sf.jopt-simple" % "jopt-simple" % Versions.jopt % Test
+  val kafkaTests         = kafka % Test kafkaJacksonExclusions
+  val scalaCheck         = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck % Test
+  val scalaTest          = "org.scalatest" %% "scalatest" % Versions.scalaTest % Test
   val sparkCatalystTests = sparkCatalyst % Test classifier "tests"
-  val sparkCoreTests = sparkCore % Test classifier "tests"
-  val sparkSQLTests = sparkSQL % Test classifier "tests"
-  val sparkTagsTests = sparkTags % Test classifier "tests"
+  val sparkCoreTests     = sparkCore % Test classifier "tests"
+  val sparkSQLTests      = sparkSQL % Test classifier "tests"
+  val sparkTagsTests     = sparkTags % Test classifier "tests"
 
   // grouped dependencies, for convenience =============================================================================
   val test = Seq(akkaTestKit, akkaClusterTestKit, scalaTest)
@@ -243,10 +247,10 @@ object Dependencies {
     sparkTagsTests,
     jaxRs,
     scalaTest
-  )).map(excludeLog4j)++ log4j :+ log4j1
+  )).map(excludeLog4j) ++ log4j :+ log4j1
 
   val core = (akka ++
-		avro4s ++
+    avro4s ++
     logging ++
     time ++
     json ++
@@ -259,8 +263,7 @@ object Dependencies {
     mongodbScala :+
     sparkSQL :+
     typesafeConfig :+
-    nameOf
-    ).map(excludeLog4j).map(excludeNetty)
+    nameOf).map(excludeLog4j).map(excludeNetty)
 
   val producers = (
     akka ++
@@ -268,7 +271,7 @@ object Dependencies {
       akkaHttp :+
       akkaStream :+
       netty
-    ).map(excludeLog4j) ++ log4j :+ log4j1
+  ).map(excludeLog4j) ++ log4j :+ log4j1
 
   val consumers_spark = (
     akka ++
@@ -279,22 +282,22 @@ object Dependencies {
       spark :+
       quartz :+
       nameOf :+
-      velocity    //TODO: evaluate this is legal
-    ).map(excludeNetty).map(excludeLog4j) ++
+      velocity //TODO: evaluate this is legal
+  ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
     log4j1 :+
     nettySpark :+
     nettyAll :+
     guava
 
-  val consumers_rt = (
+  val consumers_rt: Seq[sbt.ModuleID] = (
     akka :+
       akkaCamel :+
       camelKafka :+
       camelWebsocket :+
       kafka :+
       netty
-    ).map(excludeLog4j) ++ log4j
+  ).map(excludeLog4j) ++ log4j
 
   val master = (
     akka :+
@@ -306,7 +309,7 @@ object Dependencies {
       akkaStreamTestkit :+
       solrjMasterClient :+
       httpClient
-    ).map(excludeLog4j) ++ log4j
+  ).map(excludeLog4j) ++ log4j
 
   val plugin_elastic_spark = Seq(
     elasticSearchSpark
@@ -315,14 +318,13 @@ object Dependencies {
   val plugin_hbase_spark = (
     hbase :+
       scalaTest
-    ).map(excludeNetty)
+  ).map(excludeNetty)
 
   val plugin_kafka_spark = Seq(
     guava,
     kafkaClients,
     sparkSQL,
     sparkTags
-
   ).map(excludeLog4j).map(excludeNetty)
 
   val plugin_solr_spark = Seq(
@@ -332,28 +334,36 @@ object Dependencies {
     sparkSolr
   ).map(excludeNetty)
 
-
   val plugin_mongo_spark = Seq(
     "org.mongodb.spark" %% "mongo-spark-connector" % "2.2.7",
-    "org.mongodb" % "mongo-java-driver" % "3.12.0"
+    "org.mongodb"       % "mongo-java-driver"      % "3.12.0"
   ).map(excludeNetty)
 
-	val plugin_mailer_spark = Seq (
+  val plugin_mailer_spark = Seq(
     javaxMail,
     scalaTest
-	)
+  )
 
   val openapi = swaggerCore
+
+  val nifiClient: Seq[sbt.ModuleID] = (
+    akka :+
+      akkaHttp :+
+      akkaHttpSpray :+
+      sttpCore :+
+      sttpJson4s:+
+      json4sJackson
+  )
 
   def kmsTest = Seq(
     transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
     libraryDependencies ++= Seq(
-      ("org.codehaus.jackson" % "jackson-core-asl" % "1.9.13") % "test",
-      ("org.codehaus.jackson" % "jackson-jaxrs" % "1.9.13") % "test",
-      ("org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13") % "test",
-      ("org.eclipse.jetty" % "jetty-security" % "9.3.25.v20180904" % "test"),
-      ("org.apache.hadoop" % "hadoop-common" % Versions.kms) % "test",
-      ("org.apache.hadoop" % "hadoop-kms" % Versions.kms) % "test",
+      ("org.codehaus.jackson" % "jackson-core-asl"   % "1.9.13")          % "test",
+      ("org.codehaus.jackson" % "jackson-jaxrs"      % "1.9.13")          % "test",
+      ("org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13")          % "test",
+      ("org.eclipse.jetty"    % "jetty-security"     % "9.3.25.v20180904" % "test"),
+      ("org.apache.hadoop"    % "hadoop-common"      % Versions.kms)      % "test",
+      ("org.apache.hadoop"    % "hadoop-kms"         % Versions.kms)      % "test",
       ("org.apache.hadoop" % "hadoop-kms" % Versions.kms).classifier("tests") % "test"
     )
   )

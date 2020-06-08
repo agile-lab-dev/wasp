@@ -44,4 +44,5 @@ object Versions {
   val sparkSolr = "3.8.0"
   val kms = s"3.0.0-$cdh6"
   val scalaParserAndCombinators = "1.0.4"
+  val sttpVersion = "2.1.2"
 }

@@ -96,9 +96,9 @@ lazy val plugin_mongo_spark = Project("wasp-plugin-mongo-spark", file("plugin-mo
   .settings(libraryDependencies ++= Dependencies.plugin_mongo_spark)
 
 lazy val plugin_mailer_spark = Project("wasp-plugin-mailer-spark", file("plugin-mailer-spark"))
-	.settings(Settings.commonSettings: _*)
-	.dependsOn(consumers_spark)
-	.settings(libraryDependencies ++= Dependencies.plugin_mailer_spark)
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(consumers_spark)
+  .settings(libraryDependencies ++= Dependencies.plugin_mailer_spark)
 
 
 /* Yarn  */
@@ -134,27 +134,34 @@ lazy val spark = Project("wasp-spark", file("spark"))
   .settings(Settings.commonSettings: _*)
   .aggregate(spark_telemetry_plugin)
 
+/* nifi */
+
+lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
+  .settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies ++= Dependencies.nifiClient)
+
 
 /* Framework + Plugins */
 
 lazy val wasp = Project("wasp", file("."))
-	.settings(Settings.commonSettings: _*)
-	.aggregate(core,
-	           master,
-	           producers,
-	           consumers_spark,
-	           consumers_rt,
-	           plugin_console_spark,
-	           plugin_hbase_spark,
-	           plugin_jdbc_spark,
-	           plugin_kafka_spark,
-	           plugin_raw_spark,
-	           plugin_solr_spark,
-		         yarn,
-					   spark,
-             plugin_mailer_spark,
-             spark_sql_kafka_0_11,
-					   openapi)
+  .settings(Settings.commonSettings: _*)
+  .aggregate(core,
+    master,
+    producers,
+    consumers_spark,
+    consumers_rt,
+    plugin_console_spark,
+    plugin_hbase_spark,
+    plugin_jdbc_spark,
+    plugin_kafka_spark,
+    plugin_raw_spark,
+    plugin_solr_spark,
+    yarn,
+    spark,
+    plugin_mailer_spark,
+    spark_sql_kafka_0_11,
+    openapi,
+    nifi_client)
 
 /* WhiteLabel */
 
@@ -188,7 +195,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_jdbc_spark)
   .dependsOn(plugin_kafka_spark)
   .dependsOn(plugin_mailer_spark)
-	.dependsOn(plugin_raw_spark)
+  .dependsOn(plugin_raw_spark)
   .dependsOn(plugin_solr_spark)
   .dependsOn(plugin_mongo_spark)
   .dependsOn(spark_telemetry_plugin)
@@ -211,14 +218,14 @@ lazy val whiteLabel = Project("wasp-whitelabel", file("whitelabel"))
   .aggregate(whiteLabelModels, whiteLabelMaster, whiteLabelProducers, whiteLabelConsumersSpark, whiteLabelConsumersRt)
 
 lazy val openapi = Project("wasp-openapi", file("openapi"))
-	.settings(Settings.commonSettings: _*)
+  .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies += Dependencies.swaggerCore)
   .settings(
 
-		generateOpenApi := {
-			(runMain in Compile).toTask(" it.agilelab.bigdata.wasp.master.web.openapi.GenerateOpenApi documentation/wasp-openapi.yaml").value
-		},
+    generateOpenApi := {
+      (runMain in Compile).toTask(" it.agilelab.bigdata.wasp.master.web.openapi.GenerateOpenApi documentation/wasp-openapi.yaml").value
+    },
 
-		generateOpenApi := (generateOpenApi dependsOn (compile in Compile)).value
-	)
-	.dependsOn(core)
+    generateOpenApi := (generateOpenApi dependsOn (compile in Compile)).value
+  )
+  .dependsOn(core)
