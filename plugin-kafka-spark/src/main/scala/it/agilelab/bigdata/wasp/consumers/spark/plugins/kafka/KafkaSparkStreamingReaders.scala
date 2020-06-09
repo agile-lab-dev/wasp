@@ -1,27 +1,28 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroDeserializerExpression, SchemaConverters, SparkUtils}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroDeserializerExpression, SparkUtils}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{MultiTopicModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models.{
+  MultiTopicModel,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  TopicModel
+}
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
-import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.avro.Schema
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
-import org.apache.spark.storage.StorageLevel
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
 import scala.collection.mutable
-import scala.collection.JavaConverters._
 
 object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReader with Logging {
 
@@ -45,16 +46,16 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     * - the "avro" and "json" topic data types will output the columns specified by their schemas
     * - the "plaintext" and "bytes" topic data types output a "value" column with the contents as string or bytes respectively
     */
-  override def createStructuredStream(etl: StructuredStreamingETLModel,
-                                      streamingReaderModel: StreamingReaderModel)
-                                     (implicit ss: SparkSession): DataFrame = {
+  override def createStructuredStream(etl: StructuredStreamingETLModel, streamingReaderModel: StreamingReaderModel)(
+      implicit ss: SparkSession
+  ): DataFrame = {
 
     logger.info(s"Creating stream from input: $streamingReaderModel of ETL: $etl")
 
     // extract the topic model
     logger.info(s"""Retrieving topic datastore model with name "${streamingReaderModel.datastoreModelName}"""")
     val topicBL = new TopicBLImp(WaspDB.getDB)
-    val topics = retrieveTopicModelsRecursively(topicBL, streamingReaderModel.datastoreModelName)
+    val topics  = retrieveTopicModelsRecursively(topicBL, streamingReaderModel.datastoreModelName)
     MultiTopicModel.validateTopicModels(topics)
     logger.info(s"Retrieved topic model(s): $topics")
 
@@ -64,9 +65,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
     // check or create
     val allCheckOrCreateResult = topics map { topic =>
-      ??[Boolean](
-        WaspSystem.kafkaAdminActor,
-        CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))
+      ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))
     } reduce (_ && _)
 
     if (allCheckOrCreateResult) {
@@ -78,15 +77,17 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       // rate limit as is, otherwise multiply by triggerIntervalMs/1000
       // if the rate limit is not set, do not set maxOffsetsPerTrigger
       val triggerIntervalMs = SparkUtils.getTriggerIntervalMs(ConfigManager.getSparkStreamingConfig, etl)
-      val maybeRateLimit: Option[Long] = streamingReaderModel.rateLimit.map(x => if (triggerIntervalMs == 0l) x else (triggerIntervalMs / 1000d * x).toLong)
+      val maybeRateLimit: Option[Long] = streamingReaderModel.rateLimit.map(x =>
+        if (triggerIntervalMs == 0L) x else (triggerIntervalMs / 1000d * x).toLong
+      )
       val maybeMaxOffsetsPerTrigger = maybeRateLimit.map(rateLimit => ("maxOffsetsPerTrigger", rateLimit.toString))
 
       // calculate the options for the DataStreamReader
       val options = mutable.Map.empty[String, String]
       // start with the base options
       options ++= Seq(
-        "subscribe" -> topics.map(_.name).mkString(","),
-        "kafka.bootstrap.servers" -> kafkaConfig.connections.map(_.toString).mkString(","),
+        "subscribe"                   -> topics.map(_.name).mkString(","),
+        "kafka.bootstrap.servers"     -> kafkaConfig.connections.map(_.toString).mkString(","),
         "kafkaConsumer.pollTimeoutMs" -> kafkaConfig.ingestRateToMills().toString
       )
       // apply rate limit if it exists
@@ -120,7 +121,11 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           }
 
           val avroToRowConversion = AvroDeserializerExpression(
-            col("value").expr, prototypeTopic.getJsonSchema, darwinConf, avoidReevaluation = true)
+            col("value").expr,
+            prototypeTopic.getJsonSchema,
+            darwinConf,
+            avoidReevaluation = true
+          )
 
           // parse avro bytes into a column, lift the contents up one level and push metadata into nested column
           df.withColumn("value_parsed", new Column(avroToRowConversion))
@@ -130,7 +135,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         case "json" => {
           // prepare the udf
           val byteArrayToJson: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
-          val byteArrayToJsonUDF = udf(byteArrayToJson)
+          val byteArrayToJsonUDF                     = udf(byteArrayToJson)
 
           // convert bytes to json string, parse the json into a column, lift the contents up one level and push
           // metadata into nested column
@@ -142,7 +147,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         case "plaintext" => {
           // prepare the udf
           val byteArrayToString: Array[Byte] => String = StringToByteArrayUtil.byteArrayToString
-          val byteArrayToStringUDF = udf(byteArrayToString)
+          val byteArrayToStringUDF                     = udf(byteArrayToString)
 
           // convert bytes to string and push metadata into nested column
           df.withColumn("value_string", byteArrayToStringUDF(col("value")))
@@ -152,7 +157,8 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           // push metadata into nested column and keep value as is
           df.selectExpr(metadataSelectExpr, "value")
         }
-        case _ => throw new UnsupportedOperationException(s"""Unsupported topic data type "${prototypeTopic.topicDataType}"""")
+        case _ =>
+          throw new UnsupportedOperationException(s"""Unsupported topic data type "${prototypeTopic.topicDataType}"""")
       }
 
       logger.debug(s"DataFrame schema: ${ret.schema.treeString}")
@@ -171,8 +177,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       topicDatastoreModel match {
         case topicModel: TopicModel => Seq(topicModel)
         case multiTopicModel: MultiTopicModel =>
-          multiTopicModel
-            .topicModelNames
+          multiTopicModel.topicModelNames
             .flatMap(innerRetrieveTopicModelsRecursively)
       }
     }
@@ -182,7 +187,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
   private def getDataType(schema: String): DataType = {
     val schemaAvro = new Schema.Parser().parse(schema)
-    SchemaConverters.toSqlType(schemaAvro).dataType
+    AvroSchemaConverters.toSqlType(schemaAvro).dataType
   }
 }
 
@@ -192,7 +197,9 @@ object KafkaSparkLegacyStreamingReader extends SparkLegacyStreamingReader with L
     * Kafka configuration
     */
   //TODO: check warning (not understood)
-  def createStream(group: String, accessType: String, topic: TopicModel)(implicit ssc: StreamingContext): DStream[String] =
-      throw new Exception("Legacy Streaming was removed, migrate to structured streaming")
+  def createStream(group: String, accessType: String, topic: TopicModel)(
+      implicit ssc: StreamingContext
+  ): DStream[String] =
+    throw new Exception("Legacy Streaming was removed, migrate to structured streaming")
 
 }

@@ -3,7 +3,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 import java.nio.ByteBuffer
 
 import com.typesafe.config.Config
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SchemaConverters.IncompatibleSchemaException
+import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
+import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters.IncompatibleSchemaException
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema
@@ -39,16 +40,18 @@ import scala.collection.mutable
   *                          once for each occurence of ti you see in the physical plan.
   */
 case class AvroDeserializerExpression(
-                                       child: Expression,
-                                       schemaAvroJson: String,
-                                       darwinConfig: Option[Config],
-                                       avoidReevaluation: Boolean = true) extends UnaryExpression with ExpectsInputTypes {
+    child: Expression,
+    schemaAvroJson: String,
+    darwinConfig: Option[Config],
+    avoidReevaluation: Boolean = true
+) extends UnaryExpression
+    with ExpectsInputTypes {
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
 
-  @transient lazy private val avroSchemaManager = darwinConfig.map(AvroSchemaManagerFactory.initialize)
+  @transient private lazy val avroSchemaManager = darwinConfig.map(AvroSchemaManagerFactory.initialize)
 
-  @transient lazy private val userSchema = new Schema.Parser().parse(schemaAvroJson)
+  @transient private lazy val userSchema = new Schema.Parser().parse(schemaAvroJson)
 
   private lazy val datumReader = new GenericDatumReader[GenericRecord](userSchema)
 
@@ -56,19 +59,22 @@ case class AvroDeserializerExpression(
 
   val mapDatumReader: mutable.HashMap[Long, GenericDatumReader[GenericRecord]] = mutable.HashMap.empty
 
-  override def dataType: DataType = SchemaConverters.toSqlType(userSchema).dataType
+  override def dataType: DataType = AvroSchemaConverters.toSqlType(userSchema).dataType
 
   // Set as non-deterministic in order to avoid re-execution of the deserialization
   // See CollapseProject + ProjectExec
   override lazy val deterministic: Boolean = !avoidReevaluation
 
   def avroDatumReader(avroValue: SeekableByteArrayInput): GenericDatumReader[GenericRecord] = {
-    avroSchemaManager.flatMap { _ =>
-      AvroSingleObjectEncodingUtils.extractId(avroValue).right.toOption
-    }.map { schemaId =>
-      val schema = avroSchemaManager.get.getSchema(schemaId).get
-      mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[GenericRecord](schema, userSchema))
-    }.getOrElse(datumReader)
+    avroSchemaManager
+      .flatMap { _ =>
+        AvroSingleObjectEncodingUtils.extractId(avroValue).right.toOption
+      }
+      .map { schemaId =>
+        val schema = avroSchemaManager.get.getSchema(schemaId).get
+        mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[GenericRecord](schema, userSchema))
+      }
+      .getOrElse(datumReader)
   }
 
   // We assume it returns an InternalRow since the input is a GenericRecord...
@@ -77,44 +83,38 @@ case class AvroDeserializerExpression(
   }
 
   override protected def nullSafeEval(input: Any): Any = {
-    val avroValue = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
+    val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
     val avroReader = avroDatumReader(avroValue)
 
-    val decoder = DecoderFactory.get.binaryDecoder(avroValue, null)
+    val decoder               = DecoderFactory.get.binaryDecoder(avroValue, null)
     val record: GenericRecord = avroReader.read(null, decoder)
 
     convertRecordToInternalRow(record)
   }
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    val decoderClassName = classOf[BinaryDecoder].getName
+    val decoderClassName        = classOf[BinaryDecoder].getName
     val decoderFactoryClassName = classOf[DecoderFactory].getName
-    val decoderName = ctx.addMutableState(
-        decoderClassName,
-        "decoder",
-        varName => s"""$varName = null;""")
+    val decoderName             = ctx.addMutableState(decoderClassName, "decoder", varName => s"""$varName = null;""")
 
     val genericRecordClassName = classOf[GenericRecord].getName
     val genericRecordName =
-      ctx.addMutableState(
-        genericRecordClassName,
-        "genRecord",
-        varName => s"""$varName = null;""")
+      ctx.addMutableState(genericRecordClassName, "genRecord", varName => s"""$varName = null;""")
 
     val avroDecoderExpression =
       ctx.addReferenceObj("avroDecoderExpr", this, this.getClass.getName)
 
     val genericReaderClassName = classOf[GenericDatumReader[GenericRecord]].getName
-    val genericReaderName = ctx.freshName("genericReader")
+    val genericReaderName      = ctx.freshName("genericReader")
 
     val seekableClassName = classOf[SeekableByteArrayInput].getName
-    val seekableInput = ctx.freshName("seekableInput")
+    val seekableInput     = ctx.freshName("seekableInput")
 
     val internalRowClassName = classOf[InternalRow].getName
 
     val childEval = child.genCode(ctx)
-    ev.copy(code =
-      code"""
+    ev.copy(
+      code = code"""
             |${childEval.code}
             |$internalRowClassName ${ev.value} = null;
             |if (!${childEval.isNull}) {
@@ -128,12 +128,15 @@ case class AvroDeserializerExpression(
             |  }
             |  ${ev.value} = $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
             |}
-       """.stripMargin, isNull = childEval.isNull)
+       """.stripMargin,
+      isNull = childEval.isNull
+    )
   }
 
   @inline
   val convertString: Any => AnyRef = { item =>
-    if (item == null) null else {
+    if (item == null) null
+    else {
       val avroUtf8 = item.asInstanceOf[Utf8]
       val byteBuffer = if (avroUtf8.getByteLength != avroUtf8.getBytes.length) {
         avroUtf8.getBytes.take(avroUtf8.getByteLength)
@@ -152,19 +155,17 @@ case class AvroDeserializerExpression(
     * @param targetSqlType    Target catalyst sql type after the conversion.
     * @return returns a converter function to convert row in avro format to GenericRow of catalyst.
     */
-  private def createConverterToSQL(
-                                    sourceAvroSchema: Schema,
-                                    targetSqlType: DataType): AnyRef => AnyRef = {
+  private def createConverterToSQL(sourceAvroSchema: Schema, targetSqlType: DataType): AnyRef => AnyRef = {
 
-    def createConverter(avroSchema: Schema,
-                        sqlType: DataType, path: List[String]): AnyRef => AnyRef = {
+    def createConverter(avroSchema: Schema, sqlType: DataType, path: List[String]): AnyRef => AnyRef = {
       val avroType = avroSchema.getType
       (sqlType, avroType) match {
         case (StringType, STRING) | (StringType, ENUM) =>
-          (item: AnyRef) => convertString(item)
-        // Byte arrays are reused by avro, so we have to make a copy of them.
-        case (IntegerType, INT) | (BooleanType, BOOLEAN) | (DoubleType, DOUBLE) |
-             (FloatType, FLOAT) | (LongType, LONG) =>
+          (item: AnyRef) =>
+            convertString(item)
+          // Byte arrays are reused by avro, so we have to make a copy of them.
+        case (IntegerType, INT) | (BooleanType, BOOLEAN) | (DoubleType, DOUBLE) | (FloatType, FLOAT) |
+            (LongType, LONG) =>
           identity
         case (BinaryType, FIXED) =>
           (item: AnyRef) =>
@@ -179,22 +180,21 @@ case class AvroDeserializerExpression(
               null
             } else {
               val byteBuffer = item.asInstanceOf[ByteBuffer]
-              val bytes = new Array[Byte](byteBuffer.remaining)
+              val bytes      = new Array[Byte](byteBuffer.remaining)
               byteBuffer.get(bytes)
               bytes
             }
 
         case (struct: StructType, RECORD) =>
-          val length = struct.fields.length
-          val converters = new Array[AnyRef => AnyRef](length)
+          val length           = struct.fields.length
+          val converters       = new Array[AnyRef => AnyRef](length)
           val avroFieldIndexes = new Array[Int](length)
-          var i = 0
+          var i                = 0
           while (i < length) {
-            val sqlField = struct.fields(i)
+            val sqlField  = struct.fields(i)
             val avroField = avroSchema.getField(sqlField.name)
             if (avroField != null) {
-              val converter = createConverter(avroField.schema(), sqlField.dataType,
-                path :+ sqlField.name)
+              val converter = createConverter(avroField.schema(), sqlField.dataType, path :+ sqlField.name)
               converters(i) = converter
               avroFieldIndexes(i) = avroField.pos()
             } else if (!sqlField.nullable) {
@@ -202,7 +202,8 @@ case class AvroDeserializerExpression(
                 s"Cannot find non-nullable field ${sqlField.name} at path ${path.mkString(".")} " +
                   "in Avro schema\n" +
                   s"Source Avro schema: $sourceAvroSchema.\n" +
-                  s"Target Catalyst type: $targetSqlType")
+                  s"Target Catalyst type: $targetSqlType"
+              )
             }
             i += 1
           }
@@ -214,7 +215,7 @@ case class AvroDeserializerExpression(
               val record = item.asInstanceOf[GenericRecord]
 
               val result = new Array[Any](length)
-              var i = 0
+              var i      = 0
               while (i < converters.length) {
                 if (converters(i) != null) {
                   val converter = converters(i)
@@ -226,9 +227,8 @@ case class AvroDeserializerExpression(
             }
           }
         case (arrayType: ArrayType, ARRAY) =>
-          val elementConverter = createConverter(avroSchema.getElementType, arrayType.elementType,
-            path)
-          val allowsNull = arrayType.containsNull
+          val elementConverter = createConverter(avroSchema.getElementType, arrayType.elementType, path)
+          val allowsNull       = arrayType.containsNull
           // Specialize for simple types in order to use the unsafe representation and avoid copies
           arrayType.elementType match {
             case BooleanType =>
@@ -276,21 +276,24 @@ case class AvroDeserializerExpression(
                   ArrayData.toArrayData(avroArray.toArray)
                 }
               }
-            case _ => (item: AnyRef) => {
-              if (item == null) {
-                null
-              } else {
-                val convertedItems = item.asInstanceOf[java.lang.Iterable[AnyRef]].asScala.map { element =>
-                  if (element == null && !allowsNull) {
-                    throw new RuntimeException(s"Array value at path ${path.mkString(".")} is not " +
-                      "allowed to be null")
-                  } else {
-                    elementConverter(element)
+            case _ =>
+              (item: AnyRef) => {
+                if (item == null) {
+                  null
+                } else {
+                  val convertedItems = item.asInstanceOf[java.lang.Iterable[AnyRef]].asScala.map { element =>
+                    if (element == null && !allowsNull) {
+                      throw new RuntimeException(
+                        s"Array value at path ${path.mkString(".")} is not " +
+                          "allowed to be null"
+                      )
+                    } else {
+                      elementConverter(element)
+                    }
                   }
+                  ArrayData.toArrayData(convertedItems)
                 }
-                ArrayData.toArrayData(convertedItems)
               }
-            }
           }
 
           (item: AnyRef) => {
@@ -299,8 +302,10 @@ case class AvroDeserializerExpression(
             } else {
               val convertedItems = item.asInstanceOf[java.lang.Iterable[AnyRef]].asScala.map { element =>
                 if (element == null && !allowsNull) {
-                  throw new RuntimeException(s"Array value at path ${path.mkString(".")} is not " +
-                    "allowed to be null")
+                  throw new RuntimeException(
+                    s"Array value at path ${path.mkString(".")} is not " +
+                      "allowed to be null"
+                  )
                 } else {
                   elementConverter(element)
                 }
@@ -317,7 +322,8 @@ case class AvroDeserializerExpression(
               ArrayBasedMapData(
                 item.asInstanceOf[java.util.Map[AnyRef, AnyRef]],
                 convertString,
-                (x: Any) => valueConverter(x.asInstanceOf[AnyRef]))
+                (x: Any) => valueConverter(x.asInstanceOf[AnyRef])
+              )
             }
           }
         case (sparkSqlType, UNION) =>
@@ -328,55 +334,59 @@ case class AvroDeserializerExpression(
             } else {
               createConverter(Schema.createUnion(remainingUnionTypes.asJava), sparkSqlType, path)
             }
-          } else avroSchema.getTypes.asScala.map(_.getType) match {
-            case Seq(_) => createConverter(avroSchema.getTypes.get(0), sparkSqlType, path)
-            case Seq(a, b) if Set(a, b) == Set(INT, LONG) && sparkSqlType == LongType =>
-              (item: AnyRef) => {
-                item match {
-                  case null => null
-                  case l: java.lang.Long => l
-                  case i: java.lang.Integer => new java.lang.Long(i.longValue())
-                }
-              }
-            case Seq(a, b) if Set(a, b) == Set(FLOAT, DOUBLE) && sparkSqlType == DoubleType =>
-              (item: AnyRef) => {
-                item match {
-                  case null => null
-                  case d: java.lang.Double => d
-                  case f: java.lang.Float => new java.lang.Double(f.doubleValue())
-                }
-              }
-            case other =>
-              sparkSqlType match {
-                case t: StructType if t.fields.length == avroSchema.getTypes.size =>
-                  val fieldConverters = t.fields.zip(avroSchema.getTypes.asScala).map {
-                    case (field, schema) =>
-                      createConverter(schema, field.dataType, path :+ field.name)
+          } else
+            avroSchema.getTypes.asScala.map(_.getType) match {
+              case Seq(_) => createConverter(avroSchema.getTypes.get(0), sparkSqlType, path)
+              case Seq(a, b) if Set(a, b) == Set(INT, LONG) && sparkSqlType == LongType =>
+                (item: AnyRef) => {
+                  item match {
+                    case null                 => null
+                    case l: java.lang.Long    => l
+                    case i: java.lang.Integer => new java.lang.Long(i.longValue())
                   }
-
-                  (item: AnyRef) =>
-                    if (item == null) {
-                      null
-                    } else {
-                      val i = GenericData.get().resolveUnion(avroSchema, item)
-                      val converted = new Array[Any](fieldConverters.length)
-                      converted(i) = fieldConverters(i)(item)
-                      new GenericInternalRow(converted)
+                }
+              case Seq(a, b) if Set(a, b) == Set(FLOAT, DOUBLE) && sparkSqlType == DoubleType =>
+                (item: AnyRef) => {
+                  item match {
+                    case null                => null
+                    case d: java.lang.Double => d
+                    case f: java.lang.Float  => new java.lang.Double(f.doubleValue())
+                  }
+                }
+              case other =>
+                sparkSqlType match {
+                  case t: StructType if t.fields.length == avroSchema.getTypes.size =>
+                    val fieldConverters = t.fields.zip(avroSchema.getTypes.asScala).map {
+                      case (field, schema) =>
+                        createConverter(schema, field.dataType, path :+ field.name)
                     }
-                case _ => throw new IncompatibleSchemaException(
-                  s"Cannot convert Avro schema to catalyst type because schema at path " +
-                    s"${path.mkString(".")} is not compatible " +
-                    s"(avroType = $other, sqlType = $sparkSqlType). \n" +
-                    s"Source Avro schema: $sourceAvroSchema.\n" +
-                    s"Target Catalyst type: $targetSqlType")
-              }
-          }
+
+                    (item: AnyRef) =>
+                      if (item == null) {
+                        null
+                      } else {
+                        val i         = GenericData.get().resolveUnion(avroSchema, item)
+                        val converted = new Array[Any](fieldConverters.length)
+                        converted(i) = fieldConverters(i)(item)
+                        new GenericInternalRow(converted)
+                      }
+                  case _ =>
+                    throw new IncompatibleSchemaException(
+                      s"Cannot convert Avro schema to catalyst type because schema at path " +
+                        s"${path.mkString(".")} is not compatible " +
+                        s"(avroType = $other, sqlType = $sparkSqlType). \n" +
+                        s"Source Avro schema: $sourceAvroSchema.\n" +
+                        s"Target Catalyst type: $targetSqlType"
+                    )
+                }
+            }
         case (left, right) =>
           throw new IncompatibleSchemaException(
             s"Cannot convert Avro schema to catalyst type because schema at path " +
               s"${path.mkString(".")} is not compatible (avroType = $left, sqlType = $right). \n" +
               s"Source Avro schema: $sourceAvroSchema.\n" +
-              s"Target Catalyst type: $targetSqlType")
+              s"Target Catalyst type: $targetSqlType"
+          )
       }
     }
 

@@ -6,6 +6,7 @@ import java.nio.ByteBuffer
 import java.util
 
 import com.typesafe.config.Config
+import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema.Type
@@ -113,7 +114,7 @@ case class AvroSerializerExpression private(child: Expression,
 
   @transient private lazy val actualSchema: Schema = externalSchema.getOrElse {
     val builder = SchemaBuilder.record(structName).namespace(namespace)
-    SchemaConverters.convertStructToAvro(inputSchema, builder, namespace)
+    AvroSchemaConverters.convertStructToAvro(inputSchema, builder, namespace)
   }
 
   // convenient method for accessing the schema in codegen
@@ -268,7 +269,7 @@ case class AvroSerializerExpression private(child: Expression,
       case structType: StructType =>
         val builder = SchemaBuilder.record(structName).namespace(recordNamespace)
         val schema: Schema = externalSchema.map(eventualSubSchemaFromUnionWithNull).getOrElse(
-          SchemaConverters.convertStructToAvro(structType, builder, recordNamespace)
+          AvroSchemaConverters.convertStructToAvro(structType, builder, recordNamespace)
         )
 
         val fieldConverters = structType.fields.filter(f => {
