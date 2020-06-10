@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-319-implement-rest-apis-for-counts-summary-SNAPSHOT
+  version: 2.26.0-335-define-nifi-stateless-apis-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -34,6 +34,9 @@ tags:
   description: operation related to raw models management
 - name: stats
   description: Statistics about logs events and metrics
+- name: editor
+  description: operation related to stateless nifi, used as editor and pipegraphs
+    creation
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -1454,6 +1457,37 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /editor/nifi:
+    post:
+      tags:
+      - editor
+      description: Create a new process group on a stateless nifi instance, returns
+        a processgroupId and the instance url.
+      operationId: new-editor
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: The new editor instance
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/NifiStatelessInstanceModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /pipegraphs/{pipegraphname}/start:
     post:
       tags:
@@ -1798,6 +1832,60 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /editor/pipegraph:
+    post:
+      tags:
+      - editor
+      description: Pipegraph generation from RawPipegraph
+      operationId: post-pipegraph
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          text/json:
+            schema:
+              required:
+              - name
+              - description
+              - owner
+              - structuredStreamingComponents
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                owner:
+                  type: string
+                structuredStreamingComponents:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/StructuredStreamingETLDTO'
+              xml:
+                name: PipegraphDTO
+                namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+      responses:
+        "200":
+          description: Pipegraph generation result
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: string
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /documents/{documentname}:
     get:
       tags:
@@ -1861,6 +1949,42 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/SparkStreamingConfigModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /editor/nifi/{processgroupid}:
+    put:
+      tags:
+      - editor
+      description: Confirm that a process group edited on a editor instance it's ready
+        to be stored.
+      operationId: commit-processgroup
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: processgroupid
+        in: Path
+        description: The process group id to commit
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Result of the commit
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/CodeResponse'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2053,6 +2177,19 @@ components:
       xml:
         name: RawOptions
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    TopicDTO:
+      required:
+      - name
+      - topicName
+      type: object
+      properties:
+        name:
+          type: string
+        topicName:
+          type: string
+      xml:
+        name: TopicDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     CountEntry:
       required:
       - timestamp
@@ -2182,6 +2319,19 @@ components:
       xml:
         name: KeyValueModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    CodeResponse:
+      required:
+      - name
+      - code
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+      xml:
+        name: CodeResponse
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     RawDataStoreConf:
       required:
       - inputKeyColumn
@@ -2230,6 +2380,35 @@ components:
       xml:
         name: DashboardModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    NifiStatelessInstanceModel:
+      required:
+      - name
+      - url
+      - flowId
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        flowId:
+          type: string
+      xml:
+        name: NifiStatelessInstanceModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+    StrategyClassDTO:
+      required:
+      - name
+      - className
+      type: object
+      properties:
+        name:
+          type: string
+        className:
+          type: string
+      xml:
+        name: StrategyClassDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     MultiTopicModel:
       required:
       - name
@@ -2721,6 +2900,43 @@ components:
       xml:
         name: KryoSerializerConfig
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+    StructuredStreamingETLDTO:
+      required:
+      - name
+      - group
+      - streamingInput
+      - streamingOutput
+      - strategy
+      - triggerIntervalMs
+      type: object
+      properties:
+        name:
+          type: string
+        group:
+          type: string
+        streamingInput:
+          type: string
+        streamingOutput:
+          discriminator:
+            propertyName: outputType
+          oneOf:
+          - $ref: '#/components/schemas/TopicDTO'
+          - $ref: '#/components/schemas/RawDataDTO'
+          - $ref: '#/components/schemas/IndexDTO'
+          - $ref: '#/components/schemas/KeyValueDTO'
+        strategy:
+          discriminator:
+            propertyName: strategyType
+          oneOf:
+          - $ref: '#/components/schemas/FreeCodeDTO'
+          - $ref: '#/components/schemas/FlowNifiDTO'
+          - $ref: '#/components/schemas/StrategyClassDTO'
+        triggerIntervalMs:
+          type: integer
+          format: int64
+      xml:
+        name: StructuredStreamingETLDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     WriterModel:
       required:
       - name
@@ -3029,6 +3245,32 @@ components:
       xml:
         name: SourceEntry
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    RawDataDTO:
+      required:
+      - name
+      - destinationPath
+      type: object
+      properties:
+        name:
+          type: string
+        destinationPath:
+          type: string
+      xml:
+        name: RawDataDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+    IndexDTO:
+      required:
+      - name
+      - indexName
+      type: object
+      properties:
+        name:
+          type: string
+        indexName:
+          type: string
+      xml:
+        name: IndexDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     DataStoreCategoryEnum:
       type: string
       enum:
@@ -3059,6 +3301,19 @@ components:
       xml:
         name: ElasticConfigModel
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+    KeyValueDTO:
+      required:
+      - name
+      - keyValueName
+      type: object
+      properties:
+        name:
+          type: string
+        keyValueName:
+          type: string
+      xml:
+        name: KeyValueDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     PrefixAndTimeBoundKeyValueMatchingStrategy:
       required:
       - separator
@@ -3204,6 +3459,19 @@ components:
       xml:
         name: KafkaConfigModel
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+    FreeCodeDTO:
+      required:
+      - name
+      - code
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+      xml:
+        name: FreeCodeDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     TopicModel:
       required:
       - name
@@ -3516,6 +3784,19 @@ components:
       xml:
         name: TelemetryConfigModel
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+    FlowNifiDTO:
+      required:
+      - name
+      - nifiFlow
+      type: object
+      properties:
+        name:
+          type: string
+        nifiFlow:
+          type: string
+      xml:
+        name: FlowNifiDTO
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     ExactRawMatchingStrategy:
       required:
       - dataframeKeyMatchingExpression

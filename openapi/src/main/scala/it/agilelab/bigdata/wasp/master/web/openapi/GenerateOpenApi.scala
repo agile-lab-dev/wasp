@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths, StandardOpenOption}
+import java.nio.file.{Files, Paths, StandardOpenOption}
 
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
@@ -22,7 +22,8 @@ object GenerateOpenApi
     with TelemetrRoutesOpenApiDefinition
     with KeyValueRoutesOpenApiDefinition
     with RawRoutesOpenApiDefinition
-    with StatsRoutesOpenApiDefinition {
+    with StatsRoutesOpenApiDefinition
+    with EditorRoutesOpenApiDefinition {
 
   def main(args: Array[String]): Unit = {
 
@@ -34,7 +35,8 @@ object GenerateOpenApi
         mlmodelsRoutes(ctx) ++ configRoute(ctx) ++
         logsRoutes(ctx) ++ eventsRoutes(ctx) ++
         telemetryRoutes(ctx) ++ keyValueRoutes(ctx) ++
-        rawRoutes(ctx) ++ statsRoutes(ctx)
+        rawRoutes(ctx) ++ statsRoutes(ctx) ++
+        editorRoutes(ctx)
 
       val openapi = new OpenAPI()
         .addServersItem(
@@ -114,6 +116,11 @@ object GenerateOpenApi
           new Tag()
             .name("stats")
             .description("Statistics about logs events and metrics")
+        )
+        .addTagsItem(
+          new Tag()
+            .name("editor")
+            .description("operation related to stateless nifi, used as editor and pipegraphs creation")
         )
 
       routes.foreach {
