@@ -6,8 +6,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.dstream.DStream
 
-case class ReaderKey(sourceTypeName: String, name: String)
-
 trait Strategy extends Serializable {
 
   val ALTER_DATE_DAY = "alter_date_day"

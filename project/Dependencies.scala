@@ -174,7 +174,7 @@ object Dependencies {
   val velocity                  = "org.apache.velocity" % "velocity" % "1.7"
   val zkclient                  = "com.101tec" % "zkclient" % "0.3"
   val scalaParserAndCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % Versions.scalaParserAndCombinators
-  val scalaCompiler = "org.scala-lang" % "scala-compiler" % Versions.scala
+  val scalaCompiler             = "org.scala-lang" % "scala-compiler" % Versions.scala
   val mySql                     = "mysql" % "mysql-connector-java" % "5.1.6"
   val nameOf                    = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
   val solrjMasterClient         = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
@@ -266,6 +266,11 @@ object Dependencies {
     typesafeConfig :+
     nameOf).map(excludeLog4j).map(excludeNetty)
 
+
+  val scala_compiler = (
+    test :+
+    scalaCompiler ).map(excludeLog4j).map(excludeNetty)
+
   val producers = (
     akka ++
       test :+
@@ -283,8 +288,7 @@ object Dependencies {
       spark :+
       quartz :+
       nameOf :+
-      velocity :+   //TODO: evaluate this is legal
-      scalaCompiler
+      velocity   //TODO: evaluate this is legal
   ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
     log4j1 :+

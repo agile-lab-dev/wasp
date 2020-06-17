@@ -16,5 +16,5 @@ object ConfigBL {
   lazy val keyValueBL: KeyValueBL = new KeyValueBLImp(WaspDB.getDB)
   lazy val batchSchedulersBL: BatchSchedulersBL = new BatchSchedulersBLImp(WaspDB.getDB)
   lazy val documentBL: DocumentBL = new DocumentBLImpl(WaspDB.getDB)
-
+  lazy val freeCodeBL : FreeCodeBL = new FreeCodeBLImpl(WaspDB.getDB)
 }

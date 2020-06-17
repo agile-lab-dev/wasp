@@ -23,7 +23,8 @@ object GenerateOpenApi
     with KeyValueRoutesOpenApiDefinition
     with RawRoutesOpenApiDefinition
     with StatsRoutesOpenApiDefinition
-    with EditorRoutesOpenApiDefinition {
+    with EditorRoutesOpenApiDefinition
+    with FreeCodeRoutesOpenApiDefinition {
 
   def main(args: Array[String]): Unit = {
 
@@ -36,7 +37,7 @@ object GenerateOpenApi
         logsRoutes(ctx) ++ eventsRoutes(ctx) ++
         telemetryRoutes(ctx) ++ keyValueRoutes(ctx) ++
         rawRoutes(ctx) ++ statsRoutes(ctx) ++
-        editorRoutes(ctx)
+        editorRoutes(ctx) ++ freeCodeRoutes(ctx)
 
       val openapi = new OpenAPI()
         .addServersItem(
@@ -121,7 +122,11 @@ object GenerateOpenApi
           new Tag()
             .name("editor")
             .description("operation related to stateless nifi, used as editor and pipegraphs creation")
-        )
+        ).addTagsItem(
+        new Tag()
+          .name("freeCode")
+          .description("operation related to free code strategy management")
+      )
 
       routes.foreach {
         case (key, value) => openapi.path(key, value)

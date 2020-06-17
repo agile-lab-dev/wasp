@@ -18,7 +18,7 @@ import it.agilelab.bigdata.wasp.core.eventengine.Event
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventPipegraphModel
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
 import it.agilelab.bigdata.wasp.core.models.{IndexModel, MultiTopicModel, PipegraphModel, ProducerModel, TopicModel}
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtilsDefault, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
@@ -114,6 +114,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Document_C.getRoute ~
       KeyValueController.getRoute ~
       RawController.getRoute ~
+      new FreeCodeController(FreeCodeDBServiceDefault,FreeCodeCompilerUtilsDefault).getRoute ~
       new LogsController(new DefaultSolrLogsService(solrClient)(solrExecutionContext)).getRoutes ~
       new EventController(new DefaultSolrEventsService(solrClient)(solrExecutionContext)).getRoutes ~
       new TelemetryController(new DefaultSolrTelemetryService(solrClient)(solrExecutionContext)).getRoutes ~

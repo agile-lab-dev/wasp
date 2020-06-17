@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-335-define-nifi-stateless-apis-SNAPSHOT
+  version: 2.26.0-337-create-an-api-to-compile-free-code-strategy-and-report-errors-to-the-user-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -37,6 +37,8 @@ tags:
 - name: editor
   description: operation related to stateless nifi, used as editor and pipegraphs
     creation
+- name: freeCode
+  description: operation related to free code strategy management
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -157,6 +159,83 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/Events'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /freeCode:
+    get:
+      tags:
+      - freeCode
+      description: Retrieves all models used to write or read from FreeCode Stores
+      operationId: list-freeCode
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: All free code strategy
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FreeCodeModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+    post:
+      tags:
+      - freeCode
+      description: IInserts a freeCode model
+      operationId: insert-freeCode
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          text/json:
+            schema:
+              required:
+              - name
+              - code
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+              xml:
+                name: FreeCodeModel
+                namespace: java://it.agilelab.bigdata.wasp.core.models
+      responses:
+        "200":
+          description: Result of insert
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: string
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -1220,6 +1299,42 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     type: string
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /freeCode/{modelname}:
+    get:
+      tags:
+      - freeCode
+      description: Retrieves the model used to write or read from FreeCode Stores
+      operationId: get-freeCode
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: modelname
+        in: path
+        description: The name of the freeCode model to retrieve
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Outcome of the operation
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/FreeCodeModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2289,6 +2404,19 @@ components:
           $ref: '#/components/schemas/BatchJobExclusionConfig'
       xml:
         name: BatchJobModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models
+    FreeCodeModel:
+      required:
+      - name
+      - code
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+      xml:
+        name: FreeCodeModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
     KeyValueModel:
       required:

@@ -25,8 +25,15 @@ lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark
 
 /* Framework */
 
+lazy val scala_compiler = Project("wasp-compiler", file("compiler"))
+  .settings(Settings.commonSettings: _*)
+  .settings(Settings.sbtBuildInfoSettings: _*)
+  .settings(libraryDependencies ++= Dependencies.test :+ Dependencies.scalaCompiler)
+  .enablePlugins(BuildInfoPlugin)
+
 lazy val core = Project("wasp-core", file("core"))
   .settings(Settings.commonSettings: _*)
+  .dependsOn(scala_compiler)
   .settings(Settings.sbtBuildInfoSettings: _*)
   .settings(libraryDependencies ++= Dependencies.core ++ Dependencies.test :+ Dependencies.darwinCore)
   .enablePlugins(BuildInfoPlugin)
@@ -145,7 +152,8 @@ lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
 
 lazy val wasp = Project("wasp", file("."))
   .settings(Settings.commonSettings: _*)
-  .aggregate(core,
+  .aggregate(scala_compiler,
+    core,
     master,
     producers,
     consumers_spark,

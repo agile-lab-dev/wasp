@@ -26,6 +26,19 @@ object JsonResultsHelper extends JsonSupport with Logging {
       }
     }
 
+    def toAngularKoResponse(message : String,pretty: Boolean = false): HttpResponse  = {
+      val jsonResult = JsObject(
+        "Result" -> JsString("KO"),
+        "ErrorMsg" -> JsString(message),
+        "data" -> js
+      )
+      if (pretty) {
+        httpResponseJson(entity = jsonResult.prettyPrint)
+      } else {
+        httpResponseJson(entity = jsonResult.toString())
+      }
+    }
+
     def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long, pretty: Boolean = false): HttpResponse  = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),

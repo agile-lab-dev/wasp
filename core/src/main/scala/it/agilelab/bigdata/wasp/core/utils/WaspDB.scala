@@ -290,6 +290,7 @@ object WaspDB extends Logging {
   val websocketsName = "websockets"
   val batchSchedulersName = "batchschedulers"
   val documentName = "document"
+  val freeCodeName = "freeCode"
 
 
   val collectionsLookupTable: Map[Type, String] = Map(
@@ -316,7 +317,8 @@ object WaspDB extends Logging {
     typeTag[HBaseConfigModel].tpe -> configurationsName,
     typeTag[JdbcConfigModel].tpe -> configurationsName,
     typeTag[TelemetryConfigModel].tpe -> configurationsName,
-    typeTag[DocumentModel].tpe -> documentName
+    typeTag[DocumentModel].tpe -> documentName,
+    typeTag[FreeCodeModel].tpe -> freeCodeName
   )
 
   lazy val indexKeys: Map[String, Bson] = collectionsLookupTable.map{
@@ -368,7 +370,8 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[TelemetryTopicConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryConfigModel]),
     createCodecProviderIgnoreNone(classOf[DocumentModel]),
-    createCodecProviderIgnoreNone(classOf[BatchETLModel])
+    createCodecProviderIgnoreNone(classOf[BatchETLModel]),
+    createCodecProviderIgnoreNone(classOf[FreeCodeModel])
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(

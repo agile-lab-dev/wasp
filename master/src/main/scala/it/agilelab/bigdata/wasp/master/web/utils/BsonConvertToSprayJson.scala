@@ -6,6 +6,7 @@ import java.time.temporal.{TemporalAccessor, TemporalQuery}
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
+import it.agilelab.bigdata.wasp.compiler.utils.ErrorModel
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.models.{Counts, LogEntry, _}
 import it.agilelab.bigdata.wasp.core.models.configuration._
@@ -207,6 +208,8 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataSto
   implicit lazy val pipegraphStatusFormat: RootJsonFormat[PipegraphStatus.PipegraphStatus] = new EnumJsonConverter(PipegraphStatus)
   implicit lazy val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat6(PipegraphInstanceModel.apply)
   implicit lazy val documentModelFormat: RootJsonFormat[DocumentModel] = jsonFormat3(DocumentModel.apply)
+  implicit lazy val freeCodeModelFormat : RootJsonFormat[FreeCodeModel] = jsonFormat2(FreeCodeModel.apply)
+  implicit lazy val errorModelFormat : RootJsonFormat[ErrorModel] = jsonFormat6(ErrorModel.apply)
 
 }
 
