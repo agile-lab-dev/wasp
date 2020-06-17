@@ -2,38 +2,43 @@ package it.agilelab.bigdata.wasp.master.launcher
 
 import java.io.FileInputStream
 import java.security.{KeyStore, SecureRandom}
-import java.util.concurrent.{Executors, ThreadFactory}
+import java.util.UUID
+import java.util.concurrent.Executors
 
 import akka.actor.{ActorSystem, Props}
-import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCode, StatusCodes}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
+import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.sksamuel.avro4s.AvroSchema
-import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.nifi.client.core.SttpSerializer
+import it.agilelab.bigdata.nifi.client.{NifiClient, NifiRawClient}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.eventengine.Event
-import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventPipegraphModel
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
-import it.agilelab.bigdata.wasp.core.models.{IndexModel, MultiTopicModel, PipegraphModel, ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtilsDefault, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
-import it.agilelab.bigdata.wasp.master.web.controllers.Status_C.helpApi
 import it.agilelab.bigdata.wasp.master.web.controllers._
+import it.agilelab.bigdata.wasp.master.web.controllerseditorInstanceFormat.NifiEditorService
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
-import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.httpResponseJson
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import org.apache.avro.Schema
 import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang.exception.ExceptionUtils
+import sttp.client.SttpBackend
+import sttp.client.akkahttp.AkkaHttpBackend
+import sttp.client.akkahttp.Types.LambdaFlow
+import sttp.client.monad.FutureMonad
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-import scala.io.Source
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 /**
   * Launcher for the MasterGuardian and REST Server.
@@ -101,8 +106,19 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
   private def getRoutes: Route = {
 
-    val solrExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
-    val solrClient                                     = SolrClient(ConfigManager.getSolrConfig)(solrExecutionContext)
+    val clientExecutionContext: ExecutionContextExecutor =
+      ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
+    val solrClient = SolrClient(ConfigManager.getSolrConfig)(clientExecutionContext)
+
+    implicit val akkaBackend: SttpBackend[Future, Source[ByteString, Any], LambdaFlow] =
+      AkkaHttpBackend.usingActorSystem(WaspSystem.actorSystem)(clientExecutionContext)
+    implicit val monadForFuture: FutureMonad = new FutureMonad()(clientExecutionContext)
+    implicit val serializer: SttpSerializer  = new SttpSerializer()
+
+    val nifiConfig = ConfigManager.getNifiConfig
+    val nifiClient = new NifiClient(NifiRawClient(nifiConfig.apiUrl, nifiConfig.uiUrl), UUID.randomUUID())
+
+    // Routes
     new BatchJobController(DefaultBatchJobService).getRoute ~
       Configuration_C.getRoute ~
       Index_C.getRoute ~
@@ -115,18 +131,19 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       KeyValueController.getRoute ~
       RawController.getRoute ~
       new FreeCodeController(FreeCodeDBServiceDefault,FreeCodeCompilerUtilsDefault).getRoute ~
-      new LogsController(new DefaultSolrLogsService(solrClient)(solrExecutionContext)).getRoutes ~
-      new EventController(new DefaultSolrEventsService(solrClient)(solrExecutionContext)).getRoutes ~
-      new TelemetryController(new DefaultSolrTelemetryService(solrClient)(solrExecutionContext)).getRoutes ~
-      new StatsController(new DefaultSolrStatsService(solrClient)(solrExecutionContext)).getRoutes ~
+      new LogsController(new DefaultSolrLogsService(solrClient)(clientExecutionContext)).getRoutes ~
+      new EventController(new DefaultSolrEventsService(solrClient)(clientExecutionContext)).getRoutes ~
+      new TelemetryController(new DefaultSolrTelemetryService(solrClient)(clientExecutionContext)).getRoutes ~
+      new StatsController(new DefaultSolrStatsService(solrClient)(clientExecutionContext)).getRoutes ~
+      new EditorController(new NifiEditorService(nifiClient)(clientExecutionContext)).getRoute ~
       additionalRoutes()
   }
 
   def additionalRoutes(): Route = reject
 
   private def startRestServer(actorSystem: ActorSystem, route: Route): Unit = {
-    implicit val system       = actorSystem
-    implicit val materializer = ActorMaterializer()
+    implicit val system: ActorSystem             = actorSystem
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
 
     val rejectionHandler = RejectionHandler
       .newBuilder()
@@ -181,7 +198,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       val restHttpConfig = waspConfig.restHttpsConf.get
 
       logger.info(s"Reading keystore password from file ${restHttpConfig.passwordLocation}")
-      val password: Array[Char] = Source.fromFile(restHttpConfig.passwordLocation).getLines().next().toCharArray
+      val password: Array[Char] =
+        scala.io.Source.fromFile(restHttpConfig.passwordLocation).getLines().next().toCharArray
 
       val ks: KeyStore = KeyStore.getInstance(restHttpConfig.keystoreType)
 

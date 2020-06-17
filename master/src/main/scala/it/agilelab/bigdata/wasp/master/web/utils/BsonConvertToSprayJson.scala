@@ -8,11 +8,26 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
 import it.agilelab.bigdata.wasp.compiler.utils.ErrorModel
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
-import it.agilelab.bigdata.wasp.core.models.{Counts, LogEntry, _}
 import it.agilelab.bigdata.wasp.core.models.configuration._
+import it.agilelab.bigdata.wasp.core.models.editor.{
+  CodeResponse,
+  FlowNifiDTO,
+  FreeCodeDTO,
+  IndexDTO,
+  KeyValueDTO,
+  NifiStatelessInstanceModel,
+  PipegraphDTO,
+  RawDataDTO,
+  StrategyClassDTO,
+  StrategyDTO,
+  StreamingOutputDTO,
+  StructuredStreamingETLDTO,
+  TopicDTO
+}
+import it.agilelab.bigdata.wasp.core.models.{Counts, LogEntry, _}
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, DatastoreProductJsonFormat, ZookeeperConnectionsConfig}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
-import spray.json.{JsValue, RootJsonFormat, _}
+import spray.json.{JsValue, RootJsonFormat, deserializationError, _}
 
 /**
   * Created by Agile Lab s.r.l. on 04/08/2017.
@@ -30,12 +45,11 @@ object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol 
 
     def read(value: JsValue): BsonObjectId = value match {
       case JsString(objectId) => BsonObjectId(objectId)
-      case _ => deserializationError("String expected")
+      case _                  => deserializationError("String expected")
     }
   }
 
 }
-
 
 /**
   * Based on the code found: https://groups.google.com/forum/#!topic/spray-user/RkIwRIXzDDc
@@ -53,14 +67,14 @@ class EnumJsonConverter[T <: scala.Enumeration](enu: T) extends RootJsonFormat[T
 }
 
 class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
-  val ParseOptions = ConfigParseOptions.defaults().setSyntax(ConfigSyntax.JSON)
+  val ParseOptions  = ConfigParseOptions.defaults().setSyntax(ConfigSyntax.JSON)
   val RenderOptions = ConfigRenderOptions.concise().setJson(true)
 
   override def write(config: Config): JsValue = JsonParser(config.root.render(RenderOptions))
 
   override def read(jsValue: JsValue): Config = jsValue match {
     case obj: JsObject => ConfigFactory.parseString(obj.compactPrint, ParseOptions)
-    case _ => deserializationError("Expected JsObject for Config deserialization")
+    case _             => deserializationError("Expected JsObject for Config deserialization")
   }
 }
 
@@ -70,7 +84,7 @@ class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
   * @author Nicolò Bidotti
   */
 class TopicDatastoreModelJsonFormat
-  extends RootJsonFormat[DatastoreModel[TopicCategory]]
+    extends RootJsonFormat[DatastoreModel[TopicCategory]]
     with SprayJsonSupport
     with DefaultJsonProtocol {
 
@@ -86,29 +100,32 @@ class TopicDatastoreModelJsonFormat
       }
   }
 
-  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat11(TopicModel.apply)
+  implicit val topicModelFormat: RootJsonFormat[TopicModel]           = jsonFormat11(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
 
   override def write(obj: DatastoreModel[TopicCategory]): JsValue = {
     obj match {
-      case topicModel: TopicModel => topicModel.toJson
+      case topicModel: TopicModel           => topicModel.toJson
       case multiTopicModel: MultiTopicModel => multiTopicModel.toJson
     }
   }
 
   override def read(json: JsValue): DatastoreModel[TopicCategory] = {
-    val obj = json.asJsObject
+    val obj    = json.asJsObject
     val fields = obj.fields
     obj match {
-      case topicModel if fields.contains("partitions") => topicModel.convertTo[TopicModel]
+      case topicModel if fields.contains("partitions")          => topicModel.convertTo[TopicModel]
       case multiTopicModel if fields.contains("topicNameField") => multiTopicModel.convertTo[MultiTopicModel]
     }
   }
 }
 
-
 // collect your json format instances into a support trait:
-trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataStoreConfJsonSupport with BatchJobJsonSupport {
+trait JsonSupport
+    extends SprayJsonSupport
+    with DefaultJsonProtocol
+    with DataStoreConfJsonSupport
+    with BatchJobJsonSupport {
 
   import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
 
@@ -116,100 +133,230 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol with DataSto
     override def write(obj: Instant): JsValue = JsString(DateTimeFormatter.ISO_INSTANT.format(obj))
 
     override def read(json: JsValue): Instant = json match {
-      case JsString(value) => DateTimeFormatter.ISO_INSTANT.parse(value, new TemporalQuery[Instant] {
-        override def queryFrom(temporal: TemporalAccessor): Instant = Instant.from(temporal)
-      })
+      case JsString(value) =>
+        DateTimeFormatter.ISO_INSTANT.parse(value, new TemporalQuery[Instant] {
+          override def queryFrom(temporal: TemporalAccessor): Instant = Instant.from(temporal)
+        })
     }
   }
 
-  implicit lazy val countEntryFormat : RootJsonFormat[CountEntry] = jsonFormat2(CountEntry.apply)
-  implicit lazy val countsFormat : RootJsonFormat[Counts] = jsonFormat3(Counts.apply)
+  implicit lazy val countEntryFormat: RootJsonFormat[CountEntry] = jsonFormat2(CountEntry.apply)
+  implicit lazy val countsFormat: RootJsonFormat[Counts]         = jsonFormat3(Counts.apply)
 
-  implicit lazy val telemetryPointFormat: RootJsonFormat[TelemetryPoint] = jsonFormat2(TelemetryPoint.apply)
+  implicit lazy val telemetryPointFormat: RootJsonFormat[TelemetryPoint]   = jsonFormat2(TelemetryPoint.apply)
   implicit lazy val telemetrySeriesFormat: RootJsonFormat[TelemetrySeries] = jsonFormat3(TelemetrySeries.apply)
-  implicit lazy val metricEntryFormat: RootJsonFormat[MetricEntry] = jsonFormat2(MetricEntry.apply)
-  implicit lazy val metricsFormat: RootJsonFormat[Metrics] = jsonFormat2(Metrics.apply)
-  implicit lazy val logsFormat: RootJsonFormat[Logs] = jsonFormat2(Logs.apply)
-  implicit lazy val logEntryFormat: RootJsonFormat[LogEntry] = jsonFormat7(LogEntry.apply)
-  implicit lazy val sourceEntryFormat: RootJsonFormat[SourceEntry] = jsonFormat1(SourceEntry.apply)
-  implicit lazy val sourcesFormat: RootJsonFormat[Sources] = jsonFormat2(Sources.apply)
-  implicit lazy val eventsFormat: RootJsonFormat[Events] = jsonFormat2(Events.apply)
-  implicit lazy val eventEntryFormat: RootJsonFormat[EventEntry] = jsonFormat8(EventEntry.apply)
-  implicit lazy val jmxTelemetryTopicConfigModel: RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(JMXTelemetryConfigModel.apply)
+  implicit lazy val metricEntryFormat: RootJsonFormat[MetricEntry]         = jsonFormat2(MetricEntry.apply)
+  implicit lazy val metricsFormat: RootJsonFormat[Metrics]                 = jsonFormat2(Metrics.apply)
+  implicit lazy val logsFormat: RootJsonFormat[Logs]                       = jsonFormat2(Logs.apply)
+  implicit lazy val logEntryFormat: RootJsonFormat[LogEntry]               = jsonFormat7(LogEntry.apply)
+  implicit lazy val sourceEntryFormat: RootJsonFormat[SourceEntry]         = jsonFormat1(SourceEntry.apply)
+  implicit lazy val sourcesFormat: RootJsonFormat[Sources]                 = jsonFormat2(Sources.apply)
+  implicit lazy val eventsFormat: RootJsonFormat[Events]                   = jsonFormat2(Events.apply)
+  implicit lazy val eventEntryFormat: RootJsonFormat[EventEntry]           = jsonFormat8(EventEntry.apply)
+  implicit lazy val jmxTelemetryTopicConfigModel: RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(
+    JMXTelemetryConfigModel.apply
+  )
 
-  implicit lazy val telemetryTopicConfigModel: RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat5(TelemetryTopicConfigModel.apply)
+  implicit lazy val telemetryTopicConfigModel: RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat5(
+    TelemetryTopicConfigModel.apply
+  )
   implicit lazy val telemetryConfigModel: RootJsonFormat[TelemetryConfigModel] = jsonFormat4(TelemetryConfigModel.apply)
 
-  implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] = new TopicDatastoreModelJsonFormat
-  implicit lazy val indexModelFormat: RootJsonFormat[IndexModel] = jsonFormat8(IndexModel.apply)
+  implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] =
+    new TopicDatastoreModelJsonFormat
+  implicit lazy val indexModelFormat: RootJsonFormat[IndexModel]             = jsonFormat8(IndexModel.apply)
   implicit lazy val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
   implicit lazy val streamingReaderModelFormat: RootJsonFormat[StreamingReaderModel] = jsonFormat5(
-    (name: String,
-     datastoreModelName: String,
-     datastoreProduct: DatastoreProduct,
-     rateLimit: Option[Int],
-     options: Map[String, String]) =>
-      StreamingReaderModel(name, datastoreModelName, datastoreProduct, rateLimit, options))
+    (
+        name: String,
+        datastoreModelName: String,
+        datastoreProduct: DatastoreProduct,
+        rateLimit: Option[Int],
+        options: Map[String, String]
+    ) => StreamingReaderModel(name, datastoreModelName, datastoreProduct, rateLimit, options)
+  )
   implicit lazy val readerModelFormat: RootJsonFormat[ReaderModel] = jsonFormat4(
-    (name: String,
-     datastoreModelName: String,
-     datastoreProduct: DatastoreProduct,
-     options: Map[String, String]) => ReaderModel(name, datastoreModelName, datastoreProduct, options))
+    (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String]) =>
+      ReaderModel(name, datastoreModelName, datastoreProduct, options)
+  )
   implicit lazy val writerModelFormat: RootJsonFormat[WriterModel] = jsonFormat4(
-    (name: String,
-     datastoreModelName: String,
-     datastoreProduct: DatastoreProduct,
-     options: Map[String, String]) => WriterModel(name, datastoreModelName, datastoreProduct, options))
+    (name: String, datastoreModelName: String, datastoreProduct: DatastoreProduct, options: Map[String, String]) =>
+      WriterModel(name, datastoreModelName, datastoreProduct, options)
+  )
 
-  implicit lazy val rawModelFormat : RootJsonFormat[RawModel] = jsonFormat5(RawModel.apply)
-  implicit lazy val rawOptionModelFormat : RootJsonFormat[RawOptions] = jsonFormat4(RawOptions.apply)
-  implicit lazy val keyValueModelFormat : RootJsonFormat[KeyValueModel] = jsonFormat6(KeyValueModel.apply)
-  implicit lazy val keyValueOptionModelFormat : RootJsonFormat[KeyValueOption] = jsonFormat2(KeyValueOption.apply)
+  implicit lazy val rawModelFormat: RootJsonFormat[RawModel]                  = jsonFormat5(RawModel.apply)
+  implicit lazy val rawOptionModelFormat: RootJsonFormat[RawOptions]          = jsonFormat4(RawOptions.apply)
+  implicit lazy val keyValueModelFormat: RootJsonFormat[KeyValueModel]        = jsonFormat6(KeyValueModel.apply)
+  implicit lazy val keyValueOptionModelFormat: RootJsonFormat[KeyValueOption] = jsonFormat2(KeyValueOption.apply)
 
-  implicit lazy val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo] = jsonFormat7(MlModelOnlyInfo.apply)
-  implicit lazy val strategyModelFormat: RootJsonFormat[StrategyModel] = jsonFormat2(StrategyModel.apply)
-  implicit lazy val dashboardModelFormat: RootJsonFormat[DashboardModel] = jsonFormat2(DashboardModel.apply)
+  implicit lazy val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo]  = jsonFormat7(MlModelOnlyInfo.apply)
+  implicit lazy val strategyModelFormat: RootJsonFormat[StrategyModel]      = jsonFormat2(StrategyModel.apply)
+  implicit lazy val dashboardModelFormat: RootJsonFormat[DashboardModel]    = jsonFormat2(DashboardModel.apply)
   implicit lazy val etlModelFormat: RootJsonFormat[LegacyStreamingETLModel] = jsonFormat8(LegacyStreamingETLModel.apply)
-  implicit lazy val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingETLModel] = jsonFormat9(StructuredStreamingETLModel.apply)
-  implicit lazy val rTModelFormat: RootJsonFormat[RTModel] = jsonFormat5(RTModel.apply)
-  implicit lazy val pipegraphModelFormat: RootJsonFormat[PipegraphModel] = jsonFormat9(PipegraphModel.apply)
+  implicit lazy val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingETLModel] = jsonFormat9(
+    StructuredStreamingETLModel.apply
+  )
+  implicit lazy val rTModelFormat: RootJsonFormat[RTModel]                   = jsonFormat5(RTModel.apply)
+  implicit lazy val pipegraphModelFormat: RootJsonFormat[PipegraphModel]     = jsonFormat9(PipegraphModel.apply)
   implicit lazy val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
-  implicit lazy val zookeeperConnectionFormat: RootJsonFormat[ZookeeperConnectionsConfig] = jsonFormat2(ZookeeperConnectionsConfig.apply)
+  implicit lazy val zookeeperConnectionFormat: RootJsonFormat[ZookeeperConnectionsConfig] = jsonFormat2(
+    ZookeeperConnectionsConfig.apply
+  )
   implicit lazy val kafkaEntryConfigModelFormat: RootJsonFormat[KafkaEntryConfig] = jsonFormat2(KafkaEntryConfig.apply)
-  implicit lazy val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat13(KafkaConfigModel.apply)
-  implicit lazy val sparkDriverConfigFormat: RootJsonFormat[SparkDriverConfig] = jsonFormat7(SparkDriverConfig.apply)
-  implicit lazy val kryoSerializerConfigFormat: RootJsonFormat[KryoSerializerConfig] = jsonFormat3(KryoSerializerConfig.apply)
-  implicit lazy val sparkEntryConfigModelConfigFormat: RootJsonFormat[SparkEntryConfig] = jsonFormat2(SparkEntryConfig.apply)
-  implicit lazy val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat21(SparkStreamingConfigModel.apply)
-  implicit lazy val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat18(SparkBatchConfigModel.apply)
-  implicit lazy val hbaseEntryConfigModelConfigFormat: RootJsonFormat[HBaseEntryConfig] = jsonFormat2(HBaseEntryConfig.apply)
+  implicit lazy val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel]      = jsonFormat13(KafkaConfigModel.apply)
+  implicit lazy val sparkDriverConfigFormat: RootJsonFormat[SparkDriverConfig]    = jsonFormat7(SparkDriverConfig.apply)
+  implicit lazy val kryoSerializerConfigFormat: RootJsonFormat[KryoSerializerConfig] = jsonFormat3(
+    KryoSerializerConfig.apply
+  )
+  implicit lazy val sparkEntryConfigModelConfigFormat: RootJsonFormat[SparkEntryConfig] = jsonFormat2(
+    SparkEntryConfig.apply
+  )
+  implicit lazy val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat21(
+    SparkStreamingConfigModel.apply
+  )
+  implicit lazy val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat18(
+    SparkBatchConfigModel.apply
+  )
+  implicit lazy val hbaseEntryConfigModelConfigFormat: RootJsonFormat[HBaseEntryConfig] = jsonFormat2(
+    HBaseEntryConfig.apply
+  )
   implicit lazy val hbaseConfigModelConfigFormat: RootJsonFormat[HBaseConfigModel] = jsonFormat4(HBaseConfigModel.apply)
-  implicit lazy val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat2(ElasticConfigModel.apply)
-  implicit lazy val solrConfigModelFormat: RootJsonFormat[SolrConfigModel] = jsonFormat2(SolrConfigModel.apply)
-  implicit lazy val batchJobExclusionConfig: RootJsonFormat[BatchJobExclusionConfig] = jsonFormat2(BatchJobExclusionConfig.apply)
+  implicit lazy val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel]   = jsonFormat2(ElasticConfigModel.apply)
+  implicit lazy val solrConfigModelFormat: RootJsonFormat[SolrConfigModel]         = jsonFormat2(SolrConfigModel.apply)
+  implicit lazy val batchJobExclusionConfig: RootJsonFormat[BatchJobExclusionConfig] = jsonFormat2(
+    BatchJobExclusionConfig.apply
+  )
   implicit lazy val dataStoreConfFormat: RootJsonFormat[DataStoreConf] = createDataStoreConfFormat
   implicit lazy val batchETLModelFormat: RootJsonFormat[BatchETLModel] = jsonFormat8(BatchETLModel.apply)
   implicit lazy val batchETLGdprModelFormat: RootJsonFormat[BatchGdprETLModel] =
-    jsonFormat(
-      BatchGdprETLModel.apply,
-      "name",
-      "dataStores",
-      "strategyConfig",
-      "inputs",
-      "output",
-      "group",
-      "isActive")
-  implicit lazy val batchETLFormat: RootJsonFormat[BatchETL] = createBatchETLFormat
-  implicit lazy val batchJobModelFormat: RootJsonFormat[BatchJobModel] = jsonFormat7(BatchJobModel.apply)
-  implicit lazy val producerModelFormat: RootJsonFormat[ProducerModel] = jsonFormat7(ProducerModel.apply)
+    jsonFormat(BatchGdprETLModel.apply, "name", "dataStores", "strategyConfig", "inputs", "output", "group", "isActive")
+  implicit lazy val batchETLFormat: RootJsonFormat[BatchETL]             = createBatchETLFormat
+  implicit lazy val batchJobModelFormat: RootJsonFormat[BatchJobModel]   = jsonFormat7(BatchJobModel.apply)
+  implicit lazy val producerModelFormat: RootJsonFormat[ProducerModel]   = jsonFormat7(ProducerModel.apply)
   implicit lazy val jobStatusFormat: RootJsonFormat[JobStatus.JobStatus] = new EnumJsonConverter(JobStatus)
-  implicit lazy val typesafeConfigFormat: RootJsonFormat[Config] = new TypesafeConfigJsonConverter
-  implicit lazy val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat7(BatchJobInstanceModel.apply)
-  implicit lazy val pipegraphStatusFormat: RootJsonFormat[PipegraphStatus.PipegraphStatus] = new EnumJsonConverter(PipegraphStatus)
-  implicit lazy val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat6(PipegraphInstanceModel.apply)
+  implicit lazy val typesafeConfigFormat: RootJsonFormat[Config]         = new TypesafeConfigJsonConverter
+  implicit lazy val batchJobInstanceModelFormat: RootJsonFormat[BatchJobInstanceModel] = jsonFormat7(
+    BatchJobInstanceModel.apply
+  )
+  implicit lazy val pipegraphStatusFormat: RootJsonFormat[PipegraphStatus.PipegraphStatus] = new EnumJsonConverter(
+    PipegraphStatus
+  )
+  implicit lazy val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat6(
+    PipegraphInstanceModel.apply
+  )
   implicit lazy val documentModelFormat: RootJsonFormat[DocumentModel] = jsonFormat3(DocumentModel.apply)
   implicit lazy val freeCodeModelFormat : RootJsonFormat[FreeCodeModel] = jsonFormat2(FreeCodeModel.apply)
   implicit lazy val errorModelFormat : RootJsonFormat[ErrorModel] = jsonFormat6(ErrorModel.apply)
+
+  // Editor Format
+  implicit lazy val nifiEditorFormat: RootJsonFormat[NifiStatelessInstanceModel] = jsonFormat3(
+    NifiStatelessInstanceModel
+  )
+
+  implicit lazy val codeResponseFormat: RootJsonFormat[CodeResponse] = jsonFormat2(CodeResponse)
+
+  // StrategyDTO Format
+  implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat2(FreeCodeDTO)
+  implicit lazy val flowNifiDTOFormat: RootJsonFormat[FlowNifiDTO]           = jsonFormat2(FlowNifiDTO.apply)
+  implicit lazy val strategyClassDTOFormat: RootJsonFormat[StrategyClassDTO] = jsonFormat2(StrategyClassDTO.apply)
+
+  implicit lazy val strategyDTOFormat: RootJsonFormat[StrategyDTO] =
+    new RootJsonFormat[StrategyDTO] {
+      override def write(obj: StrategyDTO): JsValue = {
+        obj match {
+          case sb: FreeCodeDTO =>
+            JsObject(
+              ("name", JsString(sb.name)),
+              ("code", JsString(sb.code)),
+              ("outputType", JsString(StrategyDTO.freeCodeType))
+            )
+          case sb: FlowNifiDTO =>
+            JsObject(
+              ("name", JsString(sb.name)),
+              ("flowNifi", JsString(sb.flowNifi)),
+              ("outputType", JsString(StrategyDTO.flowNifiType))
+            )
+          case sb: StrategyClassDTO =>
+            JsObject(
+              ("name", JsString(sb.name)),
+              ("className", JsString(sb.className)),
+              ("outputType", JsString(StrategyDTO.strategyClassType))
+            )
+        }
+      }
+
+      override def read(json: JsValue): StrategyDTO =
+        json
+          .asJsObject("StrategyDTO should be an JSON Object")
+          .getFields("strategyType")
+          .headOption match {
+          case Some(JsString(StrategyDTO.freeCodeType))      => freeCodeDTOFormat.read(json)
+          case Some(JsString(StrategyDTO.flowNifiType))      => flowNifiDTOFormat.read(json)
+          case Some(JsString(StrategyDTO.strategyClassType)) => strategyClassDTOFormat.read(json)
+          case Some(_)                                       => deserializationError(s"$json is not a StrategyDTO subclass")
+          case None                                          => deserializationError(s"$json it's missing a strategyType field")
+          case _                                             => deserializationError(s"$json It's not a valid StrategyDTO")
+        }
+    }
+
+  // StreamingOutputDTO Format
+  implicit lazy val topicDTOFormat: RootJsonFormat[TopicDTO]       = jsonFormat2(TopicDTO.apply)
+  implicit lazy val rawDataDTOFormat: RootJsonFormat[RawDataDTO]   = jsonFormat2(RawDataDTO.apply)
+  implicit lazy val indexDTOFormat: RootJsonFormat[IndexDTO]       = jsonFormat2(IndexDTO.apply)
+  implicit lazy val keyValueDTOFormat: RootJsonFormat[KeyValueDTO] = jsonFormat2(KeyValueDTO.apply)
+
+  implicit lazy val streamingOutputDTOFormat: RootJsonFormat[StreamingOutputDTO] =
+    new RootJsonFormat[StreamingOutputDTO] {
+      override def write(obj: StreamingOutputDTO): JsValue = {
+        obj match {
+          case sb: TopicDTO =>
+            JsObject(
+              ("name", JsString(sb.name)),
+              ("topicName", JsString(sb.topicName)),
+              ("outputType", JsString(StreamingOutputDTO.topicType))
+            )
+          case sb: RawDataDTO =>
+            JsObject(
+              ("name", JsString(sb.name)),
+              ("topicName", JsString(sb.destinationPath)),
+              ("outputType", JsString(StreamingOutputDTO.rawDataType))
+            )
+          case sb: IndexDTO =>
+            JsObject(
+              ("name", JsString(sb.name)),
+              ("topicName", JsString(sb.indexName)),
+              ("outputType", JsString(StreamingOutputDTO.indexType))
+            )
+          case sb: KeyValueDTO =>
+            JsObject(
+              ("name", JsString(sb.name)),
+              ("topicName", JsString(sb.keyValueName)),
+              ("outputType", JsString(StreamingOutputDTO.keyValueType))
+            )
+        }
+      }
+
+      override def read(json: JsValue): StreamingOutputDTO =
+        json
+          .asJsObject("StreamingOutput should be an JSON Object")
+          .getFields("outputType")
+          .headOption match {
+          case Some(JsString(StreamingOutputDTO.topicType))    => topicDTOFormat.read(json)
+          case Some(JsString(StreamingOutputDTO.rawDataType))  => rawDataDTOFormat.read(json)
+          case Some(JsString(StreamingOutputDTO.indexType))    => indexDTOFormat.read(json)
+          case Some(JsString(StreamingOutputDTO.keyValueType)) => keyValueDTOFormat.read(json)
+          case Some(_)                                         => deserializationError(s"$json is not a StreamingOutputDTO subclass")
+          case None                                            => deserializationError(s"$json it's missing a outputType field")
+          case _                                               => deserializationError(s"$json a valid StreamingOutputDTO")
+        }
+    }
+
+  implicit lazy val structuredStreamingETLDTOFormat: RootJsonFormat[StructuredStreamingETLDTO] =
+    jsonFormat6(
+      StructuredStreamingETLDTO.apply
+    )
+
+  implicit lazy val pipegraphDTOFormat: RootJsonFormat[PipegraphDTO] = jsonFormat4(PipegraphDTO.apply)
 
 }
 

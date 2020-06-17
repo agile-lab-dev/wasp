@@ -317,6 +317,7 @@ object WaspDB extends Logging {
     typeTag[HBaseConfigModel].tpe -> configurationsName,
     typeTag[JdbcConfigModel].tpe -> configurationsName,
     typeTag[TelemetryConfigModel].tpe -> configurationsName,
+    typeTag[NifiConfigModel].tpe -> configurationsName,
     typeTag[DocumentModel].tpe -> documentName,
     typeTag[FreeCodeModel].tpe -> freeCodeName
   )
@@ -369,6 +370,7 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[JMXTelemetryConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryTopicConfigModel]),
     createCodecProviderIgnoreNone(classOf[TelemetryConfigModel]),
+    createCodecProviderIgnoreNone(classOf[NifiConfigModel]),
     createCodecProviderIgnoreNone(classOf[DocumentModel]),
     createCodecProviderIgnoreNone(classOf[BatchETLModel]),
     createCodecProviderIgnoreNone(classOf[FreeCodeModel])

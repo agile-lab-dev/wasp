@@ -1,25 +1,18 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.util.UUID
-
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
-import akka.stream.ActorMaterializer
 import com.typesafe.config.{Config, ConfigFactory}
-import it.agilelab.bigdata.wasp.core.models.IndexModelBuilder.Solr
-import it.agilelab.bigdata.wasp.core.models.{BatchETLModel, BatchJobInstanceModel, BatchJobModel, IndexModel, IndexModelBuilder, JobStatus, LegacyStreamingETLModel, RawModel, ReaderModel, StrategyModel, WriterModel}
+import it.agilelab.bigdata.wasp.core.models.{BatchJobInstanceModel, BatchJobModel}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
-import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 import spray.json._
 
 /**
   * Created by Agile Lab s.r.l. on 09/08/2017.
   */
 class BatchJobController(batchJobService: BatchJobService)
-    extends Directives
+  extends Directives
     with JsonSupport {
 
   def pretty(subroute: Boolean => Route): Route =
@@ -295,5 +288,3 @@ class BatchJobController(batchJobService: BatchJobService)
   }
 
 }
-
-

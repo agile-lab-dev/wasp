@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.core.models.Model
 case class NifiStatelessInstanceModel(
     name: String,
     url: String,
-    flowId: String
+    processGroupId: String
 ) extends Model
 
 case class CodeResponse(

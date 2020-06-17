@@ -1,9 +1,10 @@
-package it.agilelab.bigdata.wasp.core.models.editor
+package it.agilelab.bigdata.wasp.master.web.controllers
 
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.core.models.editor._
 
-trait PipegraphDTOConverter {
+trait PipegraphDTOService {
   /**
     * Set:
     * isSystem: Boolean

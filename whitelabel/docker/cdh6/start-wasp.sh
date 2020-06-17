@@ -90,6 +90,8 @@ if [ "$PERSIST_FLAG" = false ]
     -p 5005:5005 \
     -p 20000:20000 \
     -p 2891:2891 \
+    -p 8080:8080 \
+    -p 18080:18080 \
     $DOCKER_IMAGE \
     bash /docker-entrypoint.sh
 

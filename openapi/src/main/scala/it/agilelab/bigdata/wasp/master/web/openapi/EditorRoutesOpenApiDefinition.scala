@@ -8,11 +8,13 @@ import it.agilelab.bigdata.wasp.core.models.editor.{CodeResponse, NifiStatelessI
 
 trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with AngularResponseOpenApiComponentSupport {
 
+  //TODO:       "/editor/pipegraph" -> storePipegraphDTO(ctx) returns the pipegraphModel?
+
   def editorRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/editor/nifi"                  -> newNifiEditor(ctx),
-      "/editor/nifi/{processgroupid}" -> commitProcessGroup(ctx),
-      "/editor/pipegraph"        -> PipegraphDTOPath(ctx)
+      "/editor/nifi/{processGroupName}"        -> newNifiEditor(ctx),
+      "/editor/nifi/registry/{processGroupId}" -> commitEditorProcessGroup(ctx),
+      "/editor/pipegraph" -> storePipegraphDTO(ctx)
     )
   }
 
@@ -23,31 +25,40 @@ trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with A
           .addTagsItem("editor")
           .operationId("new-editor")
           .description(
-            "Create a new process group on a stateless nifi instance, returns a processgroupId and the instance url."
+            "Create a new processGroup on a stateless nifi instance with name processGroupName," +
+              " returns a processgroupId and the instance url."
           )
           .addParametersItem(pretty(ctx))
+          .addParametersItem(
+            new Parameter()
+              .in("Path")
+              .name("processGroupName")
+              .description("The name of the new processGroup")
+              .schema(stringOpenApi.schema(ctx))
+          )
           .responses(
-            new ApiResponses().addApiResponse(
-              "200",
-              new ApiResponse()
-                .description("The new editor instance")
-                .content(
-                  new Content()
-                    .addMediaType(
-                      "text/json",
-                      new MediaType()
-                        .schema(
-                          ToOpenApiSchema[AngularResponse[NifiStatelessInstanceModel]]
-                            .schema(ctx)
-                        )
-                    )
-                )
-            )
+            new ApiResponses()
+              .addApiResponse(
+                "200",
+                new ApiResponse()
+                  .description("The new editor instance")
+                  .content(
+                    new Content()
+                      .addMediaType(
+                        "text/json",
+                        new MediaType()
+                          .schema(
+                            ToOpenApiSchema[AngularResponse[NifiStatelessInstanceModel]]
+                              .schema(ctx)
+                          )
+                      )
+                  )
+              )
           )
       )
   }
 
-  def commitProcessGroup(ctx: Context): PathItem = {
+  def commitEditorProcessGroup(ctx: Context): PathItem = {
     new PathItem()
       .put(
         new Operation()
@@ -84,7 +95,7 @@ trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with A
       )
   }
 
-  def PipegraphDTOPath(ctx: Context): PathItem = {
+  def storePipegraphDTO(ctx: Context): PathItem = {
     new PathItem()
       .post(
         new Operation()

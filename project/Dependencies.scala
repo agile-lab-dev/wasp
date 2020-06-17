@@ -12,6 +12,10 @@ object Dependencies {
     def log4jExclude: ModuleID =
       module excludeAll ExclusionRule("log4j")
 
+    def json4sExclude = module excludeAll ExclusionRule(
+      "org.json4s"
+    )
+
     def embeddedExclusions: ModuleID =
       module.log4jExclude
         .excludeAll(ExclusionRule("org.apache.spark"))
@@ -50,6 +54,8 @@ object Dependencies {
         .exclude("org.apache.solr", "solr-solrj")
         .exclude("org.apache.solr", "solr-core")
         .exclude("org.apache.solr", "solr-test-framework")
+
+    def sttpExclusions: ModuleID = json4sExclude
 
     def kafkaExclusions: ModuleID =
       module
@@ -178,8 +184,8 @@ object Dependencies {
   val mySql                     = "mysql" % "mysql-connector-java" % "5.1.6"
   val nameOf                    = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
   val solrjMasterClient         = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
-  val sttpCore                  = "com.softwaremill.sttp.client" %% "core" % Versions.sttpVersion
-  val sttpJson4s                = "com.softwaremill.sttp.client" %% "json4s" % Versions.sttpVersion
+  val sttpCore                  = "com.softwaremill.sttp.client" %% "core" % Versions.sttpVersion sttpExclusions
+  val sttpJson4s                = "com.softwaremill.sttp.client" %% "json4s" % Versions.sttpVersion sttpExclusions
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(
@@ -288,7 +294,8 @@ object Dependencies {
       spark :+
       quartz :+
       nameOf :+
-      velocity   //TODO: evaluate this is legal
+      velocity :+ //TODO: evaluate this is legal
+      scalaCompiler
   ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
     log4j1 :+
@@ -357,9 +364,9 @@ object Dependencies {
       akkaHttp :+
       akkaHttpSpray :+
       sttpCore :+
-      sttpJson4s:+
+      sttpJson4s :+
       json4sJackson
-  )
+    )
 
   def kmsTest = Seq(
     transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),

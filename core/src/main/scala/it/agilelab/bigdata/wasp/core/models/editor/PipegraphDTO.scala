@@ -43,17 +43,24 @@ sealed trait StreamingOutputDTO {
   def outputType: String
 }
 
+object StreamingOutputDTO {
+  val topicType    = "Topic"
+  val rawDataType  = "RawData"
+  val indexType    = "Index"
+  val keyValueType = "KeyValue"
+}
+
 case class TopicDTO(name: String, topicName: String) extends StreamingOutputDTO {
-  override def outputType: String = "Topic"
+  override def outputType: String = StreamingOutputDTO.topicType
 }
 case class RawDataDTO(name: String, destinationPath: String) extends StreamingOutputDTO {
-  override def outputType: String = "RawData"
+  override def outputType: String = StreamingOutputDTO.rawDataType
 }
 case class IndexDTO(name: String, indexName: String) extends StreamingOutputDTO {
-  override def outputType: String = "Index"
+  override def outputType: String = StreamingOutputDTO.indexType
 }
 case class KeyValueDTO(name: String, keyValueName: String) extends StreamingOutputDTO {
-  override def outputType: String = "KeyValue"
+  override def outputType: String = StreamingOutputDTO.keyValueType
 }
 
 /**
@@ -63,13 +70,18 @@ sealed trait StrategyDTO {
   def name: String
   def strategyType: String
 }
+object StrategyDTO {
+  val freeCodeType      = "FreeCode"
+  val flowNifiType      = "FlowNifi"
+  val strategyClassType = "StrategyClass"
+}
 
 case class FreeCodeDTO(name: String, code: String) extends StrategyDTO {
-  override def strategyType: String = "FreeCode"
+  override def strategyType: String = StrategyDTO.freeCodeType
 }
-case class FlowNifiDTO(name: String, nifiFlow: String) extends StrategyDTO {
-  override def strategyType: String = "FreeCode"
+case class FlowNifiDTO(name: String, flowNifi: String) extends StrategyDTO {
+  override def strategyType: String = StrategyDTO.flowNifiType
 }
 case class StrategyClassDTO(name: String, className: String) extends StrategyDTO {
-  override def strategyType: String = "StrategyClass"
+  override def strategyType: String = StrategyDTO.strategyClassType
 }

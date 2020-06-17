@@ -17,117 +17,111 @@ import scala.reflect.runtime.universe._
 object ConfigManager {
   var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
-  private val kafkaConfigName = "Kafka"
-  private val sparkBatchConfigName = "SparkBatch"
+  private val kafkaConfigName          = "Kafka"
+  private val sparkBatchConfigName     = "SparkBatch"
   private val sparkStreamingConfigName = "SparkStreaming"
-  private val elasticConfigName = "Elastic"
-  private val solrConfigName = "Solr"
-  private val hbaseConfigName = "HBase"
-  private val jdbcConfigName = "Jdbc"
-  private val telemetryConfigName = "Telemetry"
+  private val elasticConfigName        = "Elastic"
+  private val solrConfigName           = "Solr"
+  private val hbaseConfigName          = "HBase"
+  private val jdbcConfigName           = "Jdbc"
+  private val telemetryConfigName      = "Telemetry"
+  private val nifiConfigName           = "Nifi"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
-
     /* waspConfig validation-rules */
 
-    ValidationRule("DefaultIndexedDatastoreAndKeyValueDatastoreEmpty") {
-      (configManager) =>
-        if (configManager.getWaspConfig.defaultIndexedDatastore.isEmpty && configManager.getWaspConfig.defaultKeyvalueDatastore.isEmpty)
-          Left("No datastore configured! Configure at least an indexed or a keyvalue datastore")
-        else
-          Right(())
+    ValidationRule("DefaultIndexedDatastoreAndKeyValueDatastoreEmpty") { (configManager) =>
+      if (configManager.getWaspConfig.defaultIndexedDatastore.isEmpty && configManager.getWaspConfig.defaultKeyvalueDatastore.isEmpty)
+        Left("No datastore configured! Configure at least an indexed or a keyvalue datastore")
+      else
+        Right(())
     },
-    ValidationRule("DefaultIndexedDatastoreUnknown") {
-      (configManager) =>
-        if (configManager.getWaspConfig.defaultIndexedDatastore != ElasticProduct.getActualProductName && configManager.getWaspConfig.defaultIndexedDatastore != SolrProduct.getActualProductName)
-          Left(s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${ElasticProduct.getActualProductName}' or '${SolrProduct.getActualProductName}'")
-        else
-          Right(())
+    ValidationRule("DefaultIndexedDatastoreUnknown") { (configManager) =>
+      if (configManager.getWaspConfig.defaultIndexedDatastore != ElasticProduct.getActualProductName && configManager.getWaspConfig.defaultIndexedDatastore != SolrProduct.getActualProductName)
+        Left(
+          s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${ElasticProduct.getActualProductName}' or '${SolrProduct.getActualProductName}'"
+        )
+      else
+        Right(())
     },
-    ValidationRule("DefaultKeyValueDatastoreUnknown") {
-      (configManager) =>
-        if (configManager.getWaspConfig.defaultKeyvalueDatastore != HBaseProduct.getActualProductName)
-          Left(s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${HBaseProduct.getActualProductName}'")
-        else
-          Right(())
+    ValidationRule("DefaultKeyValueDatastoreUnknown") { (configManager) =>
+      if (configManager.getWaspConfig.defaultKeyvalueDatastore != HBaseProduct.getActualProductName)
+        Left(
+          s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${HBaseProduct.getActualProductName}'"
+        )
+      else
+        Right(())
     },
-
     /* sparkStreamingConfig validation-rules */
 
-    ValidationRule("SparkStreamingStandaloneMode") {
-      (configManager) =>
-        if (configManager.getSparkStreamingConfig.master.protocol == "spark") {
-          if (configManager.getSparkStreamingConfig.coresMax < configManager.getSparkStreamingConfig.executorCores)
-            Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
-          else
-            Right(())
-        }
+    ValidationRule("SparkStreamingStandaloneMode") { (configManager) =>
+      if (configManager.getSparkStreamingConfig.master.protocol == "spark") {
+        if (configManager.getSparkStreamingConfig.coresMax < configManager.getSparkStreamingConfig.executorCores)
+          Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
         else
           Right(())
+      } else
+        Right(())
     },
-    ValidationRule("SparkStreamingYARNmode") {
-      (configManager) =>
-        val master = configManager.getSparkStreamingConfig.master
-        if (master.protocol == "" && master.host == "yarn") {
-          if (configManager.getSparkStreamingConfig.yarnJar.isEmpty)
-            Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
-          else
-            Right(())
-        }
+    ValidationRule("SparkStreamingYARNmode") { (configManager) =>
+      val master = configManager.getSparkStreamingConfig.master
+      if (master.protocol == "" && master.host == "yarn") {
+        if (configManager.getSparkStreamingConfig.yarnJar.isEmpty)
+          Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
         else
           Right(())
+      } else
+        Right(())
     },
-    ValidationRule("SparkStreamingCheckpointDirLocal") {
-      (configManager) =>
-        if (configManager.getSparkStreamingConfig.checkpointDir.startsWith("file:///"))
-          Left("Using a localPath (within the consumers-spark-streaming container) for the checkpoint directory is not recommended. Use a remotePath on HDFS (i.e. '/...') instead")
-        else
-          Right(())
+    ValidationRule("SparkStreamingCheckpointDirLocal") { (configManager) =>
+      if (configManager.getSparkStreamingConfig.checkpointDir.startsWith("file:///"))
+        Left(
+          "Using a localPath (within the consumers-spark-streaming container) for the checkpoint directory is not recommended. Use a remotePath on HDFS (i.e. '/...') instead"
+        )
+      else
+        Right(())
     },
-
     /* sparkBatchConfig validation-rules */
 
-    ValidationRule("SparkBatchStandaloneMode") {
-      (configManager) =>
-        if (configManager.getSparkBatchConfig.master.protocol == "spark") {
-          if (configManager.getSparkBatchConfig.coresMax < configManager.getSparkBatchConfig.executorCores)
-            Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
-          else
-            Right(())
-        }
+    ValidationRule("SparkBatchStandaloneMode") { (configManager) =>
+      if (configManager.getSparkBatchConfig.master.protocol == "spark") {
+        if (configManager.getSparkBatchConfig.coresMax < configManager.getSparkBatchConfig.executorCores)
+          Left("Running on YARN without specifying spark.yarn.jar is unlikely to work!")
         else
           Right(())
+      } else
+        Right(())
     },
-    ValidationRule("SparkBatchYARNmode") {
-      (configManager) =>
-        val master = configManager.getSparkBatchConfig.master
-        if (master.protocol == "" && master.host == "yarn") {
-          if (configManager.getSparkBatchConfig.yarnJar.isEmpty)
-            Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
-          else
-            Right(())
-        }
+    ValidationRule("SparkBatchYARNmode") { (configManager) =>
+      val master = configManager.getSparkBatchConfig.master
+      if (master.protocol == "" && master.host == "yarn") {
+        if (configManager.getSparkBatchConfig.yarnJar.isEmpty)
+          Left("Running in YARN mode without specifying 'spark.yarn.jar' is unlikely to work!")
         else
           Right(())
+      } else
+        Right(())
     }
   )
 
-  private var waspConfig: WaspConfigModel = _
-  private var telemetryConfig: TelemetryConfigModel = _
-  private var mongoDBConfig: MongoDBConfigModel = _
-  private var kafkaConfig: KafkaConfigModel = _
-  private var sparkBatchConfig: SparkBatchConfigModel = _
+  private var waspConfig: WaspConfigModel                     = _
+  private var telemetryConfig: TelemetryConfigModel           = _
+  private var mongoDBConfig: MongoDBConfigModel               = _
+  private var kafkaConfig: KafkaConfigModel                   = _
+  private var sparkBatchConfig: SparkBatchConfigModel         = _
   private var sparkStreamingConfig: SparkStreamingConfigModel = _
-  private var elasticConfig: ElasticConfigModel = _
-  private var solrConfig: SolrConfigModel = _
-  private var hbaseConfig: HBaseConfigModel = _
-  private var jdbcConfig: JdbcConfigModel = _
-  private var avroSchemaManagerConfig: Config = _
+  private var elasticConfig: ElasticConfigModel               = _
+  private var solrConfig: SolrConfigModel                     = _
+  private var hbaseConfig: HBaseConfigModel                   = _
+  private var jdbcConfig: JdbcConfigModel                     = _
+  private var avroSchemaManagerConfig: Config                 = _
+  private var nifiConfig: NifiConfigModel                     = _
 
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
     (globalValidationRules ++ pluginsValidationRules)
       .filterNot(validationRule => waspConfig.validationRulesToIgnore.contains(validationRule.key))
-      .map(validationRule => validationRule.key -> validationRule.func(this)).toMap
+      .map(validationRule => validationRule.key -> validationRule.func(this))
+      .toMap
   }
 
   private def initializeWaspConfig(): Unit = {
@@ -158,54 +152,51 @@ object ConfigManager {
 
   def initializeAvroSchemaManagerConfig(): Unit = {
 
-    avroSchemaManagerConfig =
-      waspConfig.darwinConnector match {
+    avroSchemaManagerConfig = waspConfig.darwinConnector match {
 
-        case "hbase" => ConfigFactory.parseMap(getAvroSchemaManagerConfigHbaseConnector.asJava)
-        case _ => conf.getConfig("avroSchemaManager.darwin")
+      case "hbase" => ConfigFactory.parseMap(getAvroSchemaManagerConfigHbaseConnector.asJava)
+      case _       => conf.getConfig("avroSchemaManager.darwin")
 
-      }
+    }
 
   }
 
   private def getAvroSchemaManagerConfigHbaseConnector: Map[String, AnyRef] = {
 
     val avroSchemaManagerSubConfig = conf.getConfig("avroSchemaManager")
-    val darwinConfig = avroSchemaManagerSubConfig.getConfig("darwin")
-    val defaultConf = darwinConfig.root().unwrapped().asScala.toMap
+    val darwinConfig               = avroSchemaManagerSubConfig.getConfig("darwin")
+    val defaultConf                = darwinConfig.root().unwrapped().asScala.toMap
 
     if (avroSchemaManagerSubConfig.getBoolean("wasp-manages-darwin-connectors-conf")) {
       val env = System.getenv()
 
       val hbaseSubConfig = conf.getConfig("hbase")
 
-      val isSecure: java.lang.Boolean = if (env.containsKey("WASP_SECURITY"))
-        java.lang.Boolean.getBoolean(env.get("WASP_SECURITY"))
-      else
-        java.lang.Boolean.FALSE
-      val principal = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
+      val isSecure: java.lang.Boolean =
+        if (env.containsKey("WASP_SECURITY"))
+          java.lang.Boolean.getBoolean(env.get("WASP_SECURITY"))
+        else
+          java.lang.Boolean.FALSE
+      val principal  = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
       val keytabPath = if (env.containsKey("KEYTAB_FILE_NAME")) env.get("KEYTAB_FILE_NAME") else ""
 
       defaultConf ++ Map(
-        "namespace" -> darwinConfig.getString("namespace"),
-        "table" -> darwinConfig.getString("table"),
-        "hbaseSite" -> hbaseSubConfig.getString("hbase-site-xml-path"),
-        "coreSite" -> hbaseSubConfig.getString("core-site-xml-path"),
-        "isSecure" -> isSecure,
-        "principal" -> principal,
+        "namespace"  -> darwinConfig.getString("namespace"),
+        "table"      -> darwinConfig.getString("table"),
+        "hbaseSite"  -> hbaseSubConfig.getString("hbase-site-xml-path"),
+        "coreSite"   -> hbaseSubConfig.getString("core-site-xml-path"),
+        "isSecure"   -> isSecure,
+        "principal"  -> principal,
         "keytabPath" -> keytabPath
       )
-    }
-    else {
+    } else {
       defaultConf
     }
   }
 
   private def initializeTelemetryConfig(): Unit = {
-    telemetryConfig =
-      retrieveConf[TelemetryConfigModel](getDefaultTelemetryConfig, telemetryConfigName).get
+    telemetryConfig = retrieveConf[TelemetryConfigModel](getDefaultTelemetryConfig, telemetryConfigName).get
   }
-
 
   private def getDefaultTelemetryConfig: TelemetryConfigModel = {
     val telemetrySubConfig = conf.getConfig("telemetry")
@@ -223,12 +214,15 @@ object ConfigManager {
     )
   }
 
-  private def readJmxTelemetryConfig(config:Config) : JMXTelemetryConfigModel = {
-    JMXTelemetryConfigModel(query = config.getString("query"),
-                            metricGroupAttribute = config.getString("metricGroupAttribute"),
-                            sourceIdAttribute = config.getString("sourceIdAttribute"),
-                            metricGroupFallback = if(config.hasPath("metricGroupFallback")) config.getString("metricGroupFallback") else "unknown",
-                            sourceIdFallback = if(config.hasPath("sourceIdFallback")) config.getString("metricGroupFallback") else "unknown")
+  private def readJmxTelemetryConfig(config: Config): JMXTelemetryConfigModel = {
+    JMXTelemetryConfigModel(
+      query = config.getString("query"),
+      metricGroupAttribute = config.getString("metricGroupAttribute"),
+      sourceIdAttribute = config.getString("sourceIdAttribute"),
+      metricGroupFallback =
+        if (config.hasPath("metricGroupFallback")) config.getString("metricGroupFallback") else "unknown",
+      sourceIdFallback = if (config.hasPath("sourceIdFallback")) config.getString("metricGroupFallback") else "unknown"
+    )
   }
 
   private def initializeMongoDBConfig(): Unit = {
@@ -247,8 +241,7 @@ object ConfigManager {
   }
 
   private def initializeKafkaConfig(): Unit = {
-    kafkaConfig =
-      retrieveConf[KafkaConfigModel](getDefaultKafkaConfig, kafkaConfigName).get
+    kafkaConfig = retrieveConf[KafkaConfigModel](getDefaultKafkaConfig, kafkaConfigName).get
   }
 
   private def getDefaultKafkaConfig: KafkaConfigModel = {
@@ -278,7 +271,8 @@ object ConfigManager {
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
     val sparkSubConfig = conf.getConfig("spark-streaming")
 
-    val triggerInterval = if (sparkSubConfig.hasPath("trigger-interval-ms")) Some(sparkSubConfig.getLong("trigger-interval-ms")) else None
+    val triggerInterval =
+      if (sparkSubConfig.hasPath("trigger-interval-ms")) Some(sparkSubConfig.getLong("trigger-interval-ms")) else None
 
     SparkStreamingConfigModel(
       sparkSubConfig.getString("app-name"),
@@ -297,19 +291,16 @@ object ConfigManager {
       sparkSubConfig.getInt("retained-executions"),
       sparkSubConfig.getInt("retained-batches"),
       readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
-
       sparkSubConfig.getInt("streaming-batch-interval-ms"),
       sparkSubConfig.getString("checkpoint-dir"),
       triggerInterval,
       readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
-
       sparkStreamingConfigName
     )
   }
 
   def initializeSparkBatchConfig(): Unit = {
-    sparkBatchConfig =
-      retrieveConf[SparkBatchConfigModel](getDefaultSparkBatchConfig, sparkBatchConfigName).get
+    sparkBatchConfig = retrieveConf[SparkBatchConfigModel](getDefaultSparkBatchConfig, sparkBatchConfigName).get
   }
 
   private def getDefaultSparkBatchConfig: SparkBatchConfigModel = {
@@ -338,8 +329,7 @@ object ConfigManager {
   }
 
   private def initializeElasticConfig(): Unit = {
-    elasticConfig =
-      retrieveConf[ElasticConfigModel](getDefaultElasticConfig, elasticConfigName).get
+    elasticConfig = retrieveConf[ElasticConfigModel](getDefaultElasticConfig, elasticConfigName).get
   }
 
   private def getDefaultElasticConfig: ElasticConfigModel = {
@@ -351,8 +341,7 @@ object ConfigManager {
   }
 
   private def initializeSolrConfig(): Unit = {
-    solrConfig =
-      retrieveConf[SolrConfigModel](getDefaultSolrConfig, solrConfigName).get
+    solrConfig = retrieveConf[SolrConfigModel](getDefaultSolrConfig, solrConfigName).get
   }
 
   private def getDefaultSolrConfig: SolrConfigModel = {
@@ -364,8 +353,7 @@ object ConfigManager {
   }
 
   private def initializeHBaseConfig(): Unit = {
-    hbaseConfig =
-      retrieveConf[HBaseConfigModel](getDefaultHBaseConfig, hbaseConfigName).get
+    hbaseConfig = retrieveConf[HBaseConfigModel](getDefaultHBaseConfig, hbaseConfigName).get
   }
 
   private def getDefaultHBaseConfig: HBaseConfigModel = {
@@ -379,8 +367,7 @@ object ConfigManager {
   }
 
   private def initializeJdbcConfig(): Unit = {
-    jdbcConfig =
-      retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
+    jdbcConfig = retrieveConf[JdbcConfigModel](getDefaultJdbcConfig, jdbcConfigName).get
   }
 
   private def getDefaultJdbcConfig: JdbcConfigModel = {
@@ -398,6 +385,26 @@ object ConfigManager {
       connectionsMap,
       jdbcConfigName
     )
+  }
+
+  def initializeNifiConfig(): Unit = {
+    nifiConfig = retrieveConf[NifiConfigModel](getDefaultNifiConfig, nifiConfigName).get
+  }
+
+  def getDefaultNifiConfig: NifiConfigModel = {
+    val nifiSubConfig = conf.getConfig("nifi")
+    NifiConfigModel(
+      nifiSubConfig.getString("api-url"),
+      nifiSubConfig.getString("ui-url"),
+      nifiConfigName
+    )
+  }
+
+  def getNifiConfig: NifiConfigModel = {
+    if (nifiConfig == null) {
+      throw new Exception("The nifi configuration was not initialized")
+    }
+    nifiConfig
   }
 
   /**
@@ -421,6 +428,7 @@ object ConfigManager {
     initializeSparkBatchConfig()
     initializeAvroSchemaManagerConfig()
     initializeTelemetryConfig()
+    initializeNifiConfig()
   }
 
   def getWaspConfig: WaspConfigModel = {
@@ -460,8 +468,7 @@ object ConfigManager {
 
   def getSparkStreamingConfig: SparkStreamingConfigModel = {
     if (sparkStreamingConfig == null) {
-      throw new Exception(
-        "The spark streaming configuration was not initialized")
+      throw new Exception("The spark streaming configuration was not initialized")
     }
     sparkStreamingConfig
   }
@@ -541,7 +548,7 @@ object ConfigManager {
 
   private def readZookeeperConnectionsConfig(config: Config): ZookeeperConnectionsConfig = {
     val connectionsArray = readConnectionsConfig(config, "zookeeperConnections")
-    val chRoot = config.getString("zkChRoot")
+    val chRoot           = config.getString("zkChRoot")
     ZookeeperConnectionsConfig(connectionsArray, chRoot)
   }
 
@@ -556,9 +563,9 @@ object ConfigManager {
       val list: Iterable[ConfigObject] =
         config.getObjectList("metadata").asScala
       val md = (for {
-        item: ConfigObject <- list
+        item: ConfigObject                <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key = entry.getKey
+        key   = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toMap
       Some(md)
@@ -601,7 +608,10 @@ object ConfigManager {
     * Read the configuration with the specified name from MongoDB or,
     * if it is not present, initialize it with the provided defaults.
     */
-  private def retrieveConf[T <: Model](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+  private def retrieveConf[T <: Model](
+      default: T,
+      nameConf: String
+  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     WaspDB.getDB.insertIfNotExists[T](default)
 
     return WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
@@ -620,9 +630,9 @@ object ConfigManager {
     if (config.hasPath(key)) {
       val list: Iterable[ConfigObject] = config.getObjectList(key).asScala
       (for {
-        item: ConfigObject <- list
+        item: ConfigObject                <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key = entry.getKey
+        key   = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toSeq
     } else {
@@ -631,13 +641,15 @@ object ConfigManager {
   }
 }
 
-case class ConnectionConfig(protocol: String,
-                            host: String,
-                            port: Int = 0,
-                            timeout: Option[Long] = None,
-                            metadata: Option[Map[String, String]]) {
+case class ConnectionConfig(
+    protocol: String,
+    host: String,
+    port: Int = 0,
+    timeout: Option[Long] = None,
+    metadata: Option[Map[String, String]]
+) {
 
-  override def toString = {
+  override def toString: String = {
     var result = ""
 
     if (protocol != null && !protocol.isEmpty)
@@ -652,9 +664,7 @@ case class ConnectionConfig(protocol: String,
   }
 }
 
-case class ZookeeperConnectionsConfig(connections: Seq[ConnectionConfig],
-                                      chRoot: String) {
-
+case class ZookeeperConnectionsConfig(connections: Seq[ConnectionConfig], chRoot: String) {
   override def toString = connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot}"
 }
 
@@ -669,8 +679,6 @@ trait MongoDBConfiguration {
 trait SparkBatchConfiguration {
   lazy val sparkBatchConfig: SparkBatchConfigModel = ConfigManager.getSparkBatchConfig
 }
-
-
 
 trait SparkStreamingConfiguration {
   lazy val sparkStreamingConfig: SparkStreamingConfigModel = ConfigManager.getSparkStreamingConfig
@@ -690,4 +698,8 @@ trait HBaseConfiguration {
 
 trait JdbcConfiguration {
   lazy val jdbcConfig: JdbcConfigModel = ConfigManager.getJdbcConfig
+}
+
+trait NifiConfiguration {
+  lazy val nifiConfig: NifiConfigModel = ConfigManager.getNifiConfig
 }

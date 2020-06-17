@@ -41,6 +41,7 @@ lazy val core = Project("wasp-core", file("core"))
 lazy val master = Project("wasp-master", file("master"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(core)
+  .dependsOn(nifi_client)
   .settings(libraryDependencies ++= Dependencies.master)
   .enablePlugins(JavaAppPackaging)
 
