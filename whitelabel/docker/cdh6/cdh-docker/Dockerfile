@@ -1,4 +1,10 @@
+FROM apache/nifi-stateless:1.11.4 AS nifi
+
 FROM ubuntu:16.04
+
+COPY --from=nifi /opt/nifi/nifi-current/lib/*.jar /nifi-libs/system/
+COPY --from=nifi /opt/nifi/nifi-current/lib/bootstrap/*.jar /nifi-libs/bootstrap/
+COPY --from=nifi /opt/nifi/nifi-current/work/stateless-nars /nifi-libs/extensions
 
 RUN set -ax \
     && apt-get update \
@@ -18,6 +24,14 @@ RUN set -ax \
     && apt-get install -y --allow-unauthenticated hadoop-yarn-resourcemanager hadoop-hdfs-namenode hadoop-yarn-nodemanager hadoop-hdfs-datanode hadoop-mapreduce hadoop-mapreduce-historyserver hadoop-yarn-proxyserver hbase spark-core spark-history-server hbase-master hbase-regionserver zookeeper-server=3.4.5+cdh6.3.2-1605554 zookeeper=3.4.5+cdh6.3.2-1605554 solr-server \
     && dpkg -i kafka*.deb \
     && rm -rf /var/lib/apt/lists/*
+
+
+RUN set -axe && \
+     mkdir -p /nifi-libs/stateless && \
+     curl -fLo cs https://git.io/coursier-cli-linux && \
+     chmod +x cs && \
+     bash -c "./cs fetch org.apache.nifi:nifi-stateless:1.11.4 org.apache.nifi:nifi-nar-utils:1.11.4 | xargs -I{} cp {} /nifi-libs/stateless" && \
+     ls /nifi-libs/stateless
 
 
 ENV TEMPLATE_DIR /templates
@@ -44,7 +58,8 @@ COPY solr/solr ${TEMPLATE_DIR}/solr
 
 COPY mongodb/mongod.conf ${TEMPLATE_DIR}/mongod.conf
 
-RUN set -ax \
+
+RUN set -axe \
     && sudo -u zookeeper zookeeper-server-initialize --myid=1 --force \
     && sudo -u hdfs hdfs namenode -format -nonInteractive -force \
 #     && sudo -u hdfs hadoop namenode -format -nonInteractive -force \
@@ -73,11 +88,15 @@ RUN set -ax \
     && sudo -u hdfs hdfs dfs -mkdir /solr \
     && sudo -u hdfs hdfs dfs -chown solr /solr \
     && hdfs dfs -mkdir -p /user/root/spark2/lib \
-#     && (hdfs dfs -copyFromLocal /usr/lib/hadoop/*-cdh5.16.2.jar /user/root/spark2/lib || true )\
-#     && (hdfs dfs -copyFromLocal /usr/lib/hadoop-hdfs/*-cdh5.16.2.jar /user/root/spark2/lib || true )\
-#     && (hdfs dfs -copyFromLocal /usr/lib/hadoop-mapreduce/*-cdh5.16.2.jar /user/root/spark2/lib || true )\
-#     && (hdfs dfs -copyFromLocal /usr/lib/hadoop-yarn/*-cdh5.16.2.jar /user/root/spark2/lib || true )\
-#     && (hdfs dfs -copyFromLocal /opt/parcels/CDH-6.2.1-1.cdh6.2.1.p0.1425774//lib/spark2/jars/* /user/root/spark2/lib || true )\
+    && hdfs dfs -copyFromLocal /usr/lib/spark/jars/* /user/root/spark2/lib \
+    && hdfs dfs -mkdir -p /user/root/nifi/bootstrap \
+    && hdfs dfs -mkdir -p /user/root/nifi/system \
+    && hdfs dfs -mkdir -p /user/root/nifi/extensions \
+    && hdfs dfs -mkdir -p /user/root/nifi/stateless \
+    && hdfs dfs -copyFromLocal /nifi-libs/stateless/* /user/root/nifi/stateless \
+    && hdfs dfs -copyFromLocal /nifi-libs/bootstrap/* /user/root/nifi/bootstrap \
+    && hdfs dfs -copyFromLocal /nifi-libs/system/* /user/root/nifi/system \
+    && hdfs dfs -copyFromLocal /nifi-libs/extensions /user/root/nifi/ \
     && service hbase-master start \
     && service hbase-regionserver start \
     && sudo mkdir -p /usr/lib/hadoop-yarn/logs \
@@ -86,12 +105,15 @@ RUN set -ax \
     && service hadoop-yarn-nodemanager start \
     && service hadoop-mapreduce-historyserver start \
     && service solr-server start \
-    && solrctl init
+    && solrctl init \
+    && echo "create_namespace 'AVRO'" | hbase shell -n \
+    && echo "create 'AVRO:SCHEMA_REPOSITORY', '0'" | hbase shell -n
+
 
 
 COPY mongodb/mongod /etc/init.d/mongod
 
-RUN set -ax \
+RUN set -axe \
     && wget https://repo.mongodb.org/apt/ubuntu/dists/xenial/mongodb-org/3.4/multiverse/binary-amd64/mongodb-org-mongos_3.4.8_amd64.deb \
     && wget https://repo.mongodb.org/apt/ubuntu/dists/xenial/mongodb-org/3.4/multiverse/binary-amd64/mongodb-org-server_3.4.8_amd64.deb \
     && wget https://repo.mongodb.org/apt/ubuntu/dists/xenial/mongodb-org/3.4/multiverse/binary-amd64/mongodb-org-shell_3.4.8_amd64.deb \
@@ -102,10 +124,10 @@ RUN set -ax \
 
 # NIFI
 
-RUN set -ax \
-    && wget https://mirror.nohup.it/apache/nifi/1.11.4/nifi-1.11.4-bin.tar.gz && tar -xzvf nifi-1.11.4-bin.tar.gz && rm nifi-1.11.4-bin.tar.gz && mv nifi-1.11.4 /nifi \
-    && wget https://mirror.nohup.it/apache/nifi/nifi-registry/nifi-registry-0.6.0/nifi-registry-0.6.0-bin.tar.gz && tar -xzvf nifi-registry-0.6.0-bin.tar.gz && rm nifi-registry-0.6.0-bin.tar.gz && mv nifi-registry-0.6.0 /nifi-registry \
-    && wget https://mirror.nohup.it/apache/nifi/1.11.4/nifi-toolkit-1.11.4-bin.tar.gz && tar -xzvf nifi-toolkit-1.11.4-bin.tar.gz && rm nifi-toolkit-1.11.4-bin.tar.gz && mv nifi-toolkit-1.11.4 /nifi-toolkit
+RUN set -axe \
+    && wget --no-check-certificate https://mirror.nohup.it/apache/nifi/1.11.4/nifi-1.11.4-bin.tar.gz && tar -xzvf nifi-1.11.4-bin.tar.gz && rm nifi-1.11.4-bin.tar.gz && mv nifi-1.11.4 /nifi \
+    && wget --no-check-certificate https://mirror.nohup.it/apache/nifi/nifi-registry/nifi-registry-0.6.0/nifi-registry-0.6.0-bin.tar.gz && tar -xzvf nifi-registry-0.6.0-bin.tar.gz && rm nifi-registry-0.6.0-bin.tar.gz && mv nifi-registry-0.6.0 /nifi-registry \
+    && wget --no-check-certificate https://mirror.nohup.it/apache/nifi/1.11.4/nifi-toolkit-1.11.4-bin.tar.gz && tar -xzvf nifi-toolkit-1.11.4-bin.tar.gz && rm nifi-toolkit-1.11.4-bin.tar.gz && mv nifi-toolkit-1.11.4 /nifi-toolkit
 
 RUN /nifi/bin/nifi.sh install
 RUN /nifi-registry/bin/nifi-registry.sh install

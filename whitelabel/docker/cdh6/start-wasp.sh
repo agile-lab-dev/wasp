@@ -61,7 +61,7 @@ sbt -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
 cd $SCRIPT_DIR
 source get-docker-cmd.sh
 
-DOCKER_IMAGE=registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:6.3.2
+DOCKER_IMAGE=registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:6.3.2-nifi
 NAME_CONTAINER=agile-wasp-2-whitelabel
 
 set -ax
@@ -88,10 +88,13 @@ if [ "$PERSIST_FLAG" = false ]
     -p 8983:8983 \
     -p 27017:27017 \
     -p 5005:5005 \
+    -p 5006:5006 \
+    -p 5007:5007 \
+    -p 5008:5008 \
     -p 20000:20000 \
     -p 2891:2891 \
-    -p 8080:8080 \
     -p 18080:18080 \
+    -p 8080:8080 \
     $DOCKER_IMAGE \
     bash /docker-entrypoint.sh
 

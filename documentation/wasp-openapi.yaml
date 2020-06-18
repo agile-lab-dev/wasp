@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-337-create-an-api-to-compile-free-code-strategy-and-report-errors-to-the-user-SNAPSHOT
+  version: 2.26.0-330-integrate-nifi-stateless-engine-as-a-strategy-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -1374,6 +1374,42 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /editor/nifi/{processGroupName}:
+    post:
+      tags:
+      - editor
+      description: Create a new processGroup on a stateless nifi instance with name
+        processGroupName, returns a processgroupId and the instance url.
+      operationId: new-editor
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: processGroupName
+        in: Path
+        description: The name of the new processGroup
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The new editor instance
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/NifiStatelessInstanceModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /batchjobs:
     get:
       tags:
@@ -1572,37 +1608,6 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /editor/nifi:
-    post:
-      tags:
-      - editor
-      description: Create a new process group on a stateless nifi instance, returns
-        a processgroupId and the instance url.
-      operationId: new-editor
-      parameters:
-      - name: pretty
-        in: query
-        required: false
-        schema:
-          type: boolean
-      responses:
-        "200":
-          description: The new editor instance
-          content:
-            text/json:
-              schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    $ref: '#/components/schemas/NifiStatelessInstanceModel'
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /pipegraphs/{pipegraphname}/start:
     post:
       tags:
@@ -1672,6 +1677,42 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/BatchJobStartResult'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /editor/nifi/registry/{processGroupId}:
+    put:
+      tags:
+      - editor
+      description: Confirm that a process group edited on a editor instance it's ready
+        to be stored.
+      operationId: commit-processgroup
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: processgroupid
+        in: Path
+        description: The process group id to commit
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Result of the commit
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/CodeResponse'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2064,42 +2105,6 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/SparkStreamingConfigModel'
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /editor/nifi/{processgroupid}:
-    put:
-      tags:
-      - editor
-      description: Confirm that a process group edited on a editor instance it's ready
-        to be stored.
-      operationId: commit-processgroup
-      parameters:
-      - name: pretty
-        in: query
-        required: false
-        schema:
-          type: boolean
-      - name: processgroupid
-        in: Path
-        description: The process group id to commit
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Result of the commit
-          content:
-            text/json:
-              schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    $ref: '#/components/schemas/CodeResponse'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2512,14 +2517,14 @@ components:
       required:
       - name
       - url
-      - flowId
+      - processGroupId
       type: object
       properties:
         name:
           type: string
         url:
           type: string
-        flowId:
+        processGroupId:
           type: string
       xml:
         name: NifiStatelessInstanceModel
@@ -2885,6 +2890,26 @@ components:
       xml:
         name: Counts
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    NifiStatelessConfigModel:
+      required:
+      - bootstrapJars
+      - systemJars
+      - statelessJars
+      - extensions
+      type: object
+      properties:
+        bootstrapJars:
+          type: string
+        systemJars:
+          type: string
+        statelessJars:
+          type: string
+        extensions:
+          type: string
+      nullable: true
+      xml:
+        name: NifiStatelessConfigModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     MlModelOnlyInfo:
       required:
       - name
@@ -3250,6 +3275,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SparkEntryConfig'
+        nifiStateless:
+          $ref: '#/components/schemas/NifiStatelessConfigModel'
         name:
           type: string
       xml:
@@ -3915,12 +3942,12 @@ components:
     FlowNifiDTO:
       required:
       - name
-      - nifiFlow
+      - flowNifi
       type: object
       properties:
         name:
           type: string
-        nifiFlow:
+        flowNifi:
           type: string
       xml:
         name: FlowNifiDTO

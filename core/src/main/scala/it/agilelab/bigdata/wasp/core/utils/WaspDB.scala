@@ -373,7 +373,8 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[NifiConfigModel]),
     createCodecProviderIgnoreNone(classOf[DocumentModel]),
     createCodecProviderIgnoreNone(classOf[BatchETLModel]),
-    createCodecProviderIgnoreNone(classOf[FreeCodeModel])
+    createCodecProviderIgnoreNone(classOf[FreeCodeModel]),
+    createCodecProviderIgnoreNone(classOf[NifiStatelessConfigModel])
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(

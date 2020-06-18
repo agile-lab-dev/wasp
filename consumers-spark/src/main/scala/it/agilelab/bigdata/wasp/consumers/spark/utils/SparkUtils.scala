@@ -8,7 +8,13 @@ import java.util.Base64
 import com.google.gson.JsonObject
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
+import it.agilelab.bigdata.wasp.core.models.configuration.{
+  KafkaConfigModel,
+  NifiStatelessConfigModel,
+  SparkConfigModel,
+  SparkStreamingConfigModel,
+  TelemetryConfigModel
+}
 import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SparkStreamingConfiguration, WaspConfiguration}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
@@ -26,9 +32,13 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
   /**
     * Builds a SparkConf from the supplied SparkConfigModel
     */
-  def buildSparkConfFromSparkConfigModel(sparkConfigModel: SparkConfigModel,telemetryConfig: TelemetryConfigModel, kafkaConfigModel: KafkaConfigModel): SparkConf = {
+  def buildSparkConfFromSparkConfigModel(
+      sparkConfigModel: SparkConfigModel,
+      telemetryConfig: TelemetryConfigModel,
+      kafkaConfigModel: KafkaConfigModel
+  ): SparkConf = {
     logger.info("Building Spark configuration from configuration model")
-    
+
     logger.info(s"Starting from SparkConfigModel:\n\t$sparkConfigModel")
 
     // build SparkConf from SparkConfigModel & log it
@@ -38,7 +48,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
 
     // driver-related configs
     sparkConf
-      .set("spark.submit.deployMode", sparkConfigModel.driver.submitDeployMode)  // where the driver have to be executed (client or cluster)
+      .set("spark.submit.deployMode", sparkConfigModel.driver.submitDeployMode) // where the driver have to be executed (client or cluster)
       .set("spark.driver.cores", sparkConfigModel.driver.cores.toString)
       .set("spark.driver.memory", sparkConfigModel.driver.memory) // NOTE: will only work in yarn-cluster
       .set("spark.driver.host", sparkConfigModel.driver.host)
@@ -61,17 +71,14 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
       .setAll(sparkConfigModel.others.map(v => (v.key, v.value)))
 
-
-
-
     // kryo-related configs
     if (sparkConfigModel.kryoSerializer.enabled) {
       // This setting configures the serializer used for not only shuffling data between worker nodes but also when serializing RDDs to disk.
       // N.B. The only reason Kryo is not the default is because of the custom registration requirement
       sparkConf
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        //.set("spark.kryoserializer.buffer", "64k")  // default: 64k
-        //.set("spark.kryoserializer.buffer.max", "64m") // default: 64m
+      //.set("spark.kryoserializer.buffer", "64k")  // default: 64k
+      //.set("spark.kryoserializer.buffer.max", "64m") // default: 64m
 
       /* Registering classes: for best performance */
       // * wasp-internal class registrations
@@ -99,7 +106,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
     }
 
     // add specific Elastic configs
-    val conns = elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
+    val conns   = elasticConfig.connections.filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
     val address = conns.map(e => s"${e.host}:${e.port}").mkString(",")
     sparkConf.set("es.nodes", address)
 
@@ -107,12 +114,38 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
 
     import it.agilelab.bigdata.wasp.core.models.configuration.TelemetryTopicConfigModelMessageFormat._
 
-    val telemetryConfigJSON = Base64.getUrlEncoder.encodeToString(telemetryTopicConfigModelFormat.write(telemetryConfig.telemetryTopicConfigModel).toString().getBytes(StandardCharsets.UTF_8))
-    val kafkaTinyConfigJSON = Base64.getUrlEncoder.encodeToString(tinyKafkaConfigFormat.write(kafkaConfigModel.toTinyConfig()).toString().getBytes(StandardCharsets.UTF_8))
+    val telemetryConfigJSON = Base64.getUrlEncoder.encodeToString(
+      telemetryTopicConfigModelFormat
+        .write(telemetryConfig.telemetryTopicConfigModel)
+        .toString()
+        .getBytes(StandardCharsets.UTF_8)
+    )
+    val kafkaTinyConfigJSON = Base64.getUrlEncoder.encodeToString(
+      tinyKafkaConfigFormat.write(kafkaConfigModel.toTinyConfig()).toString().getBytes(StandardCharsets.UTF_8)
+    )
 
-    val newExtraJavaOptions = s"""$originalExtraJavaOptions -Dwasp.plugin.telemetry.kafka="$kafkaTinyConfigJSON" -Dwasp.plugin.telemetry.topic="$telemetryConfigJSON""""
+    val newExtraJavaOptions =
+      s"""$originalExtraJavaOptions -Dwasp.plugin.telemetry.kafka="$kafkaTinyConfigJSON" -Dwasp.plugin.telemetry.topic="$telemetryConfigJSON""""
 
     sparkConf.set("spark.executor.extraJavaOptions", newExtraJavaOptions)
+
+    sparkConfigModel match {
+      case model: SparkStreamingConfigModel =>
+        model.nifiStateless.foreach {
+          case NifiStatelessConfigModel(bootstrapJars, systemJars, statelessJars, extensions) =>
+            sparkConf.set("spark.wasp.nifi.lib.stateless", statelessJars)
+            sparkConf.set("spark.wasp.nifi.lib.bootstrap", bootstrapJars)
+            sparkConf.set("spark.wasp.nifi.lib.system", systemJars)
+            sparkConf.set("spark.wasp.nifi.lib.extensions", extensions)
+
+            val newPlugins = Option(sparkConf.get("spark.executor.plugins", ""))
+              .filterNot(_.isEmpty)
+              .map(_ + ",it.agilelab.bigdata.wasp.spark.plugins.nifi.NifiPlugin")
+              .getOrElse("it.agilelab.bigdata.wasp.spark.plugins.nifi.NifiPlugin")
+            sparkConf.set("spark.executor.plugins", newPlugins)
+        }
+      case _ =>
+    }
 
     logger.info(s"Resulting SparkConf:\n\t${sparkConf.toDebugString.replace("\n", "\n\t")}")
 
@@ -121,45 +154,49 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
 
   private def getAdditionalJars(additionalJarsPath: String): Seq[String] = {
     try {
-      val additionalJars = Source.fromFile(additionalJarsPath + File.separator + jarsListFileName)
+      val additionalJars = Source
+        .fromFile(additionalJarsPath + File.separator + jarsListFileName)
         .getLines()
-        .map(name => "file:/" + URLEncoder.encode(additionalJarsPath  + File.separator + name, "UTF-8"))
+        .map(name => "file:/" + URLEncoder.encode(additionalJarsPath + File.separator + name, "UTF-8"))
         .toSeq
 
       additionalJars
     } catch {
-      case e : Throwable =>
+      case e: Throwable =>
         val msg = s"Unable to completely generate the additional jars list - Exception: ${e.getMessage}"
         logger.error(msg, e)
         throw e
     }
   }
-	
-	def generateUniqueLegacyStreamingCheckpointDir: String = {
+
+  def generateUniqueLegacyStreamingCheckpointDir: String = {
 
     val prefix = if (waspConfig.environmentPrefix == "") "" else "/" + waspConfig.environmentPrefix
 
     sparkStreamingConfig.checkpointDir + prefix + "/" +
-			"legacy_streaming"
-	}
-	
-  def generateSpecificStructuredStreamingCheckpointDir(pipegraph: PipegraphModel,
-                                                       component: StructuredStreamingETLModel): String = {
-
-    val prefix = if (waspConfig.environmentPrefix == "") "" else "/" + waspConfig.environmentPrefix
-
-    sparkStreamingConfig.checkpointDir + prefix + "/" +
-	    "structured_streaming" + "/" +
-	    pipegraph.generateStandardPipegraphName + "/" +
-	    component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName
+      "legacy_streaming"
   }
-  
-  def getTriggerIntervalMs(sparkStreamingConfigModel: SparkStreamingConfigModel, structuredStreamingETLModel: StructuredStreamingETLModel): Long = {
+
+  def generateSpecificStructuredStreamingCheckpointDir(
+      pipegraph: PipegraphModel,
+      component: StructuredStreamingETLModel
+  ): String = {
+
+    val prefix = if (waspConfig.environmentPrefix == "") "" else "/" + waspConfig.environmentPrefix
+
+    sparkStreamingConfig.checkpointDir + prefix + "/" +
+      "structured_streaming" + "/" +
+      pipegraph.generateStandardPipegraphName + "/" +
+      component.generateStandardProcessingComponentName + "_" + component.generateStandardWriterName
+  }
+
+  def getTriggerIntervalMs(
+      sparkStreamingConfigModel: SparkStreamingConfigModel,
+      structuredStreamingETLModel: StructuredStreamingETLModel
+  ): Long = {
     // grab the trigger interval from the etl, or if not specified from the config, or if not specified use 0
-    structuredStreamingETLModel
-      .triggerIntervalMs
+    structuredStreamingETLModel.triggerIntervalMs
       .orElse(sparkStreamingConfigModel.triggerIntervalMs)
-      .getOrElse(0l) // this is the same default that Spark uses, see org.apache.spark.sql.streaming.DataStreamWriter
+      .getOrElse(0L) // this is the same default that Spark uses, see org.apache.spark.sql.streaming.DataStreamWriter
   }
 }
-

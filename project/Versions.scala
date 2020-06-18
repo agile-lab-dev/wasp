@@ -32,6 +32,7 @@ object Versions {
   val netty = "3.10.6.Final"
   val nettySpark = "3.9.9.Final"
   val nettyAllSpark = "4.1.17.Final"
+  val nifi = "1.11.4"
   val quartz = "2.3.0"
   val scala = "2.11.11"
   val scalaCheck = "1.13.5"

@@ -211,7 +211,8 @@ trait JsonSupport
   implicit lazy val sparkEntryConfigModelConfigFormat: RootJsonFormat[SparkEntryConfig] = jsonFormat2(
     SparkEntryConfig.apply
   )
-  implicit lazy val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat21(
+  implicit lazy val nifiStatelessConfigModelFormat: RootJsonFormat[NifiStatelessConfigModel] = jsonFormat4(NifiStatelessConfigModel.apply)
+  implicit lazy val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat22(
     SparkStreamingConfigModel.apply
   )
   implicit lazy val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat18(

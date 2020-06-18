@@ -138,9 +138,19 @@ lazy val spark_telemetry_plugin = Project("wasp-spark-telemetry-plugin", file("s
   .settings(libraryDependencies += Dependencies.kafkaClients)
   .settings(libraryDependencies += Dependencies.scalaParserAndCombinators)
 
+lazy val spark_nifi_plugin = Project("wasp-spark-nifi-plugin", file("spark/nifi-plugin"))
+  .settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies += Dependencies.sparkCore)
+  .dependsOn(consumers_spark)
+  .dependsOn(spark_nifi_plugin_bridge)
+
+lazy val spark_nifi_plugin_bridge = Project("wasp-spark-nifi-plugin-bridge", file("spark/nifi-plugin-bridge"))
+  .settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies ++= Dependencies.nifiStateless)
+
 lazy val spark = Project("wasp-spark", file("spark"))
   .settings(Settings.commonSettings: _*)
-  .aggregate(spark_telemetry_plugin)
+  .aggregate(spark_telemetry_plugin, spark_nifi_plugin)
 
 /* nifi */
 
@@ -153,7 +163,8 @@ lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
 
 lazy val wasp = Project("wasp", file("."))
   .settings(Settings.commonSettings: _*)
-  .aggregate(scala_compiler,
+  .aggregate(
+    scala_compiler,
     core,
     master,
     producers,
@@ -170,7 +181,8 @@ lazy val wasp = Project("wasp", file("."))
     plugin_mailer_spark,
     spark_sql_kafka_0_11,
     openapi,
-    nifi_client)
+    nifi_client
+  )
 
 /* WhiteLabel */
 
@@ -208,10 +220,13 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_solr_spark)
   .dependsOn(plugin_mongo_spark)
   .dependsOn(spark_telemetry_plugin)
-  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector
-    :+ "mysql" % "mysql-connector-java" % "5.1.6"
-    :+ Dependencies.scalaTest
-    :+ Dependencies.darwinMockConnector)
+  .dependsOn(spark_nifi_plugin)
+  .settings(
+    libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector
+      :+ "mysql" % "mysql-connector-java" % "5.1.6"
+      :+ Dependencies.scalaTest
+      :+ Dependencies.darwinMockConnector
+  )
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelConsumersRt = Project("wasp-whitelabel-consumers-rt", file("whitelabel/consumers-rt"))
@@ -230,11 +245,11 @@ lazy val openapi = Project("wasp-openapi", file("openapi"))
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies += Dependencies.swaggerCore)
   .settings(
-
     generateOpenApi := {
-      (runMain in Compile).toTask(" it.agilelab.bigdata.wasp.master.web.openapi.GenerateOpenApi documentation/wasp-openapi.yaml").value
+      (runMain in Compile)
+        .toTask(" it.agilelab.bigdata.wasp.master.web.openapi.GenerateOpenApi documentation/wasp-openapi.yaml")
+        .value
     },
-
     generateOpenApi := (generateOpenApi dependsOn (compile in Compile)).value
   )
   .dependsOn(core)

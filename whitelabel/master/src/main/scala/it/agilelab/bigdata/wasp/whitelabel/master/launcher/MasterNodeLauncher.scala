@@ -102,6 +102,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Pipegraphs */
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
+    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.nifi)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.mongo)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.consoleWithMetadata)
     waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafka)

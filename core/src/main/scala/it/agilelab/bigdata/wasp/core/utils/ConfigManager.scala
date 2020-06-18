@@ -274,28 +274,44 @@ object ConfigManager {
     val triggerInterval =
       if (sparkSubConfig.hasPath("trigger-interval-ms")) Some(sparkSubConfig.getLong("trigger-interval-ms")) else None
 
+    val stateless = if (sparkSubConfig.hasPath("nifi-stateless")) {
+
+      Some(
+        NifiStatelessConfigModel(
+          sparkSubConfig.getString("nifi-stateless.bootstrap"),
+          sparkSubConfig.getString("nifi-stateless.system"),
+          sparkSubConfig.getString("nifi-stateless.stateless"),
+          sparkSubConfig.getString("nifi-stateless.extensions")
+        )
+      )
+
+    } else {
+      None
+    }
+
     SparkStreamingConfigModel(
-      sparkSubConfig.getString("app-name"),
-      readConnectionConfig(sparkSubConfig.getConfig("master")),
-      readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
-      sparkSubConfig.getInt("executor-cores"),
-      sparkSubConfig.getString("executor-memory"),
-      sparkSubConfig.getInt("cores-max"),
-      sparkSubConfig.getInt("executor-instances"),
-      sparkSubConfig.getString("additional-jars-path"),
-      sparkSubConfig.getString("yarn-jar"),
-      sparkSubConfig.getInt("block-manager-port"),
-      sparkSubConfig.getInt("retained-stages-jobs"),
-      sparkSubConfig.getInt("retained-tasks"),
-      sparkSubConfig.getInt("retained-jobs"),
-      sparkSubConfig.getInt("retained-executions"),
-      sparkSubConfig.getInt("retained-batches"),
-      readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
-      sparkSubConfig.getInt("streaming-batch-interval-ms"),
-      sparkSubConfig.getString("checkpoint-dir"),
-      triggerInterval,
-      readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
-      sparkStreamingConfigName
+      appName = sparkSubConfig.getString("app-name"),
+      master = readConnectionConfig(sparkSubConfig.getConfig("master")),
+      driver = readSparkDriverConf(sparkSubConfig.getConfig("driver-conf")),
+      executorCores = sparkSubConfig.getInt("executor-cores"),
+      executorMemory = sparkSubConfig.getString("executor-memory"),
+      coresMax = sparkSubConfig.getInt("cores-max"),
+      executorInstances = sparkSubConfig.getInt("executor-instances"),
+      additionalJarsPath = sparkSubConfig.getString("additional-jars-path"),
+      yarnJar = sparkSubConfig.getString("yarn-jar"),
+      blockManagerPort = sparkSubConfig.getInt("block-manager-port"),
+      retainedStagesJobs = sparkSubConfig.getInt("retained-stages-jobs"),
+      retainedTasks = sparkSubConfig.getInt("retained-tasks"),
+      retainedJobs = sparkSubConfig.getInt("retained-jobs"),
+      retainedExecutions = sparkSubConfig.getInt("retained-executions"),
+      retainedBatches = sparkSubConfig.getInt("retained-batches"),
+      kryoSerializer = readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
+      streamingBatchIntervalMs = sparkSubConfig.getInt("streaming-batch-interval-ms"),
+      checkpointDir = sparkSubConfig.getString("checkpoint-dir"),
+      triggerIntervalMs = triggerInterval,
+      others = readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
+      nifiStateless = stateless,
+      name = sparkStreamingConfigName
     )
   }
 

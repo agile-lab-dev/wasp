@@ -23,6 +23,12 @@ trait SparkConfigModel extends Model {
   val others: Seq[SparkEntryConfig]
 }
 
+case class NifiStatelessConfigModel(
+		bootstrapJars: String,
+		systemJars: String,
+		statelessJars: String,
+		extensions: String)
+
 case class SparkStreamingConfigModel(
 																			appName: String,
 																			master: ConnectionConfig,
@@ -44,6 +50,7 @@ case class SparkStreamingConfigModel(
 																			checkpointDir: String,
 																			triggerIntervalMs: Option[Long],
 																			others: Seq[SparkEntryConfig],
+																			nifiStateless: Option[NifiStatelessConfigModel],
 																			name: String
 																		) extends SparkConfigModel
 

@@ -294,7 +294,7 @@ object Dependencies {
       spark :+
       quartz :+
       nameOf :+
-      velocity :+ //TODO: evaluate this is legal
+      velocity :+   //TODO: evaluate this is legal
       scalaCompiler
   ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
@@ -367,6 +367,10 @@ object Dependencies {
       sttpJson4s :+
       json4sJackson
     )
+
+  val nifiStateless: Seq[ModuleID] = Seq(
+    "org.apache.nifi" % "nifi-stateless" % Versions.nifi % "provided"
+  )
 
   def kmsTest = Seq(
     transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
