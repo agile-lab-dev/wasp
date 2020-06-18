@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-330-integrate-nifi-stateless-engine-as-a-strategy-SNAPSHOT
+  version: 2.26.0-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -2890,26 +2890,6 @@ components:
       xml:
         name: Counts
         namespace: java://it.agilelab.bigdata.wasp.core.models
-    NifiStatelessConfigModel:
-      required:
-      - bootstrapJars
-      - systemJars
-      - statelessJars
-      - extensions
-      type: object
-      properties:
-        bootstrapJars:
-          type: string
-        systemJars:
-          type: string
-        statelessJars:
-          type: string
-        extensions:
-          type: string
-      nullable: true
-      xml:
-        name: NifiStatelessConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     MlModelOnlyInfo:
       required:
       - name
@@ -3275,8 +3255,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SparkEntryConfig'
-        nifiStateless:
-          $ref: '#/components/schemas/NifiStatelessConfigModel'
         name:
           type: string
       xml:

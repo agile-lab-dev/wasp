@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 set -ax
-
 apt-get update
 apt-get install -y exim4
-
 echo "example.org" > /etc/mailname
-
 cat << 'EOF' > /etc/exim4/update-exim4.conf.conf
 # /etc/exim4/update-exim4.conf.conf
 #
@@ -24,7 +21,6 @@ cat << 'EOF' > /etc/exim4/update-exim4.conf.conf
 # Debconf configuration, but not all of them.
 #
 # This is a Debian specific file
-
 dc_eximconfig_configtype='local'
 dc_other_hostnames='example.org'
 dc_local_interfaces='127.0.0.1'
@@ -39,7 +35,6 @@ dc_hide_mailname=''
 dc_mailname_in_oh='true'
 dc_localdelivery='mail_spool'
 EOF
-
 update-exim4.conf
 
 mkdir /velocitytemplates
@@ -82,30 +77,11 @@ service kafka-server start
 service solr-server start
 service mongod start
 service exim4 start
-
-bash /usr/bin/resolve-templates.sh
-
-service zookeeper-server start
-service hadoop-hdfs-namenode start
-service hadoop-hdfs-datanode start
-service hbase-master start
-service hbase-regionserver start
-service hadoop-yarn-resourcemanager start
-service hadoop-yarn-nodemanager start
-service hadoop-mapreduce-historyserver start
-service kafka-server start
-service solr-server start
-service mongod start
-
-echo "WAITING FOR HBASE MASTER TO GO UP"
-
-sleep 20
-
-echo "create_namespace 'AVRO'" | hbase shell -n
-echo "create 'AVRO:SCHEMA_REPOSITORY', '0'" | hbase shell -n
+service nifi start
+service nifi-registry start
 
 hdfs dfs -copyFromLocal /code/consumers-spark/lib/it.agilelab.wasp-spark-telemetry-plugin-*.jar /user/root/spark2/lib
-hdfs dfs -copyFromLocal /code/consumers-spark/lib/org.apache.kafka.kafka-clients-0.11.0-kafka-3.0.0.jar /user/root/spark2/lib
-hdfs dfs -copyFromLocal /usr/lib/spark/jars/* /user/root/spark2/lib
+hdfs dfs -copyFromLocal /code/consumers-spark/lib/it.agilelab.wasp-spark-nifi-plugin-*.jar /user/root/spark2/lib
+hdfs dfs -copyFromLocal /code/consumers-spark/lib/it.agilelab.wasp-spark-nifi-plugin-bridge-*.jar /user/root/nifi/stateless
 
 exec /usr/bin/supervisord

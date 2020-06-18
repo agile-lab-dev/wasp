@@ -1,4 +1,4 @@
-FROM registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:6.3.2
+FROM registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:6.3.2-nifi
 
 RUN mkdir -p /code
 
