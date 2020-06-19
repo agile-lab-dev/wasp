@@ -25,7 +25,6 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtils
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers._
-import it.agilelab.bigdata.wasp.master.web.controllerseditorInstanceFormat.NifiEditorService
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
@@ -116,7 +115,20 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     implicit val serializer: SttpSerializer  = new SttpSerializer()
 
     val nifiConfig = ConfigManager.getNifiConfig
-    val nifiClient = new NifiClient(NifiRawClient(nifiConfig.apiUrl, nifiConfig.uiUrl), UUID.randomUUID())
+
+    val nifiApiUrl = nifiConfig.nifiBaseUrl + "/" + nifiConfig.nifiApiPath
+
+    val proxyNifiUrl = waspConfig.restHttpsConf
+      .map { _ =>
+        s"https://${waspConfig.restServerHostname}:${waspConfig.restServerPort}/proxy/${nifiConfig.nifiUiPath}"
+      }
+      .getOrElse {
+        s"http://${waspConfig.restServerHostname}:${waspConfig.restServerPort}/proxy/${nifiConfig.nifiUiPath}"
+      }
+
+    val nifiClient = new NifiClient(NifiRawClient(nifiApiUrl), UUID.randomUUID(), proxyNifiUrl)
+
+    val nifiProxy = new NifiProxyController("proxy", nifiConfig.nifiBaseUrl)
 
     // Routes
     new BatchJobController(DefaultBatchJobService).getRoute ~
@@ -130,12 +142,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       Document_C.getRoute ~
       KeyValueController.getRoute ~
       RawController.getRoute ~
-      new FreeCodeController(FreeCodeDBServiceDefault,FreeCodeCompilerUtilsDefault).getRoute ~
+      new FreeCodeController(FreeCodeDBServiceDefault, FreeCodeCompilerUtilsDefault).getRoute ~
       new LogsController(new DefaultSolrLogsService(solrClient)(clientExecutionContext)).getRoutes ~
       new EventController(new DefaultSolrEventsService(solrClient)(clientExecutionContext)).getRoutes ~
       new TelemetryController(new DefaultSolrTelemetryService(solrClient)(clientExecutionContext)).getRoutes ~
       new StatsController(new DefaultSolrStatsService(solrClient)(clientExecutionContext)).getRoutes ~
       new EditorController(new NifiEditorService(nifiClient)(clientExecutionContext)).getRoute ~
+      nifiProxy.getRoutes ~
       additionalRoutes()
   }
 

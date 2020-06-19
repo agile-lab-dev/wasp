@@ -10,7 +10,7 @@ import it.agilelab.bigdata.nifi.client.model._
 import sttp.client.SttpBackend
 import sttp.client.monad.MonadError
 
-class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID)(
+class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID, uiUrl: String)(
     implicit sttpBackend: SttpBackend[F, Nothing, Nothing]
 ) {
 
@@ -74,7 +74,7 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID)
     }
 
     def editorUrl(processGroupEntity: ProcessGroupEntity): F[String] =
-      implicitly[MonadError[F]].unit(s"${nifiRawClient.uiUrl}/?processGroupId=${processGroupEntity.id.getOrElse("")}")
+      implicitly[MonadError[F]].unit(s"${uiUrl}/?processGroupId=${processGroupEntity.id.getOrElse("")}")
 
     def create(parentId: String, name: String): F[ProcessGroupEntity] = {
       val entity = ProcessGroupEntity(
@@ -98,7 +98,7 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID)
 
 }
 
-class NifiRawClient(apiUrl: String, val uiUrl: String)(implicit sttpSerializer: SttpSerializer) {
+class NifiRawClient(apiUrl: String)(implicit sttpSerializer: SttpSerializer) {
 
   val processGroups: ProcessGroupsApi = ProcessGroupsApi(apiUrl)
 
@@ -110,6 +110,6 @@ class NifiRawClient(apiUrl: String, val uiUrl: String)(implicit sttpSerializer: 
 
 }
 object NifiRawClient {
-  def apply(apiUrl: String, uiUrl: String)(implicit sttpSerializer: SttpSerializer): NifiRawClient =
-    new NifiRawClient(apiUrl, uiUrl)(sttpSerializer)
+  def apply(apiUrl: String)(implicit sttpSerializer: SttpSerializer): NifiRawClient =
+    new NifiRawClient(apiUrl)(sttpSerializer)
 }

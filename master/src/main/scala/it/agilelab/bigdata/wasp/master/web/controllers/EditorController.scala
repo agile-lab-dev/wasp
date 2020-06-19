@@ -1,12 +1,11 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.server.{Directives, Route}
-import it.agilelab.bigdata.wasp.master.web.controllerseditorInstanceFormat.NifiEditorService
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
 
-class EditorController(editorService: NifiEditorService) extends Directives with JsonSupport {
+class EditorController(editorService: EditorService) extends Directives with JsonSupport {
 
   def getRoute: Route =
     extractExecutionContext { implicit ec =>

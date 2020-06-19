@@ -410,8 +410,9 @@ object ConfigManager {
   def getDefaultNifiConfig: NifiConfigModel = {
     val nifiSubConfig = conf.getConfig("nifi")
     NifiConfigModel(
-      nifiSubConfig.getString("api-url"),
-      nifiSubConfig.getString("ui-url"),
+      nifiSubConfig.getString("base-url"),
+      nifiSubConfig.getString("api-path"),
+      nifiSubConfig.getString("ui-path"),
       nifiConfigName
     )
   }
