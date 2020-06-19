@@ -22,13 +22,12 @@ class NifiProxyController(basePath: String, target: Uri) extends Directives {
             extractUnmatchedPath { rest: Uri.Path =>
               extractExecutionContext { implicit ec =>
                 Route { context =>
-                  val host = request.uri.authority.toString()
+                  val host = request.uri.authority.host.toString()
+                  val port = request.uri.authority.port.toString
 
                   val newHeaders = request.headers :+
-                    RawHeader("X-Fowarded-Host", host) :+
-                    RawHeader("X-Fowarded-Scheme", request.uri.scheme) :+
                     RawHeader("X-ProxyScheme", request.uri.scheme) :+
-                    RawHeader("X-ProxyPort", target.authority.port.toString) :+
+                    RawHeader("X-ProxyPort", port) :+
                     RawHeader("X-ProxyHost", host) :+
                     RawHeader("X-ProxyContextPath", basePath)
 
