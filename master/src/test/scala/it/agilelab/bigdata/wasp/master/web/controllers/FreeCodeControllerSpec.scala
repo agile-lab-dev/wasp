@@ -200,13 +200,45 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
 
   }
 
+  it should "test complete api" in {
+    val serviceDB = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false,true)
+    val controller = new FreeCodeController(serviceDB, freeCodeCompiler)
 
+    Post("/freeCode/complete/1", freeCodeModelWarning) ~> controller.getRoute ~> check {
+      serviceDB.storage.size shouldBe 1
+      val output  = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
+      output.isDefined shouldBe false
+      val models = responseAs[AngularResponse[List[CompletionModel]]]
+      models.data.size shouldBe 1
+      models.data.head shouldBe freeCodeCompiler.complete
+      models.Result shouldBe "OK"
+    }
+
+  }
+
+  it should "test complete api without complete" in {
+    val serviceDB = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false,false)
+    val controller = new FreeCodeController(serviceDB, freeCodeCompiler)
+
+    Post("/freeCode/complete/1", freeCodeModelWarning) ~> controller.getRoute ~> check {
+      serviceDB.storage.size shouldBe 1
+      val output  = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
+      output.isDefined shouldBe false
+      val models = responseAs[AngularResponse[List[CompletionModel]]]
+      models.data.size shouldBe 0
+      models.Result shouldBe "OK"
+    }
+
+  }
 
 }
 
-private class FreeCodeCompilerUtilsMock(errors : Boolean, warnings: Boolean) extends FreeCodeCompilerUtils{
+private class FreeCodeCompilerUtilsMock(errors : Boolean, warnings: Boolean,codeToComplete : Boolean=true) extends FreeCodeCompilerUtils{
   private val error = ErrorModel("virtual","1","error","error","","")
   private val warning = ErrorModel("virtual","1","warning","warning","","")
+  val complete = CompletionModel("toString","()=>String")
 
   override def validate(code: String): List[ErrorModel] = {
     if(errors) List(error)
@@ -214,7 +246,10 @@ private class FreeCodeCompilerUtilsMock(errors : Boolean, warnings: Boolean) ext
     else List.empty
   }
 
-  override def complete(code: String): List[CompletionModel] = ???
+  override def complete(code: String,int : Int): List[CompletionModel] = {
+    if(codeToComplete) List(complete)
+    else List.empty
+  }
 }
 
 

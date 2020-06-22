@@ -13,9 +13,11 @@ trait FreeCodeGenerator {
   }
 
   def completeWithDefaultCodeAsValue(code : String): String = {
-    s"""$defaultStartFreeCodeTransformAssValue
+    s"""$defaultStartFreeCodeTransformAsValue
        |$code""".stripMargin
   }
+
+  def startPosition : Int = defaultStartFreeCodeTransformAsValue.length+1
 
 }
 object FreeCodeGenerator {
@@ -25,10 +27,10 @@ object FreeCodeGenerator {
       |import com.typesafe.config.Config
       |import org.apache.spark.sql.DataFrame
       |import org.apache.spark.sql.functions._
-      |(dataFrames: Map[ReaderKey, DataFrame],configuration : Config) =>{
+      |((dataFrames: Map[ReaderKey, DataFrame],configuration : Config) =>{
       |val spark = dataFrames.head._2.sparkSession""".stripMargin
 
-  val defaultStartFreeCodeTransformAssValue : String=
+  val defaultStartFreeCodeTransformAsValue : String=
     """import it.agilelab.bigdata.wasp.consumers.spark.strategies.ReaderKey
       |import it.agilelab.bigdata.wasp.consumers.spark.strategies._
       |import com.typesafe.config.Config
@@ -38,7 +40,9 @@ object FreeCodeGenerator {
       |val configuration : Config = null
       |val spark = dataFrames.head._2.sparkSession""".stripMargin
 
-  val defaultEndFreeCodeTransform : String= "}"
+  val defaultEndFreeCodeTransform : String= "}) : ((Map[ReaderKey, DataFrame], Config) => DataFrame) "
+
+
 
 }
 

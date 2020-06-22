@@ -5,10 +5,14 @@ import scala.reflect.internal.util.{FakePos, NoPosition, Position}
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.AbstractReporter
 
-class Reporter(val settings: Settings,startPosition : Int) extends AbstractReporter {
+class Reporter(val settings: Settings) extends AbstractReporter {
 
   private val messages : mutable.ListBuffer[ErrorModel] = mutable.ListBuffer.empty[ErrorModel]
   private val fileName = "<virtual>"
+  private var startPosition : Int = 0
+
+
+  def setStartPosition(startPosition  :Int) : Unit = this.startPosition = startPosition
 
 
 

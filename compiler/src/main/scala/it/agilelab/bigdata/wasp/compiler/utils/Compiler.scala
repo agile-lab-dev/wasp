@@ -9,7 +9,7 @@ import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interactive.{Global, Response}
 
-class Compiler(startPosition: Int = 1) {
+object Compiler {
 
   private lazy val compilerPath = try {
     jarPathOfClass("scala.tools.nsc.Interpreter")
@@ -60,7 +60,7 @@ class Compiler(startPosition: Int = 1) {
   settings.outputDirs.setSingleOutput(target)
 
 
-  private val reporter = new Reporter(settings, startPosition)
+  private val reporter = new Reporter(settings)
 
   private val compiler = new Global(settings, reporter)
 
@@ -79,18 +79,18 @@ class Compiler(startPosition: Int = 1) {
     val response = new Response[Unit]
 
     compiler.askReload(List(source), response)
-
     response.get
     source
 
   }
 
 
-  def scopeCompletion(code: String, position: Int): List[ErrorModel] = {
+  def scopeCompletion(code: String, startPosition : Int, endPosition: Int): List[ErrorModel] = {
     reporter.clear()
+    reporter.setStartPosition(startPosition)
     val source: BatchSourceFile = compile(code)
     val tcompletion = new Response[List[compiler.Member]]
-    val pos = compiler.ask(() => new OffsetPosition(source, position))
+    val pos = compiler.ask(() => new OffsetPosition(source, endPosition))
     compiler.askScopeCompletion(pos, tcompletion)
 
 

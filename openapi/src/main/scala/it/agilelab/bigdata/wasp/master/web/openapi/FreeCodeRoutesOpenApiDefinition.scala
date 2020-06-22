@@ -6,23 +6,21 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{FreeCodeModel, PipegraphModel}
+import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
+import it.agilelab.bigdata.wasp.core.models.FreeCodeModel
 
 
-trait FreeCodeModelOpenApiDefinition extends ProductOpenApi with LangOpenApi with CollectionsOpenApi {
-  implicit lazy val freeCodeModelOpenApi: ToOpenApiSchema[FreeCodeModel] =
-    product2(FreeCodeModel.apply)
 
-}
 
 trait FreeCodeRoutesOpenApiDefinition extends
-  FreeCodeModelOpenApiDefinition with
+  FreeCodeModelOpenApiSupport with
   AngularResponseOpenApiComponentSupport {
 
   def freeCodeRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
       "/freeCode"                -> get(ctx),
-      "/freeCode/{modelname}" -> getInstance(ctx)
+      "/freeCode/{modelname}" -> getInstance(ctx),
+      "/freeCode/complete/{position}" -> getInstanceComplete(ctx)
     )
   }
 
@@ -41,7 +39,7 @@ trait FreeCodeRoutesOpenApiDefinition extends
         new Operation()
           .addTagsItem("freeCode")
           .operationId("get-freeCode")
-          .description("Retrieves the model used to write or read from FreeCode Stores")
+          .description("Retrieves the models used to create a free code strategy")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
             new Parameter()
@@ -71,6 +69,52 @@ trait FreeCodeRoutesOpenApiDefinition extends
           )
       )
 
+  private def getInstanceComplete(ctx: Context): PathItem =
+    new PathItem()
+      .post(
+        new Operation()
+          .operationId("complete-freeCode")
+          .description("complete the code of a freeCode model")
+          .addTagsItem("freeCode")
+          .description("complete the code of a freeCode model")
+          .addParametersItem(pretty(ctx))
+          .addParametersItem(
+            new Parameter()
+              .in("path")
+              .name("position")
+              .description("The position on the code to complete")
+              .schema(integerOpenApi.schema(ctx))
+          )
+          .requestBody(
+            new RequestBody().content(
+              new Content().addMediaType(
+                "application/json",
+                new MediaType()
+                  .schema(ToOpenApiSchema[FreeCodeModel].schema(ctx))
+              )
+            )
+          )
+          .responses(
+            new ApiResponses()
+              .addApiResponse(
+                "200",
+                new ApiResponse()
+                  .description("complete the code of a freeCode model")
+                  .content(
+                    new Content()
+                      .addMediaType(
+                        "text/json",
+                        new MediaType()
+                          .schema(
+                            ToOpenApiSchema[AngularResponse[Seq[CompletionModel]]]
+                              .schema(ctx)
+                          )
+                      )
+                  )
+              )
+          )
+      )
+
 
 
   private def get(ctx: Context) = {
@@ -78,7 +122,7 @@ trait FreeCodeRoutesOpenApiDefinition extends
       .get(
         new Operation()
           .operationId("list-freeCode")
-          .description("Retrieves all models used to write or read from FreeCode Stores")
+          .description("Retrieves the models used to create a free code strategy")
           .addTagsItem("freeCode")
           .addParametersItem(pretty(ctx))
           .responses(
@@ -106,12 +150,12 @@ trait FreeCodeRoutesOpenApiDefinition extends
           .operationId("insert-freeCode")
           .description("Inserts a freeCode model")
           .addTagsItem("freeCode")
-          .description("IInserts a freeCode model")
+          .description("Inserts a freeCode model")
           .addParametersItem(pretty(ctx))
           .requestBody(
             new RequestBody().content(
               new Content().addMediaType(
-                "text/json",
+                "application/json",
                 new MediaType()
                   .schema(ToOpenApiSchema[FreeCodeModel].schema(ctx))
               )
@@ -129,7 +173,7 @@ trait FreeCodeRoutesOpenApiDefinition extends
                         "text/json",
                         new MediaType()
                           .schema(
-                            ToOpenApiSchema[AngularResponse[String]]
+                            ToOpenApiSchema[InsertResponse]
                               .schema(ctx)
                           )
                       )

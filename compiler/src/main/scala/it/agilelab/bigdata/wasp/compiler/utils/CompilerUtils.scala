@@ -4,32 +4,30 @@ object CompilerUtils {
 
   private val startClass = """object Compilation {""".stripMargin
   private val endClass = """}""".stripMargin
+  val compiler = Compiler
 
-  def validate(code : String,startPosition:  Int=0): List[ErrorModel] = {
-    val compiler = new Compiler(1+startPosition)
+  def validate(code : String,startPosition:  Int=0): List[ErrorModel] = compiler.synchronized {
     val completeClass =
       s"""$startClass
          |$code
          |$endClass""".stripMargin
-    val position = completeClass.length
+    val endPosition = completeClass.length
 
-    compiler.scopeCompletion(s"$completeClass",position)
+    compiler.scopeCompletion(s"$completeClass",1+startPosition,endPosition)
 
   }
 
   private val chars = Seq(' ','.')
 
-  def complete(code : String): List[CompletionModel] = {
+  def complete(code : String, position : Int): List[CompletionModel] = compiler.synchronized {
 
-    val compiler = new Compiler(0)
+
     val incompleteClass =
       s"""$startClass
-         |$code""".stripMargin
+         |${code.substring(0,position)}""".stripMargin
     val completeClass =
       s"""$incompleteClass
          |$endClass""".stripMargin
-
-
 
     val lastCharIncomplete = incompleteClass.length
     if(chars.contains(incompleteClass(lastCharIncomplete-1))) {

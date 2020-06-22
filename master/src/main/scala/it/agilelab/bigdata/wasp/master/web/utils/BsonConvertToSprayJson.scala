@@ -6,7 +6,7 @@ import java.time.temporal.{TemporalAccessor, TemporalQuery}
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
-import it.agilelab.bigdata.wasp.compiler.utils.ErrorModel
+import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.models.editor.{
@@ -248,6 +248,7 @@ trait JsonSupport
   implicit lazy val documentModelFormat: RootJsonFormat[DocumentModel] = jsonFormat3(DocumentModel.apply)
   implicit lazy val freeCodeModelFormat : RootJsonFormat[FreeCodeModel] = jsonFormat2(FreeCodeModel.apply)
   implicit lazy val errorModelFormat : RootJsonFormat[ErrorModel] = jsonFormat6(ErrorModel.apply)
+  implicit lazy val completionModelFormat : RootJsonFormat[CompletionModel] = jsonFormat2(CompletionModel.apply)
 
   // Editor Format
   implicit lazy val nifiEditorFormat: RootJsonFormat[NifiStatelessInstanceModel] = jsonFormat3(

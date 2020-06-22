@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-SNAPSHOT
+  version: 2.26.0-341-create-an-api-to-complete-the-free-code-strategy-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -166,7 +166,7 @@ paths:
     get:
       tags:
       - freeCode
-      description: Retrieves all models used to write or read from FreeCode Stores
+      description: Retrieves the models used to create a free code strategy
       operationId: list-freeCode
       parameters:
       - name: pretty
@@ -197,7 +197,7 @@ paths:
     post:
       tags:
       - freeCode
-      description: IInserts a freeCode model
+      description: Inserts a freeCode model
       operationId: insert-freeCode
       parameters:
       - name: pretty
@@ -207,7 +207,7 @@ paths:
           type: boolean
       requestBody:
         content:
-          text/json:
+          application/json:
             schema:
               required:
               - name
@@ -227,18 +227,9 @@ paths:
           content:
             text/json:
               schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    type: string
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+                oneOf:
+                - $ref: '#/components/schemas/ErrorModel'
+                - type: string
   /producers/{producername}:
     delete:
       tags:
@@ -393,6 +384,61 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/BatchJobInstanceModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /freeCode/complete/{position}:
+    post:
+      tags:
+      - freeCode
+      description: complete the code of a freeCode model
+      operationId: complete-freeCode
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: position
+        in: path
+        description: The position on the code to complete
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+              - name
+              - code
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+              xml:
+                name: FreeCodeModel
+                namespace: java://it.agilelab.bigdata.wasp.core.models
+      responses:
+        "200":
+          description: complete the code of a freeCode model
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CompletionModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -1306,7 +1352,7 @@ paths:
     get:
       tags:
       - freeCode
-      description: Retrieves the model used to write or read from FreeCode Stores
+      description: Retrieves the models used to create a free code strategy
       operationId: get-freeCode
       parameters:
       - name: pretty
@@ -2377,6 +2423,19 @@ components:
       xml:
         name: Sources
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    CompletionModel:
+      required:
+      - toComplete
+      - info
+      type: object
+      properties:
+        toComplete:
+          type: string
+        info:
+          type: string
+      xml:
+        name: CompletionModel
+        namespace: java://it.agilelab.bigdata.wasp.compiler.utils
     BatchJobModel:
       required:
       - name
@@ -2890,6 +2949,26 @@ components:
       xml:
         name: Counts
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    NifiStatelessConfigModel:
+      required:
+      - bootstrapJars
+      - systemJars
+      - statelessJars
+      - extensions
+      type: object
+      properties:
+        bootstrapJars:
+          type: string
+        systemJars:
+          type: string
+        statelessJars:
+          type: string
+        extensions:
+          type: string
+      nullable: true
+      xml:
+        name: NifiStatelessConfigModel
+        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
     MlModelOnlyInfo:
       required:
       - name
@@ -3255,6 +3334,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SparkEntryConfig'
+        nifiStateless:
+          $ref: '#/components/schemas/NifiStatelessConfigModel'
         name:
           type: string
       xml:
@@ -3434,6 +3515,31 @@ components:
       xml:
         name: ElasticConfigModel
         namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+    ErrorModel:
+      required:
+      - fileName
+      - where
+      - errorType
+      - msg
+      - content
+      - indicator
+      type: object
+      properties:
+        fileName:
+          type: string
+        where:
+          type: string
+        errorType:
+          type: string
+        msg:
+          type: string
+        content:
+          type: string
+        indicator:
+          type: string
+      xml:
+        name: ErrorModel
+        namespace: java://it.agilelab.bigdata.wasp.compiler.utils
     KeyValueDTO:
       required:
       - name

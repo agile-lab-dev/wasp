@@ -30,16 +30,28 @@ class FreeCodeController(service : FreeCodeDBService = FreeCodeDBServiceDefault,
                   val validationResult = freeCodeCompilerUtils.validate(freeCodeModel.code)
                   if (!validationResult.exists(_.errorType.equals("error"))) {
                     service.insert(freeCodeModel)
-                    if(validationResult.isEmpty) "OK".toJson.toAngularOkResponse(pretty)
+                    if (validationResult.isEmpty) "OK".toJson.toAngularOkResponse(pretty)
                     else validationResult.toJson.toAngularOkResponse(pretty)
                   }
                   else {
-                    validationResult.toJson.toAngularKoResponse(s"FreeCodeStrategy with one or more problems",pretty)
+                    validationResult.toJson.toAngularKoResponse(s"FreeCodeStrategy with one or more problems", pretty)
                   }
                 }
               }
             }
         } ~ pathPrefix(Segment) { name =>
+          pathPrefix(Segment) { position =>
+            pathEnd {
+              post {
+                entity(as[FreeCodeModel]) { freeCodeModel =>
+                  complete {
+                    val completionResult = freeCodeCompilerUtils.complete(freeCodeModel.code, position.toInt)
+                    completionResult.toJson.toAngularOkResponse(pretty)
+                  }
+                }
+              }
+            }
+          } ~
           pathEnd {
             get {
               complete {
@@ -55,8 +67,20 @@ class FreeCodeController(service : FreeCodeDBService = FreeCodeDBServiceDefault,
                 }
               }
           }
+        } ~ pathPrefix(Segment) { position =>
+          pathEnd {
+            post {
+              entity(as[FreeCodeModel]) { freeCodeModel =>
+                complete {
+                  val completionResult = freeCodeCompilerUtils.complete(freeCodeModel.code, position.toInt)
+                  completionResult.toJson.toAngularOkResponse(pretty)
+                }
+              }
+            }
+          }
+          }
         }
       }
     }
-  }
+
 }

@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeGenerator
 
 trait FreeCodeCompilerUtils {
   def validate(code : String) : List[ErrorModel]
-  def complete(code : String):List[CompletionModel]
+  def complete(code : String,position : Int):List[CompletionModel]
 
 }
 
@@ -14,6 +14,6 @@ object FreeCodeCompilerUtilsDefault extends FreeCodeCompilerUtils with FreeCodeG
 
   def validate(code :String): List[ErrorModel] = CompilerUtils.validate(completeWithDefaultCodeAsFunction(code),startRowCode)
 
-  def complete(code : String):List[CompletionModel] = CompilerUtils.complete(completeWithDefaultCodeAsValue(code))
+  def complete(code : String,position : Int):List[CompletionModel] = CompilerUtils.complete(completeWithDefaultCodeAsValue(code),position+startPosition)
 
 }
