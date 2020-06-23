@@ -116,13 +116,13 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
     serviceDB.storage.size shouldBe 1
     serviceDB.storage.exists(_.name.equals(freeCodeModelDefault.name)) shouldBe true
 
-    Get(s"/freeCode/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
+    Get(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[FreeCodeModel]]
       models.data shouldBe freeCodeModelDefault
     }
 
     //get a model thant doesn't exist
-    Get(s"/freeCode/${freeCodeModelError.name}") ~> controller.getRoute ~> check {
+    Get(s"/freeCode/instance/${freeCodeModelError.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularKoReponse[String]]
       models.Result shouldBe "KO"
     }
@@ -130,22 +130,22 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
 
 
     serviceDB.storage = List(freeCodeModelDefault,freeCodeModelError,freeCodeModelWarning,freeCodeModelCorrect)
-    Get(s"/freeCode/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
+    Get(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[FreeCodeModel]]
       models.data shouldBe freeCodeModelDefault
     }
 
-    Get(s"/freeCode/${freeCodeModelError.name}") ~> controller.getRoute ~> check {
+    Get(s"/freeCode/instance/${freeCodeModelError.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[FreeCodeModel]]
       models.data shouldBe freeCodeModelError
     }
 
-    Get(s"/freeCode/${freeCodeModelWarning.name}") ~> controller.getRoute ~> check {
+    Get(s"/freeCode/instance/${freeCodeModelWarning.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[FreeCodeModel]]
       models.data shouldBe freeCodeModelWarning
     }
 
-    Get(s"/freeCode/${freeCodeModelCorrect.name}") ~> controller.getRoute ~> check {
+    Get(s"/freeCode/instance/${freeCodeModelCorrect.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[FreeCodeModel]]
       models.data shouldBe freeCodeModelCorrect
     }
@@ -161,14 +161,14 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
     serviceDB.storage.size shouldBe 1
     serviceDB.storage.exists(_.name.equals(freeCodeModelDefault.name)) shouldBe true
 
-    Delete(s"/freeCode/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
+    Delete(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
       response
       responseAs[AngularResponse[String]] shouldBe AngularResponse("OK", "OK")
       serviceDB.storage.size shouldBe 0
     }
 
     //delete again
-    Delete(s"/freeCode/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
+    Delete(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
       responseAs[AngularKoReponse[String]].Result shouldBe "KO"
       serviceDB.storage.size shouldBe 0
     }
@@ -178,22 +178,22 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
     serviceDB.storage = List(freeCodeModelDefault,freeCodeModelError,freeCodeModelWarning,freeCodeModelCorrect)
     serviceDB.storage.size shouldBe 4
 
-    Delete(s"/freeCode/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
+    Delete(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
       responseAs[AngularResponse[String]] shouldBe AngularResponse("OK", "OK")
       serviceDB.storage.size shouldBe 3
     }
 
-    Delete(s"/freeCode/${freeCodeModelError.name}") ~> controller.getRoute ~> check {
+    Delete(s"/freeCode/instance/${freeCodeModelError.name}") ~> controller.getRoute ~> check {
       responseAs[AngularResponse[String]] shouldBe AngularResponse("OK", "OK")
       serviceDB.storage.size shouldBe 2
     }
 
-    Delete(s"/freeCode/${freeCodeModelWarning.name}") ~> controller.getRoute ~> check {
+    Delete(s"/freeCode/instance/${freeCodeModelWarning.name}") ~> controller.getRoute ~> check {
       responseAs[AngularResponse[String]] shouldBe AngularResponse("OK", "OK")
       serviceDB.storage.size shouldBe 1
     }
 
-    Delete(s"/freeCode/${freeCodeModelCorrect.name}") ~> controller.getRoute ~> check {
+    Delete(s"/freeCode/instance/${freeCodeModelCorrect.name}") ~> controller.getRoute ~> check {
       responseAs[AngularResponse[String]] shouldBe AngularResponse("OK", "OK")
       serviceDB.storage.size shouldBe 0
     }
@@ -232,6 +232,49 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
     }
 
   }
+
+  it should "test validate correct model" in {
+
+    val serviceDB =  new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,false)
+    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+
+    Post("/freeCode/validate", freeCodeModelCorrect) ~> controller.getRoute ~> check {
+      responseAs[AngularResponse[String]] shouldEqual AngularResponse("OK", "OK")
+    }
+  }
+
+
+
+  it should "test validate warning model" in {
+
+    val serviceDB =  new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,true)
+    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    Post("/freeCode/validate", freeCodeModelWarning) ~> controller.getRoute ~> check {
+      val models = responseAs[AngularResponse[List[ErrorModel]]]
+      models.data.size shouldBe 1
+      models.data.head.errorType shouldBe "warning"
+      models.Result shouldBe "OK"
+    }
+  }
+
+
+
+
+  it should "test validate wrong model" in {
+
+    val serviceDB =  new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(true,true)
+    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    Post("/freeCode/validate", freeCodeModelError) ~> controller.getRoute ~> check {
+      val models = responseAs[AngularResponse[List[ErrorModel]]]
+      models.data.size shouldBe 1
+      models.data.head.errorType shouldBe "error"
+      models.Result shouldBe "KO"
+    }
+  }
+
 
 }
 

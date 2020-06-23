@@ -247,6 +247,7 @@ trait JsonSupport
   )
   implicit lazy val documentModelFormat: RootJsonFormat[DocumentModel] = jsonFormat3(DocumentModel.apply)
   implicit lazy val freeCodeModelFormat : RootJsonFormat[FreeCodeModel] = jsonFormat2(FreeCodeModel.apply)
+  implicit lazy val freeCodeFormat : RootJsonFormat[FreeCode] = jsonFormat1(FreeCode.apply)
   implicit lazy val errorModelFormat : RootJsonFormat[ErrorModel] = jsonFormat6(ErrorModel.apply)
   implicit lazy val completionModelFormat : RootJsonFormat[CompletionModel] = jsonFormat2(CompletionModel.apply)
 

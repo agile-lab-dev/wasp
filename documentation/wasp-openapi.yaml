@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-341-create-an-api-to-complete-the-free-code-strategy-SNAPSHOT
+  version: 2.26.0-345-create-an-api-to-validate-the-free-code-strategy-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -73,6 +73,42 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     type: string
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /freeCode/instance/{modelname}:
+    get:
+      tags:
+      - freeCode
+      description: Retrieves the models used to create a free code strategy
+      operationId: get-freeCode
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: modelname
+        in: path
+        description: The name of the freeCode model to retrieve
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Outcome of the operation
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/FreeCodeModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -411,16 +447,13 @@ paths:
           application/json:
             schema:
               required:
-              - name
               - code
               type: object
               properties:
-                name:
-                  type: string
                 code:
                   type: string
               xml:
-                name: FreeCodeModel
+                name: FreeCode
                 namespace: java://it.agilelab.bigdata.wasp.core.models
       responses:
         "200":
@@ -1348,42 +1381,6 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /freeCode/{modelname}:
-    get:
-      tags:
-      - freeCode
-      description: Retrieves the models used to create a free code strategy
-      operationId: get-freeCode
-      parameters:
-      - name: pretty
-        in: query
-        required: false
-        schema:
-          type: boolean
-      - name: modelname
-        in: path
-        description: The name of the freeCode model to retrieve
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Outcome of the operation
-          content:
-            text/json:
-              schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    $ref: '#/components/schemas/FreeCodeModel'
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /producers/{producername}/stop:
     post:
       tags:
@@ -2004,6 +2001,40 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /freeCode/validate:
+    post:
+      tags:
+      - freeCode
+      description: Validates a freeCode model
+      operationId: validate-freeCode
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+              - code
+              type: object
+              properties:
+                code:
+                  type: string
+              xml:
+                name: FreeCode
+                namespace: java://it.agilelab.bigdata.wasp.core.models
+      responses:
+        "200":
+          description: Result of validate
+          content:
+            text/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ErrorModel'
+                - type: string
   /config/kafka:
     get:
       tags:

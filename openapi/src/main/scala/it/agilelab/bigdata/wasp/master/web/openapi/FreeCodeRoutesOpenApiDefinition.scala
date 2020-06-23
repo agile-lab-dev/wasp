@@ -7,7 +7,7 @@ import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
 import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
-import it.agilelab.bigdata.wasp.core.models.FreeCodeModel
+import it.agilelab.bigdata.wasp.core.models.{FreeCode, FreeCodeModel}
 
 
 
@@ -19,7 +19,8 @@ trait FreeCodeRoutesOpenApiDefinition extends
   def freeCodeRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
       "/freeCode"                -> get(ctx),
-      "/freeCode/{modelname}" -> getInstance(ctx),
+      "/freeCode/validate" -> getInstanceValidate(ctx),
+      "/freeCode/instance/{modelname}" -> getInstance(ctx),
       "/freeCode/complete/{position}" -> getInstanceComplete(ctx)
     )
   }
@@ -90,7 +91,7 @@ trait FreeCodeRoutesOpenApiDefinition extends
               new Content().addMediaType(
                 "application/json",
                 new MediaType()
-                  .schema(ToOpenApiSchema[FreeCodeModel].schema(ctx))
+                  .schema(ToOpenApiSchema[FreeCode].schema(ctx))
               )
             )
           )
@@ -114,6 +115,47 @@ trait FreeCodeRoutesOpenApiDefinition extends
               )
           )
       )
+
+
+  private def getInstanceValidate(ctx: Context): PathItem =
+    new PathItem()
+      .post(
+        new Operation()
+          .operationId("validate-freeCode")
+          .description("Validate a freeCode model")
+          .addTagsItem("freeCode")
+          .description("Validates a freeCode model")
+          .addParametersItem(pretty(ctx))
+          .requestBody(
+            new RequestBody().content(
+              new Content().addMediaType(
+                "application/json",
+                new MediaType()
+                  .schema(ToOpenApiSchema[FreeCode].schema(ctx))
+              )
+            )
+          )
+          .responses(
+            new ApiResponses()
+              .addApiResponse(
+                "200",
+                new ApiResponse()
+                  .description("Result of validate")
+                  .content(
+                    new Content()
+                      .addMediaType(
+                        "text/json",
+                        new MediaType()
+                          .schema(
+                            ToOpenApiSchema[ValidateResponse]
+                              .schema(ctx)
+                          )
+                      )
+                  )
+              )
+          )
+      )
+
 
 
 
@@ -173,7 +215,7 @@ trait FreeCodeRoutesOpenApiDefinition extends
                         "text/json",
                         new MediaType()
                           .schema(
-                            ToOpenApiSchema[InsertResponse]
+                            ToOpenApiSchema[ValidateResponse]
                               .schema(ctx)
                           )
                       )
