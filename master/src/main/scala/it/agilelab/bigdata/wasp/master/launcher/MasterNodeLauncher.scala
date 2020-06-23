@@ -147,7 +147,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       new EventController(new DefaultSolrEventsService(solrClient)(clientExecutionContext)).getRoutes ~
       new TelemetryController(new DefaultSolrTelemetryService(solrClient)(clientExecutionContext)).getRoutes ~
       new StatsController(new DefaultSolrStatsService(solrClient)(clientExecutionContext)).getRoutes ~
-      new EditorController(new NifiEditorService(nifiClient)(clientExecutionContext)).getRoute ~
+      new EditorController(new NifiEditorService(nifiClient)(clientExecutionContext)).getRoutes ~
+      new EditorController(new NifiEditorService(nifiClient)(clientExecutionContext)).getRoutes ~
       nifiProxy.getRoutes ~
       additionalRoutes()
   }

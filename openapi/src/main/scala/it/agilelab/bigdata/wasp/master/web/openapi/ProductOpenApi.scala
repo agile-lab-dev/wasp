@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.openapi
 
 import java.lang.reflect.Modifier
 
-import io.swagger.v3.oas.models.media.{Content, ObjectSchema, Schema, XML}
+import io.swagger.v3.oas.models.media.{ObjectSchema, Schema, XML}
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag

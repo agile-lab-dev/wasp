@@ -2,11 +2,11 @@ package it.agilelab.bigdata.nifi.client
 
 import java.util.UUID
 
-import it.agilelab.bigdata.nifi.client.api.{ControllerApi, FlowApi, ProcessGroupsApi, VersionsApi}
+import it.agilelab.bigdata.nifi.client.api._
 import it.agilelab.bigdata.nifi.client.core.ApiInvoker._
 import it.agilelab.bigdata.nifi.client.core.SttpSerializer
 import it.agilelab.bigdata.nifi.client.model._
-
+import org.json4s.JObject
 import sttp.client.SttpBackend
 import sttp.client.monad.MonadError
 
@@ -33,7 +33,6 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID,
 
     def buckets(registryId: String): F[BucketsEntity] =
       nifiRawClient.flows.getBuckets(registryId).result
-
   }
 
   object processGroups {
@@ -109,6 +108,22 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID,
       )
 
       nifiRawClient.processGroups.createProcessGroup(parentId, entity).result
+    }
+
+    def getProcessGroup(processGroupId: String) =
+      nifiRawClient.processGroups.getProcessGroup(processGroupId).result
+
+  }
+
+  object versions {
+    def saveToFlowRegistry(
+        processGroupId: String,
+        entity: StartVersionControlRequestEntity
+    ): F[VersionControlInformationEntity] =
+      nifiRawClient.versions.saveToFlowRegistry(processGroupId, entity).result
+
+    def getVersionedProcessGroup(id: String): F[JObject] = {
+      nifiRawClient.versions.exportFlowVersion(id).result
     }
   }
 

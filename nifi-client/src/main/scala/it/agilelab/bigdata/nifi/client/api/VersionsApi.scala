@@ -13,7 +13,8 @@ package it.agilelab.bigdata.nifi.client.api
 
 import it.agilelab.bigdata.nifi.client.core.SttpSerializer
 import it.agilelab.bigdata.nifi.client.core.alias._
-import it.agilelab.bigdata.nifi.client.model.{CreateActiveRequestEntity, StartVersionControlRequestEntity, VersionControlComponentMappingEntity, VersionControlInformationEntity, VersionedFlowSnapshotEntity, VersionedFlowUpdateRequestEntity}
+import it.agilelab.bigdata.nifi.client.model._
+import org.json4s.JObject
 import sttp.client._
 import sttp.model.Method
 
@@ -24,7 +25,6 @@ object VersionsApi {
 
 class VersionsApi(baseUrl: String)(implicit serializer: SttpSerializer) {
 
-  import it.agilelab.bigdata.nifi.client.core.Helpers._
   import serializer._
 
   /**
@@ -117,11 +117,11 @@ class VersionsApi(baseUrl: String)(implicit serializer: SttpSerializer) {
    * 
    * @param id The process group id.
    */
-  def exportFlowVersion(id: String): ApiRequestT[String] =
+  def exportFlowVersion(id: String): ApiRequestT[JObject] =
     basicRequest
       .method(Method.GET, uri"$baseUrl/versions/process-groups/${id}/download")
       .contentType("application/json")
-      .response(asJson[String])
+      .response(asJson[JObject])
 
   /**
    * Returns the Revert Request with the given ID. Once a Revert Request has been created by performing a POST to /versions/revert-requests/process-groups/{id}, that request can subsequently be retrieved via this endpoint, and the request that is fetched will contain the updated state, such as percent complete, the current state of the request, and any failures. Note: This endpoint is subject to change as NiFi and it's REST API evolve.

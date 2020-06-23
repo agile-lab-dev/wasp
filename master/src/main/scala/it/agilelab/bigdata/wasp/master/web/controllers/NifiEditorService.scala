@@ -1,7 +1,9 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import it.agilelab.bigdata.nifi.client.NifiClient
-import it.agilelab.bigdata.wasp.core.models.editor.NifiStatelessInstanceModel
+import it.agilelab.bigdata.nifi.client.model._
+import it.agilelab.bigdata.wasp.core.models.editor.{NifiStatelessInstanceModel, ProcessGroupResponse}
+import org.json4s.{JObject, JsonAST}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -21,7 +23,7 @@ trait NormalizeSupport {
 trait EditorService {
 
   def newEditorSession(processGroupName: String): Future[NifiStatelessInstanceModel]
-
+  def commitEditorSession(processGroupId: String): Future[ProcessGroupResponse]
 }
 
 class NifiEditorService(nifiClient: NifiClient[Future])(implicit ec: ExecutionContext)
@@ -38,6 +40,60 @@ class NifiEditorService(nifiClient: NifiClient[Future])(implicit ec: ExecutionCo
       _              <- nifiClient.processGroups.ports.output.create(processGroupId, "wasp-output", 1000, 0)
       _              <- nifiClient.processGroups.ports.output.create(processGroupId, "wasp-error", positionX = 1000, positionY = 100)
     } yield (NifiStatelessInstanceModel(processGroupName, editorUrl, processGroupId))
+  }
+
+  override def commitEditorSession(processGroupId: String): Future[ProcessGroupResponse] = {
+    for {
+      processGroup  <- nifiClient.processGroups.getProcessGroup(processGroupId)
+      registries    <- nifiClient.registry.registries
+      registry      <- registries.headOption.normalize("registry not found")
+      registryId    <- registry.id.normalize("registryId not found")
+      bucketsEntity <- nifiClient.registry.buckets(registryId)
+      buckets       <- bucketsEntity.buckets.normalize("No buckets found")
+      bucket        <- buckets.headOption.normalize("No bucket found")
+      bucketId      <- bucket.id.normalize("No bucketId found")
+      _ <- nifiClient.versions
+            .saveToFlowRegistry(
+              processGroupId,
+              buildVersionControlEntity(processGroupId, processGroup, registryId, bucketId)
+            )
+      versionedProcessGroup <- nifiClient.versions.getVersionedProcessGroup(processGroupId)
+      (_, flowContent) <- versionedProcessGroup
+                           .findField(a => a._1 == "flowContents")
+                           .normalize(
+                             "flow contents not found"
+                           )
+      result <- coerceToJObjectOrError(flowContent)
+    } yield (ProcessGroupResponse(processGroupId, result))
+  }
+
+  private def buildVersionControlEntity(
+      processGroupId: String,
+      processGroup: ProcessGroupEntity,
+      registryId: String,
+      bucketId: String
+  ): StartVersionControlRequestEntity = {
+    StartVersionControlRequestEntity(
+      processGroupRevision = processGroup.revision,
+      versionedFlow = Some(
+        VersionedFlowDTO(
+          registryId = Some(registryId),
+          bucketId = Some(bucketId),
+          action = Some(VersionedFlowDTOEnums.Action.COMMIT),
+          flowName = Some(processGroupId)
+        )
+      )
+    )
+  }
+
+  private def coerceToJObjectOrError[T](flowContent: JsonAST.JValue): Future[JObject] = {
+    if (flowContent.isInstanceOf[JObject]) {
+      Future.successful(flowContent.asInstanceOf[JObject])
+    } else {
+      Future.failed(
+        new Exception(s"Expected object as flowContent but got ${flowContent.getClass.getCanonicalName}")
+      )
+    }
   }
 
 }

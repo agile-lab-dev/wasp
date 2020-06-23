@@ -4,16 +4,14 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.editor.{CodeResponse, NifiStatelessInstanceModel, PipegraphDTO}
+import it.agilelab.bigdata.wasp.core.models.editor.{NifiStatelessInstanceModel, PipegraphDTO, ProcessGroupResponse}
 
 trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with AngularResponseOpenApiComponentSupport {
-
-  //TODO:       "/editor/pipegraph" -> storePipegraphDTO(ctx) returns the pipegraphModel?
 
   def editorRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
       "/editor/nifi/{processGroupName}"        -> newNifiEditor(ctx),
-      "/editor/nifi/registry/{processGroupId}" -> commitEditorProcessGroup(ctx),
+      "/editor/nifi/{processGroupId}" -> commitEditorProcessGroup(ctx),
       "/editor/pipegraph" -> storePipegraphDTO(ctx)
     )
   }
@@ -23,7 +21,7 @@ trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with A
       .post(
         new Operation()
           .addTagsItem("editor")
-          .operationId("new-editor")
+          .operationId("new-processgroup")
           .description(
             "Create a new processGroup on a stateless nifi instance with name processGroupName," +
               " returns a processgroupId and the instance url."
@@ -70,8 +68,8 @@ trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with A
           .addParametersItem(pretty(ctx))
           .addParametersItem(
             new Parameter()
-              .in("Path")
-              .name("processgroupid")
+              .in("path")
+              .name("processGroupId")
               .description("The process group id to commit")
               .schema(stringOpenApi.schema(ctx))
           )
@@ -79,14 +77,14 @@ trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with A
             new ApiResponses().addApiResponse(
               "200",
               new ApiResponse()
-                .description("Result of the commit")
+                .description("Result of the commit and the processGroup data")
                 .content(
                   new Content()
                     .addMediaType(
                       "text/json",
                       new MediaType()
                         .schema(
-                          ToOpenApiSchema[AngularResponse[CodeResponse]].schema(ctx)
+                          ToOpenApiSchema[AngularResponse[ProcessGroupResponse]].schema(ctx)
                         )
                     )
                 )

@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.core.models.editor
 
 import it.agilelab.bigdata.wasp.core.models.Model
+import org.json4s.JsonAST.JObject
 
 case class NifiStatelessInstanceModel(
     name: String,
@@ -8,7 +9,7 @@ case class NifiStatelessInstanceModel(
     processGroupId: String
 ) extends Model
 
-case class CodeResponse(
-    name: String,
-    code: String
+case class ProcessGroupResponse(
+    id: String,
+    contents: JObject
 )

@@ -1,29 +1,24 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
+import io.swagger.v3.oas.models.media._
+import it.agilelab.bigdata.wasp.core.models.editor._
+import org.json4s.JObject
 
-import io.swagger.v3.oas.models.media.{ComposedSchema, Discriminator, Schema}
-import it.agilelab.bigdata.wasp.core.models.editor.{
-  CodeResponse,
-  FlowNifiDTO,
-  FreeCodeDTO,
-  IndexDTO,
-  KeyValueDTO,
-  NifiStatelessInstanceModel,
-  PipegraphDTO,
-  RawDataDTO,
-  StrategyClassDTO,
-  StrategyDTO,
-  StreamingOutputDTO,
-  StructuredStreamingETLDTO,
-  TopicDTO
-}
+case class ProcessGroupResponseTmp(name: String, processGroupData: String)
 
 trait EditorOpenApiComponentSupport extends LangOpenApi with ProductOpenApi with CollectionsOpenApi {
 
+  implicit val jobjectOpenApi = new ToOpenApiSchema[JObject] {
+    override def schema(ctx: Context): Schema[_] = {
+      new ObjectSchema().xml(
+        new XML().name(classOf[JObject].getSimpleName).namespace("java://" + classOf[JObject].getPackage.getName)
+      ).name(classOf[JObject].getSimpleName)
+    }
+  }
+  implicit lazy val processGroupResponseInstanceOpenApi: ToOpenApiSchema[ProcessGroupResponse] =
+    product2(ProcessGroupResponse)
+
   implicit lazy val nifiStatelessInstanceOpenApi: ToOpenApiSchema[NifiStatelessInstanceModel] =
     product3(NifiStatelessInstanceModel)
-
-  implicit lazy val strategyCodeInstanceOpenApi: ToOpenApiSchema[CodeResponse] =
-    product2(CodeResponse)
 
   implicit lazy val pipegraphDTOInstanceOpenApi: ToOpenApiSchema[PipegraphDTO] =
     product4(PipegraphDTO)

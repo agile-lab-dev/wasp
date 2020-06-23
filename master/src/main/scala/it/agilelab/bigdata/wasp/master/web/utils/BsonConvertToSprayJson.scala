@@ -10,13 +10,13 @@ import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
 import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.models.configuration._
 import it.agilelab.bigdata.wasp.core.models.editor.{
-  CodeResponse,
   FlowNifiDTO,
   FreeCodeDTO,
   IndexDTO,
   KeyValueDTO,
   NifiStatelessInstanceModel,
   PipegraphDTO,
+  ProcessGroupResponse,
   RawDataDTO,
   StrategyClassDTO,
   StrategyDTO,
@@ -26,6 +26,7 @@ import it.agilelab.bigdata.wasp.core.models.editor.{
 }
 import it.agilelab.bigdata.wasp.core.models.{Counts, LogEntry, _}
 import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, DatastoreProductJsonFormat, ZookeeperConnectionsConfig}
+import org.json4s.{DefaultFormats, Formats, JObject}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat, deserializationError, _}
 
@@ -256,7 +257,19 @@ trait JsonSupport
     NifiStatelessInstanceModel
   )
 
-  implicit lazy val codeResponseFormat: RootJsonFormat[CodeResponse] = jsonFormat2(CodeResponse)
+  implicit lazy val jObjectFormat: RootJsonFormat[JObject] = new RootJsonFormat[JObject] {
+    override def write(obj: JObject): JsValue = {
+      implicit val format: Formats = DefaultFormats
+      org.json4s.jackson.Serialization.write(obj).parseJson
+    }
+
+    override def read(json: JsValue): JObject = {
+      implicit val format: Formats = DefaultFormats
+      org.json4s.jackson.Serialization.read[JObject](json.toString())
+    }
+  }
+
+  implicit lazy val processGroupResponseFormat: RootJsonFormat[ProcessGroupResponse] = jsonFormat2(ProcessGroupResponse)
 
   // StrategyDTO Format
   implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat2(FreeCodeDTO)

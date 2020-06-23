@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-346-create-wasp-nifi-input-and-output-SNAPSHOT
+  version: 2.26.0-328-implement-an-api-to-commit-changes-made-to-a-process-group-in-nifi-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -1381,6 +1381,43 @@ paths:
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /editor/nifi/{processGroupId}:
+    put:
+      tags:
+      - editor
+      description: Confirm that a process group edited on a editor instance it's ready
+        to be stored.
+      operationId: commit-processgroup
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: processGroupId
+        in: path
+        description: The process group id to commit
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Result of the commit and the processGroup data
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/ProcessGroupResponse'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /producers/{producername}/stop:
     post:
       tags:
@@ -1423,7 +1460,7 @@ paths:
       - editor
       description: Create a new processGroup on a stateless nifi instance with name
         processGroupName, returns a processgroupId and the instance url.
-      operationId: new-editor
+      operationId: new-processgroup
       parameters:
       - name: pretty
         in: query
@@ -1721,42 +1758,6 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/BatchJobStartResult'
-                xml:
-                  name: AngularResponse
-                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
-  /editor/nifi/registry/{processGroupId}:
-    put:
-      tags:
-      - editor
-      description: Confirm that a process group edited on a editor instance it's ready
-        to be stored.
-      operationId: commit-processgroup
-      parameters:
-      - name: pretty
-        in: query
-        required: false
-        schema:
-          type: boolean
-      - name: processgroupid
-        in: Path
-        description: The process group id to commit
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Result of the commit
-          content:
-            text/json:
-              schema:
-                required:
-                - Result
-                - data
-                type: object
-                properties:
-                  Result:
-                    $ref: '#/components/schemas/ResultIndicator'
-                  data:
-                    $ref: '#/components/schemas/CodeResponse'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2543,19 +2544,6 @@ components:
       xml:
         name: KeyValueModel
         namespace: java://it.agilelab.bigdata.wasp.core.models
-    CodeResponse:
-      required:
-      - name
-      - code
-      type: object
-      properties:
-        name:
-          type: string
-        code:
-          type: string
-      xml:
-        name: CodeResponse
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     RawDataStoreConf:
       required:
       - inputKeyColumn
@@ -3530,6 +3518,19 @@ components:
       - topic
       - database
       - raw
+    ProcessGroupResponse:
+      required:
+      - id
+      - contents
+      type: object
+      properties:
+        id:
+          type: string
+        contents:
+          $ref: '#/components/schemas/JObject'
+      xml:
+        name: ProcessGroupResponse
+        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
     BsonDocument:
       type: object
     ElasticConfigModel:
@@ -3601,6 +3602,11 @@ components:
       xml:
         name: PrefixAndTimeBoundKeyValueMatchingStrategy
         namespace: java://it.agilelab.bigdata.wasp.core.models
+    JObject:
+      type: object
+      xml:
+        name: JObject
+        namespace: java://org.json4s
     ReaderModel:
       required:
       - name
