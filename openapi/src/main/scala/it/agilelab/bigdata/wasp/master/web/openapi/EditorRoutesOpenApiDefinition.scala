@@ -31,7 +31,7 @@ trait EditorRoutesOpenApiDefinition extends EditorOpenApiComponentSupport with A
           .addParametersItem(pretty(ctx))
           .addParametersItem(
             new Parameter()
-              .in("Path")
+              .in("path")
               .name("processGroupName")
               .description("The name of the new processGroup")
               .schema(stringOpenApi.schema(ctx))

@@ -39,7 +39,7 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID,
   object processGroups {
 
     object ports {
-      private def newPort(portName: String) = {
+      private def newPort(portName: String, positionX: Double, positionY: Double) = {
         PortEntity(
           revision = Some(
             RevisionDTO(
@@ -55,6 +55,12 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID,
             PortDTO(
               name = Some(
                 portName
+              ),
+              position = Some(
+                PositionDTO(
+                  x = Some(positionX),
+                  y = Some(positionY)
+                )
               )
             )
           )
@@ -62,19 +68,29 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID,
       }
 
       object input {
-        def create(portId: String, portName: String): F[PortEntity] =
-          nifiRawClient.processGroups.createInputPort(portId, newPort(portName)).result
+        def create(
+            processGroupId: String,
+            portName: String,
+            positionX: Double = 0,
+            positionY: Double = 0
+        ): F[PortEntity] =
+          nifiRawClient.processGroups.createInputPort(processGroupId, newPort(portName, positionX, positionY)).result
       }
 
       object output {
-        def create(parentId: String, portName: String): F[PortEntity] =
-          nifiRawClient.processGroups.createOutputPort(parentId, newPort(portName)).result
+        def create(
+            processGroupId: String,
+            portName: String,
+            positionX: Double = 0,
+            positionY: Double = 0
+        ): F[PortEntity] =
+          nifiRawClient.processGroups.createOutputPort(processGroupId, newPort(portName, positionX, positionY)).result
       }
 
     }
 
-    def editorUrl(processGroupEntity: ProcessGroupEntity): F[String] =
-      implicitly[MonadError[F]].unit(s"${uiUrl}/?processGroupId=${processGroupEntity.id.getOrElse("")}")
+    def editorUrl(processGroupId: String): F[String] =
+      implicitly[MonadError[F]].unit(s"${uiUrl}/?processGroupId=${processGroupId}")
 
     def create(parentId: String, name: String): F[ProcessGroupEntity] = {
       val entity = ProcessGroupEntity(

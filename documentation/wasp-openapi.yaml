@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-345-create-an-api-to-validate-the-free-code-strategy-SNAPSHOT
+  version: 2.26.0-346-create-wasp-nifi-input-and-output-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -1431,8 +1431,9 @@ paths:
         schema:
           type: boolean
       - name: processGroupName
-        in: Path
+        in: path
         description: The name of the new processGroup
+        required: true
         schema:
           type: string
       responses:
