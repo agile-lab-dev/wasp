@@ -24,7 +24,9 @@ object GenerateOpenApi
     with RawRoutesOpenApiDefinition
     with StatsRoutesOpenApiDefinition
     with EditorRoutesOpenApiDefinition
-    with FreeCodeRoutesOpenApiDefinition {
+    with StrategyOpenApiDefinition
+    with FreeCodeRoutesOpenApiDefinition
+    {
 
   def main(args: Array[String]): Unit = {
 
@@ -37,7 +39,8 @@ object GenerateOpenApi
         logsRoutes(ctx) ++ eventsRoutes(ctx) ++
         telemetryRoutes(ctx) ++ keyValueRoutes(ctx) ++
         rawRoutes(ctx) ++ statsRoutes(ctx) ++
-        editorRoutes(ctx) ++ freeCodeRoutes(ctx)
+        editorRoutes(ctx) ++ freeCodeRoutes(ctx) ++
+        strategiesRoutes(ctx)
 
       val openapi = new OpenAPI()
         .addServersItem(

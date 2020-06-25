@@ -7,7 +7,7 @@ import java.util
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.{InternalStrategy, ReaderKey}
 import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.fs.{LocatedFileStatus, Path, RemoteIterator}
 import org.apache.spark.deploy.SparkHadoopUtil
@@ -17,7 +17,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.{ExecutorPlugin, SparkConf}
 import org.slf4j.{Logger, LoggerFactory}
 
-class NifiStrategy extends Strategy {
+class NifiStrategy extends InternalStrategy {
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
 
     import scala.collection.JavaConverters._

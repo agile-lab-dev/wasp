@@ -186,6 +186,7 @@ object Dependencies {
   val solrjMasterClient         = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion
   val sttpCore                  = "com.softwaremill.sttp.client" %% "core" % Versions.sttpVersion sttpExclusions
   val sttpJson4s                = "com.softwaremill.sttp.client" %% "json4s" % Versions.sttpVersion sttpExclusions
+  val reflections               = "org.reflections" % "reflections" % Versions.reflectionsVersion
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(
@@ -270,7 +271,9 @@ object Dependencies {
     mongodbScala :+
     sparkSQL :+
     typesafeConfig :+
-    nameOf).map(excludeLog4j).map(excludeNetty)
+    nameOf :+
+    reflections
+    ).map(excludeLog4j).map(excludeNetty)
 
 
   val scala_compiler = (

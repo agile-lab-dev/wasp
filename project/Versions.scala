@@ -46,4 +46,5 @@ object Versions {
   val kms = s"3.0.0-$cdh6"
   val scalaParserAndCombinators = "1.0.4"
   val sttpVersion = "2.1.2"
+  val reflectionsVersion = "0.9.11"
 }
