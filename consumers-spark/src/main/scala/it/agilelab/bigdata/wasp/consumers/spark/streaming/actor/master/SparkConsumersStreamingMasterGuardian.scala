@@ -271,6 +271,7 @@ object SparkConsumersStreamingMasterGuardian  {
                             val mlModelBL: MlModelBL
                             val indexBL: IndexBL
                             val topicBL: TopicBL
+                            val freeCodeBL : FreeCodeBL
                             val rawBL: RawBL
                             val keyValueBL: KeyValueBL
                           }): ChildCreator = { (master, suppliedName, context) =>
@@ -293,6 +294,7 @@ object SparkConsumersStreamingMasterGuardian  {
     val defaultGrandChildrenCreator = PipegraphGuardian.defaultChildFactory(sparkSession,
                                                                             env.mlModelBL,
                                                                             env.topicBL,
+                                                                            env.freeCodeBL,
                                                                             streamingReaderFactory,
                                                                             staticReaderFactory,
                                                                             writerFactory)

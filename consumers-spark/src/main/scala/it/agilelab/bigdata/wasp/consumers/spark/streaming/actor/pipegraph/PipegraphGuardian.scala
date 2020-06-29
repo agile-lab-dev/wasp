@@ -13,7 +13,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Proto
 import PipegraphGuardian._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
-import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
+import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark.sql.SparkSession
@@ -478,6 +478,7 @@ object PipegraphGuardian {
   def defaultChildFactory(sparkSession: SparkSession,
                           mlModelBl: MlModelBL,
                           topicsBl: TopicBL,
+                          freeCodeBL: FreeCodeBL,
                           streamingReaderFactory: StreamingReaderFactory,
                           staticReaderFactory: StaticReaderFactory,
                           writerFactory: WriterFactory): ChildFactory = { (pipegraph,suppliedName, context) =>
@@ -492,6 +493,7 @@ object PipegraphGuardian {
     context.actorOf(StructuredStreamingETLActor.props(childEtlSparkSession,
                                                       mlModelBl,
                                                       topicsBl,
+                                                      freeCodeBL,
                                                       streamingReaderFactory,
                                                       staticReaderFactory,
                                                       writerFactory,

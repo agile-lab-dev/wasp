@@ -6,7 +6,7 @@ import org.apache.spark.sql.DataFrame
 
 class FreeCodeStrategy(function : String) extends InternalStrategy with FreeCodeGenerator {
 
-  private lazy val _function: (Map[ReaderKey, DataFrame], Config) => DataFrame =
+  private val _function: (Map[ReaderKey, DataFrame], Config) => DataFrame =
     ToolBoxUtils.compileCode[(Map[ReaderKey, DataFrame],Config) => DataFrame] {
       completeWithDefaultCodeAsFunction(function)
   }

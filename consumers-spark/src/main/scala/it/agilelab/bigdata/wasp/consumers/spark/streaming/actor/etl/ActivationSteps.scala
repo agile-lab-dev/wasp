@@ -11,11 +11,10 @@ import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.{FreeCodeStrategy, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
-import it.agilelab.bigdata.wasp.core.SystemPipegraphs
-import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, TopicBL}
+import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
 import it.agilelab.bigdata.wasp.core.models._
@@ -51,6 +50,11 @@ trait ActivationSteps {
     * We need access to topics
     */
   protected val topicsBl: TopicBL
+
+  /**
+    * We need access to freeCodes
+    */
+  protected val freeCodeBL: FreeCodeBL
 
   /**
     * We need a streaming reader factory
@@ -196,21 +200,25 @@ trait ActivationSteps {
     * @param etl The etl to instantiate strategy for
     * @return A try holding an optional strategy
     */
-  private def createStrategy(etl: StructuredStreamingETLModel): Try[Option[Strategy]] = {
+  protected def createStrategy(etl: StructuredStreamingETLModel): Try[Option[Strategy]] = {
 
 
     def instantiateStrategy(strategyModel: StrategyModel): Try[Strategy] = Try {
-      Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
-    }
+      val conf = strategyModel.configurationConfig()
+      val strategy = if(strategyModel.className.equals(classOf[FreeCodeStrategy].getName)) {
+        require(conf.isDefined,s"Configuration for FreeCodeStrategy isn't defined.")
+        require(conf.get.hasPath("name"),s"Configuration for FreeCodeStrategy isn't defined.")
+        val freeCodeOption = freeCodeBL.getByName(conf.get.getString("name"))
+        require(freeCodeOption.isDefined,s"Free code with name ${strategyModel.configuration.get} not found.")
+        new FreeCodeStrategy(freeCodeOption.get.code)
+      } else Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
 
-    def configureStrategy(strategyModel: StrategyModel, strategy: Strategy) = Try {
-
-      strategyModel.configurationConfig() match {
+      conf match {
         case Some(config) => strategy.configuration = config
         case None => strategy.configuration = ConfigFactory.empty()
       }
-
       strategy
+
     }
 
     def createMlModelBroadcast(models: List[MlModelOnlyInfo]): Try[MlModelsBroadcastDB] = Try {
@@ -236,8 +244,7 @@ trait ActivationSteps {
     etl.strategy match {
       case Some(strategyModel) =>
         for {
-          instantiatedStrategy <- instantiateStrategy(strategyModel)
-          configuredStrategy <- configureStrategy(strategyModel, instantiatedStrategy)
+          configuredStrategy <- instantiateStrategy(strategyModel)
           broadcastMlModelDb <- createMlModelBroadcast(etl.mlModels)
           augmented <- augmentStrategyWithMlModelsBroadcast(configuredStrategy, broadcastMlModelDb).map(Some(_))
         } yield augmented
