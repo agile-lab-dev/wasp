@@ -11,5 +11,5 @@ case class NifiStatelessInstanceModel(
 
 case class ProcessGroupResponse(
     id: String,
-    contents: JObject
+    content: JObject
 )

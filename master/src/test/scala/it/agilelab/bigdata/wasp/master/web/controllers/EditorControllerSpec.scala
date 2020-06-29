@@ -23,7 +23,7 @@ class EditorControllerSpec extends FlatSpec with ScalatestRouteTest with Matcher
 
     override def commitEditorSession(processGroupId: String): Future[ProcessGroupResponse] = {
       Future.successful(
-        ProcessGroupResponse(id = processGroupId, contents = JObject(List(JField("ciccio", JString("pasticcio")))))
+        ProcessGroupResponse(id = processGroupId, content = JObject(List(JField("ciccio", JString("pasticcio")))))
       )
     }
   }
@@ -57,7 +57,7 @@ class EditorControllerSpec extends FlatSpec with ScalatestRouteTest with Matcher
     commitEditorRequest ~> controller.getRoutes ~> check {
       val response = responseAs[AngularResponse[ProcessGroupResponse]]
       response.data.id shouldBe processGroupId
-      response.data.contents shouldBe JObject(List(JField("ciccio", JString("pasticcio"))))
+      response.data.content shouldBe JObject(List(JField("ciccio", JString("pasticcio"))))
     }
   }
 

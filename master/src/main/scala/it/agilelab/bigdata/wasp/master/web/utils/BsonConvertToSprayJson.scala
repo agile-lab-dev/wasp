@@ -270,6 +270,7 @@ trait JsonSupport
   }
 
   implicit lazy val processGroupResponseFormat: RootJsonFormat[ProcessGroupResponse] = jsonFormat2(ProcessGroupResponse)
+  implicit lazy val processGroupModelFormat: RootJsonFormat[ProcessGroupModel] = jsonFormat2(ProcessGroupModel)
 
   // StrategyDTO Format
   implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat2(FreeCodeDTO)
