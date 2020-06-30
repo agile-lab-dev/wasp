@@ -12,8 +12,10 @@ trait FreeCodeCompilerUtils {
 
 object FreeCodeCompilerUtilsDefault extends FreeCodeCompilerUtils with FreeCodeGenerator{
 
-  def validate(code :String): List[ErrorModel] = CompilerUtils.validate(completeWithDefaultCodeAsFunction(code),startRowCode)
+  def validate(code :String): List[ErrorModel] =
+    CompilerUtils.validate(completeWithDefaultCodeAsFunction(code),startRowCode)
 
-  def complete(code : String,position : Int):List[CompletionModel] = CompilerUtils.complete(completeWithDefaultCodeAsValue(code),position+startPosition)
+  def complete(code : String,position : Int):List[CompletionModel] =
+    CompilerUtils.complete(completeWithDefaultCodeAsFunction(code),position+startPosition)
 
 }

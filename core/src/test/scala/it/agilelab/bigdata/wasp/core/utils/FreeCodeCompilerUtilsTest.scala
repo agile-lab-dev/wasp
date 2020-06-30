@@ -107,12 +107,12 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers {
       """val test = "banana"
         |val test1 = "ciao"
         |val home = "home"
-        |to""".stripMargin
+        |if(test=="banana"){
+        |tes""".stripMargin
     val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("test")) shouldBe false
-    output.exists(m=> m.toComplete.equals("test1")) shouldBe false
-    output.exists(m=> m.toComplete.equals("toString")) shouldBe true
-    output.size shouldBe 1
+    output.exists(m=> m.toComplete.equals("test")) shouldBe true
+    output.exists(m=> m.toComplete.equals("test1")) shouldBe true
+    output.size shouldBe 2
 
 
 

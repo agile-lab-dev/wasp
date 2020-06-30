@@ -108,14 +108,27 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
 
   it should "test complete code 6" in {
     val code =
-      """val test10 = "Hello
+      """val test10 = "Hello"
         |val test0 : Int = {
         |val test = "banana"
         |val test1 = "ciao"
         |te""".stripMargin
     val output =  CompilerUtils.complete(code,code.length)
+    output.size shouldBe 4
 
-    output.size shouldBe 0 //TODO there is a problem when the code is on a block.
+  }
+
+  it should "test complete code 6 bis" in {
+    val code =
+      """val test10 = "Hello"
+        |val test0 : Int = {
+        |val test = "banana"
+        |val test1 = "ciao"
+        |}
+        |te""".stripMargin
+    val output =  CompilerUtils.complete(code,code.length)
+
+    output.size shouldBe 2
 
   }
 
@@ -141,12 +154,73 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val home = "hello"
         |""".stripMargin
     val output =  CompilerUtils.complete(code,43)
-    println(output.mkString("\n"))
     output.exists(m=> m.toComplete.equals("toDouble")) shouldBe true
     output.size shouldBe 1
 
   }
 
+  it should "test complete code 9" in {
+    val code =
+      """val test10 = "Hello"
+        |val test0 : Int = {
+        |val test = "banana"
+        |val test1 = "ciao"
+        |}
+        |test0.toSt""".stripMargin
+    val output =  CompilerUtils.complete(code,code.length)
+    output.size shouldBe 1
+    output.head.toComplete shouldBe "toString"
+
+  }
+
+  it should "test complete code 10" in {
+    val code =
+      """val test10 = "Hello"
+        |val test0 : Int = {
+        |val test = "banana"
+        |test.toStri""".stripMargin
+    val output =  CompilerUtils.complete(code,code.length)
+    output.size shouldBe 1
+    output.head.toComplete shouldBe "toString"
+
+  }
+
+  it should "test complete code 11" in {
+    val code =
+      """val test10 = "Hello"
+        |val test0 : Int = {
+        |val test = "banana"
+        |test10.toStri""".stripMargin
+    val output =  CompilerUtils.complete(code,code.length)
+    output.size shouldBe 1
+    output.head.toComplete shouldBe "toString"
+
+  }
+
+
+  it should "test complete code 12" in {
+    val code =
+      """val test10 = "Hello"
+        |val test0 : Int = {
+        |val test = "banana"
+        |test.""".stripMargin
+    val output =  CompilerUtils.complete(code,code.length)
+    output.size>1 shouldBe true
+    output.exists(_.toComplete.equals("toString")) shouldBe true
+
+  }
+
+  it should "test complete code 13" in {
+    val code =
+      """val test10 = "Hello"
+        |val test0 : Int = {
+        |val test = "banana"
+        |test10.""".stripMargin
+    val output =  CompilerUtils.complete(code,code.length)
+    output.size>1 shouldBe true
+    output.exists(_.toComplete.equals("toString")) shouldBe true
+
+  }
 
 }
 

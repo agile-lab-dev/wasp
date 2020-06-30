@@ -85,7 +85,7 @@ object Compiler {
   }
 
 
-  def scopeCompletion(code: String, startPosition : Int, endPosition: Int): List[ErrorModel] = {
+  def scopeCompletion(code: String, startPosition : Int, endPosition: Int): (List[CompletionModel], List[ErrorModel]) = {
     reporter.clear()
     reporter.setStartPosition(startPosition)
     val source: BatchSourceFile = compile(code)
@@ -94,19 +94,19 @@ object Compiler {
     compiler.askScopeCompletion(pos, tcompletion)
 
 
-    tcompletion.get(5000).get match {
+    val vals = tcompletion.get(5000).get match {
       case Left(members) =>
         compiler.ask{ () =>
-          members.foreach{
-            case compiler.ScopeMember(sym, tpe, accessible, viaImport)  =>
-//              if(viaImport.isEmpty && sym.isVal){
-//                println(sym)
-//              }
+          members.flatMap {
+            case m: compiler.ScopeMember if m.viaImport.isEmpty && m.sym.isVal => {
+                Some(CompletionModel(m.sym.nameString, m.tpe.toString()))
+              }
+            case _ => None
           }
         }
       case Right(e) => throw e
     }
-    reporter.showMessages()
+    (vals,reporter.showMessages())
   }
 
 

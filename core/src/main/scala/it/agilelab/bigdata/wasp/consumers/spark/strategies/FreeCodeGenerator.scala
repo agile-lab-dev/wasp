@@ -3,7 +3,7 @@ import FreeCodeGenerator._
 
 trait FreeCodeGenerator {
 
-  def startRowCode: Int = defaultStartFreeCodeAsFunction.split("\n").size
+  def startRowCode: Int = defaultStartFreeCodeAsFunction.split("\n").length
 
 
   def completeWithDefaultCodeAsFunction(code : String): String = {
@@ -12,12 +12,8 @@ trait FreeCodeGenerator {
        |$defaultEndFreeCodeTransform""".stripMargin
   }
 
-  def completeWithDefaultCodeAsValue(code : String): String = {
-    s"""$defaultStartFreeCodeTransformAsValue
-       |$code""".stripMargin
-  }
 
-  def startPosition : Int = defaultStartFreeCodeTransformAsValue.length+1
+  def startPosition : Int = defaultStartFreeCodeAsFunction.length+1
 
 }
 object FreeCodeGenerator {
@@ -30,15 +26,6 @@ object FreeCodeGenerator {
       |((dataFrames: Map[ReaderKey, DataFrame],configuration : Config) =>{
       |val spark = dataFrames.head._2.sparkSession""".stripMargin
 
-  val defaultStartFreeCodeTransformAsValue : String=
-    """import it.agilelab.bigdata.wasp.consumers.spark.strategies.ReaderKey
-      |import it.agilelab.bigdata.wasp.consumers.spark.strategies._
-      |import com.typesafe.config.Config
-      |import org.apache.spark.sql.DataFrame
-      |import org.apache.spark.sql.functions._
-      |val dataFrames: Map[ReaderKey, DataFrame] = Map.empty
-      |val configuration : Config = null
-      |val spark = dataFrames.head._2.sparkSession""".stripMargin
 
   val defaultEndFreeCodeTransform : String= "}) : ((Map[ReaderKey, DataFrame], Config) => DataFrame) "
 

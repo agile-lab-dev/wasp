@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-347-create-an-api-to-list-all-strategies-SNAPSHOT
+  version: 2.26.0-349-block-code-compiler-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -3553,12 +3553,12 @@ components:
     ProcessGroupResponse:
       required:
       - id
-      - contents
+      - content
       type: object
       properties:
         id:
           type: string
-        contents:
+        content:
           $ref: '#/components/schemas/JObject'
       xml:
         name: ProcessGroupResponse
