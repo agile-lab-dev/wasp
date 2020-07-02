@@ -291,7 +291,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
 
     val res = schemaRequest.process(solrServer, message.collection)
 
-    if (res.getStatus != 200) {
+    if (res.getStatus != 200 && res.getStatus != 0) {
       logger.error("Cannot set schema for collection")
       false
     } else {
