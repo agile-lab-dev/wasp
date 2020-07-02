@@ -1,4 +1,4 @@
-/*
+/**
  * Versions definitions. Keep in alphabetical order.
  */
 object Versions {
@@ -42,7 +42,7 @@ object Versions {
   val solr = "7.4.0.7.0.3.0-79"
   val spark_ = s"2.4.0"
   val spark = s"${spark_}-${cdh6}"
-  val sparkSolr = "3.8.0"
+  val sparkSolr = "3.8.1"
   val kms = s"3.0.0-$cdh6"
   val scalaParserAndCombinators = "1.0.4"
   val sttpVersion = "2.1.2"
