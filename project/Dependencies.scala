@@ -181,6 +181,7 @@ object Dependencies {
   val zkclient                  = "com.101tec" % "zkclient" % "0.3"
   val scalaParserAndCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % Versions.scalaParserAndCombinators
   val scalaCompiler             = "org.scala-lang" % "scala-compiler" % Versions.scala
+  val scalaPool                 = "io.github.andrebeat" %% "scala-pool" % "0.4.3"
   val mySql                     = "mysql" % "mysql-connector-java" % "5.1.6"
   val nameOf                    = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
   val solrjMasterClient         = "org.apache.solr" % "solr-solrj" % Versions.solr solrExclusion

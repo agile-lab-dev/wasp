@@ -28,7 +28,7 @@ lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark
 lazy val scala_compiler = Project("wasp-compiler", file("compiler"))
   .settings(Settings.commonSettings: _*)
   .settings(Settings.sbtBuildInfoSettings: _*)
-  .settings(libraryDependencies ++= Dependencies.test :+ Dependencies.scalaCompiler)
+  .settings(libraryDependencies ++= Dependencies.test :+ Dependencies.scalaCompiler :+ Dependencies.scalaPool)
   .enablePlugins(BuildInfoPlugin)
 
 lazy val core = Project("wasp-core", file("core"))

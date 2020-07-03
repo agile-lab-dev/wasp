@@ -1,17 +1,15 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import it.agilelab.bigdata.wasp.core.models.{FreeCode, FreeCodeModel}
 import akka.http.scaladsl.server.{Directives, Route}
-import it.agilelab.bigdata.wasp.core.utils.{FreeCodeCompilerUtils, FreeCodeCompilerUtilsDefault}
+import it.agilelab.bigdata.wasp.core.models.{FreeCode, FreeCodeModel}
+import it.agilelab.bigdata.wasp.core.utils.FreeCodeCompilerUtils
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
 
-
-class FreeCodeController(service: FreeCodeDBService = FreeCodeDBServiceDefault,
-                         freeCodeCompilerUtils: FreeCodeCompilerUtils = FreeCodeCompilerUtilsDefault)
-  extends Directives with JsonSupport {
-
+class FreeCodeController(service: FreeCodeDBService, freeCodeCompilerUtils: FreeCodeCompilerUtils)
+    extends Directives
+    with JsonSupport {
 
   def getRoute: Route = {
     pathPrefix("freeCode") {
@@ -31,8 +29,7 @@ class FreeCodeController(service: FreeCodeDBService = FreeCodeDBServiceDefault,
                     service.insert(freeCode)
                     if (validationResult.isEmpty) "OK".toJson.toAngularOkResponse(pretty)
                     else validationResult.toJson.toAngularOkResponse(pretty)
-                  }
-                  else {
+                  } else {
                     validationResult.toJson.toAngularKoResponse(s"FreeCodeStrategy with one or more problems", pretty)
                   }
                 }
@@ -49,8 +46,7 @@ class FreeCodeController(service: FreeCodeDBService = FreeCodeDBServiceDefault,
                     if (!validationResult.exists(_.errorType.equals("error"))) {
                       if (validationResult.isEmpty) "OK".toJson.toAngularOkResponse(pretty)
                       else validationResult.toJson.toAngularOkResponse(pretty)
-                    }
-                    else {
+                    } else {
                       validationResult.toJson.toAngularKoResponse(s"FreeCodeStrategy with one or more problems", pretty)
                     }
                   }
@@ -58,20 +54,20 @@ class FreeCodeController(service: FreeCodeDBService = FreeCodeDBServiceDefault,
               }
             }
           } ~
-        pathPrefix("complete") {
-          pathPrefix(Segment) { position =>
-            pathEnd {
-              post {
-                entity(as[FreeCode]) { freeCode =>
-                  complete {
-                    val completionResult = freeCodeCompilerUtils.complete(freeCode.code, position.toInt)
-                    completionResult.toJson.toAngularOkResponse(pretty)
+          pathPrefix("complete") {
+            pathPrefix(Segment) { position =>
+              pathEnd {
+                post {
+                  entity(as[FreeCode]) { freeCode =>
+                    complete {
+                      val completionResult = freeCodeCompilerUtils.complete(freeCode.code, position.toInt)
+                      completionResult.toJson.toAngularOkResponse(pretty)
+                    }
                   }
                 }
               }
             }
-          }
-        } ~
+          } ~
           pathPrefix("instance") {
             pathPrefix(Segment) { name =>
               pathEnd {

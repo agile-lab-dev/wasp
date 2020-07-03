@@ -1,11 +1,16 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import org.scalatest.{FlatSpec, Matchers}
+import it.agilelab.bigdata.wasp.compiler.utils.{CompilerPool, FreeCodeCompiler}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers {
+class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  private val helper = FreeCodeCompilerUtilsDefault
+  private val helper =  new FreeCodeCompilerUtilsDefault(new FreeCodeCompiler(new CompilerPool(4)))
 
+  override def afterAll(): Unit = {
+    super.afterAll()
+    helper.close()
+  }
   it should "test wrong code" in {
     val output = helper.validate(
       """val a = "banana"

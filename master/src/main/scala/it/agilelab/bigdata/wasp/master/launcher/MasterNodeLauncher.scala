@@ -17,6 +17,7 @@ import akka.util.ByteString
 import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.nifi.client.core.SttpSerializer
 import it.agilelab.bigdata.nifi.client.{NifiClient, NifiRawClient}
+import it.agilelab.bigdata.wasp.compiler.utils.{CompilerPool, FreeCodeCompiler}
 import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.eventengine.Event
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
@@ -130,6 +131,10 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
     val nifiProxy = new NifiProxyController("proxy", nifiConfig.nifiBaseUrl)
 
+    val compilerPool = new CompilerPool(ConfigManager.getCompilerConfig.compilerInstances)
+    val freeCodeCompiler = new FreeCodeCompiler(compilerPool)
+    val freeCodeCompilerUtils = new FreeCodeCompilerUtilsDefault(freeCodeCompiler)
+
     // Routes
     new BatchJobController(DefaultBatchJobService).getRoute ~
       Configuration_C.getRoute ~
@@ -143,7 +148,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       KeyValueController.getRoute ~
       RawController.getRoute ~
       StrategyController.getRoute ~
-      new FreeCodeController(FreeCodeDBServiceDefault, FreeCodeCompilerUtilsDefault).getRoute ~
+      new FreeCodeController(FreeCodeDBServiceDefault, freeCodeCompilerUtils).getRoute ~
       new LogsController(new DefaultSolrLogsService(solrClient)(clientExecutionContext)).getRoutes ~
       new EventController(new DefaultSolrEventsService(solrClient)(clientExecutionContext)).getRoutes ~
       new TelemetryController(new DefaultSolrTelemetryService(solrClient)(clientExecutionContext)).getRoutes ~

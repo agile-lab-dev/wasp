@@ -368,7 +368,8 @@ object WaspDB extends Logging {
     typeTag[NifiConfigModel].tpe           -> configurationsName,
     typeTag[DocumentModel].tpe             -> documentName,
     typeTag[FreeCodeModel].tpe             -> freeCodeName,
-    typeTag[ProcessGroupModel].tpe         -> processGroupsName
+    typeTag[ProcessGroupModel].tpe         -> processGroupsName,
+    typeTag[CompilerConfigModel].tpe       -> configurationsName
   )
 
   lazy val indexKeys: Map[String, Bson] = collectionsLookupTable.map {
@@ -424,7 +425,8 @@ object WaspDB extends Logging {
     createCodecProviderIgnoreNone(classOf[BatchETLModel]),
     createCodecProviderIgnoreNone(classOf[FreeCodeModel]),
     createCodecProviderIgnoreNone(classOf[ProcessGroupModel]),
-    createCodecProviderIgnoreNone(classOf[NifiStatelessConfigModel])
+    createCodecProviderIgnoreNone(classOf[NifiStatelessConfigModel]),
+    createCodecProviderIgnoreNone(classOf[CompilerConfigModel])
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(

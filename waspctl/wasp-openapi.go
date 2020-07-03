@@ -27,6 +27,52 @@ func waspOpenapiServers() []map[string]string {
 	}
 }
 
+// WaspOpenapiListBatchJob list-batch-job
+func WaspOpenapiListBatchJob(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
+	handlerPath := "list-batch-job"
+	if waspOpenapiSubcommand {
+		handlerPath = "wasp-openapi " + handlerPath
+	}
+
+	server := viper.GetString("server")
+	if server == "" {
+		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
+	}
+
+	url := server + "/batchjobs"
+
+	req := cli.Client.Get().URL(url)
+
+	paramPretty := params.GetBool("pretty")
+	if paramPretty != false {
+		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
+	}
+
+	cli.HandleBefore(handlerPath, params, req)
+
+	resp, err := req.Do()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Request failed")
+	}
+
+	var decoded map[string]interface{}
+
+	if resp.StatusCode < 400 {
+		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
+			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
+		}
+	} else {
+		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
+	}
+
+	after := cli.HandleAfter(handlerPath, params, resp, decoded)
+	if after != nil {
+		decoded = after.(map[string]interface{})
+	}
+
+	return resp, decoded, nil
+}
+
 // WaspOpenapiInsertBatchJob insert-batch-job
 func WaspOpenapiInsertBatchJob(params *viper.Viper, body string) (*gentleman.Response, map[string]interface{}, error) {
 	handlerPath := "insert-batch-job"
@@ -100,52 +146,6 @@ func WaspOpenapiUpdateBatchJob(params *viper.Viper, body string) (*gentleman.Res
 
 	if body != "" {
 		req = req.AddHeader("Content-Type", "text/json").BodyString(body)
-	}
-
-	cli.HandleBefore(handlerPath, params, req)
-
-	resp, err := req.Do()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "Request failed")
-	}
-
-	var decoded map[string]interface{}
-
-	if resp.StatusCode < 400 {
-		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
-			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
-		}
-	} else {
-		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
-	}
-
-	after := cli.HandleAfter(handlerPath, params, resp, decoded)
-	if after != nil {
-		decoded = after.(map[string]interface{})
-	}
-
-	return resp, decoded, nil
-}
-
-// WaspOpenapiListBatchJob list-batch-job
-func WaspOpenapiListBatchJob(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
-	handlerPath := "list-batch-job"
-	if waspOpenapiSubcommand {
-		handlerPath = "wasp-openapi " + handlerPath
-	}
-
-	server := viper.GetString("server")
-	if server == "" {
-		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
-	}
-
-	url := server + "/batchjobs"
-
-	req := cli.Client.Get().URL(url)
-
-	paramPretty := params.GetBool("pretty")
-	if paramPretty != false {
-		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
 	}
 
 	cli.HandleBefore(handlerPath, params, req)
@@ -2055,56 +2055,6 @@ func WaspOpenapiStopPipegraph(paramPipegraphname string, params *viper.Viper, bo
 	return resp, decoded, nil
 }
 
-// WaspOpenapiUpdateProducer update-producer
-func WaspOpenapiUpdateProducer(params *viper.Viper, body string) (*gentleman.Response, map[string]interface{}, error) {
-	handlerPath := "update-producer"
-	if waspOpenapiSubcommand {
-		handlerPath = "wasp-openapi " + handlerPath
-	}
-
-	server := viper.GetString("server")
-	if server == "" {
-		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
-	}
-
-	url := server + "/producers"
-
-	req := cli.Client.Put().URL(url)
-
-	paramPretty := params.GetBool("pretty")
-	if paramPretty != false {
-		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
-	}
-
-	if body != "" {
-		req = req.AddHeader("Content-Type", "text/json").BodyString(body)
-	}
-
-	cli.HandleBefore(handlerPath, params, req)
-
-	resp, err := req.Do()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "Request failed")
-	}
-
-	var decoded map[string]interface{}
-
-	if resp.StatusCode < 400 {
-		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
-			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
-		}
-	} else {
-		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
-	}
-
-	after := cli.HandleAfter(handlerPath, params, resp, decoded)
-	if after != nil {
-		decoded = after.(map[string]interface{})
-	}
-
-	return resp, decoded, nil
-}
-
 // WaspOpenapiGetProducer get-producer
 func WaspOpenapiGetProducer(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
 	handlerPath := "get-producer"
@@ -2166,6 +2116,56 @@ func WaspOpenapiInsertProducer(params *viper.Viper, body string) (*gentleman.Res
 	url := server + "/producers"
 
 	req := cli.Client.Post().URL(url)
+
+	paramPretty := params.GetBool("pretty")
+	if paramPretty != false {
+		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
+	}
+
+	if body != "" {
+		req = req.AddHeader("Content-Type", "text/json").BodyString(body)
+	}
+
+	cli.HandleBefore(handlerPath, params, req)
+
+	resp, err := req.Do()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Request failed")
+	}
+
+	var decoded map[string]interface{}
+
+	if resp.StatusCode < 400 {
+		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
+			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
+		}
+	} else {
+		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
+	}
+
+	after := cli.HandleAfter(handlerPath, params, resp, decoded)
+	if after != nil {
+		decoded = after.(map[string]interface{})
+	}
+
+	return resp, decoded, nil
+}
+
+// WaspOpenapiUpdateProducer update-producer
+func WaspOpenapiUpdateProducer(params *viper.Viper, body string) (*gentleman.Response, map[string]interface{}, error) {
+	handlerPath := "update-producer"
+	if waspOpenapiSubcommand {
+		handlerPath = "wasp-openapi " + handlerPath
+	}
+
+	server := viper.GetString("server")
+	if server == "" {
+		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
+	}
+
+	url := server + "/producers"
+
+	req := cli.Client.Put().URL(url)
 
 	paramPretty := params.GetBool("pretty")
 	if paramPretty != false {
@@ -2795,6 +2795,42 @@ func waspOpenapiRegister(subcommand bool) {
 		var examples string
 
 		cmd := &cobra.Command{
+			Use:     "list-batch-job",
+			Short:   "list-batch-job",
+			Long:    cli.Markdown("Lists all barch jobs"),
+			Example: examples,
+			Args:    cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+
+				_, decoded, err := WaspOpenapiListBatchJob(params)
+				if err != nil {
+					log.Fatal().Err(err).Msg("Error calling operation")
+				}
+
+				if err := cli.Formatter.Format(decoded); err != nil {
+					log.Fatal().Err(err).Msg("Formatting failed")
+				}
+
+			},
+		}
+		root.AddCommand(cmd)
+
+		cmd.Flags().String("pretty", "", "")
+
+		cli.SetCustomFlags(cmd)
+
+		if cmd.Flags().HasFlags() {
+			params.BindPFlags(cmd.Flags())
+		}
+
+	}()
+
+	func() {
+		params := viper.New()
+
+		var examples string
+
+		cmd := &cobra.Command{
 			Use:     "insert-batch-job",
 			Short:   "insert-batch-job",
 			Long:    cli.Markdown("Inserts a new batch job\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  description:\n    type: string\n  etl:\n    discriminator:\n      propertyName: type\n    oneOf:\n    - $ref: '#/components/schemas/BatchETLModel'\n    - $ref: '#/components/schemas/BatchGdprETLModel'\n  exclusivityConfig:\n    $ref: '#/components/schemas/BatchJobExclusionConfig'\n  name:\n    type: string\n  owner:\n    type: string\n  system:\n    type: boolean\nrequired:\n- name\n- description\n- owner\n- system\n- creationTime\n- etl\n- exclusivityConfig\ntype: object\nxml:\n  name: BatchJobModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
@@ -2847,42 +2883,6 @@ func waspOpenapiRegister(subcommand bool) {
 				}
 
 				_, decoded, err := WaspOpenapiUpdateBatchJob(params, body)
-				if err != nil {
-					log.Fatal().Err(err).Msg("Error calling operation")
-				}
-
-				if err := cli.Formatter.Format(decoded); err != nil {
-					log.Fatal().Err(err).Msg("Formatting failed")
-				}
-
-			},
-		}
-		root.AddCommand(cmd)
-
-		cmd.Flags().String("pretty", "", "")
-
-		cli.SetCustomFlags(cmd)
-
-		if cmd.Flags().HasFlags() {
-			params.BindPFlags(cmd.Flags())
-		}
-
-	}()
-
-	func() {
-		params := viper.New()
-
-		var examples string
-
-		cmd := &cobra.Command{
-			Use:     "list-batch-job",
-			Short:   "list-batch-job",
-			Long:    cli.Markdown("Lists all barch jobs"),
-			Example: examples,
-			Args:    cobra.MinimumNArgs(0),
-			Run: func(cmd *cobra.Command, args []string) {
-
-				_, decoded, err := WaspOpenapiListBatchJob(params)
 				if err != nil {
 					log.Fatal().Err(err).Msg("Error calling operation")
 				}
@@ -4367,46 +4367,6 @@ func waspOpenapiRegister(subcommand bool) {
 		var examples string
 
 		cmd := &cobra.Command{
-			Use:     "update-producer",
-			Short:   "update-producer",
-			Long:    cli.Markdown("Updates a new producer\n## Request Schema (text/json)\n\nproperties:\n  className:\n    type: string\n  configuration:\n    nullable: true\n    type: string\n  isActive:\n    type: boolean\n  isRemote:\n    type: boolean\n  isSystem:\n    type: boolean\n  name:\n    type: string\n  topicName:\n    nullable: true\n    type: string\nrequired:\n- name\n- className\n- isActive\n- isRemote\n- isSystem\ntype: object\nxml:\n  name: ProducerModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
-			Example: examples,
-			Args:    cobra.MinimumNArgs(0),
-			Run: func(cmd *cobra.Command, args []string) {
-				body, err := cli.GetBody("text/json", args[0:])
-				if err != nil {
-					log.Fatal().Err(err).Msg("Unable to get body")
-				}
-
-				_, decoded, err := WaspOpenapiUpdateProducer(params, body)
-				if err != nil {
-					log.Fatal().Err(err).Msg("Error calling operation")
-				}
-
-				if err := cli.Formatter.Format(decoded); err != nil {
-					log.Fatal().Err(err).Msg("Formatting failed")
-				}
-
-			},
-		}
-		root.AddCommand(cmd)
-
-		cmd.Flags().String("pretty", "", "")
-
-		cli.SetCustomFlags(cmd)
-
-		if cmd.Flags().HasFlags() {
-			params.BindPFlags(cmd.Flags())
-		}
-
-	}()
-
-	func() {
-		params := viper.New()
-
-		var examples string
-
-		cmd := &cobra.Command{
 			Use:     "get-producer",
 			Short:   "get-producer",
 			Long:    cli.Markdown("Retrieves all producers"),
@@ -4455,6 +4415,46 @@ func waspOpenapiRegister(subcommand bool) {
 				}
 
 				_, decoded, err := WaspOpenapiInsertProducer(params, body)
+				if err != nil {
+					log.Fatal().Err(err).Msg("Error calling operation")
+				}
+
+				if err := cli.Formatter.Format(decoded); err != nil {
+					log.Fatal().Err(err).Msg("Formatting failed")
+				}
+
+			},
+		}
+		root.AddCommand(cmd)
+
+		cmd.Flags().String("pretty", "", "")
+
+		cli.SetCustomFlags(cmd)
+
+		if cmd.Flags().HasFlags() {
+			params.BindPFlags(cmd.Flags())
+		}
+
+	}()
+
+	func() {
+		params := viper.New()
+
+		var examples string
+
+		cmd := &cobra.Command{
+			Use:     "update-producer",
+			Short:   "update-producer",
+			Long:    cli.Markdown("Updates a new producer\n## Request Schema (text/json)\n\nproperties:\n  className:\n    type: string\n  configuration:\n    nullable: true\n    type: string\n  isActive:\n    type: boolean\n  isRemote:\n    type: boolean\n  isSystem:\n    type: boolean\n  name:\n    type: string\n  topicName:\n    nullable: true\n    type: string\nrequired:\n- name\n- className\n- isActive\n- isRemote\n- isSystem\ntype: object\nxml:\n  name: ProducerModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Example: examples,
+			Args:    cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+				body, err := cli.GetBody("text/json", args[0:])
+				if err != nil {
+					log.Fatal().Err(err).Msg("Unable to get body")
+				}
+
+				_, decoded, err := WaspOpenapiUpdateProducer(params, body)
 				if err != nil {
 					log.Fatal().Err(err).Msg("Error calling operation")
 				}

@@ -1,46 +1,46 @@
 package it.agilelab.bigdata.wasp.compiler.utils
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-class CompilerUtilsTest extends FlatSpec with Matchers {
+class FreeCodeCompilerTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  it should "test wrong code" in {
-    val output = CompilerUtils.validate(
-      """val a = "banana"
-        | a.test """.stripMargin)
-    output.size shouldBe 1
-    output.head.toString should startWith ("<virtual>:2")
+  val compiler = new FreeCodeCompiler(new CompilerPool(1))
+
+  override def afterAll(): Unit = {
+    compiler.close()
+    super.afterAll()
   }
 
+  it should "test wrong code" in {
+    val output = compiler.validate("""val a = "banana"
+        | a.test """.stripMargin)
+    output.size shouldBe 1
+    output.head.toString should startWith("<virtual>:2")
+  }
 
   it should "test validate code" in {
-   val output =  CompilerUtils.validate(
-      """val a = "banana"
+    val output = compiler.validate("""val a = "banana"
         |a.toString()
         |val c = "bar" """.stripMargin)
-     output.size shouldBe 0
+    output.size shouldBe 0
   }
 
   it should "test validate code with warning" in {
-    val output =  CompilerUtils.validate(
-      """val a = "banana"
+    val output = compiler.validate("""val a = "banana"
         |a""".stripMargin)
     output.count(_.errorType.equals("error")) shouldBe 0
     output.count(_.errorType.equals("warning")) shouldBe 1
   }
 
-
   it should "test complete code 1" in {
-    val code = """val a = "banana"
+    val code   = """val a = "banana"
                  |a.""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
-    val a = "banana"
-    output.exists(m=> m.toComplete.equals("toInt")) shouldBe true
-    output.exists(m=> m.toComplete.equals("zip")) shouldBe true
+    val output = compiler.complete(code, code.length)
+    val a      = "banana"
+    output.exists(m => m.toComplete.equals("toInt")) shouldBe true
+    output.exists(m => m.toComplete.equals("zip")) shouldBe true
 
   }
-
-
 
   it should "test complete code 2" in {
     val code =
@@ -49,13 +49,12 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val home = "home"
         |test.to""".stripMargin
 
-    val output =  CompilerUtils.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("toInt")) shouldBe true
-    output.exists(m=> m.toComplete.equals("toString")) shouldBe true
-    output.exists(m=> m.toComplete.equals("zip")) shouldBe false
+    val output = compiler.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("toInt")) shouldBe true
+    output.exists(m => m.toComplete.equals("toString")) shouldBe true
+    output.exists(m => m.toComplete.equals("zip")) shouldBe false
 
   }
-
 
   it should "test complete code 3" in {
     val code =
@@ -63,11 +62,10 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test1 = "ciao"
         |val home = "home"
         |te""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("test")) shouldBe true
-    output.exists(m=> m.toComplete.equals("test1")) shouldBe true
+    val output = compiler.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("test")) shouldBe true
+    output.exists(m => m.toComplete.equals("test1")) shouldBe true
     output.size shouldBe 2
-
 
   }
 
@@ -77,16 +75,13 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test1 = "ciao"
         |val home = "home"
         |to""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("test")) shouldBe false
-    output.exists(m=> m.toComplete.equals("test1")) shouldBe false
-    output.exists(m=> m.toComplete.equals("toString")) shouldBe true
+    val output = compiler.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("test")) shouldBe false
+    output.exists(m => m.toComplete.equals("test1")) shouldBe false
+    output.exists(m => m.toComplete.equals("toString")) shouldBe true
     output.size shouldBe 1
 
-
-
   }
-
 
   it should "test complete code 5" in {
     val code =
@@ -96,15 +91,14 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val home = "home"
         |1}
         |te""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("test0")) shouldBe true
-    output.exists(m=> m.toComplete.equals("test")) shouldBe false
-    output.exists(m=> m.toComplete.equals("test1")) shouldBe false
-    output.exists(m=> m.toComplete.equals("toString")) shouldBe false
+    val output = compiler.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("test0")) shouldBe true
+    output.exists(m => m.toComplete.equals("test")) shouldBe false
+    output.exists(m => m.toComplete.equals("test1")) shouldBe false
+    output.exists(m => m.toComplete.equals("toString")) shouldBe false
     output.size shouldBe 1
 
   }
-
 
   it should "test complete code 6" in {
     val code =
@@ -113,7 +107,7 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test = "banana"
         |val test1 = "ciao"
         |te""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
+    val output = compiler.complete(code, code.length)
     output.size shouldBe 4
 
   }
@@ -126,12 +120,11 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test1 = "ciao"
         |}
         |te""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
+    val output = compiler.complete(code, code.length)
 
     output.size shouldBe 2
 
   }
-
 
   it should "test complete code 7" in {
     val code =
@@ -139,13 +132,12 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val house = te
         |val home = "hello"
         |""".stripMargin
-    val output =  CompilerUtils.complete(code,34)
+    val output = compiler.complete(code, 34)
 
-    output.exists(m=> m.toComplete.equals("test")) shouldBe true
+    output.exists(m => m.toComplete.equals("test")) shouldBe true
     output.size shouldBe 1
 
   }
-
 
   it should "test complete code 8" in {
     val code =
@@ -153,8 +145,8 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val house = test.toDoub
         |val home = "hello"
         |""".stripMargin
-    val output =  CompilerUtils.complete(code,43)
-    output.exists(m=> m.toComplete.equals("toDouble")) shouldBe true
+    val output = compiler.complete(code, 43)
+    output.exists(m => m.toComplete.equals("toDouble")) shouldBe true
     output.size shouldBe 1
 
   }
@@ -167,7 +159,7 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test1 = "ciao"
         |}
         |test0.toSt""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
+    val output = compiler.complete(code, code.length)
     output.size shouldBe 1
     output.head.toComplete shouldBe "toString"
 
@@ -179,7 +171,7 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test0 : Int = {
         |val test = "banana"
         |test.toStri""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
+    val output = compiler.complete(code, code.length)
     output.size shouldBe 1
     output.head.toComplete shouldBe "toString"
 
@@ -191,12 +183,11 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test0 : Int = {
         |val test = "banana"
         |test10.toStri""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
+    val output = compiler.complete(code, code.length)
     output.size shouldBe 1
     output.head.toComplete shouldBe "toString"
 
   }
-
 
   it should "test complete code 12" in {
     val code =
@@ -204,8 +195,8 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test0 : Int = {
         |val test = "banana"
         |test.""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
-    output.size>1 shouldBe true
+    val output = compiler.complete(code, code.length)
+    output.size > 1 shouldBe true
     output.exists(_.toComplete.equals("toString")) shouldBe true
 
   }
@@ -216,11 +207,10 @@ class CompilerUtilsTest extends FlatSpec with Matchers {
         |val test0 : Int = {
         |val test = "banana"
         |test10.""".stripMargin
-    val output =  CompilerUtils.complete(code,code.length)
-    output.size>1 shouldBe true
+    val output = compiler.complete(code, code.length)
+    output.size > 1 shouldBe true
     output.exists(_.toComplete.equals("toString")) shouldBe true
 
   }
 
 }
-

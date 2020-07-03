@@ -9,7 +9,7 @@ import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interactive.{Global, Response}
 
-object Compiler {
+class Compiler {
 
   private lazy val compilerPath = try {
     jarPathOfClass("scala.tools.nsc.Interpreter")
@@ -62,7 +62,7 @@ object Compiler {
 
   private val reporter = new Reporter(settings)
 
-  private val compiler = new Global(settings, reporter)
+  protected val compiler = new Global(settings, reporter)
 
   private def jarPathOfClass(className: String) = try {
     val resource = className.split('.').mkString("/", "/", ".class")
@@ -84,6 +84,10 @@ object Compiler {
 
   }
 
+  def reset(): Unit = {
+    //nothing to do in reset now
+  }
+
 
   def scopeCompletion(code: String, startPosition : Int, endPosition: Int): (List[CompletionModel], List[ErrorModel]) = {
     reporter.clear()
@@ -94,7 +98,7 @@ object Compiler {
     compiler.askScopeCompletion(pos, tcompletion)
 
 
-    val vals = tcompletion.get(5000).get match {
+    val vals = tcompletion.get match {
       case Left(members) =>
         compiler.ask{ () =>
           members.flatMap {
@@ -118,7 +122,7 @@ object Compiler {
     val pos = compiler.ask(() => new OffsetPosition(source, position))
     compiler.askTypeCompletion(pos, tcompletion)
 
-    tcompletion.get(5000).get match {
+    tcompletion.get match {
       case Left(members) =>
         compiler.ask { () =>
           members.map {
@@ -129,5 +133,7 @@ object Compiler {
       case Right(e) => throw e
     }
   }
+
+  def close(): Unit = compiler.askShutdown
 
 }

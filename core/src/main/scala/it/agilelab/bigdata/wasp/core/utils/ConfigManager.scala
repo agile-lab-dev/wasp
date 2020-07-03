@@ -15,7 +15,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 object ConfigManager {
-  var conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
+  val conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   private val kafkaConfigName          = "Kafka"
   private val sparkBatchConfigName     = "SparkBatch"
@@ -26,6 +26,7 @@ object ConfigManager {
   private val jdbcConfigName           = "Jdbc"
   private val telemetryConfigName      = "Telemetry"
   private val nifiConfigName           = "Nifi"
+  private val compilerConfigName       = "Compiler"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
     /* waspConfig validation-rules */
@@ -116,6 +117,7 @@ object ConfigManager {
   private var jdbcConfig: JdbcConfigModel                     = _
   private var avroSchemaManagerConfig: Config                 = _
   private var nifiConfig: NifiConfigModel                     = _
+  private var compilerConfig: CompilerConfigModel             = _
 
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
     (globalValidationRules ++ pluginsValidationRules)
@@ -266,6 +268,16 @@ object ConfigManager {
   def initializeSparkStreamingConfig(): Unit = {
     sparkStreamingConfig =
       retrieveConf[SparkStreamingConfigModel](getDefaultSparkStreamingConfig, sparkStreamingConfigName).get
+  }
+
+  def initializeCompilerConfig(): Unit = {
+    compilerConfig = retrieveConf[CompilerConfigModel](getDefaultCompilerConfig, compilerConfigName).get
+  }
+
+  private def getDefaultCompilerConfig: CompilerConfigModel = {
+    val compilerSubConfig = conf.getConfig("compiler")
+
+    CompilerConfigModel(compilerSubConfig.getInt("max-instances"), compilerConfigName)
   }
 
   private def getDefaultSparkStreamingConfig: SparkStreamingConfigModel = {
@@ -446,6 +458,7 @@ object ConfigManager {
     initializeAvroSchemaManagerConfig()
     initializeTelemetryConfig()
     initializeNifiConfig()
+    initializeCompilerConfig()
   }
 
   def getWaspConfig: WaspConfigModel = {
@@ -481,6 +494,13 @@ object ConfigManager {
       throw new Exception("The spark batch configuration was not initialized")
     }
     sparkBatchConfig
+  }
+
+  def getCompilerConfig: CompilerConfigModel = {
+    if (compilerConfig == null) {
+      throw new Exception("The spark batch configuration was not initialized")
+    }
+    compilerConfig
   }
 
   def getSparkStreamingConfig: SparkStreamingConfigModel = {
