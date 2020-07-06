@@ -1,0 +1,118 @@
+version: "3.5"
+services:
+  mongodb:
+    build:
+      context: 'mongodb'
+    container_name: mongo 
+    hostname: 'mongo.example.com'
+    image: 'wasp/mongodb:2.26.0'
+    networks:
+      example.com:
+  master:
+    build:
+      context: 'master'
+    container_name: master 
+    hostname: 'master.example.com'
+    image: 'wasp/master:2.26.0'
+    networks:
+      example.com:
+    environment:
+      WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
+      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_KAFKA_HOSTNAME: "services.example.com"
+      WASP_KAFKA_PORT: "9092"
+      WASP_ZOOKEEPER_HOSTNAME: "services.example.com"
+      WASP_ZOOKEEPER_PORT: "2181"
+      WASP_HDFS_YARN_JARS: "hdfs://services.example.com:9000/user/root/spark2/lib/*"
+      WASP_NIFI_BOOTSTRAP: "hdfs://services.example.com:9000/user/root/nifi/bootstrap"
+      WASP_NIFI_SYSTEM: "hdfs://services.example.com:9000/user/root/nifi/system"
+      WASP_NIFI_STATELESS: "hdfs://services.example.com:9000/user/root/nifi/stateless"
+      WASP_NIFI_EXTENSIONS: "hdfs://services.example.com:9000/user/root/nifi/extensions"
+    ports:
+    - "2891:2891"
+        
+  streaming:
+    build:
+      context: 'streaming'
+    container_name: streaming 
+    hostname: 'streaming.example.com'
+    image: 'wasp/streaming:2.26.0'
+    networks:
+      example.com:
+    environment:
+      WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
+      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_KAFKA_HOSTNAME: "services.example.com"
+      WASP_KAFKA_PORT: "9092"
+      WASP_ZOOKEEPER_HOSTNAME: "services.example.com"
+      WASP_ZOOKEEPER_PORT: "2181"
+      WASP_HDFS_YARN_JARS: "hdfs://services.example.com:9000/user/root/spark2/lib/*"
+      WASP_NIFI_BOOTSTRAP: "hdfs://services.example.com:9000/user/root/nifi/bootstrap"
+      WASP_NIFI_SYSTEM: "hdfs://services.example.com:9000/user/root/nifi/system"
+      WASP_NIFI_STATELESS: "hdfs://services.example.com:9000/user/root/nifi/stateless"
+      WASP_NIFI_EXTENSIONS: "hdfs://services.example.com:9000/user/root/nifi/extensions"
+  batch:
+    build:
+      context: 'batch'
+    container_name: batch 
+    hostname: 'batch.example.com'
+    image: 'wasp/batch:2.26.0'
+    networks:
+      example.com:
+    environment:
+      WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
+      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_KAFKA_HOSTNAME: "services.example.com"
+      WASP_KAFKA_PORT: "9092"
+      WASP_ZOOKEEPER_HOSTNAME: "services.example.com"
+      WASP_ZOOKEEPER_PORT: "2181"
+      WASP_HDFS_YARN_JARS: "hdfs://services.example.com:9000/user/root/spark2/lib/*"
+      WASP_NIFI_BOOTSTRAP: "hdfs://services.example.com:9000/user/root/nifi/bootstrap"
+      WASP_NIFI_SYSTEM: "hdfs://services.example.com:9000/user/root/nifi/system"
+      WASP_NIFI_STATELESS: "hdfs://services.example.com:9000/user/root/nifi/stateless"
+      WASP_NIFI_EXTENSIONS: "hdfs://services.example.com:9000/user/root/nifi/extensions"
+  producers:
+    build:
+      context: 'producers'
+    container_name: producers
+    hostname: 'producers.example.com'
+    image: 'wasp/producers:2.26.0'
+    networks:
+      example.com:
+    environment:
+      WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
+      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_KAFKA_HOSTNAME: "services.example.com"
+      WASP_KAFKA_PORT: "9092"
+      WASP_ZOOKEEPER_HOSTNAME: "services.example.com"
+      WASP_ZOOKEEPER_PORT: "2181"
+      WASP_HDFS_YARN_JARS: "hdfs://services.example.com:9000/user/root/spark2/lib/*"
+      WASP_NIFI_BOOTSTRAP: "hdfs://services.example.com:9000/user/root/nifi/bootstrap"
+      WASP_NIFI_SYSTEM: "hdfs://services.example.com:9000/user/root/nifi/system"
+      WASP_NIFI_STATELESS: "hdfs://services.example.com:9000/user/root/nifi/stateless"
+      WASP_NIFI_EXTENSIONS: "hdfs://services.example.com:9000/user/root/nifi/extensions"
+  services:
+    build:
+      context: 'services'
+    container_name: services
+    hostname: 'services.example.com'
+    image: 'wasp/services:2.26.0'
+    networks:
+      example.com:
+    ports:
+    - "7180:7180" 
+    - "2222:22"
+    - "60010:60010" 
+    - "60020:60020" 
+    - "8088:8088" 
+    - "8042:8042" 
+    - "8983:8983" 
+    - "27017:27017" 
+    - "20000:20000" 
+    - "18080:18080" 
+    - "8080:8080"
+
+
+networks:
+  example.com:
+    name: example.com

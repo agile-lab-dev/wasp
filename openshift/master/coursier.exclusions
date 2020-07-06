@@ -1,0 +1,16 @@
+org.apache.hbase:hbase-client--io.netty:netty
+org.apache.hbase:hbase-client--com.google.guava:guava
+org.apache.hbase:hbase-client--org.mortbay.jetty:jetty-utils
+org.apache.hbase:hbase-client--org.mortbay.jetty:jetty
+org.apache.hbase:hbase-client--org.apache.zookeeper:zookeeper
+org.apache.hbase:hbase-common--io.netty:netty
+org.apache.hbase:hbase-common--com.google.guava:guava
+org.apache.hbase:hbase-common--org.mortbay.jetty:jetty-utils
+org.apache.hbase:hbase-common--org.mortbay.jetty:jetty
+org.apache.hbase:hbase-common--org.apache.zookeeper:zookeeper
+org.apache.hbase:hbase-server--io.netty:netty
+org.apache.hbase:hbase-server--com.google.guava:guava
+org.apache.hbase:hbase-server--org.mortbay.jetty:jetty-utils
+org.apache.hbase:hbase-server--org.mortbay.jetty:jetty
+org.apache.hbase:hbase-server--org.apache.zookeeper:zookeeper
+
