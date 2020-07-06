@@ -13,7 +13,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Proto
 import PipegraphGuardian._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
-import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, TopicBL}
+import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark.sql.SparkSession
@@ -475,31 +475,38 @@ object PipegraphGuardian {
   type ChildFactory = (PipegraphModel,String, ActorRefFactory) => ActorRef
   type ComponentFailedStrategy = StructuredStreamingETLModel => Choice
 
-  def defaultChildFactory(sparkSession: SparkSession,
-                          mlModelBl: MlModelBL,
-                          topicsBl: TopicBL,
-                          freeCodeBL: FreeCodeBL,
-                          streamingReaderFactory: StreamingReaderFactory,
-                          staticReaderFactory: StaticReaderFactory,
-                          writerFactory: WriterFactory): ChildFactory = { (pipegraph,suppliedName, context) =>
-
+  def defaultChildFactory(
+      sparkSession: SparkSession,
+      mlModelBl: MlModelBL,
+      topicsBl: TopicBL,
+      freeCodeBL: FreeCodeBL,
+      processGroupBL: ProcessGroupBL,
+      streamingReaderFactory: StreamingReaderFactory,
+      staticReaderFactory: StaticReaderFactory,
+      writerFactory: WriterFactory
+  ): ChildFactory = { (pipegraph, suppliedName, context) =>
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
     val childEtlSparkSession = sparkSession.newSession()
 
     //actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
-    
-    context.actorOf(StructuredStreamingETLActor.props(childEtlSparkSession,
-                                                      mlModelBl,
-                                                      topicsBl,
-                                                      freeCodeBL,
-                                                      streamingReaderFactory,
-                                                      staticReaderFactory,
-                                                      writerFactory,
-                                                      pipegraph,
-                                                      StructuredStreamingETLActor.defaultTelemetryActorFactory()),
-                    saneName)
+
+    context.actorOf(
+      StructuredStreamingETLActor.props(
+        childEtlSparkSession,
+        mlModelBl,
+        topicsBl,
+        freeCodeBL,
+        processGroupBL,
+        streamingReaderFactory,
+        staticReaderFactory,
+        writerFactory,
+        pipegraph,
+        StructuredStreamingETLActor.defaultTelemetryActorFactory()
+      ),
+      saneName
+    )
 
   }
 

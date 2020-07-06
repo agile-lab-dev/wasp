@@ -12,22 +12,22 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol =>
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.telemetry.TelemetryActor
 import it.agilelab.bigdata.wasp.core.bl._
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.sql.SparkSession
 
 import scala.util.{Failure, Success}
 
-class StructuredStreamingETLActor private(override val sparkSession: SparkSession,
-                                          override val mlModelBl: MlModelBL,
-                                          override val topicsBl: TopicBL,
-                                          override val freeCodeBL: FreeCodeBL,
-                                          override val streamingReaderFactory: StreamingReaderFactory,
-                                          override val staticReaderFactory: StaticReaderFactory,
-                                          override val writerFactory: WriterFactory,
-                                          val pipegraph: PipegraphModel,
-                                          val telemetryActorFactory: TelemetryActorFactory
-                                         )
-  extends FSM[State, Data]
+class StructuredStreamingETLActor private (
+    override val sparkSession: SparkSession,
+    override val mlModelBl: MlModelBL,
+    override val topicsBl: TopicBL,
+    override val freeCodeBL: FreeCodeBL,
+    override val processGroupBL: ProcessGroupBL,
+    override val streamingReaderFactory: StreamingReaderFactory,
+    override val staticReaderFactory: StaticReaderFactory,
+    override val writerFactory: WriterFactory,
+    val pipegraph: PipegraphModel,
+    val telemetryActorFactory: TelemetryActorFactory
+) extends FSM[State, Data]
     with ActivationSteps
     with MaterializationSteps
     with MonitoringStep
@@ -100,25 +100,32 @@ object StructuredStreamingETLActor {
 
   type TelemetryActorFactory = (String, ActorRefFactory) => ActorRef
 
-  def props(sparkSession: SparkSession,
-            mlModelBl: MlModelBL,
-            topicsBl: TopicBL,
-            freeCodeBL: FreeCodeBL,
-            streamingReaderFactory: StreamingReaderFactory,
-            staticReaderFactory: StaticReaderFactory,
-            writerFactory: WriterFactory,
-            pipegraph: PipegraphModel,
-            telemetryActorFactory: TelemetryActorFactory) =
-    Props(new StructuredStreamingETLActor(sparkSession,
-                                          mlModelBl,
-                                          topicsBl,
-                                          freeCodeBL,
-                                          streamingReaderFactory,
-                                          staticReaderFactory,
-                                          writerFactory,
-                                          pipegraph,
-                                          telemetryActorFactory))
-
+  def props(
+      sparkSession: SparkSession,
+      mlModelBl: MlModelBL,
+      topicsBl: TopicBL,
+      freeCodeBL: FreeCodeBL,
+      processGroupBL: ProcessGroupBL,
+      streamingReaderFactory: StreamingReaderFactory,
+      staticReaderFactory: StaticReaderFactory,
+      writerFactory: WriterFactory,
+      pipegraph: PipegraphModel,
+      telemetryActorFactory: TelemetryActorFactory
+  ) =
+    Props(
+      new StructuredStreamingETLActor(
+        sparkSession,
+        mlModelBl,
+        topicsBl,
+        freeCodeBL,
+        processGroupBL,
+        streamingReaderFactory,
+        staticReaderFactory,
+        writerFactory,
+        pipegraph,
+        telemetryActorFactory
+      )
+    )
 
   def defaultTelemetryActorFactory() : TelemetryActorFactory = { (suppliedName, context) =>
 

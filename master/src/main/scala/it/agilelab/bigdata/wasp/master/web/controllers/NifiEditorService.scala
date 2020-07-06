@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import it.agilelab.bigdata.nifi.client.NifiClient
 import it.agilelab.bigdata.nifi.client.model._
 import it.agilelab.bigdata.wasp.core.models.editor.{NifiStatelessInstanceModel, ProcessGroupResponse}
-import org.json4s.{JObject, JsonAST}
+import org.json4s.JsonAST.{JObject, JString, JValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,6 +42,16 @@ class NifiEditorService(nifiClient: NifiClient[Future])(implicit ec: ExecutionCo
     } yield (NifiStatelessInstanceModel(processGroupName, editorUrl, processGroupId))
   }
 
+  def getErrorPort(flowContent: JObject): Option[String] = {
+    (for {
+      JObject(data)                       <- flowContent
+      ("outputPorts", ports)              <- data
+      JObject(port)                       <- ports
+      ("name", JString(name))             <- port
+      ("identifier", JString(identifier)) <- port if name == "wasp-error"
+    } yield (identifier)).headOption
+  }
+
   override def commitEditorSession(processGroupId: String): Future[ProcessGroupResponse] = {
     for {
       processGroup  <- nifiClient.processGroups.getProcessGroup(processGroupId)
@@ -63,7 +73,8 @@ class NifiEditorService(nifiClient: NifiClient[Future])(implicit ec: ExecutionCo
                            .normalize(
                              "flow contents not found"
                            )
-      result <- coerceToJObjectOrError(flowContent)
+      result: JObject <- coerceToJObjectOrError(flowContent)
+      _               <- getErrorPort(result).normalize("No wasp-error port found")
     } yield (ProcessGroupResponse(processGroupId, result))
   }
 
@@ -86,7 +97,7 @@ class NifiEditorService(nifiClient: NifiClient[Future])(implicit ec: ExecutionCo
     )
   }
 
-  private def coerceToJObjectOrError[T](flowContent: JsonAST.JValue): Future[JObject] = {
+  private def coerceToJObjectOrError[T](flowContent: JValue): Future[JObject] = {
     if (flowContent.isInstanceOf[JObject]) {
       Future.successful(flowContent.asInstanceOf[JObject])
     } else {

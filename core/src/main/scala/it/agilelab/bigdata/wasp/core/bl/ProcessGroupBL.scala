@@ -6,7 +6,7 @@ import org.mongodb.scala.bson.BsonString
 
 trait ProcessGroupBL {
 
-  def getById(pgId: String): Seq[ProcessGroupModel]
+  def getById(pgId: String): Option[ProcessGroupModel]
 
   def insert(versionedProcessGroup: ProcessGroupModel): Unit
 
@@ -14,9 +14,10 @@ trait ProcessGroupBL {
 
 class ProcessGroupBLImpl(waspDB: WaspDB) extends ProcessGroupBL {
 
-  override def getById(pgId: String): Seq[ProcessGroupModel] =
+  override def getById(pgId: String): Option[ProcessGroupModel] =
     waspDB
       .getAllDocumentsByField[ProcessGroupModel]("name", BsonString(pgId))
+      .headOption
 
   override def insert(processGroup: ProcessGroupModel): Unit =
     waspDB.insert[ProcessGroupModel](processGroup)

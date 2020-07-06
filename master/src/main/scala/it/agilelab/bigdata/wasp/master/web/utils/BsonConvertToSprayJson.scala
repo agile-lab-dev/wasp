@@ -246,11 +246,11 @@ trait JsonSupport
   implicit lazy val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat6(
     PipegraphInstanceModel.apply
   )
-  implicit lazy val documentModelFormat: RootJsonFormat[DocumentModel] = jsonFormat3(DocumentModel.apply)
-  implicit lazy val freeCodeModelFormat : RootJsonFormat[FreeCodeModel] = jsonFormat2(FreeCodeModel.apply)
-  implicit lazy val freeCodeFormat : RootJsonFormat[FreeCode] = jsonFormat1(FreeCode.apply)
-  implicit lazy val errorModelFormat : RootJsonFormat[ErrorModel] = jsonFormat6(ErrorModel.apply)
-  implicit lazy val completionModelFormat : RootJsonFormat[CompletionModel] = jsonFormat2(CompletionModel.apply)
+  implicit lazy val documentModelFormat: RootJsonFormat[DocumentModel]     = jsonFormat3(DocumentModel.apply)
+  implicit lazy val freeCodeModelFormat: RootJsonFormat[FreeCodeModel]     = jsonFormat2(FreeCodeModel.apply)
+  implicit lazy val freeCodeFormat: RootJsonFormat[FreeCode]               = jsonFormat1(FreeCode.apply)
+  implicit lazy val errorModelFormat: RootJsonFormat[ErrorModel]           = jsonFormat6(ErrorModel.apply)
+  implicit lazy val completionModelFormat: RootJsonFormat[CompletionModel] = jsonFormat2(CompletionModel.apply)
 
   // Editor Format
   implicit lazy val nifiEditorFormat: RootJsonFormat[NifiStatelessInstanceModel] = jsonFormat3(
@@ -270,7 +270,7 @@ trait JsonSupport
   }
 
   implicit lazy val processGroupResponseFormat: RootJsonFormat[ProcessGroupResponse] = jsonFormat2(ProcessGroupResponse)
-  implicit lazy val processGroupModelFormat: RootJsonFormat[ProcessGroupModel] = jsonFormat2(ProcessGroupModel)
+  implicit lazy val processGroupModelFormat: RootJsonFormat[ProcessGroupModel]       = jsonFormat3(ProcessGroupModel)
 
   // StrategyDTO Format
   implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat2(FreeCodeDTO)

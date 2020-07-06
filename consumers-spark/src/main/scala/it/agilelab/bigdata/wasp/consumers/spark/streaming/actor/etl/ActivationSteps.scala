@@ -7,14 +7,17 @@ import java.util.Properties
 import java.util.concurrent.Future
 
 import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{FreeCodeStrategy, ReaderKey, Strategy}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{
+  StaticReaderFactory,
+  StreamingReaderFactory
+}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
-import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, TopicBL}
+import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
 import it.agilelab.bigdata.wasp.core.models._
@@ -29,7 +32,6 @@ import spray.json._
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
-
 
 /**
   * Trait collecting operations to be composed to realize Activation of a [[StructuredStreamingETLModel]]
@@ -57,6 +59,11 @@ trait ActivationSteps {
   protected val freeCodeBL: FreeCodeBL
 
   /**
+    * We need access to freeCodes
+    */
+  protected val processGroupBL: ProcessGroupBL
+
+  /**
     * We need a streaming reader factory
     */
   protected val streamingReaderFactory: StreamingReaderFactory
@@ -72,18 +79,24 @@ trait ActivationSteps {
     * @param etl The [[StructuredStreamingETLModel]] to activate
     * @return the output dataframe
     */
-  protected def activate(etl: StructuredStreamingETLModel): Try[DataFrame] = for {
-    streamingDataFrame <- createStreamingDataFrameFromStreamingSource(etl, etl.streamingInput).recoverWith {
-      case e: Throwable => Failure(new Exception(s"Cannot create input from streaming source in etl ${etl.name}", e))
-    }
-    staticDataFrames <- createStaticDataFramesFromStaticSources(etl).recoverWith {
-      case e: Throwable => Failure(new Exception(s"Cannot instantiate static sources in etl ${etl.name}", e))
-    }
-    transformedStream <- applyTransformOrInputIfNoStrategy(etl, streamingDataFrame, staticDataFrames).recoverWith {
-      case e: Throwable => Failure(new Exception(s"Failed to apply strategy in etl ${etl.name}", e))
-    }
+  protected def activate(etl: StructuredStreamingETLModel): Try[DataFrame] =
+    for {
+      streamingDataFrame <- createStreamingDataFrameFromStreamingSource(etl, etl.streamingInput).recoverWith {
+                             case e: Throwable =>
+                               Failure(
+                                 new Exception(s"Cannot create input from streaming source in etl ${etl.name}", e)
+                               )
+                           }
+      staticDataFrames <- createStaticDataFramesFromStaticSources(etl).recoverWith {
+                           case e: Throwable =>
+                             Failure(new Exception(s"Cannot instantiate static sources in etl ${etl.name}", e))
+                         }
+      transformedStream <- applyTransformOrInputIfNoStrategy(etl, streamingDataFrame, staticDataFrames).recoverWith {
+                            case e: Throwable =>
+                              Failure(new Exception(s"Failed to apply strategy in etl ${etl.name}", e))
+                          }
 
-  } yield transformedStream
+    } yield transformedStream
 
   /**
     * Retries a [[TopicModel]] by name from DB
@@ -91,13 +104,13 @@ trait ActivationSteps {
     * @param named The name of the topic
     * @return The retrieved [[TopicModel]]
     */
-  private def retrieveTopic(named: String) = Try {
-    topicsBl.getByName(named)
-  } flatMap {
-    case Some(topicModel) => Success(topicModel)
-    case None => Failure(new Exception(s"Failed to retrieve topic named [$named]"))
-  }
-
+  private def retrieveTopic(named: String) =
+    Try {
+      topicsBl.getByName(named)
+    } flatMap {
+      case Some(topicModel) => Success(topicModel)
+      case None             => Failure(new Exception(s"Failed to retrieve topic named [$named]"))
+    }
 
   /**
     * Creates structured stream for a streaming source
@@ -106,18 +119,21 @@ trait ActivationSteps {
     * @param streamingReaderModel The model of the streaming source to read from
     * @return The streaming reader.
     */
-  private def createStreamingDataFrameFromStreamingSource(etl: StructuredStreamingETLModel,
-                                                          streamingReaderModel: StreamingReaderModel): Try[(ReaderKey, DataFrame)] = Try {
+  private def createStreamingDataFrameFromStreamingSource(
+      etl: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): Try[(ReaderKey, DataFrame)] = Try {
     val maybeReader = streamingReaderFactory(etl, streamingReaderModel, sparkSession)
     val streamingDataFrame = maybeReader match {
       case Some(reader) => reader.createStructuredStream(etl, streamingReaderModel)(sparkSession)
       case None =>
         val datastoreProduct = streamingReaderModel.datastoreProduct
-        throw new Exception(s"""Cannot create streaming reader, no plugin able to handle datastore product "$datastoreProduct" found""")
+        throw new Exception(
+          s"""Cannot create streaming reader, no plugin able to handle datastore product "$datastoreProduct" found"""
+        )
     }
     (ReaderKey(streamingReaderModel.datastoreProduct.categoryName, streamingReaderModel.name), streamingDataFrame)
   }
-
 
   /**
     * Creates structured Streams for non streaming sources
@@ -125,10 +141,14 @@ trait ActivationSteps {
     * @param etl The etl to activate Non streaming sources for
     * @return The created non streaming Sources
     */
-  private def createStaticDataFramesFromStaticSources(etl: StructuredStreamingETLModel): Try[Map[ReaderKey, DataFrame]] = {
+  private def createStaticDataFramesFromStaticSources(
+      etl: StructuredStreamingETLModel
+  ): Try[Map[ReaderKey, DataFrame]] = {
 
-    def createAnotherStaticDataFrameFromStaticSource(previous: Map[ReaderKey, DataFrame],
-                                                     readerModel: ReaderModel): Try[Map[ReaderKey, DataFrame]] = {
+    def createAnotherStaticDataFrameFromStaticSource(
+        previous: Map[ReaderKey, DataFrame],
+        readerModel: ReaderModel
+    ): Try[Map[ReaderKey, DataFrame]] = {
 
       def createReader(readerModel: ReaderModel): Try[SparkBatchReader] = Try {
         val maybeReader = staticReaderFactory(etl, readerModel, sparkSession)
@@ -136,7 +156,9 @@ trait ActivationSteps {
           case Some(reader) => reader
           case None =>
             val datastoreProduct = readerModel.datastoreProduct
-            throw new Exception(s"""Cannot create static reader, no plugin able to handle datastore product "$datastoreProduct" found""")
+            throw new Exception(
+              s"""Cannot create static reader, no plugin able to handle datastore product "$datastoreProduct" found"""
+            )
         }
       }
 
@@ -153,17 +175,14 @@ trait ActivationSteps {
 
     val empty = Try(Map.empty[ReaderKey, DataFrame])
 
-
     etl.staticInputs
       .foldLeft(empty) { (previousOutcome, readerModel) =>
-
         //we update outcome only if createStructuredStream does not blow up
         previousOutcome.flatMap(createAnotherStaticDataFrameFromStaticSource(_, readerModel))
 
       }
 
   }
-
 
   /**
     * Applies the transformation if an input strategy is supplied, if not the input data frame is returned.
@@ -173,24 +192,27 @@ trait ActivationSteps {
     * @param nonStreamingInputStreams The other non streaming DataFrames
     * @return A dataframe with strategy applied or the input DataFrame
     */
-  private def applyTransformOrInputIfNoStrategy(etl: StructuredStreamingETLModel, structuredInputStream: (ReaderKey,
-    DataFrame), nonStreamingInputStreams: Map[ReaderKey, DataFrame]): Try[DataFrame] = {
-
+  private def applyTransformOrInputIfNoStrategy(
+      etl: StructuredStreamingETLModel,
+      structuredInputStream: (ReaderKey, DataFrame),
+      nonStreamingInputStreams: Map[ReaderKey, DataFrame]
+  ): Try[DataFrame] = {
 
     createStrategy(etl) match {
       case Success(Some(strategy)) =>
-        applyTransform(structuredInputStream._1,
+        applyTransform(
+          structuredInputStream._1,
           structuredInputStream._2,
           nonStreamingInputStreams,
           strategy,
           etl.streamingOutput.datastoreProduct,
-          etl)
+          etl
+        )
       case Success(None) =>
         Success(structuredInputStream._2)
       case Failure(reason) =>
         Failure[DataFrame](reason)
     }
-
 
   }
 
@@ -202,23 +224,38 @@ trait ActivationSteps {
     */
   protected def createStrategy(etl: StructuredStreamingETLModel): Try[Option[Strategy]] = {
 
-
     def instantiateStrategy(strategyModel: StrategyModel): Try[Strategy] = Try {
-      val conf = strategyModel.configurationConfig()
-      val strategy = if(strategyModel.className.equals(classOf[FreeCodeStrategy].getName)) {
-        require(conf.isDefined,s"Configuration for FreeCodeStrategy isn't defined.")
-        require(conf.get.hasPath("name"),s"Configuration for FreeCodeStrategy isn't defined.")
-        val freeCodeOption = freeCodeBL.getByName(conf.get.getString("name"))
-        require(freeCodeOption.isDefined,s"Free code with name ${strategyModel.configuration.get} not found.")
-        new FreeCodeStrategy(freeCodeOption.get.code)
-      } else Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
+      val conf = strategyModel.configurationConfig().getOrElse(ConfigFactory.empty())
 
-      conf match {
-        case Some(config) => strategy.configuration = config
-        case None => strategy.configuration = ConfigFactory.empty()
+      if (strategyModel.className.equals(classOf[FreeCodeStrategy].getName)) {
+        require(conf.hasPath("name"), s"Configuration for FreeCodeStrategy isn't defined.")
+        val freeCodeOption = freeCodeBL.getByName(conf.getString("name"))
+        require(freeCodeOption.isDefined, s"Free code with name ${strategyModel.configuration.get} not found.")
+        val strategy = new FreeCodeStrategy(freeCodeOption.get.code)
+        strategy.configuration = conf
+        strategy
+      } else {
+
+        if (strategyModel.className.equals("it.agilelab.bigdata.wasp.spark.plugins.nifi.NifiStrategy")) {
+
+          require(
+            conf.hasPath("nifi.process-group-id"),
+            s"Nifi.process-group-id Configuration for NifiStrategy isn't defined."
+          )
+
+          val newStrategy = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
+          newStrategy.configuration = processGroupBL
+            .getById(conf.getString("nifi.process-group-id"))
+            .map(processGroup => conf.withValue("nifi.flow", ConfigValueFactory.fromAnyRef(processGroup.content.toJson))
+            )
+            .getOrElse(conf)
+          newStrategy
+        } else {
+          val strategy = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
+          strategy.configuration = conf
+          strategy
+        }
       }
-      strategy
-
     }
 
     def createMlModelBroadcast(models: List[MlModelOnlyInfo]): Try[MlModelsBroadcastDB] = Try {
@@ -240,18 +277,16 @@ trait ActivationSteps {
       strategy
     }
 
-
     etl.strategy match {
       case Some(strategyModel) =>
         for {
           configuredStrategy <- instantiateStrategy(strategyModel)
           broadcastMlModelDb <- createMlModelBroadcast(etl.mlModels)
-          augmented <- augmentStrategyWithMlModelsBroadcast(configuredStrategy, broadcastMlModelDb).map(Some(_))
+          augmented          <- augmentStrategyWithMlModelsBroadcast(configuredStrategy, broadcastMlModelDb).map(Some(_))
         } yield augmented
       case None =>
         Success[Option[Strategy]](None)
     }
-
 
   }
 
@@ -266,69 +301,79 @@ trait ActivationSteps {
     * @param etl              The etl model
     * @return A Try representing the application of the strategy as a new DataFrame
     */
-  private def applyTransform(readerKey: ReaderKey,
-                             stream: DataFrame,
-                             dataStoreDFs: Map[ReaderKey, DataFrame],
-                             strategy: Strategy,
-                             datastoreProduct: DatastoreProduct,
-                             etl: StructuredStreamingETLModel): Try[DataFrame] = Try {
+  private def applyTransform(
+      readerKey: ReaderKey,
+      stream: DataFrame,
+      dataStoreDFs: Map[ReaderKey, DataFrame],
+      strategy: Strategy,
+      datastoreProduct: DatastoreProduct,
+      etl: StructuredStreamingETLModel
+  ): Try[DataFrame] = Try {
 
-    val config = TelemetryMetadataProducerConfig(ConfigManager.getKafkaConfig.toTinyConfig(), ConfigManager.getTelemetryConfig)
+    val config =
+      TelemetryMetadataProducerConfig(ConfigManager.getKafkaConfig.toTinyConfig(), ConfigManager.getTelemetryConfig)
 
-
-    val keyDefaultOneMessageEveryKey = "wasp.telemetry.latency.sample-one-message-every"
+    val keyDefaultOneMessageEveryKey   = "wasp.telemetry.latency.sample-one-message-every"
     val valueDefaultOneMessageEveryKey = ConfigManager.getTelemetryConfig.sampleOneMessageEvery
 
-    val defaultConfiguration = ConfigFactory.parseString(s"$keyDefaultOneMessageEveryKey=$valueDefaultOneMessageEveryKey")
+    val defaultConfiguration =
+      ConfigFactory.parseString(s"$keyDefaultOneMessageEveryKey=$valueDefaultOneMessageEveryKey")
 
-    val sampleOneMessageEveryValue = strategy.configuration.withFallback(defaultConfiguration).getInt(keyDefaultOneMessageEveryKey)
+    val sampleOneMessageEveryValue =
+      strategy.configuration.withFallback(defaultConfiguration).getInt(keyDefaultOneMessageEveryKey)
 
     val saneSampleOneMessageEvery = if (sampleOneMessageEveryValue < 1) 1 else sampleOneMessageEveryValue
 
-
     val dropMetadataDefault = ConfigFactory.parseString(s"dropMetadata=false")
-    val dropMetadataColumn = etl.strategy.flatMap(strategy => strategy.configurationConfig().map(_.withFallback(dropMetadataDefault).getBoolean("dropMetadata"))).getOrElse(false)
+    val dropMetadataColumn = etl.strategy
+      .flatMap(strategy =>
+        strategy.configurationConfig().map(_.withFallback(dropMetadataDefault).getBoolean("dropMetadata"))
+      )
+      .getOrElse(false)
 
-
-
-    val inputStreamWithEnterMetadata = MetadataOps.sendLatencyMessage(MetadataOps.enter(etl.name, stream),
-      config, saneSampleOneMessageEvery)
+    val inputStreamWithEnterMetadata =
+      MetadataOps.sendLatencyMessage(MetadataOps.enter(etl.name, stream), config, saneSampleOneMessageEvery)
 
     val strategyInputStreams = dataStoreDFs + (readerKey -> inputStreamWithEnterMetadata)
 
     val strategyOutputStream = strategy.transform(strategyInputStreams)
 
-    val strategyOutputStreamWithExitMetadata = MetadataOps.sendLatencyMessage(MetadataOps.exit(etl.name, strategyOutputStream),config, saneSampleOneMessageEvery)
+    val strategyOutputStreamWithExitMetadata = MetadataOps
+      .sendLatencyMessage(MetadataOps.exit(etl.name, strategyOutputStream), config, saneSampleOneMessageEvery)
 
     val cleanOutputStream: DataFrame = dropMetadataColumn match {
-      case true => if(strategyOutputStreamWithExitMetadata.columns.contains("metadata")) strategyOutputStreamWithExitMetadata.drop("metadata") else strategyOutputStreamWithExitMetadata
+      case true =>
+        if (strategyOutputStreamWithExitMetadata.columns.contains("metadata"))
+          strategyOutputStreamWithExitMetadata.drop("metadata")
+        else strategyOutputStreamWithExitMetadata
       case false => strategyOutputStreamWithExitMetadata
     }
 
     // TODO maybe we should match on categories instead
     datastoreProduct match {
-      case KafkaProduct => cleanOutputStream
-      case HBaseProduct => cleanOutputStream
-      case RawProduct => cleanOutputStream
+      case KafkaProduct   => cleanOutputStream
+      case HBaseProduct   => cleanOutputStream
+      case RawProduct     => cleanOutputStream
       case ConsoleProduct => cleanOutputStream
       case _ =>
         if (cleanOutputStream.columns.contains("metadata")) {
           cleanOutputStream.select(MetadataUtils.flatMetadataSchema(cleanOutputStream.schema, None): _*)
-        }
-        else
+        } else
           cleanOutputStream
     }
   }
 }
 
 object ActivationSteps {
+
   /**
     * A function able to go from a [[StructuredStreamingETLModel]]] and a [[StreamingReaderModel]] to an [[Option]]
     * of [[SparkStructuredStreamingReader]].
     *
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
-  type StreamingReaderFactory = (StructuredStreamingETLModel, StreamingReaderModel, SparkSession) => Option[SparkStructuredStreamingReader]
+  type StreamingReaderFactory =
+    (StructuredStreamingETLModel, StreamingReaderModel, SparkSession) => Option[SparkStructuredStreamingReader]
 
   /**
     * A function able to go from a [[StructuredStreamingETLModel]]] and a [[ReaderModel]] to an [[Option]] of
@@ -339,28 +384,27 @@ object ActivationSteps {
   type StaticReaderFactory = (StructuredStreamingETLModel, ReaderModel, SparkSession) => Option[SparkBatchReader]
 }
 
-
 case class TelemetryMetadataProducerConfig(global: TinyKafkaConfig, telemetry: TelemetryConfigModel)
 
 object TelemetryMetadataProducer {
 
-  @transient private lazy val cache: LoadingCache[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]] = CacheBuilder
+  @transient private lazy val cache
+      : LoadingCache[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]] = CacheBuilder
     .newBuilder()
     .build(load())
 
-
   def send(kafkaConfig: TelemetryMetadataProducerConfig, key: String, value: JsValue): Future[RecordMetadata] = {
     val topicName = TopicModel.name(kafkaConfig.telemetry.telemetryTopicConfigModel.topicName)
-    val record = new ProducerRecord[Array[Byte], Array[Byte]](topicName,
+    val record = new ProducerRecord[Array[Byte], Array[Byte]](
+      topicName,
       key.getBytes(StandardCharsets.UTF_8),
-      value.toString().getBytes(StandardCharsets.UTF_8))
+      value.toString().getBytes(StandardCharsets.UTF_8)
+    )
 
     cache.get(kafkaConfig).send(record)
   }
 
-
-
-  private def load() = new CacheLoader[TelemetryMetadataProducerConfig,KafkaProducer[Array[Byte], Array[Byte]]] {
+  private def load() = new CacheLoader[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]] {
 
     override def load(config: TelemetryMetadataProducerConfig): KafkaProducer[Array[Byte], Array[Byte]] = {
 
@@ -368,10 +412,11 @@ object TelemetryMetadataProducer {
 
       val telemetryConfig = config.telemetry
 
-      val connectionString = kafkaConfig.connections.map {
-        conn => s"${conn.host}:${conn.port}"
-      }.mkString(",")
-
+      val connectionString = kafkaConfig.connections
+        .map { conn =>
+          s"${conn.host}:${conn.port}"
+        }
+        .mkString(",")
 
       val props = new Properties()
       props.put("bootstrap.servers", connectionString)
@@ -410,55 +455,48 @@ object MetadataOps {
 
       val updateFunction = MetadataOps.updateMetadata(path)
 
-      stream.withColumn("metadata_new",
-        updateFunction(
-          col("metadata.id"),
-          col("metadata.sourceId"),
-          col("metadata.arrivalTimestamp"),
-          col("metadata.lastSeenTimestamp"),
-          col("metadata.path")
-        ))
+      stream
+        .withColumn(
+          "metadata_new",
+          updateFunction(
+            col("metadata.id"),
+            col("metadata.sourceId"),
+            col("metadata.arrivalTimestamp"),
+            col("metadata.lastSeenTimestamp"),
+            col("metadata.path")
+          )
+        )
         .drop("metadata")
         .withColumnRenamed("metadata_new", "metadata")
         .select(originalColumnsOrder.head, originalColumnsOrder.tail: _*)
-    }
-    else {
+    } else {
       stream
     }
 
-
   def updateMetadata(path: String): UserDefinedFunction = udf {
-    (mId: String, mSourceId: String, mArrivalTimestamp: Long, _: Long, mPath: Seq[Row]) => {
+    (mId: String, mSourceId: String, mArrivalTimestamp: Long, _: Long, mPath: Seq[Row]) =>
+      {
 
-      val nowInstant = Clock.systemUTC().instant()
-      val now = nowInstant.toEpochMilli
-      val oldPaths = mPath.map(r => Path(r))
-      val newPaths = (oldPaths :+ Path(path, now)).toArray
+        val nowInstant = Clock.systemUTC().instant()
+        val now        = nowInstant.toEpochMilli
+        val oldPaths   = mPath.map(r => Path(r))
+        val newPaths   = (oldPaths :+ Path(path, now)).toArray
 
+        Metadata(mId, mSourceId, mArrivalTimestamp, now, newPaths)
 
-      Metadata(mId,
-        mSourceId,
-        mArrivalTimestamp,
-        now,
-        newPaths)
-
-    }
+      }
   }
 
-
   def sendLatencyMessage(stream: DataFrame, config: TelemetryMetadataProducerConfig, samplingFactor: Int): DataFrame =
-
     if (stream.columns.contains("metadata")) {
 
       implicit val rowEncoder: Encoder[Row] = RowEncoder(stream.schema)
 
       stream.mapPartitions { partition: Iterator[Row] =>
-
         var counter = 0
 
         partition.map { row =>
-
-          if(counter % samplingFactor == 0) {
+          if (counter % samplingFactor == 0) {
 
             val metadata = row.getStruct(row.fieldIndex("metadata"))
 
@@ -470,7 +508,7 @@ object MetadataOps {
 
             val arrivalTimestamp = metadata.getLong(metadata.fieldIndex("arrivalTimestamp"))
 
-            val path = Path(sourceId,arrivalTimestamp) +: metadata.getSeq[Row](pathField).map(Path.apply)
+            val path = Path(sourceId, arrivalTimestamp) +: metadata.getSeq[Row](pathField).map(Path.apply)
 
             val lastTwoHops = path.takeRight(2)
 
@@ -480,7 +518,8 @@ object MetadataOps {
 
             val compositeSourceId = path.map(_.name.replace(' ', '-')).mkString("/")
 
-            val message = MetricsTelemetryMessage(messageId, compositeSourceId, "latencyMs", latency, collectionTimeAsString)
+            val message =
+              MetricsTelemetryMessage(messageId, compositeSourceId, "latencyMs", latency, collectionTimeAsString)
 
             val json = MetricsTelemetryMessageFormat.metricsTelemetryMessageFormat.write(message)
 
