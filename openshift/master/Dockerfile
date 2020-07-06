@@ -28,4 +28,14 @@ COPY docker-environment.conf /docker-environment.conf
 COPY log4j2.properties /log4j2.properties
 COPY etc/hbase/conf/hbase-site.xml /etc/hbase/conf/hbase-site.xml
 
+COPY licenses.csv  /licenses/licenses.csv
+COPY wasp-license /licenses/wasp-license
+LABEL name="wasp-master"
+LABEL vendor="AgileLab s.r.l."
+LABEL version="2.26-SNAPSHOT"
+LABEL release="1"
+LABEL summary="WASP is a framework to build complex real time big data applications. It relies on Kappa/Lambda architecture leveraging Kafka and Spark."
+LABEL description="WASP is a big data framework that allows you to not waste time with devops architectures and integrating different components. WASP lets you focus on your data, business logic and algorithms, without worrying about tipical big data problems like: at least once or exactly once delivery,periodically training a machine learning model, publishing your results in real time, to be reactive,applying schemas to unstructured data,feeding different datastores from the same data flow in a safe way"
+
 CMD [ "/bin/bash", "/docker-entrypoint.sh" ]
+

@@ -1,0 +1,5 @@
+Mongodb is license is regulated by Server Side Public License Version 1
+
+a full copy of the license is available at this url
+
+https://www.mongodb.com/licensing/server-side-public-license
