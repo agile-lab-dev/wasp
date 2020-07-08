@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo.providers
 
 import java.io.StringWriter
 

@@ -7,12 +7,11 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfUtils._
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import it.agilelab.bigdata.wasp.producers.ProducerGuardian
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.{KafkaCheckOffsetsGuardian, KafkaOffsetActorAlive}
 
@@ -118,7 +117,7 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: Prod
   }
 
   protected def getAllPipegraphs: Map[String, PipegraphModel] =
-    WaspDB.getDB.getAll[PipegraphModel]().map(p => p.name -> p).toMap
+    ConfigBL.pipegraphBL.getAll.map(p => p.name -> p).toMap
 
   private def startChildActorsWhenReady(): Unit = {
     val pipegraphsStructStreaming: Map[String, PipegraphModel] = getAllPipegraphs

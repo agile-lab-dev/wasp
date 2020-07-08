@@ -1,9 +1,6 @@
 package it.agilelab.bigdata.wasp.core.bl
 
-import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, RawModel}
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
-import org.bson.BsonString
-import org.mongodb.scala.bson.BsonObjectId
+import it.agilelab.bigdata.wasp.core.models.RawModel
 
 
 
@@ -13,18 +10,8 @@ trait RawBL {
 
 	def persist(rawModel: RawModel): Unit
 
+	def upsert(rawModel: RawModel): Unit
+
 	def getAll() : Seq[RawModel]
 }
 
-class RawBLImp(waspDB: WaspDB) extends RawBL  {
-	
-	private def factory(t: RawModel) = new RawModel(t.name, t.uri, t.timed, t.schema, t.options)
-	
-	def getByName(name: String) = {
-		waspDB.getDocumentByField[RawModel]("name", new BsonString(name)).map(factory)
-	}
-
-	override def getAll(): Seq[RawModel] = waspDB.getAll[RawModel]
-	
-	override def persist(rawModel: RawModel): Unit = waspDB.insert[RawModel](rawModel)
-}

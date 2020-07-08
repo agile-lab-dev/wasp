@@ -8,10 +8,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.ConfigUtil
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
 import GdprStrategy._
 import it.agilelab.bigdata.wasp.consumers.spark.batch.AggregateException
+import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.{col, _}
@@ -60,7 +61,7 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with HasPos
 
     lazy val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
     lazy val fileSystem = FileSystem.get(hadoopConf)
-    lazy val hbaseConfig = WaspDB.getDB.getDocumentByField[HBaseConfigModel]("name", new BsonString(ConfigManager.getHBaseConfig.name))
+    lazy val hbaseConfig = ConfigBL.configManagerBL.getByName[HBaseConfigModel](ConfigManager.getHBaseConfig.name)
     lazy val hdfsDataDeletion = new HdfsDataDeletion(fileSystem)
     val STORAGE_LEVEL = "storageLevel"
     val storageLevel =

@@ -24,7 +24,7 @@ class MockLogsService extends LogsService {
       "WASP-akka.actor.default-dispatcher-3"
     ),
     models.LogEntry(
-      "it.agilelab.bigdata.wasp.core.utils.WaspDBImp",
+      "it.agilelab.bigdata.wasp.db.mongo.WaspDBImp",
       "Info",
       "Locating document(s) by key name with value BsonString{value='LoggerPipegraph'} on collection pipegraphs",
       Instant.parse("2020-04-28T13:35:10.198Z"),

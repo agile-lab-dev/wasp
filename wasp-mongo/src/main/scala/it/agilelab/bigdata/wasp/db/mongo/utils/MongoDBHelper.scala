@@ -1,15 +1,14 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo.utils
 
 import java.util.concurrent.TimeUnit
 
+import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.{Block, ConnectionString}
-import com.mongodb.client.model.{CreateCollectionOptions, UpdateOptions}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.MongoDBConfigModel
 import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 import org.mongodb.scala.connection.SocketSettings.Builder
 import org.mongodb.scala.connection.{ClusterSettings, SocketSettings}
-import org.mongodb.scala.model.UpdateOptions
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{MongoClient, MongoClientSettings, MongoDatabase, _}
 
@@ -19,7 +18,7 @@ import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-private[utils] trait MongoDBHelper extends Logging {
+private[mongo] trait MongoDBHelper extends Logging {
 
   import MongoDBHelper._
 

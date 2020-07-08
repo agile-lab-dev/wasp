@@ -4,8 +4,8 @@ import akka.cluster.Cluster
 import akka.http.scaladsl.server.{Directives, Route}
 import com.typesafe.config.ConfigRenderOptions
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
+import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
@@ -126,9 +126,7 @@ object Status_C extends Directives with JsonSupport {
             ).toJson).toVector.toJson
 
             val waspConfig = JsonParser(ConfigManager.conf.root().render(ConfigRenderOptions.concise()))
-            val mongoDBConfigurations =
-              WaspDB.getDB.mongoDatabase.getCollection(WaspDB.configurationsName)
-                .find().results().map(_.toJson()).map(JsonParser(_)).toVector.toJson
+            val mongoDBConfigurations = ConfigBL.dBConfigBL.retrieveDBConfig().map(JsonParser(_)).toVector.toJson
 
             val result = Map(
               "wasp" -> Map(

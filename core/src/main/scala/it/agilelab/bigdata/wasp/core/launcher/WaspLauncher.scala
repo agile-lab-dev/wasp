@@ -5,8 +5,9 @@ import java.util.concurrent.TimeUnit
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
+import it.agilelab.bigdata.wasp.core.db.{WaspDB, WaspDBService}
 import it.agilelab.bigdata.wasp.core.models.configuration.{ValidationRule, WaspConfigModel}
-import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager, MongoDBHelper, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager}
 import org.apache.commons.cli
 import org.apache.commons.cli.{CommandLine, ParseException}
 
@@ -67,23 +68,12 @@ trait WaspLauncher {
 
 	def initializeWasp(commandLine: CommandLine): Unit = {
 
-		waspDB = WaspDB.initializeDB()
+		waspDB = WaspDBService.service.initializeDB()
 
 		/* Management of dropDB commandline ption */
 		if(getNodeName == "master") {
 			if (commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)) {
-				// drop db
-				val mongoDBConfig = ConfigManager.getMongoDBConfig
-
-				println(s"Dropping MongoDB database '${mongoDBConfig.databaseName}'")
-				val mongoDBDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
-				val dropFuture = mongoDBDatabase.drop().toFuture()
-				Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
-				println(s"Dropped MongoDB database '${mongoDBConfig.databaseName}'")
-				System.exit(0)
-
-				// re-initialize mongoDB and continue (instead of exit) -> not safe due to all process could write on mongoDB
-				//waspDB = WaspDB.initializeDB()
+				WaspDBService.service.dropDatabase()
 			}
 		}
 

@@ -3,19 +3,15 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 import java.net.URI
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{
-  SparkBatchReader,
-  SparkLegacyStreamingReader,
-  SparkStructuredStreamingReader
-}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter}
-import it.agilelab.bigdata.wasp.core.bl.{RawBL, RawBLImp}
+import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, RawBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.RawProduct
+import it.agilelab.bigdata.wasp.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
@@ -32,7 +28,7 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info(s"Initialize the raw BL")
-    rawBL = new RawBLImp(waspDB)
+    rawBL = ConfigBL.rawBL
   }
 
   override def getValidationRules: Seq[ValidationRule] = Seq()

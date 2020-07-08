@@ -9,12 +9,11 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
-import it.agilelab.bigdata.wasp.core.bl.{MlModelBL, ProducerBL}
+import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, MlModelBL, ProducerBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.messages.{ModelKey, RestRequest}
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
 
 import scala.concurrent.Future
 import spray.json._
@@ -56,7 +55,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
       case "UPDATE" =>
         val mlModel = env.mlModelBL.getMlModelOnlyInfo(modelKey.name, modelKey.version, modelKey.timestamp)
         if (mlModel.isDefined) {
-          val modelFile = Some(WaspDB.getDB.getFileByID(mlModel.get.modelFileId.get))
+          val modelFile = ConfigBL.mlModelBL.getFileByID(mlModel.get)
           val encodedModel: Option[String] = Some(Base64.getEncoder().encodeToString(modelFile.get))
           val file = new File("/root/wasp/models/encodedModel")
           FileUtils.writeStringToFile(file, encodedModel.get)

@@ -1,5 +1,10 @@
 package it.agilelab.bigdata.wasp.core.utils
 
+import org.reflections.Reflections
+import org.reflections.scanners.SubTypesScanner
+import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
+
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => runtimeUniverse}
 
@@ -60,4 +65,23 @@ private[wasp] object ReflectionUtils {
 		
 		objects
 	}
+
+	def findAndGetIstance[T](pacKage : String) (implicit ct: ClassTag[T], typeTag: TypeTag[T] ): T = {
+
+		val reflections = new Reflections(new ConfigurationBuilder()
+			.setUrls(ClasspathHelper.forPackage(pacKage))
+			.setScanners(new SubTypesScanner(false)))
+		val classes = reflections.getSubTypesOf(ct.runtimeClass)
+
+		require(!classes.isEmpty,"Implementation of WaspDBHelper not found.")
+		require(classes.size()==1,s"Found two or more implementation of WaspDBHelper: ${classes.toArray().mkString(",")}.")
+
+		val clazz = classes.toArray().head.asInstanceOf[Class[_]]
+		clazz.getConstructor().newInstance().asInstanceOf[T]
+
+
+	}
+
+
 }
+

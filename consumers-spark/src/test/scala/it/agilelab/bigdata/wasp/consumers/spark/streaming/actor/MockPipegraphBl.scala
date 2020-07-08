@@ -46,4 +46,8 @@ class MockPipegraphBl(instanceBl: PipegraphInstanceBl) extends PipegraphBL {
   override def deleteByName(name: String): Unit = {
     buffer.remove(buffer.toIndexedSeq.indexWhere(_.name == name))
   }
+
+  override def upsert(pipegraph: PipegraphModel): Unit =
+    if(getByName(pipegraph.name).isDefined) update(pipegraph)
+    else insert(pipegraph)
 }

@@ -1,11 +1,11 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo.providers
 
+import it.agilelab.bigdata.wasp.core.utils.DatastoreProductSerde
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.utils.ReflectionUtils.{findSubclassesOfSealedTrait, getRuntimeClass}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.{BsonReader, BsonWriter}
-
 
 /**
 	* MongoDB codec provider for `DatastoreProduct`.
@@ -14,7 +14,7 @@ import org.bson.{BsonReader, BsonWriter}
 	*/
 object DatastoreProductCodecProvider extends CodecProvider {
 	private val subclassesOfDatastoreProduct = findSubclassesOfSealedTrait[DatastoreProduct].map(getRuntimeClass(_).getName).toSet
-	
+
   private def isDatastoreProduct[T](clazz: Class[T]): Boolean = {
 	  // this codec provider must match both the subclasses and the interface itself:
 	  // - we check whether the class is a subclass of DatastoreProduct because when we encode we get those classes
@@ -29,7 +29,7 @@ object DatastoreProductCodecProvider extends CodecProvider {
 			null
 		}
 	}
-	
+
 	object DatastoreProductCodec extends DatastoreProductSerde with Codec[DatastoreProduct] {
 		override def decode(reader: BsonReader, decoderContext: DecoderContext): DatastoreProduct = {
 			reader.readStartDocument()
@@ -38,7 +38,7 @@ object DatastoreProductCodecProvider extends CodecProvider {
 			reader.readEndDocument()
 			decodingLookupMap((category, product))
 		}
-			
+
 		override def encode(writer: BsonWriter, value: DatastoreProduct, encoderContext: EncoderContext): Unit = {
 			val (category, product) = encodingLookupMap(value)
 			writer.writeStartDocument()
@@ -46,7 +46,7 @@ object DatastoreProductCodecProvider extends CodecProvider {
 			writer.writeString(productField, product)
 			writer.writeEndDocument()
 		}
-		
+
 		override def getEncoderClass: Class[DatastoreProduct] = DatastoreProduct.getClass.asInstanceOf[Class[DatastoreProduct]]
 	}
 }

@@ -11,13 +11,14 @@ import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, Spark
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
-import it.agilelab.bigdata.wasp.core.bl.{IndexBL, IndexBLImp}
+import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, IndexBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.ElasticProduct
+import it.agilelab.bigdata.wasp.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspDB}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
@@ -38,7 +39,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info("Initialize the index BL")
-    indexBL = new IndexBLImp(waspDB)
+    indexBL = ConfigBL.indexBL
     logger.info(s"Initialize the elastic admin actor with this name ${ElasticAdminActor.name}")
     elasticAdminActor_ = WaspSystem.actorSystem
       .actorOf(Props(new ElasticAdminActor), ElasticAdminActor.name)

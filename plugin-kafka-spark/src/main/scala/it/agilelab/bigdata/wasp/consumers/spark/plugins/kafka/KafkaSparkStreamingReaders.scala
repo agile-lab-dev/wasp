@@ -4,15 +4,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingRea
 import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroDeserializerExpression, SparkUtils}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
-import it.agilelab.bigdata.wasp.core.bl.{TopicBL, TopicBLImp}
+import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{
-  MultiTopicModel,
-  StreamingReaderModel,
-  StructuredStreamingETLModel,
-  TopicModel
-}
+import it.agilelab.bigdata.wasp.core.models.{MultiTopicModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
 import org.apache.avro.Schema
@@ -54,7 +49,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
     // extract the topic model
     logger.info(s"""Retrieving topic datastore model with name "${streamingReaderModel.datastoreModelName}"""")
-    val topicBL = new TopicBLImp(WaspDB.getDB)
+    val topicBL = ConfigBL.topicBL
     val topics  = retrieveTopicModelsRecursively(topicBL, streamingReaderModel.datastoreModelName)
     MultiTopicModel.validateTopicModels(topics)
     logger.info(s"Retrieved topic model(s): $topics")

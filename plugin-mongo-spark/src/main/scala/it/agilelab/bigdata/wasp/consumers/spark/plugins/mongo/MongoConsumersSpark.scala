@@ -3,13 +3,13 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.mongo
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter}
-import it.agilelab.bigdata.wasp.core.bl.{DocumentBL, DocumentBLImpl}
+import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, DocumentBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.MongoDbProduct
+import it.agilelab.bigdata.wasp.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
@@ -25,7 +25,7 @@ class MongoConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info(s"Initialize the raw BL")
-    documentBL = new DocumentBLImpl(waspDB)
+    documentBL = ConfigBL.documentBL
   }
 
   override def getValidationRules: Seq[ValidationRule] = Seq()

@@ -276,6 +276,13 @@ object Dependencies {
     reflections
     ).map(excludeLog4j).map(excludeNetty)
 
+  val wasp_mongo = (
+    akka :+
+    mongodbScala :+
+    nameOf :+
+    reflections
+    ).map(excludeLog4j).map(excludeNetty)
+
 
   val scala_compiler = (
     test :+

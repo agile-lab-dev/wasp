@@ -1,14 +1,12 @@
-package it.agilelab.bigdata.wasp.core.utils
-
-import java.nio.charset.StandardCharsets
+package it.agilelab.bigdata.wasp.db.mongo.providers
 
 import com.github.dwickern.macros.NameOf._
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.SealedTraitCodecProvider.TYPE_FIELD
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.{DecoderContext, EncoderContext}
-import org.bson.{BsonBinarySubType, BsonReader, BsonSerializationException, BsonWriter}
-import org.mongodb.scala.bson.{BsonDocument, ObjectId}
+import org.bson.{BsonReader, BsonWriter}
+import org.mongodb.scala.bson.BsonDocument
+import it.agilelab.bigdata.wasp.db.mongo.providers.SealedTraitCodecProvider.TYPE_FIELD
 
 object BatchETLCodecProvider extends SealedTraitCodecProvider[BatchETL] {
 

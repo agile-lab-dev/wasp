@@ -1,14 +1,20 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo
 
 import java.nio.ByteBuffer
 import java.util
+import java.util.concurrent.TimeUnit
 
 import com.mongodb.ErrorCategory
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
+import it.agilelab.bigdata.wasp.core.db.{WaspDB, WaspDBService}
+import it.agilelab.bigdata.wasp.core.launcher.MasterCommandLineOptions
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.utils.MongoDBHelper._
+import it.agilelab.bigdata.wasp.db.mongo.utils.MongoDBHelper._
+import it.agilelab.bigdata.wasp.core.utils._
+import it.agilelab.bigdata.wasp.db.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DataStoreConfCodecProviders, DatastoreProductCodecProvider, TopicCompressionCodecProvider}
+import it.agilelab.bigdata.wasp.db.mongo.utils.MongoDBHelper
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
@@ -21,12 +27,14 @@ import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{Completed, MongoCommandException, MongoDatabase, MongoWriteException}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.util.{Failure, Success, Try}
 
-trait WaspDB extends MongoDBHelper {
+trait WaspMongoDB extends MongoDBHelper with WaspDB{
 
   def upsert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T])
 
@@ -88,9 +96,9 @@ trait WaspDB extends MongoDBHelper {
 
 }
 
-class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB {
+class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 
-  import WaspDB._
+  import WaspMongoDB._
 
   /**
     * initializes collections.
@@ -319,8 +327,9 @@ class WaspDBImp(val mongoDatabase: MongoDatabase) extends WaspDB {
     replaceDocumentToCollection("name", BsonString(name), doc, collectionsLookupTable(typeTag.tpe))
 }
 
-object WaspDB extends Logging {
-  private var waspDB: WaspDB = _
+
+object WaspMongoDB extends Logging {
+  private var waspDB: WaspMongoDB = _
 
   val pipegraphsName        = "pipegraphs"
   val producersName         = "producers"
@@ -456,7 +465,7 @@ object WaspDB extends Logging {
     mongoDatabase
   }
 
-  def getDB: WaspDB = {
+  def getDB(): WaspMongoDB = {
     if (waspDB == null) {
       val msg = "The waspDB was not initialized"
       logger.error(msg)
@@ -465,7 +474,22 @@ object WaspDB extends Logging {
     waspDB
   }
 
-  def initializeDB(): WaspDB = {
+  def dropDatabase() :Unit = {
+    // drop db
+    val mongoDBConfig = ConfigManager.getMongoDBConfig
+
+    println(s"Dropping MongoDB database '${mongoDBConfig.databaseName}'")
+    val mongoDBDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
+    val dropFuture = mongoDBDatabase.drop().toFuture()
+    Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
+    println(s"Dropped MongoDB database '${mongoDBConfig.databaseName}'")
+    System.exit(0)
+
+    // re-initialize mongoDB and continue (instead of exit) -> not safe due to all process could write on mongoDB
+    //waspDB = WaspDB.initializeDB()
+  }
+
+  def initializeDB(): WaspMongoDB = {
     // MongoDB initialization
     val mongoDBConfig = ConfigManager.getMongoDBConfig
     logger.info(
@@ -479,7 +503,7 @@ object WaspDB extends Logging {
     )
 
     val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig).withCodecRegistry(codecRegistry)
-    val completewaspDB  = new WaspDBImp(mongoDBDatabase)
+    val completewaspDB  = new WaspDBMongoImp(mongoDBDatabase)
     completewaspDB.initializeCollections()
     waspDB = completewaspDB
     waspDB

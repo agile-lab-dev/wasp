@@ -5,6 +5,7 @@ import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, HBaseProduct, SolrProduct}
 import it.agilelab.bigdata.wasp.core.models.Model
 import it.agilelab.bigdata.wasp.core.models.configuration._
@@ -649,9 +650,7 @@ object ConfigManager {
       default: T,
       nameConf: String
   )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    WaspDB.getDB.insertIfNotExists[T](default)
-
-    return WaspDB.getDB.getDocumentByField[T]("name", new BsonString(nameConf))
+    ConfigBL.configManagerBL.retrieveConf(default,nameConf)(ct,typeTag)
   }
 
   def buildTimedName(prefix: String): String = {

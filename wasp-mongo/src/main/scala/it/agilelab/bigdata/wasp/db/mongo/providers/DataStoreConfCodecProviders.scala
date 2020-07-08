@@ -1,8 +1,8 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo.providers
 
-import com.github.dwickern.macros.NameOf._
+import com.github.dwickern.macros.NameOf.nameOf
 import it.agilelab.bigdata.wasp.core.models.{ExactRawMatchingStrategy, KeyValueModel, _}
-import it.agilelab.bigdata.wasp.core.utils.SealedTraitCodecProvider.TYPE_FIELD
+import it.agilelab.bigdata.wasp.db.mongo.providers.SealedTraitCodecProvider.TYPE_FIELD
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.{DecoderContext, EncoderContext}
 import org.bson.{BsonReader, BsonWriter}

@@ -8,14 +8,14 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
-import it.agilelab.bigdata.wasp.core.bl.{KeyValueBL, KeyValueBLImp}
+import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, KeyValueBL}
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.HBaseProduct
+import it.agilelab.bigdata.wasp.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.exceptions.ModelNotFound
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
@@ -32,7 +32,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info("Initialize the keyValue BL")
-    keyValueBL = new KeyValueBLImp(waspDB)
+    keyValueBL = ConfigBL.keyValueBL
     logger.info(s"Initialize the hbase admin actor with this name ${HBaseAdminActor.name}")
     //hbaseAdminActor_ = WaspSystem.actorSystem
     //  .actorOf(Props(new HBaseAdminActor), HBaseAdminActor.name)

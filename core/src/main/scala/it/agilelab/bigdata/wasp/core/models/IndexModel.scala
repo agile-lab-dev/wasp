@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.core.datastores.IndexCategory
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
 
-case class IndexModel private[core] (override val name: String,
+case class IndexModel(override val name: String,
                       creationTime: Long,
                       schema: Option[String],
                       query: Option[String] = None,

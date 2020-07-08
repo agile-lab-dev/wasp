@@ -1,10 +1,10 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo.providers
 
-import it.agilelab.bigdata.wasp.core.utils.SealedTraitCodecProvider._
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.{BsonDocumentWriter, BsonReader, BsonString, BsonWriter}
 import org.mongodb.scala.bson.BsonDocument
+import it.agilelab.bigdata.wasp.db.mongo.providers.SealedTraitCodecProvider.TYPE_FIELD
 
 abstract class SealedTraitCodecProvider[Trait] extends CodecProvider {
 

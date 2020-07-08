@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo.providers
 
 import it.agilelab.bigdata.wasp.core.models.TopicCompression
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}

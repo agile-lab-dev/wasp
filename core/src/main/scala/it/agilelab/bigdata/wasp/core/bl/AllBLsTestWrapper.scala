@@ -37,6 +37,9 @@ class AllBLsTestWrapper {
 
     override def insert(batchJobModel: BatchJobModel): Unit = database :+ batchJobModel
 
+
+    override def upsert(batchJobModel: BatchJobModel): Unit = ???
+
     override def instances(): BatchJobInstanceBL = new BatchJobInstanceBL {
 
       override def all(): Seq[BatchJobInstanceModel] = ???
@@ -61,12 +64,20 @@ class AllBLsTestWrapper {
     }
 
     override def getAll() = database
+
+    override def upsert(indexModel: IndexModel): Unit = ???
+
+    override def insertIfNotExists(indexModel: IndexModel): Unit = ???
   }
 
   val mlModelBL: MlModelBL = new MlModelBL {
     val database = new ListBuffer[MlModelOnlyInfo]
     val fs = new mutable.HashMap[String, Array[Byte]]()
 
+
+    override def getFileByID(mlModelOnlyInfo: MlModelOnlyInfo): Option[Array[Byte]] = {
+      fs.get(mlModelOnlyInfo.modelFileId.get.toString())
+    }
 
     override def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
       database.+=:(mlModelOnlyInfo)
@@ -124,6 +135,15 @@ class AllBLsTestWrapper {
     }
 
     override def getAll: Seq[DatastoreModel[TopicCategory]] = database
+
+    override def upsert(topicModel: DatastoreModel[TopicCategory]): Unit = {
+      val exist = getByName(topicModel.name)
+      if(exist.isDefined) database.drop(database.indexOf(exist.get))
+        else persist(topicModel)
+    }
+
+    override def insertIfNotExists(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit =
+      if(getByName(topicDatastoreModel.name).isEmpty) persist(topicDatastoreModel)
   }
 
   val producerBL = new ProducerBL {
@@ -134,6 +154,8 @@ class AllBLsTestWrapper {
       database.remove(index)
       database += producerModel
     }
+
+
 
     override def getByName(name: String): Option[ProducerModel] = database.find(_.name == name)
 
@@ -156,6 +178,16 @@ class AllBLsTestWrapper {
       database.+=(producerModel)
     }
 
+
+    override def upsert(producerModel: ProducerModel): Unit = {
+      if(getByName(producerModel.name).isDefined) update(producerModel)
+      else persist(producerModel)
+    }
+
+    override def insertIfNotExists(producerModel: ProducerModel): Unit = {
+      if(getByName(producerModel.name).isEmpty) persist(producerModel)
+    }
+
     override def getByTopicName(name: String): Seq[ProducerModel] = {
       database.filter(_.topicName == name)
     }
@@ -168,6 +200,8 @@ class AllBLsTestWrapper {
     override def persist(rawModel: RawModel): Unit = ???
 
     override def getAll(): Seq[RawModel] = ???
+
+    override def upsert(rawModel: RawModel): Unit = ???
   }
 
   val keyValueBL = new KeyValueBL {override def getByName(name: String) = ???
@@ -175,6 +209,8 @@ class AllBLsTestWrapper {
     override def persist(rawModel: KeyValueModel) = ???
 
     override def getAll(): Seq[KeyValueModel] = ???
+
+    override def upsert(rawModel: KeyValueModel): Unit = ???
   }
 }
 

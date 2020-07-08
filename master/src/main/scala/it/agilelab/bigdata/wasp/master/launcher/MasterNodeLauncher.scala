@@ -82,26 +82,26 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
   private def addSystemPipegraphs(): Unit = {
 
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
-    waspDB.insertIfNotExists[TopicModel](SystemPipegraphs.loggerTopic)
-    waspDB.insertIfNotExists[TopicModel](SystemPipegraphs.telemetryTopic)
-    waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.solrLoggerIndex)
-    waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.elasticLoggerIndex)
-    waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.solrTelemetryIndex)
-    waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.elasticTelemetryIndex)
+    ConfigBL.topicBL.insertIfNotExists(SystemPipegraphs.loggerTopic)
+    ConfigBL.topicBL.insertIfNotExists(SystemPipegraphs.telemetryTopic)
+    ConfigBL.indexBL.insertIfNotExists(SystemPipegraphs.solrLoggerIndex)
+    ConfigBL.indexBL.insertIfNotExists(SystemPipegraphs.elasticLoggerIndex)
+    ConfigBL.indexBL.insertIfNotExists(SystemPipegraphs.solrTelemetryIndex)
+    ConfigBL.indexBL.insertIfNotExists(SystemPipegraphs.elasticTelemetryIndex)
 
     /* Event Engine */
-    SystemPipegraphs.eventTopicModels.foreach(topicModel => waspDB.upsert[TopicModel](topicModel))
-    waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.eventPipegraph)
-    waspDB.insertIfNotExists[IndexModel](SystemPipegraphs.eventIndex)
-    waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.mailerPipegraph)
-    waspDB.insertIfNotExists[MultiTopicModel](SystemPipegraphs.eventMultiTopicModel)
+    SystemPipegraphs.eventTopicModels.foreach(topicModel => ConfigBL.topicBL.upsert(topicModel))
+    ConfigBL.pipegraphBL.insert(SystemPipegraphs.eventPipegraph)
+    ConfigBL.indexBL.insertIfNotExists(SystemPipegraphs.eventIndex)
+    ConfigBL.pipegraphBL.insert(SystemPipegraphs.mailerPipegraph)
+    ConfigBL.topicBL.insertIfNotExists(SystemPipegraphs.eventMultiTopicModel)
     /* Producers */
-    waspDB.insertIfNotExists[ProducerModel](SystemPipegraphs.loggerProducer)
+    ConfigBL.producerBL.insertIfNotExists(SystemPipegraphs.loggerProducer)
 
     /* Pipegraphs */
-    waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.loggerPipegraph)
+    ConfigBL.pipegraphBL.insert(SystemPipegraphs.loggerPipegraph)
 
-    waspDB.insertIfNotExists[PipegraphModel](SystemPipegraphs.telemetryPipegraph)
+    ConfigBL.pipegraphBL.insert(SystemPipegraphs.telemetryPipegraph)
   }
 
   private def getRoutes: Route = {

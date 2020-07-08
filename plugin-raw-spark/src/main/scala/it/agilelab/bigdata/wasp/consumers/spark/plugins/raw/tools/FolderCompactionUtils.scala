@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools
 
 import com.typesafe.config.{Config, ConfigList, ConfigValueType}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools.WhereCondition.PartitionsCombination
+import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.models.{RawModel, RawOptions}
-import it.agilelab.bigdata.wasp.core.utils.WaspDB
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.bson.BsonString
 
@@ -83,7 +83,7 @@ object FolderCompactionUtils {
         parseConfigModel(conf.getConfig(key))
       case ConfigValueType.STRING =>
         val str = conf.getString(key)
-        WaspDB.getDB.getDocumentByField[RawModel]("name", new BsonString(str))
+        ConfigBL.rawBL.getByName(str)
           .getOrElse(throw new IllegalArgumentException(s"Cannot find model with name $str"))
       case _ =>
         throw new IllegalArgumentException(s"Conf: ${conf.getValue(key)} is neither a String or " +

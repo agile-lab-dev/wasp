@@ -59,6 +59,11 @@ class MockBatchBl(batchJobInstanceBL: BatchJobInstanceBL) extends BatchJobBL {
 
 
   override def instances(): BatchJobInstanceBL = batchJobInstanceBL
+
+  override def upsert(batchJobModel: BatchJobModel): Unit = {
+    if(getByName(batchJobModel.name).isDefined) update(batchJobModel)
+    else insert(batchJobModel)
+  }
 }
 
 class MockBatchSchedulersBl extends BatchSchedulersBL {

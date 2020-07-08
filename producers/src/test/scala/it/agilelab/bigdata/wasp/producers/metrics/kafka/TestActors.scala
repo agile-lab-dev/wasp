@@ -29,6 +29,11 @@ object Env {
     override def update(producerModel: ProducerModel): Unit = ()
 
     override def persist(producerModel: ProducerModel): Unit = ???
+
+    override def upsert(producerModel: ProducerModel): Unit = ???
+
+    override def insertIfNotExists(producerModel: ProducerModel): Unit = ???
+
   }
   val topicBL = new TopicBL() {
     override def getByName(name: String): Option[DatastoreModel[TopicCategory]] = ???
@@ -36,6 +41,10 @@ object Env {
     override def getAll: Seq[DatastoreModel[TopicCategory]] = ???
 
     override def persist(topicModel: DatastoreModel[TopicCategory]): Unit = ???
+
+    override def upsert(topicModel: DatastoreModel[TopicCategory]): Unit = ???
+
+    override def insertIfNotExists(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit = ???
   }
 }
 

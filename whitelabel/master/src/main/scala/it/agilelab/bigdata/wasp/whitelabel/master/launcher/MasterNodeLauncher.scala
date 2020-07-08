@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
 import com.sksamuel.avro4s.AvroSchema
+import it.agilelab.bigdata.wasp.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
@@ -45,143 +46,146 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
      */
 
     /* Topic for Producers, Pipegraphs */
-    waspDB.upsert[TopicModel](ExampleTopicModel.topic)
+    ConfigBL.topicBL.upsert(ExampleTopicModel.topic)
 
     /* Pipegraphs */
-    waspDB.upsert[PipegraphModel](ExamplePipegraphModel.pipegraph)
+    ConfigBL.pipegraphBL.upsert(ExamplePipegraphModel.pipegraph)
 
     /* ProcessGroups */
 
-    waspDB.upsert[ProcessGroupModel](ExampleProcessGroupModel.processGroup)
+    ConfigBL.processGroupBL.insert(ExampleProcessGroupModel.processGroup)
 
     /*
      * =================================================================================================================
      * Tests
      * =================================================================================================================
      */
-
+    
+    
+    
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
-    waspDB.upsert[TopicModel](TestTopicModel.json)
-    waspDB.upsert[TopicModel](TestTopicModel.json2)
-    waspDB.upsert[TopicModel](TestTopicModel.json3)
-    waspDB.upsert[TopicModel](TestTopicModel.json4)
-    waspDB.upsert[TopicModel](TestTopicModel.json5)
-    waspDB.upsert[TopicModel](TestTopicModel.json6)
-    waspDB.upsert[MultiTopicModel](TestTopicModel.jsonMultitopicRead)
-    waspDB.upsert[MultiTopicModel](TestTopicModel.jsonMultitopicWrite)
-    waspDB.upsert[TopicModel](TestTopicModel.json2ForKafkaHeaders)
-    waspDB.upsert[TopicModel](TestTopicModel.jsonWithMetadata)
-    waspDB.upsert[TopicModel](TestTopicModel.jsonCheckpoint)
-    waspDB.upsert[TopicModel](TestTopicModel.avro)
-    waspDB.upsert[TopicModel](TestTopicModel.avro2)
-    waspDB.upsert[TopicModel](TestTopicModel.avro3)
-    waspDB.upsert[TopicModel](TestTopicModel.avro4)
-    waspDB.upsert[TopicModel](TestTopicModel.avro5)
-    waspDB.upsert[MultiTopicModel](TestTopicModel.avroMultitopicRead)
-    waspDB.upsert[MultiTopicModel](TestTopicModel.avroMultitopicWrite)
-    waspDB.upsert[TopicModel](TestTopicModel.avro2ForKafkaHeaders)
-    waspDB.upsert[TopicModel](TestTopicModel.avroCheckpoint)
-    waspDB.upsert[TopicModel](TestTopicModel.plaintext1)
-    waspDB.upsert[TopicModel](TestTopicModel.plaintext2)
-    waspDB.upsert[MultiTopicModel](TestTopicModel.plaintextMultitopic)
-    waspDB.upsert[TopicModel](TestTopicModel.binary1)
-    waspDB.upsert[TopicModel](TestTopicModel.binary2)
-    waspDB.upsert[MultiTopicModel](TestTopicModel.binaryMultitopic)
-    waspDB.upsert[IndexModel](TestIndexModel.solr)
-    waspDB.upsert[IndexModel](TestIndexModel.elastic)
-    waspDB.upsert[RawModel](TestRawModel.nested) // used by TestPipegraphs.JSON.XYZ.hdfs
-    waspDB.upsert[RawModel](TestRawModel.flat)   // used by TestBatchJobModels.FromHdfs.toConsole
-    waspDB.upsert[RawModel](TestRawModel.text)   // used by TestBatchJobModels.FromHdfs.toConsole
-    waspDB.upsert[KeyValueModel](TestKeyValueModel.hbase)
-    waspDB.upsert[KeyValueModel](TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
-    waspDB.upsert[SqlSourceModel](TestSqlSouceModel.mySql)
-    waspDB.upsert[DocumentModel](TestMongoModel.writeToMongo)
-    waspDB.upsert[RawModel](TestGdprBatchJobModels.outputRawModel)
-    waspDB.upsert[RawModel](TestGdprBatchJobModels.inputRawModel)
-    waspDB.upsert[RawModel](TestGdprBatchJobModels.dataRawModel)
+    ConfigBL.topicBL.upsert(TestTopicModel.json)
+    ConfigBL.topicBL.upsert(TestTopicModel.json2)
+    ConfigBL.topicBL.upsert(TestTopicModel.json3)
+    ConfigBL.topicBL.upsert(TestTopicModel.json4)
+    ConfigBL.topicBL.upsert(TestTopicModel.json5)
+    ConfigBL.topicBL.upsert(TestTopicModel.json6)
+    ConfigBL.topicBL.upsert(TestTopicModel.jsonMultitopicRead)
+    ConfigBL.topicBL.upsert(TestTopicModel.jsonMultitopicWrite)
+    ConfigBL.topicBL.upsert(TestTopicModel.json2ForKafkaHeaders)
+    ConfigBL.topicBL.upsert(TestTopicModel.jsonWithMetadata)
+    ConfigBL.topicBL.upsert(TestTopicModel.jsonCheckpoint)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro2)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro3)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro4)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro5)
+    ConfigBL.topicBL.upsert(TestTopicModel.avroMultitopicRead)
+    ConfigBL.topicBL.upsert(TestTopicModel.avroMultitopicWrite)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro2ForKafkaHeaders)
+    ConfigBL.topicBL.upsert(TestTopicModel.avroCheckpoint)
+    ConfigBL.topicBL.upsert(TestTopicModel.plaintext1)
+    ConfigBL.topicBL.upsert(TestTopicModel.plaintext2)
+    ConfigBL.topicBL.upsert(TestTopicModel.plaintextMultitopic)
+    ConfigBL.topicBL.upsert(TestTopicModel.binary1)
+    ConfigBL.topicBL.upsert(TestTopicModel.binary2)
+    ConfigBL.topicBL.upsert(TestTopicModel.binaryMultitopic)
+    ConfigBL.indexBL.upsert(TestIndexModel.solr)
+    ConfigBL.indexBL.upsert(TestIndexModel.elastic)
+    ConfigBL.rawBL.upsert(TestRawModel.nested) // used by TestPipegraphs.JSON.XYZ.hdfs
+    ConfigBL.rawBL.upsert(TestRawModel.flat) // used by TestBatchJobModels.FromHdfs.toConsole
+    ConfigBL.rawBL.upsert(TestRawModel.text) // used by TestBatchJobModels.FromHdfs.toConsole
+    ConfigBL.keyValueBL.upsert(TestKeyValueModel.hbase)
+    ConfigBL.keyValueBL.upsert(TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
+    ConfigBL.sqlSourceBl.upsert(TestSqlSouceModel.mySql)
+    ConfigBL.documentBL.upsert(TestMongoModel.writeToMongo)
+    ConfigBL.rawBL.upsert(TestGdprBatchJobModels.outputRawModel)
+    ConfigBL.rawBL.upsert(TestGdprBatchJobModels.inputRawModel)
+    ConfigBL.rawBL.upsert(TestGdprBatchJobModels.dataRawModel)
 
     /* Producers */
-    waspDB.upsert[ProducerModel](TestProducerModel.json)
-    waspDB.upsert[ProducerModel](TestProducerModel.jsonWithMetadata)
-    waspDB.upsert[ProducerModel](TestProducerModel.jsonCheckpoint)
-    waspDB.upsert[ProducerModel](TestProducerModel.avro)
-    waspDB.upsert[ProducerModel](TestProducerModel.avroCheckpoint)
-    waspDB.upsert[ProducerModel](TestProducerModel.jsonHbaseMultipleClustering)
-    waspDB.upsert[ProducerModel](FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
-    waspDB.upsert[TopicModel](FakeDataTopicModel.fakeDataTopicModel)              //EVENT ENGINE
+    ConfigBL.producerBL.upsert(TestProducerModel.json)
+    ConfigBL.producerBL.upsert(TestProducerModel.jsonWithMetadata)
+    ConfigBL.producerBL.upsert(TestProducerModel.jsonCheckpoint)
+    ConfigBL.producerBL.upsert(TestProducerModel.avro)
+    ConfigBL.producerBL.upsert(TestProducerModel.avroCheckpoint)
+    ConfigBL.producerBL.upsert(TestProducerModel.jsonHbaseMultipleClustering)
+    ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
+    ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel) //EVENT ENGINE
 
     /* Pipegraphs */
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.nifi)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.mongo)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.consoleWithMetadata)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafka)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaHeaders)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaMultitopicRead)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.kafkaMultitopicWrite)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.solr)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.elastic)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hdfs)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbase)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.hbaseMultipleClustering)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.multiETL)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.ERROR.multiETL)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Structured.CHECKPOINT.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.kafka)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.solr)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.elastic)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.JSON.Legacy.hdfs)
+    
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.nifi)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.mongo)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.consoleWithMetadata)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.kafka)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.kafkaHeaders)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.kafkaMultitopicRead)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.kafkaMultitopicWrite)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.solr)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.elastic)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.hdfs)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.hbase)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.hbaseMultipleClustering)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.multiETL)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.ERROR.multiETL)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.CHECKPOINT.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.kafka)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.solr)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.elastic)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.hdfs)
 
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafka)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafkaHeaders)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafkaMultitopicRead)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.kafkaMultitopicWrite)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.solr)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.elastic)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hdfs)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.hbase)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.multiETL)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.ERROR.multiETL)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.CHECKPOINT.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Structured.avroEncoder)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.console)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.kafka)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.solr)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.elastic)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.AVRO.Legacy.hdfs)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafka)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafkaHeaders)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafkaMultitopicRead)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafkaMultitopicWrite)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.solr)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.elastic)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.hdfs)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.hbase)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.multiETL)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.ERROR.multiETL)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.CHECKPOINT.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.avroEncoder)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.kafka)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.solr)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.elastic)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.hdfs)
 
-    waspDB.upsert[PipegraphModel](TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
 
-    waspDB.upsert[PipegraphModel](TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
-    waspDB.upsert[PipegraphModel](TestPipegraphs.SparkSessionErrors.pipegraph)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.SparkSessionErrors.pipegraph)
 
     /* BatchJobs */
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromElastic.toHdfsNested)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromSolr.toHdfsFlat)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.flatToConsole)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.toKafka)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToConsole)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromHdfs.nestedToMongo)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromJdbc.mySqlToConsole)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.WithPostHook.nestedToConsole)
-    waspDB.upsert[BatchJobModel](TestBatchJobModels.FromMongo.nestedToConsole)
-    waspDB.upsert[BatchJobModel](TestGdprBatchJobModels.model)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromElastic.toHdfsNested)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromSolr.toHdfsFlat)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromHdfs.flatToConsole)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromHdfs.toKafka)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromHdfs.nestedToConsole)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromHdfs.nestedToMongo)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromJdbc.mySqlToConsole)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.WithPostHook.nestedToConsole)
+    ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromMongo.nestedToConsole)
+    ConfigBL.batchJobBL.upsert(TestGdprBatchJobModels.model)
 
     /* Test SchemaAvroManager */
-    waspDB.upsert[TopicModel](TestSchemaAvroManager.topicAvro_v1)
-    waspDB.upsert[TopicModel](TestSchemaAvroManager.topicAvro_v2)
-    waspDB.upsert[TopicModel](TestSchemaAvroManager.topicAvro_v3)
-    waspDB.upsert[ProducerModel](TestSchemaAvroManager.producer_v1)
-    waspDB.upsert[ProducerModel](TestSchemaAvroManager.producer_v2)
-    waspDB.upsert[KeyValueModel](TestSchemaAvroManagerKeyValueModel.avroSchemaManagerHBaseModel)
-    waspDB.upsert[PipegraphModel](TestSchemaAvroManager.pipegraph)
+    ConfigBL.topicBL.upsert(TestSchemaAvroManager.topicAvro_v1)
+    ConfigBL.topicBL.upsert(TestSchemaAvroManager.topicAvro_v2)
+    ConfigBL.topicBL.upsert(TestSchemaAvroManager.topicAvro_v3)
+    ConfigBL.producerBL.upsert(TestSchemaAvroManager.producer_v1)
+    ConfigBL.producerBL.upsert(TestSchemaAvroManager.producer_v2)
+    ConfigBL.keyValueBL.upsert(TestSchemaAvroManagerKeyValueModel.avroSchemaManagerHBaseModel)
+    ConfigBL.pipegraphBL.upsert(TestSchemaAvroManager.pipegraph)
 
     /* Test backlog */
-    waspDB.upsert[TopicModel](TestTopicModel.monitoring)
-    waspDB.upsert[ProducerModel](TestProducerModel.backlog)
-    waspDB.upsert[ProducerModel](TestProducerModel.throughput)
+    ConfigBL.topicBL.upsert(TestTopicModel.monitoring)
+    ConfigBL.producerBL.upsert(TestProducerModel.backlog)
+    ConfigBL.producerBL.upsert(TestProducerModel.throughput)
   }
 }
 

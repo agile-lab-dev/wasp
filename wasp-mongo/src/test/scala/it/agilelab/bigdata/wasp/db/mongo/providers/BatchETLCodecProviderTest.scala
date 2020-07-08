@@ -1,16 +1,16 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.db.mongo.providers
 
 import java.util
 
 import it.agilelab.bigdata.wasp.core.models._
 import org.apache.spark.sql.types._
 import org.bson.BsonDocumentWriter
-import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.{DecoderContext, EncoderContext}
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, ObjectId}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import org.scalatest.FunSuite
 
 import scala.collection.JavaConverters._

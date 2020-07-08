@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.models
 
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+import org.mongodb.scala.bson.BsonDocument
 
 case class BatchSchedulerModel (override val name: String,
                                 cronExpression: String,
