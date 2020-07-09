@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models.{Metadata, MetadataModel}
+import it.agilelab.bigdata.wasp.models.{Metadata, MetadataModel}
 
 case class TestDocument(id: String,
                         number: Int,

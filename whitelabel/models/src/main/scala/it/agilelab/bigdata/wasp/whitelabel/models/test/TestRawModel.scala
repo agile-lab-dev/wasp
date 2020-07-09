@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models.{RawModel, RawOptions}
+import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 import org.apache.spark.sql.types._
 
 private[wasp] object TestRawModel {

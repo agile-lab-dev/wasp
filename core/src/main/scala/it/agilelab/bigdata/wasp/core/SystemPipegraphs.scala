@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.core
 
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, GenericIndexProduct, SolrProduct}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.{ElasticProduct, GenericIndexProduct, SolrProduct}
 import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingPipegraphModel
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.{EventPipegraphModel, SolrEventIndex}
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 
 /**
@@ -356,16 +356,8 @@ private[wasp] object LoggerPipegraph {
       dashboard = None
     )
 
-  private def writer: WriterModel =
-    ConfigManager.getWaspConfig.defaultIndexedDatastore match {
-      case "elastic" =>
-        WriterModel.elasticWriter(
-          "Write logging data to Elastic",
-          elasticLoggerIndex
-        )
-      case "solr" =>
-        WriterModel.solrWriter("Write logging data to Solr", solrLoggerIndex)
-    }
+  private def writer: WriterModel = WriterModel.solrWriter("Write logging data to Solr", solrLoggerIndex)
+
 }
 
 private[wasp] object TelemetryPipegraph {

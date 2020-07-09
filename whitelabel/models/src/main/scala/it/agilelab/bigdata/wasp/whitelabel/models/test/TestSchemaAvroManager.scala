@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import com.sksamuel.avro4s.AvroSchema
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
+import it.agilelab.bigdata.wasp.models.{KeyValueModel, KeyValueOption, PipegraphModel, ProducerModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
 import org.apache.avro.Schema
 
 /**

@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog
 
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.models.TopicModel
 
 class ImplBacklogSizeAnalyzerProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL},
                                               producerName: String) extends BacklogSizeAnalyzerProducerGuardian[String](env, producerName) {

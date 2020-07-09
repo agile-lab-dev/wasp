@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.example
 
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 
 private[wasp] object ExamplePipegraphModel {
 

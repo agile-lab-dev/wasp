@@ -10,11 +10,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{HasPostMaterializationHook, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkWriterFactory}
-import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
+import it.agilelab.bigdata.wasp.repository.core.bl._
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkBatchConfiguration}
+import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel, ReaderModel, WriterModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 

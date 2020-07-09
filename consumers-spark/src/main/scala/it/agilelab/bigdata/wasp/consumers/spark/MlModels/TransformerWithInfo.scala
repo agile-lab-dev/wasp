@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.MlModels
 
-import it.agilelab.bigdata.wasp.core.models.MlModelOnlyInfo
+import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.Params
 import org.joda.time.DateTime

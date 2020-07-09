@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.openapi
 
 import io.swagger.v3.oas.models.media.{ComposedSchema, Schema}
 import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
-import it.agilelab.bigdata.wasp.core.models.{FreeCode, FreeCodeModel}
+import it.agilelab.bigdata.wasp.models.{FreeCode, FreeCodeModel}
 
 trait FreeCodeModelOpenApiSupport extends ProductOpenApi with LangOpenApi with CollectionsOpenApi {
   implicit lazy val freeCodeModelOpenApi: ToOpenApiSchema[FreeCodeModel] =

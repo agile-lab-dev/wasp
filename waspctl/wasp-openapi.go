@@ -2833,7 +2833,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "insert-batch-job",
 			Short:   "insert-batch-job",
-			Long:    cli.Markdown("Inserts a new batch job\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  description:\n    type: string\n  etl:\n    discriminator:\n      propertyName: type\n    oneOf:\n    - $ref: '#/components/schemas/BatchETLModel'\n    - $ref: '#/components/schemas/BatchGdprETLModel'\n  exclusivityConfig:\n    $ref: '#/components/schemas/BatchJobExclusionConfig'\n  name:\n    type: string\n  owner:\n    type: string\n  system:\n    type: boolean\nrequired:\n- name\n- description\n- owner\n- system\n- creationTime\n- etl\n- exclusivityConfig\ntype: object\nxml:\n  name: BatchJobModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Inserts a new batch job\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  description:\n    type: string\n  etl:\n    discriminator:\n      propertyName: type\n    oneOf:\n    - $ref: '#/components/schemas/BatchETLModel'\n    - $ref: '#/components/schemas/BatchGdprETLModel'\n  exclusivityConfig:\n    $ref: '#/components/schemas/BatchJobExclusionConfig'\n  name:\n    type: string\n  owner:\n    type: string\n  system:\n    type: boolean\nrequired:\n- name\n- description\n- owner\n- system\n- creationTime\n- etl\n- exclusivityConfig\ntype: object\nxml:\n  name: BatchJobModel\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -2873,7 +2873,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "update-batch-job",
 			Short:   "update-batch-job",
-			Long:    cli.Markdown("Inserts a new batch job\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  description:\n    type: string\n  etl:\n    discriminator:\n      propertyName: type\n    oneOf:\n    - $ref: '#/components/schemas/BatchETLModel'\n    - $ref: '#/components/schemas/BatchGdprETLModel'\n  exclusivityConfig:\n    $ref: '#/components/schemas/BatchJobExclusionConfig'\n  name:\n    type: string\n  owner:\n    type: string\n  system:\n    type: boolean\nrequired:\n- name\n- description\n- owner\n- system\n- creationTime\n- etl\n- exclusivityConfig\ntype: object\nxml:\n  name: BatchJobModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Inserts a new batch job\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  description:\n    type: string\n  etl:\n    discriminator:\n      propertyName: type\n    oneOf:\n    - $ref: '#/components/schemas/BatchETLModel'\n    - $ref: '#/components/schemas/BatchGdprETLModel'\n  exclusivityConfig:\n    $ref: '#/components/schemas/BatchJobExclusionConfig'\n  name:\n    type: string\n  owner:\n    type: string\n  system:\n    type: boolean\nrequired:\n- name\n- description\n- owner\n- system\n- creationTime\n- etl\n- exclusivityConfig\ntype: object\nxml:\n  name: BatchJobModel\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -3429,7 +3429,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "post-pipegraph",
 			Short:   "post-pipegraph",
-			Long:    cli.Markdown("Pipegraph generation from RawPipegraph\n## Request Schema (text/json)\n\nproperties:\n  description:\n    type: string\n  name:\n    type: string\n  owner:\n    type: string\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLDTO'\n    type: array\nrequired:\n- name\n- description\n- owner\n- structuredStreamingComponents\ntype: object\nxml:\n  name: PipegraphDTO\n  namespace: java://it.agilelab.bigdata.wasp.core.models.editor\n"),
+			Long:    cli.Markdown("Pipegraph generation from RawPipegraph\n## Request Schema (text/json)\n\nproperties:\n  description:\n    type: string\n  name:\n    type: string\n  owner:\n    type: string\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLDTO'\n    type: array\nrequired:\n- name\n- description\n- owner\n- structuredStreamingComponents\ntype: object\nxml:\n  name: PipegraphDTO\n  namespace: java://it.agilelab.bigdata.wasp.models.editor\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -3539,7 +3539,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "insert-freecode",
 			Short:   "insert-freeCode",
-			Long:    cli.Markdown("Inserts a freeCode model\n## Request Schema (application/json)\n\nproperties:\n  code:\n    type: string\n  name:\n    type: string\nrequired:\n- name\n- code\ntype: object\nxml:\n  name: FreeCodeModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Inserts a freeCode model\n## Request Schema (application/json)\n\nproperties:\n  code:\n    type: string\n  name:\n    type: string\nrequired:\n- name\n- code\ntype: object\nxml:\n  name: FreeCodeModel\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -3579,7 +3579,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "complete-freecode position",
 			Short:   "complete-freeCode",
-			Long:    cli.Markdown("complete the code of a freeCode model\n## Request Schema (application/json)\n\nproperties:\n  code:\n    type: string\nrequired:\n- code\ntype: object\nxml:\n  name: FreeCode\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("complete the code of a freeCode model\n## Request Schema (application/json)\n\nproperties:\n  code:\n    type: string\nrequired:\n- code\ntype: object\nxml:\n  name: FreeCode\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -3655,7 +3655,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "validate-freecode",
 			Short:   "validate-freeCode",
-			Long:    cli.Markdown("Validates a freeCode model\n## Request Schema (application/json)\n\nproperties:\n  code:\n    type: string\nrequired:\n- code\ntype: object\nxml:\n  name: FreeCode\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Validates a freeCode model\n## Request Schema (application/json)\n\nproperties:\n  code:\n    type: string\nrequired:\n- code\ntype: object\nxml:\n  name: FreeCode\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -3873,7 +3873,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "insert-mlmodel",
 			Short:   "insert-mlmodel",
-			Long:    cli.Markdown("Inserts a new MlModel\n## Request Schema (text/json)\n\nproperties:\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    description: Should be a valid mongodb bsonobject formatted as hex string\n    example: 507f1f77bcf86cd799439011\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Inserts a new MlModel\n## Request Schema (text/json)\n\nproperties:\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    description: Should be a valid mongodb bsonobject formatted as hex string\n    example: 507f1f77bcf86cd799439011\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -3913,7 +3913,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "update-mlmodel",
 			Short:   "update-mlmodel",
-			Long:    cli.Markdown("Updates a machine learning model\n## Request Schema (text/json)\n\nproperties:\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    description: Should be a valid mongodb bsonobject formatted as hex string\n    example: 507f1f77bcf86cd799439011\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Updates a machine learning model\n## Request Schema (text/json)\n\nproperties:\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    description: Should be a valid mongodb bsonobject formatted as hex string\n    example: 507f1f77bcf86cd799439011\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -4097,7 +4097,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "insert-pipegraph",
 			Short:   "insert-pipegraph",
-			Long:    cli.Markdown("Inserts a pipegraph\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  dashboard:\n    $ref: '#/components/schemas/DashboardModel'\n  description:\n    type: string\n  isSystem:\n    type: boolean\n  legacyStreamingComponents:\n    items:\n      $ref: '#/components/schemas/LegacyStreamingETLModel'\n    type: array\n  name:\n    type: string\n  owner:\n    type: string\n  rtComponents:\n    items:\n      $ref: '#/components/schemas/RTModel'\n    type: array\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLModel'\n    type: array\nrequired:\n- name\n- description\n- owner\n- isSystem\n- creationTime\n- legacyStreamingComponents\n- structuredStreamingComponents\n- rtComponents\ntype: object\nxml:\n  name: PipegraphModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Inserts a pipegraph\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  dashboard:\n    $ref: '#/components/schemas/DashboardModel'\n  description:\n    type: string\n  isSystem:\n    type: boolean\n  legacyStreamingComponents:\n    items:\n      $ref: '#/components/schemas/LegacyStreamingETLModel'\n    type: array\n  name:\n    type: string\n  owner:\n    type: string\n  rtComponents:\n    items:\n      $ref: '#/components/schemas/RTModel'\n    type: array\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLModel'\n    type: array\nrequired:\n- name\n- description\n- owner\n- isSystem\n- creationTime\n- legacyStreamingComponents\n- structuredStreamingComponents\n- rtComponents\ntype: object\nxml:\n  name: PipegraphModel\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -4137,7 +4137,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "update-pipegraph",
 			Short:   "update-pipegraph",
-			Long:    cli.Markdown("updateds a pipegraph\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  dashboard:\n    $ref: '#/components/schemas/DashboardModel'\n  description:\n    type: string\n  isSystem:\n    type: boolean\n  legacyStreamingComponents:\n    items:\n      $ref: '#/components/schemas/LegacyStreamingETLModel'\n    type: array\n  name:\n    type: string\n  owner:\n    type: string\n  rtComponents:\n    items:\n      $ref: '#/components/schemas/RTModel'\n    type: array\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLModel'\n    type: array\nrequired:\n- name\n- description\n- owner\n- isSystem\n- creationTime\n- legacyStreamingComponents\n- structuredStreamingComponents\n- rtComponents\ntype: object\nxml:\n  name: PipegraphModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("updateds a pipegraph\n## Request Schema (text/json)\n\nproperties:\n  creationTime:\n    format: int64\n    type: integer\n  dashboard:\n    $ref: '#/components/schemas/DashboardModel'\n  description:\n    type: string\n  isSystem:\n    type: boolean\n  legacyStreamingComponents:\n    items:\n      $ref: '#/components/schemas/LegacyStreamingETLModel'\n    type: array\n  name:\n    type: string\n  owner:\n    type: string\n  rtComponents:\n    items:\n      $ref: '#/components/schemas/RTModel'\n    type: array\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLModel'\n    type: array\nrequired:\n- name\n- description\n- owner\n- isSystem\n- creationTime\n- legacyStreamingComponents\n- structuredStreamingComponents\n- rtComponents\ntype: object\nxml:\n  name: PipegraphModel\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {

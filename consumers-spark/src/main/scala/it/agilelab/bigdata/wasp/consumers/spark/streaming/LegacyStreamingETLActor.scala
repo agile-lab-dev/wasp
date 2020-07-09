@@ -12,11 +12,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, Spark
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
-import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, IndexCategory}
+import it.agilelab.bigdata.wasp.repository.core.bl._
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct._
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, IndexCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, PipegraphModel, ReaderModel, TopicModel}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.streaming.StreamingContext

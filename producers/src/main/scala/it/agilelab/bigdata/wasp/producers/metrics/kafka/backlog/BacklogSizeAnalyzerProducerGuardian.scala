@@ -7,11 +7,11 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
 import it.agilelab.bigdata.wasp.core.messages._
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfUtils._
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, TopicModel}
 import it.agilelab.bigdata.wasp.producers.ProducerGuardian
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.{KafkaCheckOffsetsGuardian, KafkaOffsetActorAlive}
 

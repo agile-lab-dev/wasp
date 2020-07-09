@@ -4,8 +4,9 @@ import java.util.UUID
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.RawModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.models.RawModel
+import it.agilelab.bigdata.wasp.utils.ConfigManagerHelper
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path, RemoteIterator}
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -143,7 +144,7 @@ object HdfsUtils extends Logging {
     val path = if (rawModel.timed) {
       // the path must be timed; add timed subdirectory
       val hdfsPath = new Path(rawModel.uri)
-      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManager.buildTimedName("").substring(1) + "/")
+      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManagerHelper.buildTimedName("").substring(1) + "/")
 
       timedPath.toString
     } else {

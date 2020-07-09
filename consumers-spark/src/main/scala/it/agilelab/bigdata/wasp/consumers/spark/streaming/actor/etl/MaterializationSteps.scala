@@ -5,9 +5,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.generateSpecificStructuredStreamingCheckpointDir
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkStructuredStreamingWriter
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
-import it.agilelab.bigdata.wasp.core.models.configuration.SparkStreamingConfigModel
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel, WriterModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.models.configuration.SparkStreamingConfigModel
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
 

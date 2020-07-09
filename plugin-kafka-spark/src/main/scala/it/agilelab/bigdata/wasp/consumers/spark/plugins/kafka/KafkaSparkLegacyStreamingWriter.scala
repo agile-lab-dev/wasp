@@ -3,10 +3,10 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkLegacyStreamingWriter
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
-import it.agilelab.bigdata.wasp.core.bl.TopicBL
+import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.kafka.{CheckOrCreateTopic, WaspKafkaWriter}
-import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager, StringToByteArrayUtil}
+import it.agilelab.bigdata.wasp.models.TopicModel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
 import io.swagger.v3.oas.models.media.{ComposedSchema, Discriminator, Schema, StringSchema}
-import it.agilelab.bigdata.wasp.core.models.{MultiTopicModel, TopicCompression, TopicModel}
+import it.agilelab.bigdata.wasp.models.{MultiTopicModel, TopicCompression, TopicModel}
 import org.mongodb.scala.bson.BsonDocument
 
 trait TopicModelOpenApiComponentSupport

@@ -13,7 +13,7 @@ import akka.stream.FlowMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import reactivemongo.bson.{BSONInteger, BSONString}
 

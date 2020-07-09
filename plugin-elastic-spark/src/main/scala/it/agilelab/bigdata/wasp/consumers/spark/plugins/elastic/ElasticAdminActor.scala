@@ -4,7 +4,7 @@ import java.net.{InetAddress, InetSocketAddress}
 
 import akka.actor.{Actor, actorRef2Scala}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.ElasticConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.ElasticConfigModel
 
 import scala.util.{Failure, Success, Try}
 

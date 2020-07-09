@@ -8,10 +8,11 @@ import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySetti
 import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
-import it.agilelab.bigdata.wasp.core.db.WaspDBService
+import it.agilelab.bigdata.wasp.repository.core.db.RepositoriesFactory
 import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils._
+import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -187,7 +188,7 @@ object WaspSystem extends WaspConfiguration with Logging {
     if (actorSystem != null) actorSystem.terminate()
 
     // close wasp db connections
-    WaspDBService.service.getDB().close()
+    RepositoriesFactory.service.getDB().close()
   }
   
   /**

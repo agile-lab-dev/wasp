@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 
 /**

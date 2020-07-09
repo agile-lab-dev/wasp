@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.rt.launcher
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.rt.RtConsumersMasterGuardian
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.launcher.ClusterSingletonLauncher
 
 /**

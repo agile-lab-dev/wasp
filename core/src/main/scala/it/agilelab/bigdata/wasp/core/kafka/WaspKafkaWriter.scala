@@ -4,7 +4,7 @@ import java.util.Properties
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
-import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaConfigModel, KafkaEntryConfig, TinyKafkaConfig}
+import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, KafkaEntryConfig, TinyKafkaConfig}
 import kafka.server.KafkaConfig
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 

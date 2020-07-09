@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput
 
 import akka.actor.{ActorRef, Cancellable}
-import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.data.{RingBuffer, RingBufferQueue}
+import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.{KafkaOffsets, KafkaOffsetsRequest}
 import it.agilelab.bigdata.wasp.producers.{ProducerActor, StartMainTask, StopMainTask}
 

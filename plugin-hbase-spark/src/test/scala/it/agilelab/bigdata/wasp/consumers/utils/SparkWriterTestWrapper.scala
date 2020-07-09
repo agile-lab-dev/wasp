@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.consumers.utils
 /*
 import it.agilelab.bigdata.wasp.consumers.readers.StreamingReader
 import it.agilelab.bigdata.wasp.consumers.writers.{SparkStreamingWriter, SparkWriter, SparkWriterFactory}
-import it.agilelab.bigdata.wasp.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.models.{TopicModel, WriterModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
+import it.agilelab.bigdata.wasp.models.{TopicModel, WriterModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row}

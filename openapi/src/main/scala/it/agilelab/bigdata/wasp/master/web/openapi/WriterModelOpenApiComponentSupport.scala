@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.core.models.WriterModel
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.models.WriterModel
 
 trait WriterModelOpenApiComponentSupport
     extends LangOpenApi

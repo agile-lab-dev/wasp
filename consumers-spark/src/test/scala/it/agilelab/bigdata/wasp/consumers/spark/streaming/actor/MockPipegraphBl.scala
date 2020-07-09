@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor
 
-import it.agilelab.bigdata.wasp.core.bl.{PipegraphBL, PipegraphInstanceBl}
-import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, PipegraphStatus}
+import it.agilelab.bigdata.wasp.repository.core.bl.{PipegraphBL, PipegraphInstanceBl}
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, PipegraphStatus}
+import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 
 import scala.collection.mutable.ListBuffer
 

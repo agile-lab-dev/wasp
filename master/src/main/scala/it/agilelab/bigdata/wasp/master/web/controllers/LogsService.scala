@@ -3,13 +3,12 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import java.time.Instant
 import java.util.Date
 
-import it.agilelab.bigdata.wasp.core.models.Logs
-import it.agilelab.bigdata.wasp.core.{SolrLoggerIndex, models}
+import it.agilelab.bigdata.wasp.models.Logs
+import it.agilelab.bigdata.wasp.core.SolrLoggerIndex
+import it.agilelab.bigdata.wasp.models
 import org.apache.solr.client.solrj.util.ClientUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-
-
 
 trait LogsService {
   def logs(search: String,
@@ -19,6 +18,8 @@ trait LogsService {
            size: Int): Future[Logs]
 
 }
+
+
 
 class DefaultSolrLogsService(client: SolrClient)(implicit ec: ExecutionContext)
     extends LogsService {

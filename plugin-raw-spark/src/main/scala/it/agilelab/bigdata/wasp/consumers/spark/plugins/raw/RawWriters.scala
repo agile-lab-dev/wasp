@@ -1,9 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkLegacyStreamingWriter, SparkStructuredStreamingWriter, SparkBatchWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.RawModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.models.RawModel
+import it.agilelab.bigdata.wasp.utils.ConfigManagerHelper
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
@@ -36,7 +37,7 @@ class RawSparkLegacyStreamingWriter(hdfsModel: RawModel,
           val path = if (hdfsModelLocal.timed) {
             // the path must be timed; add timed subdirectory
             val hdfsPath = new Path(hdfsModelLocal.uri)
-            val timedPath = new Path(hdfsPath.toString + "/" + ConfigManager.buildTimedName("").substring(1) + "/")
+            val timedPath = new Path(hdfsPath.toString + "/" + ConfigManagerHelper.buildTimedName("").substring(1) + "/")
 
             timedPath.toString
           } else {
@@ -75,7 +76,7 @@ class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
     val path = if (hdfsModel.timed) {
       // the path must be timed; add timed subdirectory
       val hdfsPath = new Path(hdfsModel.uri)
-      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManager.buildTimedName("").substring(1) + "/")
+      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManagerHelper.buildTimedName("").substring(1) + "/")
     
       timedPath.toString
     } else {
@@ -113,7 +114,7 @@ class RawSparkBatchWriter(hdfsModel: RawModel,
     val path = if (hdfsModel.timed) {
       // the path must be timed; add timed subdirectory
       val hdfsPath = new Path(hdfsModel.uri)
-      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManager.buildTimedName("").substring(1) + "/")
+      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManagerHelper.buildTimedName("").substring(1) + "/")
 
       timedPath.toString
     } else {

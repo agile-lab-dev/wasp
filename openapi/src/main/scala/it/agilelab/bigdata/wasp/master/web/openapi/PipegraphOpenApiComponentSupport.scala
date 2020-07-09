@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{DashboardModel, LegacyStreamingETLModel, PipegraphInstanceModel, PipegraphModel, PipegraphStatus, RTModel, StructuredStreamingETLModel}
 
 trait PipegraphOpenApiComponentSupport
     extends LangOpenApi

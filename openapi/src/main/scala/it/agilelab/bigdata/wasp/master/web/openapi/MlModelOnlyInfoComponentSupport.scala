@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-import it.agilelab.bigdata.wasp.core.models.MlModelOnlyInfo
+import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
 import org.mongodb.scala.bson.BsonObjectId
 
 trait MlModelOnlyInfoComponentSupport extends LangOpenApi with ProductOpenApi with CollectionsOpenApi {

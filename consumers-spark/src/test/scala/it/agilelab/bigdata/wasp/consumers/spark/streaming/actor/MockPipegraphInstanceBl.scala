@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor
 
-import it.agilelab.bigdata.wasp.core.bl.PipegraphInstanceBl
-import it.agilelab.bigdata.wasp.core.models.PipegraphInstanceModel
+import it.agilelab.bigdata.wasp.repository.core.bl.PipegraphInstanceBl
+import it.agilelab.bigdata.wasp.models.PipegraphInstanceModel
 
 import scala.collection.mutable.ListBuffer
 

@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.mongo
 
 import com.mongodb.spark.sql.MongoForeachRddWriter
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkStructuredStreamingWriter
-import it.agilelab.bigdata.wasp.core.models.{DocumentModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{DocumentModel, WriterModel}
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row}
 

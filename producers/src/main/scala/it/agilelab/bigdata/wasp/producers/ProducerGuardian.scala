@@ -6,11 +6,11 @@ import akka.pattern.gracefulStop
 import akka.routing.BalancingPool
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, generalTimeout}
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
-import it.agilelab.bigdata.wasp.core.models.{ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.models.{ProducerModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
 import scala.concurrent.ExecutionContext.Implicits.global

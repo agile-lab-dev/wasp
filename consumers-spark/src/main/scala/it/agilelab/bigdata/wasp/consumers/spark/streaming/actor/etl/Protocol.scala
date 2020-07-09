@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
-import it.agilelab.bigdata.wasp.core.models.StructuredStreamingETLModel
+import it.agilelab.bigdata.wasp.models.StructuredStreamingETLModel
 
 /**
   * Trait marking messages as being part of the [[StructuredStreamingETLActor]] protocol.

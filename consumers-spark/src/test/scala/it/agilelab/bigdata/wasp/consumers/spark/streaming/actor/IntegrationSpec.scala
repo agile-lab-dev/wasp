@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol =>
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{SparkConsumersStreamingMasterGuardian, Protocol => MasterProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.{ComponentFailedStrategy, DontCare, StopAll}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, ProbesFactory, Protocol => PipegraphProtocol}
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}

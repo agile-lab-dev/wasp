@@ -4,7 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.Strategy
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.GdprStrategy
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{BatchETL, BatchETLModel, BatchGdprETLModel, DataStoreConf, StrategyModel}
 import org.apache.spark.SparkContext
 
 import scala.util.{Success, Try}

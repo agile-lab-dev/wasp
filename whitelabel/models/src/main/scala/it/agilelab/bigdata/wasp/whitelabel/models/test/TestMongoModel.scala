@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models.DocumentModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.models.DocumentModel
 import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType}
 
 object TestMongoModel {

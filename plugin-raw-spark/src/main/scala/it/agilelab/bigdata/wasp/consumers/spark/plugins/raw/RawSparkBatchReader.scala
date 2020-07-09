@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.RawProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.RawProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.RawModel
+import it.agilelab.bigdata.wasp.models.RawModel
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}

@@ -8,11 +8,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.ConfigUtil
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
 import GdprStrategy._
 import it.agilelab.bigdata.wasp.consumers.spark.batch.AggregateException
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.models.{DataStoreConf, ExactKeyValueMatchingStrategy, KeyValueDataStoreConf, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, RawDataStoreConf}
+import it.agilelab.bigdata.wasp.models.configuration.HBaseConfigModel
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.{col, _}

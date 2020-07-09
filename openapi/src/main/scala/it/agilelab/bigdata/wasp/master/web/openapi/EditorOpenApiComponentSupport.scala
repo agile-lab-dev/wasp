@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 import io.swagger.v3.oas.models.media._
-import it.agilelab.bigdata.wasp.core.models.editor._
+import it.agilelab.bigdata.wasp.models.editor._
 import org.json4s.JObject
 
 case class ProcessGroupResponseTmp(name: String, processGroupData: String)

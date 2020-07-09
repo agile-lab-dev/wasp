@@ -5,7 +5,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import scala.util.{Failure, Try}
 
 /**
-  * Trait collecting operations to be composed to realize Stopping of a [[it.agilelab.bigdata.wasp.core.models
+  * Trait collecting operations to be composed to realize Stopping of a [[it.agilelab.bigdata.wasp.models
   * .StructuredStreamingETLModel]]
   */
 trait StoppingStep {

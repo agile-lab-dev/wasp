@@ -2,12 +2,12 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaWriters._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
-import it.agilelab.bigdata.wasp.core.bl.TopicBL
-import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
+import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
+import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicCompression}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
+import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel}
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SparkSession}
 
 class KafkaBatchWriter(topicBL: TopicBL,

@@ -7,15 +7,9 @@ import java.util.Base64
 
 import com.google.gson.JsonObject
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.{
-  KafkaConfigModel,
-  NifiStatelessConfigModel,
-  SparkConfigModel,
-  SparkStreamingConfigModel,
-  TelemetryConfigModel
-}
+import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, NifiStatelessConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SparkStreamingConfiguration, WaspConfiguration}
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, StructuredStreamingETLModel}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -112,7 +106,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
 
     val originalExtraJavaOptions = sparkConf.get("spark.executor.extraJavaOptions", "")
 
-    import it.agilelab.bigdata.wasp.core.models.configuration.TelemetryTopicConfigModelMessageFormat._
+    import it.agilelab.bigdata.wasp.models.configuration.TelemetryTopicConfigModelMessageFormat._
 
     val telemetryConfigJSON = Base64.getUrlEncoder.encodeToString(
       telemetryTopicConfigModelFormat

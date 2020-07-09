@@ -17,9 +17,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.Pipegr
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, Protocol => ChildProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.watchdog.SparkContextWatchDog
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
-import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.repository.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphStatus}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession

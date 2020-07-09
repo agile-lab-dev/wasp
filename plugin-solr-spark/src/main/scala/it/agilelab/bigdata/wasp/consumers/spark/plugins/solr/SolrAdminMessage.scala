@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
 import it.agilelab.bigdata.wasp.core.WaspMessage
-import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.SolrConfigModel
 import org.apache.solr.client.solrj.SolrQuery
 
 trait SolrAdminMessage extends WaspMessage

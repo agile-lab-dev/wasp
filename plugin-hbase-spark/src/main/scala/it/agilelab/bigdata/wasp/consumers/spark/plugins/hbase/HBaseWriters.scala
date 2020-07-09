@@ -3,9 +3,9 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 import java.io.File
 
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
-import it.agilelab.bigdata.wasp.core.bl.KeyValueBL
+import it.agilelab.bigdata.wasp.repository.core.bl.KeyValueBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.KeyValueModel
+import it.agilelab.bigdata.wasp.models.KeyValueModel
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client.Put

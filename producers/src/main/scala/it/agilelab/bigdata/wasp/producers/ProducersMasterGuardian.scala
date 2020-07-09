@@ -4,11 +4,11 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.{??, actorSystem, mediator}
-import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages._
-import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
+import it.agilelab.bigdata.wasp.models.ProducerModel
 
 import scala.collection.mutable
 

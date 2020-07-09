@@ -11,9 +11,7 @@ import com.lucidworks.spark.util.SolrSupport
 import com.lucidworks.spark.util.SolrSupport.CloudClientParams
 import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.IndexModelBuilder.Solr
-import it.agilelab.bigdata.wasp.core.models.IndexModelBuilder.Solr.{SolrMissingFieldSort, Type}
-import it.agilelab.bigdata.wasp.core.models.configuration.SolrConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.SolrConfigModel
 import org.apache.http.HttpStatus
 import org.apache.http.client.HttpClient
 import org.apache.http.client.config.RequestConfig

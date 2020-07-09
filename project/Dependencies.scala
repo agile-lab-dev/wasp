@@ -258,6 +258,14 @@ object Dependencies {
     scalaTest
   )).map(excludeLog4j) ++ log4j :+ log4j1
 
+  val model = (
+    time ++
+    json :+
+    akkaHttpSpray :+
+    sparkSQL :+
+    mongodbScala
+    ).map(excludeLog4j).map(excludeNetty)
+
   val core = (akka ++
     avro4s ++
     logging ++
@@ -269,18 +277,14 @@ object Dependencies {
     avro :+
     commonsCli :+
     kafka :+ // TODO remove when switching to plugins
-    mongodbScala :+
     sparkSQL :+
     typesafeConfig :+
-    nameOf :+
     reflections
     ).map(excludeLog4j).map(excludeNetty)
 
-  val wasp_mongo = (
-    akka :+
-    mongodbScala :+
-    nameOf :+
-    reflections
+  val repository_mongo = Seq(
+    mongodbScala,
+    nameOf
     ).map(excludeLog4j).map(excludeNetty)
 
 

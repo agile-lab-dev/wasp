@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, Props}
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, TopicModel}
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, TopicModel}
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.{Constants, Env, KafkaCheckOffsetsGuardian, TestKafkaCheckKafkaOffset, TestKafkaRouter}
 
 import scala.concurrent.duration.FiniteDuration

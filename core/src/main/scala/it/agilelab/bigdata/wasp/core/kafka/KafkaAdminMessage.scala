@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.kafka
 
 import it.agilelab.bigdata.wasp.core.WaspMessage
-import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigModel
 
 trait KafkaAdminMessage extends WaspMessage
 

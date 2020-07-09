@@ -5,7 +5,7 @@ import java.util.Properties
 
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigModel
 import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
 
 import scala.collection.convert.decorateAsScala._

@@ -7,25 +7,11 @@ import java.time.temporal.{TemporalAccessor, TemporalQuery}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
 import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
-import it.agilelab.bigdata.wasp.core.datastores.{DatastoreProduct, TopicCategory}
-import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.models.editor.{
-  FlowNifiDTO,
-  FreeCodeDTO,
-  IndexDTO,
-  KeyValueDTO,
-  NifiStatelessInstanceModel,
-  PipegraphDTO,
-  ProcessGroupResponse,
-  RawDataDTO,
-  StrategyClassDTO,
-  StrategyDTO,
-  StreamingOutputDTO,
-  StructuredStreamingETLDTO,
-  TopicDTO
-}
-import it.agilelab.bigdata.wasp.core.models.{Counts, LogEntry, _}
-import it.agilelab.bigdata.wasp.core.utils.{ConnectionConfig, DatastoreProductJsonFormat, ZookeeperConnectionsConfig}
+import it.agilelab.bigdata.wasp.core.utils.DatastoreProductJsonFormat
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
+import it.agilelab.bigdata.wasp.models.configuration._
+import it.agilelab.bigdata.wasp.models.editor.{FlowNifiDTO, FreeCodeDTO, IndexDTO, KeyValueDTO, NifiStatelessInstanceModel, PipegraphDTO, ProcessGroupResponse, RawDataDTO, StrategyClassDTO, StrategyDTO, StreamingOutputDTO, StructuredStreamingETLDTO, TopicDTO}
+import it.agilelab.bigdata.wasp.models.{Counts, LogEntry, _}
 import org.json4s.{DefaultFormats, Formats, JObject}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat, deserializationError, _}

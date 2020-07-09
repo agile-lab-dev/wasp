@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import it.agilelab.bigdata.nifi.client.NifiClient
 import it.agilelab.bigdata.nifi.client.model._
-import it.agilelab.bigdata.wasp.core.models.editor.{NifiStatelessInstanceModel, ProcessGroupResponse}
+import it.agilelab.bigdata.wasp.models.editor.{NifiStatelessInstanceModel, ProcessGroupResponse}
 import org.json4s.JsonAST.{JObject, JString, JValue}
 
 import scala.concurrent.{ExecutionContext, Future}

@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka
 
 import akka.actor.{Actor, ActorRef}
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
-import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
-import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, PipegraphModel, ProducerModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
+import it.agilelab.bigdata.wasp.datastores.TopicCategory
+import it.agilelab.bigdata.wasp.models.{DatastoreModel, PipegraphModel, ProducerModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
 import it.agilelab.bigdata.wasp.producers.StopMainTask
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog.TestBacklogSizeAnalyzerProducerActor
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput.TestKafkaThroughputProducerActor

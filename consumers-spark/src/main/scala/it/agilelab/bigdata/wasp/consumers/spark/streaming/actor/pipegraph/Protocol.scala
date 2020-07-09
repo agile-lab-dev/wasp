@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.core.models.StructuredStreamingETLModel
+import it.agilelab.bigdata.wasp.models.StructuredStreamingETLModel
 
 trait Protocol
 

@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.example
 
-import it.agilelab.bigdata.wasp.core.models.ProducerModel
+import it.agilelab.bigdata.wasp.models.ProducerModel
 
 private[wasp] object FakeDataProducerModel {
 

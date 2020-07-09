@@ -5,9 +5,10 @@ import java.util.concurrent.TimeUnit
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.core.db.{WaspDB, WaspDBService}
-import it.agilelab.bigdata.wasp.core.models.configuration.{ValidationRule, WaspConfigModel}
+import it.agilelab.bigdata.wasp.repository.core.db.{WaspDB, RepositoriesFactory}
+import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager}
+import it.agilelab.bigdata.wasp.models.configuration.WaspConfigModel
 import org.apache.commons.cli
 import org.apache.commons.cli.{CommandLine, ParseException}
 
@@ -68,12 +69,12 @@ trait WaspLauncher {
 
 	def initializeWasp(commandLine: CommandLine): Unit = {
 
-		waspDB = WaspDBService.service.initializeDB()
+		waspDB = RepositoriesFactory.service.initializeDB()
 
 		/* Management of dropDB commandline ption */
 		if(getNodeName == "master") {
 			if (commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)) {
-				WaspDBService.service.dropDatabase()
+				RepositoriesFactory.service.dropDatabase()
 			}
 		}
 

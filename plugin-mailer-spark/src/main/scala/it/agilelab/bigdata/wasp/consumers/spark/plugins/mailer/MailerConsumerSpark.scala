@@ -3,11 +3,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.mailer
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter}
-import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, IndexBL}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.core.db.WaspDB
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, IndexBL}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
+import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext

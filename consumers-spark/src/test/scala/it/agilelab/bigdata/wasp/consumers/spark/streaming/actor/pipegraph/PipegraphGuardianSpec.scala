@@ -10,8 +10,8 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.Data.{
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.State._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => PipegraphProtocol}
-import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp._
+import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 

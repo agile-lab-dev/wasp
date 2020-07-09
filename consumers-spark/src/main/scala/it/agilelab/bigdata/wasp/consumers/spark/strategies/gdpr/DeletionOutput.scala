@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.GdprStrategy.CorrelationId
-import it.agilelab.bigdata.wasp.core.models.{ContainsRawMatchingStrategy, ExactRawMatchingStrategy, PrefixRawMatchingStrategy, RawMatchingStrategy}
+import it.agilelab.bigdata.wasp.models.{ContainsRawMatchingStrategy, ExactRawMatchingStrategy, PrefixRawMatchingStrategy, RawMatchingStrategy}
 
 /**
   * Represents the output result of the deletion process for a single key

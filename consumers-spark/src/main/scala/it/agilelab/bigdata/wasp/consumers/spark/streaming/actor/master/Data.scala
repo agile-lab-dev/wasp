@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
-import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphStatus}
+import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
+import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphStatus}
 
 /**
   * Trait marking classes holding [[SparkConsumersStreamingMasterGuardian]] State Data

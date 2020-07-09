@@ -7,9 +7,9 @@ import akka.actor.{ActorRef, ActorRefFactory, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
-import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.repository.core.bl._
 import it.agilelab.bigdata.wasp.core.messages.BatchMessages
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobExclusionConfig, BatchJobInstanceModel, BatchJobModel, BatchSchedulerModel, JobStatus, WriterModel}
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
 import scala.collection.mutable.ListBuffer

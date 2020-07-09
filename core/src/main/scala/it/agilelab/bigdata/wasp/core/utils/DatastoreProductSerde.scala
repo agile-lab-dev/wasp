@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.utils.ReflectionUtils
 
 /**
 	* Base trait for `DataStoreProduct` serde.

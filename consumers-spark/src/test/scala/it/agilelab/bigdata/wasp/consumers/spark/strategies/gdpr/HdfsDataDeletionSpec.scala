@@ -13,7 +13,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hdfs.HdfsDataDel
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.hdfs.{HdfsBackupHandler, HdfsDataDeletion, HdfsDeletionHandler}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{ContainsRawMatchingStrategy, ExactRawMatchingStrategy, NoPartitionPruningStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawModel, RawOptions, TimeBasedBetweenPartitionPruningStrategy}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions._

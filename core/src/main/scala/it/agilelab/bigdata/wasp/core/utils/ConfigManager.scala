@@ -5,11 +5,12 @@ import java.util.Date
 import java.util.Map.Entry
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, HBaseProduct, SolrProduct}
-import it.agilelab.bigdata.wasp.core.models.Model
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.{ElasticProduct, HBaseProduct, SolrProduct}
+import it.agilelab.bigdata.wasp.models.Model
+import it.agilelab.bigdata.wasp.models.configuration._
 import it.agilelab.bigdata.wasp.core.models.configuration._
-import org.bson.BsonString
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -30,30 +31,7 @@ object ConfigManager {
   private val compilerConfigName       = "Compiler"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
-    /* waspConfig validation-rules */
 
-    ValidationRule("DefaultIndexedDatastoreAndKeyValueDatastoreEmpty") { (configManager) =>
-      if (configManager.getWaspConfig.defaultIndexedDatastore.isEmpty && configManager.getWaspConfig.defaultKeyvalueDatastore.isEmpty)
-        Left("No datastore configured! Configure at least an indexed or a keyvalue datastore")
-      else
-        Right(())
-    },
-    ValidationRule("DefaultIndexedDatastoreUnknown") { (configManager) =>
-      if (configManager.getWaspConfig.defaultIndexedDatastore != ElasticProduct.getActualProductName && configManager.getWaspConfig.defaultIndexedDatastore != SolrProduct.getActualProductName)
-        Left(
-          s"No indexed datastore configured! Value: ${configManager.getWaspConfig.defaultIndexedDatastore} is different from '${ElasticProduct.getActualProductName}' or '${SolrProduct.getActualProductName}'"
-        )
-      else
-        Right(())
-    },
-    ValidationRule("DefaultKeyValueDatastoreUnknown") { (configManager) =>
-      if (configManager.getWaspConfig.defaultKeyvalueDatastore != HBaseProduct.getActualProductName)
-        Left(
-          s"No keyvalue datastore configured! Value: ${configManager.getWaspConfig.defaultKeyvalueDatastore} is different from '${HBaseProduct.getActualProductName}'"
-        )
-      else
-        Right(())
-    },
     /* sparkStreamingConfig validation-rules */
 
     ValidationRule("SparkStreamingStandaloneMode") { (configManager) =>
@@ -139,8 +117,6 @@ object ConfigManager {
       conf.getBoolean("index-rollover"),
       conf.getInt("general-timeout-millis"),
       conf.getInt("services-timeout-millis"),
-      conf.getString("datastore.indexed"),
-      conf.getString("datastore.keyvalue"),
       conf.getBoolean("systempipegraphs.start"),
       conf.getBoolean("systemproducers.start"),
       conf.getString("rest.server.hostname"),
@@ -440,7 +416,7 @@ object ConfigManager {
   /**
     * Initialize the configurations managed by this ConfigManager.
     *
-    * Not initialize MongoDB due to already initialized [[WaspDB.initializeDB()]]
+    * Not initialize WaspDB due to already initialized
     */
   def initializeCommonConfigs(): Unit = {
 
@@ -653,12 +629,7 @@ object ConfigManager {
     ConfigBL.configManagerBL.retrieveConf(default,nameConf)(ct,typeTag)
   }
 
-  def buildTimedName(prefix: String): String = {
-    val result = prefix + "-" + new SimpleDateFormat("yyyy.MM.dd")
-      .format(new Date())
 
-    result
-  }
 
   def readOthersConfig(config: Config): Seq[(String, String)] = {
     val key = "others"
@@ -677,32 +648,9 @@ object ConfigManager {
   }
 }
 
-case class ConnectionConfig(
-    protocol: String,
-    host: String,
-    port: Int = 0,
-    timeout: Option[Long] = None,
-    metadata: Option[Map[String, String]]
-) {
 
-  override def toString: String = {
-    var result = ""
 
-    if (protocol != null && !protocol.isEmpty)
-      result = protocol + "://"
 
-    result = result + host
-
-    if (port != 0)
-      result = result + ":" + port
-
-    result
-  }
-}
-
-case class ZookeeperConnectionsConfig(connections: Seq[ConnectionConfig], chRoot: String) {
-  override def toString = connections.map(conn => s"${conn.host}:${conn.port}").mkString(",") + s"${chRoot}"
-}
 
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig

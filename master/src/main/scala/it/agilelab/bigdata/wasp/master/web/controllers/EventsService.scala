@@ -4,8 +4,7 @@ import java.time.Instant
 import java.util.Date
 
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.SolrEventIndex
-import it.agilelab.bigdata.wasp.core.models.{Events, Logs}
-import it.agilelab.bigdata.wasp.core.{SolrLoggerIndex, models}
+import it.agilelab.bigdata.wasp.models.{EventEntry, Events}
 import org.apache.solr.client.solrj.util.ClientUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,6 +17,7 @@ trait EventsService {
              size: Int): Future[Events]
 
 }
+
 
 class DefaultSolrEventsService(client: SolrClient)(
   implicit ec: ExecutionContext
@@ -42,7 +42,7 @@ class DefaultSolrEventsService(client: SolrClient)(
         Events(
           found,
           entries = response.getResults.asScala.toList.map { document =>
-            models.EventEntry(
+            EventEntry(
               document.getFieldValue("eventType").asInstanceOf[String],
               document.getFieldValue("eventId").asInstanceOf[String],
               document.getFieldValue("severity").asInstanceOf[String],

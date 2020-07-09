@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.models.TopicModel
 
 class ImplKafkaThroughputProducer(kafka_router: ActorRef,
                                   kafkaOffsetChecker: ActorRef,

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, PipegraphModel, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 
 private[wasp] object TestPipegraphs {
 

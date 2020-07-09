@@ -4,12 +4,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.TopicModel
-import it.agilelab.bigdata.wasp.core.models.configuration._
-import it.agilelab.bigdata.wasp.core.utils.{
-  ConnectionConfig,
-  ZookeeperConnectionsConfig
-}
+import it.agilelab.bigdata.wasp.models.configuration.{ConnectionConfig, ElasticConfigModel, JMXTelemetryConfigModel, KafkaConfigModel, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkDriverConfig, SparkEntryConfig, SparkStreamingConfigModel, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
 
 trait ConfigModelOpenApiComponentSupport
     extends ProductOpenApi

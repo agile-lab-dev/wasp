@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
+import it.agilelab.bigdata.wasp.models.{MultiTopicModel, TopicCompression, TopicModel}
 
 private[wasp] object TestTopicModel {
 

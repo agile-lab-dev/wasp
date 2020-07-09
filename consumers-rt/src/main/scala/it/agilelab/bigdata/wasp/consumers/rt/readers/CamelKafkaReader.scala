@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.rt.readers
 import akka.actor.{Actor, ActorRef}
 import akka.camel.{CamelMessage, Consumer}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigModel
 
 
 /**

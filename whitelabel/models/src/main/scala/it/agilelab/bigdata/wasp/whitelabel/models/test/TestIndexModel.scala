@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models.{IndexModel, IndexModelBuilder}
+import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder}
 
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 

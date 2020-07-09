@@ -3,12 +3,12 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroSerializerExpression
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
-import it.agilelab.bigdata.wasp.core.bl.TopicBL
-import it.agilelab.bigdata.wasp.core.datastores.TopicCategory
+import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
+import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{DatastoreModel, MultiTopicModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, StringToByteArrayUtil}
+import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, TopicModel}
 import org.apache.avro.Schema
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.functions.{col, struct, udf}

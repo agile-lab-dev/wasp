@@ -4,7 +4,7 @@ This document describes the configurations available for WASP, broken down by fe
 
 ## Telemetry
 
-The model is `it.agilelab.bigdata.wasp.core.models.configuration.TelemetryConfigModel`.
+The model is `it.agilelab.bigdata.wasp.models.configuration.TelemetryConfigModel`.
 
 The typesafe config object is found at path `wasp.telemetry`.
 

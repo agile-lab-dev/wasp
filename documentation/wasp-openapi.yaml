@@ -256,7 +256,7 @@ paths:
                   type: string
               xml:
                 name: FreeCodeModel
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -454,7 +454,7 @@ paths:
                   type: string
               xml:
                 name: FreeCode
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: complete the code of a freeCode model
@@ -741,7 +741,7 @@ paths:
                   type: string
               xml:
                 name: MlModelOnlyInfo
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -805,7 +805,7 @@ paths:
                   type: string
               xml:
                 name: MlModelOnlyInfo
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -1108,7 +1108,7 @@ paths:
                   $ref: '#/components/schemas/DashboardModel'
               xml:
                 name: PipegraphModel
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -1180,7 +1180,7 @@ paths:
                   $ref: '#/components/schemas/DashboardModel'
               xml:
                 name: PipegraphModel
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -1302,7 +1302,7 @@ paths:
                   type: boolean
               xml:
                 name: ProducerModel
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -1362,7 +1362,7 @@ paths:
                   type: boolean
               xml:
                 name: ProducerModel
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -1569,7 +1569,7 @@ paths:
                   $ref: '#/components/schemas/BatchJobExclusionConfig'
               xml:
                 name: BatchJobModel
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -1634,7 +1634,7 @@ paths:
                   $ref: '#/components/schemas/BatchJobExclusionConfig'
               xml:
                 name: BatchJobModel
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of insert
@@ -2027,7 +2027,7 @@ paths:
                   type: string
               xml:
                 name: FreeCode
-                namespace: java://it.agilelab.bigdata.wasp.core.models
+                namespace: java://it.agilelab.bigdata.wasp.models
       responses:
         "200":
           description: Result of validate
@@ -2102,7 +2102,7 @@ paths:
                     $ref: '#/components/schemas/StructuredStreamingETLDTO'
               xml:
                 name: PipegraphDTO
-                namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+                namespace: java://it.agilelab.bigdata.wasp.models.editor
       responses:
         "200":
           description: Pipegraph generation result
@@ -2407,7 +2407,7 @@ components:
             type: string
       xml:
         name: RawOptions
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     TopicDTO:
       required:
       - name
@@ -2420,7 +2420,7 @@ components:
           type: string
       xml:
         name: TopicDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     CountEntry:
       required:
       - timestamp
@@ -2437,7 +2437,7 @@ components:
             format: int32
       xml:
         name: CountEntry
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     LegacyStreamingETLModel:
       required:
       - name
@@ -2471,7 +2471,7 @@ components:
           type: boolean
       xml:
         name: LegacyStreamingETLModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     Sources:
       required:
       - found
@@ -2487,7 +2487,7 @@ components:
             $ref: '#/components/schemas/SourceEntry'
       xml:
         name: Sources
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     CompletionModel:
       required:
       - toComplete
@@ -2533,7 +2533,7 @@ components:
           $ref: '#/components/schemas/BatchJobExclusionConfig'
       xml:
         name: BatchJobModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     FreeCodeModel:
       required:
       - name
@@ -2546,7 +2546,7 @@ components:
           type: string
       xml:
         name: FreeCodeModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     KeyValueModel:
       required:
       - name
@@ -2575,7 +2575,7 @@ components:
           nullable: true
       xml:
         name: KeyValueModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     RawDataStoreConf:
       required:
       - inputKeyColumn
@@ -2609,7 +2609,7 @@ components:
           type: boolean
       xml:
         name: RawDataStoreConf
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     DashboardModel:
       required:
       - url
@@ -2623,7 +2623,7 @@ components:
       nullable: true
       xml:
         name: DashboardModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     NifiStatelessInstanceModel:
       required:
       - name
@@ -2639,7 +2639,7 @@ components:
           type: string
       xml:
         name: NifiStatelessInstanceModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     StrategyClassDTO:
       required:
       - name
@@ -2652,7 +2652,7 @@ components:
           type: string
       xml:
         name: StrategyClassDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     MultiTopicModel:
       required:
       - name
@@ -2670,7 +2670,7 @@ components:
             type: string
       xml:
         name: MultiTopicModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     EventEntry:
       required:
       - eventType
@@ -2702,7 +2702,7 @@ components:
           type: string
       xml:
         name: EventEntry
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     BatchJobInstanceModel:
       required:
       - name
@@ -2732,7 +2732,7 @@ components:
           nullable: true
       xml:
         name: BatchJobInstanceModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     KafkaEntryConfig:
       required:
       - key
@@ -2745,7 +2745,7 @@ components:
           type: string
       xml:
         name: KafkaEntryConfig
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     DocumentModel:
       required:
       - name
@@ -2761,7 +2761,7 @@ components:
           type: string
       xml:
         name: DocumentModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     Metrics:
       required:
       - found
@@ -2777,7 +2777,7 @@ components:
             $ref: '#/components/schemas/MetricEntry'
       xml:
         name: Metrics
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     RawModel:
       required:
       - name
@@ -2799,7 +2799,7 @@ components:
           $ref: '#/components/schemas/RawOptions'
       xml:
         name: RawModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     JMXTelemetryConfigModel:
       required:
       - query
@@ -2821,7 +2821,7 @@ components:
           type: string
       xml:
         name: JMXTelemetryConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     SparkDriverConfig:
       required:
       - submitDeployMode
@@ -2851,7 +2851,7 @@ components:
           type: boolean
       xml:
         name: SparkDriverConfig
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     PipegraphInstanceModel:
       required:
       - name
@@ -2878,7 +2878,7 @@ components:
           nullable: true
       xml:
         name: PipegraphInstanceModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     ContainsRawMatchingStrategy:
       required:
       - dataframeKeyMatchingExpression
@@ -2888,7 +2888,7 @@ components:
           type: string
       xml:
         name: ContainsRawMatchingStrategy
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     SparkEntryConfig:
       required:
       - key
@@ -2901,7 +2901,7 @@ components:
           type: string
       xml:
         name: SparkEntryConfig
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     DataStoreProductEnum:
       type: string
       enum:
@@ -2928,7 +2928,7 @@ components:
       nullable: true
       xml:
         name: StrategyModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     ResultIndicator:
       type: string
       enum:
@@ -2971,7 +2971,7 @@ components:
           type: string
       xml:
         name: BatchGdprETLModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     TopicCompressionEnum:
       type: string
       enum:
@@ -3000,7 +3000,7 @@ components:
             $ref: '#/components/schemas/CountEntry'
       xml:
         name: Counts
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     NifiStatelessConfigModel:
       required:
       - bootstrapJars
@@ -3020,7 +3020,7 @@ components:
       nullable: true
       xml:
         name: NifiStatelessConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     MlModelOnlyInfo:
       required:
       - name
@@ -3051,7 +3051,7 @@ components:
           type: string
       xml:
         name: MlModelOnlyInfo
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     SparkBatchConfigModel:
       required:
       - appName
@@ -3123,7 +3123,7 @@ components:
           type: string
       xml:
         name: SparkBatchConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     Logs:
       required:
       - found
@@ -3139,7 +3139,7 @@ components:
             $ref: '#/components/schemas/LogEntry'
       xml:
         name: Logs
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     JobStatus:
       type: string
       enum:
@@ -3163,7 +3163,7 @@ components:
           type: boolean
       xml:
         name: KryoSerializerConfig
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     StructuredStreamingETLDTO:
       required:
       - name
@@ -3200,7 +3200,7 @@ components:
           format: int64
       xml:
         name: StructuredStreamingETLDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     WriterModel:
       required:
       - name
@@ -3222,7 +3222,7 @@ components:
       nullable: true
       xml:
         name: WriterModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     PipegraphModel:
       required:
       - name
@@ -3262,7 +3262,7 @@ components:
           $ref: '#/components/schemas/DashboardModel'
       xml:
         name: PipegraphModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     TimeBasedBetweenPartitionPruningStrategy:
       required:
       - columnName
@@ -3281,7 +3281,7 @@ components:
           type: string
       xml:
         name: TimeBasedBetweenPartitionPruningStrategy
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     ConnectionConfig:
       required:
       - protocol
@@ -3392,7 +3392,7 @@ components:
           type: string
       xml:
         name: SparkStreamingConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     KeyValueDataStoreConf:
       required:
       - inputKeyColumn
@@ -3416,7 +3416,7 @@ components:
           - $ref: '#/components/schemas/PrefixKeyValueMatchingStrategy'
       xml:
         name: KeyValueDataStoreConf
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     StructuredStreamingETLModel:
       required:
       - name
@@ -3456,7 +3456,7 @@ components:
             type: string
       xml:
         name: StructuredStreamingETLModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     PrefixKeyValueMatchingStrategy:
       type: object
     LogEntry:
@@ -3487,7 +3487,7 @@ components:
           nullable: true
       xml:
         name: LogEntry
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     BatchJobStartResult:
       required:
       - startResult
@@ -3510,7 +3510,7 @@ components:
           type: string
       xml:
         name: SourceEntry
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     RawDataDTO:
       required:
       - name
@@ -3523,7 +3523,7 @@ components:
           type: string
       xml:
         name: RawDataDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     IndexDTO:
       required:
       - name
@@ -3536,7 +3536,7 @@ components:
           type: string
       xml:
         name: IndexDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     DataStoreCategoryEnum:
       type: string
       enum:
@@ -3562,7 +3562,7 @@ components:
           $ref: '#/components/schemas/JObject'
       xml:
         name: ProcessGroupResponse
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     BsonDocument:
       type: object
     ElasticConfigModel:
@@ -3579,7 +3579,7 @@ components:
           type: string
       xml:
         name: ElasticConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     ErrorModel:
       required:
       - fileName
@@ -3617,7 +3617,7 @@ components:
           type: string
       xml:
         name: KeyValueDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     PrefixAndTimeBoundKeyValueMatchingStrategy:
       required:
       - separator
@@ -3633,7 +3633,7 @@ components:
           type: string
       xml:
         name: PrefixAndTimeBoundKeyValueMatchingStrategy
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     JObject:
       type: object
       xml:
@@ -3659,7 +3659,7 @@ components:
             type: string
       xml:
         name: ReaderModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     PrefixRawMatchingStrategy:
       required:
       - dataframeKeyMatchingExpression
@@ -3669,7 +3669,7 @@ components:
           type: string
       xml:
         name: PrefixRawMatchingStrategy
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     MetricEntry:
       required:
       - source
@@ -3682,7 +3682,7 @@ components:
           type: string
       xml:
         name: MetricEntry
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     IndexModel:
       required:
       - name
@@ -3716,7 +3716,7 @@ components:
           nullable: true
       xml:
         name: IndexModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     KafkaConfigModel:
       required:
       - connections
@@ -3767,7 +3767,7 @@ components:
           type: string
       xml:
         name: KafkaConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     FreeCodeDTO:
       required:
       - name
@@ -3780,7 +3780,7 @@ components:
           type: string
       xml:
         name: FreeCodeDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     TopicModel:
       required:
       - name
@@ -3825,7 +3825,7 @@ components:
           $ref: '#/components/schemas/TopicCompressionEnum'
       xml:
         name: TopicModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     BatchETLModel:
       required:
       - name
@@ -3861,7 +3861,7 @@ components:
           type: string
       xml:
         name: BatchETLModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     BatchJobExclusionConfig:
       required:
       - isFullyExclusive
@@ -3876,7 +3876,7 @@ components:
             type: string
       xml:
         name: BatchJobExclusionConfig
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     SolrConfigModel:
       required:
       - zookeeperConnections
@@ -3889,7 +3889,7 @@ components:
           type: string
       xml:
         name: SolrConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     RTModel:
       required:
       - name
@@ -3911,7 +3911,7 @@ components:
           $ref: '#/components/schemas/WriterModel'
       xml:
         name: RTModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     Events:
       required:
       - found
@@ -3927,7 +3927,7 @@ components:
             $ref: '#/components/schemas/EventEntry'
       xml:
         name: Events
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     TelemetryPoint:
       required:
       - timestamp
@@ -3942,7 +3942,7 @@ components:
           format: double
       xml:
         name: TelemetryPoint
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     ProducerModel:
       required:
       - name
@@ -3970,7 +3970,7 @@ components:
           type: boolean
       xml:
         name: ProducerModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     Aggregate:
       type: string
       enum:
@@ -4011,7 +4011,7 @@ components:
             type: string
       xml:
         name: StreamingReaderModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     TelemetrySeries:
       required:
       - source
@@ -4029,7 +4029,7 @@ components:
             $ref: '#/components/schemas/TelemetryPoint'
       xml:
         name: TelemetrySeries
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     TelemetryTopicConfigModel:
       required:
       - topicName
@@ -4057,7 +4057,7 @@ components:
             $ref: '#/components/schemas/JMXTelemetryConfigModel'
       xml:
         name: TelemetryTopicConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     ZookeeperConnectionsConfig:
       required:
       - connections
@@ -4092,7 +4092,7 @@ components:
           $ref: '#/components/schemas/TelemetryTopicConfigModel'
       xml:
         name: TelemetryConfigModel
-        namespace: java://it.agilelab.bigdata.wasp.core.models.configuration
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     FlowNifiDTO:
       required:
       - name
@@ -4105,7 +4105,7 @@ components:
           type: string
       xml:
         name: FlowNifiDTO
-        namespace: java://it.agilelab.bigdata.wasp.core.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     ExactRawMatchingStrategy:
       required:
       - dataframeKeyMatchingExpression
@@ -4115,7 +4115,7 @@ components:
           type: string
       xml:
         name: ExactRawMatchingStrategy
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     KeyValueOption:
       required:
       - key
@@ -4128,7 +4128,7 @@ components:
           type: string
       xml:
         name: KeyValueOption
-        namespace: java://it.agilelab.bigdata.wasp.core.models
+        namespace: java://it.agilelab.bigdata.wasp.models
     PipegraphStatus:
       type: string
       enum:

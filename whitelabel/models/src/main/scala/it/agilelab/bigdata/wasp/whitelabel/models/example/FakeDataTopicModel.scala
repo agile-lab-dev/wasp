@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.whitelabel.models.example
 import java.util.UUID
 
 import com.sksamuel.avro4s.AvroSchema
-import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
+import it.agilelab.bigdata.wasp.models.TopicModel
 
 import scala.util.Random
 

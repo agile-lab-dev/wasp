@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.core.eventengine
 
 import com.sksamuel.avro4s.AvroSchema
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.KafkaProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
 import it.agilelab.bigdata.wasp.core.eventengine.settings.ModelSettings
-import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
+import it.agilelab.bigdata.wasp.models.{StreamingReaderModel, TopicModel}
 
 object EventTopicModelFactory {
 

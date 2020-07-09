@@ -4,10 +4,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{
-  BatchJobInstanceModel,
-  BatchJobModel
-}
+import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel}
 
 trait BatchJobRoutesOpenApiDefinition
     extends BatchOpenApiComponentsSupport

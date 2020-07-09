@@ -4,8 +4,8 @@ import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.ReadConfig
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.MongoDbProduct
-import it.agilelab.bigdata.wasp.core.models.{DocumentModel, ReaderModel}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.MongoDbProduct
+import it.agilelab.bigdata.wasp.models.{DocumentModel, ReaderModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{DataType, StructType}

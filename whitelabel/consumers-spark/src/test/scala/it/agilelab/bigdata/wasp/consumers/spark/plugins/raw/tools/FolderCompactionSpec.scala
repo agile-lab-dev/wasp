@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools
 
 import it.agilelab.bigdata.wasp.consumers.SparkFlatSpec
-import it.agilelab.bigdata.wasp.core.models.{RawModel, RawOptions}
+import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.spark.sql.functions.{col, lit}

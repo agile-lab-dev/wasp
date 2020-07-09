@@ -5,7 +5,7 @@ import org.apache.spark.sql.streaming.{StreamingQuery, StreamingQueryException, 
 import scala.util.{Failure, Try}
 
 /**
-  * Trait collecting operations to be composed to realize Monitoring of a [[it.agilelab.bigdata.wasp.core.models.StructuredStreamingETLModel]]
+  * Trait collecting operations to be composed to realize Monitoring of a [[it.agilelab.bigdata.wasp.models.StructuredStreamingETLModel]]
   */
 trait MonitoringStep {
 

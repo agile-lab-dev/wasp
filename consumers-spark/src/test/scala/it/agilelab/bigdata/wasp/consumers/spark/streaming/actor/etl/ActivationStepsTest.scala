@@ -3,8 +3,9 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 import it.agilelab.bigdata.wasp.consumers.spark.eventengine.SparkSetup
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{EventIndexingStrategy, FreeCodeStrategy, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
-import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.models.{FreeCodeModel, StrategyModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, TopicBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
+import it.agilelab.bigdata.wasp.models.{FreeCodeModel, StrategyModel, StructuredStreamingETLModel}
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{FlatSpec, Matchers}
 

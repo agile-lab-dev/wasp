@@ -12,17 +12,14 @@ import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, M
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{FreeCodeStrategy, ReaderKey, Strategy}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{
-  StaticReaderFactory,
-  StreamingReaderFactory
-}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
-import it.agilelab.bigdata.wasp.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct._
-import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.{KafkaEntryConfig, TelemetryConfigModel, TinyKafkaConfig}
+import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct._
+import it.agilelab.bigdata.wasp.models.configuration.{KafkaEntryConfig, TelemetryConfigModel, TinyKafkaConfig}
+import it.agilelab.bigdata.wasp.models.{MlModelOnlyInfo, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import org.apache.kafka.clients.producer._
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction

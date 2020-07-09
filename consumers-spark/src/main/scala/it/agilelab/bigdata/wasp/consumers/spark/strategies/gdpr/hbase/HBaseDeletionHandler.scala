@@ -8,8 +8,8 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils.
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hbase.HBaseUtils
 import it.agilelab.bigdata.wasp.consumers.spark.utils.HBaseConnection
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
-import it.agilelab.bigdata.wasp.core.models.{ExactKeyValueMatchingStrategy, KeyValueMatchingStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy}
+import it.agilelab.bigdata.wasp.models.{ExactKeyValueMatchingStrategy, KeyValueMatchingStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy}
+import it.agilelab.bigdata.wasp.models.configuration.HBaseConfigModel
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.hbase.client.{Scan, Table}
 import org.apache.spark.TaskContext

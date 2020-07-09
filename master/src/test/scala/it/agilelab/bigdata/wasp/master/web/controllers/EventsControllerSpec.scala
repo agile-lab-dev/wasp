@@ -4,8 +4,8 @@ import java.time.Instant
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.testkit.TestDuration
-import it.agilelab.bigdata.wasp.core.models.{EventEntry, Events, Logs}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.models.{EventEntry, Events}
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsonFormat, RootJsonFormat}
 

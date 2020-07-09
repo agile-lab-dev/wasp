@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import java.util.UUID
 
-import it.agilelab.bigdata.wasp.core.models.PipegraphStatus.PipegraphStatus
-import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus}
+import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
+import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus}
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.util.{Failure, Success, Try}

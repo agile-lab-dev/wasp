@@ -7,13 +7,13 @@ import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriterFactory, SparkWriterFactoryDefault}
-import it.agilelab.bigdata.wasp.core.bl._
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.repository.core.bl._
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.BatchMessages
-import it.agilelab.bigdata.wasp.core.models.JobStatus.JobStatus
-import it.agilelab.bigdata.wasp.core.models.{BatchJobInstanceModel, BatchJobModel, BatchSchedulerModel, JobStatus}
 import it.agilelab.bigdata.wasp.core.utils.SparkBatchConfiguration
+import it.agilelab.bigdata.wasp.models.JobStatus.JobStatus
+import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel, BatchSchedulerModel, JobStatus}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.quartz.Scheduler
 

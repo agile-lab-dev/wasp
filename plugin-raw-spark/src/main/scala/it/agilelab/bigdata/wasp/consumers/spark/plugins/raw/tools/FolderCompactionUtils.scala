@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools
 
 import com.typesafe.config.{Config, ConfigList, ConfigValueType}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools.WhereCondition.PartitionsCombination
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.models.{RawModel, RawOptions}
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.bson.BsonString
 

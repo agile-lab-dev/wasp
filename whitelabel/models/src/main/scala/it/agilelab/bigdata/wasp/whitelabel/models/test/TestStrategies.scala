@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import it.agilelab.bigdata.wasp.core.models.StrategyModel
+import it.agilelab.bigdata.wasp.models.StrategyModel
 
 /**
   * @author Nicolò Bidotti

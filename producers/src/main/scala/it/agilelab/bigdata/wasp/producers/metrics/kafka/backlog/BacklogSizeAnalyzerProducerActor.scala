@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog
 
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.core.messages.{TelemetryMessageSource, TelemetryMessageSourcesSummary}
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.ProducerActor
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.{KafkaOffsets, KafkaOffsetsRequest}
 

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.core.models.{ReaderModel, _}
+import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobModel, LegacyStreamingETLModel, ReaderModel, StrategyModel, WriterModel}
 
 private[wasp] object TestBatchJobModels {
 

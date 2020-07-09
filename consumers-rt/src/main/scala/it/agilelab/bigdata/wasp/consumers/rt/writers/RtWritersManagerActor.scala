@@ -2,12 +2,12 @@ package it.agilelab.bigdata.wasp.consumers.rt.writers
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.camel.{CamelMessage, Producer}
-import it.agilelab.bigdata.wasp.core.bl.{IndexBL, TopicBL, WebsocketBL}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.{ElasticProduct, SolrProduct}
-import it.agilelab.bigdata.wasp.core.datastores.{IndexCategory, TopicCategory, WebSocketCategory}
+import it.agilelab.bigdata.wasp.repository.core.bl.{IndexBL, TopicBL, WebsocketBL}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.{ElasticProduct, SolrProduct}
+import it.agilelab.bigdata.wasp.datastores.{IndexCategory, TopicCategory, WebSocketCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
+import it.agilelab.bigdata.wasp.models.{TopicModel, WebsocketModel, WriterModel}
 import org.apache.camel.component.websocket._
 import org.mongodb.scala.bson.BsonDocument
 

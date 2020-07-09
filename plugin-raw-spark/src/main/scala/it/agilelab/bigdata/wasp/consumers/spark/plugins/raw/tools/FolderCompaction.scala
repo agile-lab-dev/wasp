@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.RawSparkBatchWriter
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.RawModel
+import it.agilelab.bigdata.wasp.models.RawModel
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.functions.input_file_name
 import org.apache.spark.sql.types.{DataType, StructType}

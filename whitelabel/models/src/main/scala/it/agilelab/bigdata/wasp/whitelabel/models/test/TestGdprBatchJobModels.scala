@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import java.net.InetAddress
 
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models._
 import org.apache.spark.sql.types._
 import java.time.temporal.ChronoUnit
 

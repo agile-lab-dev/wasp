@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
 import com.sksamuel.avro4s.AvroSchema
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
+import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory

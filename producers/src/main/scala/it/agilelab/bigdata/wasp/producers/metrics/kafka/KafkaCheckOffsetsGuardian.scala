@@ -5,7 +5,7 @@ import java.util.Date
 import akka.actor.{Actor, ActorRef, Props}
 import it.agilelab.bigdata.wasp.core.kafka.WaspKafkaWriter
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigModel
 import it.agilelab.bigdata.wasp.producers.StopMainTask
 
 import scala.collection.mutable

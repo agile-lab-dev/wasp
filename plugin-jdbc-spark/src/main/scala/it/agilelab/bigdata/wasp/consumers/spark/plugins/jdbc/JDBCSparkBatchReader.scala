@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.jdbc
 
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.JDBCProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.JDBCProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.SqlSourceModel
 import it.agilelab.bigdata.wasp.core.utils.JdbcConfiguration
+import it.agilelab.bigdata.wasp.models.SqlSourceModel
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 

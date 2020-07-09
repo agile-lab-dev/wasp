@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import it.agilelab.bigdata.wasp.consumers.spark.batch.StartBatchJobSender
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.models.BatchSchedulerModel
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.models.BatchSchedulerModel
 import org.quartz.CronScheduleBuilder._
 import org.quartz.JobBuilder._
 import org.quartz.TriggerBuilder._

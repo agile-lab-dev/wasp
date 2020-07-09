@@ -9,15 +9,15 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
-import it.agilelab.bigdata.wasp.core.bl.{ConfigBL, MlModelBL, ProducerBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, MlModelBL, ProducerBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.ProducerModel
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.messages.{ModelKey, RestRequest}
 
 import scala.concurrent.Future
 import spray.json._
 import NifiRquestJsonProtocol._
+import it.agilelab.bigdata.wasp.models.ProducerModel
 import org.apache.commons.io.FileUtils
 
 /**

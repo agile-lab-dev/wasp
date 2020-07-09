@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.readers
 
-import it.agilelab.bigdata.wasp.core.models.{StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
+import it.agilelab.bigdata.wasp.models.{StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.streaming.StreamingContext

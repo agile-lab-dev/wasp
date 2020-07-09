@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp
 
-import it.agilelab.bigdata.wasp.core.models.{IndexModel, IndexModelBuilder, TopicModel}
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
+import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, TopicModel}
 
 /**
 	* Datastore models for use in testing code.
@@ -10,7 +10,7 @@ import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 	*/
 object DatastoreModelsForTesting {
 	object IndexModels {
-     import IndexModelBuilder._
+     import it.agilelab.bigdata.wasp.models.IndexModelBuilder._
      import org.json4s.JsonDSL._
      import org.json4s._
 
@@ -74,7 +74,7 @@ object DatastoreModelsForTesting {
 					|        }
 				""".stripMargin))
 
-		lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
+		lazy val json = models.TopicModel(name = TopicModel.name(topic_name + "_json"),
 		                           creationTime = System.currentTimeMillis,
 		                           partitions = 3,
 		                           replicas = 1,

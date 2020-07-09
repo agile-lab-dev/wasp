@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.editor._
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.editor.{PipegraphDTO, RawDataDTO, StrategyDTO, StreamingOutputDTO, StructuredStreamingETLDTO}
 
 trait PipegraphDTOService {
   /**

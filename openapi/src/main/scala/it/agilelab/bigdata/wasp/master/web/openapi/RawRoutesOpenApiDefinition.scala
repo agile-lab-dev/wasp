@@ -4,7 +4,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{RawModel, RawOptions}
+import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 
 trait RawModelOpenApiDefinition extends ProductOpenApi with LangOpenApi with CollectionsOpenApi {
 

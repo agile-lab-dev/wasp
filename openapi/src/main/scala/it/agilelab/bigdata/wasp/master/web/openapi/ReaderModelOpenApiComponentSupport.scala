@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.core.models.{ReaderModel, StreamingReaderModel}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.models.{ReaderModel, StreamingReaderModel}
 
 trait ReaderModelOpenApiComponentSupport
     extends LangOpenApi

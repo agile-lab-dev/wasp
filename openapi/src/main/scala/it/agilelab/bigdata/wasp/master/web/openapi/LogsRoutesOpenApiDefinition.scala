@@ -6,7 +6,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{LogEntry, Logs}
+import it.agilelab.bigdata.wasp.models.{LogEntry, Logs}
 
 trait LogsOpenApiComponentSupport
     extends ProducerOpenApiComponentSupport

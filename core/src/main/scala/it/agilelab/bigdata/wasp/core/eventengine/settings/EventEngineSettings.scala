@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.core.eventengine.settings
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingRule
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventRule
-import it.agilelab.bigdata.wasp.core.models.{StructuredStreamingETLModel, TopicModel}
+
 /**
   * Models supported by the event engine to load and store events
   * Currently only Kafka and mail are supported

@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.core.models.{PipegraphInstanceModel, PipegraphModel}
 import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages
 import it.agilelab.bigdata.wasp.core.messages
+import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel}
 
 /**
   * Trait marking messages as being part of the [[SparkConsumersStreamingMasterGuardian]] protocol.

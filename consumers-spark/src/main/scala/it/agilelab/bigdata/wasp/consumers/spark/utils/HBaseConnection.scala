@@ -5,7 +5,7 @@ import java.util
 import java.util.concurrent.{Executors, TimeUnit}
 
 import it.agilelab.bigdata.wasp.core.logging.GuardedLogging
-import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.HBaseConfigModel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
@@ -19,6 +19,7 @@ import org.apache.hadoop.security.token.TokenIdentifier
 import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier
 import org.apache.hadoop.yarn.security.{AMRMTokenIdentifier, ContainerTokenIdentifier, NMTokenIdentifier}
 import org.apache.hadoop.yarn.security.client.ClientToAMTokenIdentifier
+
 import scala.collection.JavaConverters._
 
 

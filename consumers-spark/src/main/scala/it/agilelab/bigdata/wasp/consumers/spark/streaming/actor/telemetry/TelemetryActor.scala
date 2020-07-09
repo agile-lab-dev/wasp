@@ -10,9 +10,9 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutco
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.TelemetryMessageJsonProtocol._
 import it.agilelab.bigdata.wasp.core.messages.{TelemetryActorRedirection, TelemetryMessageSource, TelemetryMessageSourcesSummary}
-import it.agilelab.bigdata.wasp.core.models.configuration.KafkaEntryConfig
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
+import it.agilelab.bigdata.wasp.models.configuration.KafkaEntryConfig
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.sql.streaming.StreamingQueryProgress
 import spray.json._

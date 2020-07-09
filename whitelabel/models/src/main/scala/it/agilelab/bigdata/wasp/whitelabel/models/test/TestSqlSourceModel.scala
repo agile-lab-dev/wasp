@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.SqlSourceModel
 
 private[wasp] object TestSqlSouceModel {
 

@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
-import it.agilelab.bigdata.wasp.core.models.FreeCodeModel
 import it.agilelab.bigdata.wasp.core.utils.FreeCodeCompilerUtils
 import it.agilelab.bigdata.wasp.master.web.controllers.FreeCodeDataSupport._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.models.FreeCodeModel
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsonFormat, RootJsonFormat}
 

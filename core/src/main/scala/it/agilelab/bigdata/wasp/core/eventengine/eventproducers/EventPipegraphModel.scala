@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.core.eventengine.eventproducers
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.eventengine.settings.{EventPipegraphSettings, EventPipegraphSettingsFactory, EventProducerETLSettings}
 import it.agilelab.bigdata.wasp.core.eventengine.{EventReaderModelFactory, EventTopicModelFactory}
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, MultiTopicModel, PipegraphModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
 
 /**
   * EventPipegraph is a System pipegraph which produces Event objects.
@@ -121,7 +121,7 @@ private[wasp] object SolrEventIndex{
 
   val index_name = "event_solr"
 
-  import IndexModelBuilder._
+  import it.agilelab.bigdata.wasp.models.IndexModelBuilder._
 
   def apply(): IndexModel =
     IndexModelBuilder.forSolr

@@ -5,12 +5,12 @@ import java.util.Calendar
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspSystem._
-import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.repository.core.bl._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.PipegraphMessages.StartSystemPipegraphs
 import it.agilelab.bigdata.wasp.core.messages.{PipegraphMessages, _}
-import it.agilelab.bigdata.wasp.core.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
+import it.agilelab.bigdata.wasp.models.{BatchJobModel, PipegraphModel, ProducerModel}
 import spray.json.{JsObject, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global

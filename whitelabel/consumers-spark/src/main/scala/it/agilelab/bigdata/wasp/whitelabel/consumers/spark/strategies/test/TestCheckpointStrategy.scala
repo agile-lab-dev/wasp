@@ -1,8 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.GenericTopicProduct
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.GenericTopicProduct
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.GroupState

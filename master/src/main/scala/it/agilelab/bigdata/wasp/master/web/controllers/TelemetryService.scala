@@ -5,7 +5,7 @@ import java.util.Date
 import java.util.regex.Pattern
 
 import it.agilelab.bigdata.wasp.core.SolrTelemetryIndexModel
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models.{Aggregate, MetricEntry, Metrics, SourceEntry, Sources, TelemetryPoint, TelemetrySeries}
 import org.apache.solr.client.solrj.util.ClientUtils
 import org.apache.solr.common.util.{NamedList, SimpleOrderedMap}
 

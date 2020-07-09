@@ -11,8 +11,8 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.ConfigUtil
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.GdprUtils._
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.{KeyWithCorrelation, RowKeyWithCorrelation}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.models.configuration.HBaseConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.HBaseConfigModel
+import it.agilelab.bigdata.wasp.models.{ContainsRawMatchingStrategy, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, KeyValueDataStoreConf, KeyValueMatchingStrategy, KeyValueModel, NoPartitionPruningStrategy, PartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawMatchingStrategy, RawModel, TimeBasedBetweenPartitionPruningStrategy}
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.filter.{FilterList, FirstKeyOnlyFilter, KeyOnlyFilter, PrefixFilter}

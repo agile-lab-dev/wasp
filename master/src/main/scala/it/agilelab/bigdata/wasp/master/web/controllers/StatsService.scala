@@ -3,9 +3,9 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import java.time.Instant
 import java.util.Date
 
+import it.agilelab.bigdata.wasp.core.{SolrLoggerIndex, SolrTelemetryIndexModel}
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.SolrEventIndex
-import it.agilelab.bigdata.wasp.core.models.{CountEntry, Counts}
-import it.agilelab.bigdata.wasp.core.{models, SolrLoggerIndex, SolrTelemetryIndexModel}
+import it.agilelab.bigdata.wasp.models.{CountEntry, Counts}
 import org.apache.solr.client.solrj.response.QueryResponse
 
 import scala.collection.JavaConverters._

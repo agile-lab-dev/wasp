@@ -5,8 +5,8 @@ import java.io.ByteArrayOutputStream
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.sksamuel.avro4s.{AvroJsonOutputStream, SchemaFor, ToRecord}
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.{ProducerActor, ProducerGuardian, StartMainTask}
 import it.agilelab.bigdata.wasp.whitelabel.models.example.FakeData
 import spray.json.DefaultJsonProtocol

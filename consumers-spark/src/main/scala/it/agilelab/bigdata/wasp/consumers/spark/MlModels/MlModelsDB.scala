@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.MlModels
 
-import it.agilelab.bigdata.wasp.core.bl.MlModelBL
-import it.agilelab.bigdata.wasp.core.models.MlModelOnlyInfo
+import it.agilelab.bigdata.wasp.repository.core.bl.MlModelBL
+import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.Transformer

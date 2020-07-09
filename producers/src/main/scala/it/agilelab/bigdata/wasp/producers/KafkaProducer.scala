@@ -5,7 +5,7 @@ import java.util.Properties
 import akka.actor.{Actor, ActorLogging}
 import it.agilelab.bigdata.wasp.core.kafka.WaspKafkaWriter
 import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
-import it.agilelab.bigdata.wasp.core.models.configuration.KafkaConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigModel
 
 class KafkaPublisherActor(val producerConfig: Properties) extends KafkaProducerActor[String, Array[Byte]] {
 

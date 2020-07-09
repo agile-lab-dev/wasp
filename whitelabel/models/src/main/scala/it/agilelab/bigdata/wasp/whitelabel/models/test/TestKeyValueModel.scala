@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, KeyValueOption}
+import it.agilelab.bigdata.wasp.models.{KeyValueModel, KeyValueOption}
 
 object TestKeyValueModel {
 

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, PipegraphInstanceModel, PipegraphModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, StructuredStreamingETLModel}
 
 /**
   * Trait marking classes holding [[PipegraphGuardian]] State Data

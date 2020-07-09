@@ -21,10 +21,10 @@ import akka.actor._
 import akka.routing.BalancingPool
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.core.WaspSystem._
-import it.agilelab.bigdata.wasp.core.bl.{ProducerBL, TopicBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging.LogEvent
-import it.agilelab.bigdata.wasp.core.models.TopicModel
+import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
 import scala.util.parsing.json.{JSONFormat, JSONObject}

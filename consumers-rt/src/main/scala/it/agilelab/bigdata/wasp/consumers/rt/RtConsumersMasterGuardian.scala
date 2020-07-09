@@ -3,11 +3,11 @@ package it.agilelab.bigdata.wasp.consumers.rt
 import akka.actor.{ActorRef, Props}
 import akka.pattern.gracefulStop
 import it.agilelab.bigdata.wasp.core.WaspSystem.generalTimeout
-import it.agilelab.bigdata.wasp.core.bl._
+import it.agilelab.bigdata.wasp.repository.core.bl._
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian.generateUniqueComponentName
-import it.agilelab.bigdata.wasp.core.models.RTModel
 import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
+import it.agilelab.bigdata.wasp.models.RTModel
 
 import scala.collection.mutable
 import scala.concurrent.{Await, Future}

@@ -13,9 +13,9 @@ object BatchMessages {
 
 
   /**
-    * Message sent to batch consumer guardian to request start of a [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]].
+    * Message sent to batch consumer guardian to request start of a [[it.agilelab.bigdata.wasp.models.BatchJobModel]].
     *
-    * @param name The name of the [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]] to start
+    * @param name The name of the [[it.agilelab.bigdata.wasp.models.BatchJobModel]] to start
     */
   case class StartBatchJob(name: String, restConfig: Config) extends BatchMessage
 
@@ -26,19 +26,22 @@ object BatchMessages {
 
   /**
     * Successful response to [[StartBatchJob]]
-    * @param name The name of the [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]] started
+ *
+    * @param name The name of the [[it.agilelab.bigdata.wasp.models.BatchJobModel]] started
     */
   case class StartBatchJobResultSuccess(name: String, instanceName: String) extends StartBatchJobResult
 
   /**
     * Failure response to [[StartBatchJob]]
-    * @param name The name of the [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]] that did not start.
+ *
+    * @param name The name of the [[it.agilelab.bigdata.wasp.models.BatchJobModel]] that did not start.
     * @param error
     */
   case class StartBatchJobResultFailure(name: String, error: String) extends StartBatchJobResult
 
   /**
-    * Message sent to batch consumer guardian to request stop of a [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]].
+    * Message sent to batch consumer guardian to request stop of a [[it.agilelab.bigdata.wasp.models.BatchJobModel]].
+ *
     * @param name
     */
   case class StopBatchJob(name: String) extends BatchMessage
@@ -50,13 +53,15 @@ object BatchMessages {
 
   /**
     * Successful response to [[StopBatchJob]]
-    * @param name The name of the [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]] stopped
+ *
+    * @param name The name of the [[it.agilelab.bigdata.wasp.models.BatchJobModel]] stopped
     */
   case class StopBatchJobResultSuccess(name: String) extends StopBatchJobResult
 
   /**
     * Failure response to [[StopBatchJob]]
-    * @param name The name of the [[it.agilelab.bigdata.wasp.core.models.BatchJobModel]] stopped
+ *
+    * @param name The name of the [[it.agilelab.bigdata.wasp.models.BatchJobModel]] stopped
     */
   case class StopBatchJobResultFailure(name: String, error: String) extends StopBatchJobResult
 

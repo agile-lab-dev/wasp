@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.producers
 import akka.actor.{Actor, ActorRef, Cancellable}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.WaspMessageEnvelope
-import it.agilelab.bigdata.wasp.core.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, JsonConverter, StringToByteArrayUtil}
+import it.agilelab.bigdata.wasp.models.TopicModel
 
 case object StopMainTask
 

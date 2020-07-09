@@ -18,10 +18,10 @@ import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.nifi.client.core.SttpSerializer
 import it.agilelab.bigdata.nifi.client.{NifiClient, NifiRawClient}
 import it.agilelab.bigdata.wasp.compiler.utils.{CompilerPool, FreeCodeCompiler}
-import it.agilelab.bigdata.wasp.core.bl.ConfigBL
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.eventengine.Event
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
-import it.agilelab.bigdata.wasp.core.models._
+import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtilsDefault, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian

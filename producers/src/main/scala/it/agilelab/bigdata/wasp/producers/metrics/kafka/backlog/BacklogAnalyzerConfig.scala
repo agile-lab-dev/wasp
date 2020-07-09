@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog
 
 import com.typesafe.config.{Config, ConfigRenderOptions, ConfigValueType}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct.KafkaProduct
-import it.agilelab.bigdata.wasp.core.models.{PipegraphModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, StructuredStreamingETLModel}
 
 
 case class BacklogAnalyzerConfig(pipegraph: PipegraphModel,

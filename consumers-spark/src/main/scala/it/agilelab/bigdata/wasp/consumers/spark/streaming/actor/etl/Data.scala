@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
-import it.agilelab.bigdata.wasp.core.models.StructuredStreamingETLModel
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.StreamingQuery
 

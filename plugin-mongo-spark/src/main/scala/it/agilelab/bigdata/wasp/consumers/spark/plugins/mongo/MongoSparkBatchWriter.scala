@@ -2,9 +2,9 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.mongo
 
 import com.mongodb.spark.config.WriteConfig
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
-import it.agilelab.bigdata.wasp.core.models.{DocumentModel, WriterModel}
 import org.apache.spark.sql.DataFrame
 import com.mongodb.spark.sql._
+import it.agilelab.bigdata.wasp.models.{DocumentModel, WriterModel}
 
 class MongoSparkBatchWriter(writer: WriterModel, model : DocumentModel) extends SparkBatchWriter {
   override def write(data: DataFrame): Unit = {

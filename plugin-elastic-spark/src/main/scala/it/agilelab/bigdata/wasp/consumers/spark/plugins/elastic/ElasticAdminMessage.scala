@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import it.agilelab.bigdata.wasp.core.WaspMessage
-import it.agilelab.bigdata.wasp.core.models.configuration.ElasticConfigModel
+import it.agilelab.bigdata.wasp.models.configuration.ElasticConfigModel
 
 sealed abstract class ElasticAdminMessage extends WaspMessage
 

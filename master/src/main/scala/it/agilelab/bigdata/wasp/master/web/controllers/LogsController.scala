@@ -4,7 +4,6 @@ import java.time.Instant
 
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
-import it.agilelab.bigdata.wasp.core.models.LogEntry
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 
 class LogsController(logs: LogsService) extends Directives with JsonSupport {

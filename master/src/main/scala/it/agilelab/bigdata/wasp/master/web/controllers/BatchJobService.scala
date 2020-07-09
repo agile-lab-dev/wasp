@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import com.typesafe.config.Config
-import it.agilelab.bigdata.wasp.core.models.{BatchJobInstanceModel, BatchJobModel}
+import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel}
 
 trait BatchJobService {
 

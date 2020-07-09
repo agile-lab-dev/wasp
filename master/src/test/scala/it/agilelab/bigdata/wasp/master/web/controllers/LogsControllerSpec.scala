@@ -3,8 +3,6 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import java.time.Instant
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import it.agilelab.bigdata.wasp.core.models
-import it.agilelab.bigdata.wasp.core.models.{LogEntry, Logs}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsonFormat, RootJsonFormat}
@@ -12,6 +10,7 @@ import spray.json.{JsonFormat, RootJsonFormat}
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import akka.testkit.TestDuration
+import it.agilelab.bigdata.wasp.models.{LogEntry, Logs}
 
 class MockLogsService extends LogsService {
 
@@ -23,21 +22,21 @@ class MockLogsService extends LogsService {
       Instant.parse("2020-04-28T13:32:00.98Z"),
       "WASP-akka.actor.default-dispatcher-3"
     ),
-    models.LogEntry(
-      "it.agilelab.bigdata.wasp.db.mongo.WaspDBImp",
+    LogEntry(
+      "it.agilelab.bigdata.wasp.repository.core.db.mongo.WaspDBImp",
       "Info",
       "Locating document(s) by key name with value BsonString{value='LoggerPipegraph'} on collection pipegraphs",
       Instant.parse("2020-04-28T13:35:10.198Z"),
       "WASP-akka.actor.default-dispatcher-5"
     ),
-    models.LogEntry(
+    LogEntry(
       "it.agilelab.bigdata.wasp.master.MasterGuardian",
       "Info",
       "Starting pipegraph 'LoggerPipegraph'",
       Instant.parse("2020-04-28T13:35:10.273Z"),
       "WASP-akka.actor.default-dispatcher-5"
     ),
-    models.LogEntry(
+    LogEntry(
       "it.agilelab.bigdata.wasp.master.MasterGuardianExpected",
       "Info",
       "Call invocation: message: StartPipegraph(LoggerPipegraph) result: Left(Pipegraph 'LoggerPipegraph' start not accepted due to [Cannot start more than one instance of [LoggerPipegraph]])",

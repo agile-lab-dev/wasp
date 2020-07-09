@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.writers
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
-import it.agilelab.bigdata.wasp.core.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.repository.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.{LegacyStreamingETLModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext

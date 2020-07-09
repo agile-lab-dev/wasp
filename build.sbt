@@ -31,19 +31,36 @@ lazy val scala_compiler = Project("wasp-compiler", file("compiler"))
   .settings(libraryDependencies ++= Dependencies.test :+ Dependencies.scalaCompiler :+ Dependencies.scalaPool)
   .enablePlugins(BuildInfoPlugin)
 
+
+lazy val model = Project("wasp-model", file("model"))
+  .settings(Settings.commonSettings: _*)
+  .settings(Settings.sbtBuildInfoSettings: _*)
+  .settings(libraryDependencies ++= Dependencies.model ++  Dependencies.test :+ Dependencies.darwinCore)
+  .enablePlugins(BuildInfoPlugin)
+
 lazy val core = Project("wasp-core", file("core"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(scala_compiler)
+  .dependsOn(model)
+  .dependsOn(repository_core)
   .dependsOn(nifi_client)
   .settings(Settings.sbtBuildInfoSettings: _*)
   .settings(libraryDependencies ++= Dependencies.core ++ Dependencies.test :+ Dependencies.darwinCore)
   .enablePlugins(BuildInfoPlugin)
 
-lazy val wasp_mongo = Project("wasp-mongo", file("wasp-mongo"))
+lazy val repository_core = Project("wasp-repository-core", file("repository/core"))
   .settings(Settings.commonSettings: _*)
+  .dependsOn(model)
+  .settings(Settings.sbtBuildInfoSettings: _*)
+  .settings(libraryDependencies ++=  Dependencies.test)
+  .enablePlugins(BuildInfoPlugin)
+
+lazy val repository_mongo = Project("wasp-repository-mongo", file("repository/mongo"))
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(repository_core)
   .dependsOn(core)
   .settings(Settings.sbtBuildInfoSettings: _*)
-  .settings(libraryDependencies ++= Dependencies.wasp_mongo ++ Dependencies.test)
+  .settings(libraryDependencies ++= Dependencies.repository_mongo ++ Dependencies.test)
   .enablePlugins(BuildInfoPlugin)
 
 lazy val master = Project("wasp-master", file("master"))
@@ -172,9 +189,11 @@ lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
 lazy val wasp = Project("wasp", file("."))
   .settings(Settings.commonSettings: _*)
   .aggregate(
+    model,
     scala_compiler,
+    repository_core,
     core,
-    wasp_mongo,
+    repository_mongo,
     master,
     producers,
     consumers_spark,
@@ -203,7 +222,7 @@ lazy val whiteLabelModels = Project("wasp-whitelabel-models", file("whitelabel/m
 lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/master"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(whiteLabelModels)
-  .dependsOn(wasp_mongo)
+  .dependsOn(repository_mongo)
   .dependsOn(master)
   .dependsOn(whiteLabelConsumersSpark)
   .dependsOn(plugin_hbase_spark)
@@ -213,7 +232,7 @@ lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/m
 lazy val whiteLabelProducers = Project("wasp-whitelabel-producers", file("whitelabel/producers"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(whiteLabelModels)
-  .dependsOn(wasp_mongo)
+  .dependsOn(repository_mongo)
   .dependsOn(producers)
   .dependsOn(plugin_hbase_spark)
   .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector)
@@ -223,7 +242,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .settings(Settings.commonSettings: _*)
   .dependsOn(whiteLabelModels)
   .dependsOn(consumers_spark)
-  .dependsOn(wasp_mongo)
+  .dependsOn(repository_mongo)
   .dependsOn(plugin_console_spark)
   .dependsOn(plugin_hbase_spark)
   .dependsOn(plugin_jdbc_spark)

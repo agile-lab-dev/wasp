@@ -4,7 +4,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.core.models.{KeyValueModel, KeyValueOption}
+import it.agilelab.bigdata.wasp.models.{KeyValueModel, KeyValueOption}
 
 trait KeyValueModelOpenApiDefinition extends ProductOpenApi with LangOpenApi with CollectionsOpenApi {
   implicit lazy val keyValueModelOpenApi: ToOpenApiSchema[KeyValueModel] =
