@@ -5,7 +5,8 @@ import akka.http.scaladsl.server.{Directives, Route}
 import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
 /**

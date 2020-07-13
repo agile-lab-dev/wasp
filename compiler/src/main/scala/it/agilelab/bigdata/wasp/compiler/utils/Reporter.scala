@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.compiler.utils
 
+import it.agilelab.bigdata.wasp.models.ErrorModel
+
 import scala.collection.mutable
 import scala.reflect.internal.util.{FakePos, NoPosition, Position}
 import scala.tools.nsc.Settings

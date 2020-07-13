@@ -188,6 +188,9 @@ object Dependencies {
   val sttpCore                  = "com.softwaremill.sttp.client" %% "core" % Versions.sttpVersion sttpExclusions
   val sttpJson4s                = "com.softwaremill.sttp.client" %% "json4s" % Versions.sttpVersion sttpExclusions
   val reflections               = "org.reflections" % "reflections" % Versions.reflectionsVersion
+  val postgres                  = "org.postgresql" % "postgresql" % Versions.postgresqlVersion
+  val dpcp2                     = "org.apache.commons" % "commons-dbcp2" % Versions.dbcp2Version
+  val postgresqlEmbedded        = "com.opentable.components" % "otj-pg-embedded" % Versions.postgresqlEmbeddedVersion % Test
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(
@@ -285,6 +288,12 @@ object Dependencies {
   val repository_mongo = Seq(
     mongodbScala,
     nameOf
+    ).map(excludeLog4j).map(excludeNetty)
+
+  val repository_postgres = Seq(
+    postgres,
+    dpcp2,
+    postgresqlEmbedded
     ).map(excludeLog4j).map(excludeNetty)
 
 

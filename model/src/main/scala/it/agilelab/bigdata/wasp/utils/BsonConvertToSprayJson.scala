@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.master.web.utils
+package it.agilelab.bigdata.wasp.utils
 
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -6,12 +6,10 @@ import java.time.temporal.{TemporalAccessor, TemporalQuery}
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
-import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
-import it.agilelab.bigdata.wasp.core.utils.DatastoreProductJsonFormat
 import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.models.configuration._
-import it.agilelab.bigdata.wasp.models.editor.{FlowNifiDTO, FreeCodeDTO, IndexDTO, KeyValueDTO, NifiStatelessInstanceModel, PipegraphDTO, ProcessGroupResponse, RawDataDTO, StrategyClassDTO, StrategyDTO, StreamingOutputDTO, StructuredStreamingETLDTO, TopicDTO}
-import it.agilelab.bigdata.wasp.models.{Counts, LogEntry, _}
+import it.agilelab.bigdata.wasp.models.editor._
+import it.agilelab.bigdata.wasp.models.{Counts, DashboardModel, LogEntry, _}
 import org.json4s.{DefaultFormats, Formats, JObject}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat, deserializationError, _}
@@ -75,7 +73,7 @@ class TopicDatastoreModelJsonFormat
     with SprayJsonSupport
     with DefaultJsonProtocol {
 
-  import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
+  import BsonConvertToSprayJson._
 
   implicit lazy val topicCompressionFormat: JsonFormat[TopicCompression] = new JsonFormat[TopicCompression] {
     override def write(obj: TopicCompression): JsValue =
@@ -114,7 +112,7 @@ trait JsonSupport
     with DataStoreConfJsonSupport
     with BatchJobJsonSupport {
 
-  import it.agilelab.bigdata.wasp.master.web.utils.BsonConvertToSprayJson._
+  import BsonConvertToSprayJson._
 
   implicit lazy val instant: RootJsonFormat[Instant] = new RootJsonFormat[Instant] {
     override def write(obj: Instant): JsValue = JsString(DateTimeFormatter.ISO_INSTANT.format(obj))

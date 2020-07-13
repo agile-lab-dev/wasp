@@ -1,5 +1,7 @@
 package it.agilelab.bigdata.wasp.compiler.utils
 
+import it.agilelab.bigdata.wasp.models.{CompletionModel, ErrorModel}
+
 class FreeCodeCompiler(compilerPool: CompilerPool) extends AutoCloseable {
 
   private val startClass = """object Compilation {""".stripMargin

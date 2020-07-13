@@ -7,8 +7,9 @@ import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.{StartPipegraph, StopPipegraph}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.{JsonResultsHelper, JsonSupport}
+import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel}
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
 /**

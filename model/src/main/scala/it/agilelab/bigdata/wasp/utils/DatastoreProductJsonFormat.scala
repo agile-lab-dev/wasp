@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.core.utils
+package it.agilelab.bigdata.wasp.utils
 
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
@@ -15,7 +15,7 @@ object DatastoreProductJsonFormat extends DatastoreProductSerde with RootJsonFor
 		val key = (category, product)
 		decodingLookupMap(key)
 	}
-	
+
 	override def write(obj: DatastoreProduct): JsValue = {
 		val (category, product) = encodingLookupMap(obj)
 		val fields = Map(categoryField -> JsString(category), productField -> JsString(product))

@@ -47,4 +47,7 @@ object Versions {
   val scalaParserAndCombinators = "1.0.4"
   val sttpVersion = "2.1.2"
   val reflectionsVersion = "0.9.11"
+  val postgresqlVersion = "42.2.5"
+  val dbcp2Version = "2.4.0"
+  val postgresqlEmbeddedVersion ="0.13.1"
 }

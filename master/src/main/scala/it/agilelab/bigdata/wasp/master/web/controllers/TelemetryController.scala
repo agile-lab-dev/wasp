@@ -4,9 +4,9 @@ import java.time.Instant
 
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import it.agilelab.bigdata.wasp.models.{Aggregate, MetricEntry, SourceEntry}
 import it.agilelab.bigdata.wasp.models.Aggregate.Aggregate
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 
 class TelemetryController(telemetry: TelemetryService) extends Directives with JsonSupport {
 

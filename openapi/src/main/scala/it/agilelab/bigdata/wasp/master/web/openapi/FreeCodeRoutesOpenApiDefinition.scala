@@ -6,8 +6,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel}
-import it.agilelab.bigdata.wasp.models.{FreeCode, FreeCodeModel}
+import it.agilelab.bigdata.wasp.models.{CompletionModel, FreeCode, FreeCodeModel}
 
 
 trait FreeCodeRoutesOpenApiDefinition extends

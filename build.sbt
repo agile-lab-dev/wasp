@@ -27,6 +27,7 @@ lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark
 
 lazy val scala_compiler = Project("wasp-compiler", file("compiler"))
   .settings(Settings.commonSettings: _*)
+  .dependsOn(model)
   .settings(Settings.sbtBuildInfoSettings: _*)
   .settings(libraryDependencies ++= Dependencies.test :+ Dependencies.scalaCompiler :+ Dependencies.scalaPool)
   .enablePlugins(BuildInfoPlugin)
@@ -62,6 +63,18 @@ lazy val repository_mongo = Project("wasp-repository-mongo", file("repository/mo
   .settings(Settings.sbtBuildInfoSettings: _*)
   .settings(libraryDependencies ++= Dependencies.repository_mongo ++ Dependencies.test)
   .enablePlugins(BuildInfoPlugin)
+
+lazy val repository_postgres = Project("wasp-repository-postgres", file("repository/postgres"))
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(repository_core)
+  .dependsOn(core)
+  .settings(Settings.sbtBuildInfoSettings: _*)
+  .settings(libraryDependencies ++= Dependencies.repository_postgres ++ Dependencies.test)
+  .enablePlugins(BuildInfoPlugin)
+
+lazy val repository = Project("wasp-repository", file("repository"))
+  .settings(Settings.commonSettings: _*)
+  .aggregate(repository_core, repository_mongo, repository_postgres)
 
 lazy val master = Project("wasp-master", file("master"))
   .settings(Settings.commonSettings: _*)
@@ -194,6 +207,7 @@ lazy val wasp = Project("wasp", file("."))
     repository_core,
     core,
     repository_mongo,
+    repository_postgres,
     master,
     producers,
     consumers_spark,

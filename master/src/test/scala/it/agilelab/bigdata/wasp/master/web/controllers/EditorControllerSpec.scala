@@ -2,8 +2,8 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import it.agilelab.bigdata.wasp.models.editor.{NifiStatelessInstanceModel, ProcessGroupResponse}
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.json4s.JsonAST.{JField, JObject, JString}
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json._

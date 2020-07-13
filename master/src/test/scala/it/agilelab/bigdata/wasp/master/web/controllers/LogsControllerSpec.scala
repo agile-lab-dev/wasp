@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import java.time.Instant
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsonFormat, RootJsonFormat}
 
@@ -11,6 +10,7 @@ import scala.concurrent.duration._
 import scala.concurrent.Future
 import akka.testkit.TestDuration
 import it.agilelab.bigdata.wasp.models.{LogEntry, Logs}
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 
 class MockLogsService extends LogsService {
 

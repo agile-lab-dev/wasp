@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
-import it.agilelab.bigdata.wasp.core.utils.DatastoreProductSerde
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.utils.DatastoreProductSerde
 import it.agilelab.bigdata.wasp.utils.ReflectionUtils.{findSubclassesOfSealedTrait, getRuntimeClass}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}

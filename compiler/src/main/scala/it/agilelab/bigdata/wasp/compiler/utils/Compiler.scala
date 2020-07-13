@@ -4,6 +4,8 @@ import java.io.File
 import java.net.URLClassLoader
 import java.util.jar.JarFile
 
+import it.agilelab.bigdata.wasp.models.{CompletionModel, ErrorModel}
+
 import scala.reflect.internal.util.{BatchSourceFile, OffsetPosition}
 import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.Settings

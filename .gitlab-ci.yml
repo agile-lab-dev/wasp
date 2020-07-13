@@ -4,6 +4,7 @@ variables:
   SBT_VERSION: "1.2.8"
   SBT_OPTS: "-Xmx2G -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xss2M  -Duser.timezone=GMT -Dsbt.global.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy"
   COURSIER_CACHE: sbt-cache/coursier
+  UNPRIVILEGED_USER: "tester"
 
 stages:
   - censor # first censor cause it's faster
@@ -27,7 +28,7 @@ test:
   interruptible: true
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
-    - sbt clean coverageOn test coverageOff coverageReport coverageAggregate
+    - ./run-sbt-unprivileged.sh "clean coverageOn test coverageOff coverageReport coverageAggregate"
   only:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/

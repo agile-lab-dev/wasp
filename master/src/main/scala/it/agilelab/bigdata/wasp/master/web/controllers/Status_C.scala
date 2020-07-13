@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
 object Status_C extends Directives with JsonSupport {

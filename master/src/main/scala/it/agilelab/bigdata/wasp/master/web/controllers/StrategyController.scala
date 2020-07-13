@@ -2,10 +2,10 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.getJsonArrayOrEmpty
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import spray.json._
 
 object StrategyController extends Directives with JsonSupport {

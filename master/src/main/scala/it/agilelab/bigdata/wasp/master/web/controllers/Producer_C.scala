@@ -9,8 +9,8 @@ import it.agilelab.bigdata.wasp.core.messages.{ModelKey, RestProducerRequest, St
 import it.agilelab.bigdata.wasp.master.web.models.RestProducerModel
 import it.agilelab.bigdata.wasp.master.web.models.RestProducerModelJsonProtocol._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import it.agilelab.bigdata.wasp.models.ProducerModel
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
 /**

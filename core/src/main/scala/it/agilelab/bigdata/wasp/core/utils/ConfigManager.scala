@@ -87,6 +87,7 @@ object ConfigManager {
   private var waspConfig: WaspConfigModel                     = _
   private var telemetryConfig: TelemetryConfigModel           = _
   private var mongoDBConfig: MongoDBConfigModel               = _
+  private var pgDBConfig: PostgresDBConfigModel               = _
   private var kafkaConfig: KafkaConfigModel                   = _
   private var sparkBatchConfig: SparkBatchConfigModel         = _
   private var sparkStreamingConfig: SparkStreamingConfigModel = _
@@ -216,6 +217,21 @@ object ConfigManager {
       mongoDBSubConfig.getString("username"),
       mongoDBSubConfig.getString("password"),
       mongoDBSubConfig.getInt("timeout")
+    )
+  }
+
+  private def initializePostgresDBConfig(): Unit = {
+    pgDBConfig = getDefaultPostgresDBConfig // postgres config is always read from file, so it's always "default"
+  }
+
+  private def getDefaultPostgresDBConfig: PostgresDBConfigModel = {
+    val pgDBSubConfig = conf.getConfig("postgres")
+    PostgresDBConfigModel(
+      pgDBSubConfig.getString("url"),
+      pgDBSubConfig.getString("user"),
+      pgDBSubConfig.getString("password"),
+      pgDBSubConfig.getString("driver"),
+      pgDBSubConfig.getInt("pool.size")
     )
   }
 
@@ -457,6 +473,13 @@ object ConfigManager {
       initializeMongoDBConfig()
     }
     mongoDBConfig
+  }
+
+  def getPostgresDBConfig: PostgresDBConfigModel = {
+    if (pgDBConfig == null) {
+      initializePostgresDBConfig()
+    }
+    pgDBConfig
   }
 
   def getKafkaConfig: KafkaConfigModel = {

@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.core.utils.FreeCodeCompilerUtils
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
-import it.agilelab.bigdata.wasp.master.web.utils.JsonSupport
 import it.agilelab.bigdata.wasp.models.{FreeCode, FreeCodeModel}
+import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
 class FreeCodeController(service: FreeCodeDBService, freeCodeCompilerUtils: FreeCodeCompilerUtils)

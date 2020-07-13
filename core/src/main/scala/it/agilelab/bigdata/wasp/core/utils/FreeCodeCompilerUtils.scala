@@ -1,7 +1,8 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import it.agilelab.bigdata.wasp.compiler.utils.{CompletionModel, ErrorModel, FreeCodeCompiler}
+import it.agilelab.bigdata.wasp.compiler.utils.FreeCodeCompiler
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeGenerator
+import it.agilelab.bigdata.wasp.models.{CompletionModel, ErrorModel}
 
 trait FreeCodeCompilerUtils {
   def validate(code: String): List[ErrorModel]
