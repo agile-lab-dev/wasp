@@ -78,6 +78,7 @@ trait PostgresDBHelper extends ConnectionSupport with ConnectionInfoProvider wit
       value.isInstanceOf[Double] ||
       value.isInstanceOf[Float] ||
       value.isInstanceOf[Boolean] ) value.toString
+    else if (value == null) null
     else throw new Exception(s"Problem to map ${value} into a string : it is a ${value.getClass.getSimpleName}")
     }
 

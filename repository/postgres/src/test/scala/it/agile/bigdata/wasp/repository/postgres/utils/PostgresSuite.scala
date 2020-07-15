@@ -4,8 +4,10 @@ package it.agile.bigdata.wasp.repository.postgres.utils
 import java.sql.Connection
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres
+import it.agile.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
 import it.agile.bigdata.wasp.repository.postgres.utils.PostgresSuite._
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 object PostgresSuite {
@@ -53,6 +55,9 @@ trait PostgresSuite extends FlatSpec with Matchers with BeforeAndAfterAll with L
 
 
   def closePool():Unit = ConnectionSupport.poolingDriver.closePool(s"$jdbcUrl:$user")
+
+  val config: PostgresDBConfigModel = PostgresDBConfigModel(jdbcUrl,user,pass,driver,10)
+  val pgDB = new WaspPostgresDBImpl(config)
 
 }
 

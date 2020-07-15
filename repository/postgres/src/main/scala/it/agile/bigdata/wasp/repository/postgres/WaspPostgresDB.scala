@@ -1,7 +1,6 @@
 package it.agile.bigdata.wasp.repository.postgres
 
-import it.agile.bigdata.wasp.repository.postgres.WaspPostgresDB.waspDB
-import it.agile.bigdata.wasp.repository.postgres.tables.{BatchJobTableDefinition, FreeCodeTableDefinition, TableDefinition}
+import it.agile.bigdata.wasp.repository.postgres.tables.{BatchJobTableDefinition, FreeCodeTableDefinition, ProducerTableDefinition, TableDefinition}
 import it.agile.bigdata.wasp.repository.postgres.utils.PostgresDBHelper
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
@@ -18,6 +17,8 @@ trait WaspPostgresDB extends WaspDB with PostgresDBHelper {
 
   def getAll[T <: Model,K]()(implicit tableDefinition: TableDefinition[T,K]) : Seq[T]
 
+  def getBy[T <: Model,K](condition : String)(implicit tableDefinition: TableDefinition[T,K]): Seq[T]
+
   def getByPrimaryKey[T <: Model,K](primaryKey : K)(implicit tableDefinition: TableDefinition[T,K]): Option[T]
 
   def deleteByPrimaryKey[T <: Model,K](primaryKey : K)(implicit tableDefinition: TableDefinition[T,K]): Unit
@@ -30,6 +31,8 @@ trait WaspPostgresDB extends WaspDB with PostgresDBHelper {
 
   def upsert[T <: Model,K](obj : T)(implicit table: TableDefinition[T,K]): Unit
 
+  def insertIfNotExists[T <: Model,K](obj : T)(implicit table: TableDefinition[T,K]): Unit
+
 }
 
 
@@ -41,6 +44,7 @@ object WaspPostgresDB extends  Logging{
 
 
   val tableDefinitions = Seq(
+    ProducerTableDefinition,
     FreeCodeTableDefinition,
     BatchJobTableDefinition
   )

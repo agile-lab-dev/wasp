@@ -11,7 +11,7 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getPipegraphBL: PipegraphBL = ???
 
-  override def getProducerBL: ProducerBL = ???
+  override def getProducerBL: ProducerBL = ProducerBLImpl(WaspPostgresDB.getDB())
 
   override def getTopicBL: TopicBL = ???
 

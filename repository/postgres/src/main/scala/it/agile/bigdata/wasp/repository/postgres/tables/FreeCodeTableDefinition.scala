@@ -1,29 +1,17 @@
 package it.agile.bigdata.wasp.repository.postgres.tables
 
-
-import java.sql.ResultSet
-
 import it.agilelab.bigdata.wasp.models.FreeCodeModel
+import spray.json.JsValue
+import it.agilelab.bigdata.wasp.utils.JsonSupport
+import spray.json._
 
 
-object FreeCodeTableDefinition extends ModelTableDefinition[FreeCodeModel] {
+object FreeCodeTableDefinition extends SimpleModelTableDefinition[FreeCodeModel] with JsonSupport{
 
   val tableName = "FREE_CODE"
 
-  //val name = "name"
-  val code = "code"
+  override def fromJsonToModel(json: JsValue): FreeCodeModel = json.convertTo[FreeCodeModel]
 
-  val columns: Seq[String] = Seq(
-    name,
-    code
-  )
+  override def fromModelToJson(model: FreeCodeModel): JsValue = model.toJson
 
-  val ddl = s"""CREATE TABLE IF NOT EXISTS $tableName (
-       |$name varchar NOT NULL,
-       |$code varchar NOT NULL,
-       |PRIMARY KEY ($name))
-       |""".stripMargin
-
-  override val from: ResultSet => FreeCodeModel = rs => FreeCodeModel(rs.getString(name),rs.getString(code))
-  override val to: FreeCodeModel => Array[(String, Any)] = m=> Array((name,m.name),(code,m.code))
 }

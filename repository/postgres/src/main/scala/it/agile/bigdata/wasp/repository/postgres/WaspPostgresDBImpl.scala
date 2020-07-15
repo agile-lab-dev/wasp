@@ -16,6 +16,10 @@ class WaspPostgresDBImpl(pgDBConf : PostgresDBConfigModel) extends WaspPostgresD
   }
 
 
+  def getBy[T <: Model,K](condition : String)(implicit tableDefinition: TableDefinition[T,K]): Seq[T] = {
+    selectAll(tableDefinition.tableName, tableDefinition.columns.toArray, Some(condition))(tableDefinition.from)
+  }
+
   def getAll[T <: Model,K]()(implicit tableDefinition: TableDefinition[T,K]): Seq[T] = {
     selectAll(tableDefinition.tableName, tableDefinition.columns.toArray, None)(tableDefinition.from)
   }
@@ -43,6 +47,10 @@ class WaspPostgresDBImpl(pgDBConf : PostgresDBConfigModel) extends WaspPostgresD
     if(getByPrimaryKey(table.primaryKeyFromObject(obj)).isDefined)
       updateBy(table.tableName,obj,table.conditionPrimaryKey(table.primaryKeyFromObject(obj)))(table.to)
     else insert(obj)
+  }
+
+  def insertIfNotExists[T <: Model,K](obj : T)(implicit table: TableDefinition[T,K]): Unit = {
+    if(getByPrimaryKey(table.primaryKeyFromObject(obj)).isEmpty) insert(obj)
   }
 
 

@@ -5,19 +5,19 @@ import java.sql.ResultSet
 
 trait TableDefinition[T,K] {
 
-  val tableName : String
+  def tableName : String
 
-  val columns: Seq[String]
+  def columns: List[String]
 
-  val ddl : String
+  def ddl : String
 
-  val from : ResultSet => T
+  def from : ResultSet => T
 
-  val to : T=> Array[(String,Any)]
+  def to : T=> Array[(String,Any)]
 
-  val conditionPrimaryKey : K => String
+  def conditionPrimaryKey : K => String
 
-  val primaryKeyFromObject : T => K
+  def primaryKeyFromObject : T => K
 
 
 }

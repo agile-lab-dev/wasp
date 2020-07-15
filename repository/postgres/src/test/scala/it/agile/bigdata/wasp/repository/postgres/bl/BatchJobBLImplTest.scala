@@ -7,8 +7,6 @@ import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
 
 class BatchJobBLImplTest extends PostgresSuite{
 
-  val config = PostgresDBConfigModel(jdbcUrl,user,pass,driver,10)
-  val pgDB = new WaspPostgresDBImpl(config)
   val batchJobBL =  BatchJobBLImpl(pgDB)
 
 

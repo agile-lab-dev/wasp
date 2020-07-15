@@ -1,16 +1,12 @@
 package it.agile.bigdata.wasp.repository.postgres.bl
 
-import it.agile.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
 import it.agile.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import it.agilelab.bigdata.wasp.models.FreeCodeModel
-import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
 
 
 class FreeCodeBLImplTest extends PostgresSuite{
 
-  val config = PostgresDBConfigModel(jdbcUrl,user,pass,driver,10)
-  val pgDB = new WaspPostgresDBImpl(config)
-  val freeCodeBL = new FreeCodeBLImpl(pgDB)
+  val freeCodeBL = FreeCodeBLImpl(pgDB)
 
 
   it should "test freeCodeBL" in {
