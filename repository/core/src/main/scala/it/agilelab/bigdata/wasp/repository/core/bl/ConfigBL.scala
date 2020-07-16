@@ -11,7 +11,7 @@ object ConfigBL {
   lazy val topicBL: TopicBL = factory.getTopicBL
   lazy val mlModelBL: MlModelBL = factory.getMlModelBL
   lazy val websocketBL: WebsocketBL = factory.getWebsocketBL
-  lazy val batchSchedulerBL: BatchSchedulersBL = factory.getBatchSchedulerBL
+  lazy val batchSchedulerBL: BatchSchedulersBL = factory.getBatchSchedulersBL
   lazy val rawBL: RawBL = factory.getRawBL
   lazy val keyValueBL: KeyValueBL = factory.getKeyValueBL
   lazy val batchSchedulersBL: BatchSchedulersBL = factory.getBatchSchedulersBL
@@ -34,7 +34,6 @@ trait FactoryBL {
   def getTopicBL: TopicBL
   def getMlModelBL: MlModelBL
   def getWebsocketBL: WebsocketBL
-  def getBatchSchedulerBL: BatchSchedulersBL
   def getRawBL: RawBL
   def getKeyValueBL: KeyValueBL
   def getBatchSchedulersBL: BatchSchedulersBL

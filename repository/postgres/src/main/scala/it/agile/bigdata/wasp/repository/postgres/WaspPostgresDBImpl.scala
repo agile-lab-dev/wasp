@@ -55,7 +55,7 @@ class WaspPostgresDBImpl(pgDBConf : PostgresDBConfigModel) extends WaspPostgresD
 
 
 
-  def createTable[T <: Model,K]()(implicit tableDefinition: TableDefinition[T,K]) : Unit = {
+  def createTable()(implicit tableDefinition: TableDefinition[_,_]) : Unit = {
     super.execute(tableDefinition.ddl)
   }
 

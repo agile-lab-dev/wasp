@@ -124,7 +124,7 @@ trait JsonSupport
         })
     }
   }
-
+  implicit lazy val batchSchedulerModelFormat: RootJsonFormat[BatchSchedulerModel] = jsonFormat5(BatchSchedulerModel.apply)
   implicit lazy val countEntryFormat: RootJsonFormat[CountEntry] = jsonFormat2(CountEntry.apply)
   implicit lazy val countsFormat: RootJsonFormat[Counts]         = jsonFormat3(Counts.apply)
 

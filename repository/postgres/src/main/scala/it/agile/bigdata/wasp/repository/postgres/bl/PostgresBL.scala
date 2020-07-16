@@ -1,8 +1,16 @@
 package it.agile.bigdata.wasp.repository.postgres.bl
 
+import it.agile.bigdata.wasp.repository.postgres.WaspPostgresDB
+import it.agile.bigdata.wasp.repository.postgres.tables.TableDefinition
 
 trait PostgresBL {
 
-   def createTable(): Unit
+   val waspDB: WaspPostgresDB
+
+   implicit val tableDefinition: TableDefinition[_,_]
+
+   def createTable(): Unit = {
+      waspDB.createTable()
+   }
 
 }

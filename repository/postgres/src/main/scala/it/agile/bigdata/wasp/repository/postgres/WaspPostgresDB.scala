@@ -1,6 +1,6 @@
 package it.agile.bigdata.wasp.repository.postgres
 
-import it.agile.bigdata.wasp.repository.postgres.tables.{BatchJobTableDefinition, FreeCodeTableDefinition, ProducerTableDefinition, TableDefinition}
+import it.agile.bigdata.wasp.repository.postgres.tables._
 import it.agile.bigdata.wasp.repository.postgres.utils.PostgresDBHelper
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
@@ -25,7 +25,7 @@ trait WaspPostgresDB extends WaspDB with PostgresDBHelper {
 
   def close() : Unit
 
-  def createTable[T <: Model,K]()(implicit tableDefinition: TableDefinition[T,K]) : Unit
+  def createTable()(implicit tableDefinition: TableDefinition[_,_]) : Unit
 
   def updateByPrimaryKey[T <: Model,K](obj : T)(implicit tableDefinition: TableDefinition[T,K]): Unit
 
@@ -44,6 +44,7 @@ object WaspPostgresDB extends  Logging{
 
 
   val tableDefinitions = Seq(
+    BatchSchedulersTableDefinition,
     ProducerTableDefinition,
     FreeCodeTableDefinition,
     BatchJobTableDefinition
