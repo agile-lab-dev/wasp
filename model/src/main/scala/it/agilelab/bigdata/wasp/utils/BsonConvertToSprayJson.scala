@@ -257,9 +257,11 @@ trait JsonSupport
   implicit lazy val processGroupModelFormat: RootJsonFormat[ProcessGroupModel]       = jsonFormat3(ProcessGroupModel)
 
   // StrategyDTO Format
-  implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat2(FreeCodeDTO)
-  implicit lazy val flowNifiDTOFormat: RootJsonFormat[FlowNifiDTO]           = jsonFormat2(FlowNifiDTO.apply)
-  implicit lazy val strategyClassDTOFormat: RootJsonFormat[StrategyClassDTO] = jsonFormat2(StrategyClassDTO.apply)
+  implicit lazy val errorDTOFormat: RootJsonFormat[ErrorDTO]           = jsonFormat1(ErrorDTO.apply)
+
+  implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat1(FreeCodeDTO)
+  implicit lazy val flowNifiDTOFormat: RootJsonFormat[FlowNifiDTO]           = jsonFormat1(FlowNifiDTO)
+  implicit lazy val strategyClassDTOFormat: RootJsonFormat[StrategyClassDTO] = jsonFormat1(StrategyClassDTO)
 
   implicit lazy val strategyDTOFormat: RootJsonFormat[StrategyDTO] =
     new RootJsonFormat[StrategyDTO] {
@@ -267,21 +269,18 @@ trait JsonSupport
         obj match {
           case sb: FreeCodeDTO =>
             JsObject(
-              ("name", JsString(sb.name)),
               ("code", JsString(sb.code)),
-              ("outputType", JsString(StrategyDTO.freeCodeType))
+              ("outputType", JsString(StrategyDTO.freecodeType))
             )
           case sb: FlowNifiDTO =>
             JsObject(
-              ("name", JsString(sb.name)),
-              ("flowNifi", JsString(sb.flowNifi)),
-              ("outputType", JsString(StrategyDTO.flowNifiType))
+              ("processGroup", JsString(sb.processGroup)),
+              ("outputType", JsString(StrategyDTO.nifiType))
             )
           case sb: StrategyClassDTO =>
             JsObject(
-              ("name", JsString(sb.name)),
               ("className", JsString(sb.className)),
-              ("outputType", JsString(StrategyDTO.strategyClassType))
+              ("outputType", JsString(StrategyDTO.codebaseType))
             )
         }
       }
@@ -291,74 +290,22 @@ trait JsonSupport
           .asJsObject("StrategyDTO should be an JSON Object")
           .getFields("strategyType")
           .headOption match {
-          case Some(JsString(StrategyDTO.freeCodeType))      => freeCodeDTOFormat.read(json)
-          case Some(JsString(StrategyDTO.flowNifiType))      => flowNifiDTOFormat.read(json)
-          case Some(JsString(StrategyDTO.strategyClassType)) => strategyClassDTOFormat.read(json)
+          case Some(JsString(StrategyDTO.freecodeType))      => freeCodeDTOFormat.read(json)
+          case Some(JsString(StrategyDTO.nifiType))      => flowNifiDTOFormat.read(json)
+          case Some(JsString(StrategyDTO.codebaseType)) => strategyClassDTOFormat.read(json)
           case Some(_)                                       => deserializationError(s"$json is not a StrategyDTO subclass")
           case None                                          => deserializationError(s"$json it's missing a strategyType field")
           case _                                             => deserializationError(s"$json It's not a valid StrategyDTO")
         }
     }
 
-  // StreamingOutputDTO Format
-  implicit lazy val topicDTOFormat: RootJsonFormat[TopicDTO]       = jsonFormat2(TopicDTO.apply)
-  implicit lazy val rawDataDTOFormat: RootJsonFormat[RawDataDTO]   = jsonFormat2(RawDataDTO.apply)
-  implicit lazy val indexDTOFormat: RootJsonFormat[IndexDTO]       = jsonFormat2(IndexDTO.apply)
-  implicit lazy val keyValueDTOFormat: RootJsonFormat[KeyValueDTO] = jsonFormat2(KeyValueDTO.apply)
-
-  implicit lazy val streamingOutputDTOFormat: RootJsonFormat[StreamingOutputDTO] =
-    new RootJsonFormat[StreamingOutputDTO] {
-      override def write(obj: StreamingOutputDTO): JsValue = {
-        obj match {
-          case sb: TopicDTO =>
-            JsObject(
-              ("name", JsString(sb.name)),
-              ("topicName", JsString(sb.topicName)),
-              ("outputType", JsString(StreamingOutputDTO.topicType))
-            )
-          case sb: RawDataDTO =>
-            JsObject(
-              ("name", JsString(sb.name)),
-              ("topicName", JsString(sb.destinationPath)),
-              ("outputType", JsString(StreamingOutputDTO.rawDataType))
-            )
-          case sb: IndexDTO =>
-            JsObject(
-              ("name", JsString(sb.name)),
-              ("topicName", JsString(sb.indexName)),
-              ("outputType", JsString(StreamingOutputDTO.indexType))
-            )
-          case sb: KeyValueDTO =>
-            JsObject(
-              ("name", JsString(sb.name)),
-              ("topicName", JsString(sb.keyValueName)),
-              ("outputType", JsString(StreamingOutputDTO.keyValueType))
-            )
-        }
-      }
-
-      override def read(json: JsValue): StreamingOutputDTO =
-        json
-          .asJsObject("StreamingOutput should be an JSON Object")
-          .getFields("outputType")
-          .headOption match {
-          case Some(JsString(StreamingOutputDTO.topicType))    => topicDTOFormat.read(json)
-          case Some(JsString(StreamingOutputDTO.rawDataType))  => rawDataDTOFormat.read(json)
-          case Some(JsString(StreamingOutputDTO.indexType))    => indexDTOFormat.read(json)
-          case Some(JsString(StreamingOutputDTO.keyValueType)) => keyValueDTOFormat.read(json)
-          case Some(_)                                         => deserializationError(s"$json is not a StreamingOutputDTO subclass")
-          case None                                            => deserializationError(s"$json it's missing a outputType field")
-          case _                                               => deserializationError(s"$json a valid StreamingOutputDTO")
-        }
-    }
+  implicit lazy val readerModelDTOFormat: RootJsonFormat[ReaderModelDTO] = jsonFormat5(ReaderModelDTO.apply)
+  implicit lazy val writerModelDTOFormat: RootJsonFormat[WriterModelDTO] = jsonFormat4(WriterModelDTO.apply)
 
   implicit lazy val structuredStreamingETLDTOFormat: RootJsonFormat[StructuredStreamingETLDTO] =
-    jsonFormat6(
-      StructuredStreamingETLDTO.apply
-    )
+    jsonFormat7(StructuredStreamingETLDTO.apply)
 
   implicit lazy val pipegraphDTOFormat: RootJsonFormat[PipegraphDTO] = jsonFormat4(PipegraphDTO.apply)
-
 }
 
 /*trait GdprJsonSupport extends DefaultJsonProtocol {

@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-357-make-waspdb-private-and-migrate-all-usages-to-bl-interface-usage-SNAPSHOT
+  version: 2.26.0-339-fix-and-implement-api-for-pipegraph-editing-via-web-ui-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -2086,7 +2086,6 @@ paths:
               required:
               - name
               - description
-              - owner
               - structuredStreamingComponents
               type: object
               properties:
@@ -2096,6 +2095,7 @@ paths:
                   type: string
                 owner:
                   type: string
+                  nullable: true
                 structuredStreamingComponents:
                   type: array
                   items:
@@ -2408,19 +2408,6 @@ components:
       xml:
         name: RawOptions
         namespace: java://it.agilelab.bigdata.wasp.models
-    TopicDTO:
-      required:
-      - name
-      - topicName
-      type: object
-      properties:
-        name:
-          type: string
-        topicName:
-          type: string
-      xml:
-        name: TopicDTO
-        namespace: java://it.agilelab.bigdata.wasp.models.editor
     CountEntry:
       required:
       - timestamp
@@ -2500,7 +2487,7 @@ components:
           type: string
       xml:
         name: CompletionModel
-        namespace: java://it.agilelab.bigdata.wasp.compiler.utils
+        namespace: java://it.agilelab.bigdata.wasp.models
     BatchJobModel:
       required:
       - name
@@ -2534,6 +2521,27 @@ components:
       xml:
         name: BatchJobModel
         namespace: java://it.agilelab.bigdata.wasp.models
+    WriterModelDTO:
+      required:
+      - name
+      - datastoreModelName
+      - datastoreProduct
+      - options
+      type: object
+      properties:
+        name:
+          type: string
+        datastoreModelName:
+          type: string
+        datastoreProduct:
+          type: string
+        options:
+          type: object
+          additionalProperties:
+            type: string
+      xml:
+        name: WriterModelDTO
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     FreeCodeModel:
       required:
       - name
@@ -2642,12 +2650,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.models.editor
     StrategyClassDTO:
       required:
-      - name
       - className
       type: object
       properties:
-        name:
-          type: string
         className:
           type: string
       xml:
@@ -2889,6 +2894,31 @@ components:
       xml:
         name: ContainsRawMatchingStrategy
         namespace: java://it.agilelab.bigdata.wasp.models
+    ReaderModelDTO:
+      required:
+      - name
+      - datastoreModelName
+      - datastoreProduct
+      - options
+      type: object
+      properties:
+        name:
+          type: string
+        datastoreModelName:
+          type: string
+        datastoreProduct:
+          type: string
+        options:
+          type: object
+          additionalProperties:
+            type: string
+        rateLimit:
+          type: integer
+          format: int32
+          nullable: true
+      xml:
+        name: ReaderModelDTO
+        namespace: java://it.agilelab.bigdata.wasp.models.editor
     SparkEntryConfig:
       required:
       - key
@@ -3172,6 +3202,7 @@ components:
       - streamingOutput
       - strategy
       - triggerIntervalMs
+      - options
       type: object
       properties:
         name:
@@ -3179,15 +3210,9 @@ components:
         group:
           type: string
         streamingInput:
-          type: string
+          $ref: '#/components/schemas/ReaderModelDTO'
         streamingOutput:
-          discriminator:
-            propertyName: outputType
-          oneOf:
-          - $ref: '#/components/schemas/TopicDTO'
-          - $ref: '#/components/schemas/RawDataDTO'
-          - $ref: '#/components/schemas/IndexDTO'
-          - $ref: '#/components/schemas/KeyValueDTO'
+          $ref: '#/components/schemas/WriterModelDTO'
         strategy:
           discriminator:
             propertyName: strategyType
@@ -3198,6 +3223,10 @@ components:
         triggerIntervalMs:
           type: integer
           format: int64
+        options:
+          type: object
+          additionalProperties:
+            type: string
       xml:
         name: StructuredStreamingETLDTO
         namespace: java://it.agilelab.bigdata.wasp.models.editor
@@ -3307,7 +3336,7 @@ components:
           nullable: true
       xml:
         name: ConnectionConfig
-        namespace: java://it.agilelab.bigdata.wasp.core.utils
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     SparkStreamingConfigModel:
       required:
       - appName
@@ -3511,32 +3540,6 @@ components:
       xml:
         name: SourceEntry
         namespace: java://it.agilelab.bigdata.wasp.models
-    RawDataDTO:
-      required:
-      - name
-      - destinationPath
-      type: object
-      properties:
-        name:
-          type: string
-        destinationPath:
-          type: string
-      xml:
-        name: RawDataDTO
-        namespace: java://it.agilelab.bigdata.wasp.models.editor
-    IndexDTO:
-      required:
-      - name
-      - indexName
-      type: object
-      properties:
-        name:
-          type: string
-        indexName:
-          type: string
-      xml:
-        name: IndexDTO
-        namespace: java://it.agilelab.bigdata.wasp.models.editor
     DataStoreCategoryEnum:
       type: string
       enum:
@@ -3604,20 +3607,7 @@ components:
           type: string
       xml:
         name: ErrorModel
-        namespace: java://it.agilelab.bigdata.wasp.compiler.utils
-    KeyValueDTO:
-      required:
-      - name
-      - keyValueName
-      type: object
-      properties:
-        name:
-          type: string
-        keyValueName:
-          type: string
-      xml:
-        name: KeyValueDTO
-        namespace: java://it.agilelab.bigdata.wasp.models.editor
+        namespace: java://it.agilelab.bigdata.wasp.models
     PrefixAndTimeBoundKeyValueMatchingStrategy:
       required:
       - separator
@@ -3770,12 +3760,9 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.models.configuration
     FreeCodeDTO:
       required:
-      - name
       - code
       type: object
       properties:
-        name:
-          type: string
         code:
           type: string
       xml:
@@ -4072,7 +4059,7 @@ components:
           type: string
       xml:
         name: ZookeeperConnectionsConfig
-        namespace: java://it.agilelab.bigdata.wasp.core.utils
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     TelemetryConfigModel:
       required:
       - name
@@ -4095,13 +4082,10 @@ components:
         namespace: java://it.agilelab.bigdata.wasp.models.configuration
     FlowNifiDTO:
       required:
-      - name
-      - flowNifi
+      - processGroup
       type: object
       properties:
-        name:
-          type: string
-        flowNifi:
+        processGroup:
           type: string
       xml:
         name: FlowNifiDTO

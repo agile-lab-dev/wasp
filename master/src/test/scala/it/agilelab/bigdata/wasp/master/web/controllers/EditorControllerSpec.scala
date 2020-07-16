@@ -1,8 +1,10 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
-import it.agilelab.bigdata.wasp.models.editor.{NifiStatelessInstanceModel, ProcessGroupResponse}
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, StrategyModel}
+import it.agilelab.bigdata.wasp.models.editor.{ErrorDTO, NifiStatelessInstanceModel, PipegraphDTO, ProcessGroupResponse}
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.json4s.JsonAST.{JField, JObject, JString}
 import org.scalatest.{FlatSpec, Matchers}
@@ -28,8 +30,25 @@ class EditorControllerSpec extends FlatSpec with ScalatestRouteTest with Matcher
     }
   }
 
-  val service          = new MockEditorService
-  val controller       = new EditorController(service)
+  class MockPipegraphEditorService extends PipegraphEditorService {
+    override def checkIOByName(name: String, datastore: DatastoreProduct): Option[ErrorDTO] = {
+      val ios = List("IO_1", "IO_2")
+      if (ios.contains(name)) Some(ErrorDTO.alreadyExists("Streaming IO", name)) else None
+    }
+
+    override def checkPipegraphName(name: String): Option[ErrorDTO] = {
+      val pipegraphs = List("pipegraph_1", "pipegraph_2")
+      if (pipegraphs.contains(name)) Some(ErrorDTO.alreadyExists("Pipegraph", name)) else None
+    }
+
+    override def insertPipegraphModel(model: PipegraphModel): Unit = {}
+
+    override def checkStrategy(strategy: StrategyModel): List[ErrorDTO] = List.empty
+  }
+
+  val editroService          = new MockEditorService
+  val pipegraphEditorService = new MockPipegraphEditorService
+  val controller       = new EditorController(editroService, pipegraphEditorService)
   val processGroupName = "testName"
   val processGroupId   = "id"
 
@@ -58,6 +77,29 @@ class EditorControllerSpec extends FlatSpec with ScalatestRouteTest with Matcher
       val response = responseAs[AngularResponse[ProcessGroupResponse]]
       response.data.id shouldBe processGroupId
       response.data.content shouldBe JObject(List(JField("ciccio", JString("pasticcio"))))
+    }
+  }
+
+  // Tests for /editor/pipegraph
+  it should "Respond a OK on post empty Pipegraph request" in {
+    val testDTO = PipegraphDTO("empty", "description", Some("owner"), List.empty)
+    val commitEditorRequest = Post(s"/editor/pipegraph", testDTO)
+
+    commitEditorRequest ~> controller.getRoutes ~> check {
+      val response: AngularResponse[String] = responseAs[AngularResponse[String]]
+      response.Result shouldBe "OK"
+    }
+  }
+
+  it should "Respond a KO on already existing Pipegraph request" in {
+    val testDTO = PipegraphDTO("pipegraph_1", "description", Some("owner"), List.empty)
+    val commitEditorRequest = Post(s"/editor/pipegraph", testDTO)
+
+    commitEditorRequest ~> controller.getRoutes ~> check {
+      val response: AngularResponse[List[ErrorDTO]] = responseAs[AngularResponse[List[ErrorDTO]]]
+
+      response.data shouldBe List(ErrorDTO.alreadyExists("Pipegraph", "pipegraph_1"))
+      response.Result shouldBe "KO"
     }
   }
 

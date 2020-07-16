@@ -1,5 +1,9 @@
 package it.agilelab.bigdata.wasp.models.editor
 
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+
 /**
   * Pipegraph data transfer object
   *
@@ -12,9 +16,30 @@ package it.agilelab.bigdata.wasp.models.editor
 case class PipegraphDTO(
     name: String,
     description: String,
-    owner: String,
+    owner: Option[String],
     structuredStreamingComponents: List[StructuredStreamingETLDTO]
-)
+) {
+  def toPipegraphModel: Either[List[ErrorDTO], PipegraphModel] = {
+    val errs: List[ErrorDTO] =
+      structuredStreamingComponents.flatMap(_.toStructuredStreamingETLModel.fold(x => x, _ => List.empty))
+
+    if (errs.nonEmpty) Left(errs)
+    else
+      Right(
+        PipegraphModel(
+          name,
+          description,
+          owner.getOrElse("ui"),
+          isSystem = false,
+          creationTime = System.currentTimeMillis(),
+          legacyStreamingComponents = List.empty,
+          structuredStreamingComponents = structuredStreamingComponents.map(_.toStructuredStreamingETLModel.right.get),
+          rtComponents = List.empty
+        )
+      )
+
+  }
+}
 
 /**
   * StructuredStreamingETLModel data transfer object
@@ -29,59 +54,93 @@ case class PipegraphDTO(
 case class StructuredStreamingETLDTO(
     name: String,
     group: String,
-    streamingInput: String,
-    streamingOutput: StreamingOutputDTO,
+    streamingInput: ReaderModelDTO,
+    streamingOutput: WriterModelDTO,
     strategy: StrategyDTO,
-    triggerIntervalMs: Long
-)
+    triggerIntervalMs: Long,
+    options: Map[String, String]
+) {
+  def toStructuredStreamingETLModel: Either[List[ErrorDTO], StructuredStreamingETLModel] = {
+    val errs: List[ErrorDTO] =
+      streamingInput.toReaderModel.fold(x => x, _ => List.empty) ++
+        streamingOutput.toWriterModel.fold(x => x, _ => List.empty) ++
+        strategy.toStrategyModel.fold(x => x, _ => List.empty)
+
+    if (errs.nonEmpty) Left(errs)
+    else
+      Right(
+        StructuredStreamingETLModel(
+          name,
+          group,
+          streamingInput = streamingInput.toReaderModel.right.get,
+          staticInputs = List.empty, // !
+          streamingOutput = streamingOutput.toWriterModel.right.get,
+          mlModels = List.empty, // !
+          strategy = Some(strategy.toStrategyModel.right.get),
+          triggerIntervalMs = Some(triggerIntervalMs),
+          options = options
+        )
+      )
+  }
+}
 
 /**
   * WriterModel data transfer object
   */
-sealed trait StreamingOutputDTO {
-  def name: String
-  def outputType: String
+sealed trait StreamingIODTO {
+  protected def mapProduct(product: String): Either[List[ErrorDTO], DatastoreProduct] = product match {
+    case "Topic"    => Right(DatastoreProduct.GenericTopicProduct)
+    case "Index"    => Right(DatastoreProduct.GenericIndexProduct)
+    case "KeyValue" => Right(DatastoreProduct.GenericKeyValueProduct)
+    case "RawData"  => Right(DatastoreProduct.RawProduct)
+    case _          => Left(List(ErrorDTO.unknownArgument(s"Datastore product", product)))
+  }
 }
 
-object StreamingOutputDTO {
-  val topicType    = "Topic"
-  val rawDataType  = "RawData"
-  val indexType    = "Index"
-  val keyValueType = "KeyValue"
+case class WriterModelDTO(
+    name: String,
+    datastoreModelName: String,
+    datastoreProduct: String,
+    options: Map[String, String]
+) extends StreamingIODTO {
+  def toWriterModel: Either[List[ErrorDTO], WriterModel] =
+    mapProduct(datastoreProduct).right.map(x => WriterModel(name, datastoreModelName, x, options))
 }
 
-case class TopicDTO(name: String, topicName: String) extends StreamingOutputDTO {
-  override def outputType: String = StreamingOutputDTO.topicType
-}
-case class RawDataDTO(name: String, destinationPath: String) extends StreamingOutputDTO {
-  override def outputType: String = StreamingOutputDTO.rawDataType
-}
-case class IndexDTO(name: String, indexName: String) extends StreamingOutputDTO {
-  override def outputType: String = StreamingOutputDTO.indexType
-}
-case class KeyValueDTO(name: String, keyValueName: String) extends StreamingOutputDTO {
-  override def outputType: String = StreamingOutputDTO.keyValueType
+case class ReaderModelDTO(
+    name: String,
+    datastoreModelName: String,
+    datastoreProduct: String,
+    options: Map[String, String],
+    rateLimit: Option[Int]
+) extends StreamingIODTO {
+  def toReaderModel: Either[List[ErrorDTO], StreamingReaderModel] = {
+    mapProduct(datastoreProduct).right.map(x => StreamingReaderModel(name, datastoreModelName, x, rateLimit, options))
+  }
 }
 
 /**
   * Strategy data transfer object
   */
 sealed trait StrategyDTO {
-  def name: String
-  def strategyType: String
-}
-object StrategyDTO {
-  val freeCodeType      = "FreeCode"
-  val flowNifiType      = "FlowNifi"
-  val strategyClassType = "StrategyClass"
+  def toStrategyModel: Either[List[ErrorDTO], StrategyModel]
 }
 
-case class FreeCodeDTO(name: String, code: String) extends StrategyDTO {
-  override def strategyType: String = StrategyDTO.freeCodeType
+object StrategyDTO {
+  val nifiType     = "nifi"
+  val codebaseType = "codebase"
+  val freecodeType = "freecode"
 }
-case class FlowNifiDTO(name: String, flowNifi: String) extends StrategyDTO {
-  override def strategyType: String = StrategyDTO.flowNifiType
+
+case class FreeCodeDTO(code: String) extends StrategyDTO {
+  override def toStrategyModel: Either[List[ErrorDTO], StrategyModel] =
+     Right(StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy", Some(code)))
 }
-case class StrategyClassDTO(name: String, className: String) extends StrategyDTO {
-  override def strategyType: String = StrategyDTO.strategyClassType
+case class FlowNifiDTO(processGroup: String) extends StrategyDTO {
+  override def toStrategyModel: Either[List[ErrorDTO], StrategyModel] =
+    Right(StrategyModel("it.agilelab.bigdata.wasp.spark.plugins.nifi.NifiStrategy", Some(processGroup)))
+}
+case class StrategyClassDTO(className: String) extends StrategyDTO {
+  override def toStrategyModel: Either[List[ErrorDTO], StrategyModel] =
+    Right(StrategyModel(className))
 }

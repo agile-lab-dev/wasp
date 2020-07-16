@@ -1419,6 +1419,52 @@ func WaspOpenapiLogs(paramSearch string, paramStarttimestamp string, paramEndtim
 	return resp, decoded, nil
 }
 
+// WaspOpenapiListMlmodel list-mlmodel
+func WaspOpenapiListMlmodel(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
+	handlerPath := "list-mlmodel"
+	if waspOpenapiSubcommand {
+		handlerPath = "wasp-openapi " + handlerPath
+	}
+
+	server := viper.GetString("server")
+	if server == "" {
+		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
+	}
+
+	url := server + "/mlmodels"
+
+	req := cli.Client.Get().URL(url)
+
+	paramPretty := params.GetBool("pretty")
+	if paramPretty != false {
+		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
+	}
+
+	cli.HandleBefore(handlerPath, params, req)
+
+	resp, err := req.Do()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Request failed")
+	}
+
+	var decoded map[string]interface{}
+
+	if resp.StatusCode < 400 {
+		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
+			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
+		}
+	} else {
+		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
+	}
+
+	after := cli.HandleAfter(handlerPath, params, resp, decoded)
+	if after != nil {
+		decoded = after.(map[string]interface{})
+	}
+
+	return resp, decoded, nil
+}
+
 // WaspOpenapiInsertMlmodel insert-mlmodel
 func WaspOpenapiInsertMlmodel(params *viper.Viper, body string) (*gentleman.Response, map[string]interface{}, error) {
 	handlerPath := "insert-mlmodel"
@@ -1492,52 +1538,6 @@ func WaspOpenapiUpdateMlmodel(params *viper.Viper, body string) (*gentleman.Resp
 
 	if body != "" {
 		req = req.AddHeader("Content-Type", "text/json").BodyString(body)
-	}
-
-	cli.HandleBefore(handlerPath, params, req)
-
-	resp, err := req.Do()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "Request failed")
-	}
-
-	var decoded map[string]interface{}
-
-	if resp.StatusCode < 400 {
-		if err := cli.UnmarshalResponse(resp, &decoded); err != nil {
-			return nil, nil, errors.Wrap(err, "Unmarshalling response failed")
-		}
-	} else {
-		return nil, nil, errors.Errorf("HTTP %d: %s", resp.StatusCode, resp.String())
-	}
-
-	after := cli.HandleAfter(handlerPath, params, resp, decoded)
-	if after != nil {
-		decoded = after.(map[string]interface{})
-	}
-
-	return resp, decoded, nil
-}
-
-// WaspOpenapiListMlmodel list-mlmodel
-func WaspOpenapiListMlmodel(params *viper.Viper) (*gentleman.Response, map[string]interface{}, error) {
-	handlerPath := "list-mlmodel"
-	if waspOpenapiSubcommand {
-		handlerPath = "wasp-openapi " + handlerPath
-	}
-
-	server := viper.GetString("server")
-	if server == "" {
-		server = waspOpenapiServers()[viper.GetInt("server-index")]["url"]
-	}
-
-	url := server + "/mlmodels"
-
-	req := cli.Client.Get().URL(url)
-
-	paramPretty := params.GetBool("pretty")
-	if paramPretty != false {
-		req = req.AddQuery("pretty", fmt.Sprintf("%v", paramPretty))
 	}
 
 	cli.HandleBefore(handlerPath, params, req)
@@ -3429,7 +3429,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "post-pipegraph",
 			Short:   "post-pipegraph",
-			Long:    cli.Markdown("Pipegraph generation from RawPipegraph\n## Request Schema (text/json)\n\nproperties:\n  description:\n    type: string\n  name:\n    type: string\n  owner:\n    type: string\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLDTO'\n    type: array\nrequired:\n- name\n- description\n- owner\n- structuredStreamingComponents\ntype: object\nxml:\n  name: PipegraphDTO\n  namespace: java://it.agilelab.bigdata.wasp.models.editor\n"),
+			Long:    cli.Markdown("Pipegraph generation from RawPipegraph\n## Request Schema (text/json)\n\nproperties:\n  description:\n    type: string\n  name:\n    type: string\n  owner:\n    nullable: true\n    type: string\n  structuredStreamingComponents:\n    items:\n      $ref: '#/components/schemas/StructuredStreamingETLDTO'\n    type: array\nrequired:\n- name\n- description\n- structuredStreamingComponents\ntype: object\nxml:\n  name: PipegraphDTO\n  namespace: java://it.agilelab.bigdata.wasp.models.editor\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -3871,6 +3871,42 @@ func waspOpenapiRegister(subcommand bool) {
 		var examples string
 
 		cmd := &cobra.Command{
+			Use:     "list-mlmodel",
+			Short:   "list-mlmodel",
+			Long:    cli.Markdown("Retrieve all machine learning models info"),
+			Example: examples,
+			Args:    cobra.MinimumNArgs(0),
+			Run: func(cmd *cobra.Command, args []string) {
+
+				_, decoded, err := WaspOpenapiListMlmodel(params)
+				if err != nil {
+					log.Fatal().Err(err).Msg("Error calling operation")
+				}
+
+				if err := cli.Formatter.Format(decoded); err != nil {
+					log.Fatal().Err(err).Msg("Formatting failed")
+				}
+
+			},
+		}
+		root.AddCommand(cmd)
+
+		cmd.Flags().String("pretty", "", "")
+
+		cli.SetCustomFlags(cmd)
+
+		if cmd.Flags().HasFlags() {
+			params.BindPFlags(cmd.Flags())
+		}
+
+	}()
+
+	func() {
+		params := viper.New()
+
+		var examples string
+
+		cmd := &cobra.Command{
 			Use:     "insert-mlmodel",
 			Short:   "insert-mlmodel",
 			Long:    cli.Markdown("Inserts a new MlModel\n## Request Schema (text/json)\n\nproperties:\n  className:\n    nullable: true\n    type: string\n  description:\n    type: string\n  favorite:\n    type: boolean\n  modelFileId:\n    description: Should be a valid mongodb bsonobject formatted as hex string\n    example: 507f1f77bcf86cd799439011\n    nullable: true\n    type: string\n  name:\n    type: string\n  timestamp:\n    format: int64\n    nullable: true\n    type: integer\n  version:\n    type: string\nrequired:\n- name\n- version\n- favorite\n- description\ntype: object\nxml:\n  name: MlModelOnlyInfo\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
@@ -3923,42 +3959,6 @@ func waspOpenapiRegister(subcommand bool) {
 				}
 
 				_, decoded, err := WaspOpenapiUpdateMlmodel(params, body)
-				if err != nil {
-					log.Fatal().Err(err).Msg("Error calling operation")
-				}
-
-				if err := cli.Formatter.Format(decoded); err != nil {
-					log.Fatal().Err(err).Msg("Formatting failed")
-				}
-
-			},
-		}
-		root.AddCommand(cmd)
-
-		cmd.Flags().String("pretty", "", "")
-
-		cli.SetCustomFlags(cmd)
-
-		if cmd.Flags().HasFlags() {
-			params.BindPFlags(cmd.Flags())
-		}
-
-	}()
-
-	func() {
-		params := viper.New()
-
-		var examples string
-
-		cmd := &cobra.Command{
-			Use:     "list-mlmodel",
-			Short:   "list-mlmodel",
-			Long:    cli.Markdown("Retrieve all machine learning models info"),
-			Example: examples,
-			Args:    cobra.MinimumNArgs(0),
-			Run: func(cmd *cobra.Command, args []string) {
-
-				_, decoded, err := WaspOpenapiListMlmodel(params)
 				if err != nil {
 					log.Fatal().Err(err).Msg("Error calling operation")
 				}
@@ -4405,7 +4405,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "insert-producer",
 			Short:   "insert-producer",
-			Long:    cli.Markdown("Inserts a producer\n## Request Schema (text/json)\n\nproperties:\n  className:\n    type: string\n  configuration:\n    nullable: true\n    type: string\n  isActive:\n    type: boolean\n  isRemote:\n    type: boolean\n  isSystem:\n    type: boolean\n  name:\n    type: string\n  topicName:\n    nullable: true\n    type: string\nrequired:\n- name\n- className\n- isActive\n- isRemote\n- isSystem\ntype: object\nxml:\n  name: ProducerModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Inserts a producer\n## Request Schema (text/json)\n\nproperties:\n  className:\n    type: string\n  configuration:\n    nullable: true\n    type: string\n  isActive:\n    type: boolean\n  isRemote:\n    type: boolean\n  isSystem:\n    type: boolean\n  name:\n    type: string\n  topicName:\n    nullable: true\n    type: string\nrequired:\n- name\n- className\n- isActive\n- isRemote\n- isSystem\ntype: object\nxml:\n  name: ProducerModel\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
@@ -4445,7 +4445,7 @@ func waspOpenapiRegister(subcommand bool) {
 		cmd := &cobra.Command{
 			Use:     "update-producer",
 			Short:   "update-producer",
-			Long:    cli.Markdown("Updates a new producer\n## Request Schema (text/json)\n\nproperties:\n  className:\n    type: string\n  configuration:\n    nullable: true\n    type: string\n  isActive:\n    type: boolean\n  isRemote:\n    type: boolean\n  isSystem:\n    type: boolean\n  name:\n    type: string\n  topicName:\n    nullable: true\n    type: string\nrequired:\n- name\n- className\n- isActive\n- isRemote\n- isSystem\ntype: object\nxml:\n  name: ProducerModel\n  namespace: java://it.agilelab.bigdata.wasp.core.models\n"),
+			Long:    cli.Markdown("Updates a new producer\n## Request Schema (text/json)\n\nproperties:\n  className:\n    type: string\n  configuration:\n    nullable: true\n    type: string\n  isActive:\n    type: boolean\n  isRemote:\n    type: boolean\n  isSystem:\n    type: boolean\n  name:\n    type: string\n  topicName:\n    nullable: true\n    type: string\nrequired:\n- name\n- className\n- isActive\n- isRemote\n- isSystem\ntype: object\nxml:\n  name: ProducerModel\n  namespace: java://it.agilelab.bigdata.wasp.models\n"),
 			Example: examples,
 			Args:    cobra.MinimumNArgs(0),
 			Run: func(cmd *cobra.Command, args []string) {
