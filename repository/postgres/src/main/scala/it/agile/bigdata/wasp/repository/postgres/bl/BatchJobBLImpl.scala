@@ -10,7 +10,6 @@ case class BatchJobBLImpl(waspDB: WaspPostgresDB ) extends BatchJobBL with Postg
 
   implicit val tableDefinition: TableDefinition[BatchJobModel,String] = BatchJobTableDefinition
 
-
   override def getByName(name: String): Option[BatchJobModel] = waspDB.getByPrimaryKey(name)
 
   override def getAll: Seq[BatchJobModel] = waspDB.getAll()
@@ -23,7 +22,6 @@ case class BatchJobBLImpl(waspDB: WaspPostgresDB ) extends BatchJobBL with Postg
 
   override def deleteByName(name: String): Unit =  waspDB.deleteByPrimaryKey(name)
 
-  override def instances(): BatchJobInstanceBL = ???
+  override def instances(): BatchJobInstanceBL = BatchJobInstanceBLImpl(waspDB)
 
-  override def createTable(): Unit = waspDB.createTable()
 }

@@ -10,7 +10,7 @@ class PostgresRepositoryFactory extends RepositoriesFactory {
 
   override def initializeDB(): WaspDB = WaspPostgresDB.initializeDB()
 
-  override def dropDatabase(): Unit = ??? //TODO
+  override def dropDatabase(): Unit = {}
 
   override def getFactoryBL: FactoryBL = new PostgresFactoryBL
 

@@ -1,9 +1,7 @@
 package it.agile.bigdata.wasp.repository.postgres.bl
 
-import it.agile.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
 import it.agile.bigdata.wasp.repository.postgres.utils.PostgresSuite
-import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobModel, FreeCodeModel, WriterModel}
-import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
+import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobModel, WriterModel}
 
 class BatchJobBLImplTest extends PostgresSuite{
 

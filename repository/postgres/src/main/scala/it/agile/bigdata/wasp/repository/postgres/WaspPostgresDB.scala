@@ -47,7 +47,8 @@ object WaspPostgresDB extends  Logging{
     BatchSchedulersTableDefinition,
     ProducerTableDefinition,
     FreeCodeTableDefinition,
-    BatchJobTableDefinition
+    BatchJobTableDefinition,
+    BatchJobInstanceTableDefinition
   )
 
 
@@ -76,7 +77,7 @@ object WaspPostgresDB extends  Logging{
     waspDB
   }
 
-  def createTables(waspDB: WaspPostgresDB) = {
+  def createTables(waspDB: WaspPostgresDB): Unit = {
     waspDB.execute(tableDefinitions.map(_.ddl):_*)
   }
 
