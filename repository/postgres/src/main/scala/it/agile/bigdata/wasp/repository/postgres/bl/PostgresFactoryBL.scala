@@ -19,7 +19,7 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getWebsocketBL: WebsocketBL = ???
 
-  override def getRawBL: RawBL = ???
+  override def getRawBL: RawBL = RawBLImpl(WaspPostgresDB.getDB())
 
   override def getKeyValueBL: KeyValueBL = ???
 
