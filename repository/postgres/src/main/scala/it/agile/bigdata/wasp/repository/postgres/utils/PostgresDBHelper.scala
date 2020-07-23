@@ -56,7 +56,7 @@ trait PostgresDBHelper extends ConnectionSupport with ConnectionInfoProvider wit
 
 
 
-  protected def selectAll[T](table : String, columns : Array[String], whereCondition : Option[String]=None)(mapper : ResultSet=> T) : Seq[T] ={
+  private[postgres] def selectAll[T](table : String, columns : Array[String], whereCondition : Option[String]=None)(mapper : ResultSet=> T) : Seq[T] ={
     val where = whereCondition.map(w=> s" WHERE $w")
     executeQuery(s"SELECT ${columns.mkString(",")} FROM $table${where.getOrElse("")}")(mapper)
   }

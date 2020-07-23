@@ -31,9 +31,7 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getProcessGroupBL: ProcessGroupBL = ProcessGroupBLImpl(WaspPostgresDB.getDB())
 
-  override def getConfigManagerBL: ConfigManagerBL = ???
-
-  override def getDBConfigBL: DBConfigBL = ???
+  override def getConfigManagerBL: ConfigManagerBL = ConfigManagerBLImpl(WaspPostgresDB.getDB())
 
   override def getSqlSourceBl: SqlSourceBl = SqlSourceBLImpl(WaspPostgresDB.getDB())
 }

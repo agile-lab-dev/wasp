@@ -141,6 +141,11 @@ trait JsonSupport
   implicit lazy val jmxTelemetryTopicConfigModel: RootJsonFormat[JMXTelemetryConfigModel] = jsonFormat5(
     JMXTelemetryConfigModel.apply
   )
+  implicit lazy val jdbcConnectionConfigFormat : RootJsonFormat[JdbcConnectionConfig] = jsonFormat5(JdbcConnectionConfig.apply)
+  implicit lazy val jdbcConfigModelFormat :  RootJsonFormat[JdbcConfigModel] = jsonFormat2(JdbcConfigModel.apply)
+  implicit lazy val nifiConfigModelFormat :  RootJsonFormat[NifiConfigModel] = jsonFormat4(NifiConfigModel.apply)
+  implicit lazy val compilerConfigModelFormat :  RootJsonFormat[CompilerConfigModel] = jsonFormat2(CompilerConfigModel.apply)
+
 
   implicit lazy val telemetryTopicConfigModel: RootJsonFormat[TelemetryTopicConfigModel] = jsonFormat5(
     TelemetryTopicConfigModel.apply

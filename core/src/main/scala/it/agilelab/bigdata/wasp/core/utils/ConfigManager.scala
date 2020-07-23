@@ -19,16 +19,16 @@ import scala.reflect.runtime.universe._
 object ConfigManager {
   val conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
-  private val kafkaConfigName          = "Kafka"
-  private val sparkBatchConfigName     = "SparkBatch"
-  private val sparkStreamingConfigName = "SparkStreaming"
-  private val elasticConfigName        = "Elastic"
-  private val solrConfigName           = "Solr"
-  private val hbaseConfigName          = "HBase"
-  private val jdbcConfigName           = "Jdbc"
-  private val telemetryConfigName      = "Telemetry"
-  private val nifiConfigName           = "Nifi"
-  private val compilerConfigName       = "Compiler"
+  val kafkaConfigName          = "Kafka"
+  val sparkBatchConfigName     = "SparkBatch"
+  val sparkStreamingConfigName = "SparkStreaming"
+  val elasticConfigName        = "Elastic"
+  val solrConfigName           = "Solr"
+  val hbaseConfigName          = "HBase"
+  val jdbcConfigName           = "Jdbc"
+  val telemetryConfigName      = "Telemetry"
+  val nifiConfigName           = "Nifi"
+  val compilerConfigName       = "Compiler"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
 

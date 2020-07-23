@@ -126,7 +126,7 @@ object Status_C extends Directives with JsonSupport {
             ).toJson).toVector.toJson
 
             val waspConfig = JsonParser(ConfigManager.conf.root().render(ConfigRenderOptions.concise()))
-            val mongoDBConfigurations = ConfigBL.dBConfigBL.retrieveDBConfig().map(JsonParser(_)).toVector.toJson
+            val mongoDBConfigurations = ConfigBL.configManagerBL.retrieveDBConfig().map(JsonParser(_)).toVector.toJson
 
             val result = Map(
               "wasp" -> Map(

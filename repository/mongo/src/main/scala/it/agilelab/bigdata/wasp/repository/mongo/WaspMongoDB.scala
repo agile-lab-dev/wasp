@@ -9,9 +9,8 @@ import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
 import it.agilelab.bigdata.wasp.repository.core.db.{RepositoriesFactory, WaspDB}
 import it.agilelab.bigdata.wasp.core.launcher.MasterCommandLineOptions
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.models.configuration.CompilerConfigModel
 import it.agilelab.bigdata.wasp.models._
-import it.agilelab.bigdata.wasp.models.configuration._
+import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, _}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}

@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.core.models.configuration
+package it.agilelab.bigdata.wasp.models.configuration
 
 import it.agilelab.bigdata.wasp.models.Model
 

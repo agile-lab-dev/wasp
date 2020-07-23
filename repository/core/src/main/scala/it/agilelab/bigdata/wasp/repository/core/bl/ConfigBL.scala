@@ -19,7 +19,6 @@ object ConfigBL {
   lazy val freeCodeBL : FreeCodeBL = factory.getFreeCodeBL
   lazy val processGroupBL: ProcessGroupBL = factory.getProcessGroupBL
   lazy val configManagerBL : ConfigManagerBL = factory.getConfigManagerBL
-  lazy val dBConfigBL :  DBConfigBL = factory.getDBConfigBL
   lazy val sqlSourceBl : SqlSourceBl = factory.getSqlSourceBl
 }
 
@@ -41,7 +40,6 @@ trait FactoryBL {
   def getFreeCodeBL : FreeCodeBL
   def getProcessGroupBL: ProcessGroupBL
   def getConfigManagerBL : ConfigManagerBL
-  def getDBConfigBL :  DBConfigBL
   def getSqlSourceBl : SqlSourceBl
 
 }

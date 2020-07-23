@@ -11,6 +11,8 @@ trait ConfigManagerBL {
 
   def retrieveConf[T <: Model](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
+  def retrieveDBConfig(): Seq[String]
+
 }
 
 
