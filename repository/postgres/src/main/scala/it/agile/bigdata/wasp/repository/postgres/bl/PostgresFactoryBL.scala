@@ -1,7 +1,7 @@
 package it.agile.bigdata.wasp.repository.postgres.bl
 
 import it.agile.bigdata.wasp.repository.postgres.WaspPostgresDB
-import it.agilelab.bigdata.wasp.repository.core.bl.{BatchJobBL, BatchSchedulersBL, ConfigManagerBL, DBConfigBL, DocumentBL, FactoryBL, FreeCodeBL, IndexBL, KeyValueBL, MlModelBL, PipegraphBL, ProcessGroupBL, ProducerBL, RawBL, SqlSourceBl, TopicBL, WebsocketBL}
+import it.agilelab.bigdata.wasp.repository.core.bl._
 
 class PostgresFactoryBL extends FactoryBL {
 
@@ -29,7 +29,7 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getFreeCodeBL: FreeCodeBL =  FreeCodeBLImpl(WaspPostgresDB.getDB())
 
-  override def getProcessGroupBL: ProcessGroupBL = ???
+  override def getProcessGroupBL: ProcessGroupBL = ProcessGroupBLImpl(WaspPostgresDB.getDB())
 
   override def getConfigManagerBL: ConfigManagerBL = ???
 
