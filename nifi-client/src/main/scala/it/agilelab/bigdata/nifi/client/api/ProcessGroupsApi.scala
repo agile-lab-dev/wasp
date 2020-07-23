@@ -16,6 +16,7 @@ import java.io.File
 import it.agilelab.bigdata.nifi.client.core.SttpSerializer
 import it.agilelab.bigdata.nifi.client.core.alias._
 import it.agilelab.bigdata.nifi.client.model._
+import org.json4s.JObject
 import sttp.client._
 import sttp.model.Method
 
@@ -276,11 +277,11 @@ class ProcessGroupsApi(baseUrl: String)(implicit serializer: SttpSerializer) {
     *
     * @param id The process group id.
     */
-  def exportProcessGroup(id: String): ApiRequestT[String] =
+  def exportProcessGroup(id: String): ApiRequestT[JObject] =
     basicRequest
       .method(Method.GET, uri"$baseUrl/process-groups/${id}/download")
       .contentType("application/json")
-      .response(asJson[String])
+      .response(asJson[JObject])
 
   /**
     * Expected answers:

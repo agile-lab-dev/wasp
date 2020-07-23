@@ -16,7 +16,7 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 cd $SCRIPT_DIR/../../..
 
 echo "Running sbt stage task..."
-sbt -mem 2048 wasp-whitelabel/stage
+sbt -mem 4096 wasp-whitelabel/stage
 
 TAG_NAME=$1
 IMAGE_NAME=registry.gitlab.com/agilefactory/agile.wasp2/try-wasp:$1
