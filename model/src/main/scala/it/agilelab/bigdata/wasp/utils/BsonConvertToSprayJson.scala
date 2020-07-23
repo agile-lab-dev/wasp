@@ -241,6 +241,8 @@ trait JsonSupport
   implicit lazy val errorModelFormat: RootJsonFormat[ErrorModel]           = jsonFormat6(ErrorModel.apply)
   implicit lazy val completionModelFormat: RootJsonFormat[CompletionModel] = jsonFormat2(CompletionModel.apply)
 
+  implicit lazy val websocketModelFormat: RootJsonFormat[WebsocketModel] = jsonFormat5(WebsocketModel.apply)
+
   implicit lazy val jdbcPartitioningInfoFormat: RootJsonFormat[JdbcPartitioningInfo] = jsonFormat3(
     JdbcPartitioningInfo.apply
   )
