@@ -25,7 +25,7 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getBatchSchedulersBL: BatchSchedulersBLImpl = BatchSchedulersBLImpl(WaspPostgresDB.getDB())
 
-  override def getDocumentBL: DocumentBL = ???
+  override def getDocumentBL: DocumentBL = DocumentBLImpl(WaspPostgresDB.getDB())
 
   override def getFreeCodeBL: FreeCodeBL =  FreeCodeBLImpl(WaspPostgresDB.getDB())
 
