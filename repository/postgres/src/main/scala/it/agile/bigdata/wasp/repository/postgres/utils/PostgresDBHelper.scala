@@ -71,6 +71,10 @@ trait PostgresDBHelper extends ConnectionSupport with ConnectionInfoProvider wit
     execute(s"update $table SET ${objTransformed.map(e=> s"${e._1}=${format(e._2)}").mkString(",")} where $whereCondition")
   }
 
+  protected def dropTable(table : String) : Unit = {
+    execute(s"DROP TABLE IF EXISTS $table")
+  }
+
   private def format(value : Any): String = {
     if(value.isInstanceOf[String]) s"'$value'"
     else if (value.isInstanceOf[Long] ||

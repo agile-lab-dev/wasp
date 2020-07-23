@@ -13,4 +13,8 @@ trait PostgresBL {
       waspDB.createTable()
    }
 
+   private[postgres] def dropTable() : Unit = {
+      waspDB.dropTable()
+   }
+
 }

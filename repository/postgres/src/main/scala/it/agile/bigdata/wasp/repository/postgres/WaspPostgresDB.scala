@@ -1,6 +1,6 @@
 package it.agile.bigdata.wasp.repository.postgres
 
-import it.agile.bigdata.wasp.repository.postgres.tables._
+import it.agile.bigdata.wasp.repository.postgres.tables.{PipegraphTableDefinition, _}
 import it.agile.bigdata.wasp.repository.postgres.utils.PostgresDBHelper
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
@@ -27,6 +27,8 @@ trait WaspPostgresDB extends WaspDB with PostgresDBHelper {
 
   def createTable()(implicit tableDefinition: TableDefinition[_,_]) : Unit
 
+  private[postgres] def dropTable()(implicit tableDefinition: TableDefinition[_,_]) : Unit
+
   def updateByPrimaryKey[T <: Model,K](obj : T)(implicit tableDefinition: TableDefinition[T,K]): Unit
 
   def upsert[T <: Model,K](obj : T)(implicit table: TableDefinition[T,K]): Unit
@@ -45,17 +47,19 @@ object WaspPostgresDB extends  Logging{
 
   val tableDefinitions = Seq(
     BatchSchedulersTableDefinition,
-    TopicTableDefinition,
-    ProducerTableDefinition,
-    IndexTableDefinition,
-    FreeCodeTableDefinition,
-    SqlSourceTableDefinition,
     BatchJobTableDefinition,
-    DocumentTableDefinition,
-    ProcessGroupTableDefinition,
     BatchJobInstanceTableDefinition,
+    DocumentTableDefinition,
+    FreeCodeTableDefinition,
+    IndexTableDefinition,
+    KeyValueTableDefinition,
+    PipegraphTableDefinition,
+    PipegraphInstanceTableDefinition,
+    ProcessGroupTableDefinition,
+    ProducerTableDefinition,
     RawTableDefinition,
-    KeyValueTableDefinition
+    SqlSourceTableDefinition,
+    TopicTableDefinition
   )
 
 

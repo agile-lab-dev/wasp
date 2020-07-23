@@ -59,6 +59,10 @@ class WaspPostgresDBImpl(pgDBConf : PostgresDBConfigModel) extends WaspPostgresD
     super.execute(tableDefinition.ddl)
   }
 
+  private[postgres] def dropTable()(implicit tableDefinition: TableDefinition[_,_]) : Unit = {
+    dropTable(tableDefinition.tableName)
+  }
+
 
   def close() : Unit = super.closePool()
 
