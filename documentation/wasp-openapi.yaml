@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-339-fix-and-implement-api-for-pipegraph-editing-via-web-ui-SNAPSHOT
+  version: 2.26.0-381-refactor-generateopenapi-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
