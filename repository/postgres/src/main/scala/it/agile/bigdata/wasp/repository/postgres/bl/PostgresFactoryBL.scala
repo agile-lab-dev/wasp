@@ -7,7 +7,7 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getBatchJobBL: BatchJobBL = BatchJobBLImpl(WaspPostgresDB.getDB())
 
-  override def getIndexBL: IndexBL = ???
+  override def getIndexBL: IndexBL = IndexBLImpl(WaspPostgresDB.getDB())
 
   override def getPipegraphBL: PipegraphBL = ???
 
