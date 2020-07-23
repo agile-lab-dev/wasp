@@ -45,6 +45,7 @@ object WaspPostgresDB extends  Logging{
 
   val tableDefinitions = Seq(
     BatchSchedulersTableDefinition,
+    TopicTableDefinition,
     ProducerTableDefinition,
     IndexTableDefinition,
     FreeCodeTableDefinition,
