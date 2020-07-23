@@ -18,7 +18,7 @@ trait ModelTableDefinition[T<:Model] extends TableDefinition[T,String]{
 
   override def to: T => Array[(String, Any)] = model=> Array(
     (name,model.name),
-    (payload,fromModelToJson(model).toString())
+    (payload,fromModelToJson(model))
   ) ++ mapperExtraColumnsFromModelToArray(model)
 
 
@@ -27,7 +27,7 @@ trait ModelTableDefinition[T<:Model] extends TableDefinition[T,String]{
   protected def fromModelToJson(model : T) : JsValue
   protected def fromJsonToModel(json : JsValue) : T
 
-  override lazy val conditionPrimaryKey : String => String = k=> s"$name='$k'"
+  override lazy val conditionPrimaryKey : String => Array[(String,Any)] = k=> Array((name,k))
   override lazy val primaryKeyFromObject : T => String = obj => obj.name
 
 

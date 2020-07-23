@@ -24,7 +24,7 @@ case class BatchJobInstanceBLImpl(waspDB: WaspPostgresDB) extends BatchJobInstan
   override def all(): Seq[BatchJobInstanceModel] = waspDB.getAll()
 
   override def instancesOf(name: String): Seq[BatchJobInstanceModel] =
-    waspDB.getBy(s"${BatchJobInstanceTableDefinition.instanceOf}='$name'")
+    waspDB.getBy(Array((BatchJobInstanceTableDefinition.instanceOf,name)))
 
   override def createTable(): Unit = waspDB.createTable()
 }

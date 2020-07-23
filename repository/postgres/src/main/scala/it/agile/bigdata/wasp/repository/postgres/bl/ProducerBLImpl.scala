@@ -12,16 +12,16 @@ case class ProducerBLImpl(waspDB : WaspPostgresDB) extends ProducerBL with Postg
   override def getByName(name: String): Option[ProducerModel] = waspDB.getByPrimaryKey(name)
 
   override def getActiveProducers(isActive: Boolean): Seq[ProducerModel] =
-    waspDB.getBy(s"${ProducerTableDefinition.isActive}=$isActive")
+    waspDB.getBy(Array((ProducerTableDefinition.isActive,isActive)))
 
   override def getSystemProducers: Seq[ProducerModel] =
-    waspDB.getBy(s"${ProducerTableDefinition.isSystem}=true")
+    waspDB.getBy(Array((ProducerTableDefinition.isSystem,true)))
 
   override def getNonSystemProducers: Seq[ProducerModel] =
-    waspDB.getBy(s"${ProducerTableDefinition.isSystem}=false")
+    waspDB.getBy(Array((ProducerTableDefinition.isSystem,false)))
 
   override def getByTopicName(name: String): Seq[ProducerModel] =
-    waspDB.getBy(s"${ProducerTableDefinition.topicName}='$name'")
+    waspDB.getBy(Array((ProducerTableDefinition.topicName,name)))
 
   override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
     if (producerModel.hasOutput)

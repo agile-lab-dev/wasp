@@ -1,7 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.core.bl
 
 import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
-import org.mongodb.scala.bson.BsonObjectId
+import org.apache.commons.lang3.SerializationUtils
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString, BsonValue}
 
 /**
   * This class allow to read and persist the machine learning models
@@ -41,7 +42,9 @@ trait MlModelBL {
     * @param mlModelOnlyInfo All the metadata about the model with the modelFileId initialized
     * @return
     */
-  def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any]
+  def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any] = {
+    getFileByID(mlModelOnlyInfo).map(SerializationUtils.deserialize[Any])
+  }
 
   def getFileByID(mlModelOnlyInfo: MlModelOnlyInfo): Option[Array[Byte]]
 
@@ -63,7 +66,14 @@ trait MlModelBL {
     * @param timestamp
     * @return the id of the model
     */
-  def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId
+  def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId = {
+    val serialized  = SerializationUtils.serialize(transformerModel)
+    val contentType = "application/octet-stream"
+    val metadata    = BsonDocument(Map("contentType" -> BsonString(contentType)))
+    saveFile(serialized, s"$name-$version-$timestamp", metadata)
+  }
+
+  protected def saveFile(file : Array[Byte],fileName : String, metadata : BsonDocument): BsonObjectId
 
   /**
     * Delete the metadata and the transformer model in base to name, version, timestamp

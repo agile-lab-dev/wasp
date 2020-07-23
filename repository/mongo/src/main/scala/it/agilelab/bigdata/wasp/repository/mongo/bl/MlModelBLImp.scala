@@ -55,14 +55,6 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
     waspDB.getAll[MlModelOnlyInfo]()
   }
 
-  /**
-    * Pay attention this method could not working
-    * @param mlModelOnlyInfo All the metadata about the model with the modelFileId initialized
-    * @return
-    */
-  def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any] = {
-    getFileByID(mlModelOnlyInfo).map(SerializationUtils.deserialize[Any])
-  }
 
   def getFileByID(mlModelOnlyInfo: MlModelOnlyInfo): Option[Array[Byte]] = {
     if (mlModelOnlyInfo.modelFileId.isDefined) {
@@ -74,11 +66,10 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
   def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
     waspDB.insert(mlModelOnlyInfo)
   }
-  def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId = {
-    val serialized  = SerializationUtils.serialize(transformerModel)
-    val contentType = "application/octet-stream"
-    val metadata    = BsonDocument(Map("contentType" -> BsonString(contentType)))
-    waspDB.saveFile(serialized, s"$name-$version-$timestamp", metadata)
+
+
+  protected def saveFile(file : Array[Byte],fileName : String, metadata : BsonDocument): BsonObjectId = {
+    waspDB.saveFile(file, fileName, metadata)
   }
 
   override def delete(name: String, version: String, timestamp: Long): Unit = {

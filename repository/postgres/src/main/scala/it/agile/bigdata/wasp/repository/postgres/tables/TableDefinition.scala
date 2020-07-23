@@ -15,7 +15,7 @@ trait TableDefinition[T,K] {
 
   def to : T=> Array[(String,Any)]
 
-  def conditionPrimaryKey : K => String
+  def conditionPrimaryKey : K => Array[(String,Any)]
 
   def primaryKeyFromObject : T => K
 

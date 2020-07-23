@@ -9,7 +9,7 @@ case class BatchSchedulersBLImpl(waspDB: WaspPostgresDB) extends BatchSchedulers
 
   override implicit val tableDefinition: TableDefinition[BatchSchedulerModel,String] = BatchSchedulersTableDefinition
 
-  override def getActiveSchedulers(isActive: Boolean): Seq[BatchSchedulerModel] = waspDB.getBy(s"${BatchSchedulersTableDefinition.isActive}=$isActive")
+  override def getActiveSchedulers(isActive: Boolean): Seq[BatchSchedulerModel] = waspDB.getBy(Array((BatchSchedulersTableDefinition.isActive,isActive)))
 
   override def persist(schedulerModel: BatchSchedulerModel): Unit = waspDB.insert(schedulerModel)
 

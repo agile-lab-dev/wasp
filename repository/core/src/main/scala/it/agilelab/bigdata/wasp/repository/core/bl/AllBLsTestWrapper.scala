@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.repository.core.bl
 import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel, DatastoreModel, IndexModel, KeyValueModel, MlModelOnlyInfo, ProducerModel, RawModel, TopicModel}
 import org.apache.commons.lang3.SerializationUtils
-import org.mongodb.scala.bson.BsonObjectId
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -71,6 +71,10 @@ class AllBLsTestWrapper {
   }
 
   val mlModelBL: MlModelBL = new MlModelBL {
+
+
+    override protected def saveFile(file: Array[Byte], fileName: String, metadata: BsonDocument): BsonObjectId = ???
+
     val database = new ListBuffer[MlModelOnlyInfo]
     val fs = new mutable.HashMap[String, Array[Byte]]()
 
