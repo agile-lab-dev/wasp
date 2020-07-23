@@ -9,7 +9,7 @@ import com.typesafe.config._
 import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
 import it.agilelab.bigdata.wasp.models.configuration._
 import it.agilelab.bigdata.wasp.models.editor._
-import it.agilelab.bigdata.wasp.models.{Counts, DashboardModel, LogEntry, _}
+import it.agilelab.bigdata.wasp.models._
 import org.json4s.{DefaultFormats, Formats, JObject}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import spray.json.{JsValue, RootJsonFormat, deserializationError, _}
@@ -235,6 +235,14 @@ trait JsonSupport
   implicit lazy val freeCodeFormat: RootJsonFormat[FreeCode]               = jsonFormat1(FreeCode.apply)
   implicit lazy val errorModelFormat: RootJsonFormat[ErrorModel]           = jsonFormat6(ErrorModel.apply)
   implicit lazy val completionModelFormat: RootJsonFormat[CompletionModel] = jsonFormat2(CompletionModel.apply)
+
+  implicit lazy val jdbcPartitioningInfoFormat: RootJsonFormat[JdbcPartitioningInfo] = jsonFormat3(
+    JdbcPartitioningInfo.apply
+  )
+
+  implicit lazy val sqlSourceModelFormat: RootJsonFormat[SqlSourceModel] = jsonFormat6(
+    SqlSourceModel.apply
+  )
 
   // Editor Format
   implicit lazy val nifiEditorFormat: RootJsonFormat[NifiStatelessInstanceModel] = jsonFormat3(

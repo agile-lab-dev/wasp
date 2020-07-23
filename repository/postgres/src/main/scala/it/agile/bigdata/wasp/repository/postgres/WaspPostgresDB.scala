@@ -48,6 +48,7 @@ object WaspPostgresDB extends  Logging{
     ProducerTableDefinition,
     IndexTableDefinition,
     FreeCodeTableDefinition,
+    SqlSourceTableDefinition,
     BatchJobTableDefinition,
     BatchJobInstanceTableDefinition,
     RawTableDefinition
