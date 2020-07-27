@@ -45,22 +45,24 @@ trait WaspPostgresDB extends WaspDB with PostgresDBHelper {
 
 
   val tableDefinitions = Seq(
-    MlModelOnlyDataTableDefinition,
-    MlModelOnlyInfoTableDefinition,
-    BatchSchedulersTableDefinition,
-    BatchJobTableDefinition,
     BatchJobInstanceTableDefinition,
+    BatchJobTableDefinition,
+    BatchSchedulersTableDefinition,
+    ConfigManagerTableDefinition,
     DocumentTableDefinition,
     FreeCodeTableDefinition,
     IndexTableDefinition,
     KeyValueTableDefinition,
-    PipegraphTableDefinition,
+    MlModelOnlyDataTableDefinition,
+    MlModelOnlyInfoTableDefinition,
     PipegraphInstanceTableDefinition,
+    PipegraphTableDefinition,
     ProcessGroupTableDefinition,
     ProducerTableDefinition,
     RawTableDefinition,
     SqlSourceTableDefinition,
-    TopicTableDefinition
+    TopicTableDefinition,
+    WebSocketTableDefinition
   )
 
 
