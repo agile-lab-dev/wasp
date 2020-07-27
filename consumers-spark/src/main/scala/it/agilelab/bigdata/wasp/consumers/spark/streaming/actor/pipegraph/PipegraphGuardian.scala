@@ -4,13 +4,14 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
+import akka.actor.{ActorRef, ActorRefFactory, FSM, LoggingFSM, Props}
 import State._
 import Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol => MasterProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{StructuredStreamingETLActor, Protocol => ChildrenProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => MyProtocol}
 import PipegraphGuardian._
+import akka.cluster.Cluster
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
 import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
@@ -25,12 +26,14 @@ class PipegraphGuardian(private val master: ActorRef,
                         private val childFactory: ChildFactory,
                         private val retryDuration: FiniteDuration,
                         private val monitoringInterval: FiniteDuration,
-                        private val componentFailedStrategy: ComponentFailedStrategy) extends FSM[State, Data] {
+                        private val componentFailedStrategy: ComponentFailedStrategy) extends FSM[State, Data] with LoggingFSM[State,Data]{
+
+  val cluster = Cluster(context.system)
 
   startWith(WaitingForWork, Empty)
 
   when(WaitingForWork) {
-    case Event(MasterProtocol.WorkAvailable, Empty) =>
+    case Event(MasterProtocol.WorkAvailable(_), Empty) =>
       log.info("Work is available")
       goto(RequestingWork)
   }
@@ -287,11 +290,11 @@ class PipegraphGuardian(private val master: ActorRef,
   onTransition {
     case (WaitingForWork, RequestingWork) =>
       log.info("Requesting work from master [{}]", sender())
-      sender() ! MyProtocol.GimmeWork
+      sender() ! MyProtocol.GimmeWork(cluster.selfUniqueAddress)
 
     case (RequestingWork, RequestingWork) =>
       log.info("Requesting work from master [{}] retry", sender())
-      sender() ! MyProtocol.GimmeWork
+      sender() ! MyProtocol.GimmeWork(cluster.selfUniqueAddress)
 
     case (RequestingWork, Activating) => nextStateData match {
       case ActivatingData.ToBeActivated(etl) =>

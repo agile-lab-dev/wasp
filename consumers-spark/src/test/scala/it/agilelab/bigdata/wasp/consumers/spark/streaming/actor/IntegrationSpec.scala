@@ -3,26 +3,45 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
 import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.collaborator.CollaboratorActor
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => ETLProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{SparkConsumersStreamingMasterGuardian, Protocol => MasterProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.{ComponentFailedStrategy, DontCare, StopAll}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, ProbesFactory, Protocol => PipegraphProtocol}
-import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{
+  SparkConsumersStreamingMasterGuardian,
+  Protocol => MasterProtocol
+}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.{
+  ComponentFailedStrategy,
+  DontCare,
+  StopAll
+}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{
+  PipegraphGuardian,
+  ProbesFactory,
+  Protocol => PipegraphProtocol
+}
+import it.agilelab.bigdata.wasp.models.{
+  PipegraphInstanceModel,
+  PipegraphModel,
+  PipegraphStatus,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  WriterModel
+}
 import org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.collection.immutable.Map
 
 class IntegrationSpec
-  extends TestKit(ActorSystem("WASP"))
+    extends TestKit(ActorSystem("WASP"))
     with WordSpecLike
     with BeforeAndAfterAll
     with ImplicitSender
     with Matchers
-    with Eventually {
-
+    with Eventually
+    with BeforeAndAfter {
 
   import SparkConsumersStreamingMasterGuardian._
 
@@ -32,39 +51,45 @@ class IntegrationSpec
     TestKit.shutdownActorSystem(system)
   }
 
-  val defaultPipegraph = PipegraphModel(name = "pipegraph",
+  val defaultPipegraph = PipegraphModel(
+    name = "pipegraph",
     description = "",
     owner = "test",
     isSystem = false,
     creationTime = System.currentTimeMillis(),
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
-      StructuredStreamingETLModel(name = "component",
-                                  streamingInput = StreamingReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json, None),
-                                  staticInputs = List.empty,
-                                  streamingOutput = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
-                                  mlModels = List(),
-                                  strategy = None,
-                                  triggerIntervalMs = None,
-                                  options = Map()
-      )),
+      StructuredStreamingETLModel(
+        name = "component",
+        streamingInput = StreamingReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json, None),
+        staticInputs = List.empty,
+        streamingOutput = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
+        mlModels = List(),
+        strategy = None,
+        triggerIntervalMs = None,
+        options = Map()
+      )
+    ),
     rtComponents = List.empty,
-    dashboard = None)
-  val defaultInstance = PipegraphInstanceModel(name = "pipegraph-1",
+    dashboard = None
+  )
+  val defaultInstance = PipegraphInstanceModel(
+    name = "pipegraph-1",
     instanceOf = "pipegraph",
-    startTimestamp = 1l,
-    currentStatusTimestamp = 0l,
-    status = PipegraphStatus.PROCESSING)
+    startTimestamp = 1L,
+    currentStatusTimestamp = 0L,
+    status = PipegraphStatus.PROCESSING,
+    executedByNode = None,
+    peerActor = None
+  )
 
   "A SparkConsumersStreamingMasterGuardian orchestrating PipegraphGuardians" must {
 
     "Orchestrate one pipegraph" in {
 
-
       val mockBl = new MockPipegraphBl(new MockPipegraphInstanceBl())
 
       mockBl.insert(defaultPipegraph)
-
 
       val probe = TestProbe()
 
@@ -72,27 +97,31 @@ class IntegrationSpec
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
+      val childCreator: ChildCreator = (master, name, system) =>
+        system.actorOf(
+          Props(new PipegraphGuardian(master, factory, 500.milliseconds, 500.milliseconds, strategy)),
+          name
+        )
 
-      val childCreator: ChildCreator = (master,name, system) => system.actorOf(Props(new PipegraphGuardian(master,
-        factory,
-        500.milliseconds, 500.milliseconds, strategy)),name)
+      val watchdogCreator: ChildCreator = (master, name, _) => TestProbe(name)(system).ref
 
-      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
+      val fsm =
+        system.actorOf(
+          SparkConsumersStreamingMasterGuardian.props(mockBl, watchdogCreator, "collaborator-1", 500.millisecond),
+          "fsm1"
+        )
 
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator,
-        1.millisecond))
-
-
+      val collaborator = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-1")
 
       probe.send(fsm, MasterProtocol.StartPipegraph(defaultPipegraph.name))
 
-
-      probe.expectMsgPF() {
-        case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName) if instanceName.startsWith(s"${defaultPipegraph.name}-") => ()
+      probe.expectMsgPF(max = Duration.fromNanos(1000000000000d)) {
+        case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName)
+            if instanceName.startsWith(s"${defaultPipegraph.name}-") =>
+          ()
       }
 
       val etl = defaultPipegraph.structuredStreamingComponents.head
-
 
       eventually(timeout(Span(10, Seconds))) {
         factory.probes.head
@@ -118,24 +147,23 @@ class IntegrationSpec
 
       probe.expectMsg(MasterProtocol.PipegraphStopped(defaultPipegraph.name))
 
+      system.stop(fsm)
+      system.stop(collaborator)
+
     }
 
     "Orchestrate more than one pipegraph" in {
 
-
       val mockBl = new MockPipegraphBl(new MockPipegraphInstanceBl())
 
-
-      val firstEtl = defaultPipegraph.structuredStreamingComponents.head.copy(name = "first-component")
+      val firstEtl  = defaultPipegraph.structuredStreamingComponents.head.copy(name = "first-component")
       val secondEtl = defaultPipegraph.structuredStreamingComponents.head.copy(name = "second-component")
 
-      val firstPipegraph = defaultPipegraph.copy(name = "first", structuredStreamingComponents = List(firstEtl))
+      val firstPipegraph  = defaultPipegraph.copy(name = "first", structuredStreamingComponents = List(firstEtl))
       val secondPipegraph = defaultPipegraph.copy(name = "second", structuredStreamingComponents = List(secondEtl))
-
 
       mockBl.insert(firstPipegraph)
       mockBl.insert(secondPipegraph)
-
 
       val probe = TestProbe()
 
@@ -143,16 +171,18 @@ class IntegrationSpec
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
+      val childCreator: ChildCreator = (master, name, system) =>
+        system.actorOf(
+          Props(new PipegraphGuardian(master, factory, 500.milliseconds, 500.milliseconds, strategy)),
+          name
+        )
 
-      val childCreator: ChildCreator = (master,name, system) => system.actorOf(Props(new PipegraphGuardian(master,
-        factory,
-        500.milliseconds, 500.milliseconds, strategy)), name)
+      val watchdogCreator: ChildCreator = (master, name, _) => TestProbe(name)(system).ref
 
-      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
-
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator,watchdogCreator,
-        1.millisecond))
-
+      val fsm = system.actorOf(
+        SparkConsumersStreamingMasterGuardian.props(mockBl, watchdogCreator, "collaborator-2", 1.millisecond)
+      )
+      val collaborator = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-2")
 
       probe.send(fsm, MasterProtocol.StartPipegraph(firstPipegraph.name))
 
@@ -162,10 +192,14 @@ class IntegrationSpec
 
       probe.send(fsm, MasterProtocol.StartPipegraph(secondPipegraph.name))
       probe.expectMsgPF() {
-        case MasterProtocol.PipegraphStarted(firstPipegraph.name, instanceName) if instanceName.startsWith(s"${firstPipegraph.name}-") => ()
+        case MasterProtocol.PipegraphStarted(firstPipegraph.name, instanceName)
+            if instanceName.startsWith(s"${firstPipegraph.name}-") =>
+          ()
       }
       probe.expectMsgPF() {
-        case MasterProtocol.PipegraphStarted(secondPipegraph.name, instanceName) if instanceName.startsWith(s"${secondPipegraph.name}-") => ()
+        case MasterProtocol.PipegraphStarted(secondPipegraph.name, instanceName)
+            if instanceName.startsWith(s"${secondPipegraph.name}-") =>
+          ()
       }
 
       factory.probes.head.expectMsg(ETLProtocol.ActivateETL(firstEtl))
@@ -198,9 +232,7 @@ class IntegrationSpec
 
       factory.probes(1).reply(ETLProtocol.ETLStopped(secondEtl))
 
-
       probe.expectMsg(MasterProtocol.PipegraphStopped(secondPipegraph.name))
-
 
       factory.probes.head.expectMsg(ETLProtocol.CheckETL(firstEtl))
 
@@ -213,17 +245,16 @@ class IntegrationSpec
       factory.probes.head.reply(ETLProtocol.ETLStopped(firstEtl))
 
       probe.expectMsg(MasterProtocol.PipegraphStopped(firstPipegraph.name))
-
+      system.stop(fsm)
+      system.stop(collaborator)
 
     }
 
     "Record failure of pipegraph" in {
 
-
       val mockBl = new MockPipegraphBl(new MockPipegraphInstanceBl())
 
       mockBl.insert(defaultPipegraph)
-
 
       val probe = TestProbe()
 
@@ -231,27 +262,28 @@ class IntegrationSpec
 
       val strategy: ComponentFailedStrategy = _ => StopAll
 
+      val childCreator: ChildCreator = (master, name, system) =>
+        system.actorOf(
+          Props(new PipegraphGuardian(master, factory, 500.milliseconds, 500.milliseconds, strategy)),
+          name
+        )
 
-      val childCreator: ChildCreator = (master,name, system) => system.actorOf(Props(new PipegraphGuardian(master,
-        factory,
-        500.milliseconds, 500.milliseconds, strategy)), name)
+      val watchdogCreator: ChildCreator = (master, name, _) => TestProbe(name)(system).ref
 
-      val watchdogCreator: ChildCreator = (master,name, _) => TestProbe(name)(system).ref
-
-      val fsm = TestFSMRef(new SparkConsumersStreamingMasterGuardian(mockBl, childCreator, watchdogCreator,
-        1.millisecond))
-
-
+      val fsm = system.actorOf(
+        SparkConsumersStreamingMasterGuardian.props(mockBl, watchdogCreator, "collaborator-3", 1.millisecond)
+      )
+      val collaborator = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-3")
 
       probe.send(fsm, MasterProtocol.StartPipegraph(defaultPipegraph.name))
 
-
       probe.expectMsgPF() {
-        case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName) if instanceName.startsWith(s"${defaultPipegraph.name}-") => ()
+        case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName)
+            if instanceName.startsWith(s"${defaultPipegraph.name}-") =>
+          ()
       }
 
       val etl = defaultPipegraph.structuredStreamingComponents.head
-
 
       eventually(timeout(Span(10, Seconds))) {
         factory.probes.head
@@ -273,10 +305,14 @@ class IntegrationSpec
 
       eventually(timeout(Span(10, Seconds))) {
         mockBl.instances().all().head should matchPattern {
-          case PipegraphInstanceModel(_,defaultPipegraph.name,_,_,PipegraphStatus.FAILED,Some(string)) if string ==
-            getStackTrace(reason) =>
+          case PipegraphInstanceModel(_, defaultPipegraph.name, _, _, PipegraphStatus.FAILED, _, _, Some(string))
+              if string ==
+                getStackTrace(reason) =>
         }
       }
+
+      system.stop(collaborator)
+      system.stop(fsm)
 
     }
 

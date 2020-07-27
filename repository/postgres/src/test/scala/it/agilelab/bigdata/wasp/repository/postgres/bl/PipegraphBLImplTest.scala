@@ -5,31 +5,31 @@ import it.agilelab.bigdata.wasp.repository.postgres.tables.PipegraphTableDefinit
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.bson.BsonDocument
 
-class PipegraphBLImplTest extends PostgresSuite{
+class PipegraphBLImplTest extends PostgresSuite {
 
-  val bl =  PipegraphBLImpl(pgDB)
+  val bl = PipegraphBLImpl(pgDB)
 
   it should "test PipegraphBLImpl" in {
     bl.dropTable()
     bl.createTable()
 
 
-    val model1 = PipegraphModel("name1","description","tester",true,10L,List.empty,List.empty,List.empty,None)
+    val model1 = PipegraphModel("name1", "description", "tester", true, 10L, List.empty, List.empty, List.empty, None)
     bl.insert(model1)
 
-    val etl = StructuredStreamingETLModel("name_1","not-default",
-      StreamingReaderModel.topicReader("name",TopicModel("name",10L,3,3,"topic",None,None,None,true,new BsonDocument),Some(10),Map.empty),
+    val etl = StructuredStreamingETLModel("name_1", "not-default",
+      StreamingReaderModel.topicReader("name", TopicModel("name", 10L, 3, 3, "topic", None, None, None, true, new BsonDocument), Some(10), Map.empty),
       List.empty,
       WriterModel.consoleWriter("console"),
-      List.empty,None,Some(10))
-    val rtModel = RTModel("model",List(ReaderModel.hbaseReader("made",KeyValueModel("hbase","catalog",None,None,false,None))),true,None,None)
-    val model2 = PipegraphModel("name2","description","tester",true,10L,List.empty,List(etl),List(rtModel),None)
+      List.empty, None, Some(10))
+    val rtModel = RTModel("model", List(ReaderModel.hbaseReader("made", KeyValueModel("hbase", "catalog", None, None, false, None))), true, None, None)
+    val model2 = PipegraphModel("name2", "description", "tester", true, 10L, List.empty, List(etl), List(rtModel), None)
     bl.insert(model2)
 
     val list = bl.getAll
 
     list.size shouldBe 2
-    list should contain theSameElementsAs Seq(model1,model2)
+    list should contain theSameElementsAs Seq(model1, model2)
 
     bl.getByName(model1.name).get shouldBe model1
     bl.getByName(model2.name).get shouldBe model2
@@ -47,16 +47,16 @@ class PipegraphBLImplTest extends PostgresSuite{
     bl.createTable()
 
 
-    val model1 = PipegraphModel("name_1","description1","tester",true,10L,List.empty,List.empty,List.empty,None)
-    val model2 = PipegraphModel("name_1","description2","tester",true,10L,List.empty,List.empty,List.empty,None)
-    val model3 = PipegraphModel("name_2","description3","tester",true,10L,List.empty,List.empty,List.empty,None)
-    val model4 = PipegraphModel("name_2","description4","tester",true,10L,List.empty,List.empty,List.empty,None)
+    val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model2 = PipegraphModel("name_1", "description2", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model3 = PipegraphModel("name_2", "description3", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model4 = PipegraphModel("name_2", "description4", "tester", true, 10L, List.empty, List.empty, List.empty, None)
 
 
     bl.insert(model1)
     bl.getByName(model1.name).get shouldBe model1
 
-    an [Exception] should be thrownBy bl.insert(model2)
+    an[Exception] should be thrownBy bl.insert(model2)
     bl.upsert(model2)
     bl.getByName(model1.name).get shouldBe model2
 
@@ -67,7 +67,6 @@ class PipegraphBLImplTest extends PostgresSuite{
     bl.getByName(model3.name).get shouldBe model3
     bl.update(model4)
     bl.getByName(model3.name).get shouldBe model4
-
 
 
     bl.deleteByName(model1.name)
@@ -86,10 +85,10 @@ class PipegraphBLImplTest extends PostgresSuite{
     bl.dropTable()
     bl.createTable()
 
-    val model1 = PipegraphModel("model_1","description1","tester",true,10L,List.empty,List.empty,List.empty,None)
-    val model2 = PipegraphModel("model_2","description2","tester",true,10L,List.empty,List.empty,List.empty,None)
-    val model3 = PipegraphModel("model_3","description3","tester",false,10L,List.empty,List.empty,List.empty,None)
-    val model4 = PipegraphModel("model_4","description4","tester",false,10L,List.empty,List.empty,List.empty,None)
+    val model1 = PipegraphModel("model_1", "description1", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model2 = PipegraphModel("model_2", "description2", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model3 = PipegraphModel("model_3", "description3", "tester", false, 10L, List.empty, List.empty, List.empty, None)
+    val model4 = PipegraphModel("model_4", "description4", "tester", false, 10L, List.empty, List.empty, List.empty, None)
 
 
     bl.insert(model1)
@@ -99,15 +98,15 @@ class PipegraphBLImplTest extends PostgresSuite{
 
     val all = bl.getAll
     all.size shouldBe 4
-    all should contain theSameElementsAs Seq(model1,model2,model3,model4)
+    all should contain theSameElementsAs Seq(model1, model2, model3, model4)
 
     val systemPipegraphs = bl.getSystemPipegraphs
     systemPipegraphs.size shouldBe 2
-    systemPipegraphs should contain theSameElementsAs Seq(model1,model2)
+    systemPipegraphs should contain theSameElementsAs Seq(model1, model2)
 
     val notSystemPipegraphs = bl.getNonSystemPipegraphs
     notSystemPipegraphs.size shouldBe 2
-    notSystemPipegraphs should contain theSameElementsAs Seq(model3,model4)
+    notSystemPipegraphs should contain theSameElementsAs Seq(model3, model4)
 
 
     bl.deleteByName(model1.name)
@@ -121,17 +120,17 @@ class PipegraphBLImplTest extends PostgresSuite{
   }
 
   it should "test getActivePipegraphs" in {
-    val blInstance =  PipegraphInstanceBlImpl(pgDB)
+    val blInstance = PipegraphInstanceBlImpl(pgDB)
     bl.dropTable()
     bl.createTable()
     blInstance.dropTable()
     blInstance.createTable()
 
 
-    val modelInstance1 = PipegraphInstanceModel("name_1","instance_1",100L,10L,PipegraphStatus.PENDING)
-    val modelInstance2 = PipegraphInstanceModel("name_2","instance_1",100L,10L,PipegraphStatus.PROCESSING)
-    val modelInstance3 = PipegraphInstanceModel("name_3","instance_1",100L,10L,PipegraphStatus.FAILED)
-    val modelInstance4 = PipegraphInstanceModel("name_4","instance_1",100L,10L,PipegraphStatus.PROCESSING)
+    val modelInstance1 = PipegraphInstanceModel("name_1", "instance_1", 100L, 10L, PipegraphStatus.PENDING, None, None)
+    val modelInstance2 = PipegraphInstanceModel("name_2", "instance_1", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
+    val modelInstance3 = PipegraphInstanceModel("name_3", "instance_1", 100L, 10L, PipegraphStatus.FAILED, None, None)
+    val modelInstance4 = PipegraphInstanceModel("name_4", "instance_1", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
 
 
     blInstance.insert(modelInstance1)
@@ -139,19 +138,19 @@ class PipegraphBLImplTest extends PostgresSuite{
     blInstance.insert(modelInstance3)
     blInstance.insert(modelInstance4)
 
-    blInstance.all() should contain theSameElementsAs Seq(modelInstance1,modelInstance2,modelInstance3,modelInstance4)
+    blInstance.all() should contain theSameElementsAs Seq(modelInstance1, modelInstance2, modelInstance3, modelInstance4)
 
 
-    val model1 = PipegraphModel("name_1","description1","tester",true,10L,List.empty,List.empty,List.empty,None)
-    val model2 = PipegraphModel("name_2","description2","tester",true,10L,List.empty,List.empty,List.empty,None)
-    val model3 = PipegraphModel("name_3","description3","tester",false,10L,List.empty,List.empty,List.empty,None)
+    val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model2 = PipegraphModel("name_2", "description2", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model3 = PipegraphModel("name_3", "description3", "tester", false, 10L, List.empty, List.empty, List.empty, None)
     bl.insert(model1)
     bl.insert(model2)
     bl.insert(model3)
-    bl.getAll should contain theSameElementsAs Seq(model1,model2,model3)
+    bl.getAll should contain theSameElementsAs Seq(model1, model2, model3)
 
 
-    bl.getActivePipegraphs() should contain theSameElementsAs Seq(model1,model2)
+    bl.getActivePipegraphs() should contain theSameElementsAs Seq(model1, model2)
 
     bl.deleteByName(model1.name)
     bl.deleteByName(model2.name)
@@ -162,4 +161,4 @@ class PipegraphBLImplTest extends PostgresSuite{
 
   }
 
-  }
+}

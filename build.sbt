@@ -93,6 +93,7 @@ lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark
   .settings(Settings.commonSettings: _*)
   .dependsOn(core)
   .settings(libraryDependencies ++= Dependencies.consumers_spark)
+  .settings(Settings.disableParallelTests: _*)
   .enablePlugins(JavaAppPackaging)
 
 lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
@@ -238,8 +239,8 @@ lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/m
   .dependsOn(whiteLabelModels)
   .dependsOn(repository_mongo)
   .dependsOn(master)
-  .dependsOn(whiteLabelConsumersSpark)
-  .dependsOn(plugin_hbase_spark)
+  .settings(libraryDependencies ++= Dependencies.plugin_hbase_spark)
+  .settings(libraryDependencies += Dependencies.log4j1)
   .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector)
   .enablePlugins(JavaAppPackaging)
 
@@ -248,7 +249,8 @@ lazy val whiteLabelProducers = Project("wasp-whitelabel-producers", file("whitel
   .dependsOn(whiteLabelModels)
   .dependsOn(repository_mongo)
   .dependsOn(producers)
-  .dependsOn(plugin_hbase_spark)
+  .settings(libraryDependencies ++= Dependencies.plugin_hbase_spark)
+  .settings(libraryDependencies += Dependencies.log4j1)
   .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector)
   .enablePlugins(JavaAppPackaging)
 

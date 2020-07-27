@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
 import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem}
+import akka.cluster.Cluster
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => ETLProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol => MasterProtocol}
@@ -63,7 +64,8 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
     instanceOf = "pipegraph",
     startTimestamp = 1l,
     currentStatusTimestamp = 0l,
-    status = PipegraphStatus.PROCESSING)
+    status = PipegraphStatus.PROCESSING,
+    executedByNode = Some("node"),peerActor = None)
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
@@ -79,14 +81,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -104,28 +106,28 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
       transitions.expectMsg(Transition[State](fsm, WaitingForWork, RequestingWork))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkNotGiven(new Exception("Something went wrong")))
 
       transitions.expectMsg(Transition[State](fsm, RequestingWork, RequestingWork))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkNotGiven(new Exception("Something went wrong")))
 
       transitions.expectMsg(Transition[State](fsm, RequestingWork, RequestingWork))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -153,14 +155,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -187,14 +189,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -224,14 +226,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => Retry
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -289,9 +291,9 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -334,14 +336,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
 
 
@@ -389,14 +391,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable("pipegraph"))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -435,14 +437,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -481,14 +483,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => Retry
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -542,9 +544,9 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -592,14 +594,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
 
 
@@ -660,14 +662,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => DontCare
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -727,9 +729,9 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -786,14 +788,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system  ).selfUniqueAddress))
 
 
 
@@ -871,14 +873,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
 
       val strategy: ComponentFailedStrategy = _ => StopAll
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
       master.send(fsm, MasterProtocol.WorkGiven(defaultPipegraph, defaultInstance))
 
@@ -936,14 +938,14 @@ class PipegraphGuardianSpec extends TestKit(ActorSystem("WASP"))
         case `etl` => DontCare
       }
 
-      val fsm = TestFSMRef(new PipegraphGuardian(testActor, factory, 500.milliseconds, 500.milliseconds, strategy))
+      val fsm = TestFSMRef(new PipegraphGuardian(master.ref, factory, 500.milliseconds, 500.milliseconds, strategy))
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable)
+      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork)
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress))
 
 
 

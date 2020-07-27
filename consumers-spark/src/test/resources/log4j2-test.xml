@@ -6,7 +6,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="it.agilelab" level="INFO" additivity="false">
+        <Logger name="it.agilelab" level="TRACE" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Root level="ERROR">

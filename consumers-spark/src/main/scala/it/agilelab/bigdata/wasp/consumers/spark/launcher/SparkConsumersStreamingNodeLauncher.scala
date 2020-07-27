@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.launcher
 
-import java.util.ServiceLoader
+import java.util.{ServiceLoader, UUID}
 
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
@@ -10,6 +10,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkCons
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.consumers.spark.readers.PluginBasedSparkReaderFactory
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.collaborator.CollaboratorActor
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
@@ -52,6 +53,13 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 			_ => PipegraphGuardian.Retry,
 			ConfigBL)
 
+
+		val collaborator = CollaboratorActor.props(WaspSystem.sparkConsumersStreamingMasterGuardian, childrenCreator)
+
+		logger.error("Starting collaborator")
+		WaspSystem.actorSystem.actorOf(collaborator, "collaborator")
+		logger.error("Collaborator started")
+
 		val watchdog = if(ConfigManager.getSparkStreamingConfig.driver.killDriverProcessIfSparkContextStops) {
 
       SparkConsumersStreamingMasterGuardian.exitingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext,
@@ -63,8 +71,8 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
 
 		val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(
 			ConfigBL.pipegraphBL,
-			childrenCreator,
       watchdog,
+			"collaborator",
 			5.seconds)
 
 

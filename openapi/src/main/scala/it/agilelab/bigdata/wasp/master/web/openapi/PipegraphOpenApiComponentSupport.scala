@@ -15,7 +15,7 @@ trait PipegraphOpenApiComponentSupport
    implicit lazy val pipegraphStatusOpenApi: ToOpenApiSchema[PipegraphStatus.Value] =
     enumOpenApi(PipegraphStatus)
    implicit lazy val pipegraphInstanceOpenApi
-    : ToOpenApiSchema[PipegraphInstanceModel] = product6(PipegraphInstanceModel)
+    : ToOpenApiSchema[PipegraphInstanceModel] = product8(PipegraphInstanceModel)
 
    implicit lazy val pipegraphOpenApi: ToOpenApiSchema[PipegraphModel] = product9(
     PipegraphModel

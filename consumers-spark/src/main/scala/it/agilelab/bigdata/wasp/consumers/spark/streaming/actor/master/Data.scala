@@ -1,8 +1,11 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSelection, Address}
+import akka.cluster.UniqueAddress
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphStatus}
+
+import scala.collection.immutable.Queue
 
 /**
   * Trait marking classes holding [[SparkConsumersStreamingMasterGuardian]] State Data
@@ -26,24 +29,23 @@ object Data {
   case object NoData extends Data
 
 
+  case class Collaborator(address: UniqueAddress, actorSelection: ActorRef)
+
   /**
     * Data of the [[State.Initialized]] state
     *
     * @param scheduleInstances The current know schedules to be instantiated
     */
-  case class Schedule private(scheduleInstances: Seq[ScheduleInstance])
-    extends Data {
+  case class Schedule private (scheduleInstances: Seq[ScheduleInstance], workers: Queue[Collaborator]) extends Data {
 
-    private val byStatus = scheduleInstances.groupBy(instance => instance.pipegraphInstance.status)
+    private val byStatus = scheduleInstances
+      .groupBy(instance => instance.pipegraphInstance.status)
       .mapValues(value => value.map(_.instanceOf).toSet)
-
 
     private val known = byStatus.values.flatten.toSet
 
-
-
     def toPending(worker: ActorRef, instance: PipegraphInstanceModel): Schedule =
-      moveTo(worker, instance, PipegraphStatus.PENDING)
+      moveTo(worker, instance.copy(peerActor = None, executedByNode = None), PipegraphStatus.PENDING)
 
     def toStopping(worker: ActorRef, instance: PipegraphInstanceModel): Schedule =
       moveTo(worker, instance, PipegraphStatus.STOPPING)
@@ -58,40 +60,49 @@ object Data {
       moveTo(worker, instance, PipegraphStatus.FAILED)
 
     private def moveTo(worker: ActorRef, instance: PipegraphInstanceModel, status: PipegraphStatus): Schedule = {
-      val updatedInstance = instance.copy(currentStatusTimestamp = System.currentTimeMillis(),
-        status = status)
+
+      val updatedInstance = instance.copy(currentStatusTimestamp = System.currentTimeMillis(), status = status)
 
       val updatedScheduleInstances = scheduleInstances.filterNot(_.instanceOf == instance.instanceOf) :+
         ScheduleInstance(worker, updatedInstance)
 
-
       val statusesToForget = Set(PipegraphStatus.STOPPED, PipegraphStatus.FAILED)
 
-      Schedule(updatedScheduleInstances.filterNot(instance => statusesToForget.contains(instance.pipegraphInstance
-        .status)))
+      Schedule(
+        updatedScheduleInstances.filterNot(instance => statusesToForget.contains(instance.pipegraphInstance.status)),
+        workers
+      )
     }
 
     def pending: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.PENDING)
-    def processing: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus
-      .PROCESSING)
+    def processing: Seq[ScheduleInstance] =
+      scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.PROCESSING)
 
     def pending(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PENDING)
 
     def stopping(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.STOPPING)
 
-    def stoppingOrProcessing(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.STOPPING, PipegraphStatus.PROCESSING)
+    def stoppingOrProcessing(worker: ActorRef): ScheduleInstance =
+      byStatus(worker, PipegraphStatus.STOPPING, PipegraphStatus.PROCESSING)
 
     def processing(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.PROCESSING)
 
     def processing(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PROCESSING)
 
+    def processing(address: Address): Seq[ScheduleInstance] =
+      scheduleInstances
+        .filter(_.pipegraphInstance.status == PipegraphStatus.PROCESSING)
+        .filter(_.worker.path.address == address)
+
     private def byStatus(instanceOf: String, pipegraphStatus: PipegraphStatus) =
-      scheduleInstances.filter(_.pipegraphInstance.status == pipegraphStatus)
+      scheduleInstances
+        .filter(_.pipegraphInstance.status == pipegraphStatus)
         .find(_.instanceOf == instanceOf)
         .head
 
     private def byStatus(worker: ActorRef, pipegraphStatus: PipegraphStatus*) =
-      scheduleInstances.filter(instance => pipegraphStatus.contains(instance.pipegraphInstance.status))
+      scheduleInstances
+        .filter(instance => pipegraphStatus.contains(instance.pipegraphInstance.status))
         .find(_.worker == worker)
         .head
 

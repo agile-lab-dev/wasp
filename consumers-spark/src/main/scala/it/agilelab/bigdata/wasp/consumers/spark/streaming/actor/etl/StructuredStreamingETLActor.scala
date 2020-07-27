@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorRefFactory, FSM, Props}
+import akka.actor.{ActorRef, ActorRefFactory, FSM, LoggingFSM, Props}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
@@ -30,6 +30,7 @@ class StructuredStreamingETLActor private (
     val pipegraph: PipegraphModel,
     val telemetryActorFactory: TelemetryActorFactory
 ) extends FSM[State, Data]
+    with LoggingFSM[State, Data]
     with ActivationSteps
     with MaterializationSteps
     with MonitoringStep

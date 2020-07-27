@@ -69,6 +69,10 @@ object Dependencies {
       module
         .exclude("org.apache.kafka", "kafka_2.11")
 
+    def kryoExclusions: ModuleID =
+      module
+        .exclude("net.jpountz.lz4", "lz4")
+
     // these are needed because kafka brings in jackson-core/databind 2.8.5, which are incompatible with Spark
     // and otherwise cause a jackson compatibility exception
     def kafkaJacksonExclusions: ModuleID =
@@ -105,20 +109,21 @@ object Dependencies {
   // ===================================================================================================================
   // Compile dependencies
   // ===================================================================================================================
-  val akkaActor          = "com.typesafe.akka"  %% "akka-actor"           % Versions.akka
-  val akkaCamel          = "com.typesafe.akka"  %% "akka-camel"           % Versions.akka
-  val akkaCluster        = "com.typesafe.akka"  %% "akka-cluster"         % Versions.akka
-  val akkaClusterTools   = "com.typesafe.akka"  %% "akka-cluster-tools"   % Versions.akka
-  val akkaContrib        = "com.typesafe.akka"  %% "akka-contrib"         % Versions.akka
-  val akkaHttp           = "com.typesafe.akka"  %% "akka-http"            % Versions.akkaHttp
-  val akkaHttpSpray      = "com.typesafe.akka"  %% "akka-http-spray-json" % Versions.akkaHttp
-  val akkaRemote         = "com.typesafe.akka"  %% "akka-remote"          % Versions.akka
-  val akkaSlf4j          = "com.typesafe.akka"  %% "akka-slf4j"           % Versions.akka
-  val akkaStream         = "com.typesafe.akka"  %% "akka-stream"          % Versions.akka
-  val akkaStreamTestkit  = "com.typesafe.akka"  %% "akka-stream-testkit"  % Versions.akka % Test
-  val akkaHttpTestKit    = "com.typesafe.akka"  %% "akka-http-testkit"    % Versions.akkaHttp % Test
-  val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3"         % Versions.apacheCommonsLang3Version // remove?
-  val avro               = "org.apache.avro"    % "avro"                  % Versions.avro
+  val akkaActor          = "com.typesafe.akka"     %% "akka-actor"              % Versions.akka
+  val akkaCamel          = "com.typesafe.akka"     %% "akka-camel"              % Versions.akka
+  val akkaCluster        = "com.typesafe.akka"     %% "akka-cluster"            % Versions.akka
+  val akkaClusterTools   = "com.typesafe.akka"     %% "akka-cluster-tools"      % Versions.akka
+  val akkaContrib        = "com.typesafe.akka"     %% "akka-contrib"            % Versions.akka
+  val akkaHttp           = "com.typesafe.akka"     %% "akka-http"               % Versions.akkaHttp
+  val akkaHttpSpray      = "com.typesafe.akka"     %% "akka-http-spray-json"    % Versions.akkaHttp
+  val akkaKryo           = "com.github.romix.akka" %% "akka-kryo-serialization" % "0.5.0"
+  val akkaRemote         = "com.typesafe.akka"     %% "akka-remote"             % Versions.akka
+  val akkaSlf4j          = "com.typesafe.akka"     %% "akka-slf4j"              % Versions.akka
+  val akkaStream         = "com.typesafe.akka"     %% "akka-stream"             % Versions.akka
+  val akkaStreamTestkit  = "com.typesafe.akka"     %% "akka-stream-testkit"     % Versions.akka % Test
+  val akkaHttpTestKit    = "com.typesafe.akka"     %% "akka-http-testkit"       % Versions.akkaHttp % Test
+  val apacheCommonsLang3 = "org.apache.commons"    % "commons-lang3"            % Versions.apacheCommonsLang3Version // remove?
+  val avro               = "org.apache.avro"       % "avro"                     % Versions.avro
   // avro4s requires a json4s version incompatible with wasp, downstream projects confirmed that this exclusion does
   // not create issues with darwin and avro parsing
   val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion excludeAll ExclusionRule(
@@ -199,7 +204,8 @@ object Dependencies {
     akkaClusterTools,
     akkaContrib,
     akkaRemote,
-    akkaSlf4j
+    akkaSlf4j,
+    akkaKryo.kryoExclusions
   )
 
   val hbase = Seq(hbaseClient, hbaseCommon, hbaseServer, hbaseMapreduce)
@@ -263,11 +269,11 @@ object Dependencies {
 
   val model = (
     time ++
-    json :+
-    akkaHttpSpray :+
-    sparkSQL :+
-    mongodbScala
-    ).map(excludeLog4j).map(excludeNetty)
+      json :+
+      akkaHttpSpray :+
+      sparkSQL :+
+      mongodbScala
+  ).map(excludeLog4j).map(excludeNetty)
 
   val core = (akka ++
     avro4s ++
@@ -282,24 +288,21 @@ object Dependencies {
     kafka :+ // TODO remove when switching to plugins
     sparkSQL :+
     typesafeConfig :+
-    reflections
-    ).map(excludeLog4j).map(excludeNetty)
+    reflections).map(excludeLog4j).map(excludeNetty)
 
   val repository_mongo = Seq(
     mongodbScala,
     nameOf
-    ).map(excludeLog4j).map(excludeNetty)
+  ).map(excludeLog4j).map(excludeNetty)
 
   val repository_postgres = Seq(
     postgres,
     dpcp2,
     postgresqlEmbedded
-    ).map(excludeLog4j).map(excludeNetty)
+  ).map(excludeLog4j).map(excludeNetty)
 
-
-  val scala_compiler = (
-    test :+
-    scalaCompiler ).map(excludeLog4j).map(excludeNetty)
+  val scala_compiler = (test :+
+    scalaCompiler).map(excludeLog4j).map(excludeNetty)
 
   val producers = (
     akka ++
@@ -318,7 +321,7 @@ object Dependencies {
       spark :+
       quartz :+
       nameOf :+
-      velocity :+   //TODO: evaluate this is legal
+      velocity :+ //TODO: evaluate this is legal
       scalaCompiler
   ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
@@ -390,7 +393,7 @@ object Dependencies {
       sttpCore :+
       sttpJson4s :+
       json4sJackson
-    )
+  )
 
   val nifiStateless: Seq[ModuleID] = Seq(
     "org.apache.nifi" % "nifi-stateless" % Versions.nifi % "provided"

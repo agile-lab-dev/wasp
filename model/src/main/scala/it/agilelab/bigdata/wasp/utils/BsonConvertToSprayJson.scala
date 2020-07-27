@@ -232,7 +232,7 @@ trait JsonSupport
   implicit lazy val pipegraphStatusFormat: RootJsonFormat[PipegraphStatus.PipegraphStatus] = new EnumJsonConverter(
     PipegraphStatus
   )
-  implicit lazy val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat6(
+  implicit lazy val pipegraphInstanceModelFormat: RootJsonFormat[PipegraphInstanceModel] = jsonFormat8(
     PipegraphInstanceModel.apply
   )
   implicit lazy val documentModelFormat: RootJsonFormat[DocumentModel]     = jsonFormat3(DocumentModel.apply)

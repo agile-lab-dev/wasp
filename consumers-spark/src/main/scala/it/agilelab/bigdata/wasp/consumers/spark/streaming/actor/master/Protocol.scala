@@ -118,7 +118,7 @@ object Protocol {
     * [[it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian]]
     * to signal that work is available
     */
-  private[actor] case object WorkAvailable extends Protocol
+  private[actor] case class WorkAvailable(name: String) extends Protocol
 
   /**
     * Message sent from [[it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian]] to

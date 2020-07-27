@@ -55,9 +55,7 @@ object Settings {
 			"-language:_",
 			"-deprecation",
 			"-unchecked",
-			//"-Ylog-classpath",
-			"-Xlint",
-			"-Xmax-classfile-name", "72"),
+			"-Xlint"),
 		javacOptions ++= Seq(
 			"-encoding", "UTF-8",
 			"-source", Versions.jdk,

@@ -100,6 +100,8 @@ final case class PipegraphInstanceModel(override val name:String,
                                         startTimestamp: Long,
                                         currentStatusTimestamp: Long,
                                         status: PipegraphStatus,
+                                        executedByNode: Option[String],
+                                        peerActor: Option[String],
                                         error: Option[String] = None) extends Model
 /**
   * A model for a pipegraph, a processing pipeline abstraction.

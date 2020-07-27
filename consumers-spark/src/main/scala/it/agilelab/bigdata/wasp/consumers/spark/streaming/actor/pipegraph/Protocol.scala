@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
 import akka.actor.ActorRef
+import akka.cluster.UniqueAddress
 import it.agilelab.bigdata.wasp.models.StructuredStreamingETLModel
 
 trait Protocol
@@ -11,7 +12,7 @@ object Protocol {
     * message sent from [[PipegraphGuardian]] to [[it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian]]
     * to obtain work
     */
-  private[actor] case object GimmeWork extends Protocol
+  private[actor] case class GimmeWork(member: UniqueAddress) extends Protocol
 
 
   /**
