@@ -14,12 +14,13 @@ import org.json4s.{CustomSerializer, Formats}
   * @param config The current index config
   * @param isRolling Whether the index should be rolling
   * @param id Wether the index has an id field
+  * @param options Wether the index has an options field
   * @tparam Stage The current [[Stage]] of the builder.
   * @tparam Kind The kind of DataStore whose index is being built.
   */
 class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuilder.DataStoreKind] private
 (name: String, schema: IndexModelBuilder.UntypedSchema, config: IndexModelBuilder.UntypedConfig, isRolling: Boolean,
- id: Option[String]) {
+ id: Option[String], options: Map[String, String]) {
 
 
   /**
@@ -28,7 +29,7 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     * @return An instance of builder with Name stage completed
     */
   def named(name: String): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Name, Kind] =
-    new IndexModelBuilder(name, schema, config, isRolling, id)
+    new IndexModelBuilder(name, schema, config, isRolling, id, options)
 
   /**
     * Assigns a schema to the index
@@ -36,7 +37,7 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     * @return An instance of builder with Schema stage completed
     */
   def schema(schema: IndexModelBuilder.Schema[Kind]): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Schema[Kind], Kind] =
-    new IndexModelBuilder(name, schema, config, isRolling, id)
+    new IndexModelBuilder(name, schema, config, isRolling, id, options)
 
   /**
     * Assigns a config to the index
@@ -44,21 +45,28 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     * @return An instance of builder with Config stage completed
     */
   def config(config: IndexModelBuilder.Config[Kind]): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Config[Kind], Kind] =
-    new IndexModelBuilder(name, schema, config, isRolling, id)
+    new IndexModelBuilder(name, schema, config, isRolling, id, options)
 
   /**
     * Mark the index as rolling
     * @return An instance of builder with Rolling stage completed
     */
   def rolling:  IndexModelBuilder[Stage with IndexModelBuilder.Stage.Rolling, Kind] = new IndexModelBuilder(name,
-    schema, config, true, id)
+    schema, config, true, id, options)
 
   /**
     * Assings an id field to the index
     * @return An instance of builder with Id stage completed
     */
   def id(id: String): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Id, Kind] =
-    new IndexModelBuilder(name, schema, config, isRolling, Some(id))
+    new IndexModelBuilder(name, schema, config, isRolling, Some(id), options)
+  
+  /**
+    * Assings an options field to the index
+    * @return An instance of builder with Options stage completed
+    */
+  def options(options: Map[String, String]): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Options, Kind] =
+    new IndexModelBuilder(name, schema, config, isRolling, id, options)
 
   /**
     * Builds an index model, this method is callable only when Stage is a subclass of [[IndexModelBuilder.Stage.Complete]]
@@ -75,7 +83,8 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
           creationTime = System.currentTimeMillis(),
           rollingIndex = isRolling,
           idField = id,
-          schema = None)
+          schema = None,
+          options = options)
       )
     )
 
@@ -95,14 +104,14 @@ object IndexModelBuilder {
     * @return The builder preconfigured for Solr indices building
     */
   def forSolr: IndexModelBuilder[Stage.DataStore[DataStoreKind.Solr], DataStoreKind.Solr] = new IndexModelBuilder("",
-    Solr.Schema(), Solr.Config(), false, None)
+    Solr.Schema(), Solr.Config(), false, None, Map.empty)
 
   /**
     * creates an [[IndexModelBuilder]] setup to create Elastic Indices
     * @return The builder preconfigured for Elastic indices building
     */
   def forElastic: IndexModelBuilder[Stage.DataStore[DataStoreKind.Elastic], DataStoreKind.Elastic] = new
-      IndexModelBuilder("", Elastic.Schema(JObject()), Elastic.Config(), false, None)
+      IndexModelBuilder("", Elastic.Schema(JObject()), Elastic.Config(), false, None, Map.empty)
 
 
   /**
@@ -516,6 +525,11 @@ object IndexModelBuilder {
       * Index has been assigned an Id
       */
     sealed trait Id extends Stage
+  
+    /**
+      * Index has an assigned Options
+      */
+    sealed trait Options extends Stage
 
   }
 

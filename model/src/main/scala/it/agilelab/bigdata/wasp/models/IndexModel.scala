@@ -11,7 +11,8 @@ case class IndexModel(override val name: String,
                       numShards: Option[Int] = Some(1),
                       replicationFactor: Option[Int] = Some(1),
                       rollingIndex: Boolean = true,
-                      idField: Option[String] = None)
+                      idField: Option[String] = None,
+                      options: Map[String, String] = Map.empty)
     extends DatastoreModel[IndexCategory] {
 
   def resource = s"$eventuallyTimedName/$dataType"

@@ -154,7 +154,7 @@ trait JsonSupport
 
   implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] =
     new TopicDatastoreModelJsonFormat
-  implicit lazy val indexModelFormat: RootJsonFormat[IndexModel]             = jsonFormat8(IndexModel.apply)
+  implicit lazy val indexModelFormat: RootJsonFormat[IndexModel]             = jsonFormat9(IndexModel.apply)
   implicit lazy val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
   implicit lazy val streamingReaderModelFormat: RootJsonFormat[StreamingReaderModel] = jsonFormat5(
     (

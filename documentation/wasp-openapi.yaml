@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-381-refactor-generateopenapi-SNAPSHOT
+  version: 2.26.0-389-add-indexmodel-options-in-order-to-manage-solr-multi-writer-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -2878,6 +2878,12 @@ components:
           format: int64
         status:
           $ref: '#/components/schemas/PipegraphStatus'
+        executedByNode:
+          type: string
+          nullable: true
+        peerActor:
+          type: string
+          nullable: true
         error:
           type: string
           nullable: true
@@ -3678,6 +3684,7 @@ components:
       - name
       - creationTime
       - rollingIndex
+      - options
       type: object
       properties:
         name:
@@ -3704,6 +3711,10 @@ components:
         idField:
           type: string
           nullable: true
+        options:
+          type: object
+          additionalProperties:
+            type: string
       xml:
         name: IndexModel
         namespace: java://it.agilelab.bigdata.wasp.models

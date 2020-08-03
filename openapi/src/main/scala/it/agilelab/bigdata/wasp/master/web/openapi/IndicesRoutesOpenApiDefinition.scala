@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.models.IndexModel
 
 trait IndicesModelOpenApiComponentSupport extends ProducerOpenApiComponentSupport with LangOpenApi with CollectionsOpenApi {
 
-  implicit val indexModelOpenApi: ToOpenApiSchema[IndexModel] = product8(IndexModel)
+  implicit val indexModelOpenApi: ToOpenApiSchema[IndexModel] = product9(IndexModel)
 }
 trait IndicesRoutesOpenApiDefinition
     extends IndicesModelOpenApiComponentSupport
