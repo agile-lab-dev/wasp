@@ -238,6 +238,7 @@ lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/m
   .settings(Settings.commonSettings: _*)
   .dependsOn(whiteLabelModels)
   .dependsOn(repository_mongo)
+  .dependsOn(whiteLabelConsumersSpark)
   .dependsOn(master)
   .settings(libraryDependencies ++= Dependencies.plugin_hbase_spark)
   .settings(libraryDependencies += Dependencies.log4j1)
