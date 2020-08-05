@@ -3,8 +3,19 @@ set -ax
 
 bash /usr/bin/resolve-templates.sh
 
-sed 's|nifi.web.proxy.context.path=|nifi.web.proxy.context.path=/proxy|g' -i nifi/conf/nifi.properties
-sed 's|nifi.web.proxy.host=|nifi.web.proxy.host=localhost:2891|g' -i nifi/conf/nifi.properties
+if [ -n "$NIFI_PROXY_PATH" ]
+  then
+    sed "s|nifi.web.proxy.context.path=|nifi.web.proxy.context.path=$NIFI_PROXY_PATH|g" -i nifi/conf/nifi.properties
+  else
+    sed "s|nifi.web.proxy.context.path=|nifi.web.proxy.context.path=/proxy|g" -i nifi/conf/nifi.properties
+fi
+
+if [ -n "$NIFI_PROXY_HOST" ]
+  then
+    sed "s|nifi.web.proxy.host=|nifi.web.proxy.host=$NIFI_PROXY_HOST|g" -i nifi/conf/nifi.properties
+  else
+    sed "s|nifi.web.proxy.host=|nifi.web.proxy.host=localhost:2891|g" -i nifi/conf/nifi.properties
+fi
 
 service nifi start
 service nifi-registry start
