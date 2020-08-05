@@ -33,6 +33,8 @@ trait PipegraphBL {
 
   def upsert(pipegraph: PipegraphModel): Unit
 
+  def insertIfNotExists(pipegraph: PipegraphModel): Unit
+
   def update(pipegraphModel: PipegraphModel): Unit
 
   def deleteByName(id_string: String): Unit

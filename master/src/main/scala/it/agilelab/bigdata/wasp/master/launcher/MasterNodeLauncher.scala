@@ -91,17 +91,17 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
     /* Event Engine */
     SystemPipegraphs.eventTopicModels.foreach(topicModel => ConfigBL.topicBL.upsert(topicModel))
-    ConfigBL.pipegraphBL.insert(SystemPipegraphs.eventPipegraph)
+    ConfigBL.pipegraphBL.insertIfNotExists(SystemPipegraphs.eventPipegraph)
     ConfigBL.indexBL.insertIfNotExists(SystemPipegraphs.eventIndex)
-    ConfigBL.pipegraphBL.insert(SystemPipegraphs.mailerPipegraph)
+    ConfigBL.pipegraphBL.insertIfNotExists(SystemPipegraphs.mailerPipegraph)
     ConfigBL.topicBL.insertIfNotExists(SystemPipegraphs.eventMultiTopicModel)
     /* Producers */
     ConfigBL.producerBL.insertIfNotExists(SystemPipegraphs.loggerProducer)
 
     /* Pipegraphs */
-    ConfigBL.pipegraphBL.insert(SystemPipegraphs.loggerPipegraph)
+    ConfigBL.pipegraphBL.insertIfNotExists(SystemPipegraphs.loggerPipegraph)
 
-    ConfigBL.pipegraphBL.insert(SystemPipegraphs.telemetryPipegraph)
+    ConfigBL.pipegraphBL.insertIfNotExists(SystemPipegraphs.telemetryPipegraph)
   }
 
   private def getRoutes: Route = {

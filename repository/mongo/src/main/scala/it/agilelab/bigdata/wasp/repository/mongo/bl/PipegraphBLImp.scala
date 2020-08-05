@@ -58,6 +58,8 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
     waspDB.insertIfNotExists[PipegraphModel](pipegraph)
   }
 
+  override def insertIfNotExists(pipegraph: PipegraphModel): Unit = waspDB.insertIfNotExists[PipegraphModel](pipegraph)
+
   def upsert(pipegraph: PipegraphModel): Unit = {
     waspDB.upsert[PipegraphModel](pipegraph)
   }

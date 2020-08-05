@@ -30,6 +30,11 @@ class MockPipegraphBl(instanceBl: PipegraphInstanceBl) extends PipegraphBL {
 
   }
 
+
+  override def insertIfNotExists(pipegraph: PipegraphModel): Unit = {
+    if(getByName(pipegraph.name).isEmpty) insert(pipegraph)
+  }
+
   override def getByName(name: String): Option[PipegraphModel] =
     buffer.find(_.name == name)
 

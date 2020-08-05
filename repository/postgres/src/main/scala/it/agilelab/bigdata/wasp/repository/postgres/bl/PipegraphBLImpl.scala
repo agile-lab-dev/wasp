@@ -31,6 +31,8 @@ case class PipegraphBLImpl(waspDB : WaspPostgresDB) extends PipegraphBL with Pos
 
   override def insert(pipegraph: PipegraphModel): Unit = waspDB.insert(pipegraph)
 
+  override def insertIfNotExists(pipegraph: PipegraphModel): Unit = waspDB.insertIfNotExists(pipegraph)
+
   override def upsert(pipegraph: PipegraphModel): Unit = waspDB.upsert(pipegraph)
 
   override def update(pipegraphModel: PipegraphModel): Unit = waspDB.updateByPrimaryKey(pipegraphModel)
