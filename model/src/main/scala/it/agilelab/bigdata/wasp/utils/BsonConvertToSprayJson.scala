@@ -187,7 +187,7 @@ trait JsonSupport
     StructuredStreamingETLModel.apply
   )
   implicit lazy val rTModelFormat: RootJsonFormat[RTModel]                   = jsonFormat5(RTModel.apply)
-  implicit lazy val pipegraphModelFormat: RootJsonFormat[PipegraphModel]     = jsonFormat9(PipegraphModel.apply)
+  implicit lazy val pipegraphModelFormat: RootJsonFormat[PipegraphModel]     = jsonFormat10(PipegraphModel.apply)
   implicit lazy val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
   implicit lazy val zookeeperConnectionFormat: RootJsonFormat[ZookeeperConnectionsConfig] = jsonFormat2(
     ZookeeperConnectionsConfig.apply
@@ -202,10 +202,12 @@ trait JsonSupport
     SparkEntryConfig.apply
   )
   implicit lazy val nifiStatelessConfigModelFormat: RootJsonFormat[NifiStatelessConfigModel] = jsonFormat4(NifiStatelessConfigModel.apply)
-  implicit lazy val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat22(
+  implicit lazy val retainedConfigModelFormat: RootJsonFormat[RetainedConfigModel]  = jsonFormat5(RetainedConfigModel.apply)
+  implicit lazy val schedulingStrategyConfigModelFormat: RootJsonFormat[SchedulingStrategyConfigModel] = jsonFormat2(SchedulingStrategyConfigModel.apply)
+  implicit lazy val sparkStreamingConfigModelFormat: RootJsonFormat[SparkStreamingConfigModel] = jsonFormat19(
     SparkStreamingConfigModel.apply
   )
-  implicit lazy val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat18(
+  implicit lazy val sparkBatchConfigModelFormat: RootJsonFormat[SparkBatchConfigModel] = jsonFormat14(
     SparkBatchConfigModel.apply
   )
   implicit lazy val hbaseEntryConfigModelConfigFormat: RootJsonFormat[HBaseEntryConfig] = jsonFormat2(

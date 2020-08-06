@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
 import akka.actor.ActorLogging
 
+import scala.annotation.tailrec
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
@@ -11,6 +12,7 @@ trait RetrySupport {
 
   trait Recoverable[F[_]] {
     def recoverWith[A, B >: A](self: F[A])(e: Throwable => F[B]): F[B]
+
     def extractor[A](self: F[A]): A
   }
 
@@ -33,17 +35,28 @@ trait RetrySupport {
       Await.result(self, Duration.Inf)
   }
 
-  def retry[F[_]: Recoverable, A](retryInterval: FiniteDuration)(retryable: () => F[A]): A = {
+  def retry[F[_] : Recoverable, A](retryInterval: FiniteDuration)(retryable: () => F[A]): A = {
 
     val Recoverable: Recoverable[F] = implicitly[Recoverable[F]]
 
-    def inner(e: Throwable): F[A] = {
-      Thread.sleep(retryInterval.toMillis)
-      log.warning("Retry {}", e.getMessage)
-      Recoverable.recoverWith(retryable())(inner)
+    @tailrec
+    def inner(maybeError: Option[Throwable]): A = {
+
+      maybeError.foreach { e =>
+        Thread.sleep(retryInterval.toMillis)
+        log.warning("Retry ciccio {}", e.getMessage, e)
+      }
+
+      try {
+        Recoverable.extractor(retryable())
+      } catch {
+        case e: Exception =>
+          inner(Some(e))
+      }
+
     }
 
-    Recoverable.extractor(Recoverable.recoverWith(retryable())(inner))
+    inner(None)
   }
 
 }

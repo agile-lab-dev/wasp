@@ -11,34 +11,19 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
   def getByName(name: String): Option[PipegraphModel] = {
     waspDB
       .getDocumentByField[PipegraphModel]("name", new BsonString(name))
-      .map(pipegraph => {
-        factory(pipegraph)
-      })
   }
 
-  private def factory(p: PipegraphModel) =
-    PipegraphModel(
-      p.name,
-      p.description,
-      p.owner,
-      p.isSystem,
-      p.creationTime,
-      p.legacyStreamingComponents,
-      p.structuredStreamingComponents,
-      p.rtComponents,
-      p.dashboard
-    )
 
   def getAll: Seq[PipegraphModel] = {
     waspDB.getAll[PipegraphModel]
   }
 
   def getSystemPipegraphs: Seq[PipegraphModel] = {
-    waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(true)).map(factory)
+    waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(true))
   }
 
   def getNonSystemPipegraphs: Seq[PipegraphModel] = {
-    waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(false)).map(factory)
+    waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(false))
   }
 
   def getActivePipegraphs(): Seq[PipegraphModel] = {
@@ -68,7 +53,7 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
     waspDB.deleteByName[PipegraphModel](name)
   }
 
-  lazy val instances = new PipegraphInstanceBlImp(waspDB)
+  lazy val instances: PipegraphInstanceBl = new PipegraphInstanceBlImp(waspDB)
 
 }
 

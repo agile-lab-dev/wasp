@@ -34,6 +34,35 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val freecode = PipegraphModel(
+        name = "TestConsoleWriterFreeCodeStructuredJSONPipegraph",
+        description = "Description of TestConsoleWriterFreeCodeStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestConsoleWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Console Writer"),
+            mlModels = List(),
+            strategy= Some(StrategyModel(
+              "it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy",
+              Some("{ name = test-freecode }")
+            )),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None,
+        labels = Set("free-code")
+      )
+
       lazy val nifi = PipegraphModel(
         name = "TestConsoleWriterNifiStructuredJSONPipegraph",
         description = "Description of TestConsoleWriterStructuredJSONPipegraph",

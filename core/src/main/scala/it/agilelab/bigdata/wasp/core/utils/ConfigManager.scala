@@ -19,16 +19,16 @@ import scala.reflect.runtime.universe._
 object ConfigManager {
   val conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
-  val kafkaConfigName          = "Kafka"
-  val sparkBatchConfigName     = "SparkBatch"
+  val kafkaConfigName = "Kafka"
+  val sparkBatchConfigName = "SparkBatch"
   val sparkStreamingConfigName = "SparkStreaming"
-  val elasticConfigName        = "Elastic"
-  val solrConfigName           = "Solr"
-  val hbaseConfigName          = "HBase"
-  val jdbcConfigName           = "Jdbc"
-  val telemetryConfigName      = "Telemetry"
-  val nifiConfigName           = "Nifi"
-  val compilerConfigName       = "Compiler"
+  val elasticConfigName = "Elastic"
+  val solrConfigName = "Solr"
+  val hbaseConfigName = "HBase"
+  val jdbcConfigName = "Jdbc"
+  val telemetryConfigName = "Telemetry"
+  val nifiConfigName = "Nifi"
+  val compilerConfigName = "Compiler"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
 
@@ -84,20 +84,20 @@ object ConfigManager {
     }
   )
 
-  private var waspConfig: WaspConfigModel                     = _
-  private var telemetryConfig: TelemetryConfigModel           = _
-  private var mongoDBConfig: MongoDBConfigModel               = _
-  private var pgDBConfig: PostgresDBConfigModel               = _
-  private var kafkaConfig: KafkaConfigModel                   = _
-  private var sparkBatchConfig: SparkBatchConfigModel         = _
+  private var waspConfig: WaspConfigModel = _
+  private var telemetryConfig: TelemetryConfigModel = _
+  private var mongoDBConfig: MongoDBConfigModel = _
+  private var pgDBConfig: PostgresDBConfigModel = _
+  private var kafkaConfig: KafkaConfigModel = _
+  private var sparkBatchConfig: SparkBatchConfigModel = _
   private var sparkStreamingConfig: SparkStreamingConfigModel = _
-  private var elasticConfig: ElasticConfigModel               = _
-  private var solrConfig: SolrConfigModel                     = _
-  private var hbaseConfig: HBaseConfigModel                   = _
-  private var jdbcConfig: JdbcConfigModel                     = _
-  private var avroSchemaManagerConfig: Config                 = _
-  private var nifiConfig: NifiConfigModel                     = _
-  private var compilerConfig: CompilerConfigModel             = _
+  private var elasticConfig: ElasticConfigModel = _
+  private var solrConfig: SolrConfigModel = _
+  private var hbaseConfig: HBaseConfigModel = _
+  private var jdbcConfig: JdbcConfigModel = _
+  private var avroSchemaManagerConfig: Config = _
+  private var nifiConfig: NifiConfigModel = _
+  private var compilerConfig: CompilerConfigModel = _
 
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
     (globalValidationRules ++ pluginsValidationRules)
@@ -135,7 +135,7 @@ object ConfigManager {
     avroSchemaManagerConfig = waspConfig.darwinConnector match {
 
       case "hbase" => ConfigFactory.parseMap(getAvroSchemaManagerConfigHbaseConnector.asJava)
-      case _       => conf.getConfig("avroSchemaManager.darwin")
+      case _ => conf.getConfig("avroSchemaManager.darwin")
 
     }
 
@@ -144,8 +144,8 @@ object ConfigManager {
   private def getAvroSchemaManagerConfigHbaseConnector: Map[String, AnyRef] = {
 
     val avroSchemaManagerSubConfig = conf.getConfig("avroSchemaManager")
-    val darwinConfig               = avroSchemaManagerSubConfig.getConfig("darwin")
-    val defaultConf                = darwinConfig.root().unwrapped().asScala.toMap
+    val darwinConfig = avroSchemaManagerSubConfig.getConfig("darwin")
+    val defaultConf = darwinConfig.root().unwrapped().asScala.toMap
 
     if (avroSchemaManagerSubConfig.getBoolean("wasp-manages-darwin-connectors-conf")) {
       val env = System.getenv()
@@ -157,16 +157,16 @@ object ConfigManager {
           java.lang.Boolean.getBoolean(env.get("WASP_SECURITY"))
         else
           java.lang.Boolean.FALSE
-      val principal  = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
+      val principal = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
       val keytabPath = if (env.containsKey("KEYTAB_FILE_NAME")) env.get("KEYTAB_FILE_NAME") else ""
 
       defaultConf ++ Map(
-        "namespace"  -> darwinConfig.getString("namespace"),
-        "table"      -> darwinConfig.getString("table"),
-        "hbaseSite"  -> hbaseSubConfig.getString("hbase-site-xml-path"),
-        "coreSite"   -> hbaseSubConfig.getString("core-site-xml-path"),
-        "isSecure"   -> isSecure,
-        "principal"  -> principal,
+        "namespace" -> darwinConfig.getString("namespace"),
+        "table" -> darwinConfig.getString("table"),
+        "hbaseSite" -> hbaseSubConfig.getString("hbase-site-xml-path"),
+        "coreSite" -> hbaseSubConfig.getString("core-site-xml-path"),
+        "isSecure" -> isSecure,
+        "principal" -> principal,
         "keytabPath" -> keytabPath
       )
     } else {
@@ -305,19 +305,37 @@ object ConfigManager {
       additionalJarsPath = sparkSubConfig.getString("additional-jars-path"),
       yarnJar = sparkSubConfig.getString("yarn-jar"),
       blockManagerPort = sparkSubConfig.getInt("block-manager-port"),
-      retainedStagesJobs = sparkSubConfig.getInt("retained-stages-jobs"),
-      retainedTasks = sparkSubConfig.getInt("retained-tasks"),
-      retainedJobs = sparkSubConfig.getInt("retained-jobs"),
-      retainedExecutions = sparkSubConfig.getInt("retained-executions"),
-      retainedBatches = sparkSubConfig.getInt("retained-batches"),
+      retained = RetainedConfigModel(
+        retainedStagesJobs = sparkSubConfig.getInt("retained-stages-jobs"),
+        retainedTasks = sparkSubConfig.getInt("retained-tasks"),
+        retainedJobs = sparkSubConfig.getInt("retained-jobs"),
+        retainedExecutions = sparkSubConfig.getInt("retained-executions"),
+        retainedBatches = sparkSubConfig.getInt("retained-batches")
+      ),
       kryoSerializer = readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
       streamingBatchIntervalMs = sparkSubConfig.getInt("streaming-batch-interval-ms"),
       checkpointDir = sparkSubConfig.getString("checkpoint-dir"),
       triggerIntervalMs = triggerInterval,
       others = readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
       nifiStateless = stateless,
+      schedulingStrategy = parseSchedulingStrategyConfigModel(sparkSubConfig),
       name = sparkStreamingConfigName
     )
+  }
+
+  def parseSchedulingStrategyConfigModel(config: Config): SchedulingStrategyConfigModel = {
+    if (config.hasPath("scheduling-strategy")) {
+      val innerConfig = config.getConfig("scheduling-strategy")
+
+      if (innerConfig.hasPath("class-name")) {
+        SchedulingStrategyConfigModel(innerConfig.getString("class-name"), innerConfig)
+      } else {
+        throw new Exception("Expected a [scheduling-strategy.class-name] config key")
+      }
+
+    } else {
+      SchedulingStrategyConfigModel("it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.FifoSchedulingStrategyFactory", ConfigFactory.empty())
+    }
   }
 
   def initializeSparkBatchConfig(): Unit = {
@@ -338,11 +356,12 @@ object ConfigManager {
       sparkSubConfig.getString("additional-jars-path"),
       sparkSubConfig.getString("yarn-jar"),
       sparkSubConfig.getInt("block-manager-port"),
-      sparkSubConfig.getInt("retained-stages-jobs"),
-      sparkSubConfig.getInt("retained-tasks"),
-      sparkSubConfig.getInt("retained-jobs"),
-      sparkSubConfig.getInt("retained-executions"),
-      sparkSubConfig.getInt("retained-batches"),
+      RetainedConfigModel(
+        sparkSubConfig.getInt("retained-stages-jobs"),
+        sparkSubConfig.getInt("retained-tasks"),
+        sparkSubConfig.getInt("retained-jobs"),
+        sparkSubConfig.getInt("retained-executions"),
+        sparkSubConfig.getInt("retained-batches")),
       readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
       readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
       sparkBatchConfigName
@@ -585,7 +604,7 @@ object ConfigManager {
 
   private def readZookeeperConnectionsConfig(config: Config): ZookeeperConnectionsConfig = {
     val connectionsArray = readConnectionsConfig(config, "zookeeperConnections")
-    val chRoot           = config.getString("zkChRoot")
+    val chRoot = config.getString("zkChRoot")
     ZookeeperConnectionsConfig(connectionsArray, chRoot)
   }
 
@@ -600,9 +619,9 @@ object ConfigManager {
       val list: Iterable[ConfigObject] =
         config.getObjectList("metadata").asScala
       val md = (for {
-        item: ConfigObject                <- list
+        item: ConfigObject <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key   = entry.getKey
+        key = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toMap
       Some(md)
@@ -646,12 +665,11 @@ object ConfigManager {
     * if it is not present, initialize it with the provided defaults.
     */
   private def retrieveConf[T <: Model](
-      default: T,
-      nameConf: String
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    ConfigBL.configManagerBL.retrieveConf(default,nameConf)(ct,typeTag)
+                                        default: T,
+                                        nameConf: String
+                                      )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+    ConfigBL.configManagerBL.retrieveConf(default, nameConf)(ct, typeTag)
   }
-
 
 
   def readOthersConfig(config: Config): Seq[(String, String)] = {
@@ -660,9 +678,9 @@ object ConfigManager {
     if (config.hasPath(key)) {
       val list: Iterable[ConfigObject] = config.getObjectList(key).asScala
       (for {
-        item: ConfigObject                <- list
+        item: ConfigObject <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key   = entry.getKey
+        key = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toSeq
     } else {
@@ -670,9 +688,6 @@ object ConfigManager {
     }
   }
 }
-
-
-
 
 
 trait WaspConfiguration {

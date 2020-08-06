@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-389-add-indexmodel-options-in-order-to-manage-solr-multi-writer-SNAPSHOT
+  version: 2.26.0-387-create-pluggable-scheduling-policies-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -1079,6 +1079,7 @@ paths:
               - legacyStreamingComponents
               - structuredStreamingComponents
               - rtComponents
+              - labels
               type: object
               properties:
                 name:
@@ -1106,6 +1107,10 @@ paths:
                     $ref: '#/components/schemas/RTModel'
                 dashboard:
                   $ref: '#/components/schemas/DashboardModel'
+                labels:
+                  type: array
+                  items:
+                    type: string
               xml:
                 name: PipegraphModel
                 namespace: java://it.agilelab.bigdata.wasp.models
@@ -1151,6 +1156,7 @@ paths:
               - legacyStreamingComponents
               - structuredStreamingComponents
               - rtComponents
+              - labels
               type: object
               properties:
                 name:
@@ -1178,6 +1184,10 @@ paths:
                     $ref: '#/components/schemas/RTModel'
                 dashboard:
                   $ref: '#/components/schemas/DashboardModel'
+                labels:
+                  type: array
+                  items:
+                    type: string
               xml:
                 name: PipegraphModel
                 namespace: java://it.agilelab.bigdata.wasp.models
@@ -3100,11 +3110,7 @@ components:
       - additionalJarsPath
       - yarnJar
       - blockManagerPort
-      - retainedStagesJobs
-      - retainedTasks
-      - retainedJobs
-      - retainedExecutions
-      - retainedBatches
+      - retained
       - kryoSerializer
       - others
       - name
@@ -3134,21 +3140,8 @@ components:
         blockManagerPort:
           type: integer
           format: int32
-        retainedStagesJobs:
-          type: integer
-          format: int32
-        retainedTasks:
-          type: integer
-          format: int32
-        retainedJobs:
-          type: integer
-          format: int32
-        retainedExecutions:
-          type: integer
-          format: int32
-        retainedBatches:
-          type: integer
-          format: int32
+        retained:
+          $ref: '#/components/schemas/RetainedConfigModel'
         kryoSerializer:
           $ref: '#/components/schemas/KryoSerializerConfig'
         others:
@@ -3268,6 +3261,7 @@ components:
       - legacyStreamingComponents
       - structuredStreamingComponents
       - rtComponents
+      - labels
       type: object
       properties:
         name:
@@ -3295,6 +3289,10 @@ components:
             $ref: '#/components/schemas/RTModel'
         dashboard:
           $ref: '#/components/schemas/DashboardModel'
+        labels:
+          type: array
+          items:
+            type: string
       xml:
         name: PipegraphModel
         namespace: java://it.agilelab.bigdata.wasp.models
@@ -3355,15 +3353,12 @@ components:
       - additionalJarsPath
       - yarnJar
       - blockManagerPort
-      - retainedStagesJobs
-      - retainedTasks
-      - retainedJobs
-      - retainedExecutions
-      - retainedBatches
+      - retained
       - kryoSerializer
       - streamingBatchIntervalMs
       - checkpointDir
       - others
+      - schedulingStrategy
       - name
       type: object
       properties:
@@ -3391,21 +3386,8 @@ components:
         blockManagerPort:
           type: integer
           format: int32
-        retainedStagesJobs:
-          type: integer
-          format: int32
-        retainedTasks:
-          type: integer
-          format: int32
-        retainedJobs:
-          type: integer
-          format: int32
-        retainedExecutions:
-          type: integer
-          format: int32
-        retainedBatches:
-          type: integer
-          format: int32
+        retained:
+          $ref: '#/components/schemas/RetainedConfigModel'
         kryoSerializer:
           $ref: '#/components/schemas/KryoSerializerConfig'
         streamingBatchIntervalMs:
@@ -3423,6 +3405,8 @@ components:
             $ref: '#/components/schemas/SparkEntryConfig'
         nifiStateless:
           $ref: '#/components/schemas/NifiStatelessConfigModel'
+        schedulingStrategy:
+          $ref: '#/components/schemas/SchedulingStrategyConfigModel'
         name:
           type: string
       xml:
@@ -3492,6 +3476,21 @@ components:
       xml:
         name: StructuredStreamingETLModel
         namespace: java://it.agilelab.bigdata.wasp.models
+    SchedulingStrategyConfigModel:
+      required:
+      - factoryClass
+      - factoryParams
+      type: object
+      properties:
+        factoryClass:
+          type: string
+        factoryParams:
+          type: object
+          additionalProperties:
+            type: string
+      xml:
+        name: SchedulingStrategyConfigModel
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     PrefixKeyValueMatchingStrategy:
       type: object
     LogEntry:
@@ -3768,6 +3767,33 @@ components:
           type: string
       xml:
         name: KafkaConfigModel
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
+    RetainedConfigModel:
+      required:
+      - retainedStagesJobs
+      - retainedTasks
+      - retainedJobs
+      - retainedExecutions
+      - retainedBatches
+      type: object
+      properties:
+        retainedStagesJobs:
+          type: integer
+          format: int32
+        retainedTasks:
+          type: integer
+          format: int32
+        retainedJobs:
+          type: integer
+          format: int32
+        retainedExecutions:
+          type: integer
+          format: int32
+        retainedBatches:
+          type: integer
+          format: int32
+      xml:
+        name: RetainedConfigModel
         namespace: java://it.agilelab.bigdata.wasp.models.configuration
     FreeCodeDTO:
       required:
@@ -4132,3 +4158,4 @@ components:
       - STOPPING
       - FAILED
       - STOPPED
+      - UNSCHEDULABLE

@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import com.mongodb.ErrorCategory
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
+import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import it.agilelab.bigdata.wasp.repository.core.db.{RepositoriesFactory, WaspDB}
 import it.agilelab.bigdata.wasp.core.launcher.MasterCommandLineOptions
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -16,7 +17,9 @@ import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}
 import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, TopicCompressionCodecProvider}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper
-import org.bson.codecs.configuration.CodecProvider
+import org.bson.{BsonReader, BsonWriter}
+import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
+import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
@@ -35,41 +38,41 @@ import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.util.{Failure, Success, Try}
 
-trait WaspMongoDB extends MongoDBHelper with WaspDB{
+trait WaspMongoDB extends MongoDBHelper with WaspDB {
 
   def upsert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T])
 
   def getAll[T <: Model]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T]
 
   def getDocumentByField[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
-      typeTag: TypeTag[T]
+    implicit ct: ClassTag[T],
+    typeTag: TypeTag[T]
   ): Option[T]
 
   def getDocumentByQueryParams[T <: Model](query: Map[String, BsonValue], sort: Option[BsonDocument])(
-      implicit ct: ClassTag[T],
-      typeTag: TypeTag[T]
+    implicit ct: ClassTag[T],
+    typeTag: TypeTag[T]
   ): Option[T]
 
   def getAllDocumentsByField[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
-      typeTag: TypeTag[T]
+    implicit ct: ClassTag[T],
+    typeTag: TypeTag[T]
   ): Seq[T]
 
   def getAllRaw[T <: Model]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument]
 
   def getDocumentByFieldRaw[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
-      typeTag: TypeTag[T]
+    implicit ct: ClassTag[T],
+    typeTag: TypeTag[T]
   ): Option[BsonDocument]
 
   def getDocumentByQueryParamsRaw[T <: Model](
-      query: Map[String, BsonValue]
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument]
+                                               query: Map[String, BsonValue]
+                                             )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument]
 
   def getAllDocumentsByFieldRaw[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
-      typeTag: TypeTag[T]
+    implicit ct: ClassTag[T],
+    typeTag: TypeTag[T]
   ): Seq[BsonDocument]
 
   def insert[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
@@ -83,8 +86,8 @@ trait WaspMongoDB extends MongoDBHelper with WaspDB{
   def updateByName[T <: Model](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
 
   def updateByNameRaw[T <: Model](name: String, doc: BsonDocument)(
-      implicit ct: ClassTag[T],
-      typeTag: TypeTag[T]
+    implicit ct: ClassTag[T],
+    typeTag: TypeTag[T]
   ): UpdateResult
 
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId
@@ -125,7 +128,7 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
         case (collectionName: String, Success(_)) => Right(collectionName)
         //collection already exist, nothing to do
         case (collectionName: String, Failure(ex: MongoCommandException))
-            if ex.getErrorCode == COLLECTION_ALREADY_EXISTS =>
+          if ex.getErrorCode == COLLECTION_ALREADY_EXISTS =>
           Right(collectionName)
         //collection correctly created
         case (_, Failure(ex: MongoCommandException)) if ex.getErrorCode != COLLECTION_ALREADY_EXISTS => Left(ex)
@@ -188,23 +191,23 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
   }
 
   def getDocumentByField[T <: Model](
-      field: String,
-      value: BsonValue
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+                                      field: String,
+                                      value: BsonValue
+                                    )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     getDocumentByKey[T](field, value, collectionsLookupTable(typeTag.tpe))
   }
 
   def getDocumentByQueryParams[T <: Model](
-      query: Map[String, BsonValue],
-      sort: Option[BsonDocument]
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+                                            query: Map[String, BsonValue],
+                                            sort: Option[BsonDocument]
+                                          )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
     getDocumentByQueryParams[T](query, sort, collectionsLookupTable(typeTag.tpe))
   }
 
   def getAllDocumentsByField[T <: Model](
-      field: String,
-      value: BsonValue
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T] = {
+                                          field: String,
+                                          value: BsonValue
+                                        )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T] = {
     getAllDocumentsByKey[T](field, value, collectionsLookupTable(typeTag.tpe))
   }
 
@@ -213,22 +216,22 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
   }
 
   def getDocumentByFieldRaw[T <: Model](
-      field: String,
-      value: BsonValue
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
+                                         field: String,
+                                         value: BsonValue
+                                       )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
     getDocumentByKey[BsonDocument](field, value, collectionsLookupTable(typeTag.tpe))
   }
 
   def getDocumentByQueryParamsRaw[T <: Model](
-      query: Map[String, BsonValue]
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
+                                               query: Map[String, BsonValue]
+                                             )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument] = {
     getDocumentByQueryParams[BsonDocument](query, None, collectionsLookupTable(typeTag.tpe))
   }
 
   def getAllDocumentsByFieldRaw[T <: Model](
-      field: String,
-      value: BsonValue
-  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument] = {
+                                             field: String,
+                                             value: BsonValue
+                                           )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument] = {
     getAllDocumentsByKey[BsonDocument](field, value, collectionsLookupTable(typeTag.tpe))
   }
 
@@ -272,7 +275,7 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 
   def enumerateFile(file: String): Array[Byte] = {
     val gridFile = GridFSBucket(mongoDatabase).openDownloadStream(file)
-    val length   = gridFile.gridFSFile().headResult().getLength
+    val length = gridFile.gridFSFile().headResult().getLength
     // MUST be less than 4GB
     assert(length < Integer.MAX_VALUE)
     val resultFile = ByteBuffer.allocate(length.toInt)
@@ -289,7 +292,7 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 
     logger.info(s"Locating file by id $id")
     val gridFile = GridFSBucket(mongoDatabase).openDownloadStream(id)
-    val length   = gridFile.gridFSFile().headResult().getLength
+    val length = gridFile.gridFSFile().headResult().getLength
     // MUST be less than 4GB
     assert(length < Integer.MAX_VALUE)
     val resultFile = ByteBuffer.allocate(length.toInt)
@@ -301,9 +304,9 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
     removeDocumentFromCollection[T]("name", BsonString(name), collectionsLookupTable(typeTag.tpe))
 
   override def updateByName[T <: Model](
-      name: String,
-      doc: T
-  )(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
+                                         name: String,
+                                         doc: T
+                                       )(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
     replaceDocumentToCollection[T]("name", BsonString(name), doc, collectionsLookupTable(typeTag.tpe))
 
   override def insertRaw[T <: Model](doc: BsonDocument)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit = {
@@ -322,9 +325,9 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
   }
 
   override def updateByNameRaw[T <: Model](
-      name: String,
-      doc: BsonDocument
-  )(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
+                                            name: String,
+                                            doc: BsonDocument
+                                          )(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): UpdateResult =
     replaceDocumentToCollection("name", BsonString(name), doc, collectionsLookupTable(typeTag.tpe))
 }
 
@@ -332,54 +335,54 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 object WaspMongoDB extends Logging {
   private var waspDB: WaspMongoDB = _
 
-  val pipegraphsName        = "pipegraphs"
-  val producersName         = "producers"
-  val topicsName            = "topics"
-  val indexesName           = "indexes"
-  val rawName               = "raw"
-  val keyValueName          = "keyvalues"
-  val sqlSourceName         = "sqlsource"
-  val batchjobName          = "batchjobs"
-  val batchjobInstanceName  = "batchjobinstances"
+  val pipegraphsName = "pipegraphs"
+  val producersName = "producers"
+  val topicsName = "topics"
+  val indexesName = "indexes"
+  val rawName = "raw"
+  val keyValueName = "keyvalues"
+  val sqlSourceName = "sqlsource"
+  val batchjobName = "batchjobs"
+  val batchjobInstanceName = "batchjobinstances"
   val pipegraphInstanceName = "pipegraphinstances"
 
-  val configurationsName  = "configurations"
-  val mlModelsName        = "mlmodels"
-  val websocketsName      = "websockets"
+  val configurationsName = "configurations"
+  val mlModelsName = "mlmodels"
+  val websocketsName = "websockets"
   val batchSchedulersName = "batchschedulers"
-  val documentName        = "document"
-  val freeCodeName        = "freeCode"
-  val processGroupsName   = "processGroups"
+  val documentName = "document"
+  val freeCodeName = "freeCode"
+  val processGroupsName = "processGroups"
 
   val collectionsLookupTable: Map[Type, String] = Map(
-    typeTag[PipegraphModel].tpe            -> pipegraphsName,
-    typeTag[ProducerModel].tpe             -> producersName,
-    typeTag[TopicModel].tpe                -> topicsName,
-    typeTag[MultiTopicModel].tpe           -> topicsName,
-    typeTag[IndexModel].tpe                -> indexesName,
-    typeTag[RawModel].tpe                  -> rawName,
-    typeTag[KeyValueModel].tpe             -> keyValueName,
-    typeTag[SqlSourceModel].tpe            -> sqlSourceName,
-    typeTag[BatchJobModel].tpe             -> batchjobName,
-    typeTag[MlModelOnlyInfo].tpe           -> mlModelsName,
-    typeTag[WebsocketModel].tpe            -> websocketsName,
-    typeTag[BatchSchedulerModel].tpe       -> batchSchedulersName,
-    typeTag[BatchJobInstanceModel].tpe     -> batchjobInstanceName,
-    typeTag[PipegraphInstanceModel].tpe    -> pipegraphInstanceName,
-    typeTag[KafkaConfigModel].tpe          -> configurationsName,
-    typeTag[SparkBatchConfigModel].tpe     -> configurationsName,
+    typeTag[PipegraphModel].tpe -> pipegraphsName,
+    typeTag[ProducerModel].tpe -> producersName,
+    typeTag[TopicModel].tpe -> topicsName,
+    typeTag[MultiTopicModel].tpe -> topicsName,
+    typeTag[IndexModel].tpe -> indexesName,
+    typeTag[RawModel].tpe -> rawName,
+    typeTag[KeyValueModel].tpe -> keyValueName,
+    typeTag[SqlSourceModel].tpe -> sqlSourceName,
+    typeTag[BatchJobModel].tpe -> batchjobName,
+    typeTag[MlModelOnlyInfo].tpe -> mlModelsName,
+    typeTag[WebsocketModel].tpe -> websocketsName,
+    typeTag[BatchSchedulerModel].tpe -> batchSchedulersName,
+    typeTag[BatchJobInstanceModel].tpe -> batchjobInstanceName,
+    typeTag[PipegraphInstanceModel].tpe -> pipegraphInstanceName,
+    typeTag[KafkaConfigModel].tpe -> configurationsName,
+    typeTag[SparkBatchConfigModel].tpe -> configurationsName,
     typeTag[SparkStreamingConfigModel].tpe -> configurationsName,
-    typeTag[ElasticConfigModel].tpe        -> configurationsName,
-    typeTag[SolrConfigModel].tpe           -> configurationsName,
-    typeTag[SolrConfigModel].tpe           -> configurationsName,
-    typeTag[HBaseConfigModel].tpe          -> configurationsName,
-    typeTag[JdbcConfigModel].tpe           -> configurationsName,
-    typeTag[TelemetryConfigModel].tpe      -> configurationsName,
-    typeTag[NifiConfigModel].tpe           -> configurationsName,
-    typeTag[DocumentModel].tpe             -> documentName,
-    typeTag[FreeCodeModel].tpe             -> freeCodeName,
-    typeTag[ProcessGroupModel].tpe         -> processGroupsName,
-    typeTag[CompilerConfigModel].tpe       -> configurationsName
+    typeTag[ElasticConfigModel].tpe -> configurationsName,
+    typeTag[SolrConfigModel].tpe -> configurationsName,
+    typeTag[SolrConfigModel].tpe -> configurationsName,
+    typeTag[HBaseConfigModel].tpe -> configurationsName,
+    typeTag[JdbcConfigModel].tpe -> configurationsName,
+    typeTag[TelemetryConfigModel].tpe -> configurationsName,
+    typeTag[NifiConfigModel].tpe -> configurationsName,
+    typeTag[DocumentModel].tpe -> documentName,
+    typeTag[FreeCodeModel].tpe -> freeCodeName,
+    typeTag[ProcessGroupModel].tpe -> processGroupsName,
+    typeTag[CompilerConfigModel].tpe -> configurationsName
   )
 
   lazy val indexKeys: Map[String, Bson] = collectionsLookupTable.map {
@@ -389,6 +392,7 @@ object WaspMongoDB extends Logging {
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
     DatastoreProductCodecProvider,
     TopicCompressionCodecProvider,
+    TypesafeConfigCodecProvider,
     createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
     createCodecProviderIgnoreNone(classOf[BatchJobInstanceModel]),
     createCodecProviderIgnoreNone(classOf[ZookeeperConnectionsConfig]),
@@ -436,7 +440,9 @@ object WaspMongoDB extends Logging {
     createCodecProviderIgnoreNone(classOf[FreeCodeModel]),
     createCodecProviderIgnoreNone(classOf[ProcessGroupModel]),
     createCodecProviderIgnoreNone(classOf[NifiStatelessConfigModel]),
-    createCodecProviderIgnoreNone(classOf[CompilerConfigModel])
+    createCodecProviderIgnoreNone(classOf[CompilerConfigModel]),
+    createCodecProviderIgnoreNone(classOf[RetainedConfigModel]),
+    createCodecProviderIgnoreNone(classOf[SchedulingStrategyConfigModel])
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(
@@ -475,7 +481,7 @@ object WaspMongoDB extends Logging {
     waspDB
   }
 
-  def dropDatabase() :Unit = {
+  def dropDatabase(): Unit = {
     // drop db
     val mongoDBConfig = ConfigManager.getMongoDBConfig
 
@@ -504,9 +510,38 @@ object WaspMongoDB extends Logging {
     )
 
     val mongoDBDatabase = initializeConnectionAndDriver(mongoDBConfig).withCodecRegistry(codecRegistry)
-    val completewaspDB  = new WaspDBMongoImp(mongoDBDatabase)
+    val completewaspDB = new WaspDBMongoImp(mongoDBDatabase)
     completewaspDB.initializeCollections()
     waspDB = completewaspDB
     waspDB
   }
+}
+
+
+object TypesafeConfigCodecProvider extends CodecProvider {
+
+
+  override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
+    if (classOf[Config].isAssignableFrom(clazz)) {
+      ConfigCodec.asInstanceOf[Codec[T]]
+    } else {
+      null
+    }
+  }
+
+  object ConfigCodec extends Codec[Config] {
+    override def decode(reader: BsonReader, decoderContext: DecoderContext): Config = {
+      val data = reader.readString()
+
+      ConfigFactory.parseString(data)
+    }
+
+    override def encode(writer: BsonWriter, value: Config, encoderContext: EncoderContext): Unit = {
+      val data = value.root().render(ConfigRenderOptions.defaults().setJson(true))
+      writer.writeString(data)
+    }
+
+    override def getEncoderClass: Class[Config] = classOf[Config]
+  }
+
 }

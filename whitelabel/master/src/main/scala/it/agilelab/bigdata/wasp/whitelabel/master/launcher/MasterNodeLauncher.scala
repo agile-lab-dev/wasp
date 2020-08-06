@@ -113,9 +113,14 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
     ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel) //EVENT ENGINE
 
+    /* Free code models */
+
+    ConfigBL.freeCodeBL.insert(TestFreeCodeModels.testFreeCode)
+
     /* Pipegraphs */
     
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.freecode)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.nifi)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.mongo)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.consoleWithMetadata)

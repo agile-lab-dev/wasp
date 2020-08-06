@@ -16,7 +16,8 @@ object Data {
 
   /**
     * Case class representing an element of the current schedule, it associates a worker to a pipegraph instance
-    * @param worker The worker
+    *
+    * @param worker            The worker
     * @param pipegraphInstance The pipegraph instance
     */
   case class ScheduleInstance(worker: ActorRef, pipegraphInstance: PipegraphInstanceModel) {
@@ -29,14 +30,14 @@ object Data {
   case object NoData extends Data
 
 
-  case class Collaborator(address: UniqueAddress, actorSelection: ActorRef)
+  case class Collaborator(address: UniqueAddress, collaboratorActor: ActorRef, roles: Set[String])
 
   /**
     * Data of the [[State.Initialized]] state
     *
     * @param scheduleInstances The current know schedules to be instantiated
     */
-  case class Schedule private (scheduleInstances: Seq[ScheduleInstance], workers: Queue[Collaborator]) extends Data {
+  case class Schedule private(scheduleInstances: Seq[ScheduleInstance], workers: Set[Collaborator]) extends Data {
 
     private val byStatus = scheduleInstances
       .groupBy(instance => instance.pipegraphInstance.status)
@@ -59,6 +60,9 @@ object Data {
     def toFailed(worker: ActorRef, instance: PipegraphInstanceModel): Schedule =
       moveTo(worker, instance, PipegraphStatus.FAILED)
 
+    def toUnschedulable(worker: ActorRef, instance: PipegraphInstanceModel) =
+      moveTo(worker, instance, PipegraphStatus.UNSCHEDULABLE)
+
     private def moveTo(worker: ActorRef, instance: PipegraphInstanceModel, status: PipegraphStatus): Schedule = {
 
       val updatedInstance = instance.copy(currentStatusTimestamp = System.currentTimeMillis(), status = status)
@@ -75,10 +79,13 @@ object Data {
     }
 
     def pending: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.PENDING)
+
     def processing: Seq[ScheduleInstance] =
       scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.PROCESSING)
 
     def pending(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PENDING)
+
+    def stoppable(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PENDING, PipegraphStatus.UNSCHEDULABLE)
 
     def stopping(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.STOPPING)
 
@@ -94,9 +101,11 @@ object Data {
         .filter(_.pipegraphInstance.status == PipegraphStatus.PROCESSING)
         .filter(_.worker.path.address == address)
 
-    private def byStatus(instanceOf: String, pipegraphStatus: PipegraphStatus) =
+    def unschedulable: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.UNSCHEDULABLE)
+
+    private def byStatus(instanceOf: String, pipegraphStatus: PipegraphStatus*) =
       scheduleInstances
-        .filter(_.pipegraphInstance.status == pipegraphStatus)
+        .filter(instance => pipegraphStatus.contains(instance.pipegraphInstance.status))
         .find(_.instanceOf == instanceOf)
         .head
 
@@ -108,6 +117,9 @@ object Data {
 
     def isPending(instanceOf: String): Boolean =
       isInStatus(instanceOf, PipegraphStatus.PENDING)
+
+    def isUnschedulable(instanceOf: String) : Boolean =
+      isInStatus(instanceOf, PipegraphStatus.UNSCHEDULABLE)
 
     private def isInStatus(instanceOf: String, allowed: PipegraphStatus*) =
       allowed.exists(a => byStatus.get(a).exists(_.contains(instanceOf)))
@@ -126,7 +138,7 @@ object Data {
       isInStatus(instanceOf, PipegraphStatus.PROCESSING)
 
     def canGoToStopped(instanceOf: String): Boolean =
-      isInStatus(instanceOf, PipegraphStatus.STOPPING, PipegraphStatus.PENDING)
+      isInStatus(instanceOf, PipegraphStatus.STOPPING, PipegraphStatus.PENDING, PipegraphStatus.UNSCHEDULABLE)
 
     def canGoToProcessing(instanceOf: String): Boolean =
       isInStatus(instanceOf, PipegraphStatus.STOPPING, PipegraphStatus.PENDING)

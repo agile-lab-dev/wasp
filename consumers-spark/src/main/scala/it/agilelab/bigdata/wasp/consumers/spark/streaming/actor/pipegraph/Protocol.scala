@@ -12,7 +12,7 @@ object Protocol {
     * message sent from [[PipegraphGuardian]] to [[it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian]]
     * to obtain work
     */
-  private[actor] case class GimmeWork(member: UniqueAddress) extends Protocol
+  private[actor] case class GimmeWork(member: UniqueAddress, pipegraph: String) extends Protocol
 
 
   /**
@@ -38,23 +38,26 @@ object Protocol {
 
   /**
     * Self message to signal activation of etl
+    *
     * @param etl the etl to activate
     */
   private[pipegraph] case class ActivateETL(etl: StructuredStreamingETLModel) extends Protocol
 
   /**
     * Self message to signal materialization of etl
-    * @param etl the etl to materialize
+    *
+    * @param etl    the etl to materialize
     * @param worker the assigned worker
     */
   private[pipegraph] case class MaterializeETL(worker: ActorRef, etl: StructuredStreamingETLModel) extends Protocol
 
   /**
     * Self message to signal monitoring of etl
-    * @param etl the etl to monitor
+    *
+    * @param etl    the etl to monitor
     * @param worker the assigned worker
     */
-  private[pipegraph] case class MonitorETL(worker:ActorRef, etl: StructuredStreamingETLModel) extends
+  private[pipegraph] case class MonitorETL(worker: ActorRef, etl: StructuredStreamingETLModel) extends
     Protocol
 
   /**
@@ -85,7 +88,7 @@ object Protocol {
   /**
     * Self message to signal start of stopping of etl
     */
-  private[pipegraph] case class StopETL(worker: ActorRef,etl:StructuredStreamingETLModel) extends Protocol
+  private[pipegraph] case class StopETL(worker: ActorRef, etl: StructuredStreamingETLModel) extends Protocol
 
   /**
     * Self message to signal Finish of Stop
@@ -102,7 +105,6 @@ object Protocol {
     * Self message to signal need to perform a retry in current state
     */
   private[pipegraph] case object PerformRetry extends Protocol
-
 
 
 }

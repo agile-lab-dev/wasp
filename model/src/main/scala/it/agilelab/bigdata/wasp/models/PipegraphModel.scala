@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 object PipegraphStatus extends Enumeration {
   type PipegraphStatus = Value
 
-  val PENDING, PROCESSING, STOPPING, FAILED, STOPPED = Value
+  val PENDING, PROCESSING, STOPPING, FAILED, STOPPED, UNSCHEDULABLE = Value
 }
 
 case class DashboardModel(url: String, needsFilterBox: Boolean)
@@ -124,7 +124,8 @@ case class PipegraphModel(override val name: String,
                           legacyStreamingComponents: List[LegacyStreamingETLModel],
                           structuredStreamingComponents: List[StructuredStreamingETLModel],
                           rtComponents: List[RTModel],
-                          dashboard: Option[DashboardModel] = None) extends Model {
+                          dashboard: Option[DashboardModel] = None,
+                          labels: Set[String] = Set.empty) extends Model {
 
   def generateStandardPipegraphName: String = s"pipegraph_$name"
   

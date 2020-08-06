@@ -58,11 +58,11 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       .setJars(getAdditionalJars(sparkConfigModel.additionalJarsPath))
       .set("spark.yarn.jars", sparkConfigModel.yarnJar)
       .set("spark.blockManager.port", sparkConfigModel.blockManagerPort.toString)
-      .set("spark.ui.retainedStages", sparkConfigModel.retainedStagesJobs.toString)
-      .set("spark.ui.retainedTasks", sparkConfigModel.retainedTasks.toString)
-      .set("spark.ui.retainedJobs", sparkConfigModel.retainedJobs.toString)
-      .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retainedExecutions.toString)
-      .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retainedBatches.toString)
+      .set("spark.ui.retainedStages", sparkConfigModel.retained.retainedStagesJobs.toString)
+      .set("spark.ui.retainedTasks", sparkConfigModel.retained.retainedTasks.toString)
+      .set("spark.ui.retainedJobs", sparkConfigModel.retained.retainedJobs.toString)
+      .set("spark.sql.ui.retainedExecutions", sparkConfigModel.retained.retainedExecutions.toString)
+      .set("spark.streaming.ui.retainedBatches", sparkConfigModel.retained.retainedBatches.toString)
       .setAll(sparkConfigModel.others.map(v => (v.key, v.value)))
 
     // kryo-related configs

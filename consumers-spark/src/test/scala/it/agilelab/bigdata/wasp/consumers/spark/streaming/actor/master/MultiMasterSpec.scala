@@ -3,15 +3,18 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
+import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props, Terminated}
 import akka.cluster.ClusterEvent.{InitialStateAsEvents, MemberUp}
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings, ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.cluster.{Cluster, UniqueAddress}
 import akka.testkit.{TestKit, TestProbe}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.collaborator.CollaboratorActor
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.State.{Idle, Initialized, Initializing}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.Protocol.GimmeWork
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.{MockPipegraphBl, MockPipegraphInstanceBl}
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus}
@@ -23,7 +26,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class MultiMasterSpec
-    extends WordSpecLike
+  extends WordSpecLike
     with BeforeAndAfterAll
     with Matchers
     with Eventually
@@ -34,6 +37,8 @@ class MultiMasterSpec
   import SparkConsumersStreamingMasterGuardian._
 
   import scala.concurrent.duration._
+
+  val slowTimeout: FiniteDuration = FiniteDuration(5, TimeUnit.MINUTES)
 
   def childCreatorFactory(probe: TestProbe): ChildCreator = {
     (_, name, factory) => {
@@ -52,7 +57,7 @@ class MultiMasterSpec
         import testkitC._
 
         val mockBL: PipegraphBL = new MockPipegraphBl(new MockPipegraphInstanceBl)
-        val probe               = TestProbe()
+        val probe = TestProbe()
 
 
         val watchdogCreator: ChildCreator = (_, name, _) => TestProbe(name).ref
@@ -60,7 +65,7 @@ class MultiMasterSpec
         mockBL.insert(pipegraph)
         mockBL.instances().insert(pipegraphInstance)
 
-        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond)
+        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS))
 
         val childCreator = childCreatorFactory(probe)
         cluster("system-0", props, childCreator) { (cluster0, _, _, shutdown0) =>
@@ -70,7 +75,7 @@ class MultiMasterSpec
 
                 probe.expectMsgPF() {
                   case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
                 probe.expectMsgType[HelperEnvelope]
@@ -82,14 +87,82 @@ class MultiMasterSpec
                     i.executedByNode === Some(
                       SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster0.selfUniqueAddress)
                     ) ||
-                    i.executedByNode === Some(
-                      SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster1.selfUniqueAddress)
-                    ) ||
-                    i.executedByNode === Some(
-                      SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster2.selfUniqueAddress)
-                    )
+                      i.executedByNode === Some(
+                        SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster1.selfUniqueAddress)
+                      ) ||
+                      i.executedByNode === Some(
+                        SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster2.selfUniqueAddress)
+                      )
                   }
 
+                }
+
+                Future.traverse(Seq(shutdown0, shutdown1, shutdown2, shutdownC))(_.apply())
+              }
+            }
+          }
+        }
+      }
+    }
+
+    "recover UNSCHEDULABLE pipegraphs when a schedulable node joins" in {
+      import scala.concurrent.ExecutionContext.Implicits.global
+
+      coordinator("coordinator") { (clusterC, proxy, testkitC, shutdownC) =>
+        import testkitC._
+
+        val mockBL: PipegraphBL = new MockPipegraphBl(new MockPipegraphInstanceBl)
+        val probe = TestProbe()
+
+
+        val childCreator = childCreatorFactory(probe)
+        val watchdogCreator: ChildCreator = (_, name, _) => TestProbe(name).ref
+
+        mockBL.insert(pipegraph.copy(labels = Set("strange-label")))
+
+        class TestNodeLabelSchedulingStrategyFactory extends SchedulingStrategyFactory {
+          override def create: SchedulingStrategy = new NodeLabelsSchedulingStrategy(Map.empty, new FifoSchedulingStrategyFactory)
+        }
+
+        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS), schedulingStrategy = new TestNodeLabelSchedulingStrategyFactory)
+
+        cluster("system-0", props, childCreator) { (cluster0, proxy0, _, shutdown0) =>
+          cluster("system-1", props, childCreator) { (cluster1, _, _, shutdown1) =>
+            converge(clusterC, cluster0, cluster1) {
+              val transitionProbe = TestProbe()
+
+              transitionProbe.send(proxy, SubscribeTransitionCallBack(transitionProbe.ref))
+
+              transitionProbe.receiveWhile() {
+                case CurrentState(_, Idle) =>
+                case Transition(_, Idle, Initializing) =>
+                case Transition(_, Initializing, Initialized) =>
+              }
+
+              probe.send(proxy0, StartPipegraph(pipegraph.name))
+
+
+              probe.expectMsgPF(100.seconds) {
+                case PipegraphStarted(pipegraph.name, _) =>
+              }
+
+              cluster("system-2", props, childCreator, Set("strange-label")) { (cluster2, _, _, shutdown2) =>
+
+                probe.expectMsgPF(120.seconds) {
+                  case HelperEnvelope(address, sender, WorkAvailable(pipegraph.name)) =>
+                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, pipegraph.name))
+                }
+
+                probe.expectMsgType[HelperEnvelope]
+
+                mockBL.instances().all().foreach { i =>
+                  i.status should be(PipegraphStatus.PROCESSING)
+
+                  assert {
+                      i.executedByNode === Some(
+                        SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster2.selfUniqueAddress)
+                      )
+                  }
                 }
 
                 Future.traverse(Seq(shutdown0, shutdown1, shutdown2, shutdownC))(_.apply())
@@ -108,7 +181,7 @@ class MultiMasterSpec
         import testkitC._
 
         val mockBL: PipegraphBL = new MockPipegraphBl(new MockPipegraphInstanceBl)
-        val probe               = TestProbe()
+        val probe = TestProbe()
 
 
         val childCreator = childCreatorFactory(probe)
@@ -121,7 +194,7 @@ class MultiMasterSpec
             pipegraphInstance.copy(executedByNode = Some("NodeThatDoesNotExist"), status = PipegraphStatus.PROCESSING)
           )
 
-        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond)
+        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS))
 
         cluster("system-0", props, childCreator) { (cluster0, _, _, shutdown0) =>
           cluster("system-1", props, childCreator) { (cluster1, _, _, shutdown1) =>
@@ -130,7 +203,7 @@ class MultiMasterSpec
 
                 probe.expectMsgPF() {
                   case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
                 probe.expectMsgType[HelperEnvelope]
@@ -142,12 +215,12 @@ class MultiMasterSpec
                     i.executedByNode === Some(
                       SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster0.selfUniqueAddress)
                     ) ||
-                    i.executedByNode === Some(
-                      SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster1.selfUniqueAddress)
-                    ) ||
-                    i.executedByNode === Some(
-                      SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster2.selfUniqueAddress)
-                    )
+                      i.executedByNode === Some(
+                        SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster1.selfUniqueAddress)
+                      ) ||
+                      i.executedByNode === Some(
+                        SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster2.selfUniqueAddress)
+                      )
                   }
                 }
 
@@ -167,7 +240,7 @@ class MultiMasterSpec
         import testkitC._
 
         val mockBL: PipegraphBL = new MockPipegraphBl(new MockPipegraphInstanceBl)
-        val probe               = TestProbe()
+        val probe = TestProbe()
 
 
         val childCreator = childCreatorFactory(probe)
@@ -206,13 +279,7 @@ class MultiMasterSpec
 
         val whoIsRunningTheSingletonProbe: TestProbe = TestProbe("who-is-running-the-singleton")
 
-        val props = SparkConsumersStreamingMasterGuardian.props(
-          mockBL,
-          watchdogCreator,
-          "collaborator",
-          1.millisecond,
-          Some(whoIsRunningTheSingletonProbe.ref)
-        )
+        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS), Some(whoIsRunningTheSingletonProbe.ref))
 
         cluster("system-0", props, childCreator) { (cluster0, _, _, shutdown0) =>
           cluster("system-1", props, childCreator) { (cluster1, _, _, shutdown1) =>
@@ -234,6 +301,7 @@ class MultiMasterSpec
       }
     }
 
+
     "Recover from failed nodes" in {
 
       import scala.concurrent.ExecutionContext.Implicits.global
@@ -242,7 +310,7 @@ class MultiMasterSpec
         import testkitC._
 
         val mockBL: PipegraphBL = new MockPipegraphBl(new MockPipegraphInstanceBl)
-        val probe               = TestProbe()
+        val probe = TestProbe()
 
         val childCreator = childCreatorFactory(probe)
         val watchdogCreator: ChildCreator = (_, name, _) => TestProbe(name).ref
@@ -250,7 +318,7 @@ class MultiMasterSpec
         mockBL.insert(pipegraph)
         mockBL.instances().insert(pipegraphInstance)
 
-        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond)
+        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.second, FiniteDuration(5, TimeUnit.SECONDS))
 
         cluster("system-0", props, childCreator) { (cluster0, _, _, shutdown0) =>
           cluster("system-1", props, childCreator) { (cluster1, _, _, shutdown1) =>
@@ -258,7 +326,7 @@ class MultiMasterSpec
               converge(clusterC, cluster0, cluster1, cluster2) {
                 probe.expectMsgPF() {
                   case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
                 val address = probe.expectMsgPF() {
@@ -270,13 +338,13 @@ class MultiMasterSpec
                   cluster.leave(cluster.selfAddress)
                 }
 
-                probe.expectMsgPF(Duration(120, "seconds")) {
+                probe.expectMsgPF(slowTimeout) {
                   case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
 
-                probe.expectMsgPF(Duration(120, "seconds")) {
+                probe.expectMsgPF(slowTimeout) {
                   case HelperEnvelope(address, sender, WorkGiven(_, _)) =>
                 }
 
@@ -302,7 +370,7 @@ class MultiMasterSpec
         import testkitC._
 
         val mockBL: PipegraphBL = new MockPipegraphBl(new MockPipegraphInstanceBl)
-        val probe               = TestProbe()
+        val probe = TestProbe()
 
         val childCreator = childCreatorFactory(probe)
         val watchdogCreator: ChildCreator = (_, name, _) => TestProbe(name).ref
@@ -315,46 +383,41 @@ class MultiMasterSpec
         mockBL.insert(pipegraphB)
         mockBL.insert(pipegraphC)
 
-        mockBL.instances().insert(pipegraphInstance.copy(name = "instance-a"))
-        mockBL.instances().insert(pipegraphInstance.copy(name = "instance-b", instanceOf = pipegraphB.name))
-        mockBL.instances().insert(pipegraphInstance.copy(name = "instance-c", instanceOf = pipegraphC.name))
 
         val whoIsRunningTheSingletonProbe: TestProbe = TestProbe("who-is-running-the-singleton")
-        val props = SparkConsumersStreamingMasterGuardian.props(
-          mockBL,
-          watchdogCreator,
-          "collaborator",
-          1.millisecond,
-          debugActor = Some(whoIsRunningTheSingletonProbe.ref)
-        )
+        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS), debugActor = Some(whoIsRunningTheSingletonProbe.ref))
 
-        cluster("system-0", props, childCreator) { (cluster0, _, _, shutdown0) =>
+        cluster("system-0", props, childCreator) { (cluster0, proxy0, _, shutdown0) =>
           cluster("system-1", props, childCreator) { (cluster1, _, _, shutdown1) =>
             cluster("system-2", props, childCreator) { (cluster2, _, _, shutdown2) =>
               converge(clusterC, cluster0, cluster1, cluster2) {
+
+                proxy0 ! StartPipegraph(pipegraphA.name)
+                proxy0 ! StartPipegraph(pipegraphB.name)
+                proxy0 ! StartPipegraph(pipegraphC.name)
 
                 val hostingSingleton = whoIsRunningTheSingletonProbe.expectMsgType[UniqueAddress]
 
                 val nodeToPipegraph = multiple(6) {
                   probe.expectMsgPF() {
                     case HelperEnvelope(
-                        address,
-                        sender,
-                        WorkAvailable("pipegraph-a") | WorkAvailable("pipegraph-b") | WorkAvailable("pipegraph-c")
-                        ) =>
-                      probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                    address,
+                    sender,
+                    msg@(WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c"))
+                    ) =>
+                      probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, msg.name))
                       None
                     case HelperEnvelope(
-                        _,
-                        _,
-                        GimmeWork(cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress)
-                        ) =>
+                    _,
+                    _,
+                    GimmeWork(cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress, _)
+                    ) =>
                       None
                     case HelperEnvelope(
-                        address,
-                        _,
-                        WorkGiven(pipegraph, _)
-                        ) =>
+                    address,
+                    _,
+                    WorkGiven(pipegraph, _)
+                    ) =>
                       Some((address, pipegraph.name))
                   }
                 }.flatten.toMap
@@ -366,12 +429,12 @@ class MultiMasterSpec
                     c.selfUniqueAddress
                   }
 
-                probe.expectMsgPF(Duration(120, "seconds")) {
-                  case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                probe.expectMsgPF(slowTimeout) {
+                  case HelperEnvelope(address, sender, msg@WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c")) =>
+                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, msg.name))
                 }
-                probe.expectMsgPF(Duration(120, "seconds")) {
-                  case HelperEnvelope(_, _, WorkGiven(_,_)) =>
+                probe.expectMsgPF(slowTimeout) {
+                  case HelperEnvelope(_, _, WorkGiven(_, _)) =>
                 }
 
                 mockBL.instances().all().foreach { i =>
@@ -395,7 +458,7 @@ class MultiMasterSpec
         import testkitC._
 
         val mockBL: PipegraphBL = new MockPipegraphBl(new MockPipegraphInstanceBl)
-        val probe               = TestProbe()
+        val probe = TestProbe()
 
         val childCreator = childCreatorFactory(probe)
         val watchdogCreator: ChildCreator = (_, name, _) => TestProbe(name).ref
@@ -410,13 +473,7 @@ class MultiMasterSpec
 
         val whoIsRunningTheSingletonProbe: TestProbe = TestProbe("who-is-running-the-singleton")
 
-        val props = SparkConsumersStreamingMasterGuardian.props(
-          mockBL,
-          watchdogCreator,
-          "collaborator",
-          1.millisecond,
-          Some(whoIsRunningTheSingletonProbe.ref)
-        )
+        val props = SparkConsumersStreamingMasterGuardian.props(mockBL, watchdogCreator, "collaborator", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS), Some(whoIsRunningTheSingletonProbe.ref))
 
         cluster("system-0", props, childCreator) { (cluster0, proxy0, _, shutdown0) =>
           cluster("system-1", props, childCreator) { (cluster1, _, _, shutdown1) =>
@@ -432,23 +489,23 @@ class MultiMasterSpec
                 val nodeToPipegraph = multiple(6) {
                   probe.expectMsgPF() {
                     case HelperEnvelope(
-                        address,
-                        sender,
-                        WorkAvailable("pipegraph-a") | WorkAvailable("pipegraph-b") | WorkAvailable("pipegraph-c")
-                        ) =>
-                      probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                    address,
+                    sender,
+                    msg@WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c")
+                    ) =>
+                      probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, msg.name))
                       None
                     case HelperEnvelope(
-                        _,
-                        _,
-                        GimmeWork(cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress)
-                        ) =>
+                    _,
+                    _,
+                    GimmeWork(cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress, _)
+                    ) =>
                       None
                     case HelperEnvelope(
-                        address,
-                        _,
-                        WorkGiven(pipegraph, _)
-                        ) =>
+                    address,
+                    _,
+                    WorkGiven(pipegraph, _)
+                    ) =>
                       Some((address, pipegraph.name))
                   }
                 }.flatten.toMap
@@ -460,18 +517,18 @@ class MultiMasterSpec
                       cluster.selfUniqueAddress
                   }
 
-                probe.expectMsgPF(Duration(120, "seconds")) {
+                probe.expectMsgPF(slowTimeout) {
                   case HelperEnvelope(address, sender, WorkAvailable(pipegraphName))
-                      if pipegraphName == nodeToPipegraph(firstOneRunningTheSingleton) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address))
+                    if pipegraphName == nodeToPipegraph(firstOneRunningTheSingleton) =>
+                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, pipegraphName))
                 }
 
                 probe.expectMsgPF() {
                   case HelperEnvelope(
-                      _,
-                      _,
-                      WorkGiven(_, _)
-                      ) =>
+                  _,
+                  _,
+                  WorkGiven(_, _)
+                  ) =>
                 }
 
                 mockBL.instances().all().foreach { i =>
@@ -494,9 +551,9 @@ trait SystemUtils {
   type ShutdownCallback = () => Future[Terminated]
 
   def coordinator[A](
-      configSubsection: String
-  )(f: (Cluster, ActorRef, TestKit, ShutdownCallback) => Future[Seq[Terminated]]): Unit = {
-    val system  = ActorSystem("WASP", ConfigFactory.load().getConfig(configSubsection))
+                      configSubsection: String
+                    )(f: (Cluster, ActorRef, TestKit, ShutdownCallback) => Future[Seq[Terminated]]): Unit = {
+    val system = ActorSystem("WASP", ConfigFactory.load().getConfig(configSubsection))
     val cluster = Cluster(system)
 
     val proxySettings = ClusterSingletonProxySettings(system)
@@ -512,10 +569,21 @@ trait SystemUtils {
     Await.result(f(cluster, proxy, new TestKit(system), shutdown), Duration.Inf)
   }
 
-  def cluster[A](configSubsection: String, singletonProps: Props, childCreator: ChildCreator)(
-      f: (Cluster, ActorRef, TestKit, ShutdownCallback) => A
+  def cluster[A](configSubsection: String, singletonProps: Props, childCreator: ChildCreator, additionalRoles: Set[String] = Set.empty)(
+    f: (Cluster, ActorRef, TestKit, ShutdownCallback) => A
   ): A = {
-    val system  = ActorSystem("WASP", ConfigFactory.load().getConfig(configSubsection))
+    val config = ConfigFactory.load().getConfig(configSubsection)
+
+
+    val roles = config.getList("akka.cluster.roles").unwrapped().asInstanceOf[java.util.List[String]]
+
+    additionalRoles.foreach { role =>
+      roles.add(role)
+    }
+
+    val finalConfig = ConfigFactory.empty().withValue("akka.cluster.roles", ConfigValueFactory.fromAnyRef(roles)).withFallback(config).resolve()
+
+    val system = ActorSystem("WASP", finalConfig)
     val cluster = Cluster(system)
 
     val managerSettings = ClusterSingletonManagerSettings(system)
@@ -585,7 +653,7 @@ class HelperActor(upstream: ActorRef) extends Actor {
   val cluster: Cluster = Cluster(context.system)
 
   override def receive: Receive = {
-    case msg @ HelperEnvelope(_, destination, message) =>
+    case msg@HelperEnvelope(_, destination, message) =>
       destination ! message
     case msg =>
       upstream ! HelperEnvelope(cluster.selfUniqueAddress, sender(), msg)

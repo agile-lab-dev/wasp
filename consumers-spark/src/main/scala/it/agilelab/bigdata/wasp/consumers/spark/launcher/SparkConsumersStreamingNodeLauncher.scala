@@ -1,11 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.launcher
 
+import java.util.concurrent.TimeUnit
 import java.util.{ServiceLoader, UUID}
 
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{SchedulingStrategyFactory, SparkConsumersStreamingMasterGuardian}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
@@ -23,102 +24,109 @@ import org.apache.commons.cli.CommandLine
 import scala.collection.JavaConverters._
 
 /**
-	* Launcher for the SparkConsumersStreamingMasterGuardian.
-	* This trait is useful for who want extend the launcher
-	*
-	* @author Nicolò Bidotti
-	*/
+  * Launcher for the SparkConsumersStreamingMasterGuardian.
+  * This trait is useful for who want extend the launcher
+  *
+  * @author Nicolò Bidotti
+  */
 trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
 
-	var plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin] = Map()
+  var plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin] = Map()
 
-	override def launch(commandLine: CommandLine): Unit = {
-		SparkSingletons.initializeSpark(ConfigManager.getSparkStreamingConfig, ConfigManager.getTelemetryConfig, ConfigManager.getKafkaConfig)
-		SparkSingletons.initializeSparkStreaming(ConfigManager.getSparkStreamingConfig)
+  override def launch(commandLine: CommandLine): Unit = {
+    SparkSingletons.initializeSpark(ConfigManager.getSparkStreamingConfig, ConfigManager.getTelemetryConfig, ConfigManager.getKafkaConfig)
+    SparkSingletons.initializeSparkStreaming(ConfigManager.getSparkStreamingConfig)
 
-		super.launch(commandLine)
-	}
+    super.launch(commandLine)
+  }
 
-	override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
+  override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 
-		import scala.concurrent.duration._
-
-
-		val childrenCreator: ChildCreator = SparkConsumersStreamingMasterGuardian.defaultChildCreator(
-			SparkSingletons.getSparkSession,
-			new PluginBasedSparkReaderFactory(plugins),
-			SparkWriterFactoryDefault(plugins),
-			5.seconds,
-			5.seconds,
-			_ => PipegraphGuardian.Retry,
-			ConfigBL)
+    import scala.concurrent.duration._
 
 
-		val collaborator = CollaboratorActor.props(WaspSystem.sparkConsumersStreamingMasterGuardian, childrenCreator)
+    val childrenCreator: ChildCreator = SparkConsumersStreamingMasterGuardian.defaultChildCreator(
+      SparkSingletons.getSparkSession,
+      new PluginBasedSparkReaderFactory(plugins),
+      SparkWriterFactoryDefault(plugins),
+      5.seconds,
+      5.seconds,
+      _ => PipegraphGuardian.Retry,
+      ConfigBL)
 
-		logger.error("Starting collaborator")
-		WaspSystem.actorSystem.actorOf(collaborator, "collaborator")
-		logger.error("Collaborator started")
 
-		val watchdog = if(ConfigManager.getSparkStreamingConfig.driver.killDriverProcessIfSparkContextStops) {
+    val collaborator = CollaboratorActor.props(WaspSystem.sparkConsumersStreamingMasterGuardian, childrenCreator)
+
+    logger.error("Starting collaborator")
+    WaspSystem.actorSystem.actorOf(collaborator, "collaborator")
+    logger.error("Collaborator started")
+
+    val watchdog = if (ConfigManager.getSparkStreamingConfig.driver.killDriverProcessIfSparkContextStops) {
 
       SparkConsumersStreamingMasterGuardian.exitingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext,
-      -1)
+        -1)
 
-    }else {
+    } else {
       SparkConsumersStreamingMasterGuardian.doNothingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext)
     }
 
-		val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(
-			ConfigBL.pipegraphBL,
-      watchdog,
-			"collaborator",
-			5.seconds)
+
+    val schedulingStrategyFactory: SchedulingStrategyFactory = try {
+      val strategy = Class.forName(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryClass).newInstance().asInstanceOf[SchedulingStrategyFactory]
+      strategy.inform(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryParams)
+    } catch {
+      case e: Exception =>
+        logger.error(s"Could not instantiate ${ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryClass}", e)
+        throw e
+    }
+
+    val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(ConfigBL.pipegraphBL, watchdog, "collaborator", 5.seconds, FiniteDuration(5, TimeUnit.SECONDS), schedulingStrategy = schedulingStrategyFactory)
 
 
-		val sparkConsumersStreamingMasterGuardianSingletonInfo = (
-			masterGuardianProps,
+    val sparkConsumersStreamingMasterGuardianSingletonInfo = (
+      masterGuardianProps,
       WaspSystem.sparkConsumersStreamingMasterGuardianName,
-			WaspSystem.sparkConsumersStreamingMasterGuardianSingletonManagerName,
-			Seq(WaspSystem.sparkConsumersStreamingMasterGuardianRole)
-		)
+      WaspSystem.sparkConsumersStreamingMasterGuardianSingletonManagerName,
+      Seq(WaspSystem.sparkConsumersStreamingMasterGuardianRole)
+    )
 
-		Seq(sparkConsumersStreamingMasterGuardianSingletonInfo)
-	}
+    Seq(sparkConsumersStreamingMasterGuardianSingletonInfo)
+  }
 
-	/**
-		* Initialize the WASP plugins, this method is called after the wasp initialization and before getSingletonInfos
-		* @param args command line arguments
-		*/
-	override def initializePlugins(args: Array[String]): Unit = {
-		logger.info("Finding Spark consumers plugins")
-		val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] = ServiceLoader.load[WaspConsumersSparkPlugin](classOf[WaspConsumersSparkPlugin])
-		val pluginsList = pluginLoader.iterator().asScala.toList
-		logger.info(s"Found ${pluginsList.size} plugins")
-		logger.info("Initializing consumers Spark plugins")
-		plugins = pluginsList.map({
-			plugin => {
-				logger.info(s"Initializing Spark consumers plugin ${plugin.getClass.getSimpleName} for datastore product ${plugin.datastoreProduct}")
-				plugin.initialize(waspDB)
-				// You cannot have two plugin with the same name
-				(plugin.datastoreProduct, plugin)
-			}
-		}).toMap
+  /**
+    * Initialize the WASP plugins, this method is called after the wasp initialization and before getSingletonInfos
+    *
+    * @param args command line arguments
+    */
+  override def initializePlugins(args: Array[String]): Unit = {
+    logger.info("Finding Spark consumers plugins")
+    val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] = ServiceLoader.load[WaspConsumersSparkPlugin](classOf[WaspConsumersSparkPlugin])
+    val pluginsList = pluginLoader.iterator().asScala.toList
+    logger.info(s"Found ${pluginsList.size} plugins")
+    logger.info("Initializing consumers Spark plugins")
+    plugins = pluginsList.map({
+      plugin => {
+        logger.info(s"Initializing Spark consumers plugin ${plugin.getClass.getSimpleName} for datastore product ${plugin.datastoreProduct}")
+        plugin.initialize(waspDB)
+        // You cannot have two plugin with the same name
+        (plugin.datastoreProduct, plugin)
+      }
+    }).toMap
 
-		logger.info(s"Initialized all Spark consumers plugins")
-	}
+    logger.info(s"Initialized all Spark consumers plugins")
+  }
 
-	override def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Unit = {
-		val pluginsValidationRules = plugins.flatMap(plugin => plugin._2.getValidationRules).toSeq
+  override def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Unit = {
+    val pluginsValidationRules = plugins.flatMap(plugin => plugin._2.getValidationRules).toSeq
 
-		super.validateConfigs(pluginsValidationRules)
-	}
+    super.validateConfigs(pluginsValidationRules)
+  }
 
-	override def getNodeName: String = "streaming consumers spark"
+  override def getNodeName: String = "streaming consumers spark"
 }
 
 /**
-	* Create the main static method to run
-	*
-	*/
+  * Create the main static method to run
+  *
+  */
 object SparkConsumersStreamingNodeLauncher extends SparkConsumersStreamingNodeLauncherTrait

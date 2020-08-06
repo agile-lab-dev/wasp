@@ -23,10 +23,11 @@ import org.apache.spark.sql.SparkSession
 import scala.concurrent.duration.FiniteDuration
 
 class PipegraphGuardian(private val master: ActorRef,
+                        private val pipegraphName: String,
                         private val childFactory: ChildFactory,
                         private val retryDuration: FiniteDuration,
                         private val monitoringInterval: FiniteDuration,
-                        private val componentFailedStrategy: ComponentFailedStrategy) extends FSM[State, Data] with LoggingFSM[State,Data]{
+                        private val componentFailedStrategy: ComponentFailedStrategy) extends FSM[State, Data] with LoggingFSM[State, Data] {
 
   val cluster = Cluster(context.system)
 
@@ -290,11 +291,11 @@ class PipegraphGuardian(private val master: ActorRef,
   onTransition {
     case (WaitingForWork, RequestingWork) =>
       log.info("Requesting work from master [{}]", sender())
-      sender() ! MyProtocol.GimmeWork(cluster.selfUniqueAddress)
+      sender() ! MyProtocol.GimmeWork(cluster.selfUniqueAddress, pipegraphName)
 
     case (RequestingWork, RequestingWork) =>
       log.info("Requesting work from master [{}] retry", sender())
-      sender() ! MyProtocol.GimmeWork(cluster.selfUniqueAddress)
+      sender() ! MyProtocol.GimmeWork(cluster.selfUniqueAddress, pipegraphName)
 
     case (RequestingWork, Activating) => nextStateData match {
       case ActivatingData.ToBeActivated(etl) =>
@@ -476,19 +477,19 @@ object PipegraphGuardian {
   /**
     * A child factory is a function of (pipegraph,actorName, context | Actorsystem)
     */
-  type ChildFactory = (PipegraphModel,String, ActorRefFactory) => ActorRef
+  type ChildFactory = (PipegraphModel, String, ActorRefFactory) => ActorRef
   type ComponentFailedStrategy = StructuredStreamingETLModel => Choice
 
   def defaultChildFactory(
-      sparkSession: SparkSession,
-      mlModelBl: MlModelBL,
-      topicsBl: TopicBL,
-      freeCodeBL: FreeCodeBL,
-      processGroupBL: ProcessGroupBL,
-      streamingReaderFactory: StreamingReaderFactory,
-      staticReaderFactory: StaticReaderFactory,
-      writerFactory: WriterFactory
-  ): ChildFactory = { (pipegraph, suppliedName, context) =>
+                           sparkSession: SparkSession,
+                           mlModelBl: MlModelBL,
+                           topicsBl: TopicBL,
+                           freeCodeBL: FreeCodeBL,
+                           processGroupBL: ProcessGroupBL,
+                           streamingReaderFactory: StreamingReaderFactory,
+                           staticReaderFactory: StaticReaderFactory,
+                           writerFactory: WriterFactory
+                         ): ChildFactory = { (pipegraph, suppliedName, context) =>
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
     val childEtlSparkSession = sparkSession.newSession()
@@ -515,11 +516,13 @@ object PipegraphGuardian {
   }
 
   def props(master: ActorRef,
-                    childFactory: ChildFactory,
-                    retryDuration: FiniteDuration,
-                    monitoringInterval: FiniteDuration,
-                    componentFailedStrategy: ComponentFailedStrategy) =
+            pipegraphName: String,
+            childFactory: ChildFactory,
+            retryDuration: FiniteDuration,
+            monitoringInterval: FiniteDuration,
+            componentFailedStrategy: ComponentFailedStrategy) =
     Props(new PipegraphGuardian(master,
+      pipegraphName,
       childFactory,
       retryDuration,
       monitoringInterval,

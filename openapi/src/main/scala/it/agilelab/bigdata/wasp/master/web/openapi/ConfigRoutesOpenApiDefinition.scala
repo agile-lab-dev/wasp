@@ -4,7 +4,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.models.configuration.{ConnectionConfig, ElasticConfigModel, JMXTelemetryConfigModel, KafkaConfigModel, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkDriverConfig, SparkEntryConfig, SparkStreamingConfigModel, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
+import it.agilelab.bigdata.wasp.models.configuration.{ConnectionConfig, ElasticConfigModel, JMXTelemetryConfigModel, KafkaConfigModel, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, RetainedConfigModel, SchedulingStrategyConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkDriverConfig, SparkEntryConfig, SparkStreamingConfigModel, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
 
 trait ConfigModelOpenApiComponentSupport
     extends ProductOpenApi
@@ -32,11 +32,14 @@ trait ConfigModelOpenApiComponentSupport
     : ToOpenApiSchema[KryoSerializerConfig] = product3(KryoSerializerConfig)
   implicit lazy val sparkBatchConfigOpenApi
     : ToOpenApiSchema[SparkBatchConfigModel] =
-    product18(SparkBatchConfigModel)
+    product14(SparkBatchConfigModel)
   implicit lazy val sparkStreamingConfigOpenApi
-    : ToOpenApiSchema[SparkStreamingConfigModel] = product22(
+    : ToOpenApiSchema[SparkStreamingConfigModel] = product19(
     SparkStreamingConfigModel
   )
+
+  implicit lazy val schedulingStrategyConfigModelOpenApi: ToOpenApiSchema[SchedulingStrategyConfigModel] =
+    product2(SchedulingStrategyConfigModel.apply)
   implicit lazy val nifiConfigModelOpenApi: ToOpenApiSchema[NifiStatelessConfigModel] =
     product4(NifiStatelessConfigModel.apply)
 
@@ -55,6 +58,9 @@ trait ConfigModelOpenApiComponentSupport
   )
   implicit lazy val kafkaConfigOpenApi: ToOpenApiSchema[KafkaConfigModel] =
     product13(KafkaConfigModel)
+
+  implicit lazy val retainedOpenApi: ToOpenApiSchema[RetainedConfigModel] =
+    product5(RetainedConfigModel)
 
 }
 
