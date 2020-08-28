@@ -127,10 +127,10 @@ class PipegraphBLImplTest extends PostgresSuite {
     blInstance.createTable()
 
 
-    val modelInstance1 = PipegraphInstanceModel("name_1", "instance_1", 100L, 10L, PipegraphStatus.PENDING, None, None)
-    val modelInstance2 = PipegraphInstanceModel("name_2", "instance_1", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
-    val modelInstance3 = PipegraphInstanceModel("name_3", "instance_1", 100L, 10L, PipegraphStatus.FAILED, None, None)
-    val modelInstance4 = PipegraphInstanceModel("name_4", "instance_1", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
+    val modelInstance1 = PipegraphInstanceModel("name_i_1", "name_1", 100L, 10L, PipegraphStatus.PENDING, None, None)
+    val modelInstance2 = PipegraphInstanceModel("name_i_2", "name_2", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
+    val modelInstance3 = PipegraphInstanceModel("name_i_3", "name_3", 100L, 10L, PipegraphStatus.FAILED, None, None)
+    val modelInstance4 = PipegraphInstanceModel("name_i_4", "name_4", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
 
 
     blInstance.insert(modelInstance1)

@@ -26,7 +26,7 @@ case class PipegraphBLImpl(waspDB : WaspPostgresDB) extends PipegraphBL with Pos
     _instances
       .all()
       .filter(instance => allowedStates.contains(instance.status))
-      .flatMap(instance => getByName(instance.name))
+      .flatMap(instance => getByName(instance.instanceOf))
   }
 
   override def insert(pipegraph: PipegraphModel): Unit = waspDB.insert(pipegraph)

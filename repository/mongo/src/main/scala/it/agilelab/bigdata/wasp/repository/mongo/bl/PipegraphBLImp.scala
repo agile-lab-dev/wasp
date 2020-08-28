@@ -32,7 +32,7 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
     instances
       .all()
       .filter(instance => allowedStates.contains(instance.status))
-      .flatMap(instance => getByName(instance.name))
+      .flatMap(instance => getByName(instance.instanceOf))
   }
 
   def update(pipegraphModel: PipegraphModel): Unit = {
