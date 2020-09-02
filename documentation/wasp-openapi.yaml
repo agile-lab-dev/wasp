@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-387-create-pluggable-scheduling-policies-SNAPSHOT
+  version: 2.26.0-390-openshift-operator-for-wasp-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -825,7 +825,7 @@ paths:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /pipegraphs/{pipegraphname}/instances:
-    post:
+    get:
       tags:
       - pipegraphs
       description: List all instances of a pipegraph

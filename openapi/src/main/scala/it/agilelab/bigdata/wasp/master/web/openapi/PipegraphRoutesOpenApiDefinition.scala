@@ -285,7 +285,7 @@ trait PipegraphRoutesOpenApiDefinition
 
   private def listInstances(ctx: Context) = {
     new PathItem()
-      .post(
+      .get(
         new Operation()
           .operationId("list-pipegraph-instance")
           .description("List all instances of a pipegraph")
