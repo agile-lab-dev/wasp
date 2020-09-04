@@ -21,6 +21,8 @@ case class PipegraphBLImpl(waspDB : WaspPostgresDB) extends PipegraphBL with Pos
 
   override def getNonSystemPipegraphs: Seq[PipegraphModel] = waspDB.getBy(Array(PipegraphTableDefinition.isSystem -> false))
 
+  override def getByOwner(owner: String): Seq[PipegraphModel] = waspDB.getBy(Array(PipegraphTableDefinition.owner -> owner))
+
   override def getActivePipegraphs(): Seq[PipegraphModel] = {
     val allowedStates: Set[PipegraphStatus] = Set(PipegraphStatus.PENDING, PipegraphStatus.PROCESSING)
     _instances

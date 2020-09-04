@@ -273,56 +273,103 @@ trait JsonSupport
   implicit lazy val processGroupResponseFormat: RootJsonFormat[ProcessGroupResponse] = jsonFormat2(ProcessGroupResponse)
   implicit lazy val processGroupModelFormat: RootJsonFormat[ProcessGroupModel]       = jsonFormat3(ProcessGroupModel)
 
-  // StrategyDTO Format
-  implicit lazy val errorDTOFormat: RootJsonFormat[ErrorDTO]           = jsonFormat1(ErrorDTO.apply)
+  /*
+   Pipegrpaph editor formats
+   */
+  implicit lazy val pipegraphDTOFormat: RootJsonFormat[PipegraphDTO] = jsonFormat4(PipegraphDTO.apply)
+  implicit lazy val structuredStreamingETLDTOFormat: RootJsonFormat[StructuredStreamingETLDTO] = jsonFormat7(
+    StructuredStreamingETLDTO.apply
+  )
 
-  implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat1(FreeCodeDTO)
-  implicit lazy val flowNifiDTOFormat: RootJsonFormat[FlowNifiDTO]           = jsonFormat1(FlowNifiDTO)
-  implicit lazy val strategyClassDTOFormat: RootJsonFormat[StrategyClassDTO] = jsonFormat1(StrategyClassDTO)
+  implicit lazy val errorDTOFormat: RootJsonFormat[ErrorDTO] = jsonFormat1(ErrorDTO.apply)
 
-  implicit lazy val strategyDTOFormat: RootJsonFormat[StrategyDTO] =
-    new RootJsonFormat[StrategyDTO] {
-      override def write(obj: StrategyDTO): JsValue = {
-        obj match {
-          case sb: FreeCodeDTO =>
-            JsObject(
-              ("code", JsString(sb.code)),
-              ("outputType", JsString(StrategyDTO.freecodeType))
-            )
-          case sb: FlowNifiDTO =>
-            JsObject(
-              ("processGroup", JsString(sb.processGroup)),
-              ("outputType", JsString(StrategyDTO.nifiType))
-            )
-          case sb: StrategyClassDTO =>
-            JsObject(
-              ("className", JsString(sb.className)),
-              ("outputType", JsString(StrategyDTO.codebaseType))
-            )
-        }
+  // Strategy DTO formats
+  implicit lazy val freeCodeDTOFormat: RootJsonFormat[FreeCodeDTO]           = jsonFormat3(FreeCodeDTO)
+  implicit lazy val flowNifiDTOFormat: RootJsonFormat[FlowNifiDTO]           = jsonFormat3(FlowNifiDTO)
+  implicit lazy val strategyClassDTOFormat: RootJsonFormat[StrategyClassDTO] = jsonFormat2(StrategyClassDTO)
+
+  implicit lazy val strategyDTOFormat: RootJsonFormat[StrategyDTO] = new RootJsonFormat[StrategyDTO] {
+    override def read(json: JsValue): StrategyDTO =
+      json
+        .asJsObject("StrategyDTO should be an JSON Object")
+        .getFields("strategyType")
+        .headOption match {
+        case Some(JsString(StrategyDTO.freecodeType)) => freeCodeDTOFormat.read(json)
+        case Some(JsString(StrategyDTO.nifiType))     => flowNifiDTOFormat.read(json)
+        case Some(JsString(StrategyDTO.codebaseType)) => strategyClassDTOFormat.read(json)
+        case Some(_)                                  => deserializationError(s"$json is not a StrategyDTO subclass")
+        case None                                     => deserializationError(s"$json it's missing a strategyType field")
+        case _                                        => deserializationError(s"$json It's not a valid StrategyDTO")
       }
 
-      override def read(json: JsValue): StrategyDTO =
-        json
-          .asJsObject("StrategyDTO should be an JSON Object")
-          .getFields("strategyType")
-          .headOption match {
-          case Some(JsString(StrategyDTO.freecodeType))      => freeCodeDTOFormat.read(json)
-          case Some(JsString(StrategyDTO.nifiType))      => flowNifiDTOFormat.read(json)
-          case Some(JsString(StrategyDTO.codebaseType)) => strategyClassDTOFormat.read(json)
-          case Some(_)                                       => deserializationError(s"$json is not a StrategyDTO subclass")
-          case None                                          => deserializationError(s"$json it's missing a strategyType field")
-          case _                                             => deserializationError(s"$json It's not a valid StrategyDTO")
-        }
+    override def write(obj: StrategyDTO): JsValue = obj match {
+      case sb: FreeCodeDTO =>
+        JsObject(
+          freeCodeDTOFormat.write(sb).asJsObject.fields +
+            ("outputType" -> JsString(StrategyDTO.freecodeType))
+        )
+      case sb: FlowNifiDTO =>
+        JsObject(
+          flowNifiDTOFormat.write(sb).asJsObject.fields +
+            ("outputType" -> JsString(StrategyDTO.nifiType))
+        )
+      case sb: StrategyClassDTO =>
+        JsObject(
+          strategyClassDTOFormat.write(sb).asJsObject.fields +
+            ("outputType" -> JsString(StrategyDTO.codebaseType))
+        )
     }
+  }
 
-  implicit lazy val readerModelDTOFormat: RootJsonFormat[ReaderModelDTO] = jsonFormat5(ReaderModelDTO.apply)
-  implicit lazy val writerModelDTOFormat: RootJsonFormat[WriterModelDTO] = jsonFormat4(WriterModelDTO.apply)
+  // IO DTO formats
+  implicit lazy val rawModelSetupDTOFormat: RootJsonFormat[RawModelSetupDTO] = jsonFormat7(RawModelSetupDTO)
 
-  implicit lazy val structuredStreamingETLDTOFormat: RootJsonFormat[StructuredStreamingETLDTO] =
-    jsonFormat7(StructuredStreamingETLDTO.apply)
+  implicit lazy val topicModelDTOFormat: RootJsonFormat[TopicModelDTO] = jsonFormat1(TopicModelDTO)
+  implicit lazy val indexModelDTOFormat: RootJsonFormat[IndexModelDTO] = jsonFormat1(IndexModelDTO)
+  implicit lazy val kvModelDTOFormat: RootJsonFormat[KeyValueModelDTO] = jsonFormat1(KeyValueModelDTO)
+  implicit lazy val rawModelDTOFormat: RootJsonFormat[RawModelDTO]     = jsonFormat2(RawModelDTO)
 
-  implicit lazy val pipegraphDTOFormat: RootJsonFormat[PipegraphDTO] = jsonFormat4(PipegraphDTO.apply)
+  implicit lazy val datastoreDTOFormat: RootJsonFormat[DatastoreModelDTO] = new RootJsonFormat[DatastoreModelDTO] {
+    override def read(json: JsValue): DatastoreModelDTO =
+      json
+        .asJsObject("Datastore DTO should be an JSON Object")
+        .getFields("modelType")
+        .headOption match {
+        case Some(JsString(DatastoreModelDTO.topicType))    => topicModelDTOFormat.read(json)
+        case Some(JsString(DatastoreModelDTO.indexType))    => indexModelDTOFormat.read(json)
+        case Some(JsString(DatastoreModelDTO.keyValueType)) => kvModelDTOFormat.read(json)
+        case Some(JsString(DatastoreModelDTO.rawDataType))  => rawModelDTOFormat.read(json)
+        case Some(_)                                        => deserializationError(s"$json is not a DatastoreDTO subclass")
+        case None                                           => deserializationError(s"$json it's missing a modelType field")
+        case _                                              => deserializationError(s"$json It's not a valid DatastoreDTO")
+      }
+
+    override def write(obj: DatastoreModelDTO): JsValue = obj match {
+      case sb: TopicModelDTO =>
+        JsObject(
+          topicModelDTOFormat.write(sb).asJsObject.fields +
+            ("modelType" -> JsString(DatastoreModelDTO.topicType))
+        )
+      case sb: IndexModelDTO =>
+        JsObject(
+          indexModelDTOFormat.write(sb).asJsObject.fields +
+            ("modelType" -> JsString(DatastoreModelDTO.indexType))
+        )
+      case sb: KeyValueModelDTO =>
+        JsObject(
+          kvModelDTOFormat.write(sb).asJsObject.fields +
+            ("modelType" -> JsString(DatastoreModelDTO.keyValueType))
+        )
+      case sb: RawModelDTO =>
+        JsObject(
+          rawModelDTOFormat.write(sb).asJsObject.fields +
+            ("modelType" -> JsString(DatastoreModelDTO.rawDataType))
+        )
+    }
+  }
+
+  implicit lazy val readerModelDTOFormat: RootJsonFormat[ReaderModelDTO] = jsonFormat4(ReaderModelDTO.apply)
+  implicit lazy val writerModelDTOFormat: RootJsonFormat[WriterModelDTO] = jsonFormat3(WriterModelDTO.apply)
 }
 
 /*trait GdprJsonSupport extends DefaultJsonProtocol {

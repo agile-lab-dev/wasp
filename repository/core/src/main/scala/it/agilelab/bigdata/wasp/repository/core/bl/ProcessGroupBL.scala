@@ -8,4 +8,5 @@ trait ProcessGroupBL {
 
   def insert(versionedProcessGroup: ProcessGroupModel): Unit
 
+  def upsert(versionedProcessGroup: ProcessGroupModel): Unit
 }

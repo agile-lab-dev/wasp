@@ -20,5 +20,7 @@ case class FreeCodeBLImpl(waspDB : WaspPostgresDB) extends FreeCodeBL with Postg
 
   override def insert(freeCodeModel: FreeCodeModel): Unit = waspDB.insert(freeCodeModel)
 
+  override def upsert(freeCodeModel: FreeCodeModel): Unit = waspDB.upsert(freeCodeModel)
+
 }
 

@@ -23,6 +23,8 @@ trait PipegraphBL {
 
   def getAll: Seq[PipegraphModel]
 
+  def getByOwner(owner: String): Seq[PipegraphModel]
+
   def getSystemPipegraphs: Seq[PipegraphModel]
 
   def getNonSystemPipegraphs: Seq[PipegraphModel]

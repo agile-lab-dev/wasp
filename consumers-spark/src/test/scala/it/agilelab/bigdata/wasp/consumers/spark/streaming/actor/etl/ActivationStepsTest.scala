@@ -191,4 +191,8 @@ class FreeCodeBLMock extends FreeCodeBL {
   override def insert(freeCodeModel: FreeCodeModel): Unit = {
     list += freeCodeModel
   }
+
+  override def upsert(freeCodeModel: FreeCodeModel): Unit = {
+    list += freeCodeModel
+  }
 }

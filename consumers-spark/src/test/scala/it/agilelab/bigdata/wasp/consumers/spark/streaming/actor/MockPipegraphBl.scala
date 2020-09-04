@@ -19,6 +19,9 @@ class MockPipegraphBl(instanceBl: PipegraphInstanceBl) extends PipegraphBL {
   override def getNonSystemPipegraphs: Seq[PipegraphModel] =
     buffer.filterNot(_.isSystem)
 
+  override def getByOwner(owner: String): Seq[PipegraphModel] =
+    buffer.filter(_.owner == owner)
+
   override def getActivePipegraphs(): Seq[PipegraphModel] = {
 
     val allowedStates: Set[PipegraphStatus] = Set(PipegraphStatus.PENDING, PipegraphStatus.PROCESSING)

@@ -22,6 +22,10 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
     waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(true))
   }
 
+  def getByOwner(owner: String): Seq[PipegraphModel] = {
+    waspDB.getAllDocumentsByField[PipegraphModel]("owner", new BsonString(owner))
+  }
+
   def getNonSystemPipegraphs: Seq[PipegraphModel] = {
     waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(false))
   }

@@ -15,4 +15,6 @@ class ProcessGroupBLImpl(waspDB: WaspMongoDB) extends ProcessGroupBL {
   override def insert(processGroup: ProcessGroupModel): Unit =
     waspDB.insert[ProcessGroupModel](processGroup)
 
+  override def upsert(processGroup: ProcessGroupModel): Unit =
+    waspDB.upsert[ProcessGroupModel](processGroup)
 }

@@ -13,4 +13,5 @@ case class ProcessGroupBLImpl(waspDB: WaspPostgresDB ) extends ProcessGroupBL wi
 
   override def insert(versionedProcessGroup: ProcessGroupModel): Unit = waspDB.insert(versionedProcessGroup)
 
+  override def upsert(versionedProcessGroup: ProcessGroupModel): Unit = waspDB.upsert(versionedProcessGroup)
 }

@@ -20,6 +20,8 @@ class FreeCodeBLImpl(waspDB: WaspMongoDB) extends FreeCodeBL {
 
   override def insert(freeCodeModel: FreeCodeModel): Unit = waspDB.insert[FreeCodeModel](freeCodeModel)
 
+  override def upsert(freeCodeModel: FreeCodeModel): Unit = waspDB.upsert[FreeCodeModel](freeCodeModel)
+
   override def getAll: Seq[FreeCodeModel] = waspDB.getAllRaw[FreeCodeModel]().map(factory)
 
 

@@ -11,7 +11,7 @@ object PipegraphTableDefinition extends ModelTableDefinition[PipegraphModel] wit
   val tableName = "PIPEGRAPH"
 
   val isSystem = "is_system"
-
+  val owner = "owner"
 
   override protected def extraColumns: List[String] = List(isSystem)
 
@@ -27,6 +27,7 @@ object PipegraphTableDefinition extends ModelTableDefinition[PipegraphModel] wit
   val ddl: String =
     s"""CREATE TABLE IF NOT EXISTS $tableName (
        |$name varchar NOT NULL,
+       |$owner varchar,
        |$isSystem boolean,
        |$payload json,
        |PRIMARY KEY ($name))

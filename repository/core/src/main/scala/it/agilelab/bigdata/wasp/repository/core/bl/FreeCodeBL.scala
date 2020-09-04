@@ -12,6 +12,7 @@ trait FreeCodeBL {
 
   def insert(freeCodeModel: FreeCodeModel): Unit
 
+  def upsert(freeCodeModel: FreeCodeModel): Unit
 }
 
 
