@@ -8,7 +8,6 @@ import java.util
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
-import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema.Type
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
@@ -100,10 +99,12 @@ case class AvroSerializerExpression private(child: Expression,
                                             timeZoneId: Option[String]) extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression {
 
 
+  @transient private lazy val schemaManager = avroSchemaManagerConfig.map(AvroSchemaManagerFactory.initialize)
+
   @transient private lazy val externalSchema: Option[Schema] = maybeSchemaAvroJsonOrFingerprint.map {
     case Left(json) => new Schema.Parser().parse(json)
     case Right(fingerprint) =>
-      AvroSchemaManagerFactory.initialize(avroSchemaManagerConfig.get).getSchema(fingerprint) match {
+      schemaManager.get.getSchema(fingerprint) match {
         case None => throw new IllegalStateException(s"Schema with fingerprint [$fingerprint] was not found in schema registry")
         case Some(schema) => schema
       }
@@ -139,7 +140,7 @@ case class AvroSerializerExpression private(child: Expression,
                            encoder: BinaryEncoder,
                            writer: GenericDatumWriter[GenericRecord]): Array[Byte] = {
     if (useAvroSchemaManager) {
-      AvroSingleObjectEncodingUtils.writeHeaderToStream(output, schemaId)
+      schemaManager.get.writeHeaderToStream(output, schemaId)
     }
     val value: GenericRecord = converter(row).asInstanceOf[GenericRecord]
     writer.write(value, encoder)

@@ -1,22 +1,22 @@
 package it.agilelab.bigdata.wasp.core.utils
 
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.nio.ByteOrder
 import java.util.Map.Entry
 
-import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue, ConfigValueFactory}
+import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.{ElasticProduct, HBaseProduct, SolrProduct}
 import it.agilelab.bigdata.wasp.models.Model
 import it.agilelab.bigdata.wasp.models.configuration._
-import it.agilelab.bigdata.wasp.core.models.configuration._
+
+import it.agilelab.darwin.manager.util.ConfigurationKeys
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-object ConfigManager {
+object ConfigManager extends Logging {
   val conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   val kafkaConfigName = "Kafka"
@@ -132,11 +132,17 @@ object ConfigManager {
 
   def initializeAvroSchemaManagerConfig(): Unit = {
 
-    avroSchemaManagerConfig = waspConfig.darwinConnector match {
-
+    val tmp = waspConfig.darwinConnector match {
       case "hbase" => ConfigFactory.parseMap(getAvroSchemaManagerConfigHbaseConnector.asJava)
       case _ => conf.getConfig("avroSchemaManager.darwin")
-
+    }
+    avroSchemaManagerConfig = if (!tmp.hasPath(ConfigurationKeys.ENDIANNESS)) {
+      logger.warn(s"No ${ConfigurationKeys.ENDIANNESS} configured on Darwin, " +
+        s"we are defaulting to ${ByteOrder.BIG_ENDIAN} for compatibility with old versions, but you should configure " +
+        s"it explictly with either ${ByteOrder.BIG_ENDIAN} or  ${ByteOrder.LITTLE_ENDIAN}")
+      tmp.withValue(ConfigurationKeys.ENDIANNESS,ConfigValueFactory.fromAnyRef(ByteOrder.BIG_ENDIAN.toString))
+    } else {
+      tmp
     }
 
   }

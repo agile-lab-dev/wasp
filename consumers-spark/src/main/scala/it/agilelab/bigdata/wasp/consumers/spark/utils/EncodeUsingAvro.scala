@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 import java.io.ByteArrayOutputStream
 
 import it.agilelab.bigdata.wasp.consumers.spark.utils.EncodeUsingAvro.AvroSerializer
-import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
+import it.agilelab.darwin.manager.AvroSchemaManager
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{BinaryEncoder, EncoderFactory}
@@ -13,13 +13,15 @@ import org.apache.spark.sql.types.{BinaryType, DataType}
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 
 case class EncodeUsingAvro[A](
-                               child: Expression,
-                               schema: String,
-                               toGenericRecord: A => org.apache.avro.generic.GenericRecord
-                             ) extends UnaryExpression
-  with NonSQLExpression {
+    child: Expression,
+    schema: String,
+    avroSchemaManager: () => AvroSchemaManager,
+    toGenericRecord: A => org.apache.avro.generic.GenericRecord
+) extends UnaryExpression
+    with NonSQLExpression {
 
-  private lazy val serializer = new AvroSerializer[A](new Schema.Parser().parse(schema), toGenericRecord)
+  private lazy val serializer =
+    new AvroSerializer[A](new Schema.Parser().parse(schema), avroSchemaManager(), toGenericRecord)
 
   override protected def nullSafeEval(input: Any): Any = {
     serializer.toSingleObjectEncoded(input.asInstanceOf[A])
@@ -32,20 +34,36 @@ case class EncodeUsingAvro[A](
     // once since it is in the mutable variable initialization of the code-gen.
     // I saw that the same has been done in the others AvroSerializerExpressions
     val schemaStringRef = ctx.addReferenceObj("schemaStr", schema, "java.lang.String")
-    val schemaRef = "schema"
-    val schemaClass = classOf[Schema].getName
+    val schemaClass     = classOf[Schema].getName
     val toGenericRecordRef =
       ctx.addReferenceObj("toGenericRecord", toGenericRecord, classOf[A => GenericRecord].getName)
+    val schemaManagerClass = classOf[AvroSchemaManager].getName
+    val schemaManagerFactoryRef =
+      ctx.addReferenceObj("schemaManagerFactory", avroSchemaManager, classOf[() => AvroSchemaManager].getName)
 
-    ctx.addImmutableStateIfNotExists(schemaClass, schemaRef,
-      v => s"$v = new $schemaClass.Parser().parse($schemaStringRef);")
+    val schemaRef        = "schema"
+    val schemaManagerRef = "schemaManager"
 
-    val serializer = ctx.addMutableState(serializerClass, "serializer", v =>
-      s"$v = new $serializerClass($schemaRef, $toGenericRecordRef);")
+    ctx.addImmutableStateIfNotExists(
+      schemaManagerClass,
+      schemaManagerRef,
+      v => s"$v = ($schemaManagerClass) $schemaManagerFactoryRef.apply();"
+    )
+    ctx.addImmutableStateIfNotExists(
+      schemaClass,
+      schemaRef,
+      v => s"$v = new $schemaClass.Parser().parse($schemaStringRef);"
+    )
+
+    val serializer = ctx.addMutableState(
+      serializerClass,
+      "serializer",
+      v => s"$v = new $serializerClass($schemaRef, $schemaManagerRef, $toGenericRecordRef);"
+    )
 
     // Code to serialize. this code is copy pasted from kryo expression encoder
-    val input = child.genCode(ctx)
-    val javaType = CodeGenerator.javaType(dataType)
+    val input     = child.genCode(ctx)
+    val javaType  = CodeGenerator.javaType(dataType)
     val serialize = s"$serializer.toSingleObjectEncoded(${input.value})"
 
     val code = input.code +
@@ -64,17 +82,21 @@ object EncodeUsingAvro {
   /**
     * Stateful avro serializer: NOT thread safe
     */
-  private final class AvroSerializer[A](schema: Schema, toRecord: A => GenericRecord) {
+  final private class AvroSerializer[A](
+      schema: Schema,
+      avroSchemaManager: AvroSchemaManager,
+      toRecord: A => GenericRecord
+  ) {
 
-    private[this] val fingerprint = AvroSingleObjectEncodingUtils.getId(schema)
-    private[this] val outputStream: ByteArrayOutputStream = new ByteArrayOutputStream()
-    private[this] var encoder: BinaryEncoder = _ // scalastyle:ignore
+    private[this] val fingerprint                               = avroSchemaManager.getId(schema)
+    private[this] val outputStream: ByteArrayOutputStream       = new ByteArrayOutputStream()
+    private[this] var encoder: BinaryEncoder                    = _ // scalastyle:ignore
     private[this] val writer: GenericDatumWriter[GenericRecord] = new GenericDatumWriter[GenericRecord](schema)
 
     def toSingleObjectEncoded(obj: A): Array[Byte] = {
       outputStream.reset()
       encoder = EncoderFactory.get().binaryEncoder(outputStream, encoder)
-      AvroSingleObjectEncodingUtils.writeHeaderToStream(outputStream, fingerprint)
+      avroSchemaManager.writeHeaderToStream(outputStream, fingerprint)
       writer.write(toRecord(obj), encoder)
       encoder.flush()
       outputStream.toByteArray

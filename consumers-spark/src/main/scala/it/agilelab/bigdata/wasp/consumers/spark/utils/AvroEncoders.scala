@@ -37,6 +37,7 @@ object AvroEncoders {
         EncodeUsingAvro[A](
           BoundReference(0, ObjectType(classOf[AnyRef]), nullable = true),
           readerSchema.toString(),
+          avroSchemaManager,
           toGenericRecord
         )
       ),

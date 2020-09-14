@@ -6,7 +6,6 @@ import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters.IncompatibleSchemaException
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
-import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
 import org.apache.avro.file.SeekableByteArrayInput
@@ -67,12 +66,14 @@ case class AvroDeserializerExpression(
 
   def avroDatumReader(avroValue: SeekableByteArrayInput): GenericDatumReader[GenericRecord] = {
     avroSchemaManager
-      .flatMap { _ =>
-        AvroSingleObjectEncodingUtils.extractId(avroValue).right.toOption
+      .flatMap { m =>
+        m.extractSchema(avroValue).right.toOption.map { schema =>
+          schema -> m.getId(schema)
+        }
       }
-      .map { schemaId =>
-        val schema = avroSchemaManager.get.getSchema(schemaId).get
-        mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[GenericRecord](schema, userSchema))
+      .map {
+        case (schema, schemaId) =>
+          mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[GenericRecord](schema, userSchema))
       }
       .getOrElse(datumReader)
   }

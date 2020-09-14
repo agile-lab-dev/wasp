@@ -1,23 +1,24 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
+import java.nio.ByteOrder
+
 import com.sksamuel.avro4s.{AvroSchema, FromRecord, ToRecord}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.darwin.connector.mock.MockConnector
-import it.agilelab.darwin.manager.{AvroSchemaManager, CachedEagerAvroSchemaManager}
+import it.agilelab.darwin.manager.CachedEagerAvroSchemaManager
+import it.agilelab.darwin.manager.util.ConfigurationKeys
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.scalatest.{Matchers, WordSpec}
 
-class AvroEncodersSpec extends WordSpec
-  with Matchers
-  with CodegenTester {
+class AvroEncodersSpec extends WordSpec with Matchers with CodegenTester {
   "RowToAvroExpression" must {
 
-    val schema1: Schema = AvroSchema[CompatibleClass]
-    val toRecord1: CompatibleClass => GenericRecord = ToRecord[CompatibleClass].apply(_)
+    val schema1: Schema                               = AvroSchema[CompatibleClass]
+    val toRecord1: CompatibleClass => GenericRecord   = ToRecord[CompatibleClass].apply(_)
     val fromRecord1: GenericRecord => CompatibleClass = FromRecord[CompatibleClass].apply(_)
 
-    val manager = new CachedEagerAvroSchemaManager(new MockConnector(ConfigFactory.empty()))
+    val manager = new CachedEagerAvroSchemaManager(new MockConnector(ConfigFactory.empty().withValue(ConfigurationKeys.ENDIANNESS,ConfigValueFactory.fromAnyRef("BIG_ENDIAN"))), ByteOrder.BIG_ENDIAN)
 
     def generateData(seed: Long, size: Int): List[CompatibleClass] = {
       val random = new scala.util.Random(seed)

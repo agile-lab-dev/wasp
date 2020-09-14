@@ -78,6 +78,7 @@ class AvroDeserializerExpressionSpec extends WordSpec
         """
           |type: cached_eager
           |connector: "mock"
+          |endianness: "BIG_ENDIAN"
         """.stripMargin)
 
       val expr = AvroDeserializerExpression($"serialized".expr, TestSchemas.schema.toString, Some(darwinConf))
@@ -90,6 +91,7 @@ class AvroDeserializerExpressionSpec extends WordSpec
         """
           |type: cached_eager
           |connector: "mock"
+          |endianness: "LITTLE_ENDIAN"
         """.stripMargin)
       val child = Literal(null, BinaryType)
       val expr1 = AvroDeserializerExpression(child, TestSchemas.schema.toString, Some(darwinConf))

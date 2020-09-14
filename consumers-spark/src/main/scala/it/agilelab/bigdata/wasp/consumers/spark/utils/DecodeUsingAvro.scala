@@ -4,14 +4,13 @@ import java.io.ByteArrayInputStream
 
 import it.agilelab.bigdata.wasp.consumers.spark.utils.DecodeUsingAvro.AvroDeserializer
 import it.agilelab.darwin.manager.AvroSchemaManager
-import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
-import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression, UnaryExpression}
-import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
-import org.apache.spark.sql.types.{DataType, ObjectType}
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
+import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
+import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression, UnaryExpression}
+import org.apache.spark.sql.types.{DataType, ObjectType}
 
 import scala.reflect.ClassTag
 
@@ -91,7 +90,7 @@ object DecodeUsingAvro {
 
     def toObj(array: Array[Byte]): A = {
       val inputStream = new ByteArrayInputStream(array)
-      val writerSchema = avroSchemaManager.getSchema(AvroSingleObjectEncodingUtils.extractId(inputStream).right.get).get
+      val writerSchema = avroSchemaManager.extractSchema(inputStream).right.get
       val reader = new GenericDatumReader[GenericRecord](writerSchema, schema)
       decoder = DecoderFactory.get().binaryDecoder(inputStream, decoder)
       fromRecord(reader.read(genericRecord, decoder))

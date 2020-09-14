@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test
 
 import java.io.{ByteArrayInputStream, DataInputStream, InputStream}
+import java.nio.ByteOrder
 
 import com.google.common.io.ByteStreams
 import com.sksamuel.avro4s.{AvroSchema, FromRecord}
@@ -9,7 +10,6 @@ import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestNestedDocument, Test
 import it.agilelab.darwin.common.Logging
 import it.agilelab.darwin.connector.mock.MockConnector
 import it.agilelab.darwin.manager.CachedEagerAvroSchemaManager
-import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord}
 import org.apache.avro.io.DecoderFactory
@@ -22,8 +22,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
-class TestAvroEncoderStrategySpec extends FlatSpec
-  with Matchers with BeforeAndAfterEach with Logging {
+class TestAvroEncoderStrategySpec extends FlatSpec with Matchers with BeforeAndAfterEach with Logging {
 
   private val master = "local"
 
@@ -45,7 +44,11 @@ class TestAvroEncoderStrategySpec extends FlatSpec
     */
   it should "generate a valid delta state" in {
 
-    val dataInputStream: DataInputStream = TestAvroEncoderStrategySpec.decompressLz4(spark.sparkContext.hadoopConfiguration, spark.sparkContext.getConf, new Path("whitelabel/consumers-spark/src/test/resources/3.delta"))
+    val dataInputStream: DataInputStream = TestAvroEncoderStrategySpec.decompressLz4(
+      spark.sparkContext.hadoopConfiguration,
+      spark.sparkContext.getConf,
+      new Path("whitelabel/consumers-spark/src/test/resources/3.delta")
+    )
 
     val (keyVal: Long, avroFile: Array[Byte]) = TestAvroEncoderStrategySpec.extractData(dataInputStream)
 
@@ -63,8 +66,8 @@ class TestAvroEncoderStrategySpec extends FlatSpec
 object TestAvroEncoderStrategySpec {
 
   def decompressLz4(hadoopConf: Configuration, sparkConf: SparkConf, filePath: Path): DataInputStream = {
-    val fs = FileSystem.newInstance(hadoopConf)
-    val is = fs.open(filePath)
+    val fs                      = FileSystem.newInstance(hadoopConf)
+    val is                      = fs.open(filePath)
     val compressed: InputStream = new LZ4CompressionCodec(sparkConf).compressedInputStream(is)
     new DataInputStream(compressed)
   }
@@ -77,7 +80,7 @@ object TestAvroEncoderStrategySpec {
     keyRow.pointTo(keyRowBuffer, keySize)
     val keyValue = keyRow.getUTF8String(0).toString.toLong
 
-    val valueSize = dataInputStream.readInt()
+    val valueSize      = dataInputStream.readInt()
     val valueRowBuffer = new Array[Byte](valueSize)
     ByteStreams.readFully(dataInputStream, valueRowBuffer, 0, valueSize)
     val valueRow = new UnsafeRow(1)
@@ -88,17 +91,18 @@ object TestAvroEncoderStrategySpec {
   }
 
   def fromByteArray(byteArray: Array[Byte]): TestState = {
-    val manager: CachedEagerAvroSchemaManager = new CachedEagerAvroSchemaManager(new MockConnector(ConfigFactory.empty()))
+    val manager: CachedEagerAvroSchemaManager =
+      new CachedEagerAvroSchemaManager(new MockConnector(ConfigFactory.empty()), ByteOrder.BIG_ENDIAN)
 
     val schema: Schema = AvroSchema[TestState]
     manager.registerAll(Seq(schema))
     val genericRecord = new GenericData.Record(schema)
 
     val inputStream = new ByteArrayInputStream(byteArray)
-    val decoder = DecoderFactory.get().binaryDecoder(inputStream, null)
+    val decoder     = DecoderFactory.get().binaryDecoder(inputStream, null)
 
-    val writerSchema = manager.getSchema(AvroSingleObjectEncodingUtils.extractId(inputStream).right.get).get
-    val reader = new GenericDatumReader[GenericRecord](writerSchema, schema)
+    val writerSchema = manager.extractSchema(inputStream).right.get
+    val reader       = new GenericDatumReader[GenericRecord](writerSchema, schema)
 
     FromRecord[TestState].apply(reader.read(genericRecord, decoder))
   }

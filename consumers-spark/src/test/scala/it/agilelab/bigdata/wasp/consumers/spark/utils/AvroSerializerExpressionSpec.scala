@@ -49,6 +49,7 @@ class AvroSerializerExpressionSpec extends WordSpec
         """
           |type: cached_eager
           |connector: "mock"
+          |endianness: "BIG_ENDIAN"
         """.stripMargin)
 
       AvroSchemaManagerFactory.initialize(darwinConf)
@@ -69,6 +70,7 @@ class AvroSerializerExpressionSpec extends WordSpec
         """
           |type: cached_eager
           |connector: "mock"
+          |endianness: "BIG_ENDIAN"
         """.stripMargin)
       AvroSchemaManagerFactory.initialize(darwinConf)
       val schema = StructType(Seq(StructField("_1", IntegerType, nullable = true), StructField("_2", StringType)))
