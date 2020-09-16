@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, NifiStat
 import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SparkStreamingConfiguration, WaspConfiguration}
 import it.agilelab.bigdata.wasp.models.{PipegraphModel, StructuredStreamingETLModel}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, UtilsForwarder}
 
 import scala.io.Source
 
@@ -147,12 +147,16 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
   }
 
   private def getAdditionalJars(additionalJarsPath: String): Seq[String] = {
+
+    val source = Source
+      .fromFile(additionalJarsPath + File.separator + jarsListFileName)
+
     try {
-      val additionalJars = Source
-        .fromFile(additionalJarsPath + File.separator + jarsListFileName)
+      val additionalJars = source
         .getLines()
-        .map(name => "file:/" + URLEncoder.encode(additionalJarsPath + File.separator + name, "UTF-8"))
-        .toSeq
+        .map(jarName => UtilsForwarder.resolveURI(additionalJarsPath + File.separator + jarName))
+        .map(_.toString)
+        .toVector
 
       additionalJars
     } catch {
@@ -160,6 +164,8 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
         val msg = s"Unable to completely generate the additional jars list - Exception: ${e.getMessage}"
         logger.error(msg, e)
         throw e
+    }finally {
+      source.close()
     }
   }
 
