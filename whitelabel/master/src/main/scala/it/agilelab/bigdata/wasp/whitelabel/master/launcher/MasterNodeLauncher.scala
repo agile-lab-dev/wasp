@@ -6,6 +6,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
+import it.agilelab.bigdata.wasp.whitelabel.models.example.iot.{IndustrialPlantData, IoTIndustrialPlantIndexModel, IoTIndustrialPlantPipegraphModel, IoTIndustrialPlantProducerModel, IoTIndustrialPlantTopicModel}
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import org.apache.avro.Schema
@@ -27,6 +28,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   private def addExampleRegisterAvroSchema(): Unit = {
     val schemas: Seq[Schema] = Seq(
       AvroSchema[FakeData],
+      AvroSchema[IndustrialPlantData],
       AvroSchema[TopicAvro_v1],
       AvroSchema[TopicAvro_v2],
       new Schema.Parser().parse(TestTopicModel.avro.schema.toJson)
@@ -50,6 +52,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Pipegraphs */
     ConfigBL.pipegraphBL.upsert(ExamplePipegraphModel.pipegraph)
+    ConfigBL.pipegraphBL.upsert(IoTIndustrialPlantPipegraphModel.pipegraph)
 
     /* ProcessGroups */
 
@@ -102,6 +105,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.outputRawModel)
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.inputRawModel)
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.dataRawModel)
+    ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel) //EVENT ENGINE
+    ConfigBL.topicBL.upsert(IoTIndustrialPlantTopicModel.industrialPlantTopicModel) //IoT
+    ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel()) //IoT
 
     /* Producers */
     ConfigBL.producerBL.upsert(TestProducerModel.json)
@@ -111,7 +117,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.producerBL.upsert(TestProducerModel.avroCheckpoint)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonHbaseMultipleClustering)
     ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
-    ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel) //EVENT ENGINE
+    ConfigBL.producerBL.upsert(IoTIndustrialPlantProducerModel.iotIndustrialPlantProducer) //IoT
+
 
     /* Free code models */
 

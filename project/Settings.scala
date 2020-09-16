@@ -26,8 +26,8 @@ object Settings {
 		* */
 	val mavenLocalRepo = Resolver.mavenLocal
 	val sonatypeReleaseRepo = Resolver.sonatypeRepo("releases")
-	val bintraySparkSolrRepo = Resolver.bintrayRepo("agile-labAvroSerializerExpressionSpec-dev", "Spark-Solr")
-	val typesafeReleaseRepo = "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/"
+	val bintraySparkSolrRepo = Resolver.bintrayRepo("agile-lab-dev", "Spark-Solr")
+	/*val typesafeReleaseRepo = "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"*/
 	val restletMavenRepo = "Restlet Maven repository" at "https://maven.restlet.com/"
 	val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 	val clouderaReleaseLocalRepo = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
@@ -38,7 +38,7 @@ object Settings {
 		mavenLocalRepo,
 		sonatypeReleaseRepo,
 		bintraySparkSolrRepo,
-		typesafeReleaseRepo,
+		/*typesafeReleaseRepo,*/
 		restletMavenRepo,
 		clouderaHadoopReleaseRepo,
 		repo1Maven2
