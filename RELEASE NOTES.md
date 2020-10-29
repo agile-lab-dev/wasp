@@ -7389,3 +7389,36 @@ Technically not a bug
 
 Closes #408
 
+## WASP 2.26.1
+
+### feature: fetchLatestOffsets return a wrong offset
+
+[Merge request 419](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/419)
+
+    commit 36e47c3715c8771b71e77af263362000f6bb8552 (HEAD -> release/v2.26)
+    Author: Andrea Fonti <andrea.fonti@agilelab.it>
+    Date:   Thu Oct 29 11:54:39 2020 +0000
+
+[#419] fetchLatestOffsets return a wrong offset
+
+#### New features and improvements
+
+None
+
+#### Breaking changes
+
+None
+
+#### Migration
+
+None
+
+#### Bug fixes
+
+Backported SPARK-26267
+https://issues.apache.org/jira/browse/SPARK-26267
+https://github.com/apache/spark/pull/23324
+
+#### Related issue
+
+Closes #419
