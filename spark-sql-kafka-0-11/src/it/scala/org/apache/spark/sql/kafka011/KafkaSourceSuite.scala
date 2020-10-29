@@ -1059,4 +1059,69 @@ class KafkaSourceStressForDontFailOnDataLossSuite extends StreamTest with Shared
       throw query.exception.get
     }
   }
+
+  test("subscribe topic by pattern with topic recreation between batches") {
+    val topicPrefix = newTopic()
+    val topic = topicPrefix + "-good"
+    val topic2 = topicPrefix + "-bad"
+    testUtils.createTopic(topic, partitions = 1)
+    testUtils.sendMessages(topic, Array("1", "3"))
+    testUtils.createTopic(topic2, partitions = 1)
+    testUtils.sendMessages(topic2, Array("2", "4"))
+
+    val reader = spark
+      .readStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", testUtils.brokerAddress)
+      .option("kafka.metadata.max.age.ms", "1")
+      .option("kafka.default.api.timeout.ms", "3000")
+      .option("startingOffsets", "earliest")
+      .option("subscribePattern", s"$topicPrefix-.*")
+
+    val ds = reader.load()
+      .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
+      .as[(String, String)]
+      .map(kv => kv._2.toInt)
+
+    testStream(ds)(
+      StartStream(),
+      AssertOnQuery { q =>
+        q.processAllAvailable()
+        true
+      },
+      CheckAnswer(1, 2, 3, 4),
+      // Restart the stream in this test to make the test stable. When recreating a topic when a
+      // consumer is alive, it may not be able to see the recreated topic even if a fresh consumer
+      // has seen it.
+      StopStream,
+      // Recreate `topic2` and wait until it's available
+      WithOffsetSync(new TopicPartition(topic2, 0), expectedOffset = 1) { () =>
+        testUtils.deleteTopic(topic2)
+        testUtils.createTopic(topic2)
+        testUtils.sendMessages(topic2, Array("6"))
+      },
+      StartStream(),
+      ExpectFailure[IllegalStateException](e => {
+        // The offset of `topic2` should be changed from 2 to 1
+        assert(e.getMessage.contains("was changed from 2 to 1"))
+      })
+    )
+  }
+
+  object WithOffsetSync {
+    /**
+      * Run `func` to write some Kafka messages and wait until the latest offset of the given
+      * `TopicPartition` is not less than `expectedOffset`.
+      */
+    def apply(
+               topicPartition: TopicPartition,
+               expectedOffset: Long)(func: () => Unit): StreamAction = {
+      Execute("Run Kafka Producer")(_ => {
+        func()
+        // This is a hack for the race condition that the committed message may be not visible to
+        // consumer for a short time.
+        testUtils.waitUntilOffsetAppears(topicPartition, expectedOffset)
+      })
+    }
+  }
 }
