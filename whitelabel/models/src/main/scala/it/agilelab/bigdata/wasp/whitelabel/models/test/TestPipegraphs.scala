@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, PipegraphModel, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models._
 
 private[wasp] object TestPipegraphs {
 
@@ -15,7 +15,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -24,13 +23,12 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
-            strategy= None,
+            strategy = None,
             triggerIntervalMs = None,
             options = Map()
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -40,7 +38,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -49,16 +46,17 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
-            strategy= Some(StrategyModel(
-              "it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy",
-              Some("{ name = test-freecode }")
-            )),
+            strategy = Some(
+              StrategyModel(
+                "it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy",
+                Some("{ name = test-freecode }")
+              )
+            ),
             triggerIntervalMs = None,
             options = Map()
           )
         ),
         rtComponents = List(),
-
         dashboard = None,
         labels = Set("free-code")
       )
@@ -69,7 +67,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -78,20 +75,20 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
-            strategy = Some(StrategyModel(
-             "it.agilelab.bigdata.wasp.spark.plugins.nifi.NifiStrategy",
-              Some(
-                """
+            strategy = Some(
+              StrategyModel(
+                "it.agilelab.bigdata.wasp.spark.plugins.nifi.NifiStrategy",
+                Some("""
                   | nifi.process-group-id = "c116c98bd5c9"
                   | nifi.error-port = "e8dc48d4-633e-30f8-a59a-6f30f26c8917"
                   | nifi.variables = {}""".stripMargin)
-            )),
+              )
+            ),
             triggerIntervalMs = None,
             options = Map()
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -101,7 +98,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -116,7 +112,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -126,7 +121,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -135,13 +129,14 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Console Writer with metadata"),
             mlModels = List(),
-            strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestEchoStrategy")),
+            strategy = Some(
+              StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestEchoStrategy")
+            ),
             triggerIntervalMs = None,
             options = Map()
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -151,7 +146,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -166,7 +160,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -223,7 +216,8 @@ private[wasp] object TestPipegraphs {
           ),
           StructuredStreamingETLModel(
             name = "ShowKafkaMetadata",
-            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.jsonMultitopicRead, None),
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.jsonMultitopicRead, None),
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Write to console"),
             mlModels = List(),
@@ -256,7 +250,8 @@ private[wasp] object TestPipegraphs {
           ),
           StructuredStreamingETLModel(
             name = "ShowKafkaMetadata",
-            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.jsonMultitopicWrite, None),
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.jsonMultitopicWrite, None),
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Write to console"),
             mlModels = List(),
@@ -275,7 +270,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -290,7 +284,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -300,7 +293,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -315,7 +307,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -325,7 +316,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -340,7 +330,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -350,7 +339,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -365,7 +353,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -375,14 +362,14 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json6, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbaseMultipleClusteringKeyValueModel),
+            streamingOutput =
+              WriterModel.hbaseWriter("HBase Writer", TestKeyValueModel.hbaseMultipleClusteringKeyValueModel),
             mlModels = List(),
             strategy = None,
             triggerIntervalMs = None,
@@ -390,7 +377,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -400,7 +386,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents =
           console.structuredStreamingComponents :::
@@ -408,7 +393,6 @@ private[wasp] object TestPipegraphs {
             elastic.structuredStreamingComponents :::
             hdfs.structuredStreamingComponents,
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -420,19 +404,23 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-
           legacyStreamingComponents = List(),
           structuredStreamingComponents =
             console.structuredStreamingComponents :::
               solr.structuredStreamingComponents :::
               elastic.structuredStreamingComponents :::
               hdfs.structuredStreamingComponents.map(
-                _.copy(strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
-                  ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))))),
-
+                _.copy(strategy = Some(
+                  StrategyModel.create(
+                    "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
+                    ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
+                  )
+                )
+                )
+              ),
           rtComponents = List(),
-
-          dashboard = None)
+          dashboard = None
+        )
       }
 
       object CHECKPOINT {
@@ -442,7 +430,6 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-
           legacyStreamingComponents = List(),
           structuredStreamingComponents = List(
             StructuredStreamingETLModel(
@@ -451,18 +438,20 @@ private[wasp] object TestPipegraphs {
               staticInputs = List.empty,
               streamingOutput = WriterModel.consoleWriter("Console Writer"),
               mlModels = List(),
-              strategy = Some(StrategyModel.create(
-                "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV1",
-                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV2",
-                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV3",
-                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV4",
-                ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+              strategy = Some(
+                StrategyModel.create(
+                  "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV1",
+                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV2",
+                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV3",
+                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV4",
+                  ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
+                )
+              ),
               triggerIntervalMs = None,
               options = Map()
             )
           ),
           rtComponents = List(),
-
           dashboard = None
         )
       }
@@ -476,7 +465,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestConsoleWriterLegacyJSONPipegraph",
@@ -491,7 +479,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -501,7 +488,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestKafkaWriterLegacyJSONPipegraph",
@@ -513,11 +499,9 @@ private[wasp] object TestPipegraphs {
             strategy = None,
             kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
           )
-
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -527,7 +511,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestSolrWriterLegacyJSONPipegraph",
@@ -542,7 +525,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -552,7 +534,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestElasticWriterLegacyJSONPipegraph",
@@ -567,7 +548,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -577,7 +557,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestHdfsrWriterLegacyJSONPipegraph",
@@ -592,7 +571,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
     }
@@ -609,7 +587,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -624,7 +601,39 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
+        dashboard = None
+      )
 
+      lazy val kafka_key_schema = PipegraphModel(
+        name = "TestKafkaWriterStructuredAVROKeySchemaPipegraph",
+        description = "Description of TestKafkaWriterStructuredAVROPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestKafkaWriterStructuredAVROPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro_key_schema, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.avro_key_schema2),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          ),
+          StructuredStreamingETLModel(
+            name = "ETL TestKafkaWriterStructuredAVROPipegraph Console",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro_key_schema2, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Console", Map.empty),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
         dashboard = None
       )
 
@@ -634,7 +643,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -649,7 +657,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -706,7 +713,8 @@ private[wasp] object TestPipegraphs {
           ),
           StructuredStreamingETLModel(
             name = "ShowKafkaMetadata",
-            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.avroMultitopicRead, None),
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.avroMultitopicRead, None),
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Write to console"),
             mlModels = List(),
@@ -739,7 +747,8 @@ private[wasp] object TestPipegraphs {
           ),
           StructuredStreamingETLModel(
             name = "ShowKafkaMetadata",
-            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.avroMultitopicWrite, None),
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.avroMultitopicWrite, None),
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Write to console"),
             mlModels = List(),
@@ -758,7 +767,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -773,7 +781,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -783,7 +790,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -798,7 +804,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -808,7 +813,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -823,7 +827,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -833,7 +836,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -848,7 +850,6 @@ private[wasp] object TestPipegraphs {
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -858,7 +859,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents =
           console.structuredStreamingComponents :::
@@ -866,7 +866,6 @@ private[wasp] object TestPipegraphs {
             elastic.structuredStreamingComponents :::
             hdfs.structuredStreamingComponents,
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -876,7 +875,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -902,17 +900,21 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-
           legacyStreamingComponents = List(),
           structuredStreamingComponents =
             console.structuredStreamingComponents :::
               solr.structuredStreamingComponents :::
               elastic.structuredStreamingComponents :::
               hdfs.structuredStreamingComponents.map(
-                _.copy(strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
-                  ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))))),
+                _.copy(strategy = Some(
+                  StrategyModel.create(
+                    "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
+                    ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
+                  )
+                )
+                )
+              ),
           rtComponents = List(),
-
           dashboard = None
         )
       }
@@ -924,7 +926,6 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-
           legacyStreamingComponents = List(),
           structuredStreamingComponents = List(
             StructuredStreamingETLModel(
@@ -933,18 +934,20 @@ private[wasp] object TestPipegraphs {
               staticInputs = List.empty,
               streamingOutput = WriterModel.consoleWriter("Console Writer"),
               mlModels = List(),
-              strategy = Some(StrategyModel.create(
-                "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV1",
-                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV2",
-                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV3",
-                //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV4",
-                ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1"""))),
+              strategy = Some(
+                StrategyModel.create(
+                  "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV1",
+                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV2",
+                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV3",
+                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV4",
+                  ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
+                )
+              ),
               triggerIntervalMs = None,
               options = Map()
             )
           ),
           rtComponents = List(),
-
           dashboard = None
         )
       }
@@ -959,7 +962,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestConsoleWriterLegacyAVROPipegraph",
@@ -983,7 +985,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestKafkaWriterLegacyAVROPipegraph",
@@ -998,7 +999,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -1008,7 +1008,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestSolrWriterLegacyAVROPipegraph",
@@ -1023,7 +1022,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -1033,7 +1031,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestElasticWriterLegacyAVROPipegraph",
@@ -1048,7 +1045,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
 
@@ -1058,7 +1054,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(
           LegacyStreamingETLModel(
             name = "ETL TestHdfsrWriterLegacyAVROPipegraph",
@@ -1073,7 +1068,6 @@ private[wasp] object TestPipegraphs {
         ),
         structuredStreamingComponents = List(),
         rtComponents = List(),
-
         dashboard = None
       )
     }
@@ -1104,7 +1098,8 @@ private[wasp] object TestPipegraphs {
           ),
           StructuredStreamingETLModel(
             name = "ReadAndShowKafkaData",
-            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.plaintextMultitopic, None),
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.plaintextMultitopic, None),
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Write to console"),
             mlModels = List(),
@@ -1145,7 +1140,8 @@ private[wasp] object TestPipegraphs {
           ),
           StructuredStreamingETLModel(
             name = "ReadAndShowKafkaData",
-            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.binaryMultitopic, None),
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.binaryMultitopic, None),
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Write to console"),
             mlModels = List(),
@@ -1170,16 +1166,21 @@ private[wasp] object TestPipegraphs {
       owner = "user",
       isSystem = false,
       creationTime = System.currentTimeMillis,
-
       legacyStreamingComponents = List(),
       structuredStreamingComponents =
         TestPipegraphs.AVRO.Structured.console.structuredStreamingComponents :::
           TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
           TestPipegraphs.AVRO.Structured.elastic.structuredStreamingComponents :::
           TestPipegraphs.AVRO.Structured.hdfs.structuredStreamingComponents.map(
-            _.copy(strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy", None)))),
+            _.copy(strategy = Some(
+              StrategyModel(
+                "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
+                None
+              )
+            )
+            )
+          ),
       rtComponents = List(),
-
       dashboard = None
     )
   }
@@ -1188,34 +1189,43 @@ private[wasp] object TestPipegraphs {
 
     lazy val pipegraph = PipegraphModel(
       name = "TestStrategiesSettingSparkSessionConf",
-      description = "Two strategies setting different spark.sql.shuffle.partitions, should create independent values for each one",
+      description =
+        "Two strategies setting different spark.sql.shuffle.partitions, should create independent values for each one",
       owner = "user",
       isSystem = false,
       creationTime = System.currentTimeMillis,
-
       legacyStreamingComponents = List(),
-      structuredStreamingComponents = List(StructuredStreamingETLModel(
-        name = "TestSetShufflePartitionsTo10ETL",
-        streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro, None),
-        staticInputs = List.empty,
-        streamingOutput = WriterModel.consoleWriter("Console Writer"),
-        mlModels = List(),
-        strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestSetShufflePartitionsTo10Strategy")),
-        triggerIntervalMs = None,
-        options = Map()
-      ),
+      structuredStreamingComponents = List(
+        StructuredStreamingETLModel(
+          name = "TestSetShufflePartitionsTo10ETL",
+          streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro, None),
+          staticInputs = List.empty,
+          streamingOutput = WriterModel.consoleWriter("Console Writer"),
+          mlModels = List(),
+          strategy = Some(
+            StrategyModel(
+              "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestSetShufflePartitionsTo10Strategy"
+            )
+          ),
+          triggerIntervalMs = None,
+          options = Map()
+        ),
         StructuredStreamingETLModel(
           name = "TestSetShufflePartitionsTo20ETL",
           streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro, None),
           staticInputs = List.empty,
           streamingOutput = WriterModel.consoleWriter("Console Writer"),
           mlModels = List(),
-          strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestSetShufflePartitionsTo20Strategy")),
+          strategy = Some(
+            StrategyModel(
+              "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestSetShufflePartitionsTo20Strategy"
+            )
+          ),
           triggerIntervalMs = None,
           options = Map()
-        )),
+        )
+      ),
       rtComponents = List(),
-
       dashboard = None
     )
 

@@ -69,15 +69,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     *
     * @return [[Seq[(Key, Schema)]]
     */
-  def registerSchema(): Seq[(Long, Schema)] = {
-    val schemas = Seq(AvroSchema[Event])
-    if (schemas.isEmpty) {
-      Seq.empty
-    } else {
-      val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
-      AvroSchemaManagerFactory.initialize(configAvroSchemaManager).registerAll(schemas)
-    }
-  }
+  def registerSchema(): Seq[(Long, Schema)] = Seq.empty
 
   private def addSystemPipegraphs(): Unit = {
 
@@ -113,7 +105,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     implicit val akkaBackend: SttpBackend[Future, Source[ByteString, Any], LambdaFlow] =
       AkkaHttpBackend.usingActorSystem(WaspSystem.actorSystem)(clientExecutionContext)
     implicit val monadForFuture: FutureMonad = new FutureMonad()(clientExecutionContext)
-    implicit val serializer: SttpSerializer  = new SttpSerializer()
+    implicit val serializer: SttpSerializer = new SttpSerializer()
 
     val nifiConfig = ConfigManager.getNifiConfig
 
@@ -162,13 +154,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
   def additionalRoutes(): Route = reject
 
   private def startRestServer(actorSystem: ActorSystem, route: Route): Unit = {
-    implicit val system: ActorSystem             = actorSystem
+    implicit val system: ActorSystem = actorSystem
     implicit val materializer: ActorMaterializer = ActorMaterializer()
 
     val rejectionHandler = RejectionHandler
       .newBuilder()
       .handle {
-        case rejection @ ValidationRejection(message, _) =>
+        case rejection@ValidationRejection(message, _) =>
           extractRequest { request =>
             complete {
               logger.error(s"request ${request} was rejected with rejection ${rejection}")

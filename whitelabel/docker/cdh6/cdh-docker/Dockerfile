@@ -123,13 +123,46 @@ RUN set -axe \
     && chmod +x /etc/init.d/mongod
 
 # NIFI
-
 RUN set -axe \
-    && wget --no-check-certificate https://mirror.nohup.it/apache/nifi/1.11.4/nifi-1.11.4-bin.tar.gz && tar -xzvf nifi-1.11.4-bin.tar.gz && rm nifi-1.11.4-bin.tar.gz && mv nifi-1.11.4 /nifi \
-    && wget --no-check-certificate https://mirror.nohup.it/apache/nifi/nifi-registry/nifi-registry-0.6.0/nifi-registry-0.6.0-bin.tar.gz && tar -xzvf nifi-registry-0.6.0-bin.tar.gz && rm nifi-registry-0.6.0-bin.tar.gz && mv nifi-registry-0.6.0 /nifi-registry \
-    && wget --no-check-certificate https://mirror.nohup.it/apache/nifi/1.11.4/nifi-toolkit-1.11.4-bin.tar.gz && tar -xzvf nifi-toolkit-1.11.4-bin.tar.gz && rm nifi-toolkit-1.11.4-bin.tar.gz && mv nifi-toolkit-1.11.4 /nifi-toolkit
+    && wget --no-check-certificate https://archive.apache.org/dist/nifi/1.11.4/nifi-1.11.4-bin.tar.gz && tar -xzvf nifi-1.11.4-bin.tar.gz && rm nifi-1.11.4-bin.tar.gz && mv nifi-1.11.4 /nifi \
+    && wget --no-check-certificate https://archive.apache.org/dist/nifi/nifi-registry/nifi-registry-0.6.0/nifi-registry-0.6.0-bin.tar.gz && tar -xzvf nifi-registry-0.6.0-bin.tar.gz && rm nifi-registry-0.6.0-bin.tar.gz && mv nifi-registry-0.6.0 /nifi-registry \
+    && wget --no-check-certificate https://archive.apache.org/dist/nifi/1.11.4/nifi-toolkit-1.11.4-bin.tar.gz && tar -xzvf nifi-toolkit-1.11.4-bin.tar.gz && rm nifi-toolkit-1.11.4-bin.tar.gz && mv nifi-toolkit-1.11.4 /nifi-toolkit
 
 RUN /nifi/bin/nifi.sh install
 RUN /nifi-registry/bin/nifi-registry.sh install
+
+RUN set -axe && \
+curl -O http://packages.confluent.io/archive/6.0/confluent-6.0.0.tar.gz && \
+tar xzvf confluent-6.0.0.tar.gz && \
+cd confluent-6.0.0 && \
+rm -rf ./share/java/ce-kafka-http-server/ && \
+rm -rf ./share/java/ce-kafka-rest-extensions/ && \
+rm -rf ./share/java/confluent-control-center/ && \
+rm -rf ./share/java/confluent-hub-client/ && \
+rm -rf ./share/java/confluent-kafka-mqtt/ && \
+rm -rf ./share/java/confluent-metadata-service/ && \
+rm -rf ./share/java/confluent-rebalancer/ && \
+rm -rf ./share/java/kafka && \
+rm -rf ./share/java/kafka-connect-replicator/ && \
+rm -rf ./share/java/kafka-rest-bin/ && \
+rm -rf ./share/java/kafka-rest-lib && \
+rm -rf ./share/java/kafka-serde-tools/ && \
+rm -rf ./share/java/ksqldb/ && \
+rm -rf ./share/java/monitoring-interceptors/ && \
+rm -rf ./share/java/acl/ && \
+rm -rf ./share/doc/ && \
+rm -rf ./share/java/confluent-security/connect && \
+rm -rf ./share/java/confluent-security/kafka-rest && \
+rm -rf ./share/java/confluent-security/ksql && \
+rm -rf ./share/java/confluent-security/schema-validator && \
+rm -rf ./libexec/ && \
+rm -rf ./src && \
+cd .. && \
+rm -rf confluent-6.0.0.tar.gz
+
+
+COPY schema-registry/schema-registry.properties ${TEMPLATE_DIR}/schema-registry.properties
+
+RUN echo '\ncat ${TEMPLATE_DIR}/schema-registry.properties | envsubst \$HOSTNAME > /confluent-6.0.0/etc/schema-registry/schema-registry.properties' >> /usr/bin/resolve-templates.sh
 
 CMD [ "/bin/bash", "/usr/bin/entrypoint.sh" ]

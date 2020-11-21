@@ -1,8 +1,9 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
+import it.agilelab.bigdata.wasp.models.{SubjectStrategy, TopicModel}
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
-
+import org.apache.avro.Schema
 
 object AvroToJsonUtil extends Logging {
 
@@ -10,14 +11,23 @@ object AvroToJsonUtil extends Logging {
 
   val jsonAvroConverter = new JsonAvroConverter()
 
-  def jsonToAvro(json: String,
-                 schemaStr: String,
-                 useAvroSchemaManager: Boolean): Array[Byte] = {
+  def jsonToAvro(json: String, schemaStr: String, useAvroSchemaManager: Boolean): Array[Byte] = {
     logger.debug("Starting jsonToAvro encoding ...")
-    jsonAvroConverter.convertToAvro(
-      json.getBytes,
-      schemaStr,
-      if (useAvroSchemaManager) Some(darwin) else None)
+    jsonAvroConverter.convertToAvro(json.getBytes, schemaStr, if (useAvroSchemaManager) Some(darwin) else None)
+  }
+
+  def jsonToAvro(
+      json: String,
+      schema: Schema,
+      useAvroSchemaManager: Boolean,
+      topicModel: TopicModel,
+      isKey: Boolean = false
+  ): Array[Byte] = {
+    logger.debug("Starting jsonToAvro encoding ...")
+
+    val schemaWithSubject = SubjectUtils.attachSubjectToSchema(topicModel, schema, isKey)
+
+    jsonAvroConverter.convertToAvro(json.getBytes, schemaWithSubject, if (useAvroSchemaManager) Some(darwin) else None)
   }
 
   def avroToJson(avro: Array[Byte], schemaStr: String): String = {
@@ -28,7 +38,11 @@ object AvroToJsonUtil extends Logging {
   //Use this function all the times you need to pass a Json generic text message to the Avro encoder. This way, afterward, the decoder won't get broken.
   def convertToUTF8(s: String): String = {
     //s.replaceAll("""""","""\"""")
-    s.replaceAll("#", "").replaceAll("\\\\", "").replaceAll("\"", "").replaceAll( """/[^a-z 0-9\.\:\;\!\?]+/gi""", " ").replaceAll( """[^\p{L}\p{Nd}\.\:\;\!\?]+""", " ")
+    s.replaceAll("#", "")
+      .replaceAll("\\\\", "")
+      .replaceAll("\"", "")
+      .replaceAll("""/[^a-z 0-9\.\:\;\!\?]+/gi""", " ")
+      .replaceAll("""[^\p{L}\p{Nd}\.\:\;\!\?]+""", " ")
   }
 
 }

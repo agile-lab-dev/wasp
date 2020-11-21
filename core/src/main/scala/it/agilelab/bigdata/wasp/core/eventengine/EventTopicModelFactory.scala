@@ -4,7 +4,7 @@ import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
 import it.agilelab.bigdata.wasp.core.eventengine.settings.ModelSettings
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import it.agilelab.bigdata.wasp.models.{StreamingReaderModel, TopicModel}
+import it.agilelab.bigdata.wasp.models.{StreamingReaderModel, SubjectStrategy, TopicModel}
 
 object EventTopicModelFactory {
 
@@ -26,9 +26,10 @@ object EventTopicModelFactory {
       topicDataType = "avro",
       keyFieldName = options.get("keyFieldName"),
       headersFieldName = options.get("headersFieldName"),
-      valueFieldsNames = options.get("valueFiledsName").flatMap(s => Some(s.split(","))),    //Evaluate
+      valueFieldsNames = options.get("valueFiledsName").flatMap(s => Some(s.split(","))), //Evaluate
       useAvroSchemaManager = true,
-      schema = JsonConverter.fromString(eventTopicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
+      schema = JsonConverter.fromString(eventTopicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
+      subjectStrategy = SubjectStrategy.Topic
     )
   }
 }
@@ -37,6 +38,7 @@ object EventReaderModelFactory {
 
   /**
     * Bypass user's dedicated API in order to be able to generate StreamingReaderModel objects at runtime with configurable values
+    *
     * @param modelSettings is the settings object containing parameters of the StreamingReaderModel
     * @return a new (KAFKA) StreamingReaderModel
     */

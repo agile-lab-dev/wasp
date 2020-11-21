@@ -24,14 +24,13 @@ import org.apache.spark.unsafe.types.UTF8String
 
 import scala.collection.JavaConverters._
 
-
 object AvroSerializerExpression {
 
   def apply(avroSchemaAsJson: Option[String],
             avroRecordName: String,
             avroNamespace: String)
            (child: Expression,
-            sparkSchema: StructType): AvroSerializerExpression = {
+            sparkSchema: DataType): AvroSerializerExpression = {
 
     avroSchemaAsJson.foreach(s => checkSchemas(sparkSchema, new Schema.Parser().parse(s)))
 
@@ -46,7 +45,7 @@ object AvroSerializerExpression {
             avroRecordName: String,
             avroNamespace: String)
            (child: Expression,
-            sparkSchema: StructType): AvroSerializerExpression = {
+            sparkSchema: DataType): AvroSerializerExpression = {
 
     val fingerprint = AvroSchemaManagerFactory.initialize(schemaManagerConfig).registerAll(Seq(avroSchema)).head._1
 
@@ -65,7 +64,7 @@ object AvroSerializerExpression {
       None)
   }
 
-  private def checkSchemas(schemaSpark: StructType, schemaAvro: Schema): Unit = {
+  private def checkSchemas(schemaSpark: DataType, schemaAvro: Schema): Unit = {
     // flatten schemas, convert spark field list into a map
     val sparkFields: Map[String, String] = SchemaFlatteners.Spark.flattenSchema(schemaSpark, "").toMap
     // the key is the field name, the value is the field type
@@ -92,7 +91,7 @@ case class AvroSerializerExpression private(child: Expression,
                                             maybeSchemaAvroJsonOrFingerprint: Option[Either[String, Long]],
                                             avroSchemaManagerConfig: Option[Config],
                                             useAvroSchemaManager: Boolean,
-                                            inputSchema: StructType,
+                                            inputSchema: DataType,
                                             structName: String,
                                             namespace: String,
                                             fieldsToWrite: Option[Set[String]],
@@ -115,7 +114,13 @@ case class AvroSerializerExpression private(child: Expression,
 
   @transient private lazy val actualSchema: Schema = externalSchema.getOrElse {
     val builder = SchemaBuilder.record(structName).namespace(namespace)
-    AvroSchemaConverters.convertStructToAvro(inputSchema, builder, namespace)
+
+    inputSchema match {
+      case struct : StructType =>
+        AvroSchemaConverters.convertStructToAvro(struct, builder, namespace)
+      case otherwise =>
+        AvroSchemaConverters.convertTypeToAvro(otherwise, SchemaBuilder.builder(), "", recordNamespace = namespace)
+    }
   }
 
   // convenient method for accessing the schema in codegen
@@ -129,20 +134,27 @@ case class AvroSerializerExpression private(child: Expression,
     }
   }
 
-  override def inputTypes = Seq(StructType)
+  override def inputTypes = {
+    inputSchema match {
+      case s : StructType =>
+        Seq(StructType)
+      case d : DataType =>
+        Seq(d)
+    }
+  }
 
   override def withTimeZone(timeZoneId: String): TimeZoneAwareExpression = copy(timeZoneId = Some(timeZoneId))
 
   override def nullable: Boolean = child.nullable
 
-  def serializeInternalRow(row: InternalRow,
+  def serializeInternalRow(row: AnyRef,
                            output: ByteArrayOutputStream,
                            encoder: BinaryEncoder,
-                           writer: GenericDatumWriter[GenericRecord]): Array[Byte] = {
+                           writer: GenericDatumWriter[AnyRef]): Array[Byte] = {
     if (useAvroSchemaManager) {
       schemaManager.get.writeHeaderToStream(output, schemaId)
     }
-    val value: GenericRecord = converter(row).asInstanceOf[GenericRecord]
+    val value= converter(row).asInstanceOf[AnyRef]
     writer.write(value, encoder)
     encoder.flush()
     output.toByteArray
@@ -150,7 +162,7 @@ case class AvroSerializerExpression private(child: Expression,
 
   override protected def nullSafeEval(input: Any): Any = {
     val output = new ByteArrayOutputStream()
-    val writer = new GenericDatumWriter[GenericRecord](actualSchema)
+    val writer = new GenericDatumWriter[AnyRef](actualSchema)
     serializeInternalRow(input.asInstanceOf[InternalRow], output,
       EncoderFactory.get().binaryEncoder(output, null),
       writer)
@@ -279,9 +291,22 @@ case class AvroSerializerExpression private(child: Expression,
           } else {
             true
           }
-        }).map(field =>
-          createConverterToAvro(field.dataType, field.name, recordNamespace, None, Some(schema.getField(field.name).schema()))
-        )
+        }).map { field =>
+          val maybeSubfieldSchema = Option(schema.getField(field.name)).map(_.schema())
+
+          if(maybeSubfieldSchema.isEmpty){
+             val message =
+               s"""spark schema contains a field [${field.name}] of type [${field.dataType}]
+                  |no corresponding field is present in the avro schema, maybe you forgot to
+                  |drop kafkaMetadata column or to configure 'valueFieldsNames' in TopicModel
+                  |to specify which columns should be treated as the value
+                  |""".stripMargin
+
+            throw new IllegalArgumentException(message)
+          }
+
+          createConverterToAvro(field.dataType, field.name, recordNamespace, None, maybeSubfieldSchema)
+        }
         (item: Any) => {
           if (item == null) {
             null

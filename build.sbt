@@ -242,7 +242,7 @@ lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/m
   .dependsOn(master)
   .settings(libraryDependencies ++= Dependencies.plugin_hbase_spark)
   .settings(libraryDependencies += Dependencies.log4j1)
-  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector)
+  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinConfluentConnector)
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelProducers = Project("wasp-whitelabel-producers", file("whitelabel/producers"))
@@ -252,7 +252,7 @@ lazy val whiteLabelProducers = Project("wasp-whitelabel-producers", file("whitel
   .dependsOn(producers)
   .settings(libraryDependencies ++= Dependencies.plugin_hbase_spark)
   .settings(libraryDependencies += Dependencies.log4j1)
-  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector)
+  .settings(libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinConfluentConnector)
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", file("whitelabel/consumers-spark"))
@@ -271,7 +271,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(spark_telemetry_plugin)
   .dependsOn(spark_nifi_plugin)
   .settings(
-    libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinHBaseConnector
+    libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinConfluentConnector
       :+ "mysql" % "mysql-connector-java" % "5.1.6"
       :+ Dependencies.scalaTest
       :+ Dependencies.darwinMockConnector

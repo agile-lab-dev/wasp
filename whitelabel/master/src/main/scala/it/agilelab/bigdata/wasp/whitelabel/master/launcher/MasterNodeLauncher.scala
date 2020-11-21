@@ -26,15 +26,6 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     * @return [[Seq[(Key, Schema)]]
     */
   private def addExampleRegisterAvroSchema(): Unit = {
-    val schemas: Seq[Schema] = Seq(
-      AvroSchema[FakeData],
-      AvroSchema[IndustrialPlantData],
-      AvroSchema[TopicAvro_v1],
-      AvroSchema[TopicAvro_v2],
-      new Schema.Parser().parse(TestTopicModel.avro.schema.toJson)
-    )
-    val configAvroSchemaManager = ConfigManager.getAvroSchemaManagerConfig
-    AvroSchemaManagerFactory.initialize(configAvroSchemaManager).registerAll(schemas)
   }
 
   private def addExamplePipegraphs(): Unit = {
@@ -63,9 +54,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
      * Tests
      * =================================================================================================================
      */
-    
-    
-    
+
+
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     ConfigBL.topicBL.upsert(TestTopicModel.json)
     ConfigBL.topicBL.upsert(TestTopicModel.json2)
@@ -93,6 +83,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.topicBL.upsert(TestTopicModel.binary1)
     ConfigBL.topicBL.upsert(TestTopicModel.binary2)
     ConfigBL.topicBL.upsert(TestTopicModel.binaryMultitopic)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro_key_schema)
+    ConfigBL.topicBL.upsert(TestTopicModel.avro_key_schema2)
     ConfigBL.indexBL.upsert(TestIndexModel.solr)
     ConfigBL.indexBL.upsert(TestIndexModel.elastic)
     ConfigBL.rawBL.upsert(TestRawModel.nested) // used by TestPipegraphs.JSON.XYZ.hdfs
@@ -114,6 +106,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.producerBL.upsert(TestProducerModel.jsonWithMetadata)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonCheckpoint)
     ConfigBL.producerBL.upsert(TestProducerModel.avro)
+    ConfigBL.producerBL.upsert(TestProducerModel.avro_key_schema)
     ConfigBL.producerBL.upsert(TestProducerModel.avroCheckpoint)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonHbaseMultipleClustering)
     ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
@@ -125,7 +118,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.freeCodeBL.insert(TestFreeCodeModels.testFreeCode)
 
     /* Pipegraphs */
-    
+
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.console)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.freecode)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.nifi)
@@ -151,6 +144,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.console)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafka)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafka_key_schema)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafkaHeaders)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafkaMultitopicRead)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafkaMultitopicWrite)
@@ -204,7 +198,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 private[wasp] object ExampleProcessGroupModel {
   lazy val processGroup = ProcessGroupModel(
     "c116c98bd5c9",
-    BsonDocument("""{
+    BsonDocument(
+      """{
         |      "comments": "",
         |      "componentType": "PROCESS_GROUP",
         |      "connections": [

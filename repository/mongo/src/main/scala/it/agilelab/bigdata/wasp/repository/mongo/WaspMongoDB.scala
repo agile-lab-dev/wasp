@@ -15,7 +15,7 @@ import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, _}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}
-import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, TopicCompressionCodecProvider}
+import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, SubjectStrategyCodecProvider, TopicCompressionCodecProvider}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper
 import org.bson.{BsonReader, BsonWriter}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
@@ -392,6 +392,7 @@ object WaspMongoDB extends Logging {
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
     DatastoreProductCodecProvider,
     TopicCompressionCodecProvider,
+    SubjectStrategyCodecProvider,
     TypesafeConfigCodecProvider,
     createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
     createCodecProviderIgnoreNone(classOf[BatchJobInstanceModel]),

@@ -75,5 +75,14 @@ deploy:
   only:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
-    - merge_requests
     - tags
+
+deploy_nexus_mr:
+  interruptible: false
+  stage: deploy
+  image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
+  script:
+    - sbt clean publish
+  only:
+    - merge_requests
+  when: manual

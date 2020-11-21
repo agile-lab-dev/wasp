@@ -120,7 +120,7 @@ trait AvroSchemaConverters {
     * This function is used to convert some sparkSQL type to avro type. Note that this function won't
     * be used to construct fields of avro record (convertFieldTypeToAvro is used for that).
     */
-  private def convertTypeToAvro[T](
+  def convertTypeToAvro[T](
       dataType: DataType,
       schemaBuilder: BaseTypeBuilder[T],
       structName: String,

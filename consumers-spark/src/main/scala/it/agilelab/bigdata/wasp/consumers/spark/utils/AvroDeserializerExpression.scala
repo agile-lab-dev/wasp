@@ -15,7 +15,7 @@ import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
 import org.apache.avro.util.Utf8
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
-import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
+import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
 import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, GenericInternalRow, UnaryExpression}
 import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, ArrayData}
 import org.apache.spark.sql.types._
@@ -52,11 +52,11 @@ case class AvroDeserializerExpression(
 
   @transient private lazy val userSchema = new Schema.Parser().parse(schemaAvroJson)
 
-  private lazy val datumReader = new GenericDatumReader[GenericRecord](userSchema)
+  private lazy val datumReader = new GenericDatumReader[Object](userSchema)
 
   private lazy val rowConverter = createConverterToSQL(userSchema, dataType)
 
-  val mapDatumReader: mutable.HashMap[Long, GenericDatumReader[GenericRecord]] = mutable.HashMap.empty
+  val mapDatumReader: mutable.HashMap[Long, GenericDatumReader[Object]] = mutable.HashMap.empty
 
   override def dataType: DataType = AvroSchemaConverters.toSqlType(userSchema).dataType
 
@@ -64,7 +64,7 @@ case class AvroDeserializerExpression(
   // See CollapseProject + ProjectExec
   override lazy val deterministic: Boolean = !avoidReevaluation
 
-  def avroDatumReader(avroValue: SeekableByteArrayInput): GenericDatumReader[GenericRecord] = {
+  def avroDatumReader(avroValue: SeekableByteArrayInput): GenericDatumReader[Object] = {
     avroSchemaManager
       .flatMap { m =>
         m.extractSchema(avroValue).right.toOption.map { schema =>
@@ -73,65 +73,14 @@ case class AvroDeserializerExpression(
       }
       .map {
         case (schema, schemaId) =>
-          mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[GenericRecord](schema, userSchema))
+          mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[Object](schema, userSchema))
       }
       .getOrElse(datumReader)
   }
 
   // We assume it returns an InternalRow since the input is a GenericRecord...
-  def convertRecordToInternalRow(record: GenericRecord): InternalRow = {
-    rowConverter(record).asInstanceOf[InternalRow]
-  }
-
-  override protected def nullSafeEval(input: Any): Any = {
-    val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
-    val avroReader = avroDatumReader(avroValue)
-
-    val decoder               = DecoderFactory.get.binaryDecoder(avroValue, null)
-    val record: GenericRecord = avroReader.read(null, decoder)
-
-    convertRecordToInternalRow(record)
-  }
-
-  override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    val decoderClassName        = classOf[BinaryDecoder].getName
-    val decoderFactoryClassName = classOf[DecoderFactory].getName
-    val decoderName             = ctx.addMutableState(decoderClassName, "decoder", varName => s"""$varName = null;""")
-
-    val genericRecordClassName = classOf[GenericRecord].getName
-    val genericRecordName =
-      ctx.addMutableState(genericRecordClassName, "genRecord", varName => s"""$varName = null;""")
-
-    val avroDecoderExpression =
-      ctx.addReferenceObj("avroDecoderExpr", this, this.getClass.getName)
-
-    val genericReaderClassName = classOf[GenericDatumReader[GenericRecord]].getName
-    val genericReaderName      = ctx.freshName("genericReader")
-
-    val seekableClassName = classOf[SeekableByteArrayInput].getName
-    val seekableInput     = ctx.freshName("seekableInput")
-
-    val internalRowClassName = classOf[InternalRow].getName
-
-    val childEval = child.genCode(ctx)
-    ev.copy(
-      code = code"""
-            |${childEval.code}
-            |$internalRowClassName ${ev.value} = null;
-            |if (!${childEval.isNull}) {
-            |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
-            |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
-            |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
-            |  try {
-            |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
-            |  } catch (java.io.IOException e) {
-            |    throw new java.lang.RuntimeException("Unable to deserialize Avro.", e);
-            |  }
-            |  ${ev.value} = $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
-            |}
-       """.stripMargin,
-      isNull = childEval.isNull
-    )
+  def convertRecordToInternalRow(record: AnyRef): AnyRef = {
+    rowConverter(record)
   }
 
   @inline
@@ -146,6 +95,70 @@ case class AvroDeserializerExpression(
       }
       UTF8String.fromBytes(byteBuffer)
     }
+  }
+
+  override protected def nullSafeEval(input: Any): Any = {
+    val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
+    val avroReader = avroDatumReader(avroValue)
+
+    val decoder        = DecoderFactory.get.binaryDecoder(avroValue, null)
+    val record: Object = avroReader.read(null, decoder)
+
+    convertRecordToInternalRow(record)
+  }
+
+  override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+
+    val decoderClassName        = classOf[BinaryDecoder].getName
+    val decoderFactoryClassName = classOf[DecoderFactory].getName
+    val decoderName             = ctx.addMutableState(decoderClassName, "decoder", varName => s"""$varName = null;""")
+
+    val genericRecordClassName = classOf[Object].getName
+    val genericRecordName =
+      ctx.addMutableState(genericRecordClassName, "genRecord", varName => s"""$varName = null;""")
+
+    val avroDecoderExpression =
+      ctx.addReferenceObj("avroDecoderExpr", this, this.getClass.getName)
+
+    val resultVarName = ctx.freshName("result")
+
+    val genericReaderClassName = classOf[GenericDatumReader[GenericRecord]].getName
+    val genericReaderName      = ctx.freshName("genericReader")
+
+    val seekableClassName = classOf[SeekableByteArrayInput].getName
+    val seekableInput     = ctx.freshName("seekableInput")
+
+    val returnType = CodeGenerator.javaType(dataType)
+    val boxedType  = CodeGenerator.boxedType(dataType)
+
+    val childEval = child.genCode(ctx)
+
+    val defaultValue = CodeGenerator.defaultValue(dataType, typedNull = true)
+
+    val byteBufferClassName = classOf[ByteBuffer].getName
+
+    val genericDataArrayClassName = classOf[GenericData.Array[_]].getName
+    ev.copy(
+      code = code"""
+            |${childEval.code}
+            |$returnType ${ev.value} = $defaultValue;
+            |if (!${childEval.isNull}) {
+            |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
+            |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
+            |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
+            |  try {
+            |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
+            |  } catch (java.io.IOException e) {
+            |    throw new java.lang.RuntimeException("Unable to deserialize Avro.", e);
+            |  }
+            |
+            |  Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
+            |
+            |  ${ev.value} = ($boxedType) $resultVarName;
+            |}
+       """.stripMargin,
+      isNull = childEval.isNull
+    )
   }
 
   /**

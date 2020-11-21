@@ -1,26 +1,29 @@
 package it.agilelab.bigdata.wasp.repository.mongo.bl
 
-import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.datastores.TopicCategory
-import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, TopicCompression, TopicModel}
+import it.agilelab.bigdata.wasp.models._
+import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 
 import scala.collection.JavaConverters._
 
-class TopicBLImp(waspDB: WaspMongoDB) extends TopicBL  {
+class TopicBLImp(waspDB: WaspMongoDB) extends TopicBL {
 
   private def factory(bsonDocument: BsonDocument): DatastoreModel[TopicCategory] = {
     if (bsonDocument.containsKey("partitions")) // TopicModel
-    bsonDocumentToTopicModel(bsonDocument)
-      else if (bsonDocument.containsKey("topicNameField")) // MultiTopicModel
-    bsonDocumentToMultiTopicModel(bsonDocument)
-      else // unknown
-      throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory] encoded by BsonDocument: $bsonDocument")
+      bsonDocumentToTopicModel(bsonDocument)
+    else if (bsonDocument.containsKey("topicNameField")) // MultiTopicModel
+      bsonDocumentToMultiTopicModel(bsonDocument)
+    else // unknown
+      throw new UnsupportedOperationException(
+        s"Unsupported DatastoreModel[TopicCategory] encoded by BsonDocument: $bsonDocument"
+      )
   }
 
   private def bsonDocumentToTopicModel(bsonDocument: BsonDocument): TopicModel = {
-    new TopicModel(bsonDocument.get("name").asString().getValue,
+    new TopicModel(
+      bsonDocument.get("name").asString().getValue,
       bsonDocument.get("creationTime").asInt64().getValue,
       bsonDocument.get("partitions").asInt32().getValue,
       bsonDocument.get("replicas").asInt32().getValue,
@@ -39,21 +42,30 @@ class TopicBLImp(waspDB: WaspMongoDB) extends TopicBL  {
         None,
       bsonDocument.get("useAvroSchemaManager").asBoolean().getValue,
       bsonDocument.get("schema").asDocument(),
-      TopicCompression.fromString(bsonDocument.get("topicCompression").asString().getValue)
+      TopicCompression.fromString(bsonDocument.get("topicCompression").asString().getValue),
+      SubjectStrategy.fromString(bsonDocument.get("subjectStrategy").asString().getValue),
+      if (bsonDocument.containsKey("keySchema"))
+        Some(bsonDocument.get("keySchema").asString().getValue)
+      else
+        None
     )
   }
 
   private def bsonDocumentToMultiTopicModel(bsonDocument: BsonDocument): MultiTopicModel = {
-    new MultiTopicModel(bsonDocument.get("name").asString().getValue,
+    new MultiTopicModel(
+      bsonDocument.get("name").asString().getValue,
       bsonDocument.get("topicNameField").asString().getValue,
-      bsonDocument.getArray("topicModelNames").getValues.asScala.toList.map(_.asString().getValue))
+      bsonDocument.getArray("topicModelNames").getValues.asScala.toList.map(_.asString().getValue)
+    )
   }
 
   override def getByName(name: String): Option[DatastoreModel[TopicCategory]] = {
     // the type argument to getDocumentByFieldRaw is only used for collection lookup, so using TopicModel is fine
-    waspDB.getDocumentByFieldRaw[TopicModel]("name", new BsonString(name)).map(topic => {
-      factory(topic)
-    })
+    waspDB
+      .getDocumentByFieldRaw[TopicModel]("name", new BsonString(name))
+      .map(topic => {
+        factory(topic)
+      })
   }
 
   override def getAll: Seq[DatastoreModel[TopicCategory]] = {
@@ -62,24 +74,23 @@ class TopicBLImp(waspDB: WaspMongoDB) extends TopicBL  {
   }
 
   override def persist(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit = topicDatastoreModel match {
-    case topicModel: TopicModel => waspDB.insert[TopicModel](topicModel)
+    case topicModel: TopicModel           => waspDB.insert[TopicModel](topicModel)
     case multiTopicModel: MultiTopicModel => waspDB.insert[MultiTopicModel](multiTopicModel)
-    case tdm => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
+    case tdm                              => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
 
   }
 
   override def insertIfNotExists(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit = topicDatastoreModel match {
-    case topicModel: TopicModel => waspDB.insertIfNotExists[TopicModel](topicModel)
+    case topicModel: TopicModel           => waspDB.insertIfNotExists[TopicModel](topicModel)
     case multiTopicModel: MultiTopicModel => waspDB.insertIfNotExists[MultiTopicModel](multiTopicModel)
-    case tdm => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
+    case tdm                              => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
 
   }
 
-
   override def upsert(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit = topicDatastoreModel match {
-    case topicModel: TopicModel => waspDB.upsert[TopicModel](topicModel)
+    case topicModel: TopicModel           => waspDB.upsert[TopicModel](topicModel)
     case multiTopicModel: MultiTopicModel => waspDB.upsert[MultiTopicModel](multiTopicModel)
-    case tdm => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
+    case tdm                              => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
 
   }
 }

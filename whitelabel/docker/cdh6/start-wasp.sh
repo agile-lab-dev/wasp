@@ -61,7 +61,7 @@ sbt -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
 cd $SCRIPT_DIR
 source get-docker-cmd.sh
 
-DOCKER_IMAGE=registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:6.3.2-nifi
+DOCKER_IMAGE=registry.gitlab.com/agilefactory/agile.wasp2/cdh-docker:6.3.2-nifi-confluent
 NAME_CONTAINER=agile-wasp-2-whitelabel
 
 set -ax

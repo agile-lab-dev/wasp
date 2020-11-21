@@ -1,16 +1,16 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import it.agilelab.bigdata.wasp.models.{MultiTopicModel, TopicCompression, TopicModel}
+import it.agilelab.bigdata.wasp.models.{MultiTopicModel, SubjectStrategy, TopicCompression, TopicModel}
 
 private[wasp] object TestTopicModel {
 
-  private val topic_name = "test"
-  private val topic2_name = "test2"
-  private val topic3_name = "test3"
-  private val topic4_name = "test4"
-  private val topic5_name = "test5"
-  private val topic6_name = "test6"
+  private val topic_name           = "test"
+  private val topic2_name          = "test2"
+  private val topic3_name          = "test3"
+  private val topic4_name          = "test4"
+  private val topic5_name          = "test5"
+  private val topic6_name          = "test6"
   private val topicCheckpoint_name = "testCheckpoint"
 
   lazy val monitoring = TopicModel(
@@ -23,9 +23,11 @@ private[wasp] object TestTopicModel {
     headersFieldName = None,
     valueFieldsNames = None,
     useAvroSchemaManager = false,
-    schema = org.mongodb.scala.bson.BsonDocument())
+    schema = org.mongodb.scala.bson.BsonDocument()
+  )
 
-  lazy val json = TopicModel(name = TopicModel.name(topic_name + "_json"),
+  lazy val json = TopicModel(
+    name = TopicModel.name(topic_name + "_json"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -36,9 +38,11 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = false,
     schema = JsonConverter
       .fromString(topicSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
-  lazy val json6 = TopicModel(name = TopicModel.name(topic6_name + "_json"),
+  lazy val json6 = TopicModel(
+    name = TopicModel.name(topic6_name + "_json"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -49,9 +53,11 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = false,
     schema = JsonConverter
       .fromString(topicSchemaHbaseMultipleClustering)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
-  lazy val jsonWithMetadata = TopicModel(name = TopicModel.name(topic_name + "_with_metadata_json"),
+  lazy val jsonWithMetadata = TopicModel(
+    name = TopicModel.name(topic_name + "_with_metadata_json"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -62,9 +68,11 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = false,
     schema = JsonConverter
       .fromString(withMetadataSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
-  lazy val json2 = TopicModel(name = TopicModel.name(topic2_name + "_json"),
+  lazy val json2 = TopicModel(
+    name = TopicModel.name(topic2_name + "_json"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -75,26 +83,23 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = false,
     schema = JsonConverter
       .fromString(topicSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
   lazy val json3 = json.copy(name = TopicModel.name(topic3_name + "_json"))
 
-  lazy val json4 = json.copy(name = TopicModel.name(topic4_name + "_json"),
-    valueFieldsNames = Some(List("id", "number", "nested")))
+  lazy val json4 =
+    json.copy(name = TopicModel.name(topic4_name + "_json"), valueFieldsNames = Some(List("id", "number", "nested")))
 
-  lazy val json5 = json.copy(name = TopicModel.name(topic5_name + "_json"),
-    valueFieldsNames = Some(List("id", "number", "nested")))
+  lazy val json5 =
+    json.copy(name = TopicModel.name(topic5_name + "_json"), valueFieldsNames = Some(List("id", "number", "nested")))
 
-  lazy val jsonMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_json",
-    "topic",
-    Seq(json, json3))
+  lazy val jsonMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_json", "topic", Seq(json, json3))
 
+  lazy val jsonMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_json", "topic", Seq(json4, json5))
 
-  lazy val jsonMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_json",
-    "topic",
-    Seq(json4, json5))
-
-  lazy val json2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "_json"),
+  lazy val json2ForKafkaHeaders = TopicModel(
+    name = TopicModel.name(topic2_name + "_json"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -105,9 +110,11 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = false,
     schema = JsonConverter
       .fromString(topicSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
-  lazy val jsonCheckpoint = TopicModel(name = TopicModel.name(topicCheckpoint_name + "_json"),
+  lazy val jsonCheckpoint = TopicModel(
+    name = TopicModel.name(topicCheckpoint_name + "_json"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -118,9 +125,12 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = false,
     schema = JsonConverter
       .fromString(topicCheckpointSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+    subjectStrategy = SubjectStrategy.Topic
+  )
 
-  lazy val avro = TopicModel(name = TopicModel.name(topic_name + "_avro"),
+  lazy val avro = TopicModel(
+    name = TopicModel.name(topic_name + "_avro"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -132,9 +142,53 @@ private[wasp] object TestTopicModel {
     schema = JsonConverter
       .fromString(topicSchema)
       .getOrElse(org.mongodb.scala.bson.BsonDocument()),
-    topicCompression = TopicCompression.Disabled)
+    topicCompression = TopicCompression.Disabled,
+    subjectStrategy = SubjectStrategy.Topic,
+    keySchema = None
+  )
 
-  lazy val avro2 = TopicModel(name = TopicModel.name(topic2_name + "_avro"),
+  lazy val avro_key_schema2 = TopicModel(
+    name = TopicModel.name(topic2_name + "_avro_key_schema"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "avro",
+    keyFieldName = Some("kafkaMetadata.key"),
+    headersFieldName = None,
+    valueFieldsNames = Some(List("id", "number", "nested")),
+    useAvroSchemaManager = true,
+    schema = JsonConverter
+      .fromString(topicSchema)
+      .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+    topicCompression = TopicCompression.Disabled,
+    subjectStrategy = SubjectStrategy.Topic,
+    keySchema = Some(
+      avroSchemaForKey
+    )
+  )
+
+  lazy val avro_key_schema = TopicModel(
+    name = TopicModel.name(topic_name + "_avro_key_schema"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "avro",
+    keyFieldName = None,
+    headersFieldName = None,
+    valueFieldsNames = None,
+    useAvroSchemaManager = true,
+    schema = JsonConverter
+      .fromString(topicSchema)
+      .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+    topicCompression = TopicCompression.Disabled,
+    subjectStrategy = SubjectStrategy.Topic,
+    keySchema = Some(
+      avroSchemaForKey
+    )
+  )
+
+  lazy val avro2 = TopicModel(
+    name = TopicModel.name(topic2_name + "_avro"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -146,25 +200,24 @@ private[wasp] object TestTopicModel {
     schema = JsonConverter
       .fromString(topicSchema)
       .getOrElse(org.mongodb.scala.bson.BsonDocument()),
-    topicCompression = TopicCompression.Lz4)
+    topicCompression = TopicCompression.Lz4,
+    subjectStrategy = SubjectStrategy.Topic
+  )
 
   lazy val avro3 = avro.copy(name = TopicModel.name(topic3_name + "_avro"))
 
-  lazy val avro4 = avro.copy(name = TopicModel.name(topic4_name + "_avro"),
-    valueFieldsNames = Some(List("id", "number", "nested")))
+  lazy val avro4 =
+    avro.copy(name = TopicModel.name(topic4_name + "_avro"), valueFieldsNames = Some(List("id", "number", "nested")))
 
-  lazy val avro5 = avro.copy(name = TopicModel.name(topic5_name + "_avro"),
-    valueFieldsNames = Some(List("id", "number", "nested")))
+  lazy val avro5 =
+    avro.copy(name = TopicModel.name(topic5_name + "_avro"), valueFieldsNames = Some(List("id", "number", "nested")))
 
-  lazy val avroMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_avro",
-    "topic",
-    Seq(avro, avro3))
+  lazy val avroMultitopicRead = MultiTopicModel.fromTopicModels("multitopic_read_avro", "topic", Seq(avro, avro3))
 
-  lazy val avroMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_avro",
-    "topic",
-    Seq(avro4, avro5))
+  lazy val avroMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_avro", "topic", Seq(avro4, avro5))
 
-  lazy val avro2ForKafkaHeaders = TopicModel(name = TopicModel.name(topic2_name + "headers_avro"),
+  lazy val avro2ForKafkaHeaders = TopicModel(
+    name = TopicModel.name(topic2_name + "headers_avro"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -175,9 +228,11 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = true,
     schema = JsonConverter
       .fromString(topicSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
-  lazy val avroCheckpoint = TopicModel(name = TopicModel.name(topicCheckpoint_name + "_avro"),
+  lazy val avroCheckpoint = TopicModel(
+    name = TopicModel.name(topicCheckpoint_name + "_avro"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -188,9 +243,11 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = true,
     schema = JsonConverter
       .fromString(topicCheckpointSchema)
-      .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
-  lazy val plaintext1 = TopicModel(name = TopicModel.name(topic_name + "_plaintext"),
+  lazy val plaintext1 = TopicModel(
+    name = TopicModel.name(topic_name + "_plaintext"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -199,15 +256,16 @@ private[wasp] object TestTopicModel {
     headersFieldName = Some("myHeaders"),
     valueFieldsNames = Some(List("myValue")),
     useAvroSchemaManager = false,
-    schema = org.mongodb.scala.bson.BsonDocument())
+    schema = org.mongodb.scala.bson.BsonDocument()
+  )
 
   lazy val plaintext2 = plaintext1.copy(name = TopicModel.name(topic2_name + "_plaintext"))
 
-  lazy val plaintextMultitopic = MultiTopicModel.fromTopicModels("multitopic_plaintext",
-    "myTopic",
-    Seq(plaintext1, plaintext2))
+  lazy val plaintextMultitopic =
+    MultiTopicModel.fromTopicModels("multitopic_plaintext", "myTopic", Seq(plaintext1, plaintext2))
 
-  lazy val binary1 = TopicModel(name = TopicModel.name(topic_name + "_binary"),
+  lazy val binary1 = TopicModel(
+    name = TopicModel.name(topic_name + "_binary"),
     creationTime = System.currentTimeMillis,
     partitions = 3,
     replicas = 1,
@@ -216,17 +274,18 @@ private[wasp] object TestTopicModel {
     headersFieldName = Some("myHeaders"),
     valueFieldsNames = Some(List("myValue")),
     useAvroSchemaManager = false,
-    schema = org.mongodb.scala.bson.BsonDocument())
+    schema = org.mongodb.scala.bson.BsonDocument()
+  )
 
   lazy val binary2 = binary1.copy(name = TopicModel.name(topic2_name + "_binary"))
 
-  lazy val binaryMultitopic = MultiTopicModel.fromTopicModels("multitopic_binary",
-    "myTopic",
-    Seq(binary1, binary2))
+  lazy val binaryMultitopic = MultiTopicModel.fromTopicModels("multitopic_binary", "myTopic", Seq(binary1, binary2))
 
   private val topicSchema =
-    TopicModel.generateField("test", "test", Some(
-      """
+    TopicModel.generateField(
+      "test",
+      "test",
+      Some("""
         |        {
         |            "name": "id",
         |            "type": "string",
@@ -254,11 +313,19 @@ private[wasp] object TestTopicModel {
         |                          ]
         |                      }
         |        }
-      """.stripMargin))
+      """.stripMargin)
+    )
+
+  private val avroSchemaForKey =
+    """
+      |{ "type": "string"}
+      |""".stripMargin
 
   private val topicSchemaHbaseMultipleClustering =
-    TopicModel.generateField("test", "test", Some(
-      """
+    TopicModel.generateField(
+      "test",
+      "test",
+      Some("""
         |        {
         |            "name": "id",
         |            "type": "string",
@@ -291,11 +358,14 @@ private[wasp] object TestTopicModel {
         |            "type": "int",
         |            "doc": ""
         |        }
-      """.stripMargin))
+      """.stripMargin)
+    )
 
   private val withMetadataSchema =
-    TopicModel.generateField("test", "test", Some(
-      """
+    TopicModel.generateField(
+      "test",
+      "test",
+      Some("""
                 {
                   "name": "metadata",
                   "type": {
@@ -371,11 +441,14 @@ private[wasp] object TestTopicModel {
                       }
                     ]
                   }
-                }"""))
+                }""")
+    )
 
   private val topicCheckpointSchema =
-    TopicModel.generateField("test", "test", Some(
-      """
+    TopicModel.generateField(
+      "test",
+      "test",
+      Some("""
         |        {
         |            "name": "version",
         |            "type": "string",
@@ -406,5 +479,6 @@ private[wasp] object TestTopicModel {
         |            "type": "string",
         |            "doc": ""
         |        }
-      """.stripMargin))
+      """.stripMargin)
+    )
 }

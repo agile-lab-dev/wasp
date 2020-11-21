@@ -4,11 +4,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingRea
 import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroDeserializerExpression, SparkUtils}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
-import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.models.{MultiTopicModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, TopicBL}
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas._
 import org.apache.avro.Schema
 import org.apache.spark.sql.functions._
@@ -123,9 +123,29 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
           )
 
           // parse avro bytes into a column, lift the contents up one level and push metadata into nested column
-          df.withColumn("value_parsed", new Column(avroToRowConversion))
+          val dfWithParsedValue = df
+            .withColumn("value_parsed", new Column(avroToRowConversion))
             .drop("value")
-            .selectExpr(metadataSelectExpr, "value_parsed.*")
+
+          val df2 = if (prototypeTopic.keySchema.isDefined) {
+
+            val avroKeyConversion = AvroDeserializerExpression(
+              col(KEY_ATTRIBUTE_NAME).expr,
+              prototypeTopic.keySchema.get,
+              darwinConf,
+              avoidReevaluation = true
+            )
+
+            dfWithParsedValue
+              .withColumn("key_parsed", new Column(avroKeyConversion))
+              .drop("key")
+              .withColumnRenamed("key_parsed", "key")
+
+          } else {
+            dfWithParsedValue
+          }
+
+          df2.selectExpr(metadataSelectExpr, "value_parsed.*")
         }
         case "json" => {
           // prepare the udf

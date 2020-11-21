@@ -85,7 +85,18 @@ class TopicDatastoreModelJsonFormat
       }
   }
 
-  implicit val topicModelFormat: RootJsonFormat[TopicModel]           = jsonFormat11(TopicModel.apply)
+  implicit lazy val subjectStrategyFormat : JsonFormat[SubjectStrategy] = new JsonFormat[SubjectStrategy] {
+    override def write(obj: SubjectStrategy): JsValue =
+      JsString(SubjectStrategy.asString(obj))
+
+    override def read(json: JsValue): SubjectStrategy=
+      json match {
+        case JsString(value) => SubjectStrategy.fromString(value)
+      }
+  }
+
+
+  implicit val topicModelFormat: RootJsonFormat[TopicModel]           = jsonFormat13(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
 
   override def write(obj: DatastoreModel[TopicCategory]): JsValue = {

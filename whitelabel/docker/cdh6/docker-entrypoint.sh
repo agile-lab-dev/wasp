@@ -38,4 +38,6 @@ hdfs dfs -copyFromLocal /code/consumers-spark/lib/it.agilelab.wasp-spark-nifi-pl
 /nifi-toolkit/bin/cli.sh nifi     create-reg-client -u http://localhost:8080/nifi-api  --registryClientName wasp --registryClientUrl http://localhost:18080/nifi-registry
 /nifi-toolkit/bin/cli.sh registry create-bucket -u http://localhost:18080 --bucketName wasp-bucket
 
+/confluent-6.0.0/bin/schema-registry-start /confluent-6.0.0/etc/schema-registry/schema-registry.properties &
+
 exec /usr/bin/supervisord

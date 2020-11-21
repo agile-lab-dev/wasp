@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.core.utils;
 
 import it.agilelab.darwin.manager.AvroSchemaManager;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -12,6 +13,8 @@ import scala.Option;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class JsonAvroConverter {
     private JsonGenericRecordReader recordReader;
@@ -31,10 +34,55 @@ public class JsonAvroConverter {
     public byte[] convertToAvro(byte[] data, Schema schema, Option<AvroSchemaManager> avroSchemaManagerOption) {
         try {
 
+            Object writeThis = null;
+
+            switch (schema.getType()) {
+                case RECORD:
+                    writeThis = data;
+                    break;
+                case ENUM:
+                    schema.getEnumOrdinal(new String(data, StandardCharsets.UTF_8));
+                    break;
+                case UNION:
+                    throw new IllegalArgumentException("Union are not supported for bare values");
+                case FIXED:
+                    writeThis = data;
+                    break;
+                case STRING:
+                    writeThis = new String(data, StandardCharsets.UTF_8);
+                    break;
+                case BYTES:
+                    writeThis = data;
+                    break;
+                case INT:
+                    writeThis = Integer.parseInt(new String(data, StandardCharsets.UTF_8));
+                    break;
+                case LONG:
+                    writeThis = Long.parseLong(new String(data, StandardCharsets.UTF_8));
+                    break;
+                case FLOAT:
+                    writeThis = Float.parseFloat(new String(data, StandardCharsets.UTF_8));
+                    break;
+                case DOUBLE:
+                    writeThis = Double.parseDouble(new String(data, StandardCharsets.UTF_8));
+                    break;
+                case BOOLEAN:
+                    writeThis = Boolean.parseBoolean(new String(data, StandardCharsets.UTF_8));
+                    break;
+                case NULL:
+                    writeThis = null;
+                    break;
+            }
+
+
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
             GenericDatumWriter<Object> writer = new GenericDatumWriter<>(schema);
-            writer.write(convertToGenericDataRecord(data, schema), encoder);
+            if (schema.getType() == Schema.Type.RECORD) {
+                writer.write(convertToGenericDataRecord(data, schema), encoder);
+            } else {
+                writer.write(writeThis, encoder);
+            }
             encoder.flush();
             if (avroSchemaManagerOption.isDefined())
                 return avroSchemaManagerOption.get().generateAvroSingleObjectEncoded(outputStream.toByteArray(), schema);
@@ -57,10 +105,28 @@ public class JsonAvroConverter {
     public byte[] convertToJson(byte[] avro, Schema schema) {
         try {
             BinaryDecoder binaryDecoder = DecoderFactory.get().binaryDecoder(avro, null);
-            GenericRecord record = new GenericDatumReader<GenericRecord>(schema).read(null, binaryDecoder);
-            return convertToJson(record);
+            if(schema.getType().equals(Schema.Type.RECORD)) {
+                GenericRecord record = new GenericDatumReader<GenericRecord>(schema).read(null, binaryDecoder);
+                return convertToJson(record);
+            }else {
+                Object record1 = new GenericDatumReader<Object>(schema).read(null, binaryDecoder);
+                return convertToJsonAny(record1, schema);
+            }
         } catch (IOException e) {
             throw new AvroConversionException("Failed to create avro structure.", e);
+        }
+    }
+
+
+    public byte[] convertToJsonAny(Object record, Schema schema) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            NoWrappingJsonEncoder jsonEncoder = new NoWrappingJsonEncoder(schema, outputStream);
+            new GenericDatumWriter<Object>(schema).write(record, jsonEncoder);
+            jsonEncoder.flush();
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new AvroConversionException("Failed to convert to JSON.", e);
         }
     }
 
@@ -75,4 +141,5 @@ public class JsonAvroConverter {
             throw new AvroConversionException("Failed to convert to JSON.", e);
         }
     }
+
 }

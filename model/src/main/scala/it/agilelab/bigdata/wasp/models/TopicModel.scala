@@ -9,6 +9,7 @@ object TopicModel {
 
   /**
     * Generate final schema for TopicModel. Use this method if you schema have a field metadata.
+    *
     * @param ownSchema
     * @return
     */
@@ -37,23 +38,73 @@ sealed abstract class TopicCompression(val kafkaProp: String)
 
 object TopicCompression {
 
-  private[wasp] val _asString : Map[TopicCompression, String] = Map(
+  private[wasp] val _asString: Map[TopicCompression, String] = Map(
     TopicCompression.Disabled -> "disabled",
     TopicCompression.Gzip -> "gzip",
     TopicCompression.Snappy -> "snappy",
     TopicCompression.Lz4 -> "lz4"
   )
 
-  def asString : PartialFunction[TopicCompression, String] = _asString
+  def asString: PartialFunction[TopicCompression, String] = _asString
 
   def fromString: PartialFunction[String, TopicCompression] = _fromString
 
   private val _fromString: Map[String, TopicCompression] = _asString.map(_.swap)
 
   case object Disabled extends TopicCompression("none")
+
   case object Gzip extends TopicCompression("gzip")
+
   case object Snappy extends TopicCompression("snappy")
+
   case object Lz4 extends TopicCompression("lz4")
+
+}
+
+sealed trait SubjectStrategy
+
+object SubjectStrategy {
+
+  def subjectFor(schemaFQN: String, topicModel: TopicModel, isKey: Boolean) = {
+    val suffix = if (isKey) {
+      "-key"
+    } else {
+      "-value"
+    }
+
+    val subjectStrategy: Option[String] = topicModel.subjectStrategy match {
+      case SubjectStrategy.None =>
+        scala.None
+      case SubjectStrategy.Topic =>
+        Some(topicModel.name + suffix)
+      case SubjectStrategy.Record =>
+        Some(schemaFQN + suffix)
+      case SubjectStrategy.TopicAndRecord =>
+        Some(topicModel.name + "-" + schemaFQN + suffix)
+    }
+    subjectStrategy
+  }
+
+  private[wasp] val _asString: Map[SubjectStrategy, String] = Map(
+    SubjectStrategy.None -> "none",
+    SubjectStrategy.Topic -> "topic",
+    SubjectStrategy.Record -> "record",
+    SubjectStrategy.TopicAndRecord -> "topic-and-record"
+  )
+
+  def asString: PartialFunction[SubjectStrategy, String] = _asString
+
+  def fromString: PartialFunction[String, SubjectStrategy] = _fromString
+
+  private val _fromString: Map[String, SubjectStrategy] = _asString.map(_.swap)
+
+  case object Topic extends SubjectStrategy
+
+  case object Record extends SubjectStrategy
+
+  case object TopicAndRecord extends SubjectStrategy
+
+  case object None extends SubjectStrategy
 
 }
 
@@ -97,8 +148,11 @@ case class TopicModel(override val name: String,
                       valueFieldsNames: Option[Seq[String]],
                       useAvroSchemaManager: Boolean,
                       schema: BsonDocument,
-                      topicCompression: TopicCompression = TopicCompression.Disabled)
-    extends DatastoreModel[TopicCategory] {
+                      topicCompression: TopicCompression = TopicCompression.Disabled,
+                      subjectStrategy: SubjectStrategy = SubjectStrategy.None,
+                      keySchema: Option[String] = None
+                     )
+  extends DatastoreModel[TopicCategory] {
   def getJsonSchema: String = schema.toJson
 
 }
