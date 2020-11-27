@@ -13,7 +13,6 @@ import org.apache.avro.generic.GenericData.Fixed
 import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
 import org.apache.avro.util.Utf8
-import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
 import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, GenericInternalRow, UnaryExpression}
@@ -65,18 +64,14 @@ case class AvroDeserializerExpression(
   override lazy val deterministic: Boolean = !avoidReevaluation
 
   def avroDatumReader(avroValue: SeekableByteArrayInput): GenericDatumReader[Object] = {
-    avroSchemaManager
-      .flatMap { m =>
-        m.extractSchema(avroValue).right.toOption.map { schema =>
-          schema -> m.getId(schema)
-        }
-      }
-      .map {
-        case (schema, schemaId) =>
-          mapDatumReader.getOrElseUpdate(schemaId, new GenericDatumReader[Object](schema, userSchema))
-      }
-      .getOrElse(datumReader)
-  }
+    for {
+      m      <- avroSchemaManager
+      id     <- m.extractId(avroValue).right.toOption
+      schema <- m.getSchema(id)
+    } yield {
+      mapDatumReader.getOrElseUpdate(id, new GenericDatumReader[Object](schema, userSchema))
+    }
+  }.getOrElse(datumReader)
 
   // We assume it returns an InternalRow since the input is a GenericRecord...
   def convertRecordToInternalRow(record: AnyRef): AnyRef = {
