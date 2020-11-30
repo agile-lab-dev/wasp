@@ -396,6 +396,103 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val httpPost = PipegraphModel(
+        name = "TestHttpPostWriterStructuredJSONPipegraph",
+        description = "Description of TestHttpWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHttpPostWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.httpWriter("Http post writer", TestHttpModel.httpPost),
+            mlModels = List(),
+            strategy= None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None
+      )
+      lazy val httpPostHeaders = PipegraphModel(
+        name = "TestHttpPostHeaderWriterStructuredJSONPipegraph",
+        description = "Description of TestHttpWriterStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHttpPostHeaderWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.httpWriter("Http post writer with headers", TestHttpModel.httpPostHeaders),
+            mlModels = List(),
+            strategy= Some(TestStrategies.testHttpHeaderStrategy),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+
+        dashboard = None
+      )
+//      lazy val httpsPost = PipegraphModel(
+//        name = "TestHttpsPostWriterStructuredJSONPipegraph",
+//        description = "Description of TestHttpsPostWriterStructuredJSONPipegraph",
+//        owner = "user",
+//        isSystem = false,
+//        creationTime = System.currentTimeMillis,
+//
+//        legacyStreamingComponents = List(),
+//        structuredStreamingComponents = List(
+//          StructuredStreamingETLModel(
+//            name = "ETL TestHttpsPostWriterStructuredJSONPipegraph",
+//            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+//            staticInputs = List.empty,
+//            streamingOutput = WriterModel.httpWriter("Https post writer", TestHttpModel.httpsPost),
+//            mlModels = List(),
+//            strategy= None,
+//            triggerIntervalMs = None,
+//            options = Map()
+//          )
+//        ),
+//        rtComponents = List(),
+//
+//        dashboard = None
+//      )
+//      lazy val httpsGet = PipegraphModel(
+//        name = "TestHttpsGetWriterStructuredJSONPipegraph",
+//        description = "Description of TestHttpsGetWriterStructuredJSONPipegraph",
+//        owner = "user",
+//        isSystem = false,
+//        creationTime = System.currentTimeMillis,
+//
+//        legacyStreamingComponents = List(),
+//        structuredStreamingComponents = List(
+//          StructuredStreamingETLModel(
+//            name = "ETL TestHttpsGetWriterStructuredJSONPipegraph",
+//            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+//            staticInputs = List.empty,
+//            streamingOutput = WriterModel.httpWriter("Https get writer", TestHttpModel.httpsGet),
+//            mlModels = List(),
+//            strategy= None,
+//            triggerIntervalMs = None,
+//            options = Map()
+//          )
+//        ),
+//        rtComponents = List(),
+//
+//        dashboard = None
+//      )
+
       object ERROR {
 
         lazy val multiETL = PipegraphModel(

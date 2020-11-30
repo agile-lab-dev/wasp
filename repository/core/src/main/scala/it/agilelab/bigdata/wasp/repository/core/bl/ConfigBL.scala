@@ -20,6 +20,7 @@ object ConfigBL {
   lazy val processGroupBL: ProcessGroupBL = factory.getProcessGroupBL
   lazy val configManagerBL : ConfigManagerBL = factory.getConfigManagerBL
   lazy val sqlSourceBl : SqlSourceBl = factory.getSqlSourceBl
+  lazy val httpBl: HttpBL = factory.getHttpBl
 }
 
 
@@ -41,5 +42,5 @@ trait FactoryBL {
   def getProcessGroupBL: ProcessGroupBL
   def getConfigManagerBL : ConfigManagerBL
   def getSqlSourceBl : SqlSourceBl
-
+  def getHttpBl: HttpBL
 }

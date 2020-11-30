@@ -19,4 +19,5 @@ class MongoFactoryBL extends FactoryBL {
   def getProcessGroupBL: ProcessGroupBL = new ProcessGroupBLImpl(WaspMongoDB.getDB)
   def getConfigManagerBL : ConfigManagerBL = new ConfigManagerBLImpl(WaspMongoDB.getDB)
   def getSqlSourceBl : SqlSourceBl = new SqlSourceBlImpl(WaspMongoDB.getDB)
+  def getHttpBl: HttpBL = new HttpBlImpl(WaspMongoDB.getDB)
 }

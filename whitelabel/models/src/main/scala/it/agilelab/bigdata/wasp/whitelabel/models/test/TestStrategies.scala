@@ -42,4 +42,9 @@ object TestStrategies {
     configuration = None
   )
 
+  lazy val testHttpHeaderStrategy = StrategyModel(
+    className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestHttpHeaders",
+    configuration = None
+  )
+
 }

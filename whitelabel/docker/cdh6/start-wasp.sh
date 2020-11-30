@@ -79,6 +79,7 @@ if [ "$PERSIST_FLAG" = false ]
     -v $SCRIPT_DIR/docker-entrypoint.sh:/docker-entrypoint.sh \
     -v $SCRIPT_DIR/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf \
     -v $SCRIPT_DIR/templates/hbase-site.xml:/templates/hbase-site.xml \
+    -v $SCRIPT_DIR/server.py:/server.py \
     -p 7180:7180 \
     -p 2222:22 \
     -p 60010:60010 \

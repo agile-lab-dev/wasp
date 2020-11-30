@@ -197,6 +197,8 @@ object Dependencies {
   val postgres                  = "org.postgresql" % "postgresql" % Versions.postgresqlVersion
   val dpcp2                     = "org.apache.commons" % "commons-dbcp2" % Versions.dbcp2Version
   val postgresqlEmbedded        = "com.opentable.components" % "otj-pg-embedded" % Versions.postgresqlEmbeddedVersion % Test
+  val mockOkHttp2               = "com.squareup.okhttp" % "mockwebserver" % "2.7.5" % Test // in sync with cdh6
+
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(
@@ -352,9 +354,11 @@ object Dependencies {
       httpClient
   ).map(excludeLog4j) ++ log4j
 
-  val plugin_elastic_spark = Seq(
+  val plugin_elastic_spark: Seq[ModuleID] = Seq(
     elasticSearchSpark
   )
+
+  val plugin_http_spark = Seq(mockOkHttp2, scalaTest)
 
   val plugin_hbase_spark = (
     hbase :+

@@ -166,6 +166,16 @@ trait JsonSupport
   implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] =
     new TopicDatastoreModelJsonFormat
   implicit lazy val indexModelFormat: RootJsonFormat[IndexModel]             = jsonFormat9(IndexModel.apply)
+  implicit lazy val httpCompressionFormat: JsonFormat[HttpCompression] = new JsonFormat[HttpCompression] {
+    override def write(obj: HttpCompression): JsValue =
+      JsString(HttpCompression.asString(obj))
+
+    override def read(json: JsValue): HttpCompression =
+      json match {
+        case JsString(value) => HttpCompression.fromString(value)
+      }
+  }
+  implicit lazy val httpModelFormat: RootJsonFormat[HttpModel] = jsonFormat8(HttpModel.apply)
   implicit lazy val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
   implicit lazy val streamingReaderModelFormat: RootJsonFormat[StreamingReaderModel] = jsonFormat5(
     (

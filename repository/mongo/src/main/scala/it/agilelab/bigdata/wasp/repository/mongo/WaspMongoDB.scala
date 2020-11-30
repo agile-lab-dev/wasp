@@ -15,7 +15,7 @@ import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, _}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}
-import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, SubjectStrategyCodecProvider, TopicCompressionCodecProvider}
+import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, SubjectStrategyCodecProvider, TopicCompressionCodecProvider, HttpCompressionCodecProvider}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper
 import org.bson.{BsonReader, BsonWriter}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
@@ -353,6 +353,7 @@ object WaspMongoDB extends Logging {
   val documentName = "document"
   val freeCodeName = "freeCode"
   val processGroupsName = "processGroups"
+  val httpName = "http"
 
   val collectionsLookupTable: Map[Type, String] = Map(
     typeTag[PipegraphModel].tpe -> pipegraphsName,
@@ -382,7 +383,8 @@ object WaspMongoDB extends Logging {
     typeTag[DocumentModel].tpe -> documentName,
     typeTag[FreeCodeModel].tpe -> freeCodeName,
     typeTag[ProcessGroupModel].tpe -> processGroupsName,
-    typeTag[CompilerConfigModel].tpe -> configurationsName
+    typeTag[CompilerConfigModel].tpe -> configurationsName,
+    typeTag[HttpModel].tpe -> httpName
   )
 
   lazy val indexKeys: Map[String, Bson] = collectionsLookupTable.map {
@@ -392,6 +394,7 @@ object WaspMongoDB extends Logging {
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
     DatastoreProductCodecProvider,
     TopicCompressionCodecProvider,
+    HttpCompressionCodecProvider,
     SubjectStrategyCodecProvider,
     TypesafeConfigCodecProvider,
     createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
@@ -443,7 +446,8 @@ object WaspMongoDB extends Logging {
     createCodecProviderIgnoreNone(classOf[NifiStatelessConfigModel]),
     createCodecProviderIgnoreNone(classOf[CompilerConfigModel]),
     createCodecProviderIgnoreNone(classOf[RetainedConfigModel]),
-    createCodecProviderIgnoreNone(classOf[SchedulingStrategyConfigModel])
+    createCodecProviderIgnoreNone(classOf[SchedulingStrategyConfigModel]),
+    createCodecProviderIgnoreNone(classOf[HttpModel])
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(

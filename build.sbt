@@ -147,6 +147,10 @@ lazy val plugin_mailer_spark = Project("wasp-plugin-mailer-spark", file("plugin-
   .dependsOn(consumers_spark)
   .settings(libraryDependencies ++= Dependencies.plugin_mailer_spark)
 
+lazy val plugin_http_spark = Project("wasp-plugin-http-spark", file("plugin-http-spark"))
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
 
 /* Yarn  */
 
@@ -222,6 +226,7 @@ lazy val wasp = Project("wasp", file("."))
     yarn,
     spark,
     plugin_mailer_spark,
+    plugin_http_spark,
     spark_sql_kafka_0_11,
     openapi,
     nifi_client
@@ -268,6 +273,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_raw_spark)
   .dependsOn(plugin_solr_spark)
   .dependsOn(plugin_mongo_spark)
+  .dependsOn(plugin_http_spark)
   .dependsOn(spark_telemetry_plugin)
   .dependsOn(spark_nifi_plugin)
   .settings(

@@ -134,6 +134,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.hbase)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.hbaseMultipleClustering)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.multiETL)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpPost)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpPostHeaders)
+//    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpsPost)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.ERROR.multiETL)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.CHECKPOINT.console)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.console)
@@ -192,6 +195,11 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.topicBL.upsert(TestTopicModel.monitoring)
     ConfigBL.producerBL.upsert(TestProducerModel.backlog)
     ConfigBL.producerBL.upsert(TestProducerModel.throughput)
+
+    /* Test Http model*/
+    ConfigBL.httpBl.upsert(TestHttpModel.httpPost)
+    ConfigBL.httpBl.upsert(TestHttpModel.httpsPost)
+    ConfigBL.httpBl.upsert(TestHttpModel.httpPostHeaders)
   }
 }
 

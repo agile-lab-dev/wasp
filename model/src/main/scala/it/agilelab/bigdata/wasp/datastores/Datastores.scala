@@ -21,6 +21,7 @@ trait RawCategory       extends DatastoreCategory with StreamingSink with BatchS
 trait TopicCategory     extends DatastoreCategory with StreamingAndBatchSourceAndSink        { override val categoryName = "topic"     }
 trait WebSocketCategory extends DatastoreCategory with StreamingSourceAndSink                { override val categoryName = "websocket" }
 trait WebMailCategory 	extends DatastoreCategory with StreamingSink												 { override val categoryName = "webmail"   }
+trait HttpCategory 			extends DatastoreCategory with StreamingSink												 { override val categoryName = "http"   }
 trait DocumentCategory  extends DatastoreCategory with StreamingSink with BatchSourceAndSink { override val categoryName = "document"  }
 
 /**
@@ -31,9 +32,9 @@ trait DocumentCategory  extends DatastoreCategory with StreamingSink with BatchS
 	*/
 sealed trait DatastoreProduct extends DatastoreCategory {
 	import DatastoreProduct._
-	
+
 	def productName: Option[String]
-	
+
 	/**
 		* Returns the product name, looking up the default datastore product for the category if this is a *GenericProduct.
 		*/
@@ -43,14 +44,14 @@ sealed trait DatastoreProduct extends DatastoreCategory {
 			case None    => getDefaultProductForThisCategory.productName.get
 		}
 	}
-	
+
 	/**
 		* Returns the default product for this category, looking it up in the configuration.
 		*/
 	def getDefaultProductForThisCategory: DatastoreProduct = {
 		val productsInThisCategory = productsLookupMap
 			.filterKeys(_._1 == categoryName)
-		
+
 		val defaultProductNameFromConfig = this match {
 			case _: ConsoleCategory   => ConsoleProduct.productName.get
 			case _: DatabaseCategory  => JDBCProduct.productName.get
@@ -65,9 +66,9 @@ sealed trait DatastoreProduct extends DatastoreCategory {
 				throw new IllegalArgumentException(s"""Unknown datastore category "$categoryName" of $this, unable to provide
 					                                    | default datastore product""".stripMargin.filterNot(_.isControl))
 		}
-		
+
 		val maybeDefaultProduct = productsInThisCategory.get((categoryName, defaultProductNameFromConfig))
-		
+
 		if (maybeDefaultProduct.isEmpty) {
 			throw new IllegalArgumentException(s"""Unknown default datastore product name "$defaultProductNameFromConfig" for
 				                                    | category "$categoryName" of $this, unable to provide default datastore
@@ -91,26 +92,27 @@ object DatastoreProduct {
 	object GenericIndexProduct    extends IndexCategory     with DatastoreProduct { override val productName = None    				   }
 	object GenericKeyValueProduct extends KeyValueCategory  with DatastoreProduct { override val productName = None    					 }
 	object GenericTopicProduct    extends TopicCategory     with DatastoreProduct { override val productName = None              }
+	object HttpProduct            extends HttpCategory      with DatastoreProduct { override val productName = Some("http")      }
 	object WebMailProduct					extends WebMailCategory   with DatastoreProduct { override val productName = Some("webmail")   }
 
 	// product lookup map for default datastore resolution
 	private[wasp] val productsLookupMap = buildProductsLookupMap()
-	
+
 	// build products lookup map of the form (("category", "product"), DatastoreProduct)
 	private def buildProductsLookupMap(): Map[(String, String), DatastoreProduct] = {
 		// grab all objects that are subtypes of DatastoreProduct
 		val objectSubclassesList = ReflectionUtils.findObjectSubclassesOfSealedTraitAssumingTheyAreAllObjects[DatastoreProduct]
-		
+
 		// build list of (identifier, object)
 		val subclassesIdentifiersList = objectSubclassesList
 			.filter(_.productName.nonEmpty) // filter out *GenericProduct
 			.map(datastoreProduct => ((datastoreProduct.categoryName, datastoreProduct.productName.get), datastoreProduct))
-		
+
 		// check that we don't have collisions so we can use the list for forward and reverse lookup maps
 		val listSize = subclassesIdentifiersList.size
 		require(listSize == subclassesIdentifiersList.map(_._1).toSet.size, "There cannot be collisions between identifiers!")
 		require(listSize == subclassesIdentifiersList.map(_._2).toSet.size, "There cannot be collisions between subclasses!")
-		
+
 		subclassesIdentifiersList.toMap
 	}
 }
