@@ -47,4 +47,9 @@ object TestStrategies {
     configuration = None
   )
 
+  lazy val testHttpEnrichmentStrategy = StrategyModel(
+    className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestHttpEnrichmentStrategy",
+    configuration = None
+  )
+
 }

@@ -45,6 +45,7 @@ import it.agilelab.bigdata.wasp.models.editor.{
 }
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.utils.FreeCodeCompilerUtils
+import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.mongodb.scala.bson.BsonDocument
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
@@ -74,7 +75,8 @@ trait PipegraphEditorService {
           legacyStreamingComponents = List.empty,
           structuredStreamingComponents =
             dto.structuredStreamingComponents.map(toStructuredStreamingETLModel(_).right.get),
-          rtComponents = List.empty
+          rtComponents = List.empty,
+          enrichmentSources = RestEnrichmentConfigModel(Map.empty)
         )
       )
   }

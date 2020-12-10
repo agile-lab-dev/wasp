@@ -44,7 +44,7 @@ class StructuredStreamingETLActor private (
   when(WaitingToBeActivated) {
     case Event(MyProtocol.ActivateETL(etl), IdleData) =>
 
-      activate(etl) match {
+      activate(etl, pipegraph) match {
         case Success(dataFrame) => goto(WaitingToBeMaterialized) using ActivatedData(dataFrame) replying Protocol.ETLActivated(etl)
         case Failure(reason) =>
           sender() ! MyProtocol.ETLNotActivated(etl, reason)

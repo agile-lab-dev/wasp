@@ -5,6 +5,7 @@ import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingPipegraph
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.{EventPipegraphModel, SolrEventIndex}
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
+import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 
 /**
 	* Default system pipegraphs.
@@ -353,7 +354,8 @@ private[wasp] object LoggerPipegraph {
         )
       ),
       rtComponents = List(),
-      dashboard = None
+      dashboard = None,
+      enrichmentSources = RestEnrichmentConfigModel(Map.empty)
     )
 
   private def writer: WriterModel = WriterModel.solrWriter("Write logging data to Solr", solrLoggerIndex)
@@ -394,7 +396,8 @@ private[wasp] object TelemetryPipegraph {
         )
       ),
       rtComponents = List(),
-      dashboard = None
+      dashboard = None,
+      enrichmentSources = RestEnrichmentConfigModel(Map.empty)
     )
 
   private def writer: WriterModel = {

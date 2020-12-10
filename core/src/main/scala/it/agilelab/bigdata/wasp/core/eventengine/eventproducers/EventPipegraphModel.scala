@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.core.eventengine.eventproducers
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.eventengine.settings.{EventPipegraphSettings, EventPipegraphSettingsFactory, EventProducerETLSettings}
 import it.agilelab.bigdata.wasp.core.eventengine.{EventReaderModelFactory, EventTopicModelFactory}
+import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, MultiTopicModel, PipegraphModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
 
 /**
@@ -112,7 +113,8 @@ object EventPipegraphModel {
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = eventETLModels :+ storageETLModel,
     rtComponents = List.empty,
-    dashboard = None)
+    dashboard = None,
+    enrichmentSources = RestEnrichmentConfigModel(Map.empty))
 
 }
 

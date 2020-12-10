@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.models
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
+import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 
 
 object PipegraphStatus extends Enumeration {
@@ -125,7 +126,8 @@ case class PipegraphModel(override val name: String,
                           structuredStreamingComponents: List[StructuredStreamingETLModel],
                           rtComponents: List[RTModel],
                           dashboard: Option[DashboardModel] = None,
-                          labels: Set[String] = Set.empty) extends Model {
+                          labels: Set[String] = Set.empty,
+                          enrichmentSources: RestEnrichmentConfigModel = RestEnrichmentConfigModel(Map.empty)) extends Model {
 
   def generateStandardPipegraphName: String = s"pipegraph_$name"
   

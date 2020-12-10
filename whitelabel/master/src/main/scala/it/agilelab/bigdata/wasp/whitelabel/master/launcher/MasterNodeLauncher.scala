@@ -136,6 +136,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.multiETL)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpPost)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpPostHeaders)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpEnrichment)
 //    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpsPost)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.ERROR.multiETL)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.CHECKPOINT.console)

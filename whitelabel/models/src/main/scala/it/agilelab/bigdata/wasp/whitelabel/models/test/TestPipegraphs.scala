@@ -2,6 +2,9 @@ package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.models._
+import it.agilelab.bigdata.wasp.models.configuration.{RestEnrichmentConfigModel, RestEnrichmentSource}
+
+import scala.collection.immutable.Map
 
 private[wasp] object TestPipegraphs {
 
@@ -492,6 +495,56 @@ private[wasp] object TestPipegraphs {
 //
 //        dashboard = None
 //      )
+
+      lazy val httpEnrichment = PipegraphModel(
+        name = "TestHttpEnrichmentStructuredJSONPipegraph",
+        description = "Description of TestHttpEnrichmentStructuredJSONPipegraph",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestHttpEnrichmentStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Console Writer"),
+            mlModels = List(),
+            strategy= Some(TestStrategies.testHttpEnrichmentStrategy),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None,
+        enrichmentSources =
+          RestEnrichmentConfigModel(
+            Map.apply(
+              "getHttpExample" ->
+                RestEnrichmentSource("http",
+                  Map.apply(
+                    "method" -> "GET",
+                    "url" -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
+                  ),
+                  Map.apply(
+                    "Content-type" -> "text/plain",
+                    "charset" -> "ISO-8859-1"
+                  )
+                ),
+              "postHttpExample" ->
+                RestEnrichmentSource("http",
+                  Map.apply(
+                    "method" -> "POST",
+                    "url" -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
+                  ),
+                  Map.apply(
+                    "Content-type" -> "text/plain",
+                    "charset" -> "ISO-8859-1"
+                  )
+                )
+            )
+          )
+      )
 
       object ERROR {
 

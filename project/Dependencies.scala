@@ -231,6 +231,8 @@ object Dependencies {
 
   val jaxRs = "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.5"
 
+  val wireMock = Seq("com.github.tomakehurst" % "wiremock-jre8" % "2.21.0" % Test, "xmlunit" % "xmlunit" % "1.6" % Test)
+
   // ===================================================================================================================
   // Test dependencies
   // ===================================================================================================================

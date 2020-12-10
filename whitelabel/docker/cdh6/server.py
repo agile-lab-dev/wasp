@@ -13,6 +13,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
+        response = '{"id": "0","text": "TestResponse"}'
+        self.wfile.write(bytes(response, 'utf-8'))
 
     def do_GET(self):
         logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))

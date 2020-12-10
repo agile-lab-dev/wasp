@@ -92,7 +92,7 @@ lazy val producers = Project("wasp-producers", file("producers"))
 lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(core)
-  .settings(libraryDependencies ++= Dependencies.consumers_spark)
+  .settings(libraryDependencies ++= Dependencies.consumers_spark ++ Dependencies.wireMock)
   .settings(Settings.disableParallelTests: _*)
   .enablePlugins(JavaAppPackaging)
 

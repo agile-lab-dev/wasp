@@ -11,7 +11,7 @@ import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.{MlModelsBroadcastDB, MlModelsDB}
 import it.agilelab.bigdata.wasp.consumers.spark.metadata.{Metadata, Path}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.{FreeCodeStrategy, ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.{EnrichmentStrategy, FreeCodeStrategy, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
@@ -19,7 +19,7 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct._
 import it.agilelab.bigdata.wasp.models.configuration.{KafkaEntryConfig, TelemetryConfigModel, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.models.{MlModelOnlyInfo, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
+import it.agilelab.bigdata.wasp.models.{MlModelOnlyInfo, PipegraphModel, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
 import org.apache.kafka.clients.producer._
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -76,7 +76,7 @@ trait ActivationSteps {
     * @param etl The [[StructuredStreamingETLModel]] to activate
     * @return the output dataframe
     */
-  protected def activate(etl: StructuredStreamingETLModel): Try[DataFrame] =
+  protected def activate(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel): Try[DataFrame] =
     for {
       streamingDataFrame <- createStreamingDataFrameFromStreamingSource(etl, etl.streamingInput).recoverWith {
                              case e: Throwable =>
@@ -88,7 +88,7 @@ trait ActivationSteps {
                            case e: Throwable =>
                              Failure(new Exception(s"Cannot instantiate static sources in etl ${etl.name}", e))
                          }
-      transformedStream <- applyTransformOrInputIfNoStrategy(etl, streamingDataFrame, staticDataFrames).recoverWith {
+      transformedStream <- applyTransformOrInputIfNoStrategy(etl, pipegraph, streamingDataFrame, staticDataFrames).recoverWith {
                             case e: Throwable =>
                               Failure(new Exception(s"Failed to apply strategy in etl ${etl.name}", e))
                           }
@@ -191,11 +191,12 @@ trait ActivationSteps {
     */
   private def applyTransformOrInputIfNoStrategy(
       etl: StructuredStreamingETLModel,
+      pipegraph: PipegraphModel,
       structuredInputStream: (ReaderKey, DataFrame),
       nonStreamingInputStreams: Map[ReaderKey, DataFrame]
   ): Try[DataFrame] = {
 
-    createStrategy(etl) match {
+    createStrategy(etl, pipegraph) match {
       case Success(Some(strategy)) =>
         applyTransform(
           structuredInputStream._1,
@@ -219,7 +220,7 @@ trait ActivationSteps {
     * @param etl The etl to instantiate strategy for
     * @return A try holding an optional strategy
     */
-  protected def createStrategy(etl: StructuredStreamingETLModel): Try[Option[Strategy]] = {
+  protected def createStrategy(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel): Try[Option[Strategy]] = {
 
     def instantiateStrategy(strategyModel: StrategyModel): Try[Strategy] = Try {
       val conf = strategyModel.configurationConfig().getOrElse(ConfigFactory.empty())
@@ -249,7 +250,10 @@ trait ActivationSteps {
           newStrategy
         } else {
           val strategy = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
-          strategy.configuration = conf
+          strategy match {
+            case enrichmentStrategy: EnrichmentStrategy => enrichmentStrategy.enricherConfig = pipegraph.enrichmentSources
+            case _ => strategy.configuration = conf
+          }
           strategy
         }
       }

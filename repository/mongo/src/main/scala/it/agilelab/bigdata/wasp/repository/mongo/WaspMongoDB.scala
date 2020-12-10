@@ -447,7 +447,9 @@ object WaspMongoDB extends Logging {
     createCodecProviderIgnoreNone(classOf[CompilerConfigModel]),
     createCodecProviderIgnoreNone(classOf[RetainedConfigModel]),
     createCodecProviderIgnoreNone(classOf[SchedulingStrategyConfigModel]),
-    createCodecProviderIgnoreNone(classOf[HttpModel])
+    createCodecProviderIgnoreNone(classOf[HttpModel]),
+    createCodecProviderIgnoreNone(classOf[RestEnrichmentConfigModel]),
+    createCodecProviderIgnoreNone(classOf[RestEnrichmentSource])
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(

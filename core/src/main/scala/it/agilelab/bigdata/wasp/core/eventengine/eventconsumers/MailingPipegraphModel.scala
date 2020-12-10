@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.core.eventengine.eventconsumers
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.eventengine.EventReaderModelFactory
 import it.agilelab.bigdata.wasp.core.eventengine.settings.{MailingPipegraphSettings, MailingPipegraphSettingsFactory}
+import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 import it.agilelab.bigdata.wasp.models.{PipegraphModel, StrategyModel, StructuredStreamingETLModel, WebMailModel, WriterModel}
 
 /**
@@ -92,6 +93,7 @@ object MailingPipegraphModel {
     legacyStreamingComponents = List.empty,
     structuredStreamingComponents = mailingETLModels,
     rtComponents = List.empty,
-    dashboard = None)
+    dashboard = None,
+    enrichmentSources = RestEnrichmentConfigModel(Map.empty))
 
 }

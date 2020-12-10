@@ -203,12 +203,14 @@ trait JsonSupport
   implicit lazy val mlModelOnlyInfoFormat: RootJsonFormat[MlModelOnlyInfo]  = jsonFormat7(MlModelOnlyInfo.apply)
   implicit lazy val strategyModelFormat: RootJsonFormat[StrategyModel]      = jsonFormat2(StrategyModel.apply)
   implicit lazy val dashboardModelFormat: RootJsonFormat[DashboardModel]    = jsonFormat2(DashboardModel.apply)
+  implicit lazy val restEnrichmentSourceFormat: RootJsonFormat[RestEnrichmentSource]    = jsonFormat3(RestEnrichmentSource.apply)
+  implicit lazy val restEnrichmentConfigModel: RootJsonFormat[RestEnrichmentConfigModel]    = jsonFormat1(RestEnrichmentConfigModel.apply)
   implicit lazy val etlModelFormat: RootJsonFormat[LegacyStreamingETLModel] = jsonFormat8(LegacyStreamingETLModel.apply)
   implicit lazy val etlStructuredModelFormat: RootJsonFormat[StructuredStreamingETLModel] = jsonFormat9(
     StructuredStreamingETLModel.apply
   )
   implicit lazy val rTModelFormat: RootJsonFormat[RTModel]                   = jsonFormat5(RTModel.apply)
-  implicit lazy val pipegraphModelFormat: RootJsonFormat[PipegraphModel]     = jsonFormat10(PipegraphModel.apply)
+  implicit lazy val pipegraphModelFormat: RootJsonFormat[PipegraphModel]     = jsonFormat11(PipegraphModel.apply)
   implicit lazy val connectionConfigFormat: RootJsonFormat[ConnectionConfig] = jsonFormat5(ConnectionConfig.apply)
   implicit lazy val zookeeperConnectionFormat: RootJsonFormat[ZookeeperConnectionsConfig] = jsonFormat2(
     ZookeeperConnectionsConfig.apply
