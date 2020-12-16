@@ -160,15 +160,15 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
   }
 
   test("streaming - write to kafka with topic field") {
-    val input = MemoryStream[String]
+    val input = MemoryStream[(String, String)]
     val topic = newTopic()
     testUtils.createTopic(topic)
 
     val writer = createKafkaWriter(
-      input.toDF(),
+      input.toDF().select(col("_1").as("key"), col("_2").as("value")),
       withTopic = None,
       withOutputMode = Some(OutputMode.Append))(
-      withSelectExpr = s"'$topic' as topic", "value")
+      withSelectExpr = s"'$topic' as topic", "key", "value")
 
     val reader = createKafkaReader(topic)
       .selectExpr("CAST(key as STRING) key", "CAST(value as STRING) value")
@@ -176,13 +176,16 @@ class KafkaSinkSuite extends StreamTest with SharedSQLContext {
       .as[(Int, Int)]
       .map(_._2)
 
+    val firstData = Seq.range(1,6).map(_.toString)
+    val secondData = Seq.range(6,11).map(_.toString)
+
     try {
-      input.addData("1", "2", "3", "4", "5")
+      input.addData(firstData.zip(firstData))
       failAfter(streamingTimeout) {
         writer.processAllAvailable()
       }
       checkDatasetUnorderly(reader, 1, 2, 3, 4, 5)
-      input.addData("6", "7", "8", "9", "10")
+      input.addData(secondData.zip(secondData))
       failAfter(streamingTimeout) {
         writer.processAllAvailable()
       }

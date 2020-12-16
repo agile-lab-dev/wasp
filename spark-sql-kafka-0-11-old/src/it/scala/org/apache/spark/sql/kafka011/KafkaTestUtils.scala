@@ -32,12 +32,14 @@ import kafka.common.TopicAndPartition
 import kafka.server.{KafkaConfig, KafkaServer}
 import kafka.server.checkpoints.{OffsetCheckpoint, OffsetCheckpointFile}
 import kafka.utils.ZkUtils
+import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.clients.admin.{AdminClient, CreatePartitionsOptions, NewPartitions}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer._
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.TopicExistsException
 import org.apache.kafka.common.network.ListenerName
-import org.apache.kafka.common.protocol.SecurityProtocol
+import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
 import org.scalatest.concurrent.Eventually._
@@ -47,11 +49,11 @@ import org.apache.spark.util.Utils
 import org.apache.spark.SparkConf
 
 /**
- * This is a helper class for Kafka test suites. This has the functionality to set up
- * and tear down local Kafka servers, and to push data using Kafka producers.
- *
- * The reason to put Kafka test utility class in src is to test Python related Kafka APIs.
- */
+  * This is a helper class for Kafka test suites. This has the functionality to set up
+  * and tear down local Kafka servers, and to push data using Kafka producers.
+  *
+  * The reason to put Kafka test utility class in src is to test Python related Kafka APIs.
+  */
 class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends Logging {
 
   // Zookeeper related configurations
@@ -78,6 +80,7 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
   // Flag to test whether the system is correctly started
   private var zkReady = false
   private var brokerReady = false
+  private var adminClient: AdminClient = null
 
   def zkAddress: String = {
     assert(zkReady, "Zookeeper not setup yet or already torn down, cannot get zookeeper address")
@@ -118,6 +121,10 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
       brokerPort = server.boundPort(ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT))
       (server, brokerPort)
     }, new SparkConf(), "KafkaBroker")
+
+    val props = new Properties()
+    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, s"$brokerHost:$brokerPort")
+    adminClient = AdminClient.create(props)
 
     brokerReady = true
   }
@@ -202,7 +209,9 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
 
   /** Add new paritions to a Kafka topic */
   def addPartitions(topic: String, partitions: Int): Unit = {
-    AdminUtils.addPartitions(zkUtils, topic, partitions)
+    adminClient.createPartitions(
+      Map(topic -> NewPartitions.increaseTo(partitions)).asJava,
+      new CreatePartitionsOptions)
     // wait until metadata is propagated
     (0 until partitions).foreach { p =>
       waitUntilMetadataIsPropagated(topic, p)
@@ -227,9 +236,9 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
 
   /** Send the array of messages to the Kafka broker using specified partition */
   def sendMessages(
-      topic: String,
-      messages: Array[String],
-      partition: Option[Int]): Seq[(String, RecordMetadata)] = {
+                    topic: String,
+                    messages: Array[String],
+                    partition: Option[Int]): Seq[(String, RecordMetadata)] = {
     producer = new KafkaProducer[String, String](producerConfiguration)
     val offsets = try {
       messages.map { m =>
@@ -239,7 +248,7 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
         }
         val metadata =
           producer.send(record).get(10, TimeUnit.SECONDS)
-          logInfo(s"\tSent $m to partition ${metadata.partition}, offset ${metadata.offset}")
+        logInfo(s"\tSent $m to partition ${metadata.partition}, offset ${metadata.offset}")
         (m, metadata)
       }
     } finally {
@@ -321,11 +330,12 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
   }
 
   /** Verify topic is deleted in all places, e.g, brokers, zookeeper. */
+  /** Verify topic is deleted in all places, e.g, brokers, zookeeper. */
   private def verifyTopicDeletion(
-      topic: String,
-      numPartitions: Int,
-      servers: Seq[KafkaServer]): Unit = {
-    val topicAndPartitions = (0 until numPartitions).map(TopicAndPartition(topic, _))
+                                   topic: String,
+                                   numPartitions: Int,
+                                   servers: Seq[KafkaServer]): Unit = {
+    val topicAndPartitions = (0 until numPartitions).map(new TopicPartition(topic, _))
 
     import ZkUtils._
     // wait until admin path for delete topic is deleted, signaling completion of topic deletion
@@ -335,18 +345,18 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
     assert(!zkUtils.pathExists(getTopicPath(topic)), s"${getTopicPath(topic)} still exists")
     // ensure that the topic-partition has been deleted from all brokers' replica managers
     assert(servers.forall(server => topicAndPartitions.forall(tp =>
-      server.replicaManager.getPartition(new TopicPartition(tp.topic, tp.partition)) == None)),
+      server.replicaManager.getPartition(tp) == None)),
       s"topic $topic still exists in the replica manager")
     // ensure that logs from all replicas are deleted if delete topic is marked successful
     assert(servers.forall(server => topicAndPartitions.forall(tp =>
-      server.getLogManager().getLog(new TopicPartition(tp.topic, tp.partition)).isEmpty)),
+      server.getLogManager().getLog(tp).isEmpty)),
       s"topic $topic still exists in log mananger")
     // ensure that topic is removed from all cleaner offsets
     assert(servers.forall(server => topicAndPartitions.forall { tp =>
-      val checkpoints = server.getLogManager().logDirs.map { logDir =>
+      val checkpoints = server.getLogManager().liveLogDirs.map { logDir =>
         new OffsetCheckpointFile(new File(logDir, "cleaner-offset-checkpoint")).read()
       }
-      checkpoints.forall(checkpointsPerLogDir => !checkpointsPerLogDir.contains(new TopicPartition(tp.topic, tp.partition)))
+      checkpoints.forall(checkpointsPerLogDir => !checkpointsPerLogDir.contains(tp))
     }), s"checkpoint for topic $topic still exists")
     // ensure the topic is gone
     assert(
@@ -356,10 +366,10 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
 
   /** Verify topic is deleted. Retry to delete the topic if not. */
   private def verifyTopicDeletionWithRetries(
-      zkUtils: ZkUtils,
-      topic: String,
-      numPartitions: Int,
-      servers: Seq[KafkaServer]) {
+                                              zkUtils: ZkUtils,
+                                              topic: String,
+                                              numPartitions: Int,
+                                              servers: Seq[KafkaServer]) {
     eventually(timeout(60.seconds), interval(200.millis)) {
       try {
         verifyTopicDeletion(topic, numPartitions, servers)
@@ -375,13 +385,11 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
   }
 
   private def waitUntilMetadataIsPropagated(topic: String, partition: Int): Unit = {
-    def isPropagated = server.apis.metadataCache.getPartitionInfo(topic, partition) match {
+    def isPropagated = server.metadataCache.getPartitionInfo(topic, partition) match {
       case Some(partitionState) =>
-        val leaderAndInSyncReplicas = partitionState.leaderIsrAndControllerEpoch.leaderAndIsr
-
         zkUtils.getLeaderForPartition(topic, partition).isDefined &&
-          Request.isValidBrokerId(leaderAndInSyncReplicas.leader) &&
-          leaderAndInSyncReplicas.isr.size >= 1
+          Request.isValidBrokerId(partitionState.basePartitionState.leader) &&
+          !partitionState.basePartitionState.replicas.isEmpty
 
       case _ =>
         false
@@ -390,6 +398,7 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
       assert(isPropagated, s"Partition [$topic, $partition] metadata not propagated after timeout")
     }
   }
+
 
   private class EmbeddedZookeeper(val zkConnect: String) {
     val snapshotDir = Utils.createTempDir()
@@ -423,6 +432,13 @@ class KafkaTestUtils(withBrokerProps: Map[String, Object] = Map.empty) extends L
         case e: IOException if Utils.isWindows =>
           logWarning(e.getMessage)
       }
+    }
+  }
+
+  def waitUntilOffsetAppears(topicPartition: TopicPartition, offset: Long): Unit = {
+    eventually(timeout(60.seconds)) {
+      val currentOffset = getLatestOffsets(Set(topicPartition.topic)).get(topicPartition)
+      assert(currentOffset.nonEmpty && currentOffset.get >= offset)
     }
   }
 }
