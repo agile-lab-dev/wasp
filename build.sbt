@@ -15,8 +15,14 @@ lazy val IntegrationTest = config("it") extend (Test)
 
 val generateOpenApi: TaskKey[Unit] = TaskKey("generate-open-api", "Updates the generated open api specification")
 
-
 lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark-sql-kafka-0-11"))
+  .configs(IntegrationTest)
+  .settings(Settings.commonSettings: _*)
+  .settings(Defaults.itSettings)
+  .settings(Settings.disableParallelTests: _*)
+  .settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
+
+lazy val spark_sql_kafka_0_11_old = Project("wasp-spark-sql-kafka-0-11-old", file("spark-sql-kafka-0-11-old"))
   .configs(IntegrationTest)
   .settings(Settings.commonSettings: _*)
   .settings(Defaults.itSettings)
@@ -32,11 +38,10 @@ lazy val scala_compiler = Project("wasp-compiler", file("compiler"))
   .settings(libraryDependencies ++= Dependencies.test :+ Dependencies.scalaCompiler :+ Dependencies.scalaPool)
   .enablePlugins(BuildInfoPlugin)
 
-
 lazy val model = Project("wasp-model", file("model"))
   .settings(Settings.commonSettings: _*)
   .settings(Settings.sbtBuildInfoSettings: _*)
-  .settings(libraryDependencies ++= Dependencies.model ++  Dependencies.test :+ Dependencies.darwinCore)
+  .settings(libraryDependencies ++= Dependencies.model ++ Dependencies.test :+ Dependencies.darwinCore)
   .enablePlugins(BuildInfoPlugin)
 
 lazy val core = Project("wasp-core", file("core"))
@@ -53,7 +58,7 @@ lazy val repository_core = Project("wasp-repository-core", file("repository/core
   .settings(Settings.commonSettings: _*)
   .dependsOn(model)
   .settings(Settings.sbtBuildInfoSettings: _*)
-  .settings(libraryDependencies ++=  Dependencies.test)
+  .settings(libraryDependencies ++= Dependencies.test)
   .enablePlugins(BuildInfoPlugin)
 
 lazy val repository_mongo = Project("wasp-repository-mongo", file("repository/mongo"))
@@ -128,6 +133,12 @@ lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-ka
   .dependsOn(spark_sql_kafka_0_11)
   .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
+lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(consumers_spark)
+  .dependsOn(spark_sql_kafka_0_11_old)
+  .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
+
 lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(consumers_spark)
@@ -153,7 +164,6 @@ lazy val plugin_http_spark = Project("wasp-plugin-http-spark", file("plugin-http
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
 
 /* Yarn  */
-
 
 lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
   .settings(Settings.commonSettings: _*)
@@ -201,7 +211,6 @@ lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies ++= Dependencies.nifiClient)
 
-
 /* Framework + Plugins */
 
 lazy val wasp = Project("wasp", file("."))
@@ -221,6 +230,7 @@ lazy val wasp = Project("wasp", file("."))
     plugin_hbase_spark,
     plugin_jdbc_spark,
     plugin_kafka_spark,
+    plugin_kafka_spark_old,
     plugin_raw_spark,
     plugin_solr_spark,
     yarn,
@@ -228,6 +238,7 @@ lazy val wasp = Project("wasp", file("."))
     plugin_mailer_spark,
     plugin_http_spark,
     spark_sql_kafka_0_11,
+    spark_sql_kafka_0_11_old,
     openapi,
     nifi_client
   )

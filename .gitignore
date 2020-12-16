@@ -127,3 +127,9 @@ repositories
 
 # lab configuration file
 .lab.cache
+.bloop
+.bsp
+.metals
+.vscode
+project/metals.sbt
+project/project/
