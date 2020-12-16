@@ -16,22 +16,21 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-object ConfigManager extends Logging {
+object ConfigManager extends Logging with CanOverrideNameInstances {
   val conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
-  val kafkaConfigName = "Kafka"
-  val sparkBatchConfigName = "SparkBatch"
+  val kafkaConfigName          = "Kafka"
+  val sparkBatchConfigName     = "SparkBatch"
   val sparkStreamingConfigName = "SparkStreaming"
-  val elasticConfigName = "Elastic"
-  val solrConfigName = "Solr"
-  val hbaseConfigName = "HBase"
-  val jdbcConfigName = "Jdbc"
-  val telemetryConfigName = "Telemetry"
-  val nifiConfigName = "Nifi"
-  val compilerConfigName = "Compiler"
+  val elasticConfigName        = "Elastic"
+  val solrConfigName           = "Solr"
+  val hbaseConfigName          = "HBase"
+  val jdbcConfigName           = "Jdbc"
+  val telemetryConfigName      = "Telemetry"
+  val nifiConfigName           = "Nifi"
+  val compilerConfigName       = "Compiler"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
-
     /* sparkStreamingConfig validation-rules */
 
     ValidationRule("SparkStreamingStandaloneMode") { (configManager) =>
@@ -84,20 +83,20 @@ object ConfigManager extends Logging {
     }
   )
 
-  private var waspConfig: WaspConfigModel = _
-  private var telemetryConfig: TelemetryConfigModel = _
-  private var mongoDBConfig: MongoDBConfigModel = _
-  private var pgDBConfig: PostgresDBConfigModel = _
-  private var kafkaConfig: KafkaConfigModel = _
-  private var sparkBatchConfig: SparkBatchConfigModel = _
+  private var waspConfig: WaspConfigModel                     = _
+  private var telemetryConfig: TelemetryConfigModel           = _
+  private var mongoDBConfig: MongoDBConfigModel               = _
+  private var pgDBConfig: PostgresDBConfigModel               = _
+  private var kafkaConfig: KafkaConfigModel                   = _
+  private var sparkBatchConfig: SparkBatchConfigModel         = _
   private var sparkStreamingConfig: SparkStreamingConfigModel = _
-  private var elasticConfig: ElasticConfigModel = _
-  private var solrConfig: SolrConfigModel = _
-  private var hbaseConfig: HBaseConfigModel = _
-  private var jdbcConfig: JdbcConfigModel = _
-  private var avroSchemaManagerConfig: Config = _
-  private var nifiConfig: NifiConfigModel = _
-  private var compilerConfig: CompilerConfigModel = _
+  private var elasticConfig: ElasticConfigModel               = _
+  private var solrConfig: SolrConfigModel                     = _
+  private var hbaseConfig: HBaseConfigModel                   = _
+  private var jdbcConfig: JdbcConfigModel                     = _
+  private var avroSchemaManagerConfig: Config                 = _
+  private var nifiConfig: NifiConfigModel                     = _
+  private var compilerConfig: CompilerConfigModel             = _
 
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
     (globalValidationRules ++ pluginsValidationRules)
@@ -126,7 +125,8 @@ object ConfigManager extends Logging {
       environmentSubConfig.getString("prefix"),
       readValidationRulesToIgnore(environmentSubConfig, "validationRulesToIgnore"),
       environmentSubConfig.getString("mode"),
-      conf.getString("darwinConnector")
+      conf.getString("darwinConnector"),
+      ConfigurationMode.fromString(conf.getString("configuration-mode"))
     )
   }
 
@@ -134,13 +134,15 @@ object ConfigManager extends Logging {
 
     val tmp = waspConfig.darwinConnector match {
       case "hbase" => ConfigFactory.parseMap(getAvroSchemaManagerConfigHbaseConnector.asJava)
-      case _ => conf.getConfig("avroSchemaManager.darwin")
+      case _       => conf.getConfig("avroSchemaManager.darwin")
     }
     avroSchemaManagerConfig = if (!tmp.hasPath(ConfigurationKeys.ENDIANNESS)) {
-      logger.warn(s"No ${ConfigurationKeys.ENDIANNESS} configured on Darwin, " +
-        s"we are defaulting to ${ByteOrder.BIG_ENDIAN} for compatibility with old versions, but you should configure " +
-        s"it explictly with either ${ByteOrder.BIG_ENDIAN} or  ${ByteOrder.LITTLE_ENDIAN}")
-      tmp.withValue(ConfigurationKeys.ENDIANNESS,ConfigValueFactory.fromAnyRef(ByteOrder.BIG_ENDIAN.toString))
+      logger.warn(
+        s"No ${ConfigurationKeys.ENDIANNESS} configured on Darwin, " +
+          s"we are defaulting to ${ByteOrder.BIG_ENDIAN} for compatibility with old versions, but you should configure " +
+          s"it explictly with either ${ByteOrder.BIG_ENDIAN} or  ${ByteOrder.LITTLE_ENDIAN}"
+      )
+      tmp.withValue(ConfigurationKeys.ENDIANNESS, ConfigValueFactory.fromAnyRef(ByteOrder.BIG_ENDIAN.toString))
     } else {
       tmp
     }
@@ -150,8 +152,8 @@ object ConfigManager extends Logging {
   private def getAvroSchemaManagerConfigHbaseConnector: Map[String, AnyRef] = {
 
     val avroSchemaManagerSubConfig = conf.getConfig("avroSchemaManager")
-    val darwinConfig = avroSchemaManagerSubConfig.getConfig("darwin")
-    val defaultConf = darwinConfig.root().unwrapped().asScala.toMap
+    val darwinConfig               = avroSchemaManagerSubConfig.getConfig("darwin")
+    val defaultConf                = darwinConfig.root().unwrapped().asScala.toMap
 
     if (avroSchemaManagerSubConfig.getBoolean("wasp-manages-darwin-connectors-conf")) {
       val env = System.getenv()
@@ -163,20 +165,32 @@ object ConfigManager extends Logging {
           java.lang.Boolean.getBoolean(env.get("WASP_SECURITY"))
         else
           java.lang.Boolean.FALSE
-      val principal = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
+      val principal  = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
       val keytabPath = if (env.containsKey("KEYTAB_FILE_NAME")) env.get("KEYTAB_FILE_NAME") else ""
 
       defaultConf ++ Map(
-        "namespace" -> darwinConfig.getString("namespace"),
-        "table" -> darwinConfig.getString("table"),
-        "hbaseSite" -> hbaseSubConfig.getString("hbase-site-xml-path"),
-        "coreSite" -> hbaseSubConfig.getString("core-site-xml-path"),
-        "isSecure" -> isSecure,
-        "principal" -> principal,
+        "namespace"  -> darwinConfig.getString("namespace"),
+        "table"      -> darwinConfig.getString("table"),
+        "hbaseSite"  -> hbaseSubConfig.getString("hbase-site-xml-path"),
+        "coreSite"   -> hbaseSubConfig.getString("core-site-xml-path"),
+        "isSecure"   -> isSecure,
+        "principal"  -> principal,
         "keytabPath" -> keytabPath
       )
     } else {
       defaultConf
+    }
+  }
+
+  private def namespaced[T: CanOverrideName](entity: T, name: String): (T, Option[String]) = {
+    this.waspConfig.configurationMode match {
+      case ConfigurationMode.Legacy =>
+        (entity, Some(name))
+      case ConfigurationMode.Local =>
+        (entity, None)
+      case ConfigurationMode.NamespacedConfigurations(namespace) =>
+        val namespacedId = s"$namespace.$name"
+        (implicitly[CanOverrideName[T]].named(entity, namespacedId), Some(namespacedId))
     }
   }
 
@@ -340,7 +354,10 @@ object ConfigManager extends Logging {
       }
 
     } else {
-      SchedulingStrategyConfigModel("it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.FifoSchedulingStrategyFactory", ConfigFactory.empty())
+      SchedulingStrategyConfigModel(
+        "it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.FifoSchedulingStrategyFactory",
+        ConfigFactory.empty()
+      )
     }
   }
 
@@ -367,7 +384,8 @@ object ConfigManager extends Logging {
         sparkSubConfig.getInt("retained-tasks"),
         sparkSubConfig.getInt("retained-jobs"),
         sparkSubConfig.getInt("retained-executions"),
-        sparkSubConfig.getInt("retained-batches")),
+        sparkSubConfig.getInt("retained-batches")
+      ),
       readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
       readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
       sparkBatchConfigName
@@ -610,7 +628,7 @@ object ConfigManager extends Logging {
 
   private def readZookeeperConnectionsConfig(config: Config): ZookeeperConnectionsConfig = {
     val connectionsArray = readConnectionsConfig(config, "zookeeperConnections")
-    val chRoot = config.getString("zkChRoot")
+    val chRoot           = config.getString("zkChRoot")
     ZookeeperConnectionsConfig(connectionsArray, chRoot)
   }
 
@@ -625,9 +643,9 @@ object ConfigManager extends Logging {
       val list: Iterable[ConfigObject] =
         config.getObjectList("metadata").asScala
       val md = (for {
-        item: ConfigObject <- list
+        item: ConfigObject                <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key = entry.getKey
+        key   = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toMap
       Some(md)
@@ -670,13 +688,19 @@ object ConfigManager extends Logging {
     * Read the configuration with the specified name from MongoDB or,
     * if it is not present, initialize it with the provided defaults.
     */
-  private def retrieveConf[T <: Model](
-                                        default: T,
-                                        nameConf: String
-                                      )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
-    ConfigBL.configManagerBL.retrieveConf(default, nameConf)(ct, typeTag)
-  }
+  private def retrieveConf[T <: Model: CanOverrideName](
+      default: T,
+      nameConf: String
+  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
 
+    namespaced(default, nameConf) match {
+      case (entity, Some(name)) =>
+        ConfigBL.configManagerBL.retrieveConf(entity, name)(ct, typeTag)
+      case (entity, None) =>
+        Some(entity)
+    }
+
+  }
 
   def readOthersConfig(config: Config): Seq[(String, String)] = {
     val key = "others"
@@ -684,9 +708,9 @@ object ConfigManager extends Logging {
     if (config.hasPath(key)) {
       val list: Iterable[ConfigObject] = config.getObjectList(key).asScala
       (for {
-        item: ConfigObject <- list
+        item: ConfigObject                <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key = entry.getKey
+        key   = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toSeq
     } else {
@@ -694,7 +718,6 @@ object ConfigManager extends Logging {
     }
   }
 }
-
 
 trait WaspConfiguration {
   lazy val waspConfig: WaspConfigModel = ConfigManager.getWaspConfig

@@ -1,6 +1,6 @@
 # IntelliJ IDEA
 .idea
-
+.bsp
 # Spark tmp dir
 tmp
 
