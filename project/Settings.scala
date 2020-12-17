@@ -32,6 +32,7 @@ object Settings {
 	val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 	val clouderaReleaseLocalRepo = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
 	val repo1Maven2 = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
+        val confluent = "confluent" at "https://packages.confluent.io/maven/"
 
 	/** custom resolvers for dependencies */
 	lazy val customResolvers = Seq(
@@ -41,7 +42,8 @@ object Settings {
 		/*typesafeReleaseRepo,*/
 		restletMavenRepo,
 		clouderaHadoopReleaseRepo,
-		repo1Maven2
+		repo1Maven2,
+                confluent
 	)
 
 	/** base build settings */
