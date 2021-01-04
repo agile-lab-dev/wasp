@@ -481,4 +481,19 @@ private[wasp] object TestTopicModel {
         |        }
       """.stripMargin)
     )
+
+  lazy val multitopicreadjsonavro: MultiTopicModel = MultiTopicModel.fromTopicModels(
+    "multitopicreadjsonavro",
+    "topic",
+    Seq(
+      TestTopicModel.json,
+      TestTopicModel.avroCheckpoint
+    )
+  )
+
+  lazy val multitopicreadjson: MultiTopicModel = MultiTopicModel.fromTopicModels(
+    "multitopicreadjson",
+    "topic",
+    Seq(TestTopicModel.json, TestTopicModel.json2ForKafkaHeaders, TestTopicModel.json3)
+  )
 }

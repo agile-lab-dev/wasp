@@ -1381,4 +1381,57 @@ private[wasp] object TestPipegraphs {
 
   }
 
+  object MultiTopicReader {
+    object Structured {
+
+      lazy val kafkaMultitopicReadSame = PipegraphModel(
+
+        name = "TestKafkaReaderMultitopicStructuredJSONPipegraph",
+        description = "Test for reading from multiple topics for JSON topics",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "CopyFromTest1ToTest2jsonjson",
+            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.multitopicreadjson, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("console"),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+
+      lazy val kafkaMultitopicReadDifferent = PipegraphModel(
+        name = "TestKafkaReaderMultitopicStructuredJSONAvroPipegraph",
+        description = "Test for reading from multiple topics for JSON and avro topics",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "CopyFromTest1ToTest2-avrojson",
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.multitopicreadjsonavro, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("console"),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+    }
+
+  }
 }

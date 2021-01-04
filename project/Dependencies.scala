@@ -371,7 +371,8 @@ object Dependencies {
     guava,
     kafkaClients,
     sparkSQL,
-    sparkTags
+    sparkTags,
+    scalaTest
   ).map(excludeLog4j).map(excludeNetty)
 
   val plugin_solr_spark = Seq(

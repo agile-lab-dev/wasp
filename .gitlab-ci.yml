@@ -29,6 +29,13 @@ test:
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn test coverageOff coverageReport coverageAggregate"
+  after_script:
+    - mkdir test-output
+    - find . -path '*/test-reports/*.xml' -exec cp '{}' ./test-output/ \;
+  artifacts:
+    reports:
+      junit: 'test-output/*.xml'
+      cobertura: 'target/scala-2.11/coverage-report/cobertura.xml'
   only:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/

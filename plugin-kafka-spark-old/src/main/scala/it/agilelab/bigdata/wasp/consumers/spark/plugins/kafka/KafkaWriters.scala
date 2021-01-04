@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, StringToByteArrayUtil, SubjectUtils}
 import it.agilelab.bigdata.wasp.datastores.TopicCategory
-import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, SubjectStrategy, TopicModel}
+import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, TopicModel}
 import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import org.apache.avro.Schema
 import org.apache.spark.sql.catalyst.expressions.Expression

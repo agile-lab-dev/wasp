@@ -11,21 +11,24 @@ import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel}
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
-class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
-                                          topicDatastoreModelName: String,
-                                          ss: SparkSession)
-  extends SparkStructuredStreamingWriter
+class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL, topicDatastoreModelName: String, ss: SparkSession)
+    extends SparkStructuredStreamingWriter
     with Logging {
 
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
-    val tinyKafkaConfig = ConfigManager.getKafkaConfig.toTinyConfig()
+    val tinyKafkaConfig                                 = ConfigManager.getKafkaConfig.toTinyConfig()
     val topicOpt: Option[DatastoreModel[TopicCategory]] = topicBL.getByName(topicDatastoreModelName)
 
     val (topicFieldName, topics) = retrieveTopicFieldNameAndTopicModels(topicOpt, topicBL, topicDatastoreModelName)
-    val mainTopicModel = topicOpt.get
-    val prototypeTopicModel = topics.head
+    val mainTopicModel           = topicOpt.get
+    val prototypeTopicModel      = topics.head
 
-    MultiTopicModel.validateTopicModels(topics)
+    MultiTopicModel
+      .areTopicsEqualForWriting(topics)
+      .fold(
+        s => throw new IllegalArgumentException(s),
+        _ => ()
+      )
 
     logger.info(s"Writing with topic model: $mainTopicModel")
     if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
@@ -36,17 +39,19 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
 
     logger.debug(s"Input schema:\n${stream.schema.treeString}")
 
-    val keyFieldName = prototypeTopicModel.keyFieldName
+    val keyFieldName     = prototypeTopicModel.keyFieldName
     val headersFieldName = prototypeTopicModel.headersFieldName
     val valueFieldsNames = prototypeTopicModel.valueFieldsNames
 
-    val finalDf: DataFrame = prepareDfToWrite(stream,
+    val finalDf: DataFrame = prepareDfToWrite(
+      stream,
       topicFieldName,
       topics,
       prototypeTopicModel,
       keyFieldName,
       headersFieldName,
-      valueFieldsNames)
+      valueFieldsNames
+    )
 
     val partialDataStreamWriter = finalDf
       .writeStream
@@ -65,15 +70,16 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL,
     val finalDataStreamWriterAfterCompression = dataStreamWriterAfterKafkaConfig
       .option("kafka.compression.type", compressionForKafka)
 
-
     finalDataStreamWriterAfterCompression
   }
 
   private def addKafkaConf(dsw: DataStreamWriter[Row], tkc: TinyKafkaConfig): DataStreamWriter[Row] = {
 
-    val connectionString = tkc.connections.map {
-      conn => s"${conn.host}:${conn.port}"
-    }.mkString(",")
+    val connectionString = tkc.connections
+      .map { conn =>
+        s"${conn.host}:${conn.port}"
+      }
+      .mkString(",")
 
     val kafkaConfigMap: Seq[KafkaEntryConfig] = tkc.others
 

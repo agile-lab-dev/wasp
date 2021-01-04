@@ -1,12 +1,12 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
 import com.sksamuel.avro4s.AvroSchema
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.models.ProcessGroupModel
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
-import it.agilelab.bigdata.wasp.whitelabel.models.example.iot.{IndustrialPlantData, IoTIndustrialPlantIndexModel, IoTIndustrialPlantPipegraphModel, IoTIndustrialPlantProducerModel, IoTIndustrialPlantTopicModel}
+import it.agilelab.bigdata.wasp.whitelabel.models.example.iot._
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import org.apache.avro.Schema
@@ -85,6 +85,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.topicBL.upsert(TestTopicModel.binaryMultitopic)
     ConfigBL.topicBL.upsert(TestTopicModel.avro_key_schema)
     ConfigBL.topicBL.upsert(TestTopicModel.avro_key_schema2)
+    ConfigBL.topicBL.upsert(TestTopicModel.multitopicreadjsonavro)
+    ConfigBL.topicBL.upsert(TestTopicModel.multitopicreadjson)
     ConfigBL.indexBL.upsert(TestIndexModel.solr)
     ConfigBL.indexBL.upsert(TestIndexModel.elastic)
     ConfigBL.rawBL.upsert(TestRawModel.nested) // used by TestPipegraphs.JSON.XYZ.hdfs
@@ -170,6 +172,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.Binary.Structured.kafkaMultitopicWrite)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.SparkSessionErrors.pipegraph)
+
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.MultiTopicReader.Structured.kafkaMultitopicReadDifferent)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.MultiTopicReader.Structured.kafkaMultitopicReadSame)
 
     /* BatchJobs */
     ConfigBL.batchJobBL.upsert(TestBatchJobModels.FromElastic.toHdfsNested)

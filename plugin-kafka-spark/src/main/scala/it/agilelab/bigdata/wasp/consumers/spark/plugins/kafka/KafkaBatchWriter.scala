@@ -23,7 +23,10 @@ class KafkaBatchWriter(topicBL: TopicBL,
     val mainTopicModel = topicOpt.get
     val prototypeTopicModel = topics.head
 
-    MultiTopicModel.validateTopicModels(topics)
+    MultiTopicModel.areTopicsEqualForWriting(topics).fold(
+      s => throw new IllegalArgumentException(s),
+      _ => ()
+    )
 
     logger.info(s"Writing with topic model: $mainTopicModel")
     if (mainTopicModel.isInstanceOf[MultiTopicModel]) {

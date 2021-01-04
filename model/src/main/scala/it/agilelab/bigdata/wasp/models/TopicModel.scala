@@ -156,3 +156,9 @@ case class TopicModel(override val name: String,
   def getJsonSchema: String = schema.toJson
 
 }
+object TopicDataTypes {
+  val AVRO = "avro"
+  val JSON = "json"
+  val PLAINTEXT = "plaintext"
+  val BINARY = "binary"
+}

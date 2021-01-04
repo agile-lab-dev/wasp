@@ -2,12 +2,12 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaWriters._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
-import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
-import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
 import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SparkSession}
 
 class KafkaBatchWriter(topicBL: TopicBL,
@@ -23,7 +23,10 @@ class KafkaBatchWriter(topicBL: TopicBL,
     val mainTopicModel = topicOpt.get
     val prototypeTopicModel = topics.head
 
-    MultiTopicModel.validateTopicModels(topics)
+    MultiTopicModel.areTopicsEqualForWriting(topics).fold(
+      s => throw new IllegalArgumentException(s),
+      _ => ()
+    )
 
     logger.info(s"Writing with topic model: $mainTopicModel")
     if (mainTopicModel.isInstanceOf[MultiTopicModel]) {

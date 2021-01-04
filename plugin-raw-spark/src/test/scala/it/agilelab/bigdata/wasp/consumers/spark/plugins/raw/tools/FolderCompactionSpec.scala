@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools
 
-import it.agilelab.bigdata.wasp.consumers.SparkFlatSpec
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
@@ -30,7 +30,7 @@ object FakeJsonFormat extends DefaultJsonProtocol {
   implicit val abcEncoder: Encoder[FakeJsonABC] = Encoders.product[FakeJsonABC]
 }
 
-class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEach with SparkFlatSpec {
+class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEach with SparkSuite {
 
   import FolderCompactionSpec._
   import FakeJsonFormat._
@@ -38,7 +38,6 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
   private lazy val fs: FileSystem = FileSystem.getLocal(new Configuration())
   private lazy val testFolder = fs.makeQualified(new Path("./inputFolder"))
   private lazy val outFolder = fs.makeQualified(new Path("./outFolder"))
-  private lazy val spark: SparkSession = sqlContext.sparkSession
   private val schema = new StructType()
     .add("uri", StringType)
     .add("hash", IntegerType)

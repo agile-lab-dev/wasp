@@ -6,7 +6,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools.FolderCompacti
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.functions.{col, lit}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools.WhereCondition
 import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 
 class FolderCompactionUtilsSpec extends FlatSpec with Matchers with BeforeAndAfterEach with SparkSuite {

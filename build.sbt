@@ -129,19 +129,20 @@ lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc
 
 lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-kafka-spark"))
   .settings(Settings.commonSettings: _*)
-  .dependsOn(consumers_spark)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
   .dependsOn(spark_sql_kafka_0_11)
   .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
 lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
   .settings(Settings.commonSettings: _*)
-  .dependsOn(consumers_spark)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
   .dependsOn(spark_sql_kafka_0_11_old)
   .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
 lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
   .settings(Settings.commonSettings: _*)
-  .dependsOn(consumers_spark)
+  .settings(libraryDependencies += Dependencies.scalaTest)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
 
 lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr-spark"))
   .settings(Settings.commonSettings: _*)
@@ -240,7 +241,8 @@ lazy val wasp = Project("wasp", file("."))
     spark_sql_kafka_0_11,
     spark_sql_kafka_0_11_old,
     openapi,
-    nifi_client
+    nifi_client,
+    plugin_mongo_spark
   )
 
 /* WhiteLabel */
