@@ -147,12 +147,11 @@ public class JsonGenericRecordReader {
                     } else {
                         return nestedValue;
                     }
-                } else{
+                } else {
                     if (value == null) {
                         nestedValue = INCOMPATIBLE;
                     } else {
-                        Map<String, Object> valueAsMap = (Map<String, Object>) value;
-                        nestedValue = read(field, type, valueAsMap.entrySet().iterator().next().getValue(), path, true);
+                        nestedValue = read(field, type, value, path, true);
                     }
                     if (nestedValue == INCOMPATIBLE) {
                         continue;
