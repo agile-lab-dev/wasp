@@ -16,7 +16,7 @@ mappings in Universal += {
   log.info("Getting jars names to use with additional-jars-lib-path config parameter (used by Wasp Core Framework)")
 
   // get full classpaths of all jars
-  val jars = (fullClasspath in Compile).value.map(dep => {
+  val jars = (fullClasspath in Runtime).value.map(dep => {
     val moduleOpt = dep.metadata.get(AttributeKey[ModuleID]("moduleID"))
     moduleOpt match {
       case Some(module) =>
