@@ -78,20 +78,6 @@ case class AvroDeserializerExpression(
     rowConverter(record)
   }
 
-  @inline
-  val convertString: Any => AnyRef = { item =>
-    if (item == null) null
-    else {
-      val avroUtf8 = item.asInstanceOf[Utf8]
-      val byteBuffer = if (avroUtf8.getByteLength != avroUtf8.getBytes.length) {
-        avroUtf8.getBytes.take(avroUtf8.getByteLength)
-      } else {
-        avroUtf8.getBytes
-      }
-      UTF8String.fromBytes(byteBuffer)
-    }
-  }
-
   override protected def nullSafeEval(input: Any): Any = {
     val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
     val avroReader = avroDatumReader(avroValue)
@@ -154,6 +140,25 @@ case class AvroDeserializerExpression(
        """.stripMargin,
       isNull = childEval.isNull
     )
+  }
+
+  @inline
+  val convertString: Any => AnyRef = { item =>
+    if (item == null) null
+    else {
+      item match {
+        case symbol: GenericData.EnumSymbol =>
+          UTF8String.fromString(symbol.toString)
+        case _ =>
+          val avroUtf8 = item.asInstanceOf[Utf8]
+          val byteBuffer = if (avroUtf8.getByteLength != avroUtf8.getBytes.length) {
+            avroUtf8.getBytes.take(avroUtf8.getByteLength)
+          } else {
+            avroUtf8.getBytes
+          }
+          UTF8String.fromBytes(byteBuffer)
+      }
+    }
   }
 
   /**
