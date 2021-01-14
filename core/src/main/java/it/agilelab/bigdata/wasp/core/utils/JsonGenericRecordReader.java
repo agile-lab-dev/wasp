@@ -11,6 +11,7 @@ import scala.io.Codec;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 
@@ -118,7 +119,8 @@ public class JsonGenericRecordReader {
 
     private ByteBuffer convertToByte(String string) {
         try {
-            return ByteBuffer.wrap(string.getBytes(Codec.ISO8859().name()));
+            byte[] decoded = Base64.getDecoder().decode(string.getBytes(StandardCharsets.UTF_8));
+            return ByteBuffer.wrap(decoded);
         } catch (Exception e) {
             throw new AvroConversionException(e.getMessage(), e);
         }
