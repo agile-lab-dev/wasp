@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.cluster
 
-import akka.actor.Actor
+import akka.actor.{Actor, Address}
 import akka.cluster.ClusterEvent._
 import akka.cluster._
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -13,7 +13,7 @@ import scala.concurrent.duration._
   * Cluster lifecycle handling
   * - log events
   * - set "down" the unreachable members
-  *    Custom logic: the key is if network partition happens, only cluster nodes which have majority will take down UnreachableMember after downingTimeout.
+  * Custom logic: the key is if network partition happens, only cluster nodes which have majority will take down UnreachableMember after downingTimeout.
   */
 
 object ClusterListenerActor {
@@ -24,12 +24,12 @@ object ClusterListenerActor {
 class ClusterListenerActor extends Actor with Logging {
 
   val cluster = Cluster(context.system)
-  var unreachableMembers: Set[Member] = Set.empty
+  var unreachableMembers: Set[Address] = Set.empty
 
   /** Subscribe to cluster changes, re-subscribe when restart.
-      N.B.  ClusterDomainEvent includes all events (e.g.  MemberEvent, ReachabilityEvent)
-            Implementation using InitialStateAsSnapshot and matching CurrentClusterState already tested but not suitable!
-  */
+    * N.B.  ClusterDomainEvent includes all events (e.g.  MemberEvent, ReachabilityEvent)
+    * Implementation using InitialStateAsSnapshot and matching CurrentClusterState already tested but not suitable!
+    */
   override def preStart(): Unit = cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[ClusterDomainEvent])
 
   override def postStop(): Unit = cluster.unsubscribe(self)
@@ -37,9 +37,15 @@ class ClusterListenerActor extends Actor with Logging {
   override def receive: Actor.Receive = {
 
     /* MemberEvent */
-    case MemberUp(member) => logger.info(s"Member ${member.address} joined cluster")
-    case MemberLeft(member) => logger.info(s"Member ${member.address} lefted cluster")
-    case MemberRemoved(member, previousStatus) => logger.info(s"Member is removed: ${member.address} - previous status: $previousStatus")
+    case MemberUp(member) =>
+      logger.info(s"Member ${member.address} joined cluster")
+      unreachableMembers = unreachableMembers - member.address
+    case MemberLeft(member) =>
+      logger.info(s"Member ${member.address} lefted cluster")
+      unreachableMembers = unreachableMembers - member.address
+    case MemberRemoved(member, previousStatus) =>
+      logger.info(s"Member is removed: ${member.address} - previous status: $previousStatus")
+      unreachableMembers = unreachableMembers - member.address
 
     /*  ReachabilityEvent */
     case UnreachableMember(member) => onUnreachableMember(member)
@@ -47,16 +53,16 @@ class ClusterListenerActor extends Actor with Logging {
 
     /* other ClusterDomainEvent */
     case ClusterMetricsChanged(nodeMetrics) => onClusterMetricsChanged(nodeMetrics)
-    case _: ClusterDomainEvent =>  // ignore
+    case _: ClusterDomainEvent => // ignore
 
     case DownUnreachableMembers =>
       unreachableMembers.foreach {
         member => {
-          logger.info(s"Member ${member.address} downing")
-          cluster.down(member.address)
+          logger.info(s"Member ${member} downing")
+          cluster.down(member)
         }
       }
-      unreachableMembers.empty
+      unreachableMembers = Set.empty
   }
 
   private def onUnreachableMember(member: Member) = {
@@ -64,7 +70,7 @@ class ClusterListenerActor extends Actor with Logging {
     def isMajority(total: Int, unreachable: Int): Boolean = {
 
       // find out majority number of the group
-      def majority: Int = (total+1)/2 + (total+1)%2
+      def majority: Int = (total + 1) / 2 + (total + 1) % 2
 
       require(total > 0)
       require(unreachable >= 0)
@@ -73,7 +79,7 @@ class ClusterListenerActor extends Actor with Logging {
 
     def scheduleTakeDown = {
       implicit val dispatcher = context.system.dispatcher
-      unreachableMembers = unreachableMembers + member
+      unreachableMembers = unreachableMembers + member.address
       context.system.scheduler.scheduleOnce(ClusterListenerActor.downingTimeout, self, DownUnreachableMembers)
     }
 
@@ -85,7 +91,7 @@ class ClusterListenerActor extends Actor with Logging {
 
   private def onReachableMember(member: Member) = {
     logger.info(s"Member detected as reachable: ${member}")
-    unreachableMembers = unreachableMembers - member
+    unreachableMembers = unreachableMembers - member.address
   }
 
   private def onClusterMetricsChanged(nodeMetrics: Set[NodeMetrics]) {
@@ -96,7 +102,7 @@ class ClusterListenerActor extends Actor with Logging {
     }
 
     nodeMetrics collectFirst {
-      case m if m.address == cluster.selfAddress => logger.debug (s"${filter (m.metrics)}")
+      case m if m.address == cluster.selfAddress => logger.debug(s"${filter(m.metrics)}")
     }
   }
 }
