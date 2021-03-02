@@ -7422,3 +7422,76 @@ https://github.com/apache/spark/pull/23324
 #### Related issue
 
 Closes #419
+
+
+## WASP 2.26.7
+
+### hotfix: ClusterListener actor is not downing correctly unreachable members" 
+
+[Merge request 327](https://gitlab.com/AgileFactory/Agile.Wasp2/-/merge_requests/327)
+
+[#441] ClusterListener actor is not downing correctly unreachable members"  
+
+#### New features and improvements
+
+None
+
+#### Breaking changes
+
+None
+
+#### Migration
+
+None
+
+#### Bug fixes
+
+Fixed actor downing as described in related issue
+
+##### Problem statement
+
+Nodes deployed on 3 machines
+
+MACHINE0
+streaming
+batch
+producers
+master
+
+MACHINE1
+streaming
+batch
+producers
+master
+
+MACHINE2
+master
+
+
+* stop machine 1
+* cluster downs correctly members of machine1
+* start machine 1
+* machine 1 is up in the cluster
+* stop machine 0
+* machine 3 has cached that should down machine 1 and uncorrectly downs it
+
+##### Expected behaviour
+
+Down should happen correctly
+
+##### Steps to reproduce
+
+* stop machine 1
+* cluster downs correctly members of machine1
+* start machine 1
+* machine 1 is up in the cluster
+* stop machine 0
+* machine 3 has cached that should down machine 1 and uncorrectly downs it
+
+##### Proposed solution
+
+fix cluster listener actor
+
+#### Related issue
+
+Closes #441
