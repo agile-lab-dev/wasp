@@ -2,6 +2,8 @@ import sbt.Keys._
 import sbt._
 import sbtbuildinfo.BuildInfoKeys._
 import sbtbuildinfo.{BuildInfoKey, BuildInfoOption}
+import com.typesafe.sbt.pgp.PgpSettings.pgpPassphrase
+import java.nio.charset.StandardCharsets
 
 /*
  * Common settings for all the modules.
@@ -15,7 +17,9 @@ object Settings {
 	lazy val projectSettings = Seq(
 		organization := "it.agilelab",
 		organizationHomepage := Some(url("http://www.agilelab.it")),
-		homepage := Some(url("http://www.agilelab.it")),
+                homepage := Some(url("https://www.agilelab.it/wasp-wide-analytics-streaming-platform/")),
+                scmInfo := Some(ScmInfo(url("https://github.com/agile-lab-dev/wasp"), "https://github.com/agile-lab-dev/wasp.git")),
+		developers := List(Developer("AgileLabDev", "AgileLabDev", "wasp@agilelab.it", url("https://github.com/agile-lab-dev/was"))),
 		licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 	)
 
@@ -32,7 +36,8 @@ object Settings {
 	val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 	val clouderaReleaseLocalRepo = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
 	val repo1Maven2 = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
-
+        val sonatypeSnapshots = "SonatypeSnapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+        val sonatypeStaging = "SonatypeStaging" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 	/** custom resolvers for dependencies */
 	lazy val customResolvers = Seq(
 		mavenLocalRepo,
@@ -76,16 +81,25 @@ object Settings {
 		System.getenv().get("BINTRAY_API_KEY")
 	)
 
+
+        val sonatypeOssCredentials = Credentials(
+                "Sonatype Nexus Repository Manager",
+                "oss.sonatype.org",
+                System.getenv().get("SONATYPE_USER"),
+                System.getenv().get("SONATYPE_PASSWORD")
+        )
+
 	lazy val publishSettings = Seq(
 		publishMavenStyle := true,
 		updateOptions := updateOptions.value.withGigahorse(false), // workaround for publish fails https://github.com/sbt/sbt/issues/3570
 		publishTo := {
 			if (isSnapshot.value)
-				Some(jfrogOssSnapshotRepo)
+				Some(sonatypeSnapshots)
 			else
-				Some(jfrogOssReleaseRepo)
+				Some(sonatypeStaging)
 		},
-		credentials := Seq(jfrogOssCredentials)
+               credentials := Seq(sonatypeOssCredentials),
+                pgpPassphrase:= Option(System.getenv().get("GPG_PASSPHRASE")).map(_.toCharArray)
 	)
 	
 	/** settings for tests */

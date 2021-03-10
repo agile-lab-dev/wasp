@@ -71,9 +71,21 @@ deploy:
   stage: deploy
   image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
   script:
-    - sbt clean publish
+    - sbt clean publishSigned
   only:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
-    - tags
+
+deploy:
+  interruptible: false
+  stage: deploy
+  image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
+  script:
+    - "mkdir -p $HOME/.sbt/gpg"
+    - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
+    - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
+    - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
+    - sbt clean publishSigned sonatypeRelease
+  only:
+    - tags   
