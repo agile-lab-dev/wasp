@@ -52,7 +52,7 @@ object ReaderModel {
     apply(name, rawModel, RawProduct, options)
 	def websocketReader(name: String, websocketModel: WebsocketModel, options: Map[String, String] = Map.empty) =
     apply(name, websocketModel, WebSocketProduct, options)
-	def mongoDbReader(name: String, documentModel: DocumentModel, options: Map[String, String]): ReaderModel =
+	def mongoDbReader(name: String, documentModel: DocumentModel, options: Map[String, String]) =
 		apply(name, documentModel, MongoDbProduct, options)
 
   // this exists because we want to keep the main declaration on one line because of a quirk of the compiler when

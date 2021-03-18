@@ -12,6 +12,7 @@ class MongoFactoryBL extends FactoryBL {
   def getMlModelBL: MlModelBL = new MlModelBLImp(WaspMongoDB.getDB)
   def getWebsocketBL: WebsocketBL = new WebsocketBLImp(WaspMongoDB.getDB)
   def getRawBL: RawBL = new RawBLImp(WaspMongoDB.getDB)
+  def getCdcBL: CdcBL = new CdcBLImp(WaspMongoDB.getDB)
   def getKeyValueBL: KeyValueBL = new KeyValueBLImp(WaspMongoDB.getDB)
   def getBatchSchedulersBL: BatchSchedulersBL = new BatchSchedulersBLImp(WaspMongoDB.getDB)
   def getDocumentBL: DocumentBL = new DocumentBLImpl(WaspMongoDB.getDB)

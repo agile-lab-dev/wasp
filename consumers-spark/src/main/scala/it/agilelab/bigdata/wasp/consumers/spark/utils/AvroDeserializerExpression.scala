@@ -41,8 +41,7 @@ case class AvroDeserializerExpression(
     child: Expression,
     schemaAvroJson: String,
     darwinConfig: Option[Config],
-    avoidReevaluation: Boolean = true
-) extends UnaryExpression
+    avoidReevaluation: Boolean = true) extends UnaryExpression
     with ExpectsInputTypes {
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)

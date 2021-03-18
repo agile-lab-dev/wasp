@@ -195,6 +195,8 @@ trait JsonSupport
       WriterModel(name, datastoreModelName, datastoreProduct, options)
   )
 
+  implicit lazy val cdcModelFormat: RootJsonFormat[CdcModel]                  = jsonFormat4(CdcModel.apply)
+  implicit lazy val cdcOptionModelFormat: RootJsonFormat[CdcOptions]          = jsonFormat4(CdcOptions.apply)
   implicit lazy val rawModelFormat: RootJsonFormat[RawModel]                  = jsonFormat5(RawModel.apply)
   implicit lazy val rawOptionModelFormat: RootJsonFormat[RawOptions]          = jsonFormat4(RawOptions.apply)
   implicit lazy val keyValueModelFormat: RootJsonFormat[KeyValueModel]        = jsonFormat6(KeyValueModel.apply)

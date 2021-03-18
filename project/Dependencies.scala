@@ -8,6 +8,17 @@ import sbt._
  */
 object Dependencies {
 
+  val jacksonDependencies = Seq(
+    "com.fasterxml.jackson.core" % "jackson-annotations" % "2.10.1" force(),
+    "com.fasterxml.jackson.core" % "jackson-core" % "2.10.1" force(),
+    "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.1" force(),
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % "2.10.1" force(),
+    "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-base" % "2.10.1" force(),
+    "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider" % "2.10.1" force(),
+    "com.fasterxml.jackson.module" % "jackson-module-jaxb-annotations" % "2.10.1" force(),
+    "com.fasterxml.jackson.module" % "jackson-module-paranamer" % "2.10.1" force(),
+    "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.10.1" force())
+
   implicit class Exclude(module: ModuleID) {
     def log4jExclude: ModuleID =
       module excludeAll ExclusionRule("log4j")
@@ -133,9 +144,9 @@ object Dependencies {
     "org.json4s"
   )
   val darwinCore           = "it.agilelab" %% "darwin-core" % Versions.darwin
+  val darwinConfluentConnector = excludeLog4j("it.agilelab" %% "darwin-confluent-connector" % Versions.darwin)
   val darwinHBaseConnector = "it.agilelab" %% "darwin-hbase-connector" % Versions.darwin
   val darwinMockConnector  = "it.agilelab" %% "darwin-mock-connector" % Versions.darwin
-  val darwinConfluentConnector = excludeLog4j("it.agilelab" %% "darwin-confluent-connector" % Versions.darwin)
   val camelKafka           = ("org.apache.camel" % "camel-kafka" % Versions.camel).kafkaExclusions.camelKafkaExclusions
   val camelWebsocket       = "org.apache.camel" % "camel-websocket" % Versions.camel
   val commonsCli           = "commons-cli" % "commons-cli" % Versions.commonsCli
@@ -157,6 +168,7 @@ object Dependencies {
   val json4sNative         = "org.json4s" %% "json4s-native" % Versions.json4s
   val kafka                = ("org.apache.kafka" %% "kafka" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
   val kafkaClients         = ("org.apache.kafka" % "kafka-clients" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
+  val kafkaSchemaRegistryClient = "io.confluent" % "kafka-schema-registry-client" % "3.3.3"
 //  val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
   val log4jApi                  = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
   val log4jCore                 = "org.apache.logging.log4j" % "log4j-core" % Versions.log4j % "optional,test"
@@ -181,6 +193,7 @@ object Dependencies {
   val sparkStreaming            = "org.apache.spark" %% "spark-streaming" % Versions.spark sparkExclusions
   val sparkSQL                  = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions
   val sparkYarn                 = "org.apache.spark" %% "spark-yarn" % Versions.spark sparkExclusions
+  val sparkHive                 = "org.apache.spark" %% "spark-hive" % Versions.spark sparkExclusions
   val swaggerCore               = "io.swagger.core.v3" % "swagger-core" % "2.1.2"
   val typesafeConfig            = "com.typesafe" % "config" % "1.3.0"
   val velocity                  = "org.apache.velocity" % "velocity" % "1.7"
@@ -223,7 +236,7 @@ object Dependencies {
 
   val time = Seq(jodaConvert, jodaTime)
 
-  val schemaRegistry = Seq(darwinCore, darwinHBaseConnector)
+  val schemaRegistry = Seq(darwinCore, darwinConfluentConnector)
 
   val avro4s = Seq(avro4sCore, avro4sJson)
 
@@ -285,6 +298,7 @@ object Dependencies {
     logging ++
     time ++
     json ++
+    jacksonDependencies ++
     test :+
     akkaHttp :+
     akkaHttpSpray :+
@@ -317,7 +331,7 @@ object Dependencies {
       netty
   ).map(excludeLog4j) ++ log4j :+ log4j1
 
-  val consumers_spark = (
+  val consumers_spark = schemaRegistry ++ (
     akka ++
       json ++
       test ++
@@ -326,8 +340,9 @@ object Dependencies {
       spark :+
       quartz :+
       nameOf :+
-      velocity :+ //TODO: evaluate this is legal
-      scalaCompiler
+      velocity :+   //TODO: evaluate this is legal
+      scalaCompiler :+
+      "org.apache.spark" %% "spark-avro" % Versions.spark
   ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
     log4j1 :+
@@ -406,6 +421,13 @@ object Dependencies {
   val nifiStateless: Seq[ModuleID] = Seq(
     "org.apache.nifi" % "nifi-stateless" % Versions.nifi % "provided"
   )
+  val delta_lake: Seq[ModuleID] = jacksonDependencies :+ sparkHive
+
+  val plugin_cdc_spark = Seq(
+    scalaTest,
+  ) ++ log4j
+
+
 
   def kmsTest = Seq(
     transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),

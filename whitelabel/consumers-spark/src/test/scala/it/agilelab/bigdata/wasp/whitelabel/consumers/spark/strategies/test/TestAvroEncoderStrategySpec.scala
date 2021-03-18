@@ -103,7 +103,6 @@ object TestAvroEncoderStrategySpec {
 
     val writerSchema = manager.extractSchema(inputStream).right.get
     val reader       = new GenericDatumReader[GenericRecord](writerSchema, schema)
-
     FromRecord[TestState].apply(reader.read(genericRecord, decoder))
   }
 }

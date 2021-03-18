@@ -2,4 +2,3 @@ group: AgileFactory
 project_name: Agile.Wasp2
 config:
   main_branch_name: develop
-

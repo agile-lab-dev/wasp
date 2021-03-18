@@ -4,7 +4,6 @@ import java.io.FileInputStream
 import java.security.{KeyStore, SecureRandom}
 import java.util.UUID
 import java.util.concurrent.Executors
-
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
@@ -21,6 +20,7 @@ import it.agilelab.bigdata.wasp.compiler.utils.{CompilerPool, FreeCodeCompiler}
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.eventengine.Event
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
+import it.agilelab.bigdata.wasp.core.utils.ConfigManager.conf
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtilsDefault, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
@@ -28,6 +28,7 @@ import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
+
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import org.apache.avro.Schema
 import org.apache.commons.cli
@@ -60,6 +61,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
   override def launch(commandLine: CommandLine): Unit = {
     addSystemPipegraphs()
     registerSchema()
+
     super.launch(commandLine)
     startRestServer(WaspSystem.actorSystem, getRoutes)
     logger.info(s"MasterNode has been launched with WaspConfig ${waspConfig.toString}")

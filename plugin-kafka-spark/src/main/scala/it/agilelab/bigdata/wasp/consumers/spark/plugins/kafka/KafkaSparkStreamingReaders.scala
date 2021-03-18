@@ -9,8 +9,10 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.models.MultiTopicModel.topicNameToColumnName
 import it.agilelab.bigdata.wasp.models._
-import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, TopicBL}
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas
+import it.agilelab.bigdata.wasp.models.{MultiTopicModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, TopicBL}
+import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import org.apache.avro.Schema
 import org.apache.spark.sql.catalyst.expressions.CaseWhen
 import org.apache.spark.sql.functions._
@@ -125,7 +127,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
   private def selectMetadata(keyCol: Column = col(KafkaSparkSQLSchemas.KEY_ATTRIBUTE_NAME)): Column = {
     // find all kafka metadata (non-value) columns so we can keep them in the final select
-    val allColumnsButValue =
+    val allColumnsButKeyAndValue =
       KafkaSparkSQLSchemas.INPUT_SCHEMA
         .map(_.name)
         .filter(cName =>
@@ -136,7 +138,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
     // create select expression to push all kafka metadata columns under a single complex column called
     // "kafkaMetadata"
-    val metadataSelectExpr = struct(keyCol :: allColumnsButValue.map(col): _*).as(KAFKA_METADATA_COL)
+    val metadataSelectExpr = struct((keyCol.as(KafkaSparkSQLSchemas.KEY_ATTRIBUTE_NAME)) :: allColumnsButKeyAndValue.map(col): _*).as(KAFKA_METADATA_COL)
     metadataSelectExpr
   }
 
@@ -252,9 +254,23 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         } else {
           None
         }
+
+        val avroSchemaManager = darwinConf.map(AvroSchemaManagerFactory.initialize)
+        val schemaToUse = if (keySchema.isEmpty) {
+          for {
+            sm <- avroSchemaManager.toRight("Could not instantiate Schema Manager.").right
+            subj <- SubjectStrategy.subjectFor("this is not used", t, true).toRight(s"Could not retrieve subject for the specified topic ${t.name}").right
+            idAndSchema <- sm.retrieveLatestSchema(subj).toRight(s"Could not retrieve latest schema for subject ${subj}").right
+          } yield {
+            idAndSchema._2.toString
+          }
+        } else {
+          Right(keySchema)
+        }
+
         val avroKeyConversion = AvroDeserializerExpression(
           col(KafkaSparkSQLSchemas.KEY_ATTRIBUTE_NAME).expr,
-          keySchema,
+          schemaToUse.fold(x => throw new RuntimeException(x), identity),
           darwinConf,
           avoidReevaluation = true
         )
@@ -270,9 +286,24 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     } else {
       None
     }
+
+    val avroSchemaManager = darwinConf.map(AvroSchemaManagerFactory.initialize)
+
+    val schemaToUse = if (t.schema.isEmpty) {
+      for {
+        sm <- avroSchemaManager.toRight("Could not instantiate Schema Manager.").right
+        subj <- SubjectStrategy.subjectFor("this is not used", t, false).toRight(s"Could not retrieve subject for the specified topic ${t.name}").right
+        idAndSchema <- sm.retrieveLatestSchema(subj).toRight(s"Could not retrieve latest schema for subject ${subj}").right
+      } yield {
+        idAndSchema._2.toString
+      }
+    } else {
+      Right(t.getJsonSchema)
+    }
+
     val avroToRowConversion = AvroDeserializerExpression(
       col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).expr,
-      t.getJsonSchema,
+      schemaToUse.fold(x => throw new RuntimeException(x), identity),
       darwinConf,
       avoidReevaluation = true
     )

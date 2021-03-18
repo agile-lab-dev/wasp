@@ -58,8 +58,10 @@ class StructuredStreamingETLActor private (
       materialize(etl, pipegraph, dataFrame) match {
         case Success(streamingQuery) => goto(WaitingToBeMonitored) using MaterializedData(streamingQuery) replying Protocol
           .ETLMaterialized(etl)
-        case Failure(reason) => goto(WaitingToBeMaterialized) using ActivatedData(dataFrame) replying MyProtocol
-          .ETLNotMaterialized(etl, reason)
+        case Failure(reason) => {
+          goto(WaitingToBeMaterialized) using ActivatedData(dataFrame) replying MyProtocol
+            .ETLNotMaterialized(etl, reason)
+        }
       }
 
     case Event(MyProtocol.StopETL(etl), ActivatedData(_)) =>

@@ -13,6 +13,21 @@ private[wasp] object TestTopicModel {
   private val topic6_name          = "test6"
   private val topicCheckpoint_name = "testCheckpoint"
 
+  lazy val dbzMutations = TopicModel(
+    name = "dbserver1.inventory.customers",
+    creationTime = System.currentTimeMillis,
+    partitions = 1,
+    replicas = 1,
+    topicDataType = "avro",
+    keyFieldName = None,
+    headersFieldName = None,
+    valueFieldsNames = None,
+    useAvroSchemaManager = true,
+    schema = org.mongodb.scala.bson.BsonDocument(),
+    subjectStrategy = SubjectStrategy.Topic,
+    keySchema = Some(""))
+
+
   lazy val monitoring = TopicModel(
     name = TopicModel.name("monitoring"),
     creationTime = System.currentTimeMillis,

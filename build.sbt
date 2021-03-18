@@ -164,6 +164,13 @@ lazy val plugin_http_spark = Project("wasp-plugin-http-spark", file("plugin-http
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
 
+lazy val plugin_cdc_spark = Project("wasp-plugin-cdc-spark", file("plugin-cdc-spark"))
+	.settings(Settings.commonSettings: _*)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(delta_lake)
+	.settings(libraryDependencies ++= Dependencies.plugin_cdc_spark)
+  .enablePlugins(JavaAppPackaging)
+
 /* Yarn  */
 
 lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
@@ -212,8 +219,14 @@ lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies ++= Dependencies.nifiClient)
 
-/* Framework + Plugins */
+/* delta lake */
+lazy val delta_lake = Project("wasp-delta-lake", file("delta-lake"))
+  .settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies ++= Dependencies.delta_lake)
+  .settings(resolvers ++= Resolvers.resolvers)
+  .settings(scalaVersion := Versions.scala)
 
+/* Framework + Plugins */
 lazy val wasp = Project("wasp", file("."))
   .settings(Settings.commonSettings: _*)
   .aggregate(
@@ -234,6 +247,7 @@ lazy val wasp = Project("wasp", file("."))
     plugin_kafka_spark_old,
     plugin_raw_spark,
     plugin_solr_spark,
+		plugin_cdc_spark,
     yarn,
     spark,
     plugin_mailer_spark,
@@ -242,7 +256,8 @@ lazy val wasp = Project("wasp", file("."))
     spark_sql_kafka_0_11_old,
     openapi,
     nifi_client,
-    plugin_mongo_spark
+    plugin_mongo_spark,
+    delta_lake,
   )
 
 /* WhiteLabel */
@@ -287,6 +302,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_solr_spark)
   .dependsOn(plugin_mongo_spark)
   .dependsOn(plugin_http_spark)
+  .dependsOn(plugin_cdc_spark)
   .dependsOn(spark_telemetry_plugin)
   .dependsOn(spark_nifi_plugin)
   .settings(

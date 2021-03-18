@@ -335,15 +335,17 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 object WaspMongoDB extends Logging {
   private var waspDB: WaspMongoDB = _
 
-  val pipegraphsName = "pipegraphs"
-  val producersName = "producers"
-  val topicsName = "topics"
-  val indexesName = "indexes"
-  val rawName = "raw"
-  val keyValueName = "keyvalues"
-  val sqlSourceName = "sqlsource"
-  val batchjobName = "batchjobs"
-  val batchjobInstanceName = "batchjobinstances"
+
+  val pipegraphsName        = "pipegraphs"
+  val producersName         = "producers"
+  val topicsName            = "topics"
+  val indexesName           = "indexes"
+  val rawName               = "raw"
+  val cdcName               = "cdc"
+  val keyValueName          = "keyvalues"
+  val sqlSourceName         = "sqlsource"
+  val batchjobName          = "batchjobs"
+  val batchjobInstanceName  = "batchjobinstances"
   val pipegraphInstanceName = "pipegraphinstances"
 
   val configurationsName = "configurations"
@@ -356,22 +358,24 @@ object WaspMongoDB extends Logging {
   val httpName = "http"
 
   val collectionsLookupTable: Map[Type, String] = Map(
-    typeTag[PipegraphModel].tpe -> pipegraphsName,
-    typeTag[ProducerModel].tpe -> producersName,
-    typeTag[TopicModel].tpe -> topicsName,
-    typeTag[MultiTopicModel].tpe -> topicsName,
-    typeTag[IndexModel].tpe -> indexesName,
-    typeTag[RawModel].tpe -> rawName,
-    typeTag[KeyValueModel].tpe -> keyValueName,
-    typeTag[SqlSourceModel].tpe -> sqlSourceName,
-    typeTag[BatchJobModel].tpe -> batchjobName,
-    typeTag[MlModelOnlyInfo].tpe -> mlModelsName,
-    typeTag[WebsocketModel].tpe -> websocketsName,
-    typeTag[BatchSchedulerModel].tpe -> batchSchedulersName,
-    typeTag[BatchJobInstanceModel].tpe -> batchjobInstanceName,
-    typeTag[PipegraphInstanceModel].tpe -> pipegraphInstanceName,
-    typeTag[KafkaConfigModel].tpe -> configurationsName,
-    typeTag[SparkBatchConfigModel].tpe -> configurationsName,
+
+    typeTag[PipegraphModel].tpe            -> pipegraphsName,
+    typeTag[ProducerModel].tpe             -> producersName,
+    typeTag[TopicModel].tpe                -> topicsName,
+    typeTag[MultiTopicModel].tpe           -> topicsName,
+    typeTag[IndexModel].tpe                -> indexesName,
+    typeTag[RawModel].tpe                  -> rawName,
+    typeTag[CdcModel].tpe                  -> cdcName,
+    typeTag[KeyValueModel].tpe             -> keyValueName,
+    typeTag[SqlSourceModel].tpe            -> sqlSourceName,
+    typeTag[BatchJobModel].tpe             -> batchjobName,
+    typeTag[MlModelOnlyInfo].tpe           -> mlModelsName,
+    typeTag[WebsocketModel].tpe            -> websocketsName,
+    typeTag[BatchSchedulerModel].tpe       -> batchSchedulersName,
+    typeTag[BatchJobInstanceModel].tpe     -> batchjobInstanceName,
+    typeTag[PipegraphInstanceModel].tpe    -> pipegraphInstanceName,
+    typeTag[KafkaConfigModel].tpe          -> configurationsName,
+    typeTag[SparkBatchConfigModel].tpe     -> configurationsName,
     typeTag[SparkStreamingConfigModel].tpe -> configurationsName,
     typeTag[ElasticConfigModel].tpe -> configurationsName,
     typeTag[SolrConfigModel].tpe -> configurationsName,
@@ -416,6 +420,8 @@ object WaspMongoDB extends Logging {
     createCodecProviderIgnoreNone(classOf[IndexModel]),
     createCodecProviderIgnoreNone(classOf[RawOptions]),
     createCodecProviderIgnoreNone(classOf[RawModel]),
+    createCodecProviderIgnoreNone(classOf[CdcModel]),
+    createCodecProviderIgnoreNone(classOf[CdcOptions]),
     createCodecProviderIgnoreNone(classOf[KeyValueOption]),
     createCodecProviderIgnoreNone(classOf[KeyValueModel]),
     createCodecProviderIgnoreNone(classOf[SqlSourceModel]),

@@ -11,14 +11,14 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
     super.afterAll()
     helper.close()
   }
-  it should "test wrong code" in {
+  ignore should "test wrong code" in {
     val output = helper.validate(
       """val a = "banana"
         | a.test """.stripMargin)
     output.size shouldBe 1
     output.head.toString() should startWith("<virtual>:2")
   }
-  it should "test validate code with type wrong" in {
+  ignore should "test validate code with type wrong" in {
     val output = helper.validate(
       """val a = "banana"
         |a.toString()
@@ -26,7 +26,7 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
     output.size shouldBe 1
   }
 
-  it should "test validate code" in {
+  ignore should "test validate code" in {
     val output = helper.validate(
       """val a = "banana"
         |a.toString()
@@ -35,7 +35,7 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
     output.size shouldBe 0
   }
 
-  it should "test validate code with warning" in {
+  ignore should "test validate code with warning" in {
     val output = helper.validate(
       """val a = "banana"
         |a
@@ -46,27 +46,27 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
     output.size shouldBe 1
   }
 
-  it should "test a strategy" in {
+  ignore should "test a strategy" in {
     val output = helper.validate("""val df = dataFrames.getFirstDataFrame.select("name","someNumber","someLong")
-      |df.withColumn("someNumber",df("someNumber")*df("someNumber"))
-      |  .withColumn("extra",lit("TEST"))
-      |""".stripMargin)
+                                   |df.withColumn("someNumber",df("someNumber")*df("someNumber"))
+                                   |  .withColumn("extra",lit("TEST"))
+                                   |""".stripMargin)
     output.size shouldBe 0
   }
 
 
-  it should "test a strategy wrong" in {
+  ignore should "test a strategy wrong" in {
     val output = helper.validate("""val df = dataFrames.getFirstDataFrame.select("name","someNumber","someLong")
-      |dfWrong.withColumn("someNumber",df("someNumber")*df("someNumber"))
-      |.withColumn("extra",lit("TEST"))
-      |df
+                                   |dfWrong.withColumn("someNumber",df("someNumber")*df("someNumber"))
+                                   |.withColumn("extra",lit("TEST"))
+                                   |df
       """.stripMargin)
     output.size shouldBe 1
     output.head.toString() should startWith ("<virtual>:2")
   }
 
 
-  it should "test complete code 1 for a strategy" in {
+  ignore should "test complete code 1 for a strategy" in {
 
     val code =
       """val a = "banana"
@@ -93,7 +93,7 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
   }
 
 
-  it should "test complete code 3 for a strategy" in {
+  ignore should "test complete code 3 for a strategy" in {
     val code =
       """val test = "banana"
         |val test1 = "ciao"
@@ -107,7 +107,7 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
 
   }
 
-  it should "test complete code 4 for a strategy" in {
+  ignore should "test complete code 4 for a strategy" in {
     val code =
       """val test = "banana"
         |val test1 = "ciao"
@@ -124,7 +124,7 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
   }
 
 
-  it should "complete a strategy 1" in {
+  ignore should "complete a strategy 1" in {
     val code =
       """data""".stripMargin
     val output =  helper.complete(code,code.length)

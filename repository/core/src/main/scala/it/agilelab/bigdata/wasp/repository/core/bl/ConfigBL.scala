@@ -13,6 +13,7 @@ object ConfigBL {
   lazy val websocketBL: WebsocketBL = factory.getWebsocketBL
   lazy val batchSchedulerBL: BatchSchedulersBL = factory.getBatchSchedulersBL
   lazy val rawBL: RawBL = factory.getRawBL
+  lazy val cdcBL: CdcBL = factory.getCdcBL
   lazy val keyValueBL: KeyValueBL = factory.getKeyValueBL
   lazy val batchSchedulersBL: BatchSchedulersBL = factory.getBatchSchedulersBL
   lazy val documentBL: DocumentBL = factory.getDocumentBL
@@ -43,4 +44,5 @@ trait FactoryBL {
   def getConfigManagerBL : ConfigManagerBL
   def getSqlSourceBl : SqlSourceBl
   def getHttpBl: HttpBL
+  def getCdcBL: CdcBL
 }

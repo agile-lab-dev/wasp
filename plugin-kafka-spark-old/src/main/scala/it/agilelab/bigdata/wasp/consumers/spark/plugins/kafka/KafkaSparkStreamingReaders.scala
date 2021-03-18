@@ -11,6 +11,7 @@ import it.agilelab.bigdata.wasp.models.MultiTopicModel.topicNameToColumnName
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, TopicBL}
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas
+import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import org.apache.avro.Schema
 import org.apache.spark.sql.catalyst.expressions.CaseWhen
 import org.apache.spark.sql.functions._
@@ -252,9 +253,24 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         } else {
           None
         }
+
+        lazy val avroSchemaManager = darwinConf.map(AvroSchemaManagerFactory.initialize)
+
+        val schemaToUse = if (keySchema.isEmpty) {
+          for {
+            sm <- avroSchemaManager
+            subj <- SubjectStrategy.subjectFor(t.getJsonSchema, t, true)
+          } yield {
+            val idAndSchema = sm.retrieveLatestSchema(subj).getOrElse(throw new RuntimeException(s"Reader schema not specified and fetching latest schema with subject '${subj}' failed."))
+            idAndSchema._2.toString
+          }
+        } else {
+          Some(keySchema)
+        }
+
         val avroKeyConversion = AvroDeserializerExpression(
           col(KafkaSparkSQLSchemas.KEY_ATTRIBUTE_NAME).expr,
-          keySchema,
+          schemaToUse.get,
           darwinConf,
           avoidReevaluation = true
         )
@@ -270,9 +286,24 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     } else {
       None
     }
+
+    lazy val avroSchemaManager = darwinConf.map(AvroSchemaManagerFactory.initialize)
+
+    val schemaToUse = if (t.schema.isEmpty) {
+      for {
+        sm <- avroSchemaManager
+        subj <- SubjectStrategy.subjectFor(t.getJsonSchema, t, false)
+      } yield {
+        val idAndSchema = sm.retrieveLatestSchema(subj).getOrElse(throw new RuntimeException(s"Reader schema not specified and fetching latest schema with subject '${subj}' failed."))
+        idAndSchema._2.toString
+      }
+    } else {
+      Some(t.getJsonSchema)
+    }
+
     val avroToRowConversion = AvroDeserializerExpression(
       col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).expr,
-      t.getJsonSchema,
+      schemaToUse.get,
       darwinConf,
       avoidReevaluation = true
     )

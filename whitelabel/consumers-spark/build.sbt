@@ -21,7 +21,7 @@ mappings in Universal += {
     val moduleOpt = dep.metadata.get(AttributeKey[ModuleID]("moduleID"))
     moduleOpt match {
       case Some(module) =>
-        if (module.organization.equalsIgnoreCase("it.agilelab")) {
+        if (module.organization.equalsIgnoreCase("it.agilelab") || module.organization.equalsIgnoreCase("wasp-delta-lake")){
           //for some reason, the snapshot version is not appended correctly. Must do it manually
           s"${module.organization}.${module.name}-${module.revision}.jar"
         } else

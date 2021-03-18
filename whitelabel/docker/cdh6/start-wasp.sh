@@ -69,7 +69,7 @@ set -ax
 if [ "$PERSIST_FLAG" = false ]
  then
   docker rm $NAME_CONTAINER || true
-  $DOCKER_CMD run -it --name $NAME_CONTAINER \
+  $DOCKER_CMD run -it --name $NAME_CONTAINER --network wasp2 \
     -v $MASTER_PROJECT_DIRECTORY/target/universal/stage/:/code/master \
     -v $PRODUCERS_PROJECT_DIRECTORY/target/universal/stage/:/code/producer \
     -v $CONSUMERS_RT_PROJECT_DIRECTORY/target/universal/stage/:/code/consumers-rt \
@@ -97,6 +97,8 @@ if [ "$PERSIST_FLAG" = false ]
     -p 2891:2891 \
     -p 18080:18080 \
     -p 8080:8080 \
+    -p 9092:9092 \
+    -p 9000:9000 \
     $DOCKER_IMAGE \
     bash /docker-entrypoint.sh
 

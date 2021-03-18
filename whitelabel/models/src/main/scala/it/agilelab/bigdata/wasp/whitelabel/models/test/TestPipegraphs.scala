@@ -12,6 +12,29 @@ private[wasp] object TestPipegraphs {
 
     object Structured {
 
+      lazy val autoDataLakeDebeziumMutations = PipegraphModel(
+        name = "TestAutoDataLakeDebezium",
+        description = "Description of TestAutoDataLakeDebezium",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestMutationsToSOEPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.dbzMutations, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.cdcWriter("Cdc Writer", TestCdcModel.debeziumMutation),
+            mlModels = List(),
+            strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.DebeziumMutationStrategy")),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+
       lazy val console = PipegraphModel(
         name = "TestConsoleWriterStructuredJSONPipegraph",
         description = "Description of TestConsoleWriterStructuredJSONPipegraph",

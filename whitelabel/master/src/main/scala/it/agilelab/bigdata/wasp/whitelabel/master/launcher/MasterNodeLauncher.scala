@@ -55,7 +55,6 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
      * =================================================================================================================
      */
 
-
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     ConfigBL.topicBL.upsert(TestTopicModel.json)
     ConfigBL.topicBL.upsert(TestTopicModel.json2)
@@ -102,6 +101,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel) //EVENT ENGINE
     ConfigBL.topicBL.upsert(IoTIndustrialPlantTopicModel.industrialPlantTopicModel) //IoT
     ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel()) //IoT
+    ConfigBL.topicBL.upsert(TestTopicModel.dbzMutations)
+    ConfigBL.cdcBL.upsert(TestCdcModel.debeziumMutation)
 
     /* Producers */
     ConfigBL.producerBL.upsert(TestProducerModel.json)
@@ -147,7 +148,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.solr)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.elastic)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.hdfs)
-
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.autoDataLakeDebeziumMutations)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.console)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafka)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafka_key_schema)

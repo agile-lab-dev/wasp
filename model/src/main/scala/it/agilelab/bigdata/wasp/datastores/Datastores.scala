@@ -23,6 +23,9 @@ trait WebSocketCategory extends DatastoreCategory with StreamingSourceAndSink   
 trait WebMailCategory 	extends DatastoreCategory with StreamingSink												 { override val categoryName = "webmail"   }
 trait HttpCategory 			extends DatastoreCategory with StreamingSink												 { override val categoryName = "http"   }
 trait DocumentCategory  extends DatastoreCategory with StreamingSink with BatchSourceAndSink { override val categoryName = "document"  }
+trait CdcCategory			extends DatastoreCategory with StreamingSink with BatchSourceAndSink { override val categoryName = "cdc"     }
+
+
 
 /**
 	* A `DatastoreProduct` identifies either a particular datastore, as in an actual software product, or a generic one,
@@ -62,6 +65,7 @@ sealed trait DatastoreProduct extends DatastoreCategory {
 			case _: WebSocketCategory => WebSocketProduct.productName.get
 			case _: WebMailCategory   => WebMailProduct.productName.get
 			case _: DocumentCategory  => MongoDbProduct.productName.get
+			case _: CdcCategory   	=> CdcProduct.productName.get
 			case _                    =>
 				throw new IllegalArgumentException(s"""Unknown datastore category "$categoryName" of $this, unable to provide
 					                                    | default datastore product""".stripMargin.filterNot(_.isControl))
@@ -94,6 +98,7 @@ object DatastoreProduct {
 	object GenericTopicProduct    extends TopicCategory     with DatastoreProduct { override val productName = None              }
 	object HttpProduct            extends HttpCategory      with DatastoreProduct { override val productName = Some("http")      }
 	object WebMailProduct					extends WebMailCategory   with DatastoreProduct { override val productName = Some("webmail")   }
+	object CdcProduct						extends CdcCategory				with DatastoreProduct { override val productName = Some("cdc")     }
 
 	// product lookup map for default datastore resolution
 	private[wasp] val productsLookupMap = buildProductsLookupMap()

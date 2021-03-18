@@ -21,6 +21,8 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getRawBL: RawBL = RawBLImpl(WaspPostgresDB.getDB())
 
+  override def getCdcBL: CdcBL = CdcBLImpl(WaspPostgresDB.getDB())
+
   override def getKeyValueBL: KeyValueBL =  KeyValueBLImpl(WaspPostgresDB.getDB())
 
   override def getBatchSchedulersBL: BatchSchedulersBLImpl = BatchSchedulersBLImpl(WaspPostgresDB.getDB())
