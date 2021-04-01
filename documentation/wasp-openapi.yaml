@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.26.0-375-implement-an-api-to-let-the-ui-edit-a-pipegraph-created-by-it-SNAPSHOT
+  version: 2.27.0-436-refactor-plugin-in-order-to-allow-plugin-defined-models-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -39,6 +39,8 @@ tags:
     creation
 - name: freeCode
   description: operation related to free code strategy management
+- name: generic
+  description: operation related to generic models management
 paths:
   /pipegraphs/{pipegraphname}:
     delete:
@@ -195,6 +197,42 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/Events'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /generic/{modelname}:
+    get:
+      tags:
+      - generic
+      description: Retrieves the model used to write or read from Generic Stores
+      operationId: get-generic
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: modelname
+        in: path
+        description: The name of the Generic model to retrieve
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Outcome of the operation
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    $ref: '#/components/schemas/GenericModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -825,7 +863,7 @@ paths:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
   /pipegraphs/{pipegraphname}/instances:
-    post:
+    get:
       tags:
       - pipegraphs
       description: List all instances of a pipegraph
@@ -1080,6 +1118,7 @@ paths:
               - structuredStreamingComponents
               - rtComponents
               - labels
+              - enrichmentSources
               type: object
               properties:
                 name:
@@ -1111,6 +1150,8 @@ paths:
                   type: array
                   items:
                     type: string
+                enrichmentSources:
+                  $ref: '#/components/schemas/RestEnrichmentConfigModel'
               xml:
                 name: PipegraphModel
                 namespace: java://it.agilelab.bigdata.wasp.models
@@ -1157,6 +1198,7 @@ paths:
               - structuredStreamingComponents
               - rtComponents
               - labels
+              - enrichmentSources
               type: object
               properties:
                 name:
@@ -1188,6 +1230,8 @@ paths:
                   type: array
                   items:
                     type: string
+                enrichmentSources:
+                  $ref: '#/components/schemas/RestEnrichmentConfigModel'
               xml:
                 name: PipegraphModel
                 namespace: java://it.agilelab.bigdata.wasp.models
@@ -1841,6 +1885,38 @@ paths:
                     $ref: '#/components/schemas/ResultIndicator'
                   data:
                     $ref: '#/components/schemas/PipegraphInstanceModel'
+                xml:
+                  name: AngularResponse
+                  namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
+  /generic:
+    get:
+      tags:
+      - generic
+      description: Retrieves all models used to write or read from Generic Stores
+      operationId: list-generic
+      parameters:
+      - name: pretty
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: All Generic models
+          content:
+            text/json:
+              schema:
+                required:
+                - Result
+                - data
+                type: object
+                properties:
+                  Result:
+                    $ref: '#/components/schemas/ResultIndicator'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GenericModel'
                 xml:
                   name: AngularResponse
                   namespace: java://it.agilelab.bigdata.wasp.master.web.openapi
@@ -2606,6 +2682,17 @@ components:
       xml:
         name: RawModelDTO
         namespace: java://it.agilelab.bigdata.wasp.models.editor
+    GenericOptions:
+      type: object
+      properties:
+        options:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+      xml:
+        name: GenericOptions
+        namespace: java://it.agilelab.bigdata.wasp.models
     CompletionModel:
       required:
       - toComplete
@@ -2888,6 +2975,32 @@ components:
       xml:
         name: KafkaEntryConfig
         namespace: java://it.agilelab.bigdata.wasp.models.configuration
+    GenericModel:
+      required:
+      - name
+      - kind
+      - value
+      - options
+      type: object
+      properties:
+        name:
+          type: string
+        kind:
+          type: string
+        value:
+          $ref: '#/components/schemas/BsonDocument'
+        options:
+          $ref: '#/components/schemas/GenericOptions'
+      xml:
+        name: GenericModel
+        namespace: java://it.agilelab.bigdata.wasp.models
+    SubjectStrategyEnum:
+      type: string
+      enum:
+      - none
+      - topic
+      - record
+      - topic-and-record
     DocumentModel:
       required:
       - name
@@ -3089,19 +3202,6 @@ components:
       xml:
         name: SparkEntryConfig
         namespace: java://it.agilelab.bigdata.wasp.models.configuration
-    DataStoreProductEnum:
-      type: string
-      enum:
-      - webmail
-      - websocket
-      - mongodb
-      - console
-      - hbase
-      - elastic
-      - solr
-      - kafka
-      - jdbc
-      - raw
     StrategyModel:
       required:
       - className
@@ -3404,7 +3504,7 @@ components:
         datastoreModelName:
           type: string
         datastoreProduct:
-          $ref: '#/components/schemas/DatastoreProduct'
+          type: string
         options:
           type: object
           additionalProperties:
@@ -3424,6 +3524,7 @@ components:
       - structuredStreamingComponents
       - rtComponents
       - labels
+      - enrichmentSources
       type: object
       properties:
         name:
@@ -3455,6 +3556,8 @@ components:
           type: array
           items:
             type: string
+        enrichmentSources:
+          $ref: '#/components/schemas/RestEnrichmentConfigModel'
       xml:
         name: PipegraphModel
         namespace: java://it.agilelab.bigdata.wasp.models
@@ -3684,6 +3787,18 @@ components:
       xml:
         name: LogEntry
         namespace: java://it.agilelab.bigdata.wasp.models
+    RestEnrichmentConfigModel:
+      required:
+      - sources
+      type: object
+      properties:
+        sources:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/RestEnrichmentSource'
+      xml:
+        name: RestEnrichmentConfigModel
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     BatchJobStartResult:
       required:
       - startResult
@@ -3707,19 +3822,6 @@ components:
       xml:
         name: SourceEntry
         namespace: java://it.agilelab.bigdata.wasp.models
-    DataStoreCategoryEnum:
-      type: string
-      enum:
-      - webmail
-      - websocket
-      - document
-      - console
-      - keyvalue
-      - index
-      - index
-      - topic
-      - database
-      - raw
     ProcessGroupResponse:
       required:
       - id
@@ -3809,7 +3911,7 @@ components:
         datastoreModelName:
           type: string
         datastoreProduct:
-          $ref: '#/components/schemas/DatastoreProduct'
+          type: string
         options:
           type: object
           additionalProperties:
@@ -3983,6 +4085,7 @@ components:
       - useAvroSchemaManager
       - schema
       - topicCompression
+      - subjectStrategy
       type: object
       properties:
         name:
@@ -4015,6 +4118,11 @@ components:
           $ref: '#/components/schemas/BsonDocument'
         topicCompression:
           $ref: '#/components/schemas/TopicCompressionEnum'
+        subjectStrategy:
+          $ref: '#/components/schemas/SubjectStrategyEnum'
+        keySchema:
+          type: string
+          nullable: true
       xml:
         name: TopicModel
         namespace: java://it.agilelab.bigdata.wasp.models
@@ -4170,13 +4278,6 @@ components:
       - min
       - avg
       - sum
-    DatastoreProduct:
-      type: object
-      properties:
-        category:
-          $ref: '#/components/schemas/DataStoreCategoryEnum'
-        product:
-          $ref: '#/components/schemas/DataStoreProductEnum'
     TopicModelDTO:
       required:
       - name
@@ -4202,7 +4303,7 @@ components:
         datastoreModelName:
           type: string
         datastoreProduct:
-          $ref: '#/components/schemas/DatastoreProduct'
+          type: string
         rateLimit:
           type: integer
           format: int32
@@ -4232,6 +4333,26 @@ components:
       xml:
         name: TelemetrySeries
         namespace: java://it.agilelab.bigdata.wasp.models
+    RestEnrichmentSource:
+      required:
+      - kind
+      - parameters
+      - headers
+      type: object
+      properties:
+        kind:
+          type: string
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+      xml:
+        name: RestEnrichmentSource
+        namespace: java://it.agilelab.bigdata.wasp.models.configuration
     KeyValueModelDTO:
       required:
       - name

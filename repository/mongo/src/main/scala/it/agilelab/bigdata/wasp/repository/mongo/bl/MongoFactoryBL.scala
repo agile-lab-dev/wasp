@@ -21,4 +21,5 @@ class MongoFactoryBL extends FactoryBL {
   def getConfigManagerBL : ConfigManagerBL = new ConfigManagerBLImpl(WaspMongoDB.getDB)
   def getSqlSourceBl : SqlSourceBl = new SqlSourceBlImpl(WaspMongoDB.getDB)
   def getHttpBl: HttpBL = new HttpBlImpl(WaspMongoDB.getDB)
+  def getGenericBL: GenericBL =  new GenericBLImp(WaspMongoDB.getDB)
 }

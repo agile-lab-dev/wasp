@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.TopicCategory
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 
 /**
 	* A model for grouping of topics.
@@ -24,7 +25,9 @@ case class MultiTopicModel private[wasp] (
     override val name: String,
     topicNameField: String,
     topicModelNames: Seq[String]
-) extends DatastoreModel[TopicCategory]
+) extends DatastoreModel {
+  override def datastoreProduct: DatastoreProduct = KafkaProduct
+}
 
 object MultiTopicModel {
   def fromTopicModels(name: String, topicNameField: String, topicModels: Seq[TopicModel]): MultiTopicModel = {

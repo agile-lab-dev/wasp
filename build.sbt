@@ -171,6 +171,16 @@ lazy val plugin_cdc_spark = Project("wasp-plugin-cdc-spark", file("plugin-cdc-sp
 	.settings(libraryDependencies ++= Dependencies.plugin_cdc_spark)
   .enablePlugins(JavaAppPackaging)
 
+
+lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark", file("plugin-parallel-write-spark"))
+  .settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies += Dependencies.scalaTest)
+// https://mvnrepository.com/artifact/net.liftweb/lift-json
+  .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
+  .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
+  .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
+  .dependsOn(consumers_spark % "compile->compile;test->test")
+
 /* Yarn  */
 
 lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
@@ -305,6 +315,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_cdc_spark)
   .dependsOn(spark_telemetry_plugin)
   .dependsOn(spark_nifi_plugin)
+  .dependsOn(plugin_parallel_write_spark)
   .settings(
     libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinConfluentConnector
       :+ "mysql" % "mysql-connector-java" % "5.1.6"

@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.TopicCategory
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import org.bson.BsonDocument
 
 object TopicModel {
@@ -152,9 +153,10 @@ case class TopicModel(override val name: String,
                       subjectStrategy: SubjectStrategy = SubjectStrategy.None,
                       keySchema: Option[String] = None
                      )
-  extends DatastoreModel[TopicCategory] {
+  extends DatastoreModel {
   def getJsonSchema: String = schema.toJson
 
+  override def datastoreProduct: DatastoreProduct = KafkaProduct
 }
 object TopicDataTypes {
   val AVRO = "avro"

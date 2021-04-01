@@ -7,7 +7,8 @@ import org.mongodb.scala.bson.BsonDocument
 trait TopicModelOpenApiComponentSupport
   extends ProducerOpenApiComponentSupport
     with LangOpenApi
-    with CollectionsOpenApi {
+    with CollectionsOpenApi
+    with BsonDocumentOpenApiDefinition {
 
   sealed trait TopicsResponse
 
@@ -24,8 +25,6 @@ trait TopicModelOpenApiComponentSupport
   }
   implicit lazy val multiTopicModelOpenApi: ToOpenApiSchema[MultiTopicModel] = product3(MultiTopicModel.apply)
 
-  implicit lazy val bsonDocumentOpenApi: ToOpenApiSchema[BsonDocument] =
-    objectOpenApi.mapSchema((ctx, schema) => schema.name("BsonDocument"))
   implicit lazy val topicModelOpenApi: ToOpenApiSchema[TopicModel] =
     product13(TopicModel.apply)
 

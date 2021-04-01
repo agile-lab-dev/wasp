@@ -14,7 +14,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.utils.MetadataUtils
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.repository.core.bl._
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct._
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, IndexCategory}
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, PipegraphModel, ReaderModel, TopicModel}
 import org.apache.spark.sql.DataFrame

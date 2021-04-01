@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.repository.core.bl
 
-import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel, DatastoreModel, IndexModel, KeyValueModel, MlModelOnlyInfo, ProducerModel, RawModel, TopicModel}
 import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
@@ -131,22 +130,22 @@ class AllBLsTestWrapper {
   }
 
   val topicBL = new TopicBL {
-    val database = new ListBuffer[DatastoreModel[TopicCategory]]
-    override def getByName(name: String): Option[DatastoreModel[TopicCategory]] = database.find(_.name == name)
+    val database = new ListBuffer[DatastoreModel]
+    override def getByName(name: String): Option[DatastoreModel] = database.find(_.name == name)
     
-    override def persist(topicModel: DatastoreModel[TopicCategory]): Unit = {
+    override def persist(topicModel: DatastoreModel): Unit = {
       database.+=(topicModel)
     }
 
-    override def getAll: Seq[DatastoreModel[TopicCategory]] = database
+    override def getAll: Seq[DatastoreModel] = database
 
-    override def upsert(topicModel: DatastoreModel[TopicCategory]): Unit = {
+    override def upsert(topicModel: DatastoreModel): Unit = {
       val exist = getByName(topicModel.name)
       if(exist.isDefined) database.drop(database.indexOf(exist.get))
         else persist(topicModel)
     }
 
-    override def insertIfNotExists(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit =
+    override def insertIfNotExists(topicDatastoreModel: DatastoreModel): Unit =
       if(getByName(topicDatastoreModel.name).isEmpty) persist(topicDatastoreModel)
   }
 

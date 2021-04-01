@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.RawCategory
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.RawProduct
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 
 
 object RawModel{
@@ -70,7 +71,9 @@ case class RawModel(override val name: String,
                     timed: Boolean = true,
                     schema: String,
                     options: RawOptions = RawOptions.default)
-	  extends DatastoreModel[RawCategory]
+	  extends DatastoreModel {
+	override def datastoreProduct: DatastoreProduct = RawProduct
+}
 
 // TODO external scaladocs links
 /**

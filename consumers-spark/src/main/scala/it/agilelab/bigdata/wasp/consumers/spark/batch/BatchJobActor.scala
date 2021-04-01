@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{HasPostMaterializationHook, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.repository.core.bl._
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, SparkBatchConfiguration}
 import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel, ReaderModel, WriterModel}
@@ -76,13 +76,13 @@ class BatchJobActor private(env: {val batchJobBL: BatchJobBL; val indexBL: Index
   }
 
   private def stepEnsureReadersAreNotTopicBased(readers: Seq[ReaderModel]): Try[Seq[ReaderModel]] =
-    readers.find(_.datastoreProduct.isInstanceOf[TopicCategory])
+    readers.find(_.datastoreProduct.categoryName.equals("topic"))
       .map { _ => Failure(new Exception("No stream readers allowed in batch jobs")) }
       .getOrElse(Success(readers))
 
   private def logIfWriterIsTopicBased(writer: WriterModel): Try[WriterModel] = {
-    writer.datastoreProduct match {
-      case _: TopicCategory =>
+    writer.datastoreProduct.categoryName match {
+      case "topic"=>
         logger.warn("Writing from a Batch to kafka looks like an anti-pattern: use with caution")
         Success(writer)
       case _ => Success(writer)

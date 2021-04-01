@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.{DatastoreCategory, DatastoreProduct, StreamingSource}
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 
 case class StreamingReaderModel private[wasp] (name: String,
                                                datastoreModelName: String,
@@ -11,13 +11,11 @@ case class StreamingReaderModel private[wasp] (name: String,
 object StreamingReaderModel {
   import DatastoreProduct._
 
-  def apply[DSC <: DatastoreCategory, DSP <: DatastoreProduct]
-           (name: String,
-            datastoreModel: DatastoreModel[DSC],
-            datastoreProduct: DSP,
+  def apply(name: String,
+            datastoreModel: DatastoreModel,
+            datastoreProduct: DatastoreProduct,
             rateLimit: Option[Int],
-            options: Map[String, String] = Map.empty)
-           (implicit ev: DSP <:< DSC, ev2: DSC <:< StreamingSource): StreamingReaderModel = {
+            options: Map[String, String] = Map.empty): StreamingReaderModel = {
     StreamingReaderModel(name, datastoreModel.name, datastoreProduct, rateLimit, options)
   }
 
@@ -25,20 +23,20 @@ object StreamingReaderModel {
                   topicModel: TopicModel,
                   rateLimit: Option[Int],
                   options: Map[String, String] = Map.empty) =
-    apply(name, topicModel, GenericTopicProduct, rateLimit, options)
+    apply(name, topicModel.name, GenericTopicProduct, rateLimit, options)
   def kafkaReader(name: String,
                   topicModel: TopicModel,
                   rateLimit: Option[Int],
                   options: Map[String, String] = Map.empty) =
-    apply(name, topicModel, KafkaProduct, rateLimit, options)
+    apply(name, topicModel.name, KafkaProduct, rateLimit, options)
   def kafkaReaderMultitopic(name: String,
                   multiTopicModel: MultiTopicModel,
                   rateLimit: Option[Int],
                   options: Map[String, String] = Map.empty) =
-    apply(name, multiTopicModel, KafkaProduct, rateLimit, options)
+    apply(name, multiTopicModel.name, KafkaProduct, rateLimit, options)
   def websocketReader(name: String,
                       websocketModel: WebsocketModel,
                       rateLimit: Option[Int],
                       options: Map[String, String] = Map.empty) =
-    apply(name, websocketModel, WebSocketProduct, rateLimit, options)
+    apply(name, websocketModel.name, WebSocketProduct, rateLimit, options)
 }

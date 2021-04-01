@@ -22,6 +22,7 @@ object ConfigBL {
   lazy val configManagerBL : ConfigManagerBL = factory.getConfigManagerBL
   lazy val sqlSourceBl : SqlSourceBl = factory.getSqlSourceBl
   lazy val httpBl: HttpBL = factory.getHttpBl
+  lazy val genericBL: GenericBL = factory.getGenericBL
 }
 
 
@@ -45,4 +46,5 @@ trait FactoryBL {
   def getSqlSourceBl : SqlSourceBl
   def getHttpBl: HttpBL
   def getCdcBL: CdcBL
+  def getGenericBL: GenericBL
 }

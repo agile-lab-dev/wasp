@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaWriters._
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
 import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
-import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
@@ -17,7 +16,7 @@ class KafkaBatchWriter(topicBL: TopicBL,
   override def write(df: DataFrame): Unit = {
 
     val tinyKafkaConfig = ConfigManager.getKafkaConfig.toTinyConfig()
-    val topicOpt: Option[DatastoreModel[TopicCategory]] = topicBL.getByName(topicDatastoreModelName)
+    val topicOpt: Option[DatastoreModel] = topicBL.getByName(topicDatastoreModelName)
 
     val (topicFieldName, topics) = retrieveTopicFieldNameAndTopicModels(topicOpt, topicBL, topicDatastoreModelName)
     val mainTopicModel = topicOpt.get

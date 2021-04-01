@@ -6,7 +6,7 @@ import java.time.temporal.{TemporalAccessor, TemporalQuery}
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import it.agilelab.bigdata.wasp.models.configuration._
 import it.agilelab.bigdata.wasp.models.editor._
 import it.agilelab.bigdata.wasp.models._
@@ -69,7 +69,7 @@ class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
   * @author Nicolò Bidotti
   */
 class TopicDatastoreModelJsonFormat
-    extends RootJsonFormat[DatastoreModel[TopicCategory]]
+    extends RootJsonFormat[DatastoreModel]
     with SprayJsonSupport
     with DefaultJsonProtocol {
 
@@ -99,14 +99,14 @@ class TopicDatastoreModelJsonFormat
   implicit val topicModelFormat: RootJsonFormat[TopicModel]           = jsonFormat13(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
 
-  override def write(obj: DatastoreModel[TopicCategory]): JsValue = {
+  override def write(obj: DatastoreModel): JsValue = {
     obj match {
       case topicModel: TopicModel           => topicModel.toJson
       case multiTopicModel: MultiTopicModel => multiTopicModel.toJson
     }
   }
 
-  override def read(json: JsValue): DatastoreModel[TopicCategory] = {
+  override def read(json: JsValue): DatastoreModel = {
     val obj    = json.asJsObject
     val fields = obj.fields
     obj match {
@@ -163,7 +163,7 @@ trait JsonSupport
   )
   implicit lazy val telemetryConfigModel: RootJsonFormat[TelemetryConfigModel] = jsonFormat4(TelemetryConfigModel.apply)
 
-  implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel[TopicCategory]] =
+  implicit lazy val topicDatastoreModel: RootJsonFormat[DatastoreModel] =
     new TopicDatastoreModelJsonFormat
   implicit lazy val indexModelFormat: RootJsonFormat[IndexModel]             = jsonFormat9(IndexModel.apply)
   implicit lazy val httpCompressionFormat: JsonFormat[HttpCompression] = new JsonFormat[HttpCompression] {
@@ -176,6 +176,8 @@ trait JsonSupport
       }
   }
   implicit lazy val httpModelFormat: RootJsonFormat[HttpModel] = jsonFormat8(HttpModel.apply)
+  implicit lazy val genericModelFormat: RootJsonFormat[GenericModel] = jsonFormat4(GenericModel.apply)
+  implicit lazy val genericOptionModelFormat: RootJsonFormat[GenericOptions] = jsonFormat1(GenericOptions.apply)
   implicit lazy val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat
   implicit lazy val streamingReaderModelFormat: RootJsonFormat[StreamingReaderModel] = jsonFormat5(
     (

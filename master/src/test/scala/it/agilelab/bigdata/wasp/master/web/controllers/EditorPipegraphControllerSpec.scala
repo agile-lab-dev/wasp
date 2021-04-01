@@ -1,9 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import com.typesafe.config.Config
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
-import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import it.agilelab.bigdata.wasp.models.{
   DatastoreModel,
   FreeCodeModel,
@@ -22,10 +20,8 @@ import it.agilelab.bigdata.wasp.models.editor.{
   PipegraphDTO,
   ProcessGroupResponse
 }
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
-import org.json4s.JsonAST.{JField, JObject, JString}
-import org.mongodb.scala.bson.BsonDocument
+import org.json4s.JsonAST.{JObject}
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json._
 

@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.KeyValueCategory
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KeyValueProduct
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 
 import scala.util.Try
 
@@ -78,7 +79,7 @@ case class KeyValueModel(override val name: String,
                          options: Option[Seq[KeyValueOption]],
                          useAvroSchemaManager: Boolean,
                          avroSchemas: Option[Map[String, String]])
-  extends DatastoreModel[KeyValueCategory] {
+  extends DatastoreModel {
 
   def getOptionsMap(): Map[String, String] = {
     options.map(sOpts => {
@@ -87,6 +88,8 @@ case class KeyValueModel(override val name: String,
       }).toMap
     }).getOrElse(Map())
   }
+
+  override def datastoreProduct: DatastoreProduct = KeyValueProduct
 }
 
 case class KeyValueOption(key: String, value: String)

@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.repository.mongo
 import java.nio.ByteBuffer
 import java.util
 import java.util.concurrent.TimeUnit
-
 import com.mongodb.ErrorCategory
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
@@ -15,7 +14,7 @@ import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, _}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}
-import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, SubjectStrategyCodecProvider, TopicCompressionCodecProvider, HttpCompressionCodecProvider}
+import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, HttpCompressionCodecProvider, SubjectStrategyCodecProvider, TopicCompressionCodecProvider}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper
 import org.bson.{BsonReader, BsonWriter}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
@@ -356,6 +355,7 @@ object WaspMongoDB extends Logging {
   val freeCodeName = "freeCode"
   val processGroupsName = "processGroups"
   val httpName = "http"
+  val genericName = "generic"
 
   val collectionsLookupTable: Map[Type, String] = Map(
 
@@ -388,7 +388,9 @@ object WaspMongoDB extends Logging {
     typeTag[FreeCodeModel].tpe -> freeCodeName,
     typeTag[ProcessGroupModel].tpe -> processGroupsName,
     typeTag[CompilerConfigModel].tpe -> configurationsName,
-    typeTag[HttpModel].tpe -> httpName
+    typeTag[HttpModel].tpe -> httpName,
+    typeTag[GenericModel].tpe -> genericName
+
   )
 
   lazy val indexKeys: Map[String, Bson] = collectionsLookupTable.map {
@@ -455,7 +457,9 @@ object WaspMongoDB extends Logging {
     createCodecProviderIgnoreNone(classOf[SchedulingStrategyConfigModel]),
     createCodecProviderIgnoreNone(classOf[HttpModel]),
     createCodecProviderIgnoreNone(classOf[RestEnrichmentConfigModel]),
-    createCodecProviderIgnoreNone(classOf[RestEnrichmentSource])
+    createCodecProviderIgnoreNone(classOf[RestEnrichmentSource]),
+    createCodecProviderIgnoreNone(classOf[GenericModel]),
+    createCodecProviderIgnoreNone(classOf[GenericOptions])
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(

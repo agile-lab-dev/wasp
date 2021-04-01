@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.producers.metrics.kafka
 import akka.actor.{Actor, ActorRef}
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
-import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.models.{DatastoreModel, PipegraphModel, ProducerModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
 import it.agilelab.bigdata.wasp.producers.StopMainTask
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog.TestBacklogSizeAnalyzerProducerActor
@@ -36,15 +35,15 @@ object Env {
 
   }
   val topicBL = new TopicBL() {
-    override def getByName(name: String): Option[DatastoreModel[TopicCategory]] = ???
+    override def getByName(name: String): Option[DatastoreModel] = ???
 
-    override def getAll: Seq[DatastoreModel[TopicCategory]] = ???
+    override def getAll: Seq[DatastoreModel] = ???
 
-    override def persist(topicModel: DatastoreModel[TopicCategory]): Unit = ???
+    override def persist(topicModel: DatastoreModel): Unit = ???
 
-    override def upsert(topicModel: DatastoreModel[TopicCategory]): Unit = ???
+    override def upsert(topicModel: DatastoreModel): Unit = ???
 
-    override def insertIfNotExists(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit = ???
+    override def insertIfNotExists(topicDatastoreModel: DatastoreModel): Unit = ???
   }
 }
 

@@ -58,6 +58,29 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val generic = PipegraphModel(
+        name = "TestGeneric",
+        description = "Description of TestGeneric",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestGenericWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.genericWriter("Generic Writer", TestGenericModel.genericJson),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+
       lazy val freecode = PipegraphModel(
         name = "TestConsoleWriterFreeCodeStructuredJSONPipegraph",
         description = "Description of TestConsoleWriterFreeCodeStructuredJSONPipegraph",

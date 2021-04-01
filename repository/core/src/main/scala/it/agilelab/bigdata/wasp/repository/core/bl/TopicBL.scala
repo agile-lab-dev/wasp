@@ -1,11 +1,10 @@
 package it.agilelab.bigdata.wasp.repository.core.bl
 
-import it.agilelab.bigdata.wasp.datastores.TopicCategory
 import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, TopicModel}
 
 trait TopicBL {
 
-  def getByName(name: String): Option[DatastoreModel[TopicCategory]]
+  def getByName(name: String): Option[DatastoreModel]
 	
 	/**
 		* Gets a TopicModel by name; an exception is thrown if a MultiTopicModel or anything else is found instead.
@@ -19,12 +18,12 @@ trait TopicBL {
 		}
 	}
 
-  def getAll : Seq[DatastoreModel[TopicCategory]]
+  def getAll : Seq[DatastoreModel]
 
-  def persist(topicModel: DatastoreModel[TopicCategory]): Unit
+  def persist(topicModel: DatastoreModel): Unit
 
-  def upsert(topicModel: DatastoreModel[TopicCategory]): Unit
+  def upsert(topicModel: DatastoreModel): Unit
 
-  def insertIfNotExists(topicDatastoreModel: DatastoreModel[TopicCategory]): Unit
+  def insertIfNotExists(topicDatastoreModel: DatastoreModel): Unit
 
 }

@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.DatabaseCategory
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.JDBCProduct
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import it.agilelab.bigdata.wasp.models.configuration.JdbcPartitioningInfo
 
 
@@ -21,4 +22,6 @@ case class SqlSourceModel(name: String,
                           partitioningInfo: Option[JdbcPartitioningInfo],
                           numPartitions: Option[Int],
                            fetchSize: Option[Int])
-    extends DatastoreModel[DatabaseCategory]
+    extends DatastoreModel {
+  override def datastoreProduct: DatastoreProduct = JDBCProduct
+}

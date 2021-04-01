@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.models
-
-import it.agilelab.bigdata.wasp.datastores.HttpCategory
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.HttpProduct
 
 case class HttpModel(
                       override val name: String,
@@ -11,7 +11,9 @@ case class HttpModel(
                       compression: HttpCompression, // HttpCompression
                       mediaType: String,
                       logBody: Boolean
-) extends DatastoreModel[HttpCategory]
+) extends DatastoreModel {
+  override def datastoreProduct: DatastoreProduct = HttpProduct
+}
 
 sealed abstract class HttpCompression(val codec: String)
 

@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import com.google.gson.JsonObject
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, TopicCategory}
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.{
   GenericIndexProduct,
   GenericKeyValueProduct,
@@ -297,7 +297,7 @@ trait PipegraphEditorService {
   def validateStrategyCode(code: String): List[ErrorDTO]
   def insertPipegraphModel(model: PipegraphModel): Unit
   def updatePipegraphModel(model: PipegraphModel): Unit
-  def getTopicModelById(name: String): Option[DatastoreModel[TopicCategory]]
+  def getTopicModelById(name: String): Option[DatastoreModel]
   def getRawModelById(name: String): Option[RawModel]
   def getIndexModelById(name: String): Option[IndexModel]
   def getKeyValueModelById(name: String): Option[KeyValueModel]
@@ -372,7 +372,7 @@ class DefaultPipegraphEditorService(val utils: FreeCodeCompilerUtils) extends Pi
   override def upsertProcessGroup(pg: ProcessGroupModel): Unit = ConfigBL.processGroupBL.upsert(pg)
   override def upsertCodeModel(cm: FreeCodeModel): Unit        = ConfigBL.freeCodeBL.upsert(cm)
 
-  override def getTopicModelById(name: String): Option[DatastoreModel[TopicCategory]] = ConfigBL.topicBL.getByName(name)
+  override def getTopicModelById(name: String): Option[DatastoreModel] = ConfigBL.topicBL.getByName(name)
   override def getRawModelById(name: String): Option[RawModel]                        = ConfigBL.rawBL.getByName(name)
   override def getIndexModelById(name: String): Option[IndexModel]                    = ConfigBL.indexBL.getByName(name)
   override def getKeyValueModelById(name: String): Option[KeyValueModel]              = ConfigBL.keyValueBL.getByName(name)
@@ -397,7 +397,7 @@ class EmptyPipegraphEditorService() extends PipegraphEditorService {
   override def updatePipegraphModel(model: PipegraphModel): Unit                             = {}
   override def upsertProcessGroup(pg: ProcessGroupModel): Unit                               = {}
   override def upsertCodeModel(cm: FreeCodeModel): Unit                                      = {}
-  override def getTopicModelById(name: String): Option[DatastoreModel[TopicCategory]]        = None
+  override def getTopicModelById(name: String): Option[DatastoreModel]        = None
   override def getRawModelById(name: String): Option[RawModel]                               = None
   override def getIndexModelById(name: String): Option[IndexModel]                           = None
   override def getKeyValueModelById(name: String): Option[KeyValueModel]                     = None

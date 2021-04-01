@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths, StandardOpenOption}
-
 import io.swagger.v3.oas.models.{OpenAPI, PathItem}
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.servers.Server
@@ -25,7 +24,8 @@ trait WaspOpenApi
     with StatsRoutesOpenApiDefinition
     with EditorRoutesOpenApiDefinition
     with StrategyOpenApiDefinition
-    with FreeCodeRoutesOpenApiDefinition {
+    with FreeCodeRoutesOpenApiDefinition
+    with GenericRoutesOpenApiDefinition {
 
   protected def getRoutes(ctx: Context): Map[String, PathItem] = {
     batchJobRoutes(ctx) ++ pipegraphRoutes(ctx) ++
@@ -36,7 +36,7 @@ trait WaspOpenApi
       telemetryRoutes(ctx) ++ keyValueRoutes(ctx) ++
       rawRoutes(ctx) ++ statsRoutes(ctx) ++
       editorRoutes(ctx) ++ freeCodeRoutes(ctx) ++
-      strategiesRoutes(ctx)
+      strategiesRoutes(ctx) ++ genericRoutes(ctx)
   }
 
   protected def getOpenApi = new OpenAPI()
@@ -127,6 +127,11 @@ trait WaspOpenApi
       .name("freeCode")
       .description("operation related to free code strategy management")
   )
+    .addTagsItem(
+      new Tag()
+        .name("generic")
+        .description("operation related to generic models management")
+    )
 
 }
 

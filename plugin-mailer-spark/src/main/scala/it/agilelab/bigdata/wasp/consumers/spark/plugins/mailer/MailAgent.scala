@@ -3,8 +3,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.mailer
 import java.util.Properties
 
 import javax.mail._
-
-import scala.collection.JavaConverters._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 
 trait MailAgent {
@@ -43,7 +41,8 @@ case class MailAgentImpl(options: Map[String, String]) extends MailAgent {
     properties.put("mail.smtp.port", port)
     properties.put("mail.smtp.host", host)
     properties.put("mail.transport.protocol", "smtp")
-    properties.putAll(extraOptions.asJava)
+//    properties.putAll(extraOptions.asJava)
+    extraOptions.map(v => properties.put(v._1, v._2))
 
     val authenticator: Authenticator = new Authenticator {
       override def getPasswordAuthentication: PasswordAuthentication = new PasswordAuthentication(username, password)}

@@ -1,15 +1,12 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
-import com.sksamuel.avro4s.AvroSchema
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.whitelabel.models.example._
 import it.agilelab.bigdata.wasp.whitelabel.models.example.iot._
 import it.agilelab.bigdata.wasp.whitelabel.models.test._
-import it.agilelab.darwin.manager.AvroSchemaManagerFactory
-import org.apache.avro.Schema
 import org.apache.commons.cli.CommandLine
 import org.mongodb.scala.bson.BsonDocument
 
@@ -103,6 +100,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel()) //IoT
     ConfigBL.topicBL.upsert(TestTopicModel.dbzMutations)
     ConfigBL.cdcBL.upsert(TestCdcModel.debeziumMutation)
+    ConfigBL.genericBL.upsert(TestGenericModel.genericJson)
+
 
     /* Producers */
     ConfigBL.producerBL.upsert(TestProducerModel.json)
@@ -140,6 +139,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpPost)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpPostHeaders)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpEnrichment)
+
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.generic)
+
 //    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpsPost)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.ERROR.multiETL)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.CHECKPOINT.console)

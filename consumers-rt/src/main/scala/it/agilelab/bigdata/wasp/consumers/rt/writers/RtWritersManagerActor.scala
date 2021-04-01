@@ -4,7 +4,6 @@ import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.camel.{CamelMessage, Producer}
 import it.agilelab.bigdata.wasp.repository.core.bl.{IndexBL, TopicBL, WebsocketBL}
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.{ElasticProduct, SolrProduct}
-import it.agilelab.bigdata.wasp.datastores.{IndexCategory, TopicCategory, WebSocketCategory}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.{AvroToJsonUtil, ConfigManager}
 import it.agilelab.bigdata.wasp.models.{TopicModel, WebsocketModel, WriterModel}
@@ -44,15 +43,15 @@ class RtWritersManagerActor(env: {
   }
 
   def initializeEndpoint(writer: WriterModel): Option[ActorRef] = {
-    writer.datastoreProduct match {
-      case _: TopicCategory => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
-      case _: IndexCategory => writer.datastoreProduct match {
+    writer.datastoreProduct.categoryName match {
+      case "topic" => Some(context.actorOf(Props(new CamelKafkaWriter(env.topicBL, writer))))
+      case "index" => writer.datastoreProduct match {
         // TODO
         case ElasticProduct => ???
         case SolrProduct => ???
         case _ => ???
       }
-      case _: WebSocketCategory => Some(context.actorOf(Props(new CamelWebsocketWriter(env.websocketBL, writer))))
+      case "websocket" => Some(context.actorOf(Props(new CamelWebsocketWriter(env.websocketBL, writer))))
       case _ => None //TODO gestire writer inaspettato
     }
   }
