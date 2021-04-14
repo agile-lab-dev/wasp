@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.wasp.datastores.GenericProduct
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.models.configuration.{RestEnrichmentConfigModel, RestEnrichmentSource}
 
@@ -70,9 +71,33 @@ private[wasp] object TestPipegraphs {
             name = "ETL TestGenericWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel.genericWriter("Generic Writer", TestGenericModel.genericJson),
+            streamingOutput = WriterModel.genericWriter("Generic Writer", TestGenericModel.parallelWriteModel),
             mlModels = List(),
             strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+
+      val genericContinuousProduct = GenericProduct("continuousUpdate", Some("continuous"))
+      lazy val continuousUpdatePipegraph = PipegraphModel(
+        name = "TestContinuousUpdate",
+        description = "Description of TestContinuousUpdate",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestContinuousUpdateWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.apply("Continuous Update writer", TestGenericModel.continuousUpdateModel, genericContinuousProduct),
+            mlModels = List(),
+            strategy= Some(TestStrategies.continuousUpdateStrategy),
             triggerIntervalMs = None,
             options = Map()
           )

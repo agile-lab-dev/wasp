@@ -51,6 +51,7 @@ case class SparkStreamingConfigModel(
                                       kryoSerializer: KryoSerializerConfig,
                                       streamingBatchIntervalMs: Int,
                                       checkpointDir: String,
+                                      enableHiveSupport: Boolean,
                                       triggerIntervalMs: Option[Long],
                                       others: Seq[SparkEntryConfig],
                                       nifiStateless: Option[NifiStatelessConfigModel],

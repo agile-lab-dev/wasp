@@ -181,6 +181,16 @@ lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark
   .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
   .dependsOn(consumers_spark % "compile->compile;test->test")
 
+lazy val plugin_continuous_update_spark = Project("wasp-plugin-continuous-update-spark", file("plugin-continuous-update-spark"))
+  .settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies += Dependencies.scalaTest)
+  // https://mvnrepository.com/artifact/net.liftweb/lift-json
+  .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
+  .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
+  .settings(libraryDependencies += "cloud.localstack" % "localstack-utils" % "0.2.10" % Test)
+  .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
+  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(delta_lake)
 /* Yarn  */
 
 lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
@@ -316,6 +326,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(spark_telemetry_plugin)
   .dependsOn(spark_nifi_plugin)
   .dependsOn(plugin_parallel_write_spark)
+  .dependsOn(plugin_continuous_update_spark)
   .settings(
     libraryDependencies ++= Dependencies.log4j :+ Dependencies.darwinConfluentConnector
       :+ "mysql" % "mysql-connector-java" % "5.1.6"

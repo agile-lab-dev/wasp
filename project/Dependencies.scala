@@ -117,6 +117,11 @@ object Dependencies {
       //sbt.ExclusionRule(organization = "com.google.guava", name = "guava")
     )
 
+  val excludeHive:(sbt.ModuleID) => ModuleID = (module: ModuleID) =>
+    module.excludeAll(
+      sbt.ExclusionRule(organization = "org.apache.spark", name = "spark-core")
+    )
+
   // ===================================================================================================================
   // Compile dependencies
   // ===================================================================================================================
@@ -244,7 +249,7 @@ object Dependencies {
 
   val jaxRs = "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.5"
 
-  val wireMock = Seq("com.github.tomakehurst" % "wiremock-jre8" % "2.21.0" % Test, "xmlunit" % "xmlunit" % "1.6" % Test)
+  val wireMock = Seq("com.github.tomakehurst" % "wiremock-standalone" % "2.25.0" % Test, "xmlunit" % "xmlunit" % "1.6" % Test ).map(excludeHive)
 
   // ===================================================================================================================
   // Test dependencies
@@ -375,7 +380,7 @@ object Dependencies {
     elasticSearchSpark
   )
 
-  val plugin_http_spark = Seq(mockOkHttp2, scalaTest)
+  val plugin_http_spark = Seq(mockOkHttp2, scalaTest).map(excludeHive)
 
   val plugin_hbase_spark = (
     hbase :+

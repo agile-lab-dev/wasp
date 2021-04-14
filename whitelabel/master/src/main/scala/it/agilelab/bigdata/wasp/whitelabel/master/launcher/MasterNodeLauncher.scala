@@ -100,7 +100,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel()) //IoT
     ConfigBL.topicBL.upsert(TestTopicModel.dbzMutations)
     ConfigBL.cdcBL.upsert(TestCdcModel.debeziumMutation)
-    ConfigBL.genericBL.upsert(TestGenericModel.genericJson)
+    ConfigBL.genericBL.upsert(TestGenericModel.parallelWriteModel)
+    ConfigBL.genericBL.upsert(TestGenericModel.continuousUpdateModel)
 
 
     /* Producers */
@@ -111,6 +112,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.producerBL.upsert(TestProducerModel.avro_key_schema)
     ConfigBL.producerBL.upsert(TestProducerModel.avroCheckpoint)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonHbaseMultipleClustering)
+    ConfigBL.producerBL.upsert(TestProducerModel.jsonDeduplication)
     ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
     ConfigBL.producerBL.upsert(IoTIndustrialPlantProducerModel.iotIndustrialPlantProducer) //IoT
 
@@ -141,6 +143,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpEnrichment)
 
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.generic)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.continuousUpdatePipegraph)
 
 //    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpsPost)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.ERROR.multiETL)

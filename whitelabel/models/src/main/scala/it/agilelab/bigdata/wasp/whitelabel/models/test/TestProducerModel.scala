@@ -94,4 +94,14 @@ private[wasp] object TestProducerModel {
     isRemote = false,
     isSystem = false
   )
+
+  lazy val jsonDeduplication = ProducerModel(
+    name = "TestJSONDeduplicationProducer",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerDeduplication",
+    topicName = Some(TestTopicModel.json.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
 }

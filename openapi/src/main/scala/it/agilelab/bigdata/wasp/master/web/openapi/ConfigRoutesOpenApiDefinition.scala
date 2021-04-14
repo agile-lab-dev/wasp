@@ -34,7 +34,7 @@ trait ConfigModelOpenApiComponentSupport
     : ToOpenApiSchema[SparkBatchConfigModel] =
     product14(SparkBatchConfigModel)
   implicit lazy val sparkStreamingConfigOpenApi
-    : ToOpenApiSchema[SparkStreamingConfigModel] = product19(
+    : ToOpenApiSchema[SparkStreamingConfigModel] = product20(
     SparkStreamingConfigModel
   )
 

@@ -17,6 +17,7 @@ object SparkSuite {
     val ss = SparkSession
       .builder()
       .appName("test")
+      .enableHiveSupport()
       .config("spark.sql.warehouse.dir", warehouseLocation)
       .config("spark.master", "local")
       .config("spark.ui.enabled", "false")

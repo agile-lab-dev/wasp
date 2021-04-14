@@ -52,4 +52,9 @@ object TestStrategies {
     configuration = None
   )
 
+  lazy val continuousUpdateStrategy = StrategyModel(
+    className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestContinuousUpdateStrategy",
+    configuration = None
+  )
+
 }

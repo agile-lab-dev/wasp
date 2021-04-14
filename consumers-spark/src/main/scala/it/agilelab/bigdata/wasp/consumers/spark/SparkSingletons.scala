@@ -18,12 +18,12 @@ import org.apache.spark.{SparkContext, SparkException}
   * just a few places and access the various entry points in a much more straightforward way.
   */
 object SparkSingletons extends Logging {
-  
+
   private var sparkSession: SparkSession = _
   private var sparkContext: SparkContext = _
   private var sqlContext: SQLContext = _
   private var streamingContext: StreamingContext = _
-  
+
   /**
     * Try to initialize the SparkSession in the SparkSingleton with the provided configuration.
     *
@@ -47,9 +47,9 @@ object SparkSingletons extends Logging {
           throw new IllegalStateException("Spark was already initialized without using this method!")
         } else { // no global default session
           logger.info("Initializing Spark...")
-          
+
           val sparkConf = buildSparkConfFromSparkConfigModel(sparkConfigModel, telemetryConfig, kafkaConfigModel)
-          
+
           // try and build SparkContext even if the SparkSession would do it anyway
           // to ensure we are the one initializing Spark
           try {
@@ -66,10 +66,22 @@ object SparkSingletons extends Logging {
               // TODO demote to warning?
               throw new IllegalStateException("Spark was already initialized without using this method!")
           }
-  
+
           // instantiate & assign SparkSession
           logger.info("Instantiating SparkSession...")
-          sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
+
+          var builder = SparkSession.builder().config(sparkConf)
+
+          sparkConfigModel match {
+            case streaming: SparkStreamingConfigModel =>
+              if (streaming.enableHiveSupport) {
+                builder = builder.enableHiveSupport()
+              }
+            case _ =>
+            //nothing to do
+          }
+
+          sparkSession = builder.getOrCreate()
           logger.info("SparkSession successfully instantiated")
           logger.info(s"SparkContext configuration: ${sparkSession.sparkContext.hadoopConfiguration.toString}")
           logger.info(s"SparkHadoopUtil configuration: ${SparkHadoopUtil.get.conf.toString}")
@@ -77,16 +89,16 @@ object SparkSingletons extends Logging {
           // assign SparkContext & SQLContext
           sparkContext = sparkSession.sparkContext
           sqlContext = sparkSession.sqlContext
-  
+
           logger.info("Spark successfully initialized")
-  
+
           true
         }
       } else {
         false
       }
     }
-  
+
   /**
     * Try to initialize the StreamingContext in the SparkSingleton with the provided configuration.
     *
@@ -105,29 +117,31 @@ object SparkSingletons extends Logging {
       if (streamingContext == null) { // we don't have a singleton ready
         if (sparkSession == null) {
           throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with the same configuration " +
-                                          "before calling initializeSparkStreaming")
+            "before calling initializeSparkStreaming")
         }
 
         logger.info(s"Starting from SparkStreamingConfigModel:\n\t$sparkStreamingConfigModel")
-        
+
         // instantiate & assign StreamingContext
         logger.info("Instantiating StreamingContext...")
         val uniqueLegacyStreamingCheckpointDir = generateUniqueLegacyStreamingCheckpointDir
+
         def createStreamingContext: () => StreamingContext = () => { // helper to create StreamingContext
           val batchDuration = Milliseconds(sparkStreamingConfigModel.streamingBatchIntervalMs)
           val newStreamingContext = new StreamingContext(getSparkContext, batchDuration)
           newStreamingContext.checkpoint(uniqueLegacyStreamingCheckpointDir)
           newStreamingContext
         }
+
         streamingContext = StreamingContext.getOrCreate(uniqueLegacyStreamingCheckpointDir, createStreamingContext)
         logger.info("StreamingContext successfully instantiated")
-  
+
         true
       } else {
         false
       }
     }
-  
+
   /**
     * Try to deinitialize the StreamingContext in the SparkSingleton.
     *
@@ -138,7 +152,7 @@ object SparkSingletons extends Logging {
     SparkSingletons.synchronized {
       streamingContext = null
     }
-  
+
   /**
     * Returns the SparkSession singleton, or throws an exception if Spark was not initialized.
     *
@@ -149,7 +163,7 @@ object SparkSingletons extends Logging {
     SparkSingletons.synchronized {
       if (sparkSession == null) {
         throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with a proper configuration " +
-                                        "before calling this getter")
+          "before calling this getter")
       }
       sparkSession
     }
@@ -164,11 +178,11 @@ object SparkSingletons extends Logging {
     SparkSingletons.synchronized {
       if (sparkContext == null) {
         throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with a proper configuration " +
-                                        "before calling this getter")
+          "before calling this getter")
       }
       sparkContext
     }
-  
+
   /**
     * Returns the SQLContext singleton, or throws an exception if Spark was not initialized.
     *
@@ -179,11 +193,11 @@ object SparkSingletons extends Logging {
     SparkSingletons.synchronized {
       if (sqlContext == null) {
         throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with a proper configuration " +
-                                        "before calling this getter")
+          "before calling this getter")
       }
       sqlContext
     }
-  
+
   /**
     * Returns the StreamingContext singleton, or throws an exception if Spark Streaming was not initialized.
     *
@@ -194,7 +208,7 @@ object SparkSingletons extends Logging {
     SparkSingletons.synchronized {
       if (streamingContext == null) {
         throw new IllegalStateException("Spark Streaming was not initialized; invoke initializeSparkStreaming with a proper " +
-                                        "configuration before calling this getter")
+          "configuration before calling this getter")
       }
       streamingContext
     }

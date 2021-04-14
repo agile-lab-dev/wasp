@@ -5,7 +5,7 @@ import org.mongodb.scala.bson.BsonDocument
 
 object TestGenericModel {
 
-  lazy val genericJson = GenericModel(
+  lazy val parallelWriteModel = GenericModel(
     name = "test-generic",
     kind = "parallelWrite",
     value = BsonDocument(
@@ -13,6 +13,18 @@ object TestGenericModel {
         |"mode": "append",
         |"partitionBy": [],
         |"requestBody": {"source":"External"}
+        |}""".stripMargin)
+  )
+
+  lazy val continuousUpdateModel = GenericModel(
+    name = "test-continuous-update",
+    kind = "continuousUpdate",
+    value = BsonDocument(
+      """{"requestBody": {"source":"External"},
+        |"keys": ["id"],
+        |"tableName": "topic_table",
+        |"orderingField": "number",
+        |"fieldsToDrop": []
         |}""".stripMargin)
   )
 
