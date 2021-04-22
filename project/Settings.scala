@@ -74,6 +74,13 @@ object Settings {
       Versions.jdk,
       "-Xlint:deprecation",
       "-Xlint:unchecked"
+
+    ),
+    doc / javacOptions --= Seq(
+      "-target",
+      Versions.jdk,
+      "-Xlint:deprecation",
+      "-Xlint:unchecked"
     ),
     scalaVersion := Versions.scala,
     excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api")
@@ -101,7 +108,7 @@ object Settings {
         Some(sonatypeStaging)
     },
     credentials := Seq(sonatypeOssCredentials),
-    pgpPassphrase:= Option(System.getenv().get("GPG_PASSPHRASE")).map(_.toCharArray)
+    pgpPassphrase := Option(System.getenv().get("GPG_PASSPHRASE")).map(_.toCharArray)
   )
 
   /** settings for tests */

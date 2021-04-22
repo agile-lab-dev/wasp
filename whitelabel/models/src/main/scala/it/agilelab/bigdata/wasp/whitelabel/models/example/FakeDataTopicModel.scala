@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import it.agilelab.bigdata.wasp.models.TopicModel
+import it.agilelab.bigdata.wasp.models.{SubjectStrategy, TopicModel}
 
 import scala.util.Random
 
@@ -24,7 +24,8 @@ object FakeDataTopicModel {
     headersFieldName = None,
     valueFieldsNames = None,
     useAvroSchemaManager = true,
-    schema = JsonConverter.fromString(fakeDataSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
+    schema = JsonConverter.fromString(fakeDataSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
+    subjectStrategy = SubjectStrategy.Topic
   )
 
 }

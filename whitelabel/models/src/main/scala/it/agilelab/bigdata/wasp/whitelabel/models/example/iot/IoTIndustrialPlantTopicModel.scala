@@ -3,10 +3,9 @@ package it.agilelab.bigdata.wasp.whitelabel.models.example.iot
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.{Date, UUID}
-
 import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import it.agilelab.bigdata.wasp.models.TopicModel
+import it.agilelab.bigdata.wasp.models.{SubjectStrategy, TopicModel}
 
 import scala.util.Random
 
@@ -26,7 +25,8 @@ object IoTIndustrialPlantTopicModel {
     headersFieldName = None,
     valueFieldsNames = None,
     useAvroSchemaManager = true,
-    schema = JsonConverter.fromString(industrialPlantDataSchema).getOrElse(org.mongodb.scala.bson.BsonDocument())
+    schema = JsonConverter.fromString(industrialPlantDataSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
+    subjectStrategy = SubjectStrategy.Topic
   )
 
 }

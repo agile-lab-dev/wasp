@@ -15,12 +15,12 @@ object SubjectUtils {
       //nothing to do
       case (Some(userSubject), Some(waspSubject)) if userSubject != waspSubject =>
         throw new IllegalArgumentException(
-          s"This schema already declares the subject as [${userSubject}] but wasp would like" +
+          s"This schema already declares the subject as [${userSubject}] but wasp would like " +
             s"to set [$waspSubject], check the TopicModel Schema and the Subject Strategy"
         )
       case (Some(userSubject), None) =>
         throw new IllegalArgumentException(
-          s"This schema already declares the subject as [${userSubject}] but wasp would like to not use the subject" +
+          s"This schema already declares the subject as [${userSubject}] but wasp would like to not use the subject " +
             s"check the TopicModel Schema and the Subject Strategy"
         )
       case (None, Some(waspSubject)) =>

@@ -22,6 +22,13 @@ lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark
   .settings(Settings.disableParallelTests: _*)
   .settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
 
+lazy val spark_sql_kafka_0_11_new = Project("wasp-spark-sql-kafka-0-11-new", file("spark-sql-kafka-0-11-new"))
+  .configs(IntegrationTest)
+  .settings(Settings.commonSettings: _*)
+  .settings(Defaults.itSettings)
+  .settings(Settings.disableParallelTests: _*)
+  .settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
+
 lazy val spark_sql_kafka_0_11_old = Project("wasp-spark-sql-kafka-0-11-old", file("spark-sql-kafka-0-11-old"))
   .configs(IntegrationTest)
   .settings(Settings.commonSettings: _*)
@@ -131,6 +138,12 @@ lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-ka
   .settings(Settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .dependsOn(spark_sql_kafka_0_11)
+  .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
+
+lazy val plugin_kafka_spark_new = Project("wasp-plugin-kafka-spark-new", file("plugin-kafka-spark-new"))
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(spark_sql_kafka_0_11_new)
   .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
 lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
@@ -316,7 +329,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_console_spark)
   .dependsOn(plugin_hbase_spark)
   .dependsOn(plugin_jdbc_spark)
-  .dependsOn(plugin_kafka_spark)
+  .dependsOn(plugin_kafka_spark_new)
   .dependsOn(plugin_mailer_spark)
   .dependsOn(plugin_raw_spark)
   .dependsOn(plugin_solr_spark)
