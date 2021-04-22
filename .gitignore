@@ -1,6 +1,8 @@
 # IntelliJ IDEA
 .idea
 .bsp
+*.iml
+
 # Spark tmp dir
 tmp
 

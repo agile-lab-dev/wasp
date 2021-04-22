@@ -1,24 +1,24 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.http
 
-import java.nio.charset.StandardCharsets
-import java.util.concurrent.{CountDownLatch, TimeUnit}
-
 import com.squareup.okhttp.mockwebserver.{Dispatcher, MockResponse, RecordedRequest}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.http.HttpTestUtils.{decompress, tapPrint, withServer}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
-import it.agilelab.bigdata.wasp.models.{HttpModel, HttpCompression}
+import it.agilelab.bigdata.wasp.models.{HttpCompression, HttpModel}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, StreamingQueryException}
 import org.scalatest.FunSuite
 
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+
 class HttpWaspWriterSpec extends FunSuite with SparkSuite {
-  test("Test with header and response code equals to 200") {
+  test("Test with header, StringType value and response code equals to 200") {
 
     withServer(dispatcher) { serverData =>
-      val headers   = Map("test" -> "testHeader")
-      val values    = "arrayByte"
-      val myDf      = StringData(headers, values)
+      val headers = Map("test" -> "testHeader", "dataType" -> "StringData")
+      val values  = "arrayByte"
+      val myDf    = StringData(headers, values)
       val httpModel = HttpModel(
         name = "name",
         url = s"http://localhost:${serverData.port}/post-test",
@@ -37,12 +37,138 @@ class HttpWaspWriterSpec extends FunSuite with SparkSuite {
     }
   }
 
+  test("Test with header, ArrayType value, httpModel unstructured and response code equals to 200") {
+
+    withServer(dispatcher) { serverData =>
+      val httpModel = HttpModel(
+        name = "name",
+        url = s"http://localhost:${serverData.port}/post-test",
+        method = "POST",
+        headersFieldName = Some("headers"),
+        valueFieldsNames = List("values"),
+        compression = HttpCompression.Disabled,
+        mediaType = "text/plain",
+        logBody = true,
+        structured = false
+      )
+      val headers =
+        Map("test" -> "testHeader", "dataType" -> "ArrayData", "httpModelStructured" -> httpModel.structured.toString)
+      val values = Array("val1", "val2")
+      val myDf   = ArrayData(headers, values)
+      import spark.implicits._
+      val source: MemoryStream[ArrayData] = MemoryStream[ArrayData](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, httpModel, processAllAvailable = true, myDf).isEmpty
+      )
+    }
+  }
+
+  test("Test with header, ArrayType value, httpModel structured and response code equals to 200") {
+
+    withServer(dispatcher) { serverData =>
+      val httpModel = HttpModel(
+        name = "name",
+        url = s"http://localhost:${serverData.port}/post-test",
+        method = "POST",
+        headersFieldName = Some("headers"),
+        valueFieldsNames = List("values"),
+        compression = HttpCompression.Disabled,
+        mediaType = "text/plain",
+        logBody = true,
+        structured = true
+      )
+      val headers =
+        Map("test" -> "testHeader", "dataType" -> "ArrayData", "httpModelStructured" -> httpModel.structured.toString)
+      val values = Array("val1", "val2")
+      val myDf   = ArrayData(headers, values)
+      import spark.implicits._
+      val source: MemoryStream[ArrayData] = MemoryStream[ArrayData](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, httpModel, processAllAvailable = true, myDf).isEmpty
+      )
+    }
+  }
+
+  test("Test with header, MapType value, and response code equals to 200") {
+
+    withServer(dispatcher) { serverData =>
+      val headers = Map("test" -> "testHeader", "dataType" -> "MapData")
+      val values  = Map("val1" -> "val2")
+      val myDf    = MapData(headers, values)
+      val httpModel = HttpModel(
+        name = "name",
+        url = s"http://localhost:${serverData.port}/post-test",
+        method = "POST",
+        headersFieldName = Some("headers"),
+        valueFieldsNames = List("values"),
+        compression = HttpCompression.Disabled,
+        mediaType = "text/plain",
+        logBody = true,
+        structured = false
+      )
+      import spark.implicits._
+      val source: MemoryStream[MapData] = MemoryStream[MapData](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, httpModel, processAllAvailable = true, myDf).isEmpty
+      )
+    }
+  }
+
+  test("Test with header, StructType value, and response code equals to 200") {
+
+    withServer(dispatcher) { serverData =>
+      val headers = Map("test" -> "testHeader", "dataType" -> "StructData")
+      val values  = Struct("key", "val1")
+      val myDf    = StructData(headers, values)
+      val httpModel = HttpModel(
+        name = "name",
+        url = s"http://localhost:${serverData.port}/post-test",
+        method = "POST",
+        headersFieldName = Some("headers"),
+        valueFieldsNames = List("values"),
+        compression = HttpCompression.Disabled,
+        mediaType = "text/plain",
+        logBody = true
+      )
+      import spark.implicits._
+      val source: MemoryStream[StructData] = MemoryStream[StructData](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, httpModel, processAllAvailable = true, myDf).isEmpty
+      )
+    }
+  }
+
+  test("Test with header, multiple values, and response code equals to 200") {
+
+    withServer(dispatcher) { serverData =>
+      val headers    = Map("test" -> "testHeader", "dataType" -> "MultipleStringData")
+      val values     = "val1"
+      val moreValues = "val2"
+      val myDf       = MultipleStringData(headers, values, moreValues)
+      val httpModel = HttpModel(
+        name = "name",
+        url = s"http://localhost:${serverData.port}/post-test",
+        method = "POST",
+        headersFieldName = Some("headers"),
+        valueFieldsNames = List("values", "moreValues"),
+        compression = HttpCompression.Disabled,
+        mediaType = "text/plain",
+        logBody = true
+      )
+      import spark.implicits._
+      val source: MemoryStream[MultipleStringData] = MemoryStream[MultipleStringData](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, httpModel, processAllAvailable = true, myDf).isEmpty
+      )
+    }
+  }
+
   test("Test with header and response code equals to 200 with compression") {
 
     withServer(dispatcher) { serverData =>
-      val headers   = Map("test" -> "testHeader")
-      val values    = "arrayByte"
-      val myDf      = StringData(headers, values)
+      val headers = Map("test" -> "testHeader")
+      val values  = "arrayByte"
+      val myDf    = StringData(headers, values)
       val httpModel = HttpModel(
         name = "name",
         url = s"http://localhost:${serverData.port}/post-compression",
@@ -68,11 +194,11 @@ class HttpWaspWriterSpec extends FunSuite with SparkSuite {
   }
 
   def createAndExecuteStreamingQuery[A](
-    latch: CountDownLatch,
-    source: MemoryStream[A],
-    httpModel: HttpModel,
-    processAllAvailable: Boolean,
-    myDf: A*
+      latch: CountDownLatch,
+      source: MemoryStream[A],
+      httpModel: HttpModel,
+      processAllAvailable: Boolean,
+      myDf: A*
   ): Option[StreamingQueryException] = {
 
     val dsw: DataStreamWriter[Row] = new HttpWaspWriter(httpModel).write(source.toDF().repartition(10))
@@ -96,12 +222,23 @@ class HttpWaspWriterSpec extends FunSuite with SparkSuite {
     new Dispatcher {
       override def dispatch(request: RecordedRequest): MockResponse =
         request.getPath match {
-          case "/post-test"        =>
+          case "/post-test" =>
             val assertion = tapPrint(
               AggregatedAssertion(
                 EqualAssertion("POST", request.getMethod),
-                EqualAssertion("testHeader", request.getHeader("test")),
-                EqualAssertion("{\"values\":\"arrayByte\"}", request.getBody.readByteString().utf8())
+                EqualAssertion("testHeader", request.getHeader("test")), {
+                  val body = request.getBody.readByteString().utf8().trim
+                  request.getHeader("dataType") match {
+                    case "StringData" => EqualAssertion("{\"values\":\"arrayByte\"}", body)
+                    case "ArrayData" =>
+                      if (request.getHeader("httpModelStructured").toBoolean)
+                        EqualAssertion("{\"values\":[\"val1\",\"val2\"]}", body)
+                      else EqualAssertion("[\"val1\",\"val2\"]", body)
+                    case "MapData"            => EqualAssertion("{\"val1\":\"val2\"}", body)
+                    case "StructData"         => EqualAssertion("{\"name\":\"key\",\"value\":\"val1\"}", body)
+                    case "MultipleStringData" => EqualAssertion("{\"values\":\"val1\",\"moreValues\":\"val2\"}", body)
+                  }
+                }
               )
             )
             latch.countDown()
@@ -122,7 +259,7 @@ class HttpWaspWriterSpec extends FunSuite with SparkSuite {
             )
             latch.countDown()
             assertion.toResponse
-          case _                   =>
+          case _ =>
             new MockResponse().setResponseCode(404)
         }
     }

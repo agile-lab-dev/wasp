@@ -1,13 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.http
 
-import it.agilelab.bigdata.wasp.models.HttpModel
+import it.agilelab.bigdata.wasp.consumers.spark.utils.CompressExpression
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkStructuredStreamingWriter
-import it.agilelab.bigdata.wasp.models.HttpCompression
+import it.agilelab.bigdata.wasp.models.{HttpCompression, HttpModel}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.DataStreamWriter
-import org.apache.spark.sql.types.BinaryType
+import org.apache.spark.sql.types.{ArrayType, BinaryType, MapType, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
-import it.agilelab.bigdata.wasp.consumers.spark.utils.CompressExpression
 
 class HttpWaspWriter(httpModel: HttpModel) extends SparkStructuredStreamingWriter {
   private val valColName = "value"
@@ -26,8 +25,23 @@ class HttpWaspWriter(httpModel: HttpModel) extends SparkStructuredStreamingWrite
       httpModel.valueFieldsNames
     }
 
-    val conf        = stream.sparkSession.sparkContext.hadoopConfiguration
-    val valueColumn = to_json(struct(valueFields.map(col): _*)).cast(BinaryType)
+    val conf = stream.sparkSession.sparkContext.hadoopConfiguration
+
+    val valueColumn = (valueFields match {
+      case head :: Nil =>
+        stream.schema.fields.find(_.name == head).map(_.dataType) match {
+          case Some(_: MapType) | Some(_: ArrayType) =>
+            if (httpModel.structured) to_json(struct(head)) else to_json(col(head))
+          case Some(_: StructType) => to_json(col(head))
+          case None =>
+            throw new IllegalArgumentException(
+              s"Cannot find column $head inside data frame, columns are " + stream.schema.fields.mkString("[", ",", "]")
+            )
+          case _ => to_json(struct(head))
+        }
+      case _ =>
+        to_json(struct(valueFields.map(col): _*))
+    }).cast(BinaryType)
 
     val compressionF = codec.map(c => CompressExpression.compress(valueColumn, c, conf)).getOrElse(valueColumn)
 

@@ -175,7 +175,7 @@ trait JsonSupport
         case JsString(value) => HttpCompression.fromString(value)
       }
   }
-  implicit lazy val httpModelFormat: RootJsonFormat[HttpModel] = jsonFormat8(HttpModel.apply)
+  implicit lazy val httpModelFormat: RootJsonFormat[HttpModel] = jsonFormat9(HttpModel.apply)
   implicit lazy val genericModelFormat: RootJsonFormat[GenericModel] = jsonFormat4(GenericModel.apply)
   implicit lazy val genericOptionModelFormat: RootJsonFormat[GenericOptions] = jsonFormat1(GenericOptions.apply)
   implicit lazy val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat

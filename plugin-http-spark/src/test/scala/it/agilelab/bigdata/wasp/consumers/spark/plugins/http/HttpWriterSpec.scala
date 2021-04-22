@@ -16,6 +16,11 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 case class ByteData(headers: Map[String, String], values: Array[Byte])
 case class StringData(headers: Map[String, String], values: String)
+case class ArrayData(headers: Map[String, String], values: Array[String])
+case class MapData(headers: Map[String, String], values: Map[String, String])
+case class StructData(headers: Map[String, String], values: Struct)
+case class Struct(name: String, value: String)
+case class MultipleStringData(headers: Map[String, String], values: String, moreValues: String)
 
 class HttpWriterSpec extends FunSuite with SparkSuite with Retries {
   override def withFixture(test: NoArgTest): Outcome = {
