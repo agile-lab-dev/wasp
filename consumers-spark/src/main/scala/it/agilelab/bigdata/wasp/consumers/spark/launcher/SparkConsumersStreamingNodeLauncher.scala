@@ -1,26 +1,27 @@
 package it.agilelab.bigdata.wasp.consumers.spark.launcher
 
-import java.util.concurrent.TimeUnit
-import java.util.{ServiceLoader, UUID}
-
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{SchedulingStrategyFactory, SparkConsumersStreamingMasterGuardian}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian
-import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.consumers.spark.readers.PluginBasedSparkReaderFactory
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.collaborator.CollaboratorActor
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.WebMailProduct
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SparkConsumersStreamingMasterGuardian.ChildCreator
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{
+  SchedulingStrategyFactory,
+  SparkConsumersStreamingMasterGuardian
+}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
+import it.agilelab.bigdata.wasp.core.{AroundLaunch, WaspSystem}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import org.apache.commons.cli.CommandLine
 
+import java.util.ServiceLoader
+import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 
 /**
@@ -29,21 +30,30 @@ import scala.collection.JavaConverters._
   *
   * @author Nicolò Bidotti
   */
-trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
+trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletonsLauncher with AroundLaunch {
 
   var plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin] = Map()
 
-  override def launch(commandLine: CommandLine): Unit = {
-    SparkSingletons.initializeSpark(ConfigManager.getSparkStreamingConfig, ConfigManager.getTelemetryConfig, ConfigManager.getKafkaConfig)
+  def beforeLaunch(): Unit = {
+    SparkSingletons.initializeSpark(
+      ConfigManager.getSparkStreamingConfig,
+      ConfigManager.getTelemetryConfig,
+      ConfigManager.getKafkaConfig
+    )
     SparkSingletons.initializeSparkStreaming(ConfigManager.getSparkStreamingConfig)
+  }
 
+  def afterLaunch(): Unit = ()
+
+  override def launch(commandLine: CommandLine): Unit = {
+    beforeLaunch()
     super.launch(commandLine)
+    afterLaunch()
   }
 
   override def getSingletonInfos: Seq[(Props, String, String, Seq[String])] = {
 
     import scala.concurrent.duration._
-
 
     val childrenCreator: ChildCreator = SparkConsumersStreamingMasterGuardian.defaultChildCreator(
       SparkSingletons.getSparkSession,
@@ -52,8 +62,8 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
       5.seconds,
       5.seconds,
       _ => PipegraphGuardian.Retry,
-      ConfigBL)
-
+      ConfigBL
+    )
 
     val collaborator = CollaboratorActor.props(WaspSystem.sparkConsumersStreamingMasterGuardian, childrenCreator)
 
@@ -62,26 +72,35 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
     logger.error("Collaborator started")
 
     val watchdog = if (ConfigManager.getSparkStreamingConfig.driver.killDriverProcessIfSparkContextStops) {
-
-      SparkConsumersStreamingMasterGuardian.exitingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext,
-        -1)
-
+      SparkConsumersStreamingMasterGuardian.exitingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext, -1)
     } else {
       SparkConsumersStreamingMasterGuardian.doNothingWatchdogCreator(SparkSingletons.getSparkSession.sparkContext)
     }
 
+    val schedulingStrategyFactory: SchedulingStrategyFactory =
+      try {
+        val strategy = Class
+          .forName(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryClass)
+          .newInstance()
+          .asInstanceOf[SchedulingStrategyFactory]
+        strategy.inform(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryParams)
+      } catch {
+        case e: Exception =>
+          logger.error(
+            s"Could not instantiate ${ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryClass}",
+            e
+          )
+          throw e
+      }
 
-    val schedulingStrategyFactory: SchedulingStrategyFactory = try {
-      val strategy = Class.forName(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryClass).newInstance().asInstanceOf[SchedulingStrategyFactory]
-      strategy.inform(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryParams)
-    } catch {
-      case e: Exception =>
-        logger.error(s"Could not instantiate ${ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryClass}", e)
-        throw e
-    }
-
-    val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(ConfigBL.pipegraphBL, watchdog, "collaborator", 5.seconds, FiniteDuration(5, TimeUnit.SECONDS), schedulingStrategy = schedulingStrategyFactory)
-
+    val masterGuardianProps = SparkConsumersStreamingMasterGuardian.props(
+      ConfigBL.pipegraphBL,
+      watchdog,
+      "collaborator",
+      5.seconds,
+      FiniteDuration(5, TimeUnit.SECONDS),
+      schedulingStrategy = schedulingStrategyFactory
+    )
 
     val sparkConsumersStreamingMasterGuardianSingletonInfo = (
       masterGuardianProps,
@@ -100,18 +119,19 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
     */
   override def initializePlugins(args: Array[String]): Unit = {
     logger.info("Finding Spark consumers plugins")
-    val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] = ServiceLoader.load[WaspConsumersSparkPlugin](classOf[WaspConsumersSparkPlugin])
+    val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] =
+      ServiceLoader.load[WaspConsumersSparkPlugin](classOf[WaspConsumersSparkPlugin])
     val pluginsList = pluginLoader.iterator().asScala.toList
     logger.info(s"Found ${pluginsList.size} plugins")
     logger.info("Initializing consumers Spark plugins")
-    plugins = pluginsList.map({
-      plugin => {
-        logger.info(s"Initializing Spark consumers plugin ${plugin.getClass.getSimpleName} for datastore product ${plugin.datastoreProduct}")
-        plugin.initialize(waspDB)
-        // You cannot have two plugin with the same name
-        (plugin.datastoreProduct, plugin)
-      }
-    }).toMap
+    plugins = pluginsList.map { plugin =>
+      logger.info(
+        s"Initializing Spark consumers plugin ${plugin.getClass.getSimpleName} for datastore product ${plugin.datastoreProduct}"
+      )
+      plugin.initialize(waspDB)
+      // You cannot have two plugin with the same name
+      plugin.datastoreProduct -> plugin
+    }.toMap
 
     logger.info(s"Initialized all Spark consumers plugins")
   }

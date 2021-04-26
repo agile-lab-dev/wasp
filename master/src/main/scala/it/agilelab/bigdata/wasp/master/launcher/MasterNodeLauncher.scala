@@ -1,9 +1,5 @@
 package it.agilelab.bigdata.wasp.master.launcher
 
-import java.io.FileInputStream
-import java.security.{KeyStore, SecureRandom}
-import java.util.UUID
-import java.util.concurrent.Executors
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
@@ -13,23 +9,16 @@ import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.nifi.client.core.SttpSerializer
 import it.agilelab.bigdata.nifi.client.{NifiClient, NifiRawClient}
 import it.agilelab.bigdata.wasp.compiler.utils.{CompilerPool, FreeCodeCompiler}
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
-import it.agilelab.bigdata.wasp.core.eventengine.Event
 import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterCommandLineOptions}
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager.conf
-import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtilsDefault, WaspConfiguration}
-import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
+import it.agilelab.bigdata.wasp.core.{AroundLaunch, SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
-import it.agilelab.darwin.manager.AvroSchemaManagerFactory
-
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import org.apache.avro.Schema
 import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
@@ -39,6 +28,11 @@ import sttp.client.akkahttp.AkkaHttpBackend
 import sttp.client.akkahttp.Types.LambdaFlow
 import sttp.client.monad.FutureMonad
 
+import java.io.FileInputStream
+import java.security.{KeyStore, SecureRandom}
+import java.util.UUID
+import java.util.concurrent.Executors
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 /**
@@ -47,7 +41,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
   *
   * @author Nicolò Bidotti
   */
-trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration {
+trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration with AroundLaunch {
 
   private val myExceptionHandler = ExceptionHandler {
     case e: Exception =>
@@ -58,13 +52,20 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       }
   }
 
-  override def launch(commandLine: CommandLine): Unit = {
+  def beforeLaunch(): Unit = {
     addSystemPipegraphs()
     registerSchema()
+  }
 
-    super.launch(commandLine)
+  def afterLaunch(): Unit = {
     startRestServer(WaspSystem.actorSystem, getRoutes)
     logger.info(s"MasterNode has been launched with WaspConfig ${waspConfig.toString}")
+  }
+
+  override def launch(commandLine: CommandLine): Unit = {
+    beforeLaunch()
+    super.launch(commandLine)
+    afterLaunch()
   }
 
   /** Add system's schema to AvroSchemaManager.
@@ -107,7 +108,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     implicit val akkaBackend: SttpBackend[Future, Source[ByteString, Any], LambdaFlow] =
       AkkaHttpBackend.usingActorSystem(WaspSystem.actorSystem)(clientExecutionContext)
     implicit val monadForFuture: FutureMonad = new FutureMonad()(clientExecutionContext)
-    implicit val serializer: SttpSerializer = new SttpSerializer()
+    implicit val serializer: SttpSerializer  = new SttpSerializer()
 
     val nifiConfig = ConfigManager.getNifiConfig
 
@@ -125,8 +126,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
     val nifiProxy = new NifiProxyController("proxy", nifiConfig.nifiBaseUrl)
 
-    val compilerPool = new CompilerPool(ConfigManager.getCompilerConfig.compilerInstances)
-    val freeCodeCompiler = new FreeCodeCompiler(compilerPool)
+    val compilerPool          = new CompilerPool(ConfigManager.getCompilerConfig.compilerInstances)
+    val freeCodeCompiler      = new FreeCodeCompiler(compilerPool)
     val freeCodeCompilerUtils = new FreeCodeCompilerUtilsDefault(freeCodeCompiler)
 
     // Routes
@@ -148,8 +149,10 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       new EventController(new DefaultSolrEventsService(solrClient)(clientExecutionContext)).getRoutes ~
       new TelemetryController(new DefaultSolrTelemetryService(solrClient)(clientExecutionContext)).getRoutes ~
       new StatsController(new DefaultSolrStatsService(solrClient)(clientExecutionContext)).getRoutes ~
-      new EditorController(new NifiEditorService(nifiClient)(clientExecutionContext),
-        new DefaultPipegraphEditorService(freeCodeCompilerUtils)).getRoutes ~
+      new EditorController(
+        new NifiEditorService(nifiClient)(clientExecutionContext),
+        new DefaultPipegraphEditorService(freeCodeCompilerUtils)
+      ).getRoutes ~
       nifiProxy.getRoutes ~
       additionalRoutes()
   }
@@ -157,13 +160,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
   def additionalRoutes(): Route = reject
 
   private def startRestServer(actorSystem: ActorSystem, route: Route): Unit = {
-    implicit val system: ActorSystem = actorSystem
+    implicit val system: ActorSystem             = actorSystem
     implicit val materializer: ActorMaterializer = ActorMaterializer()
 
     val rejectionHandler = RejectionHandler
       .newBuilder()
       .handle {
-        case rejection@ValidationRejection(message, _) =>
+        case rejection @ ValidationRejection(message, _) =>
           extractRequest { request =>
             complete {
               logger.error(s"request ${request} was rejected with rejection ${rejection}")

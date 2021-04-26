@@ -1,16 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.launcher
 
 import java.util.ServiceLoader
-
 import akka.actor.Props
 import it.agilelab.bigdata.wasp.consumers.spark.batch.SparkConsumersBatchMasterGuardian
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactoryDefault
-import it.agilelab.bigdata.wasp.core.WaspSystem
+import it.agilelab.bigdata.wasp.core.{AroundLaunch, WaspSystem}
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
+import org.apache.commons.cli.CommandLine
 
 import scala.collection.JavaConverters._
 
@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 	*
 	* @author Nicolò Bidotti
 	*/
-trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLauncher {
+trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLauncher with AroundLaunch {
 
 	var plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin] = Map()
 
@@ -35,6 +35,16 @@ trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLaun
 		Seq(sparkConsumersBatchMasterGuardianSingletonInfo)
 	}
 
+	def beforeLaunch(): Unit = ()
+
+	def afterLaunch(): Unit = ()
+
+	override def launch(commandLine: CommandLine): Unit = {
+		beforeLaunch()
+		super.launch(commandLine)
+		afterLaunch()
+	}
+
 	/**
 		* Initialize the WASP plugins, this method is called after the wasp initialization and before getSingletonInfos
 		* @param args command line arguments
@@ -45,14 +55,12 @@ trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLaun
 		val pluginsList = pluginLoader.iterator().asScala.toList
 		logger.info(s"Found ${pluginsList.size} plugins")
 		logger.info("Initializing Spark consumers plugins")
-		plugins = pluginsList.map({
-			plugin => {
+		plugins = pluginsList.map{ plugin =>
 				logger.info(s"Initializing Spark consumers plugin ${plugin.getClass.getSimpleName} for datastore product ${plugin.datastoreProduct}")
 				plugin.initialize(waspDB)
 				// You cannot have two plugin with the same name
-				(plugin.datastoreProduct, plugin)
-			}
-		}).toMap
+				plugin.datastoreProduct -> plugin
+		}.toMap
 
 		logger.info(s"Initialized all Spark consumers plugins")
 	}

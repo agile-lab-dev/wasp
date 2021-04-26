@@ -358,9 +358,16 @@ lazy val whiteLabelConsumersRt = Project("wasp-whitelabel-consumers-rt", file("w
   .settings(libraryDependencies ++= Dependencies.log4j)
   .enablePlugins(JavaAppPackaging)
 
+lazy val whiteLabelSingleNode = project.withId("wasp-whitelabel-singlenode").in(file("whitelabel/single-node"))
+  .settings(Settings.commonSettings: _*)
+  .dependsOn(whiteLabelMaster)
+  .dependsOn(whiteLabelConsumersSpark)
+  .dependsOn(whiteLabelProducers)
+  .enablePlugins(JavaAppPackaging)
+
 lazy val whiteLabel = Project("wasp-whitelabel", file("whitelabel"))
   .settings(Settings.commonSettings: _*)
-  .aggregate(whiteLabelModels, whiteLabelMaster, whiteLabelProducers, whiteLabelConsumersSpark, whiteLabelConsumersRt)
+  .aggregate(whiteLabelModels, whiteLabelMaster, whiteLabelProducers, whiteLabelConsumersSpark, whiteLabelConsumersRt, whiteLabelSingleNode)
 
 lazy val openapi = Project("wasp-openapi", file("openapi"))
   .settings(Settings.commonSettings: _*)

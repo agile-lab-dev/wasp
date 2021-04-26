@@ -22,10 +22,10 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     *
     * @return [[Seq[(Key, Schema)]]
     */
-  private def addExampleRegisterAvroSchema(): Unit = {
+  def addExampleRegisterAvroSchema(): Unit = {
   }
 
-  private def addExamplePipegraphs(): Unit = {
+  def addExamplePipegraphs(): Unit = {
 
     /* standalone applications should prefer waspDB.insertIfNotExist() instead of waspDB.upsert() */
 
