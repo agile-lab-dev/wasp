@@ -193,7 +193,7 @@ object Dependencies {
   val sparkCatalyst             = "org.apache.spark" %% "spark-catalyst" % Versions.spark
   val sparkCore                 = "org.apache.spark" %% "spark-core" % Versions.spark sparkExclusions
   val sparkMLlib                = "org.apache.spark" %% "spark-mllib" % Versions.spark sparkExclusions
-  val sparkSolr                 = ("it.agilelab.bigdata.spark" % "spark-solr" % Versions.sparkSolr).sparkExclusions.solrExclusion
+  val sparkSolr                 = ("it.agilelab.bigdata.spark" %% "spark-solr" % Versions.sparkSolr).sparkExclusions.solrExclusion
   val sparkTags                 = "org.apache.spark" %% "spark-tags" % Versions.spark sparkExclusions
   val sparkStreaming            = "org.apache.spark" %% "spark-streaming" % Versions.spark sparkExclusions
   val sparkSQL                  = "org.apache.spark" %% "spark-sql" % Versions.spark sparkExclusions

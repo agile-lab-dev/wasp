@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 import sbtbuildinfo.BuildInfoKeys._
-import sbtbuildinfo.{BuildInfoKey, BuildInfoOption}
+import sbtbuildinfo.BuildInfoKey
 import com.typesafe.sbt.pgp.PgpSettings.pgpPassphrase
 
 
