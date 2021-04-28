@@ -4,8 +4,9 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import com.squareup.okhttp.mockwebserver.{Dispatcher, MockResponse, RecordedRequest}
 import io.delta.tables.DeltaTable
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.model.{ContinuousUpdateModel, ParallelWriteBody}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.tools.ContinuousUpdateTestUtils.{tapPrint, withServer}
+import it.agilelab.bigdata.microservicecatalog.entity.WriteExecutionPlanRequestBody
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.model.ContinuousUpdateModel
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.tools.ContinuousUpdateTestUtils.withServer
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.{ContinuousUpdateSparkStructuredStreamingWriter, DeltaLakeWriter}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.streaming.MemoryStream
@@ -19,8 +20,14 @@ case class Schema2(ordering: Int, column1: String, column2: String, column3: Str
 case class Schema3(ordering1: Int, ordering2: Float, column1: String, column2: String)
 
 object Models {
-  val model1 = ContinuousUpdateModel(requestBody =  ParallelWriteBody("External"), keys = "column1" :: Nil, tableName = "test_table", "ordering", List("ordering"))
-  val model2 = ContinuousUpdateModel(requestBody =  ParallelWriteBody("External"), keys = "column1" :: Nil, tableName = "test_table", "-(ordering1 + ordering2)", List("ordering1", "ordering2"))
+  private val entityDetails: Map[String, String] = Map(("name", "mock"))
+  private val wrongDetails: Map[String, String] = Map(("key", "value"))
+  private val notExistingEntityDetails: Map[String, String] = Map(("name", "entity"))
+
+  val model1 = ContinuousUpdateModel(requestBody =  WriteExecutionPlanRequestBody(source= "External"), keys = "column1" :: Nil, tableName = "test_table", "ordering", List("ordering"), entityDetails, "localhost:4566")
+  val model2 = ContinuousUpdateModel(requestBody =  WriteExecutionPlanRequestBody(source="External"), keys = "column1" :: Nil, tableName = "test_table", "-(ordering1 + ordering2)", List("ordering1", "ordering2"), entityDetails, "localhost:4566")
+  val wrongModel = ContinuousUpdateModel(requestBody =  WriteExecutionPlanRequestBody(source="External"), keys = "column1" :: Nil, tableName = "test_table", "-(ordering1 + ordering2)", List("ordering1", "ordering2"), wrongDetails, "localhost:4566")
+  val notExistingEntityModel = ContinuousUpdateModel(requestBody =  WriteExecutionPlanRequestBody(source="External"), keys = "column1" :: Nil, tableName = "test_table", "-(ordering1 + ordering2)", List("ordering1", "ordering2"), notExistingEntityDetails, "localhost:4566")
 }
 
 class ContinuousUpdateWaspWriterSpec extends FunSuite with TempDirectoryEach {
@@ -39,6 +46,34 @@ class ContinuousUpdateWaspWriterSpec extends FunSuite with TempDirectoryEach {
       val deltaTable = DeltaTable.forPath(spark, s"s3a://$tempDir/").toDF
       assert(deltaTable.count() == 1)
       assert(deltaTable.select("column2").first().get(0) == "value1")
+    }
+  }
+
+  test("Write to entity with wrong details") {
+    withServer(dispatcher) { serverData =>
+      val myDf = buildData("key", 1)
+      lazy val continuousUpdateModel = Models.wrongModel
+
+      import spark.implicits._
+      val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
+
+      an[Exception] should be thrownBy (
+        createAndExecuteStreamingQuery(serverData.latch, source, continuousUpdateModel, processAllAvailable = true, myDf: _*).isEmpty
+      )
+    }
+  }
+
+  test("Write to non existing entity") {
+    withServer(dispatcher) { serverData =>
+      val myDf = buildData("key", 1)
+      lazy val continuousUpdateModel = Models.notExistingEntityModel
+
+      import spark.implicits._
+      val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
+
+      an[Exception] should be thrownBy (
+        createAndExecuteStreamingQuery(serverData.latch, source, continuousUpdateModel, processAllAvailable = true, myDf: _*).isEmpty
+      )
     }
   }
 
@@ -238,17 +273,15 @@ class ContinuousUpdateWaspWriterSpec extends FunSuite with TempDirectoryEach {
       override def dispatch(request: RecordedRequest): MockResponse =
         request.getPath match {
           case "/writeExecutionPlan" =>
-            val assertion = tapPrint(
-              AggregatedAssertion(
-                EqualAssertion("POST", request.getMethod),
-                EqualAssertion("{\"source\":\"External\"}", request.getBody.readByteString().utf8())
-              )
-            )
+            EqualAssertion("POST", request.getMethod)
+            EqualAssertion("{\"source\":\"External\"}", request.getBody.readByteString().utf8())
             latch.countDown()
 
 
             val response: MockResponse = new MockResponse().setBody(
               s"""{
+                 |    "writeUri": "s3://${tempDir}/"
+                 |    "writeType": "Cold",
                  |    "temporaryCredentials": {
                  |        "r": {
                  |            "accessKeyID": "ReadaccessKeyID",
@@ -261,8 +294,6 @@ class ContinuousUpdateWaspWriterSpec extends FunSuite with TempDirectoryEach {
                  |            "sessionToken": "WritesessionToken"
                  |        }
                  |    },
-                 |    "writeType": "Cold",
-                 |    "writeUri": "s3://${tempDir}/"
                  |}""".stripMargin)
             response
           case _ =>

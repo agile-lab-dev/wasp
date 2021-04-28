@@ -13,6 +13,8 @@ object TestGenericModel {
         |"mode": "append",
         |"partitionBy": [],
         |"requestBody": {"source":"External"}
+        |"entityDetails":{"name": "integrationTest"},
+        |"s3aEndpoint": "host.docker.internal:4566"
         |}""".stripMargin)
   )
 
@@ -23,8 +25,10 @@ object TestGenericModel {
       """{"requestBody": {"source":"External"},
         |"keys": ["id"],
         |"tableName": "topic_table",
-        |"orderingField": "number",
+        |"orderingExpression": "number",
         |"fieldsToDrop": []
+        |"entityDetails": {"name": "integrationTest"}
+        |"s3aEndpoint": "host.docker.internal:4566"
         |}""".stripMargin)
   )
 

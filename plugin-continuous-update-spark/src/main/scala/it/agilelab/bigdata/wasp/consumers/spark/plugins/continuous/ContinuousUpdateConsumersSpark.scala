@@ -26,14 +26,11 @@ import scala.util.Try
   */
 class ContinuousUpdateConsumersSparkPlugin extends WaspConsumersSparkPlugin with Logging {
   var genericBL: GenericBL = ConfigBL.genericBL
-  val okHttpClient: OkHttpClient = new OkHttpClient() with Serializable
 
   override def datastoreProduct: DatastoreProduct = GenericProduct("continuousUpdate", Some("continuous"))
 
   override def initialize(waspDB: WaspDB): Unit = {
     logger.info(s"Initialize the Generic BL")
-    genericBL
-    okHttpClient
   }
 
   override def getValidationRules: Seq[ValidationRule] = Seq()

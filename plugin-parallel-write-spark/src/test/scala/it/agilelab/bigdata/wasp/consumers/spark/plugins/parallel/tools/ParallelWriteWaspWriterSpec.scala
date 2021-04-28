@@ -34,6 +34,8 @@ class ParallelWriteWaspWriterSpec extends FunSuite with SparkSuite {
             |"mode": "append",
             |"partitionBy": [],
             |"requestBody": {"source":"External"}
+            |"entityDetails": {"name":"mock"},
+            |"s3aEndpoint": "localhost:4566"
             |}""".stripMargin)
       )
       import spark.implicits._
@@ -58,6 +60,8 @@ class ParallelWriteWaspWriterSpec extends FunSuite with SparkSuite {
             |"mode": "append",
             |"partitionBy": [],
             |"requestBody": {"source":"External"}
+            |"entityDetails": {"name":"mock"},
+            |"s3aEndpoint": "localhost:4566"
             |}""".stripMargin)
       )
       import spark.implicits._
@@ -84,7 +88,8 @@ class ParallelWriteWaspWriterSpec extends FunSuite with SparkSuite {
               """{"format": "console",
                 |"mode": "append",
                 |"partitionBy": [],
-                |"requestBody": {"source":"External"}
+                |"entityDetails": {"name":"mock"},
+                |"s3aEndpoint": "localhost:4566"
                 |}""".stripMargin)
       )
 

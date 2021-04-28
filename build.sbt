@@ -174,6 +174,14 @@ lazy val plugin_cdc_spark = Project("wasp-plugin-cdc-spark", file("plugin-cdc-sp
 	.settings(libraryDependencies ++= Dependencies.plugin_cdc_spark)
   .enablePlugins(JavaAppPackaging)
 
+lazy val microservice_catalog = Project("wasp-microservice-catalog", file("microservice-catalog"))
+  .settings(Settings.commonSettings: _*)
+  .settings(libraryDependencies += Dependencies.scalaTest)
+  .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
+  .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
+  // https://mvnrepository.com/artifact/net.liftweb/lift-json
+
 
 lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark", file("plugin-parallel-write-spark"))
   .settings(Settings.commonSettings: _*)
@@ -182,7 +190,7 @@ lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark
   .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
   .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(microservice_catalog % "compile->compile;test->test")
 
 lazy val plugin_continuous_update_spark = Project("wasp-plugin-continuous-update-spark", file("plugin-continuous-update-spark"))
   .settings(Settings.commonSettings: _*)
@@ -192,7 +200,7 @@ lazy val plugin_continuous_update_spark = Project("wasp-plugin-continuous-update
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
   .settings(libraryDependencies += "cloud.localstack" % "localstack-utils" % "0.2.10" % Test)
   .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(microservice_catalog % "compile->compile;test->test")
   .dependsOn(delta_lake)
 /* Yarn  */
 

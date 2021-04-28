@@ -1,17 +1,18 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.utils
 
 import akka.http.scaladsl.model.Uri
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.TemporaryCredential
+import it.agilelab.bigdata.microservicecatalog.entity.TemporaryCredential
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.utils.HadoopS3Utils.values
 import org.apache.hadoop.conf.Configuration
 
 import scala.util.Try
 
 object HadoopS3Utils {
-  def values(credentials: TemporaryCredential): Seq[(String, String)] =
+  def values(credentials: TemporaryCredential, s3aEndpoint: String): Seq[(String, String)] =
     Seq(
       "fs.s3a.impl" -> "org.apache.hadoop.fs.s3a.S3AFileSystem",
-      "fs.s3a.endpoint" -> "localhost:4566", //"s3.eu-east-1.amazonaws.com",  //host.docker.internal
+//      "fs.s3a.endpoint" -> "localhost:4566", //"s3.eu-east-1.amazonaws.com",  //host.docker.internal
+      "fs.s3a.endpoint" -> s3aEndpoint,
       "fs.s3a.path.style.access" -> "true",
       "fs.s3a.connection.ssl.enabled" -> "false",
       "fs.s3a.aws.credentials.provider" -> "org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider",
@@ -25,8 +26,7 @@ object HadoopS3Utils {
   }
 }
 
-class HadoopS3aUtil(hadoopCfg: Configuration, credentials: TemporaryCredential) {
-
+class HadoopS3aUtil(hadoopCfg: Configuration, credentials: TemporaryCredential, s3aEndpoint: String) {
   def performBulkHadoopCfgSetup: Try[Unit] =
-    Try(values(credentials).foreach { case (key, value) => hadoopCfg.set(key, value) })
+    Try(values(credentials, s3aEndpoint).foreach { case (key, value) => hadoopCfg.set(key, value) })
 }
