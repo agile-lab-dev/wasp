@@ -191,8 +191,9 @@ lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
   .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
   .dependsOn(microservice_catalog % "compile->compile;test->test")
-
 lazy val plugin_continuous_update_spark = Project("wasp-plugin-continuous-update-spark", file("plugin-continuous-update-spark"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies += Dependencies.scalaTest)
   // https://mvnrepository.com/artifact/net.liftweb/lift-json
@@ -280,6 +281,9 @@ lazy val wasp = Project("wasp", file("."))
     plugin_raw_spark,
     plugin_solr_spark,
     plugin_cdc_spark,
+    microservice_catalog,
+    plugin_continuous_update_spark,
+    plugin_parallel_write_spark,
     yarn,
     spark,
     plugin_mailer_spark,
