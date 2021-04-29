@@ -50,4 +50,5 @@ object Versions {
   val postgresqlVersion = "42.2.5"
   val dbcp2Version = "2.4.0"
   val postgresqlEmbeddedVersion ="0.13.1"
+  val delta = "0.6.1" + "-" + spark
 }

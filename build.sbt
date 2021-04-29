@@ -170,7 +170,6 @@ lazy val plugin_http_spark = Project("wasp-plugin-http-spark", file("plugin-http
 lazy val plugin_cdc_spark = Project("wasp-plugin-cdc-spark", file("plugin-cdc-spark"))
 	.settings(Settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
-  .dependsOn(delta_lake)
 	.settings(libraryDependencies ++= Dependencies.plugin_cdc_spark)
   .enablePlugins(JavaAppPackaging)
 
@@ -199,10 +198,11 @@ lazy val plugin_continuous_update_spark = Project("wasp-plugin-continuous-update
   // https://mvnrepository.com/artifact/net.liftweb/lift-json
   .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
+  .settings(libraryDependencies += Dependencies.delta)
   .settings(libraryDependencies += "cloud.localstack" % "localstack-utils" % "0.2.10" % Test)
   .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
   .dependsOn(microservice_catalog % "compile->compile;test->test")
-  .dependsOn(delta_lake)
+
 /* Yarn  */
 
 lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
@@ -251,13 +251,6 @@ lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies ++= Dependencies.nifiClient)
 
-/* delta lake */
-lazy val delta_lake = Project("wasp-delta-lake", file("delta-lake"))
-  .settings(Settings.commonSettings: _*)
-  .settings(libraryDependencies ++= Dependencies.delta_lake)
-  .settings(resolvers ++= Resolvers.resolvers)
-  .settings(scalaVersion := Versions.scala)
-
 /* Framework + Plugins */
 lazy val wasp = Project("wasp", file("."))
   .settings(Settings.commonSettings: _*)
@@ -293,8 +286,7 @@ lazy val wasp = Project("wasp", file("."))
     spark_sql_kafka_0_11_new,
     openapi,
     nifi_client,
-    plugin_mongo_spark,
-    delta_lake,
+    plugin_mongo_spark
   )
 
 /* WhiteLabel */

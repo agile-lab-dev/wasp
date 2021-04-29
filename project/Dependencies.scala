@@ -140,6 +140,7 @@ object Dependencies {
   val akkaHttpTestKit    = "com.typesafe.akka"     %% "akka-http-testkit"       % Versions.akkaHttp % Test
   val apacheCommonsLang3 = "org.apache.commons"    % "commons-lang3"            % Versions.apacheCommonsLang3Version // remove?
   val avro               = "org.apache.avro"       % "avro"                     % Versions.avro
+  val delta              = "it.agilelab"          %% "wasp-delta-lake"          % Versions.delta log4jExclude
   // avro4s requires a json4s version incompatible with wasp, downstream projects confirmed that this exclusion does
   // not create issues with darwin and avro parsing
   val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion excludeAll ExclusionRule(
@@ -429,7 +430,8 @@ object Dependencies {
   val delta_lake: Seq[ModuleID] = jacksonDependencies :+ sparkHive
 
   val plugin_cdc_spark = Seq(
-    scalaTest,
+    delta,
+    scalaTest
   ) ++ log4j
 
 
