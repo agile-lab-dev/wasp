@@ -172,8 +172,8 @@ object Dependencies {
   val json4sCore           = "org.json4s" %% "json4s-core" % Versions.json4s
   val json4sJackson        = "org.json4s" %% "json4s-jackson" % Versions.json4s
   val json4sNative         = "org.json4s" %% "json4s-native" % Versions.json4s
-  val kafka                = ("org.apache.kafka" %% "kafka" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
-  val kafkaClients         = ("org.apache.kafka" % "kafka-clients" % "2.2.1-cdh6.3.2").kafkaExclusions.kafkaJacksonExclusions
+  val kafka                = ("org.apache.kafka" %% "kafka" % Versions.kafka).kafkaExclusions.kafkaJacksonExclusions
+  val kafkaClients         = ("org.apache.kafka" % "kafka-clients" % Versions.kafka).kafkaExclusions.kafkaJacksonExclusions
   val kafkaSchemaRegistryClient = "io.confluent" % "kafka-schema-registry-client" % "3.3.3"
 //  val kafkaSparkSql = "org.apache.spark" %% "spark-sql-kafka-0-10" % Versions.spark sparkExclusions
   val log4jApi                  = "org.apache.logging.log4j" % "log4j-api" % Versions.log4j % "optional,test"
@@ -217,7 +217,9 @@ object Dependencies {
   val dpcp2                     = "org.apache.commons" % "commons-dbcp2" % Versions.dbcp2Version
   val postgresqlEmbedded        = "com.opentable.components" % "otj-pg-embedded" % Versions.postgresqlEmbeddedVersion % Test
   val mockOkHttp2               = "com.squareup.okhttp" % "mockwebserver" % "2.7.5" % Test // in sync with cdh6
-
+  val spark_sql_kafka           = "it.agilelab" %% "wasp-spark-sql-kafka" % ("0.0.1" + "-" + Versions.kafka_ + "-" + Versions.spark)
+  val spark_sql_kafka_new       = "it.agilelab" %% "wasp-spark-sql-kafka-new" % ("0.0.1" + "-" + Versions.kafka_ + "-" + Versions.spark)
+  val spark_sql_kafka_old       = "it.agilelab" %% "wasp-spark-sql-kafka-old" % ("0.0.1" + "-" + Versions.kafka_ + "-" + Versions.spark)
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(

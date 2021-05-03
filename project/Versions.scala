@@ -51,4 +51,6 @@ object Versions {
   val dbcp2Version = "2.4.0"
   val postgresqlEmbeddedVersion ="0.13.1"
   val delta = "0.6.1" + "-" + spark
+  val kafka_ = "2.2.1"
+  val kafka: String = s"${kafka_}-${cdh6}"
 }

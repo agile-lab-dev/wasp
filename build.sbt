@@ -15,27 +15,6 @@ lazy val IntegrationTest = config("it") extend (Test)
 
 val generateOpenApi: TaskKey[Unit] = TaskKey("generate-open-api", "Updates the generated open api specification")
 
-lazy val spark_sql_kafka_0_11 = Project("wasp-spark-sql-kafka-0-11", file("spark-sql-kafka-0-11"))
-  .configs(IntegrationTest)
-  .settings(Settings.commonSettings: _*)
-  .settings(Defaults.itSettings)
-  .settings(Settings.disableParallelTests: _*)
-  .settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
-
-lazy val spark_sql_kafka_0_11_new = Project("wasp-spark-sql-kafka-0-11-new", file("spark-sql-kafka-0-11-new"))
-  .configs(IntegrationTest)
-  .settings(Settings.commonSettings: _*)
-  .settings(Defaults.itSettings)
-  .settings(Settings.disableParallelTests: _*)
-  .settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
-
-lazy val spark_sql_kafka_0_11_old = Project("wasp-spark-sql-kafka-0-11-old", file("spark-sql-kafka-0-11-old"))
-  .configs(IntegrationTest)
-  .settings(Settings.commonSettings: _*)
-  .settings(Defaults.itSettings)
-  .settings(Settings.disableParallelTests: _*)
-  .settings(libraryDependencies ++= Dependencies.spark_sql_kafka_0_11)
-
 /* Framework */
 
 lazy val scala_compiler = Project("wasp-compiler", file("compiler"))
@@ -123,19 +102,19 @@ lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc
 lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-kafka-spark"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
-  .dependsOn(spark_sql_kafka_0_11)
+  .settings(libraryDependencies += Dependencies.spark_sql_kafka)
   .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
 lazy val plugin_kafka_spark_new = Project("wasp-plugin-kafka-spark-new", file("plugin-kafka-spark-new"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
-  .dependsOn(spark_sql_kafka_0_11_new)
+  .settings(libraryDependencies += Dependencies.spark_sql_kafka_new)
   .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
 lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
-  .dependsOn(spark_sql_kafka_0_11_old)
+  .settings(libraryDependencies += Dependencies.spark_sql_kafka_old)
   .settings(libraryDependencies ++= Dependencies.plugin_kafka_spark)
 
 lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
@@ -282,9 +261,6 @@ lazy val plugin = project
     plugin_mailer_spark,
     plugin_http_spark,
     plugin_mongo_spark,
-    spark_sql_kafka_0_11,
-    spark_sql_kafka_0_11_old,
-    spark_sql_kafka_0_11_new,
     microservice_catalog
   )
 

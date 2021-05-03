@@ -1,7 +1,7 @@
 image: alpine
 
 variables:
-  SBT_OPTS: "-Dglobal.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy"
+  SBT_OPTS: "-Dglobal.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy -Dsbt.ci=true"
   COURSIER_CACHE: sbt-cache/coursier
   UNPRIVILEGED_USER: "tester"
 
@@ -93,14 +93,6 @@ censor:
   script:
     - ./censor.sh
 
-#integration:
-#  interruptible: true
-#  stage: integration
-#  image: "hseeberger/scala-sbt:8u181_2.12.8_1.2.8"
-#  script:
-#    - sbt clean it:test
-#  only:
-#    - /(^release\/v([0-9]+)\.([0-9]+))/
 
 waspctl:
   interruptible: true
@@ -127,7 +119,7 @@ snapshot:
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
     - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
-    - sbt -J-Xms3G -J-Xmx3G clean publishSigned
+    - sbt clean publishSigned
   only:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
@@ -146,6 +138,6 @@ release:
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
     - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
-    - sbt -J-Xms3G -J-Xmx3G clean publishSigned sonatypeRelease
+    - sbt clean publishSigned sonatypeRelease
   only:
     - tags
