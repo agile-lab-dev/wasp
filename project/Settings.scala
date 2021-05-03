@@ -113,8 +113,7 @@ object Settings {
 
   /** settings for tests */
   lazy val testSettings = Seq(
-    libraryDependencies += Dependencies.sparkHive % Test,
-    logBuffered in Test := false// disable buffering to make scalatest output immediate
+    logBuffered in Test := true
   )
 
   /** common settings for all modules */

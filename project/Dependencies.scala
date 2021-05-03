@@ -348,7 +348,8 @@ object Dependencies {
       nameOf :+
       velocity :+   //TODO: evaluate this is legal
       scalaCompiler :+
-      "org.apache.spark" %% "spark-avro" % Versions.spark
+      sparkHive % Test :+
+    "org.apache.spark" %% "spark-avro" % Versions.spark
   ).map(excludeNetty).map(excludeLog4j) ++
     log4j :+
     log4j1 :+

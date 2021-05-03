@@ -83,26 +83,22 @@ lazy val master = Project("wasp-master", file("master"))
   .dependsOn(core)
   .dependsOn(nifi_client)
   .settings(libraryDependencies ++= Dependencies.master)
-  .enablePlugins(JavaAppPackaging)
 
 lazy val producers = Project("wasp-producers", file("producers"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(core)
   .settings(libraryDependencies ++= Dependencies.producers)
-  .enablePlugins(JavaAppPackaging)
 
 lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(core)
   .settings(libraryDependencies ++= Dependencies.consumers_spark ++ Dependencies.wireMock)
   .settings(Settings.disableParallelTests: _*)
-  .enablePlugins(JavaAppPackaging)
 
 lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(core)
   .settings(libraryDependencies ++= Dependencies.consumers_rt)
-  .enablePlugins(JavaAppPackaging)
 
 /* Plugins */
 
@@ -168,10 +164,9 @@ lazy val plugin_http_spark = Project("wasp-plugin-http-spark", file("plugin-http
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
 
 lazy val plugin_cdc_spark = Project("wasp-plugin-cdc-spark", file("plugin-cdc-spark"))
-	.settings(Settings.commonSettings: _*)
+  .settings(Settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
-	.settings(libraryDependencies ++= Dependencies.plugin_cdc_spark)
-  .enablePlugins(JavaAppPackaging)
+  .settings(libraryDependencies ++= Dependencies.plugin_cdc_spark)
 
 lazy val microservice_catalog = Project("wasp-microservice-catalog", file("microservice-catalog"))
   .settings(Settings.commonSettings: _*)
@@ -179,29 +174,29 @@ lazy val microservice_catalog = Project("wasp-microservice-catalog", file("micro
   .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
   .dependsOn(consumers_spark % "compile->compile;test->test")
-  // https://mvnrepository.com/artifact/net.liftweb/lift-json
-
+// https://mvnrepository.com/artifact/net.liftweb/lift-json
 
 lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark", file("plugin-parallel-write-spark"))
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies += Dependencies.scalaTest)
-// https://mvnrepository.com/artifact/net.liftweb/lift-json
-  .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
-  .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
-  .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
-  .dependsOn(microservice_catalog % "compile->compile;test->test")
-lazy val plugin_continuous_update_spark = Project("wasp-plugin-continuous-update-spark", file("plugin-continuous-update-spark"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
-  .settings(Settings.commonSettings: _*)
-  .settings(libraryDependencies += Dependencies.scalaTest)
   // https://mvnrepository.com/artifact/net.liftweb/lift-json
   .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
   .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
-  .settings(libraryDependencies += Dependencies.delta)
-  .settings(libraryDependencies += "cloud.localstack" % "localstack-utils" % "0.2.10" % Test)
   .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
   .dependsOn(microservice_catalog % "compile->compile;test->test")
+lazy val plugin_continuous_update_spark =
+  Project("wasp-plugin-continuous-update-spark", file("plugin-continuous-update-spark"))
+    .configs(IntegrationTest)
+    .settings(Defaults.itSettings)
+    .settings(Settings.commonSettings: _*)
+    .settings(libraryDependencies += Dependencies.scalaTest)
+    // https://mvnrepository.com/artifact/net.liftweb/lift-json
+    .settings(libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.1")
+    .settings(libraryDependencies ++= Dependencies.plugin_http_spark)
+    .settings(libraryDependencies += Dependencies.delta)
+    .settings(libraryDependencies += "cloud.localstack" % "localstack-utils" % "0.2.10" % Test)
+    .settings(libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0")
+    .dependsOn(microservice_catalog % "compile->compile;test->test")
 
 /* Yarn  */
 
@@ -251,20 +246,28 @@ lazy val nifi_client = Project("wasp-nifi-client", file("nifi-client"))
   .settings(Settings.commonSettings: _*)
   .settings(libraryDependencies ++= Dependencies.nifiClient)
 
-/* Framework + Plugins */
-lazy val wasp = Project("wasp", file("."))
+lazy val kernel = project
+  .withId("wasp-kernel")
   .settings(Settings.commonSettings: _*)
   .aggregate(
     model,
     scala_compiler,
     repository_core,
     core,
-    repository_mongo,
-    repository_postgres,
     master,
     producers,
     consumers_spark,
     consumers_rt,
+    openapi,
+    nifi_client,
+    yarn,
+    spark
+  )
+
+lazy val plugin = project
+  .withId("wasp-plugin")
+  .settings(Settings.commonSettings: _*)
+  .aggregate(
     plugin_console_spark,
     plugin_hbase_spark,
     plugin_jdbc_spark,
@@ -274,19 +277,24 @@ lazy val wasp = Project("wasp", file("."))
     plugin_raw_spark,
     plugin_solr_spark,
     plugin_cdc_spark,
-    microservice_catalog,
     plugin_continuous_update_spark,
     plugin_parallel_write_spark,
-    yarn,
-    spark,
     plugin_mailer_spark,
     plugin_http_spark,
+    plugin_mongo_spark,
     spark_sql_kafka_0_11,
     spark_sql_kafka_0_11_old,
     spark_sql_kafka_0_11_new,
-    openapi,
-    nifi_client,
-    plugin_mongo_spark
+    microservice_catalog
+  )
+
+/* Framework + Plugins */
+lazy val wasp = Project("wasp", file("."))
+  .settings(Settings.commonSettings: _*)
+  .aggregate(
+    kernel,
+    repository,
+    plugin
   )
 
 /* WhiteLabel */
@@ -352,7 +360,9 @@ lazy val whiteLabelConsumersRt = Project("wasp-whitelabel-consumers-rt", file("w
   .settings(libraryDependencies ++= Dependencies.log4j)
   .enablePlugins(JavaAppPackaging)
 
-lazy val whiteLabelSingleNode = project.withId("wasp-whitelabel-singlenode").in(file("whitelabel/single-node"))
+lazy val whiteLabelSingleNode = project
+  .withId("wasp-whitelabel-singlenode")
+  .in(file("whitelabel/single-node"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(whiteLabelMaster)
   .dependsOn(whiteLabelConsumersSpark)
@@ -361,7 +371,14 @@ lazy val whiteLabelSingleNode = project.withId("wasp-whitelabel-singlenode").in(
 
 lazy val whiteLabel = Project("wasp-whitelabel", file("whitelabel"))
   .settings(Settings.commonSettings: _*)
-  .aggregate(whiteLabelModels, whiteLabelMaster, whiteLabelProducers, whiteLabelConsumersSpark, whiteLabelConsumersRt, whiteLabelSingleNode)
+  .aggregate(
+    whiteLabelModels,
+    whiteLabelMaster,
+    whiteLabelProducers,
+    whiteLabelConsumersSpark,
+    whiteLabelConsumersRt,
+    whiteLabelSingleNode
+  )
 
 lazy val openapi = Project("wasp-openapi", file("openapi"))
   .settings(Settings.commonSettings: _*)

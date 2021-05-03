@@ -22,12 +22,12 @@ cache:
     - "sbt-cache/target"
     - "sbt-cache/coursier"
 
-test:
+test-kernel:
   stage: test
   interruptible: true
   image: "hseeberger/scala-sbt:8u282_1.4.9_2.11.12"
   script:
-    - ./run-sbt-unprivileged.sh "clean coverageOn test coverageOff coverageReport coverageAggregate"
+    - ./run-sbt-unprivileged.sh "clean coverageOn wasp-kernel/test coverageOff wasp-kernel/coverageReport wasp-kernel/coverageAggregate"
   after_script:
     - mkdir test-output
     - find . -path '*/test-reports/*.xml' -exec cp '{}' ./test-output/ \;
@@ -41,6 +41,49 @@ test:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
+  needs: []
+
+test-plugin:
+  stage: test
+  interruptible: true
+  image: "hseeberger/scala-sbt:8u282_1.4.9_2.11.12"
+  script:
+    - ./run-sbt-unprivileged.sh "clean coverageOn wasp-plugin/test coverageOff wasp-plugin/coverageReport wasp-plugin/coverageAggregate"
+  after_script:
+    - mkdir test-output
+    - find . -path '*/test-reports/*.xml' -exec cp '{}' ./test-output/ \;
+  artifacts:
+    reports:
+      junit: 'test-output/*.xml'
+      cobertura: 'target/scala-2.11/coverage-report/cobertura.xml'
+  tags:
+    - gitlab-org
+  only:
+    - /^develop$/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
+  needs: []
+
+test-repo:
+  stage: test
+  interruptible: true
+  image: "hseeberger/scala-sbt:8u282_1.4.9_2.11.12"
+  script:
+    - ./run-sbt-unprivileged.sh "clean coverageOn wasp-repository/test coverageOff wasp-repository/coverageReport wasp-repository/coverageAggregate"
+  after_script:
+    - mkdir test-output
+    - find . -path '*/test-reports/*.xml' -exec cp '{}' ./test-output/ \;
+  artifacts:
+    reports:
+      junit: 'test-output/*.xml'
+      cobertura: 'target/scala-2.11/coverage-report/cobertura.xml'
+  tags:
+    - gitlab-org
+  only:
+    - /^develop$/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
+  needs: []
 
 censor:
   stage: censor
@@ -49,7 +92,6 @@ censor:
   only: [merge_requests]
   script:
     - ./censor.sh
-    
 
 #integration:
 #  interruptible: true
@@ -73,6 +115,8 @@ waspctl:
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
     - tags
+  needs:
+    - test-kernel
 
 snapshot:
   interruptible: false
@@ -83,11 +127,15 @@ snapshot:
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
     - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
-    - sbt clean publishSigned
+    - sbt -J-Xms3G -J-Xmx3G clean publishSigned
   only:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
+  needs:
+    - test-kernel
+    - test-repo
+    - test-plugin
 
 release:
   interruptible: false
@@ -98,6 +146,6 @@ release:
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
     - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
-    - sbt clean publishSigned sonatypeRelease
+    - sbt -J-Xms3G -J-Xmx3G clean publishSigned sonatypeRelease
   only:
     - tags
