@@ -18,7 +18,8 @@ case class HttpBlImpl(waspDB: WaspMongoDB) extends HttpBL {
       t.getArray("valueFieldsNames").getValues.asScala.toList.map(_.asString().getValue),
       HttpCompression.fromString(t.get("compression").asString().getValue),
       t.get("mediaType").asString().getValue,
-      t.get("logBody").asBoolean().getValue
+      t.get("logBody").asBoolean().getValue,
+      t.get("structured").asBoolean().getValue
     )
 
   def getByName(name: String): Option[HttpModel] = {
