@@ -135,3 +135,6 @@ repositories
 .vscode
 project/metals.sbt
 project/project/
+
+# added for the poor people that are forced to use windows and have a bugged sbt
+null

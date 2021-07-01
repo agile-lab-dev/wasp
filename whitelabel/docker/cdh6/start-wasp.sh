@@ -28,11 +28,16 @@ WASP_SECURITY=false
 WASP_YARN=false
 WASP_CONFIGURATION_FILE="docker-environment.conf"
 PERSIST_FLAG=false
+SKIP_BUILD=false
 while [[ $# -gt 0 ]]; do
     ARG=$1
     case $ARG in
         -d|--drop-db)
             DROP_MONGODB_OPT="$ARG"
+            shift # past argument
+        ;;
+        -s|--skip-build)
+            SKIP_BUILD=true
             shift # past argument
         ;;
         -c|--config)
@@ -50,12 +55,25 @@ while [[ $# -gt 0 ]]; do
         ;;
     esac
 done
-# prepare binaries for running
-cd $SCRIPT_DIR/../../..
+  # prepare binaries for running
+  cd $SCRIPT_DIR/../../..
 
-echo "Running sbt stage task..."
-sbt -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
-#sbt -v -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
+  if [ $SKIP_BUILD == false ];  then
+
+  echo "Running sbt stage task..."
+
+  ADDITIONAL_SBT_PARAMS=""
+
+  if [ "$(expr substr "$(uname -s)" 1 10)" == "MINGW64_NT" ];  then
+    # i'm in windows
+    ADDITIONAL_SBT_PARAMS="-Dsbt.coursier=false"
+  fi
+
+  sbt $ADDITIONAL_SBT_PARAMS -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
+  #sbt -v -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
+fi
+
+echo $SCRIPT_DIR
 
 # get docker command, init network if needed
 cd $SCRIPT_DIR

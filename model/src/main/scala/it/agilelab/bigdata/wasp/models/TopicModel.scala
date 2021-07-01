@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.models
 
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 import org.bson.BsonDocument
 
 object TopicModel {
@@ -14,7 +14,6 @@ object TopicModel {
     * @param ownSchema
     * @return
     */
-
   def generateField(namespace: String, name: String, ownSchema: Option[String]): String = {
     val schema = (ownSchema :: Nil).flatten.mkString(", ")
     generate(namespace, name, schema)
@@ -34,16 +33,15 @@ object TopicModel {
   }
 }
 
-
 sealed abstract class TopicCompression(val kafkaProp: String)
 
 object TopicCompression {
 
   private[wasp] val _asString: Map[TopicCompression, String] = Map(
     TopicCompression.Disabled -> "disabled",
-    TopicCompression.Gzip -> "gzip",
-    TopicCompression.Snappy -> "snappy",
-    TopicCompression.Lz4 -> "lz4"
+    TopicCompression.Gzip     -> "gzip",
+    TopicCompression.Snappy   -> "snappy",
+    TopicCompression.Lz4      -> "lz4"
   )
 
   def asString: PartialFunction[TopicCompression, String] = _asString
@@ -87,9 +85,9 @@ object SubjectStrategy {
   }
 
   private[wasp] val _asString: Map[SubjectStrategy, String] = Map(
-    SubjectStrategy.None -> "none",
-    SubjectStrategy.Topic -> "topic",
-    SubjectStrategy.Record -> "record",
+    SubjectStrategy.None           -> "none",
+    SubjectStrategy.Topic          -> "topic",
+    SubjectStrategy.Record         -> "record",
     SubjectStrategy.TopicAndRecord -> "topic-and-record"
   )
 
@@ -139,28 +137,28 @@ object SubjectStrategy {
   *
   * The `schema` field contains the schema to use when encoding the value.
   */
-case class TopicModel(override val name: String,
-                      creationTime: Long,
-                      partitions: Int,
-                      replicas: Int,
-                      topicDataType: String,
-                      keyFieldName: Option[String],
-                      headersFieldName: Option[String],
-                      valueFieldsNames: Option[Seq[String]],
-                      useAvroSchemaManager: Boolean,
-                      schema: BsonDocument,
-                      topicCompression: TopicCompression = TopicCompression.Disabled,
-                      subjectStrategy: SubjectStrategy = SubjectStrategy.None,
-                      keySchema: Option[String] = None
-                     )
-  extends DatastoreModel {
+case class TopicModel(
+    override val name: String,
+    creationTime: Long,
+    partitions: Int,
+    replicas: Int,
+    topicDataType: String,
+    keyFieldName: Option[String],
+    headersFieldName: Option[String],
+    valueFieldsNames: Option[Seq[String]],
+    useAvroSchemaManager: Boolean,
+    schema: BsonDocument,
+    topicCompression: TopicCompression = TopicCompression.Disabled,
+    subjectStrategy: SubjectStrategy = SubjectStrategy.None,
+    keySchema: Option[String] = None
+) extends DatastoreModel {
   def getJsonSchema: String = schema.toJson
 
   override def datastoreProduct: DatastoreProduct = KafkaProduct
 }
 object TopicDataTypes {
-  val AVRO = "avro"
-  val JSON = "json"
+  val AVRO      = "avro"
+  val JSON      = "json"
   val PLAINTEXT = "plaintext"
-  val BINARY = "binary"
+  val BINARY    = "binary"
 }

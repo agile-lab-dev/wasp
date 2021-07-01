@@ -27,7 +27,8 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.cdcWriter("Cdc Writer", TestCdcModel.debeziumMutation),
             mlModels = List(),
-            strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.DebeziumMutationStrategy")),
+            strategy =
+              Some(StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc.DebeziumMutationStrategy")),
             triggerIntervalMs = None,
             options = Map()
           )
@@ -95,9 +96,10 @@ private[wasp] object TestPipegraphs {
             name = "ETL TestContinuousUpdateWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel.apply("Continuous Update writer", TestGenericModel.continuousUpdateModel, genericContinuousProduct),
+            streamingOutput = WriterModel
+              .apply("Continuous Update writer", TestGenericModel.continuousUpdateModel, genericContinuousProduct),
             mlModels = List(),
-            strategy= Some(TestStrategies.continuousUpdateStrategy),
+            strategy = Some(TestStrategies.continuousUpdateStrategy),
             triggerIntervalMs = None,
             options = Map()
           )
@@ -476,7 +478,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -485,13 +486,12 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.httpWriter("Http post writer", TestHttpModel.httpPost),
             mlModels = List(),
-            strategy= None,
+            strategy = None,
             triggerIntervalMs = None,
             options = Map()
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
       lazy val httpPostHeaders = PipegraphModel(
@@ -500,7 +500,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
@@ -509,13 +508,12 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.httpWriter("Http post writer with headers", TestHttpModel.httpPostHeaders),
             mlModels = List(),
-            strategy= Some(TestStrategies.testHttpHeaderStrategy),
+            strategy = Some(TestStrategies.testHttpHeaderStrategy),
             triggerIntervalMs = None,
             options = Map()
           )
         ),
         rtComponents = List(),
-
         dashboard = None
       )
 //      lazy val httpsPost = PipegraphModel(
@@ -581,40 +579,41 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
-            strategy= Some(TestStrategies.testHttpEnrichmentStrategy),
+            strategy = Some(TestStrategies.testHttpEnrichmentStrategy),
             triggerIntervalMs = None,
             options = Map()
           )
         ),
         rtComponents = List(),
         dashboard = None,
-        enrichmentSources =
-          RestEnrichmentConfigModel(
-            Map.apply(
-              "getHttpExample" ->
-                RestEnrichmentSource("http",
-                  Map.apply(
-                    "method" -> "GET",
-                    "url" -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
-                  ),
-                  Map.apply(
-                    "Content-type" -> "text/plain",
-                    "charset" -> "ISO-8859-1"
-                  )
+        enrichmentSources = RestEnrichmentConfigModel(
+          Map.apply(
+            "getHttpExample" ->
+              RestEnrichmentSource(
+                "http",
+                Map.apply(
+                  "method" -> "GET",
+                  "url"    -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
                 ),
-              "postHttpExample" ->
-                RestEnrichmentSource("http",
-                  Map.apply(
-                    "method" -> "POST",
-                    "url" -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
-                  ),
-                  Map.apply(
-                    "Content-type" -> "text/plain",
-                    "charset" -> "ISO-8859-1"
-                  )
+                Map.apply(
+                  "Content-type" -> "text/plain",
+                  "charset"      -> "ISO-8859-1"
                 )
-            )
+              ),
+            "postHttpExample" ->
+              RestEnrichmentSource(
+                "http",
+                Map.apply(
+                  "method" -> "POST",
+                  "url"    -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
+                ),
+                Map.apply(
+                  "Content-type" -> "text/plain",
+                  "charset"      -> "ISO-8859-1"
+                )
+              )
           )
+        )
       )
 
       object ERROR {
@@ -1456,7 +1455,6 @@ private[wasp] object TestPipegraphs {
     object Structured {
 
       lazy val kafkaMultitopicReadSame = PipegraphModel(
-
         name = "TestKafkaReaderMultitopicStructuredJSONPipegraph",
         description = "Test for reading from multiple topics for JSON topics",
         owner = "user",
@@ -1466,7 +1464,8 @@ private[wasp] object TestPipegraphs {
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "CopyFromTest1ToTest2jsonjson",
-            streamingInput = StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.multitopicreadjson, None),
+            streamingInput =
+              StreamingReaderModel.kafkaReaderMultitopic("Kafka Reader", TestTopicModel.multitopicreadjson, None),
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("console"),
             mlModels = List(),
