@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
-import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
+import akka.http.scaladsl.server.{AuthenticationFailedRejection, ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
@@ -16,6 +16,8 @@ import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterC
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtilsDefault, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{AroundLaunch, SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
+import it.agilelab.bigdata.wasp.master.security.{ApiKeyAuthenticationVerifierImpl, NoSecurity}
+import it.agilelab.bigdata.wasp.master.security.common.AuthenticationService
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
@@ -173,6 +175,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
               HttpResponse(StatusCodes.BadRequest, entity = HttpEntity(s"Input validation failed: ${message}"))
             }
           }
+        case rejection @ AuthenticationFailedRejection(_, _) =>
+          extractRequest { request =>
+              complete {
+                logger.error(s"request ${request} was rejected with rejection ${rejection}")
+                HttpResponse(StatusCodes.Unauthorized, entity = HttpEntity("Request was not authorized"))
+              }
+          }
         case rejection =>
           extractRequest { request =>
             complete {
@@ -183,9 +192,16 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
       }
       .result()
 
+    val httpSecurity: AuthenticationService = waspConfig.restApiKeys match {
+      case Some(apiKey) => new ApiKeyAuthenticationVerifierImpl(apiKey)
+      case None => new NoSecurity()
+    }
+
     val finalRoute = handleExceptions(myExceptionHandler) {
       handleRejections(rejectionHandler) {
-        route
+        httpSecurity.authenticate {
+          _ => route
+        }
       }
     }
 

@@ -126,7 +126,8 @@ object ConfigManager extends Logging with CanOverrideNameInstances {
       readValidationRulesToIgnore(environmentSubConfig, "validationRulesToIgnore"),
       environmentSubConfig.getString("mode"),
       conf.getString("darwinConnector"),
-      ConfigurationMode.fromString(conf.getString("configuration-mode"))
+      ConfigurationMode.fromString(conf.getString("configuration-mode")),
+      scala.util.Try(conf.getStringList("rest.authentication.apiKeys").asScala).toOption
     )
   }
 

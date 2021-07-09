@@ -21,7 +21,8 @@ case class WaspConfigModel(
     validationRulesToIgnore: Seq[String],
     environmentMode: String,
     darwinConnector: String,
-    configurationMode: ConfigurationMode
+    configurationMode: ConfigurationMode,
+    restApiKeys: Option[Iterable[String]]
 )
 
 sealed trait ConfigurationMode
