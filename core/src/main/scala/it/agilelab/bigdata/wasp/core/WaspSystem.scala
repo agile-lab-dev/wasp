@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.core
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
@@ -9,7 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.core.cluster.ClusterListenerActor
 import it.agilelab.bigdata.wasp.repository.core.db.RepositoriesFactory
-import it.agilelab.bigdata.wasp.core.kafka.KafkaAdminActor
+import it.agilelab.bigdata.wasp.core.kafka.{KafkaAdminActor, NewKafkaAdminActor}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
@@ -111,7 +110,14 @@ object WaspSystem extends WaspConfiguration with Logging {
       
       // spawn admin actors
       logger.info("Spawning admin actors")
-      kafkaAdminActor_ = actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
+      val useNewClient = ConfigManager.conf.getConfig("kafka").getBoolean("use-new-client")
+
+      kafkaAdminActor_ =
+        if (useNewClient) {
+          actorSystem.actorOf(Props(new NewKafkaAdminActor), NewKafkaAdminActor.name)
+        } else {
+          actorSystem.actorOf(Props(new KafkaAdminActor), KafkaAdminActor.name)
+        }
       logger.info("Spawned admin actors")
 
       // spawn clusterListener actor
