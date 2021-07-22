@@ -24,6 +24,8 @@ object Dependencies {
     def log4jExclude: ModuleID =
       module excludeAll ExclusionRule("log4j")
 
+    def logbackExclude: ModuleID = module excludeAll ExclusionRule("ch.qos.logback")
+
     def json4sExclude = module excludeAll ExclusionRule(
       "org.json4s"
     )
@@ -141,7 +143,8 @@ object Dependencies {
   val akkaHttpTestKit    = "com.typesafe.akka" %% "akka-http-testkit" % Versions.akkaHttp % Test
   val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.apacheCommonsLang3Version // remove?
   val avro               = "org.apache.avro" % "avro" % Versions.avro
-  val delta              = "it.agilelab" %% "wasp-delta-lake" % Versions.delta log4jExclude
+  val delta              = ("it.agilelab" %% "wasp-delta-lake" % Versions.delta).log4jExclude.logbackExclude
+
   // avro4s requires a json4s version incompatible with wasp, downstream projects confirmed that this exclusion does
   // not create issues with darwin and avro parsing
   val avro4sCore = "com.sksamuel.avro4s" % "avro4s-core_2.11" % Versions.avro4sVersion excludeAll ExclusionRule(
@@ -261,7 +264,6 @@ object Dependencies {
 
   val wireMock =
     Seq("com.github.tomakehurst" % "wiremock-standalone" % "2.25.0" % Test, "xmlunit" % "xmlunit" % "1.6" % Test)
-      .map(excludeHive)
 
   // ===================================================================================================================
   // Test dependencies
@@ -394,7 +396,7 @@ object Dependencies {
     elasticSearchSpark
   )
 
-  val plugin_http_spark = Seq(mockOkHttp2, scalaTest).map(excludeHive)
+  val plugin_http_spark = Seq(mockOkHttp2, scalaTest)
 
   val plugin_hbase_spark = (
     hbase :+

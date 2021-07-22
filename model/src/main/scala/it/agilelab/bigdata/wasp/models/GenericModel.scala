@@ -1,16 +1,16 @@
 package it.agilelab.bigdata.wasp.models
 
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.genericProduct
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, GenericProduct}
 import org.mongodb.scala.bson.BsonDocument
 
 case class GenericModel(override val name: String,
-												kind: String,
 												value: BsonDocument,
+												product: GenericProduct,
 												options: GenericOptions = GenericOptions.default
 											 )
 	extends DatastoreModel {
-	override def datastoreProduct: DatastoreProduct = genericProduct
+	override def datastoreProduct: DatastoreProduct = product
 
 }
 

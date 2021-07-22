@@ -7,7 +7,7 @@ import org.bson.BsonString
 
 class GenericBLImp(waspDB: WaspMongoDB) extends GenericBL  {
 
-  private def factory(t: GenericModel) = new GenericModel(t.name, t.kind, t.value)
+  private def factory(t: GenericModel) = new GenericModel(t.name, t.value, t.product)
 
   def getByName(name: String) = {
     waspDB.getDocumentByField[GenericModel]("name", new BsonString(name)).map(factory)

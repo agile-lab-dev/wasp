@@ -11,7 +11,7 @@ case class EntitySDK(entityName: String) extends ParallelWriteEntity {
 
   def getBaseUrl() = System.getenv(entityName)
   def getExecutionPlan(source: WriteExecutionPlanRequestBody): ExecutionPlan = call (getExecutionPlanEndpoint(), Some(source), Map.empty, "POST")(implicitly[Manifest[ExecutionPlan]])
-  def getWriteExecutionPlan(source: WriteExecutionPlanRequestBody): WriteExecutionPlanResponseBody = call(getWriteExecutionPlanEndpoint(), Some(source), Map.empty, "POST")(implicitly[Manifest[WriteExecutionPlanResponseBody]])
+  def getWriteExecutionPlan(): WriteExecutionPlanResponseBody = call(getWriteExecutionPlanEndpoint(), Some(WriteExecutionPlanRequestBody(source="Self")), Map.empty, "POST")(implicitly[Manifest[WriteExecutionPlanResponseBody]])
   def getFlightInfo(): FlightInfo = call(getFlightInfoEndpoint, None, Map.empty, "GET")(implicitly[Manifest[FlightInfo]])
 }
 

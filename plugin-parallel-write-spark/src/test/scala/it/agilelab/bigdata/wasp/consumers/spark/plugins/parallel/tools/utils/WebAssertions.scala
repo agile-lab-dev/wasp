@@ -1,4 +1,4 @@
-package it.agilelab.bigdata.wasp.consumers.spark.plugins.continuous.tools
+package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils
 
 import com.squareup.okhttp.mockwebserver.MockResponse
 

@@ -72,7 +72,7 @@ private[wasp] object TestPipegraphs {
             name = "ETL TestGenericWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel.genericWriter("Generic Writer", TestGenericModel.parallelWriteModel),
+            streamingOutput = WriterModel.genericWriter("Generic Writer", TestParallelWriteModel.parallelWriteModel),
             mlModels = List(),
             strategy = None,
             triggerIntervalMs = None,
@@ -96,8 +96,7 @@ private[wasp] object TestPipegraphs {
             name = "ETL TestContinuousUpdateWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel
-              .apply("Continuous Update writer", TestGenericModel.continuousUpdateModel, genericContinuousProduct),
+            streamingOutput = WriterModel.genericWriter("Parallel Writer", TestParallelWriteModel.continuousUpdateModel),
             mlModels = List(),
             strategy = Some(TestStrategies.continuousUpdateStrategy),
             triggerIntervalMs = None,

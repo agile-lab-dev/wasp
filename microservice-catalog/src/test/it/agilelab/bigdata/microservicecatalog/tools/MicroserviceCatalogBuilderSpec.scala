@@ -1,11 +1,10 @@
 package it.agilelab.bigdata.microservicecatalog.tools
 
 import java.util.concurrent.CountDownLatch
-
 import com.squareup.okhttp.mockwebserver.{Dispatcher, MockResponse, RecordedRequest}
 import com.typesafe.config.ConfigException
 import it.agilelab.bigdata.microservicecatalog.MicroserviceCatalogService
-import it.agilelab.bigdata.microservicecatalog.entity.{WriteExecutionPlanRequestBody, WriteExecutionPlanResponseBody}
+import it.agilelab.bigdata.microservicecatalog.entity.{ParallelWriteFormat, WriteExecutionPlanRequestBody, WriteExecutionPlanResponseBody}
 import it.agilelab.bigdata.microservicecatalog.tools.MicroserviceCatalogTestUtils.withServer
 import it.agilelab.bigdata.microservicecatalog.tools.builders.microservices.EntitySDK
 import it.agilelab.bigdata.microservicecatalog.tools.builders.mockbuilders.{NotExistingServiceBuilder, ParameterBuilder, RightMockBuilder, WrongConfigurationPathBuilder, WrongMicroserviceMockBuilder}
@@ -20,6 +19,7 @@ class MicroserviceCatalogBuilderSpec extends FunSuite{
     withServer(dispatcher) { serverData =>
       val microservice: EntitySDK = RightMockBuilder.getMicroserviceCatalogService().getMicroservice(ms)
       val executionPlan: WriteExecutionPlanResponseBody = microservice.getWriteExecutionPlan(WriteExecutionPlanRequestBody(source = "External"))
+      assert(ParallelWriteFormat.withName(executionPlan.format) == ParallelWriteFormat.delta)
       assert(executionPlan.writeUri == "s3://bucket/")
       assert(microservice.entityName == "mock")
     }
@@ -66,11 +66,10 @@ class MicroserviceCatalogBuilderSpec extends FunSuite{
         request.getPath match {
           case "/writeExecutionPlan" =>
             latch.countDown()
-
-
             val response: MockResponse = new MockResponse().setBody(
               s"""{
-                 |    "writeUri": "s3://bucket/"
+                 |    "format": "Delta",
+                 |    "writeUri": "s3://bucket/",
                  |    "writeType": "Cold",
                  |    "temporaryCredentials": {
                  |        "r": {

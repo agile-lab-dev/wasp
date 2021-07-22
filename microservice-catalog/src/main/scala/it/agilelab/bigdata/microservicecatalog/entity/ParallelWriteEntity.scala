@@ -11,10 +11,16 @@ trait ParallelWriteEntity extends MicroserviceClient {
     * @param source
     * @return
     */
-  def getWriteExecutionPlan(source: WriteExecutionPlanRequestBody): WriteExecutionPlanResponseBody
+  def getWriteExecutionPlan(): WriteExecutionPlanResponseBody
 }
 
 // Parallel write
-case class WriteExecutionPlanResponseBody(writeUri: String, writeType: String, temporaryCredentials: Map[String, TemporaryCredential])
+object ParallelWriteFormat extends Enumeration {
+  type ParallelWriteFormat = Value
+  val parquet = Value("Parquet")
+  val delta = Value("Delta")
+}
+case class WriteExecutionPlanResponseBody(format: String, writeUri: String, writeType: String, temporaryCredentials: TemporaryCredentials)
 case class WriteExecutionPlanRequestBody(source: String, applicationFilter: Option[String] = None, dataGovernanceFilter: Option[String] = None)
+case class TemporaryCredentials(r: TemporaryCredential, w: TemporaryCredential)
 case class TemporaryCredential(accessKeyID: String, secretKey: String, sessionToken: String)

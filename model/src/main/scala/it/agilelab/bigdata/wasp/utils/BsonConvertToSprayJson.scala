@@ -3,10 +3,9 @@ package it.agilelab.bigdata.wasp.utils
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.temporal.{TemporalAccessor, TemporalQuery}
-
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.config._
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
+import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, GenericProduct}
 import it.agilelab.bigdata.wasp.models.configuration._
 import it.agilelab.bigdata.wasp.models.editor._
 import it.agilelab.bigdata.wasp.models._
@@ -176,6 +175,7 @@ trait JsonSupport
       }
   }
   implicit lazy val httpModelFormat: RootJsonFormat[HttpModel] = jsonFormat9(HttpModel.apply)
+  implicit lazy val genericProductFormat: RootJsonFormat[GenericProduct] = jsonFormat2(GenericProduct.apply)
   implicit lazy val genericModelFormat: RootJsonFormat[GenericModel] = jsonFormat4(GenericModel.apply)
   implicit lazy val genericOptionModelFormat: RootJsonFormat[GenericOptions] = jsonFormat1(GenericOptions.apply)
   implicit lazy val datastoreProductFormat: RootJsonFormat[DatastoreProduct] = DatastoreProductJsonFormat

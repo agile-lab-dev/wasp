@@ -4,11 +4,13 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
+import it.agilelab.bigdata.wasp.datastores.GenericProduct
 import it.agilelab.bigdata.wasp.models.{GenericModel, GenericOptions}
 
 trait GenericModelOpenApiDefinition extends ProductOpenApi with BsonDocumentOpenApiDefinition with LangOpenApi with CollectionsOpenApi {
 
   implicit lazy val genericModelOpenApiDefinition: ToOpenApiSchema[GenericModel]     = product4(GenericModel.apply)
+  implicit lazy val genericProductOpenApiDefinition: ToOpenApiSchema[GenericProduct]     = product2(GenericProduct.apply)
   implicit lazy val genericOptionsOpenApiDefinition: ToOpenApiSchema[GenericOptions] = product1(GenericOptions.apply)
 
 }

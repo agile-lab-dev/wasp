@@ -1,11 +1,13 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.hive.HiveContext
 import org.scalatest.Suite
 
 trait SparkSuite extends Suite {
 
   lazy val spark: SparkSession = {
+    System.setSecurityManager(null)
     SparkSuite.spark.newSession()
   }
 

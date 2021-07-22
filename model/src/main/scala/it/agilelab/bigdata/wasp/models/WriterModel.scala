@@ -60,7 +60,7 @@ object WriterModel {
 		apply(name, model, CdcProduct, options)
 
 	def genericWriter(name: String, genericModel: GenericModel, options: Map[String, String] = Map.empty): WriterModel =
-		apply(name, genericModel, genericProduct, options)
+		apply(name, genericModel, genericModel.product, options)
 
   // this exists because we want to keep the main declaration on one line because of a quirk of the compiler when
   // using both an annotation and an access modifier: it doesn't allow us to break it into more than one line,

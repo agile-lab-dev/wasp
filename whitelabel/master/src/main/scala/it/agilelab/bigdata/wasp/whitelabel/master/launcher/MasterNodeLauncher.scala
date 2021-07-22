@@ -100,8 +100,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel()) //IoT
     ConfigBL.topicBL.upsert(TestTopicModel.dbzMutations)
     ConfigBL.cdcBL.upsert(TestCdcModel.debeziumMutation)
-    ConfigBL.genericBL.upsert(TestGenericModel.parallelWriteModel)
-    ConfigBL.genericBL.upsert(TestGenericModel.continuousUpdateModel)
+    ConfigBL.genericBL.upsert(TestParallelWriteModel.parallelWriteModel)
+    ConfigBL.genericBL.upsert(TestParallelWriteModel.continuousUpdateModel)
 
 
     /* Producers */
