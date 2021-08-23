@@ -212,6 +212,11 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.httpBl.upsert(TestHttpModel.httpPost)
     ConfigBL.httpBl.upsert(TestHttpModel.httpsPost)
     ConfigBL.httpBl.upsert(TestHttpModel.httpPostHeaders)
+
+    /* Test streaming raw model */
+    ConfigBL.rawBL.upsert(TestPipegraphs.RawReader.Structured.rateModel)
+    ConfigBL.rawBL.upsert(TestPipegraphs.RawReader.Structured.fileModel)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.RawReader.Structured.rateSourceToRawModel)
   }
 }
 

@@ -1,22 +1,24 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsUtils
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{
+  SparkBatchWriter,
+  SparkLegacyStreamingWriter,
+  SparkStructuredStreamingWriter
+}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.models.RawModel
-import it.agilelab.bigdata.wasp.utils.ConfigManagerHelper
-import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.DataStreamWriter
+import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
-class RawSparkLegacyStreamingWriter(hdfsModel: RawModel,
-                                    ssc: StreamingContext)
-  extends SparkLegacyStreamingWriter with Logging {
+class RawSparkLegacyStreamingWriter(hdfsModel: RawModel, ssc: StreamingContext)
+    extends SparkLegacyStreamingWriter
+    with Logging {
 
   override def write(stream: DStream[String]): Unit = {
     // get sql context
@@ -24,118 +26,86 @@ class RawSparkLegacyStreamingWriter(hdfsModel: RawModel,
     // To avoid task not serializeble of spark
     val hdfsModelLocal = hdfsModel
     logger.info(s"Initialize DStream HDFS writer: $hdfsModel")
-    stream.foreachRDD {
-      rdd =>
-        if (!rdd.isEmpty()) {
+    stream.foreachRDD { rdd =>
+      if (!rdd.isEmpty()) {
 
+        // create df from rdd using provided schema & spark's json datasource
+        val schema: StructType = DataType.fromJson(hdfsModelLocal.schema).asInstanceOf[StructType]
+        val df                 = sqlContext.read.schema(schema).json(rdd)
 
-          // create df from rdd using provided schema & spark's json datasource
-          val schema: StructType = DataType.fromJson(hdfsModelLocal.schema).asInstanceOf[StructType]
-          val df = sqlContext.read.schema(schema).json(rdd)
+        // calculate path
+        val path = HdfsUtils.getRawModelPathToWrite(hdfsModelLocal)
 
-          // calculate path
-          val path = if (hdfsModelLocal.timed) {
-            // the path must be timed; add timed subdirectory
-            val hdfsPath = new Path(hdfsModelLocal.uri)
-            val timedPath = new Path(hdfsPath.toString + "/" + ConfigManagerHelper.buildTimedName("").substring(1) + "/")
+        // get options
+        val options      = hdfsModelLocal.options
+        val mode         = if (options.saveMode == "default") "append" else options.saveMode
+        val format       = options.format
+        val extraOptions = options.extraOptions.getOrElse(Map())
+        val partitionBy  = options.partitionBy.getOrElse(Nil)
 
-            timedPath.toString
-          } else {
-            // the path is not timed; return it as-is
-            hdfsModelLocal.uri
-          }
+        // setup writer
+        val writer = df.write
+          .mode(mode)
+          .format(format)
+          .options(extraOptions)
+          .partitionBy(partitionBy: _*)
 
-          // get options
-          val options = hdfsModelLocal.options
-          val mode = if (options.saveMode == "default") "append" else options.saveMode
-          val format = options.format
-          val extraOptions = options.extraOptions.getOrElse(Map())
-          val partitionBy = options.partitionBy.getOrElse(Nil)
-  
-          // setup writer
-          val writer = df.write
-            .mode(mode)
-            .format(format)
-            .options(extraOptions)
-            .partitionBy(partitionBy:_*)
-
-          // write
-          writer.save(path)
-        }
+        // write
+        writer.save(path)
+      }
     }
   }
 }
 
-class RawSparkStructuredStreamingWriter(hdfsModel: RawModel,
-                                        ss: SparkSession)
-  extends SparkStructuredStreamingWriter with Logging {
+class RawSparkStructuredStreamingWriter(hdfsModel: RawModel, ss: SparkSession)
+    extends SparkStructuredStreamingWriter
+    with Logging {
 
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
-  
+
     // get path timed or standard
-    val path = if (hdfsModel.timed) {
-      // the path must be timed; add timed subdirectory
-      val hdfsPath = new Path(hdfsModel.uri)
-      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManagerHelper.buildTimedName("").substring(1) + "/")
-    
-      timedPath.toString
-    } else {
-      // the path is not timed; return it as-is
-      hdfsModel.uri
-    }
-    
+    val path = HdfsUtils.getRawModelPathToWrite(hdfsModel)
+
     // get other options
-    val options = hdfsModel.options
-    val mode = if (options.saveMode == "default") "append" else hdfsModel.options.saveMode
-    val format = options.format
+    val options      = hdfsModel.options
+    val mode         = if (options.saveMode == "default") "append" else hdfsModel.options.saveMode
+    val format       = options.format
     val extraOptions = options.extraOptions.getOrElse(Map())
-    val partitionBy = options.partitionBy.getOrElse(Nil)
+    val partitionBy  = options.partitionBy.getOrElse(Nil)
 
     // create and configure DataStreamWriter
     stream.writeStream
       .format(format)
       .outputMode(mode)
       .options(extraOptions)
-      .partitionBy(partitionBy:_*)
+      .partitionBy(partitionBy: _*)
       .option("path", path)
   }
 }
 
-class RawSparkBatchWriter(hdfsModel: RawModel,
-                          sc: SparkContext)
-  extends SparkBatchWriter
-    with Logging {
+class RawSparkBatchWriter(hdfsModel: RawModel, sc: SparkContext) extends SparkBatchWriter with Logging {
 
   // TODO: validate against hdfsmodel.schema
   override def write(df: DataFrame): Unit = {
     logger.info(s"Initializing HDFS writer: $hdfsModel")
 
     // calculate path
-    val path = if (hdfsModel.timed) {
-      // the path must be timed; add timed subdirectory
-      val hdfsPath = new Path(hdfsModel.uri)
-      val timedPath = new Path(hdfsPath.toString + "/" + ConfigManagerHelper.buildTimedName("").substring(1) + "/")
-
-      timedPath.toString
-    } else {
-      // the path is not timed; return it as-is
-      hdfsModel.uri
-    }
+    val path = HdfsUtils.getRawModelPathToWrite(hdfsModel)
 
     // get options
-    val options = hdfsModel.options
-    val mode = if (options.saveMode == "default") "error" else options.saveMode
-    val format = options.format
+    val options      = hdfsModel.options
+    val mode         = if (options.saveMode == "default") "error" else options.saveMode
+    val format       = options.format
     val extraOptions = options.extraOptions.getOrElse(Map())
-    val partitionBy = options.partitionBy.getOrElse(Nil)
+    val partitionBy  = options.partitionBy.getOrElse(Nil)
 
     // setup writer
     val writer = df.write
       .mode(mode)
       .format(format)
       .options(extraOptions)
-      .partitionBy(partitionBy:_*)
-  
+      .partitionBy(partitionBy: _*)
+
     logger.info(s"Write in this path: '$path'")
 
     // write
@@ -144,6 +114,7 @@ class RawSparkBatchWriter(hdfsModel: RawModel,
 }
 
 object RawWriters {
+
   /** Prepares a DataFrame with duplicated columns; useful for when wiriting with partitionBy and then reading a single
     * subdirectory without losing data from the partitionBY columns.
     *
@@ -158,13 +129,13 @@ object RawWriters {
     // generate new column names and add duplicate columns to df
     val (dfWithAllNewColumns, allNewColumns) = columns.foldLeft((df, List.empty[String])) {
       case ((dfWithNewColumns, newColumns), column) => {
-        val newColumn = "_" + column
+        val newColumn       = "_" + column
         val dfWithNewColumn = dfWithNewColumns.withColumn(newColumn, col(column))
-        
+
         (dfWithNewColumn, newColumn :: newColumns)
       }
     }
-    
+
     // return new df & new column names (we need to reverse this list because we were prepending them)
     (dfWithAllNewColumns, allNewColumns.reverse)
   }

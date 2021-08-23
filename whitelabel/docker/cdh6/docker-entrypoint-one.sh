@@ -44,7 +44,7 @@ export HADOOP_CONF_DIR="/etc/hadoop/conf:/etc/hbase/conf",
 export HOSTNAME=$HOSTNAME
 
 export WASP_HOME=/code/single/
-/code/single/bin/wasp-whitelabel-singlenode \
+${WASP_HOME}/bin/wasp-whitelabel-singlenode \
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 \
 -J-Xmx1g -J-Xms512m \
 -Dlog4j.configurationFile=file:///log4j2.properties \

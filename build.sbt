@@ -325,7 +325,7 @@ lazy val whiteLabelConsumersRt = Project("wasp-whitelabel-consumers-rt", file("w
   .enablePlugins(JavaAppPackaging)
 
 lazy val whiteLabelSingleNode = project
-  .withId("wasp-whitelabel-singlonode")
+  .withId("wasp-whitelabel-singlenode")
   .in(file("whitelabel/single-node"))
   .settings(Settings.commonSettings: _*)
   .dependsOn(whiteLabelMaster)

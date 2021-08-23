@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.datastores.GenericProduct
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.models.configuration.{RestEnrichmentConfigModel, RestEnrichmentSource}
+import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
 
 import scala.collection.immutable.Map
 
@@ -1502,5 +1503,67 @@ private[wasp] object TestPipegraphs {
       )
     }
 
+  }
+
+  object RawReader {
+
+    object Structured {
+      val rateModel: RawModel = RawModel(
+        name = "rate",
+        uri = "",
+        timed = false,
+        schema = "",
+        options = RawOptions(
+          saveMode = "append",
+          format = "rate",
+          extraOptions = Some(Map[String, String]("rowsPerSecond" -> "10"))
+        )
+      )
+
+      val fileModel: RawModel = RawModel(
+        name = "fileWithRateValues",
+        uri = "hdfs://" + System.getenv("HOSTNAME") + ":9000/user/root/raw_model_test/",
+        timed = false,
+        schema = StructType(
+          List(
+            StructField("timestamp", DataTypes.TimestampType),
+            StructField("value", DataTypes.LongType)
+          )
+        ).json,
+        options = RawOptions("append", "parquet", None, None)
+      )
+      val rateSourceToRawModel: PipegraphModel = PipegraphModel(
+        name = "readKafkaWriteFileReadFileWriteConsole",
+        description = "",
+        owner = "",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "WriteRateToFile",
+            streamingInput = StreamingReaderModel.rawReader("RateReader", rateModel),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.rawWriter("FileRateWriter", fileModel),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          ),
+          StructuredStreamingETLModel(
+            name = "ReadRateFromFile",
+            streamingInput = StreamingReaderModel.rawReader("FileReader", fileModel),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("console"),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+    }
   }
 }

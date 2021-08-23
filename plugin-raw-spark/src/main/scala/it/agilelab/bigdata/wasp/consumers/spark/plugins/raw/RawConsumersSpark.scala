@@ -1,27 +1,52 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
-import java.net.URI
-
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter}
-import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, RawBL}
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.RawProduct
-import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, RawModel, ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.RawProduct
+import it.agilelab.bigdata.wasp.models._
+import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, RawBL}
+import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.execution.datasources.csv.CSVFileFormat
+import org.apache.spark.sql.execution.datasources.json.JsonFileFormat
+import org.apache.spark.sql.execution.datasources.parquet.ParquetFileFormat
+import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.streaming.StreamingContext
 
+import java.net.URI
 import scala.util.Try
+
+object RawConsumersSpark {
+  private def safeGetShortName(className: String): Option[String] = Try {
+    getClass.getClassLoader.loadClass(className)
+      .asInstanceOf[Class[DataSourceRegister]]
+  }.toOption.flatMap(safeGetShortNameC)
+
+  private def safeGetShortNameC[T <: DataSourceRegister](cls: Class[T]): Option[String] = Try {
+    cls.newInstance().shortName
+  }.toOption
+
+  // this list is only used to issue a warning log, so if we cannot get some short names,
+  // we swallow the exception
+  private val WARNING_FORMATS: List[String] = List(
+    safeGetShortName("org.apache.spark.sql.avro.AvroFileFormat"),
+    safeGetShortNameC(classOf[CSVFileFormat]),
+    safeGetShortNameC(classOf[JsonFileFormat]),
+    safeGetShortName("org.apache.spark.sql.execution.datasources.orc.OrcFileFormat"),
+    safeGetShortNameC(classOf[ParquetFileFormat])
+  ).flatten
+}
 
 /**
   * Created by Agile Lab s.r.l. on 05/09/2017.
   */
 class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
+
   var rawBL: RawBL = _
 
   override def datastoreProduct: DatastoreProduct = RawProduct
@@ -67,10 +92,11 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
       structuredStreamingETLModel: StructuredStreamingETLModel,
       streamingReaderModel: StreamingReaderModel
   ): SparkStructuredStreamingReader = {
-    val msg =
-      s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
-    logger.error(msg)
-    throw new UnsupportedOperationException(msg)
+    val model = getModelAndCheckSchema(streamingReaderModel.datastoreModelName)
+    if (RawConsumersSpark.WARNING_FORMATS.contains(model.options.format)) {
+      logger.warn(s"Format ${model.options.format} is discouraged as a Streaming input")
+    }
+    new RawSparkStructuredStreamingReader(model)
   }
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
@@ -86,7 +112,7 @@ class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   private def getModelAndCheckSchema(name: String): RawModel = {
     // get the raw model using the provided id & bl
     for {
-      rawModel <- Try(rawBL.getByName(name) getOrElse (throw new RuntimeException("Raw model not found: $name")))
+      rawModel <- Try(rawBL.getByName(name) getOrElse (throw new RuntimeException(s"Raw model not found: $name")))
       uri      <- Try(new URI(rawModel.uri))
     } yield {
       Option(uri.getScheme) match {

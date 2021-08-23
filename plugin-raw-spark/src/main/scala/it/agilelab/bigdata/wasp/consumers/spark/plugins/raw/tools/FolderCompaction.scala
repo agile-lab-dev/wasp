@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools
 
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.RawSparkBatchWriter
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsUtils
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.RawModel
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -149,24 +150,7 @@ class FolderCompaction extends Logging {
       case Success(schema) => reader.schema(schema)
     }
 
-    val path = if (inputModel.timed) {
-      // the path is timed; find and return the most recent subdirectory
-      val hdfsPath = new Path(inputModel.uri)
-      val hdfs = hdfsPath.getFileSystem(spark.sparkContext.hadoopConfiguration)
-
-      val subdirectories = hdfs.listStatus(hdfsPath)
-        .toList
-        .filter(_.isDirectory)
-      val mostRecentSubdirectory = subdirectories.sortBy(_.getPath.getName)
-        .reverse
-        .head
-        .getPath
-
-      mostRecentSubdirectory.toString
-    } else {
-      // the path is not timed; return it as-is
-      inputModel.uri
-    }
+    val path = HdfsUtils.getRawModelPathToToLoad(inputModel, spark.sparkContext)
 
     val hdfsPath = new Path(path)
     val hdfs = hdfsPath.getFileSystem(spark.sparkContext.hadoopConfiguration)
