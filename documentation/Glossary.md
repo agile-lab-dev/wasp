@@ -1,0 +1,11 @@
+#### Glossary
+- **Pipegraph**: a directed acyclic graph of data transformations. Each step is lazy and loosely coupled from previous and the next one. It is basically an ordered list of ETL blocks, with Inputs and Outputs.
+- **ETL**: represents a Spark Streaming job. It can consume data from one or more Inputs, elaborate the incoming data and push it to an Output. You can't have more than an Output for an ETL block, in order to avoid misalignment between outputs. If you want to write the same data on different datastores, you must consume the topic data with two different ETL blocks. Both Streaming and Batch ETLs are supported.
+- **Input**: a source of data for an ETL block.
+- **Output**: a destination for data produced by an ETL block. Can be any of various datastores or messaging systems.
+- **Topic**: the representation of a Kafka topic with an associated Avro schema. Can be either an Input or an Output.
+- **Index**: the representation of an index in an indexed datastore (either ElasticSearch or Solr) and its associated schema. Can be either an Input or an Output.
+- **KVStore**: an abstraction for a Key-Value store, like Cassandra and HBase, for when you need high performance access by key. Can only be used as an Output.
+- **OLAP**: an abstraction for an Online Analytical Processing system. It will help to provide OLAP capabilities to the application. Druid and Kylin will be the available options. This is not implemented yet.
+- **Raw**: any of a number of datastores based on files; for example, HDFS or S3. Can be either an Input or an Output.
+- **Producer**: Producers are independent from pipegraphs. They ingest data from different sources and write data to a Kafka topic, after formatting it according to a the schema.

@@ -12,7 +12,6 @@ stages:
   - integration
   - deploy
 
-
 cache:
   key: "mycachekey"
   paths:
@@ -21,6 +20,9 @@ cache:
     - "sbt-cache/sbtboot"
     - "sbt-cache/target"
     - "sbt-cache/coursier"
+    - node_modules/
+    - public/ 
+      # Node modules and dependencies
 
 test-kernel:
   stage: test
@@ -141,3 +143,35 @@ release:
     - sbt clean publishSigned sonatypeRelease
   only:
     - tags
+
+pages:
+  image: registry.gitlab.com/publicagilefactory/handbook/node:10
+  stage: deploy
+  script:
+    - npm install gitbook-cli -g # install gitbook
+    - gitbook fetch 3.2.3 # fetch final stable version
+    - gitbook install # add any requested plugins in book.json
+    - | 
+      if [[ $CI_COMMIT_REF_NAME == 'master'  ]]
+      then 
+        rm -rf public/*
+        gitbook build documentation public # build to the public path
+      else 
+        mkdir -p public/$CI_COMMIT_REF_NAME 
+        rm -rf public/$CI_COMMIT_REF_NAME/*
+        gitbook build documentation public/$CI_COMMIT_REF_NAME 
+      fi
+    - |
+      if [[ -n "$CI_MERGE_REQUEST_IID" ]]
+      then
+        curl -vvvv -L -X POST --header "Private-Token: $AGILELAB_BOT" --data-urlencode "body=Your merge request has been rendered and can be reviewed at https://agilefactory.gitlab.io/Agile.Wasp2/$CI_COMMIT_REF_NAME/" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes
+      else
+        true
+      fi
+  artifacts:
+    paths:
+      - public
+  only:
+    - merge_requests
+    - /^develop$/
+
