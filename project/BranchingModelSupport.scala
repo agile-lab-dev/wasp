@@ -8,13 +8,13 @@ object BranchingModelSupport {
   type FormatResult = Either[String, String]
 
 
-  def versionForContainingRepositoryOrGitlabCi(baseVersion: BaseVersion): String = {
+  def versionForContainingRepositoryOrGitlabCi(baseVersion: BaseVersion, flavor: Flavor): String = {
     val parsedFromCi: ParseResult = parseVersion(fromCi)
 
     parsedFromCi
       .left.map(error => parseVersion(fromGit).left.map(_ + "\n" + error)).joinLeft
       .right
-      .flatMap(format(baseVersion)) match {
+      .flatMap(format(baseVersion, flavor)) match {
       case Left(message) => throw new RuntimeException(message)
       case Right(version) => version
     }
@@ -27,8 +27,8 @@ object BranchingModelSupport {
     case None => Failure(new Exception("No CI_COMMIT_REF_NAME defined"))
   }
 
-  def versionForContainingRepository(baseVersion: BaseVersion): String = {
-    parseVersion(fromGit).right.flatMap(format(baseVersion)) match {
+  def versionForContainingRepository(baseVersion: BaseVersion, flavor: Flavor): String = {
+    parseVersion(fromGit).right.flatMap(format(baseVersion, flavor)) match {
       case Left(message) => throw new RuntimeException(message)
       case Right(version) => version
     }
@@ -40,11 +40,14 @@ object BranchingModelSupport {
 
     val process = Process("git rev-parse --abbrev-ref HEAD")
 
-    process.lineStream.head
+    process.lineStream.head match {
+      case "HEAD" => Process("git rev-parse HEAD").lineStream.head
+      case s => s
+    }
   }
 
-  def versionForConstant(constant: String)(baseVersion: BaseVersion) = {
-    parseVersion(fromConstant(constant)).right.flatMap(format(baseVersion)) match {
+  def versionForConstant(constant: String, flavor: Flavor)(baseVersion: BaseVersion) = {
+    parseVersion(fromConstant(constant)).right.flatMap(format(baseVersion, flavor)) match {
       case Left(message) => throw new RuntimeException(message)
       case Right(version) => version
     }
@@ -77,19 +80,20 @@ object BranchingModelSupport {
         }
         case _ => unparseableReference(reference)
       }
-      case reference => unparseableReference(reference)
+      case reference => Right(Detached(reference))
     }.recover[ParseResult] {
       case exception => unretrievableReference(exception)
     }.get
 
   }
 
-  def format(baseVersion: BaseVersion)(reference: Reference): FormatResult = {
+  def format(baseVersion: BaseVersion, flavor: Flavor)(reference: Reference): FormatResult = {
 
     import References._
 
     import scala.util.{Left, Right}
 
+    val postfix = flavor.postfix.map("-" + _).getOrElse("")
 
     def valid(component: Int*) = component.toSeq == baseVersion.productIterator.take(component.length).toSeq
 
@@ -105,19 +109,21 @@ object BranchingModelSupport {
 
     reference match {
       case Develop =>
-        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}-SNAPSHOT")
+        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}${postfix}-SNAPSHOT")
       case Hotfix(name) =>
-        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}-$name-SNAPSHOT")
+        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}${postfix}-$name-SNAPSHOT")
       case Feature(name) =>
-        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}-$name-SNAPSHOT")
+        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}-${name}${postfix}-SNAPSHOT")
       case Release(major, minor) if invalid(major, minor) =>
         Left(formatMessage("Release branch", major, minor))
       case Release(major, minor) if valid(major, minor) =>
-        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}-SNAPSHOT")
+        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}-${postfix}SNAPSHOT")
       case Tag(major, minor, patch) if invalid(major, minor, patch) =>
         Left(formatMessage("Tag", major, minor, patch))
       case Tag(major, minor, patch) if valid(major, minor, patch) =>
-        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}")
+        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}${postfix}")
+      case Detached(commitHash) =>
+        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}.${commitHash}${postfix}-SNAPSHOT")
     }
 
   }
@@ -172,6 +178,11 @@ object BranchingModelSupport {
       * Case class modeling Develop branch
       */
     case object Develop extends Reference
+
+    /**
+      * Case class modeling a Detached commit
+      */
+    case class Detached(commitHash: String) extends Reference
 
   }
 

@@ -1,7 +1,7 @@
 /**
  * Versions definitions. Keep in alphabetical order.
  */
-object Versions {
+class Versions private(flavor: Flavor) {
   val akka = "2.4.19" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
   val akkaHttp = "10.0.9" // keep in sync with akka
   val apacheCommonsLang3Version = "3.4"
@@ -53,4 +53,8 @@ object Versions {
   val delta = "0.6.1" + "-" + spark
   val kafka_ = "2.2.1"
   val kafka: String = s"${kafka_}-${cdh6}"
+}
+
+object Versions {
+  def build(flavor: Flavor) = new Versions(flavor)
 }

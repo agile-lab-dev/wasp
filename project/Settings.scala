@@ -10,7 +10,7 @@ import com.typesafe.sbt.pgp.PgpSettings.pgpPassphrase
  *
  * See project/Versions.scala for the versions definitions.
  */
-object Resolvers {
+class Resolvers private(flavor: Flavor) {
   val mavenLocalRepo            = Resolver.mavenLocal
   val sonatypeReleaseRepo       = Resolver.sonatypeRepo("releases")
   val sonatypeSnapshotsRepo       = Resolver.sonatypeRepo("snapshots")
@@ -38,7 +38,11 @@ object Resolvers {
   )
 }
 
-object Settings {
+object Resolvers {
+  def build(flavor: Flavor): Resolvers = new Resolvers(flavor)
+}
+
+class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) {
 
   /** settings related to project information */
   lazy val projectSettings = Seq(
@@ -52,12 +56,12 @@ object Settings {
 
   /** base build settings */
   lazy val buildSettings = Seq(
-    resolvers ++= Resolvers.resolvers,
+    resolvers ++= resolver.resolvers,
     exportJars := true,
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",
-      s"-target:jvm-${Versions.jdk}",
+      s"-target:jvm-${versions.jdk}",
       "-feature",
       "-language:_",
       "-deprecation",
@@ -69,20 +73,20 @@ object Settings {
       "-encoding",
       "UTF-8",
       "-source",
-      Versions.jdk,
+      versions.jdk,
       "-target",
-      Versions.jdk,
+      versions.jdk,
       "-Xlint:deprecation",
       "-Xlint:unchecked"
 
     ),
     doc / javacOptions --= Seq(
       "-target",
-      Versions.jdk,
+      versions.jdk,
       "-Xlint:deprecation",
       "-Xlint:unchecked"
     ),
-    scalaVersion := Versions.scala,
+    scalaVersion := versions.scala,
     excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api")
   )
 
@@ -135,7 +139,7 @@ object Settings {
       name,
       version,
       scalaVersion,
-      ("jdkVersion", Versions.jdk),
+      ("jdkVersion", versions.jdk),
       sbtVersion,
       gitCommitAction,
       gitWorkDirStatusAction
@@ -148,4 +152,9 @@ object Settings {
     parallelExecution in Test := false,
     parallelExecution in IntegrationTest := false
   )
+}
+
+object Settings {
+  def build(flavor: Flavor, versions: Versions, resolver: Resolvers): Settings = 
+    new Settings(flavor, resolver, versions)
 }
