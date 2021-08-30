@@ -18,7 +18,6 @@ import it.agilelab.bigdata.wasp.producers.metrics.kafka.{KafkaCheckOffsetsGuardi
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContextExecutor}
 
-
 object BacklogSizeAnalyzerProducerGuardian {
   val REQUESTS_TIMEOUT: FiniteDuration = FiniteDuration(5, TimeUnit.SECONDS)
 }
@@ -26,39 +25,39 @@ object BacklogSizeAnalyzerProducerGuardian {
 /**
   * @author Eugenio Liso, Antonio Murgia
   */
-abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: ProducerBL; val topicBL: TopicBL},
-                                                      producerName: String,
-                                                      kafkaOffsetCheckerGuardianFactory: ActorRefFactory => ActorRef,
-                                                      requestsTimeout: FiniteDuration)
-  extends ProducerGuardian(env, producerName) {
+abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: ProducerBL; val topicBL: TopicBL }, producerName: String, kafkaOffsetCheckerGuardianFactory: ActorRefFactory => ActorRef, requestsTimeout: FiniteDuration)
+    extends ProducerGuardian(env, producerName) {
 
-  def this(env: {val producerBL: ProducerBL; val topicBL: TopicBL},
-           producerName: String) = {
+  def this(env: { val producerBL: ProducerBL; val topicBL: TopicBL }, producerName: String) = {
     this(
       env,
       producerName,
-      factory => Await.result(
-        factory.actorSelection(WaspSystem.actorSystem / KafkaCheckOffsetsGuardian.name)
-          .resolveOne(BacklogSizeAnalyzerProducerGuardian.REQUESTS_TIMEOUT),
-        BacklogSizeAnalyzerProducerGuardian.REQUESTS_TIMEOUT * 2
-      ),
+      factory =>
+        Await.result(
+          factory
+            .actorSelection(WaspSystem.actorSystem / KafkaCheckOffsetsGuardian.name)
+            .resolveOne(BacklogSizeAnalyzerProducerGuardian.REQUESTS_TIMEOUT),
+          BacklogSizeAnalyzerProducerGuardian.REQUESTS_TIMEOUT * 2
+        ),
       BacklogSizeAnalyzerProducerGuardian.REQUESTS_TIMEOUT
     )
   }
 
   override val name: String = "BacklogSizeAnalyzerProducerGuardian"
 
-  private val mediator = DistributedPubSub(context.system).mediator
+  private val mediator               = DistributedPubSub(context.system).mediator
   private val REQUESTS_TIMEOUT: Long = 5000
 
   private var pipegraphActorsMapping: Map[String, ActorRef] = Map.empty[String, ActorRef]
-  private var kafkaOffsetCheckerActor: ActorRef = _
+  private var kafkaOffsetCheckerActor: ActorRef             = _
 
-  protected def createActor(kafka_router: ActorRef,
-                            kafkaOffsetChecker: ActorRef,
-                            topic: Option[TopicModel],
-                            topicToCheck: String,
-                            etlName: String): BacklogSizeAnalyzerProducerActor[A]
+  protected def createActor(
+      kafka_router: ActorRef,
+      kafkaOffsetChecker: ActorRef,
+      topic: Option[TopicModel],
+      topicToCheck: String,
+      etlName: String
+  ): BacklogSizeAnalyzerProducerActor[A]
 
   override def preStart(): Unit = {
     super.preStart()
@@ -109,9 +108,11 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: Prod
     * @return Right list of pipegraphs to monitor, Left error message
     *
     */
-  protected def backlogAnalyzerConfigs(allPipegraphs: Map[String, PipegraphModel]): Either[String, List[BacklogAnalyzerConfig]] = {
+  protected def backlogAnalyzerConfigs(
+      allPipegraphs: Map[String, PipegraphModel]
+  ): Either[String, List[BacklogAnalyzerConfig]] = {
     for {
-      configs <- getConfigList(ConfigFactory.load(), "wasp.backlogSizeAnalyzer.pipegraphs")
+      configs                <- getConfigList(ConfigFactory.load(), "wasp.backlogSizeAnalyzer.pipegraphs")
       backlogAnalyzerConfigs <- sequence(configs.map(BacklogAnalyzerConfig.fromConfig(_, allPipegraphs)))
     } yield backlogAnalyzerConfigs
   }
@@ -126,7 +127,7 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: Prod
       case Right(confs) =>
         confs.foreach { conf =>
           conf.etls.foreach { etl =>
-            val topicName = etl.streamingInput.datastoreModelName
+            val topicName  = etl.streamingInput.datastoreModelName
             val mappingKey = BaseConsumersMasterGuadian.generateUniqueComponentName(conf.pipegraph, etl)
             spawnChildActor(mappingKey, topicName, etl.name)
             logger.info(s"Created BacklogSizeAnalyzer Actor for $topicName and ETL: $mappingKey")
@@ -139,17 +140,10 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: Prod
     }
   }
 
-  private def spawnChildActor(mappingKey: String,
-                              topicToCheck: String,
-                              etlName: String): Unit = {
+  private def spawnChildActor(mappingKey: String, topicToCheck: String, etlName: String): Unit = {
     val aRef: ActorRef = context.actorOf(
       Props(
-        createActor(
-          kafka_router,
-          kafkaOffsetCheckerActor,
-          associatedTopic,
-          topicToCheck,
-          etlName)
+        createActor(kafka_router, kafkaOffsetCheckerActor, associatedTopic, topicToCheck, etlName)
       )
     )
     pipegraphActorsMapping += (mappingKey -> aRef)
@@ -160,13 +154,17 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: Prod
 
   private def waitingForKafkaOffsetActorR(cancellable: Cancellable): Receive = {
     case MessageTimeout =>
-      logger.warn("The actor KafkaOffsetCheckerProducerGuardian is not ready to handle the offsets requests. " +
-        "Make sure it is started.")
+      logger.warn(
+        "The actor KafkaOffsetCheckerProducerGuardian is not ready to handle the offsets requests. " +
+          "Make sure it is started."
+      )
       sendMessageKafkaOffsetActor()
 
     case KafkaOffsetActorAlive =>
-      logger.info("Successfully connected to the KafkaOffsetCheckerProducerGuardian actor. " +
-        "From now on, the actor will be used to fetch the Kafka offsets.")
+      logger.info(
+        "Successfully connected to the KafkaOffsetCheckerProducerGuardian actor. " +
+          "From now on, the actor will be used to fetch the Kafka offsets."
+      )
 
       cancellable.cancel()
       startChildActorsWhenReady()
@@ -177,8 +175,10 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: Prod
 
   private val waitingForTelemetryMessageR: Receive = {
     case TelemetryActorRedirection(telemetryActorRef) =>
-      logger.info(s"Successfully connected to the telemetry actor with actorRef: $telemetryActorRef. " +
-        "From now on, messages will be sent also to this actor.")
+      logger.info(
+        s"Successfully connected to the telemetry actor with actorRef: $telemetryActorRef. " +
+          "From now on, messages will be sent also to this actor."
+      )
 
       telemetryActorRef ! TelemetryActorRedirection(self)
 
@@ -193,7 +193,6 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: {val producerBL: Prod
     val pipegraphUniqueNames: Seq[String] = data.streamingQueriesProgress.map(_.sourceId)
 
     pipegraphUniqueNames.foreach { pipegraphUniqueName =>
-
       //If this actor receives a message for a pipegraph that it is not monitoring,
       //ignore the message. Otherwise send the message to the right child.
       if (pipegraphActorsMapping.contains(pipegraphUniqueName)) {

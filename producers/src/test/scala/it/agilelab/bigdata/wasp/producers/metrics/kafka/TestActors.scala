@@ -3,7 +3,15 @@ package it.agilelab.bigdata.wasp.producers.metrics.kafka
 import akka.actor.{Actor, ActorRef}
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
-import it.agilelab.bigdata.wasp.models.{DatastoreModel, PipegraphModel, ProducerModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  DatastoreModel,
+  PipegraphModel,
+  ProducerModel,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  TopicModel,
+  WriterModel
+}
 import it.agilelab.bigdata.wasp.producers.StopMainTask
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog.TestBacklogSizeAnalyzerProducerActor
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput.TestKafkaThroughputProducerActor
@@ -11,7 +19,8 @@ import org.bson.BsonDocument
 
 object Env {
   val producerBL: ProducerBL = new ProducerBL {
-    override def getByName(name: String): Option[ProducerModel] = Some(ProducerModel(name, name, Some("ATopics"), false, None, false, false))
+    override def getByName(name: String): Option[ProducerModel] =
+      Some(ProducerModel(name, name, Some("ATopics"), false, None, false, false))
 
     override def getActiveProducers(isActive: Boolean): Seq[ProducerModel] = ???
 
@@ -21,7 +30,21 @@ object Env {
 
     override def getByTopicName(name: String): Seq[ProducerModel] = ???
 
-    override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = Some(TopicModel(producerModel.topicName.get, System.currentTimeMillis(), 1, 1, "plaintext", None, None, None, false, new BsonDocument()))
+    override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] =
+      Some(
+        TopicModel(
+          producerModel.topicName.get,
+          System.currentTimeMillis(),
+          1,
+          1,
+          "plaintext",
+          None,
+          None,
+          None,
+          false,
+          new BsonDocument()
+        )
+      )
 
     override def getAll: Seq[ProducerModel] = ???
 
@@ -51,15 +74,19 @@ object Constants {
 
   import scala.collection.mutable
 
-  val offsetCheckerPool: mutable.Map[String, TestKafkaCheckKafkaOffset] = mutable.Map.empty
-  val throughputProducerPool: mutable.Map[String, TestKafkaThroughputProducerActor] = mutable.Map.empty
+  val offsetCheckerPool: mutable.Map[String, TestKafkaCheckKafkaOffset]              = mutable.Map.empty
+  val throughputProducerPool: mutable.Map[String, TestKafkaThroughputProducerActor]  = mutable.Map.empty
   val backlogProducerPool: mutable.Map[String, TestBacklogSizeAnalyzerProducerActor] = mutable.Map.empty
-  val throughputTestTopic = "throughputTestTopic"
-  val backlogTestTopic = "backlogTestTopic"
+  val throughputTestTopic                                                            = "throughputTestTopic"
+  val backlogTestTopic                                                               = "backlogTestTopic"
   val TestEtl = StructuredStreamingETLModel(
     "testEtl",
     "default",
-    StreamingReaderModel.kafkaReader("", TopicModel(backlogTestTopic, 0L, 1, 1, "plaintext", None, None, None, false, new BsonDocument()), None),
+    StreamingReaderModel.kafkaReader(
+      "",
+      TopicModel(backlogTestTopic, 0L, 1, 1, "plaintext", None, None, None, false, new BsonDocument()),
+      None
+    ),
     Nil,
     WriterModel.consoleWriter("console"),
     Nil,
@@ -74,10 +101,11 @@ object Constants {
     creationTime = 0L,
     legacyStreamingComponents = Nil,
     structuredStreamingComponents = TestEtl :: Nil,
-    rtComponents = Nil)
+    rtComponents = Nil
+  )
 
-  val sourceId = BaseConsumersMasterGuadian.generateUniqueComponentName(Constants.TestPipegraph, Constants.TestEtl)
-  val TriggerInterval: Long = 50L
+  val sourceId                      = BaseConsumersMasterGuadian.generateUniqueComponentName(Constants.TestPipegraph, Constants.TestEtl)
+  val TriggerInterval: Long         = 50L
   var testThroughputActor: ActorRef = _
 }
 

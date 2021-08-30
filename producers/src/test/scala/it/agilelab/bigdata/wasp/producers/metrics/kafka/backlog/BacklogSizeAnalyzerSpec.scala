@@ -12,21 +12,30 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 import scala.concurrent.duration.FiniteDuration
 
-class BacklogSizeAnalyzerSpec extends TestKit(
-  ActorSystem("BacklogSizeAnalyzerSpec",
-    ConfigFactory.load()
-      .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
-      .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(0))
-  )
-)
-  with ImplicitSender with FlatSpecLike with Matchers with BeforeAndAfterAll {
+class BacklogSizeAnalyzerSpec
+    extends TestKit(
+      ActorSystem(
+        "BacklogSizeAnalyzerSpec",
+        ConfigFactory
+          .load()
+          .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
+          .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(0))
+      )
+    )
+    with ImplicitSender
+    with FlatSpecLike
+    with Matchers
+    with BeforeAndAfterAll {
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
   it should "start, calculate backlog and then stop gracefully" in {
-    val backlogGuardian = system.actorOf(Props(new TestBacklogSizeAnalyzerProducerGuardian(testActor)), "TestBacklogSizeAnalyzerProducerGuardian")
+    val backlogGuardian = system.actorOf(
+      Props(new TestBacklogSizeAnalyzerProducerGuardian(testActor)),
+      "TestBacklogSizeAnalyzerProducerGuardian"
+    )
     backlogGuardian ! Start
     expectMsg(FiniteDuration(20, TimeUnit.SECONDS), Right(()))
     backlogGuardian ! telemetryMessageSourcesSummary(0, 0)
@@ -56,13 +65,15 @@ class BacklogSizeAnalyzerSpec extends TestKit(
   }
 
   def telemetryMessageSourcesSummary(startOffset: Long, endOffset: Long) = TelemetryMessageSourcesSummary(
-    Seq(TelemetryMessageSource(
-      messageId = UUID.randomUUID().toString,
-      sourceId = Constants.sourceId,
-      timestamp = new java.util.Date().toString,
-      description = "description",
-      startOffset = Map(Constants.backlogTestTopic -> Map("0" -> startOffset)),
-      endOffset = Map(Constants.backlogTestTopic -> Map("0" -> endOffset))
-    ))
+    Seq(
+      TelemetryMessageSource(
+        messageId = UUID.randomUUID().toString,
+        sourceId = Constants.sourceId,
+        timestamp = new java.util.Date().toString,
+        description = "description",
+        startOffset = Map(Constants.backlogTestTopic -> Map("0" -> startOffset)),
+        endOffset = Map(Constants.backlogTestTopic   -> Map("0" -> endOffset))
+      )
+    )
   )
 }

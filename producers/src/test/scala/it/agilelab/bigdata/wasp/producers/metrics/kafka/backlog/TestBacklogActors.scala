@@ -4,17 +4,24 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, Props}
 import it.agilelab.bigdata.wasp.models.{PipegraphModel, TopicModel}
-import it.agilelab.bigdata.wasp.producers.metrics.kafka.{Constants, Env, KafkaCheckOffsetsGuardian, TestKafkaCheckKafkaOffset, TestKafkaRouter}
+import it.agilelab.bigdata.wasp.producers.metrics.kafka.{
+  Constants,
+  Env,
+  KafkaCheckOffsetsGuardian,
+  TestKafkaCheckKafkaOffset,
+  TestKafkaRouter
+}
 
 import scala.concurrent.duration.FiniteDuration
 
-class TestBacklogSizeAnalyzerProducerActor(testActor: ActorRef,
-                                           kafka_router: ActorRef,
-                                           kafkaOffsetChecker: ActorRef,
-                                           topic: Option[TopicModel],
-                                           topicToCheck: String,
-                                           etlName: String)
-  extends BacklogSizeAnalyzerProducerActor[String](kafka_router, kafkaOffsetChecker, topic, topicToCheck, etlName) {
+class TestBacklogSizeAnalyzerProducerActor(
+    testActor: ActorRef,
+    kafka_router: ActorRef,
+    kafkaOffsetChecker: ActorRef,
+    topic: Option[TopicModel],
+    topicToCheck: String,
+    etlName: String
+) extends BacklogSizeAnalyzerProducerActor[String](kafka_router, kafkaOffsetChecker, topic, topicToCheck, etlName) {
 
   var counter = 0L
 
@@ -40,21 +47,28 @@ class TestBacklogSizeAnalyzerProducerActor(testActor: ActorRef,
 }
 
 class TestBacklogSizeAnalyzerProducerGuardian(testActor: ActorRef)
-  extends BacklogSizeAnalyzerProducerGuardian[String](Env,
-    "TestBacklogSizeAnalyzerProducerGuardian",
-    _.actorOf(Props(
-      new KafkaCheckOffsetsGuardian((topic: String) => Props(new TestKafkaCheckKafkaOffset(topic)))),"TestKafkaCheckKafkaOffset"
-    ),
-    FiniteDuration(5, TimeUnit.MILLISECONDS)) {
-  override protected def createActor(kafka_router: ActorRef,
-                                     kafkaOffsetChecker: ActorRef,
-                                     topic: Option[TopicModel],
-                                     topicToCheck: String,
-                                     etlName: String): BacklogSizeAnalyzerProducerActor[String] = {
+    extends BacklogSizeAnalyzerProducerGuardian[String](
+      Env,
+      "TestBacklogSizeAnalyzerProducerGuardian",
+      _.actorOf(
+        Props(new KafkaCheckOffsetsGuardian((topic: String) => Props(new TestKafkaCheckKafkaOffset(topic)))),
+        "TestKafkaCheckKafkaOffset"
+      ),
+      FiniteDuration(5, TimeUnit.MILLISECONDS)
+    ) {
+  override protected def createActor(
+      kafka_router: ActorRef,
+      kafkaOffsetChecker: ActorRef,
+      topic: Option[TopicModel],
+      topicToCheck: String,
+      etlName: String
+  ): BacklogSizeAnalyzerProducerActor[String] = {
     new TestBacklogSizeAnalyzerProducerActor(testActor, kafka_router, kafkaOffsetChecker, topic, topicToCheck, etlName)
   }
 
-  override protected def backlogAnalyzerConfigs(allPipegraphs: Map[String, PipegraphModel]): Either[String, List[BacklogAnalyzerConfig]] = {
+  override protected def backlogAnalyzerConfigs(
+      allPipegraphs: Map[String, PipegraphModel]
+  ): Either[String, List[BacklogAnalyzerConfig]] = {
     Right(allPipegraphs.values.map(model => BacklogAnalyzerConfig(model, model.structuredStreamingComponents)).toList)
   }
 
