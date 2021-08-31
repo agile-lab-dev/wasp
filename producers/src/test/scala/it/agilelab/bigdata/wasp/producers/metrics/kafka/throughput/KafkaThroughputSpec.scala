@@ -12,12 +12,20 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 import scala.concurrent.duration.FiniteDuration
 
-class KafkaThroughputSpec extends TestKit(
-  ActorSystem("BacklogSizeAnalyzerSpec",
-    ConfigFactory.load()
-      .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
-      .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(0)))
-) with ImplicitSender with FlatSpecLike with Matchers with BeforeAndAfterAll {
+class KafkaThroughputSpec
+    extends TestKit(
+      ActorSystem(
+        "BacklogSizeAnalyzerSpec",
+        ConfigFactory
+          .load()
+          .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
+          .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(0))
+      )
+    )
+    with ImplicitSender
+    with FlatSpecLike
+    with Matchers
+    with BeforeAndAfterAll {
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
@@ -31,7 +39,7 @@ class KafkaThroughputSpec extends TestKit(
     expectMsg(FiniteDuration(20, TimeUnit.SECONDS), Right(()))
     while (!Constants.offsetCheckerPool.contains(Constants.throughputTestTopic)) {}
     Constants.offsetCheckerPool(Constants.throughputTestTopic).offsets = Map(0 -> 0L)
-    for {i <- 0 until 10} expectMsg(s"0:$i")
+    for { i <- 0 until 10 } expectMsg(s"0:$i")
     Constants.offsetCheckerPool(Constants.throughputTestTopic).offsets = Map(0 -> 10L)
     expectMsg("10:10")
     Constants.offsetCheckerPool(Constants.throughputTestTopic).offsets = Map(0 -> 20L)
@@ -40,7 +48,7 @@ class KafkaThroughputSpec extends TestKit(
     expectMsg("30:12")
     Constants.offsetCheckerPool(Constants.throughputTestTopic).offsets = Map(0 -> 35L)
     expectMsg("35:13")
-    for {i <- 14 until 20} expectMsg(s"35:$i")
+    for { i <- 14 until 20 } expectMsg(s"35:$i")
     expectMsg("25:20")
     expectMsg("15:21")
     expectMsg("5:22")

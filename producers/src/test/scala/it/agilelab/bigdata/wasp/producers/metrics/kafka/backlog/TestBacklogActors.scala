@@ -46,6 +46,44 @@ class TestBacklogSizeAnalyzerProducerActor(
   override def retrievePartitionKey: String => String = identity
 }
 
+class TestMultiTopicBacklogSizeAnalyzerProducerGuardian(testActor: ActorRef)
+    extends BacklogSizeAnalyzerProducerGuardian[String](
+      Env,
+      "TestMultiTopicBacklogSizeAnalyzerProducerGuardian",
+      _.actorOf(
+        Props(new KafkaCheckOffsetsGuardian((topic: String) => Props(new TestKafkaCheckKafkaOffset(topic)))),
+        "TestKafkaCheckKafkaOffset"
+      ),
+      FiniteDuration(5, TimeUnit.MILLISECONDS)
+    ) {
+  override protected def createActor(
+      kafka_router: ActorRef,
+      kafkaOffsetChecker: ActorRef,
+      topic: Option[TopicModel],
+      topicToCheck: String,
+      etlName: String
+  ): BacklogSizeAnalyzerProducerActor[String] = {
+    new TestBacklogSizeAnalyzerProducerActor(testActor, kafka_router, kafkaOffsetChecker, topic, topicToCheck, etlName)
+  }
+
+  override protected def backlogAnalyzerConfigs(
+      allPipegraphs: Map[String, PipegraphModel]
+  ): Either[String, List[BacklogAnalyzerConfig]] = {
+    Right(allPipegraphs.values.map(model => BacklogAnalyzerConfig(model, model.structuredStreamingComponents)).toList)
+  }
+
+  override protected def getAllPipegraphs: Map[String, PipegraphModel] = Map(
+    Constants.TestMultiTopicModelPipegraph.name -> Constants.TestMultiTopicModelPipegraph
+  )
+
+  override def initialize(): Either[String, Unit] = {
+    kafka_router = context.actorOf(Props(new TestKafkaRouter()), "TestKafkaRouter")
+    producer = Env.producerBL.getByName(name).get
+    startChildActors()
+    Right(())
+  }
+}
+
 class TestBacklogSizeAnalyzerProducerGuardian(testActor: ActorRef)
     extends BacklogSizeAnalyzerProducerGuardian[String](
       Env,

@@ -5,6 +5,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
 import it.agilelab.bigdata.wasp.models.{
   DatastoreModel,
+  MultiTopicModel,
   PipegraphModel,
   ProducerModel,
   StreamingReaderModel,
@@ -18,6 +19,7 @@ import it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput.TestKafkaThro
 import org.bson.BsonDocument
 
 object Env {
+
   val producerBL: ProducerBL = new ProducerBL {
     override def getByName(name: String): Option[ProducerModel] =
       Some(ProducerModel(name, name, Some("ATopics"), false, None, false, false))
@@ -58,7 +60,22 @@ object Env {
 
   }
   val topicBL = new TopicBL() {
-    override def getByName(name: String): Option[DatastoreModel] = ???
+    override def getByName(name: String): Option[DatastoreModel] = {
+
+      if (name == Constants.backlogTestTopicName) {
+        Some(Constants.backlogTestTopicModel)
+      } else if (name == Constants.backlogTestMultiTopicName) {
+        Some(
+          MultiTopicModel(
+            name = Constants.backlogTestMultiTopicName,
+            topicNameField = Constants.backlogTestMultiTopicField,
+            topicModelNames = Seq(Constants.multiTopic1, Constants.multiTopic2)
+          )
+        )
+      } else {
+        None
+      }
+    }
 
     override def getAll: Seq[DatastoreModel] = ???
 
@@ -78,13 +95,27 @@ object Constants {
   val throughputProducerPool: mutable.Map[String, TestKafkaThroughputProducerActor]  = mutable.Map.empty
   val backlogProducerPool: mutable.Map[String, TestBacklogSizeAnalyzerProducerActor] = mutable.Map.empty
   val throughputTestTopic                                                            = "throughputTestTopic"
-  val backlogTestTopic                                                               = "backlogTestTopic"
+
+  val backlogTestTopicName = "backlogTestTopic"
+  val backlogTestTopicModel = TopicModel(
+    backlogTestTopicName,
+    System.currentTimeMillis(),
+    1,
+    1,
+    "plaintext",
+    None,
+    None,
+    None,
+    false,
+    new BsonDocument()
+  )
+
   val TestEtl = StructuredStreamingETLModel(
     "testEtl",
     "default",
     StreamingReaderModel.kafkaReader(
       "",
-      TopicModel(backlogTestTopic, 0L, 1, 1, "plaintext", None, None, None, false, new BsonDocument()),
+      TopicModel(backlogTestTopicName, 0L, 1, 1, "plaintext", None, None, None, false, new BsonDocument()),
       None
     ),
     Nil,
@@ -104,7 +135,46 @@ object Constants {
     rtComponents = Nil
   )
 
-  val sourceId                      = BaseConsumersMasterGuadian.generateUniqueComponentName(Constants.TestPipegraph, Constants.TestEtl)
+  val backlogTestMultiTopicName  = "multiTopicModelName"
+  val backlogTestMultiTopicField = "multiTopicModelField"
+  val multiTopic1                = "topic1"
+  val multiTopic2                = "topic2"
+
+  val TestMultiTopicModelEtl = StructuredStreamingETLModel(
+    "testMultiTopicModelEtl",
+    "default",
+    StreamingReaderModel.kafkaReaderMultitopic(
+      "",
+      MultiTopicModel(backlogTestMultiTopicName, backlogTestMultiTopicField, Seq(multiTopic1, multiTopic2)),
+      None
+    ),
+    Nil,
+    WriterModel.consoleWriter("console"),
+    Nil,
+    None,
+    None
+  )
+
+  val TestMultiTopicModelPipegraph = PipegraphModel(
+    name = "testMultiTopicModelPipegraph",
+    description = "",
+    owner = "",
+    isSystem = false,
+    creationTime = 0L,
+    legacyStreamingComponents = Nil,
+    structuredStreamingComponents = TestMultiTopicModelEtl :: Nil,
+    rtComponents = Nil
+  )
+
+  val sourceIds = Map(
+    backlogTestTopicName -> BaseConsumersMasterGuadian
+      .generateUniqueComponentName(Constants.TestPipegraph, Constants.TestEtl),
+    multiTopic1 -> BaseConsumersMasterGuadian
+      .generateUniqueComponentName(Constants.TestMultiTopicModelPipegraph, Constants.TestMultiTopicModelEtl),
+    multiTopic2 -> BaseConsumersMasterGuadian
+      .generateUniqueComponentName(Constants.TestMultiTopicModelPipegraph, Constants.TestMultiTopicModelEtl)
+  )
+
   val TriggerInterval: Long         = 50L
   var testThroughputActor: ActorRef = _
 }

@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorRefFactory, Cancellable, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
@@ -11,7 +10,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, ProducerBL, TopicB
 import it.agilelab.bigdata.wasp.core.consumers.BaseConsumersMasterGuadian
 import it.agilelab.bigdata.wasp.core.messages._
 import it.agilelab.bigdata.wasp.core.utils.ConfUtils._
-import it.agilelab.bigdata.wasp.models.{PipegraphModel, TopicModel}
+import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, PipegraphModel, TopicModel}
 import it.agilelab.bigdata.wasp.producers.ProducerGuardian
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.{KafkaCheckOffsetsGuardian, KafkaOffsetActorAlive}
 
@@ -48,8 +47,8 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
   private val mediator               = DistributedPubSub(context.system).mediator
   private val REQUESTS_TIMEOUT: Long = 5000
 
-  private var pipegraphActorsMapping: Map[String, ActorRef] = Map.empty[String, ActorRef]
-  private var kafkaOffsetCheckerActor: ActorRef             = _
+  private var pipegraphActorsMapping: Map[String, Map[String, ActorRef]] = Map.empty[String, Map[String, ActorRef]]
+  private var kafkaOffsetCheckerActor: ActorRef                          = _
 
   protected def createActor(
       kafka_router: ActorRef,
@@ -129,8 +128,16 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
           conf.etls.foreach { etl =>
             val topicName  = etl.streamingInput.datastoreModelName
             val mappingKey = BaseConsumersMasterGuadian.generateUniqueComponentName(conf.pipegraph, etl)
-            spawnChildActor(mappingKey, topicName, etl.name)
-            logger.info(s"Created BacklogSizeAnalyzer Actor for $topicName and ETL: $mappingKey")
+
+            /*
+            We need to extract topic NAMES from topic MODEL since if we're dealing with a [[MultiTopicModel]]
+            it can aggregate >= 1 topics and we need to spawn a child actor for each inner topic
+             */
+            val topicNames = extractTopicNames(env.topicBL, topicName)
+            topicNames.foreach { name =>
+              spawnChildActor(mappingKey, name, etl.name)
+              logger.info(s"Created BacklogSizeAnalyzer Actor for $name and ETL: $mappingKey")
+            }
           }
         }
       case Left(error) =>
@@ -140,13 +147,30 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
     }
   }
 
+  private def extractTopicNames(topicBL: TopicBL, topicModelName: String): Seq[String] = {
+    val model: Option[DatastoreModel] = topicBL.getByName(topicModelName)
+
+    if (model.isDefined) {
+      model.get match {
+        case topic: TopicModel =>
+          Seq(topic.name)
+        case multiTopic: MultiTopicModel =>
+          multiTopic.topicModelNames
+      }
+    } else {
+      Seq.empty[String]
+    }
+  }
+
   private def spawnChildActor(mappingKey: String, topicToCheck: String, etlName: String): Unit = {
     val aRef: ActorRef = context.actorOf(
       Props(
         createActor(kafka_router, kafkaOffsetCheckerActor, associatedTopic, topicToCheck, etlName)
       )
     )
-    pipegraphActorsMapping += (mappingKey -> aRef)
+    val existingActorMap = pipegraphActorsMapping.getOrElse(mappingKey, Map.empty[String, ActorRef])
+    val newActorMap      = existingActorMap + (topicToCheck -> aRef)
+    pipegraphActorsMapping = pipegraphActorsMapping + (mappingKey -> newActorMap)
   }
 
   private def waitingForKafkaOffsetActor(cancellable: Cancellable): Receive =
@@ -191,14 +215,20 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
   private def sendTelemetryInfoToChild(data: TelemetryMessageSourcesSummary): Unit = {
 
     val pipegraphUniqueNames: Seq[String] = data.streamingQueriesProgress.map(_.sourceId)
+    val involvedTopics: Seq[String]       = data.streamingQueriesProgress.flatMap(_.startOffset.keySet)
 
     pipegraphUniqueNames.foreach { pipegraphUniqueName =>
-      //If this actor receives a message for a pipegraph that it is not monitoring,
-      //ignore the message. Otherwise send the message to the right child.
+      // If this actor receives a message for a pipegraph that it is not monitoring,
+      // ignore the message. Otherwise send the message to the children
+      // (we can have more children in case of multi topic model)
       if (pipegraphActorsMapping.contains(pipegraphUniqueName)) {
-        val childRef = pipegraphActorsMapping(pipegraphUniqueName)
-        childRef ! data
-        logger.debug(s"Sent data: $data to actor $childRef")
+        val allChildrenRefs = pipegraphActorsMapping(pipegraphUniqueName)
+        allChildrenRefs.foreach {
+          case (topicName, aRef) if involvedTopics.contains(topicName) =>
+            aRef ! data
+            logger.debug(s"Sent data: $data to actor $aRef")
+          case _ =>
+        }
       } else {
         logger.trace(s"Received data: $data but there is no actor monitoring it.")
       }
