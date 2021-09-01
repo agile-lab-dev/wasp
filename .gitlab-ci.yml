@@ -152,7 +152,7 @@ pages:
     - gitbook fetch 3.2.3 # fetch final stable version
     - gitbook install # add any requested plugins in book.json
     - | 
-      if [[ $CI_COMMIT_REF_NAME == 'master'  ]]
+      if [[ $CI_COMMIT_REF_NAME == 'develop'  ]]
       then 
         rm -rf public/*
         gitbook build documentation public # build to the public path
@@ -172,6 +172,9 @@ pages:
     paths:
       - public
   only:
+    refs:
     - merge_requests
     - /^develop$/
+    changes:
+    - documentation/*
 
