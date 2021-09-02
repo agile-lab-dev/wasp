@@ -13,6 +13,7 @@ done
 /opt/resolve-templates.sh
 /opt/scripts/hdfs/start-hdfs.sh
 /opt/scripts/zookeeper/start-zookeeper.sh
+/opt/scripts/zookeeper/create-solr-znode.sh
 /opt/scripts/kafka/start-kafka.sh
 /opt/scripts/hbase/start-hbase.sh
 /opt/scripts/yarn/start-yarn.sh

@@ -7,6 +7,7 @@ cat /opt/templates/hdfs/core-site.xml | envsubst \$HOSTNAME > /etc/hadoop/conf/c
 cat /opt/templates/hdfs/mapred-site.xml | envsubst \$HOSTNAME > /etc/hadoop/conf/mapred-site.xml 
 cat /opt/templates/hdfs/yarn-site.xml | envsubst \$HOSTNAME > /etc/hadoop/conf/yarn-site.xml 
 cat /opt/templates/hdfs/yarn-env.sh   | envsubst \$HOSTNAME > /etc/hadoop/conf/yarn-env.sh
+cat /opt/templates/hdfs/capacity-scheduler.xml   | envsubst \$HOSTNAME > /etc/hadoop/conf/capacity-scheduler.xml
 
 cat /opt/templates/kafka/trogdor.conf | envsubst \$HOSTNAME > /etc/kafka/conf/trogdor.conf 
 cat /opt/templates/kafka/server.properties | envsubst \$HOSTNAME > /etc/kafka/conf/server.properties

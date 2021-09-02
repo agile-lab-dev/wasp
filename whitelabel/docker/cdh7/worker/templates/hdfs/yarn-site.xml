@@ -61,4 +61,8 @@
         $HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*
      </value>
   </property>
+  <property>
+      <name>yarn.resourcemanager.hostname</name>
+      <value>${HOSTNAME}</value>
+  </property>
 </configuration>

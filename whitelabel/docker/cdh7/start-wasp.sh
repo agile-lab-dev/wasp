@@ -61,8 +61,8 @@ echo "Running sbt stage task..."
 cd $SCRIPT_DIR
 source get-docker-cmd.sh
 
-DOCKER_IMAGE=registry.gitlab.com/agilefactory/agile.wasp2/cdh7:worker
-NAME_CONTAINER=agile-wasp-2-whitelabel
+DOCKER_IMAGE=registry.gitlab.com/agilefactory/agile.wasp2/cdp:worker
+NAME_CONTAINER=agile-wasp-2-whitelabel-cdp
 
 set -ax
 
