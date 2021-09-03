@@ -1,5 +1,6 @@
-package it.agilelab.bigdata.wasp.consumers.utils
 /*
+package it.agilelab.bigdata.wasp.consumers.utils
+
 import it.agilelab.bigdata.wasp.consumers.readers.StreamingReader
 import it.agilelab.bigdata.wasp.consumers.writers.{SparkStreamingWriter, SparkWriter, SparkWriterFactory}
 import it.agilelab.bigdata.wasp.repository.core.bl.{IndexBL, KeyValueBL, RawBL, TopicBL}

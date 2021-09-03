@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.models
 
-import org.joda.time.DateTime
 import org.mongodb.scala.bson.BsonObjectId
 
 case class MlModelOnlyInfo(

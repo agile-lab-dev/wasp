@@ -1,12 +1,14 @@
 ## Whitelabel project structure
 
 Inside of the whitelabel/docker directory we can find multiple different builds of WASP.
-These builds are differentiated by the CDH(Cloudera Distribution Hadoop) version.
+These builds are differentiated by the Hadoop or CDH(Cloudera Distribution Hadoop) version.
 
-
+The "default" build/flavor of WASP should be tested against the vanilla-hadoop2 docker image.
+ 
 ```
 whitelabel
 ├─── docker
+│       ├─── vanilla-hadoop2
 │       ├─── cdh5
 │       ├─── cdh6
 │       └─── cdh7

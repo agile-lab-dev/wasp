@@ -1,27 +1,35 @@
+import com.typesafe.sbt.pgp.PgpSettings.pgpPassphrase
 import sbt.Keys._
 import sbt._
-import sbtbuildinfo.BuildInfoKeys._
 import sbtbuildinfo.BuildInfoKey
-import com.typesafe.sbt.pgp.PgpSettings.pgpPassphrase
-
-
+import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 /*
  * Common settings for all the modules.
  *
  * See project/Versions.scala for the versions definitions.
  */
-class Resolvers private(flavor: Flavor) {
+trait Resolvers {
+  val resolvers: Seq[MavenRepository]
+}
+
+trait Settings {
+  val commonSettings:  Seq[Def.Setting[_]]
+  val sbtBuildInfoSettings: Seq[Def.Setting[_]]
+  val disableParallelTests: Seq[Def.Setting[_]]
+}
+
+class BasicResolvers extends Resolvers {
   val mavenLocalRepo            = Resolver.mavenLocal
   val sonatypeReleaseRepo       = Resolver.sonatypeRepo("releases")
-  val sonatypeSnapshotsRepo       = Resolver.sonatypeRepo("snapshots")
+  val sonatypeSnapshotsRepo     = Resolver.sonatypeRepo("snapshots")
   val bintraySparkSolrRepo      = Resolver.bintrayRepo("agile-lab-dev", "Spark-Solr")
   val restletMavenRepo          = "Restlet Maven repository" at "https://maven.restlet.com/"
   val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
   val clouderaReleaseLocalRepo  = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
   val repo1Maven2               = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
 
-  val typesafeReleaseRepo       = "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
-  val confluent                 = "confluent" at "https://packages.confluent.io/maven/"
+  val typesafeReleaseRepo = "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/"
+  val confluent           = "confluent" at "https://packages.confluent.io/maven/"
 
   /** custom resolvers for dependencies */
   val resolvers = Seq(
@@ -38,11 +46,7 @@ class Resolvers private(flavor: Flavor) {
   )
 }
 
-object Resolvers {
-  def build(flavor: Flavor): Resolvers = new Resolvers(flavor)
-}
-
-class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) {
+class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionValue: String) extends Settings {
 
   /** settings related to project information */
   lazy val projectSettings = Seq(
@@ -50,7 +54,9 @@ class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) 
     organizationHomepage := Some(url("http://www.agilelab.it")),
     homepage := Some(url("https://www.agilelab.it/wasp-wide-analytics-streaming-platform/")),
     scmInfo := Some(ScmInfo(url("https://github.com/agile-lab-dev/wasp"), "https://github.com/agile-lab-dev/wasp.git")),
-    developers := List(Developer("AgileLabDev", "AgileLabDev", "wasp@agilelab.it", url("https://github.com/agile-lab-dev/wasp"))),
+    developers := List(
+      Developer("AgileLabDev", "AgileLabDev", "wasp@agilelab.it", url("https://github.com/agile-lab-dev/wasp"))
+    ),
     licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
   )
 
@@ -61,7 +67,7 @@ class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) 
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",
-      s"-target:jvm-${versions.jdk}",
+      s"-target:jvm-${jdkVersionValue}",
       "-feature",
       "-language:_",
       "-deprecation",
@@ -73,25 +79,24 @@ class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) 
       "-encoding",
       "UTF-8",
       "-source",
-      versions.jdk,
+      jdkVersionValue,
       "-target",
-      versions.jdk,
+      jdkVersionValue,
       "-Xlint:deprecation",
       "-Xlint:unchecked"
-
     ),
     doc / javacOptions --= Seq(
       "-target",
-      versions.jdk,
+      jdkVersionValue,
       "-Xlint:deprecation",
       "-Xlint:unchecked"
     ),
-    scalaVersion := versions.scala,
+    scalaVersion := scalaVersionValue,
     excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api")
   )
 
   val sonatypeSnapshots = "SonatypeSnapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-  val sonatypeStaging = "SonatypeStaging" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+  val sonatypeStaging   = "SonatypeStaging" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 
   val sonatypeOssCredentials = Credentials(
     "Sonatype Nexus Repository Manager",
@@ -99,7 +104,6 @@ class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) 
     System.getenv().get("SONATYPE_USER"),
     System.getenv().get("SONATYPE_PASSWORD")
   )
-
 
   lazy val publishSettings = Seq(
     publishMavenStyle := true,
@@ -134,12 +138,12 @@ class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) 
   }
 
   /** sbt-buildinfo plugin configuration */
-  lazy val sbtBuildInfoSettings = Seq(
+  lazy val sbtBuildInfoSettings: Seq[Def.Setting[_]] = Seq(
     buildInfoKeys := Seq[BuildInfoKey](
       name,
       version,
       scalaVersion,
-      ("jdkVersion", versions.jdk),
+      ("jdkVersion", jdkVersionValue),
       sbtVersion,
       gitCommitAction,
       gitWorkDirStatusAction
@@ -148,13 +152,8 @@ class Settings private(flavor: Flavor, resolver: Resolvers, versions: Versions) 
   )
 
   /** settings to disable parallel execution of tests, for Spark & co */
-  lazy val disableParallelTests = Seq(
+  lazy val disableParallelTests: Seq[Def.Setting[Boolean]] = Seq(
     parallelExecution in Test := false,
     parallelExecution in IntegrationTest := false
   )
-}
-
-object Settings {
-  def build(flavor: Flavor, versions: Versions, resolver: Resolvers): Settings = 
-    new Settings(flavor, resolver, versions)
 }

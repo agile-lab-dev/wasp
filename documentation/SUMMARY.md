@@ -18,6 +18,7 @@
 * [Building WASP](building.md)
 * [Whitelabel project](whitelabel/whitelabel.md)
     * [Project structure](whitelabel/structure.md)
+        * [Vanilla Hadoop Structure](whitelabel/vanilla2.md)
         * [CDH5 Structure](whitelabel/cdh5.md)
         * [CDH6 Structure](whitelabel/cdh6.md)
         * [CDH7 Structure](whitelabel/cdh7.md)

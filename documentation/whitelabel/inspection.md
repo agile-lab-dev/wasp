@@ -1,6 +1,6 @@
 ## Inspection
 
-After starting WASP using whitelabel/cdh6 or whitelabel/cdh7, you can start pipegraphs and producers using the provided REST API.
+After starting WASP using any whitelabel, you can start pipegraphs and producers using the provided REST API.
 To browse all pipegraphs and their settings you can use:
 ``` curl -X GET http://localhost:2891/pipegraphs``` which will return a JSON document.
 

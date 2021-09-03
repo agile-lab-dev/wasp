@@ -30,7 +30,3 @@ import java.io.File
 
   file -> ("lib" + File.separator + jarsListFileName)
 }
-
-
-/* Hadoop YARN usage !!! Add this in standalone applications !!! */
-scriptClasspath += ":$HADOOP_CONF_DIR:$YARN_CONF_DIR"

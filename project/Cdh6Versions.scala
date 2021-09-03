@@ -1,7 +1,7 @@
 /**
  * Versions definitions. Keep in alphabetical order.
  */
-class Versions private(flavor: Flavor) {
+class Cdh6Versions {
   val akka = "2.4.19" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
   val akkaHttp = "10.0.9" // keep in sync with akka
   val apacheCommonsLang3Version = "3.4"
@@ -21,8 +21,6 @@ class Versions private(flavor: Flavor) {
   val httpcomponents = "4.3.3"
   val jdk = "1.8"
   val jetty = "9.3.20.v20170531"
-  val jodaConvert = "1.8.1"
-  val jodaTime = "2.8.2"
   val jopt = "3.2"
   val json4s = "3.5.3"
   val kryo = "3.0.0"
@@ -53,8 +51,4 @@ class Versions private(flavor: Flavor) {
   val delta = "0.6.1" + "-" + spark
   val kafka_ = "2.2.1"
   val kafka: String = s"${kafka_}-${cdh6}"
-}
-
-object Versions {
-  def build(flavor: Flavor) = new Versions(flavor)
 }
