@@ -336,10 +336,10 @@ lazy val openapi = Project("wasp-openapi", file("openapi"))
   .settings(libraryDependencies ++= dependencies.openapiDependencies)
   .settings(
     generateOpenApi := {
-      (runMain in Compile)
+      (Compile / runMain)
         .toTask(" it.agilelab.bigdata.wasp.master.web.openapi.GenerateOpenApi documentation/wasp-openapi.yaml")
         .value
     },
-    generateOpenApi := (generateOpenApi dependsOn (compile in Compile)).value
+    generateOpenApi := (generateOpenApi dependsOn (Compile / compile)).value
   )
   .dependsOn(core)

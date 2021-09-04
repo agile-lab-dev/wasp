@@ -1,7 +1,7 @@
 /* Custom Node Launcher usage !!! Add this in standalone applications !!! */
-mainClass in Compile := Some("thisClassNotExist")
-//mainClass in Compile := Some("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersStreamingNodeLauncher")
-//mainClass in Compile := Some("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersBatchNodeLauncher")
+Compile / mainClass := Some("thisClassNotExist")
+//Compile / mainClass := Some("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersStreamingNodeLauncher")
+//Compile / mainClass := Some("it.agilelab.bigdata.wasp.whitelabel.consumers.spark.launcher.SparkConsumersBatchNodeLauncher")
 
 // to use within "docker run" in start-wasp.sh using -main FULLY_QUALIFIED_NAME
 
@@ -9,7 +9,7 @@ mainClass in Compile := Some("thisClassNotExist")
 /* Spark distributed-mode (Spark Standalone or Hadoop YARN cluster managers) usage !!! Add this in standalone applications !!! */
 import java.io.File
 
-mappings in Universal += {
+Universal / mappings += {
   val jarsListFileName = "jars.list"
 
   val log = streams.value.log
@@ -17,7 +17,7 @@ mappings in Universal += {
   log.info("Getting jars names to use with additional-jars-lib-path config parameter (used by Wasp Core Framework)")
 
   // get full classpaths of all jars
-  val jars = (fullClasspath in Runtime).value.map(dep => {
+  val jars = (Runtime / fullClasspath).value.map(dep => {
     val moduleOpt = dep.metadata.get(AttributeKey[ModuleID]("moduleID"))
     moduleOpt match {
       case Some(module) =>

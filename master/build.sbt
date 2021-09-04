@@ -1,1 +1,1 @@
-mainClass in Compile := Some("it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncher")
+Compile / mainClass := Some("it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncher")

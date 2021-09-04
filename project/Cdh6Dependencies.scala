@@ -444,7 +444,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   ) ++ log4j
 
   val kmsTest: Seq[Def.Setting[_]] = Seq(
-    transitiveClassifiers in Test := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
+    (Test / transitiveClassifiers) := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
     libraryDependencies ++= Seq(
       ("org.codehaus.jackson" % "jackson-core-asl"   % "1.9.13")          % "test",
       ("org.codehaus.jackson" % "jackson-jaxrs"      % "1.9.13")          % "test",

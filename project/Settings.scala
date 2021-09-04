@@ -121,7 +121,7 @@ class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionVa
 
   /** settings for tests */
   lazy val testSettings = Seq(
-    logBuffered in Test := true
+    (Test / logBuffered) := true
   )
 
   /** common settings for all modules */
@@ -153,7 +153,7 @@ class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionVa
 
   /** settings to disable parallel execution of tests, for Spark & co */
   lazy val disableParallelTests: Seq[Def.Setting[Boolean]] = Seq(
-    parallelExecution in Test := false,
-    parallelExecution in IntegrationTest := false
+    (Test / parallelExecution) := false,
+    (IntegrationTest / parallelExecution) := false
   )
 }

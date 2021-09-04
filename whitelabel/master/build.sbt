@@ -1,2 +1,2 @@
 /* !!! Custom Node Launcher usage: Add this in standalone applications !!! */
-mainClass in Compile := Some("it.agilelab.bigdata.wasp.whitelabel.master.launcher.MasterNodeLauncher")
+Compile / mainClass := Some("it.agilelab.bigdata.wasp.whitelabel.master.launcher.MasterNodeLauncher")
