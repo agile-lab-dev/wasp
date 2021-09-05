@@ -218,9 +218,8 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val postgresqlEmbedded        = "com.opentable.components" % "otj-pg-embedded" % versions.postgresqlEmbeddedVersion % Test
   val mockOkHttp2               = "com.squareup.okhttp" % "mockwebserver" % "2.7.5" % Test // in sync with cdh6
   // why these are the only dependencies with snack case?
-  val spark_sql_kafka     = "it.agilelab"      %% "wasp-spark-sql-kafka"     % ("0.0.1" + "-" + versions.kafka_ + "-" + versions.spark)
-  val spark_sql_kafka_new = "it.agilelab"      %% "wasp-spark-sql-kafka-new" % ("0.0.1" + "-" + versions.kafka_ + "-" + versions.spark)
-  val spark_sql_kafka_old = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % ("0.0.1" + "-" + versions.kafka_ + "-" + versions.spark)
+  val spark_sql_kafka     = "it.agilelab"      %% "wasp-spark-sql-kafka"     % ("0.0.2" + "-" + versions.kafka_ + "-" + versions.spark)
+  val spark_sql_kafka_old = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % ("0.0.2" + "-" + versions.kafka_ + "-" + versions.spark)
   val prettyPrint         = "com.lihaoyi"      %% "pprint"                   % "0.6.6"
   val sparkAvro           = "org.apache.spark" %% "spark-avro"               % versions.spark
 
@@ -402,7 +401,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   ).map(excludeLog4j).map(excludeNetty)
 
   val pluginKafkaSparkDependencies    = _plugin_kafka_spark :+ spark_sql_kafka
-  val pluginKafkaSparkNewDependencies = _plugin_kafka_spark :+ spark_sql_kafka_new
   val pluginKafkaSparkOldDependencies = _plugin_kafka_spark :+ spark_sql_kafka_old
 
   val pluginSolrSparkDependencies = Seq(

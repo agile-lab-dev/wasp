@@ -44,7 +44,7 @@ class Vanilla2Versions {
   val delta                     = "0.6.1" // + "-" + spark
   val kafka_                    = "2.2.1"
   val kafka: String             = kafka_
-  val sparkSqlKafka: String     = "0.0.1" + "-" + kafka_ + "-" + spark
+  val sparkSqlKafka: String     = "0.0.2" + "-" + kafka_ + "-" + spark
   val yammerMetrics             = "2.2.0"
   val swagger                   = "2.1.2"
   val typesafeConfig            = "1.3.0"

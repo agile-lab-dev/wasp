@@ -22,7 +22,6 @@ trait Dependencies {
   val pluginElasticSparkDependencies: Seq[ModuleID]
   val pluginHbaseSparkDependencies: Seq[ModuleID]
   val pluginKafkaSparkDependencies: Seq[ModuleID]
-  val pluginKafkaSparkNewDependencies: Seq[ModuleID]
   val pluginKafkaSparkOldDependencies: Seq[ModuleID]
   val pluginSolrSparkDependencies: Seq[ModuleID]
   val pluginMongoSparkDependencies: Seq[ModuleID]

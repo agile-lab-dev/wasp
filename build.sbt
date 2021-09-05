@@ -111,11 +111,6 @@ lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-ka
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkDependencies)
 
-lazy val plugin_kafka_spark_new = Project("wasp-plugin-kafka-spark-new", file("plugin-kafka-spark-new"))
-  .settings(settings.commonSettings: _*)
-  .dependsOn(consumers_spark % "compile->compile;test->test")
-  .settings(libraryDependencies ++= dependencies.pluginKafkaSparkNewDependencies)
-
 lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
   .settings(settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
@@ -233,7 +228,6 @@ lazy val plugin = project
     plugin_jdbc_spark,
     plugin_kafka_spark,
     plugin_kafka_spark_old,
-    plugin_kafka_spark_new,
     plugin_raw_spark,
     plugin_solr_spark,
     plugin_cdc_spark,
@@ -287,7 +281,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(plugin_console_spark)
   .dependsOn(plugin_hbase_spark)
   .dependsOn(plugin_jdbc_spark)
-  .dependsOn(plugin_kafka_spark_new)
+  .dependsOn(plugin_kafka_spark)
   .dependsOn(plugin_mailer_spark)
   .dependsOn(plugin_raw_spark)
   .dependsOn(plugin_solr_spark)

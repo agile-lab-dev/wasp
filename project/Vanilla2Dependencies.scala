@@ -150,10 +150,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
       .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
 
-  override val pluginKafkaSparkNewDependencies: Seq[ModuleID] =
-    (Seq(sparkSqlKafkaNew) ++ _pluginKafkaSparkDependencies)
-      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
-
   override val pluginKafkaSparkOldDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafkaOld) ++ _pluginKafkaSparkDependencies)
       .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
@@ -342,7 +338,6 @@ trait KafkaDependencies {
   lazy val kafkaStreaming   = "org.apache.spark" %% "spark-streaming-kafka-0-8" % versions.spark exclude (exclusions.sparkExclusions ++ exclusions.kafka08Exclude) // TODO remove jersey?
   lazy val kafkaTests       = kafka              % Test exclude (exclusions.jacksonExclude)
   lazy val sparkSqlKafka    = "it.agilelab"      %% "wasp-spark-sql-kafka" % versions.sparkSqlKafka
-  lazy val sparkSqlKafkaNew = "it.agilelab"      %% "wasp-spark-sql-kafka-new" % versions.sparkSqlKafka
   lazy val sparkSqlKafkaOld = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % versions.sparkSqlKafka
 }
 
