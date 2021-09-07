@@ -5,6 +5,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.1")
 // test coverage
 addSbtPlugin("org.scoverage"  % "sbt-scoverage" % "1.8.2")
 // perform release on sonatype
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype"  % "2.3")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.10")
 // sign artifacts
-addSbtPlugin("com.jsuereth"   % "sbt-pgp"       % "1.1.1")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.1.2")

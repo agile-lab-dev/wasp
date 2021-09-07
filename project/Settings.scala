@@ -1,4 +1,5 @@
-import com.typesafe.sbt.pgp.PgpSettings.pgpPassphrase
+import com.jsuereth.sbtpgp.PgpKeys._
+import xerial.sbt.Sonatype.SonatypeKeys._
 import sbt.Keys._
 import sbt._
 import sbtbuildinfo.BuildInfoKey
@@ -106,17 +107,13 @@ class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionVa
   )
 
   lazy val publishSettings = Seq(
+    sonatypeBundleDirectory := (ThisBuild / baseDirectory).value / target.value.getName / "sonatype-staging" / (ThisBuild / version).value,
+    sonatypeSessionName := s"[sbt-sonatype] ${name.value} ${scalaVersion.value} ${version.value}",
+    publishTo := sonatypePublishToBundle.value,
     publishMavenStyle := true,
-    updateOptions := updateOptions.value
-      .withGigahorse(false), // workaround for publish fails https://github.com/sbt/sbt/issues/3570
-    publishTo := {
-      if (isSnapshot.value)
-        Some(sonatypeSnapshots)
-      else
-        Some(sonatypeStaging)
-    },
     credentials := Seq(sonatypeOssCredentials),
-    pgpPassphrase := Option(System.getenv().get("GPG_PASSPHRASE")).map(_.toCharArray)
+    pgpPassphrase := Option(System.getenv().get("PGP_PASSPHRASE")).map(_.toCharArray),
+    Global / useGpg := false
   )
 
   /** settings for tests */

@@ -11,7 +11,6 @@ stages:
   - test
   - integration
   - deploy
-  - deploy-cdh6
 
 cache:
   key: "mycachekey"
@@ -133,7 +132,7 @@ snapshot:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
-    - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
+    - "export PGP_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
     - sbt clean publishSigned
   only:
     - /^develop$/
@@ -148,27 +147,16 @@ release:
   interruptible: false
   stage: deploy
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  parallel:
+    matrix:
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6" ]
   script:
     - export WASP_FLAVOR=VANILLA2
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
-    - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
-    - sbt clean publishSigned sonatypeRelease
-  only:
-    - tags
-
-release-cdh6:
-  interruptible: false
-  stage: deploy-cdh6
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
-  script:
-    - export WASP_FLAVOR=CDH6
-    - "mkdir -p $HOME/.sbt/gpg"
-    - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
-    - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
-    - "export GPG_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
-    - sbt clean publishSigned sonatypeRelease
+    - "export PGP_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
+    - sbt clean publishSigned sonatypeBundleRelease
   only:
     - tags
 
