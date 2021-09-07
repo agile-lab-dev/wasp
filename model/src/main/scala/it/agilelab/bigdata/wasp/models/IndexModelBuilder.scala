@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.models
 
 import java.time.Instant
-
-import org.json4s.JsonAST.JObject
-import org.json4s.{CustomSerializer, Formats}
+import spray.json._
+import DefaultJsonProtocol._
+import it.agilelab.bigdata.wasp.models.IndexModelBuilder.Solr
 
 
 /**
@@ -91,6 +91,64 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
 
 }
 
+object SpraySolrProtocol extends DefaultJsonProtocol {
+  import spray.json._
+
+  implicit def typeSerializer[A]: JsonFormat[Solr.Type[A]] = new JsonFormat[Solr.Type[A]] {
+    override def read(json: JsValue): Solr.Type[A] = deserializationError("deserialization not implemented")
+
+    override def write(obj: Solr.Type[A]): JsValue = JsString(obj.name)
+  }
+
+  implicit def typeSerializerUnderscore: JsonFormat[Solr.Type[_]] = new JsonFormat[Solr.Type[_]] {
+    override def read(json: JsValue): Solr.Type[_] = deserializationError("deserialization not implemented")
+
+    override def write(obj: Solr.Type[_]): JsValue = JsString(obj.name)
+  }
+
+  implicit object missingFieldSortSerializer extends JsonFormat[Solr.SolrMissingFieldSort] {
+    override def read(json: JsValue): Solr.SolrMissingFieldSort = deserializationError("deserialization not implemented")
+
+    override def write(obj: Solr.SolrMissingFieldSort): JsValue = JsString("")
+  }
+
+  implicit val fieldSerializer: JsonFormat[Solr.Field[_]] = new JsonFormat[Solr.Field[_]] {
+    override def read(json: JsValue): Solr.Field[_] = deserializationError("deserialization not implemented")
+
+    override def write(obj: Solr.Field[_]): JsValue =
+      obj.jsonFormat.write(obj)
+  }
+
+  def fieldSerializerNonImplicit[A: JsonFormat]: JsonFormat[Solr.Field[A]] = jsonFormat(
+    Solr.Field.apply[A],
+    "name",
+    "type",
+    "defaultValue",
+    "indexed",
+    "stored",
+    "docValues",
+    "sortMissing",
+    "multiValued",
+    "omitNorms",
+    "omitTermFreqAndPositions",
+    "omitPositions",
+    "termVectors",
+    "termPositions",
+    "termOffsets",
+    "termPayloads",
+    "required",
+    "useDocValuesAsStored",
+    "large"
+  )
+
+  implicit val instantSerializer: JsonFormat[java.time.Instant] = new JsonFormat[java.time.Instant] {
+    override def read(json: JsValue): java.time.Instant = deserializationError("deserialization not implemented")
+
+    override def write(obj: java.time.Instant): JsValue =
+      JsString(obj.toString)
+  }
+}
+
 
 /**
   * Companion object of [[IndexModelBuilder]], contains the syntax.
@@ -111,7 +169,7 @@ object IndexModelBuilder {
     * @return The builder preconfigured for Elastic indices building
     */
   def forElastic: IndexModelBuilder[Stage.DataStore[DataStoreKind.Elastic], DataStoreKind.Elastic] = new
-      IndexModelBuilder("", Elastic.Schema(JObject()), Elastic.Config(), false, None, Map.empty)
+      IndexModelBuilder("", Elastic.Schema(JsObject()), Elastic.Config(), false, None, Map.empty)
 
 
   /**
@@ -167,9 +225,9 @@ object IndexModelBuilder {
     /**
       * An elastic Schema.
       *
-      * @param jsonSchema The schema as a [[JObject]]
+      * @param jsonSchema The schema as a [[JsValue]]
       */
-    case class Schema(jsonSchema: JObject) extends IndexModelBuilder.Schema[DataStoreKind.Elastic] {
+    case class Schema(jsonSchema: JsValue) extends IndexModelBuilder.Schema[DataStoreKind.Elastic] {
 
       /**
         * Augments the index model with the serialized json schema as string.
@@ -178,14 +236,7 @@ object IndexModelBuilder {
         * @return The augmented model
         */
       override def augment(model: IndexModel): IndexModel = {
-
-        import org.json4s.NoTypeHints
-        import org.json4s.native.Serialization
-
-        implicit val formats = Serialization.formats(NoTypeHints)
-
-        model.copy(schema = Some(Serialization.write(jsonSchema)))
-
+        model.copy(schema = Some(jsonSchema.toJson.toString))
       }
     }
 
@@ -211,7 +262,7 @@ object IndexModelBuilder {
         * A default configuration for [[Elastic]]
         * @return The default configuration.
         */
-      def default = Config()
+      def default: Config = Config()
     }
 
   }
@@ -262,25 +313,8 @@ object IndexModelBuilder {
         * @return The augmented model
         */
       override def augment(model: IndexModel): IndexModel = {
-
-        import org.json4s.JsonAST._
-        import org.json4s.NoTypeHints
-        import org.json4s.native.Serialization
-
-
-        class SolrTypeSerializer extends CustomSerializer[Solr.Type[_]](format => ( {
-          case _ => throw new RuntimeException("Deserialization not implemented")
-        }, {
-          case x: Solr.Type[_] => JString(x.name)
-        }
-        ))
-
-
-        implicit val formats: Formats = Serialization.formats(NoTypeHints) + new SolrTypeSerializer
-
-        model.copy(schema = Some(Serialization.write(solrFields)))
-
-
+        import it.agilelab.bigdata.wasp.models.SpraySolrProtocol.fieldSerializer
+        model.copy(schema = Some(solrFields.toJson.toString))
       }
     }
 
@@ -324,7 +358,7 @@ object IndexModelBuilder {
       * @tparam A The type contained in this solr field
       *
       */
-    case class Field[+A] private(name: String,
+    case class Field[+A: JsonFormat] private(name: String,
                                  `type`: Type[A],
                                  defaultValue: Option[A] = None,
                                  indexed: Boolean = true,
@@ -341,7 +375,12 @@ object IndexModelBuilder {
                                  termPayloads: Option[Boolean] = None,
                                  required: Boolean = false,
                                  useDocValuesAsStored: Option[Boolean] = None,
-                                 large: Option[Boolean] = None)
+                                 large: Option[Boolean] = None) {
+      lazy val jsonFormat: JsonFormat[Solr.Field[_]] = {
+        import SpraySolrProtocol._
+        fieldSerializerNonImplicit[A].asInstanceOf[JsonFormat[Solr.Field[_]]]
+      }
+    }
 
     /**
       * objects grouping factories for [[Config]]
@@ -351,7 +390,7 @@ object IndexModelBuilder {
         * A default configuration.
         * @return A default configuration.
         */
-      def default = Config()
+      def default: Config = Config()
     }
 
 

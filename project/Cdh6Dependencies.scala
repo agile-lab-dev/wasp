@@ -307,7 +307,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val coreDependencies = (akka ++
     avro4s ++
     logging ++
-    json ++
     jacksonDependencies ++
     testDependencies :+
     akkaHttp :+
@@ -340,7 +339,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val consumersSparkDependencies = schemaRegistry ++ (
     akka ++
-      json ++
       testDependencies ++
       avro4sTest ++
       hbase ++
@@ -457,7 +455,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val scalaCompilerDependencies: Seq[ModuleID] = testDependencies :+ scalaCompiler :+ scalaPool
 
   val microserviceCatalogDependencies: Seq[ModuleID] =
-    Seq(scalaTest, "net.liftweb" %% "lift-json" % "3.4.1") ++ pluginHttpSparkDependencies
+    Seq(scalaTest) ++ pluginHttpSparkDependencies
 
   val pluginParallelWriteSparkDependencies: Seq[ModuleID] =
     Seq(scalaTest) ++ pluginHttpSparkDependencies ++ Seq(delta, "org.apache.hadoop" % "hadoop-aws" % "3.0.0")

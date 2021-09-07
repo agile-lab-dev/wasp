@@ -31,9 +31,9 @@ class ParallelWriteModelParserSpec extends FunSuite {
           |"writerDetails": {
           | "writerType": "parallelWrite",
           | "saveMode": "append",
-          | "partitionBy": [],
-          |}
-          |"entityDetails": {"name":"mock"},
+          | "partitionBy": []
+          |},
+          |"entityDetails": {"name":"mock"}
           |}""".stripMargin),
       product = GenericProduct("parallelWrite", None)
     )
@@ -68,7 +68,7 @@ class ParallelWriteModelParserSpec extends FunSuite {
         """{"mode": "append",
           |"partitionBy": [],
           |"entityDetails": {"name":"mock"},
-          |"s3aEndpoint": "localhost:4566"
+          |"s3aEndpoint": "localhost:4566",
           |"deltaTableDetails": {
           | "tableName": "test_table",
           | "keys": ["pk"],
@@ -88,7 +88,7 @@ class ParallelWriteModelParserSpec extends FunSuite {
         """{"mode": "append",
           |"partitionBy": [],
           |"entityDetails": {"name":"mock"},
-          |"s3aEndpointdasd": "localhost:4566"
+          |"s3aEndpointdasd": "localhost:4566",
           |"deltaTableDetails": {
           | "tableName": "test_table",
           | "keys": ["pk"],

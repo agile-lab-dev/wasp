@@ -2,6 +2,8 @@ package it.agilelab.bigdata.wasp
 
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, TopicModel}
+import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
+
 
 /**
 	* Datastore models for use in testing code.
@@ -11,8 +13,7 @@ import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, TopicMode
 object DatastoreModelsForTesting {
 	object IndexModels {
      import it.agilelab.bigdata.wasp.models.IndexModelBuilder._
-     import org.json4s.JsonDSL._
-     import org.json4s._
+		 import spray.json._
 
      lazy val solr: IndexModel = IndexModelBuilder.forSolr
        .named("test_solr")
@@ -30,30 +31,27 @@ object DatastoreModelsForTesting {
        .schema(Elastic.Schema(indexElasticSchema))
        .build
 
-     //noinspection ScalaUnnecessaryParentheses
-     private lazy val indexElasticSchema = JObject(
-				("properties" ->
-					("id" ->
-						("type" -> "keyword")
-						) ~
-						("number" ->
-							("type" -> "integer")
-							) ~
-						("nested" ->
-							("properties" ->
-								("field1" ->
-									("type" -> "text")
-									) ~
-									("field2" ->
-										("type" -> "long")
-										) ~
-									("field3" ->
-										("type" -> "text")
-										)
-								)
-							)
+		//noinspection ScalaUnnecessaryParentheses
+		private lazy val indexElasticSchema: JsValue = JsObject(
+			"properties" -> JsObject(
+				"id" -> JsObject("type" -> JsString("keyword")),
+				"number" -> JsObject("type" -> JsString("integer")),
+				"nested" -> JsObject(
+					"properties" -> JsObject(
+						"field1" -> JsObject(
+							"type" -> JsString("text")
+						),
+						"field2" -> JsObject(
+							"type" -> JsString("long")
+						),
+						"field3" -> JsObject(
+							"type" -> JsString("text")
+						)
 					)
+				)
 			)
+		)
+
 	}
 
 	object TopicModels {
@@ -74,7 +72,7 @@ object DatastoreModelsForTesting {
 					|        }
 				""".stripMargin))
 
-		lazy val json = models.TopicModel(name = TopicModel.name(topic_name + "_json"),
+		lazy val json: TopicModel = models.TopicModel(name = TopicModel.name(topic_name + "_json"),
 		                           creationTime = System.currentTimeMillis,
 		                           partitions = 3,
 		                           replicas = 1,

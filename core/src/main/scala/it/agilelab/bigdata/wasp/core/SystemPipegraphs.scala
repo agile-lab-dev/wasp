@@ -6,6 +6,7 @@ import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.{EventPipegraphM
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
+import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
 /**
 	* Default system pipegraphs.
@@ -187,15 +188,11 @@ private[wasp] object SolrTelemetryIndexModel {
 }
 
 private[wasp] object ElasticLatencyIndexModel {
-  import org.json4s._
-
-  import org.json4s.native.JsonMethods._
-  import org.json4s.JsonDSL._
-
-  import IndexModelBuilder._
+  import spray.json._
+  import DefaultJsonProtocol._
 
   //noinspection ScalaUnnecessaryParentheses
-  private lazy val indexElasticSchema = parse(StringInput(
+  private lazy val indexElasticSchema =
     """
         {
           "properties": {
@@ -215,7 +212,7 @@ private[wasp] object ElasticLatencyIndexModel {
               "type": "date"
             }
           }
-        }"""), useBigDecimalForDouble = false).asInstanceOf[JObject]
+        }""".parseJson
 
   import IndexModelBuilder._
   val index_name = "telemetry_elastic"
@@ -270,15 +267,11 @@ private[wasp] object SolrLoggerIndex {
 }
 
 private[wasp] object ElasticLoggerIndexModel {
-  import org.json4s._
-
-  import org.json4s.native.JsonMethods._
-  import org.json4s.JsonDSL._
-
-  import IndexModelBuilder._
+  import spray.json._
+  import DefaultJsonProtocol._
 
   //noinspection ScalaUnnecessaryParentheses
-  private lazy val indexElasticSchema = parse(StringInput(
+  private lazy val indexElasticSchema =
       """
         {
           "properties": {
@@ -307,7 +300,7 @@ private[wasp] object ElasticLoggerIndexModel {
             	"type": "text"
             }
           }
-        }"""), useBigDecimalForDouble = false).asInstanceOf[JObject]
+        }""".parseJson
 
   import IndexModelBuilder._
   val index_name = "logger_elastic"

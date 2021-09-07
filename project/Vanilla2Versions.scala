@@ -54,7 +54,6 @@ class Vanilla2Versions {
   val scalaPool                 = "0.4.3"
   val commonsIO                 = "2.6"
   val okHttp                    = "2.7.5"
-  val lift                      = "3.4.1"
   val jakartaRsApi              = "2.1.5"
   val wireMock                  = "2.21.0"
   val xmlUnit                   = "1.6"

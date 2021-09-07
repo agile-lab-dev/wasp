@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
-import java.net.URI
 import java.{lang, util}
 import java.util.Properties
 
@@ -9,15 +8,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.ActorMaterializer
 import com.lucidworks.spark.util.SolrSupport
 import com.lucidworks.spark.util.SolrSupport.CloudClientParams
-import it.agilelab.bigdata.wasp.core.WaspSystem.servicesTimeout
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.SolrConfigModel
-import org.apache.http.HttpStatus
 import org.apache.http.client.HttpClient
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.StringEntity
-import org.apache.http.util.EntityUtils
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.{CloudSolrClient, HttpClientUtil, Krb5HttpClientBuilder}
 import org.apache.solr.client.solrj.request.schema.SchemaRequest
@@ -26,8 +19,7 @@ import org.apache.solr.client.solrj.response.{CollectionAdminResponse, ConfigSet
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.cloud.{ClusterState, ZkStateReader}
 import org.apache.solr.common.params.MapSolrParams
-import org.json4s.{CustomSerializer, Formats}
-import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat}
+import spray.json.DefaultJsonProtocol
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -97,7 +89,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
     true
   }
 
-  override def postStop() = {
+  override def postStop(): Unit = {
     if (solrServer != null)
       solrServer.close()
 
@@ -105,7 +97,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
     logger.info("Solr - client stopped")
   }
 
-  private def call[T <: SolrAdminMessage](message: T, f: T => Any) = {
+  private def call[T <: SolrAdminMessage](message: T, f: T => Any): Unit = {
     val result = f(message)
     logger.info(message + ": " + result)
     sender() ! result

@@ -1,16 +1,11 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder}
+import spray.json.{JsObject, JsString, JsValue}
+import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
-import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 
 private[wasp] object TestIndexModel {
-
-  import org.json4s._
-
-  import org.json4s.native.JsonMethods._
-  import org.json4s.JsonDSL._
-
   import IndexModelBuilder._
 
 
@@ -32,33 +27,27 @@ private[wasp] object TestIndexModel {
                                                   .build
 
 
-  //noinspection ScalaUnnecessaryParentheses
-  private lazy val indexElasticSchema = JObject(
-    ("properties" ->
-      ("id" ->
-        ("type" -> "keyword")
-        ) ~
-      ("number" ->
-        ("type" -> "integer")
-        ) ~
-      ("nested" ->
-        ("properties" ->
-          ("field1" ->
-            ("type" -> "text")
-          ) ~
-          ("field2" ->
-            ("type" -> "long")
-          ) ~
-          ("field3" ->
-            ("type" -> "text")
+  private lazy val indexElasticSchema: JsValue = JsObject(
+    "properties" -> JsObject(
+      "id" -> JsObject("type" -> JsString("keyword")),
+      "number" -> JsObject("type" -> JsString("integer")),
+      "nested" -> JsObject(
+        "properties" -> JsObject(
+          "field1" -> JsObject(
+            "type" -> JsString("text")
+          ),
+          "field2" -> JsObject(
+            "type" -> JsString("long")
+          ),
+          "field3" -> JsObject(
+            "type" -> JsString("text")
           )
         )
       )
     )
   )
 
-
   def main(args: Array[String]): Unit = {
-    println(pretty(render(indexElasticSchema)))
+    println(indexElasticSchema.prettyPrint)
   }
 }

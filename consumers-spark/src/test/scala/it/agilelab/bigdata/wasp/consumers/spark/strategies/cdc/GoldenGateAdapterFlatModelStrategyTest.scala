@@ -5,8 +5,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc.table.{OrderTable
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import org.apache.avro.Schema
-import org.json4s.DefaultFormats
-import org.json4s.native.JsonMethods
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers, TryValues}
 
 object GoldenGateAvroProvider {
@@ -163,7 +161,14 @@ class GoldenGateAdapterFlatModelStrategyTest
   import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
   import spark.implicits._
 
-  implicit val jsonDefaultFormats: DefaultFormats.type = DefaultFormats
+  import spray.json._
+
+  object OrderTableGoldernGateJsonProtocol extends DefaultJsonProtocol {
+    implicit val OrderTableGoldenGateFormat: RootJsonFormat[OrderTableGoldenGate] =
+      jsonFormat14(OrderTableGoldenGate)
+  }
+  import OrderTableGoldernGateJsonProtocol._
+
   val ggStrategy                                       = new GoldenGateAdapterFlatModelStrategy()
   ggStrategy.configuration = GoldenGateAvroProvider.strategyConfig
 
@@ -232,7 +237,7 @@ class GoldenGateAdapterFlatModelStrategyTest
 
   it should "fail if no configuration is provided" in {
     val insertObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.insertMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.insertMessage().parseJson.convertTo[OrderTableGoldenGate]
 
     val df = Seq(insertObject).toDF()
 
@@ -257,7 +262,7 @@ class GoldenGateAdapterFlatModelStrategyTest
 
   it should "correctly translate the insert operation" in {
     val insertObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.insertMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.insertMessage().parseJson.convertTo[OrderTableGoldenGate]
 
     val df = Seq(insertObject).toDF()
 
@@ -297,7 +302,7 @@ class GoldenGateAdapterFlatModelStrategyTest
 
   it should "correctly translate the update operation" in {
     val updateObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.updateMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.updateMessage().parseJson.convertTo[OrderTableGoldenGate]
 
     val df = Seq(updateObject).toDF()
 
@@ -338,7 +343,7 @@ class GoldenGateAdapterFlatModelStrategyTest
   it should "fail while translate the truncate operation" in {
     import scala.util.{Failure, Try}
     val truncateObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.truncateMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.truncateMessage().parseJson.convertTo[OrderTableGoldenGate]
 
     val df = Seq(truncateObject).toDF()
 
@@ -353,11 +358,11 @@ class GoldenGateAdapterFlatModelStrategyTest
 
   it should "correctly translate more operation together" in {
     val insertObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.insertMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.insertMessage().parseJson.convertTo[OrderTableGoldenGate]
     val updateObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.updateMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.updateMessage().parseJson.convertTo[OrderTableGoldenGate]
     val deleteObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.deleteMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.deleteMessage().parseJson.convertTo[OrderTableGoldenGate]
 
     val df = Seq(insertObject, updateObject, deleteObject).toDF()
 
@@ -377,11 +382,11 @@ class GoldenGateAdapterFlatModelStrategyTest
   it should "translate a dataframe into an object table" in {
 
     val insertObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.insertMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.insertMessage().parseJson.convertTo[OrderTableGoldenGate]
     val updateObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.updateMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.updateMessage().parseJson.convertTo[OrderTableGoldenGate]
     val deleteObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.deleteMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.deleteMessage().parseJson.convertTo[OrderTableGoldenGate]
 
     val df = Seq(insertObject, updateObject, deleteObject).toDF()
 
@@ -403,11 +408,11 @@ class GoldenGateAdapterFlatModelStrategyTest
   it should "translate a dataframe into a monad called Mutation table that contains the inner table" in {
 
     val insertObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.insertMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.insertMessage().parseJson.convertTo[OrderTableGoldenGate]
     val updateObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.updateMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.updateMessage().parseJson.convertTo[OrderTableGoldenGate]
     val deleteObject: OrderTableGoldenGate =
-      JsonMethods.parse(GoldenGateAvroProvider.deleteMessage()).extract[OrderTableGoldenGate]
+      GoldenGateAvroProvider.deleteMessage().parseJson.convertTo[OrderTableGoldenGate]
 
     val df = Seq(insertObject, updateObject, deleteObject).toDF()
 

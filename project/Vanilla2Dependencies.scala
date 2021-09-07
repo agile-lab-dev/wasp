@@ -40,7 +40,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val nifiStateless      = "org.apache.nifi" % "nifi-stateless" % versions.nifi % Provided exclude exclusions.javaxRsExclude
   lazy val joptSimpleTests    = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
   lazy val jettySecurity      = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
-  lazy val liftJson           = "net.liftweb" %% "lift-json" % versions.lift
   lazy val avro4sTest         = Seq(avro4sCore % Test, avro4sJson % Test, darwinMockConnector % Test)
 
   lazy val _pluginKafkaSparkDependencies: Seq[ModuleID] = spark ++ Seq(
@@ -62,7 +61,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   override val coreDependencies: Seq[ModuleID] = (akka ++
     avro4s ++
     logging ++
-    json ++
     testDependencies ++ Seq(
     akkaHttp,
     akkaHttpSpray,
@@ -99,7 +97,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val consumersSparkDependencies: Seq[ModuleID] = schemaRegistry ++ (
     akka ++
-      json ++
       testDependencies ++
       avro4sTest ++
       hbase2 ++ // maybe remove this, we need to refactor the gdpr part for hbase
@@ -202,7 +199,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     Seq(scalaTest) ++ pluginHttpSparkDependencies ++ Seq(delta, hadoopAWS)
 
   override val microserviceCatalogDependencies: Seq[ModuleID] =
-    Seq(scalaTest, liftJson) ++ pluginHttpSparkDependencies
+    Seq(scalaTest) ++ pluginHttpSparkDependencies
 
   override val yarnAuthHdfsDependencies: Seq[ModuleID] = Seq(scalaTest, sparkYarn, hadoopCommon)
 

@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.models.editor
 
 import it.agilelab.bigdata.wasp.models.RawModel
-import org.json4s.JObject
 import spray.json.JsObject
 
 /**

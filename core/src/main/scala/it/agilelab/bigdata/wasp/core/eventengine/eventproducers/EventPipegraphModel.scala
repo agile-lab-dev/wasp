@@ -5,6 +5,7 @@ import it.agilelab.bigdata.wasp.core.eventengine.settings.{EventPipegraphSetting
 import it.agilelab.bigdata.wasp.core.eventengine.{EventReaderModelFactory, EventTopicModelFactory}
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, MultiTopicModel, PipegraphModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
 /**
   * EventPipegraph is a System pipegraph which produces Event objects.

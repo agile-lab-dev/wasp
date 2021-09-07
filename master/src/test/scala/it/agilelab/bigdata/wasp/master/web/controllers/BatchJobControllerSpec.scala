@@ -2,17 +2,16 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 
 import java.util.UUID
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.ActorMaterializer
 import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.models.IndexModelBuilder.Solr
 import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobInstanceModel, BatchJobModel, IndexModel, IndexModelBuilder, JobStatus, LegacyStreamingETLModel, RawModel, ReaderModel, StrategyModel, WriterModel}
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 import org.scalatest.{FlatSpec, Matchers}
-import spray.json.{DefaultJsonProtocol, JsObject, JsString, JsValue, JsonFormat, JsonParser, RootJsonFormat}
+import spray.json.{JsObject, JsString, JsonFormat, RootJsonFormat}
+import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
+
 
 class MockBatchJobService extends BatchJobService {
 

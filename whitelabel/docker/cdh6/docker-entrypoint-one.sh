@@ -31,6 +31,13 @@ service kafka-server start
 service solr-server start
 service mongod start
 
+while [ true ]
+do
+if [ "$(hdfs dfsadmin -safemode get | awk '{print $NF}')" = "OFF" ]; then
+    break
+fi
+done
+
 hdfs dfs -copyFromLocal /code/single/lib/it.agilelab.wasp-spark-telemetry-plugin-*.jar /user/root/spark2/lib
 hdfs dfs -copyFromLocal /code/single/lib/it.agilelab.wasp-spark-nifi-plugin-*.jar /user/root/spark2/lib
 hdfs dfs -copyFromLocal /code/single/lib/it.agilelab.wasp-spark-nifi-plugin-bridge-*.jar /user/root/nifi/stateless
@@ -43,8 +50,8 @@ hdfs dfs -copyFromLocal /code/single/lib/it.agilelab.wasp-spark-nifi-plugin-brid
 export HADOOP_CONF_DIR="/etc/hadoop/conf:/etc/hbase/conf",
 export HOSTNAME=$HOSTNAME
 
-export WASP_HOME=/code/single/
-${WASP_HOME}/bin/wasp-whitelabel-singlenode \
+export WASP_HOME=/code/single
+${WASP_HOME}/bin/wasp-whitelabel-singlonode \
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 \
 -J-Xmx1g -J-Xms512m \
 -Dlog4j.configurationFile=file:///log4j2.properties \

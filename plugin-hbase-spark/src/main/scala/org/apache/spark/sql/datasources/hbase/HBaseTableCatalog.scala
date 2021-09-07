@@ -24,7 +24,8 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.types._
-import org.json4s.jackson.JsonMethods._
+import spray.json._
+import DefaultJsonProtocol._
 import scala.util.matching.Regex
 
 import scala.collection.mutable
@@ -251,7 +252,12 @@ object HBaseTableCatalog {
     val parameters = convert(params)
     //  println(jString)
     val jString = parameters(tableCatalog)
-    val map = parse(jString).values.asInstanceOf[Map[String, _]]
+
+    val map = jString
+      .parseJson
+      .convertTo[scala.collection.immutable.Map[String, String]]
+      .asInstanceOf[Map[String, _]]
+
     val tableMeta = map.get(table).get.asInstanceOf[Map[String, _]]
     val nSpace = tableMeta.get(nameSpace).getOrElse("default").asInstanceOf[String]
     val tName = tableMeta.get(tableName).get.asInstanceOf[String]

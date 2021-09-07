@@ -1,15 +1,7 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.example.iot
 
-import java.time.{ZoneOffset, ZonedDateTime}
-import java.time.format.DateTimeFormatter
-import java.util.{Date, UUID}
-
-import com.sksamuel.avro4s.AvroSchema
-import it.agilelab.bigdata.wasp.core.utils.JsonConverter
-import it.agilelab.bigdata.wasp.models.IndexModelBuilder.Solr
-import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, TopicModel}
-
-import scala.util.Random
+import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder}
+import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
 object IoTIndustrialPlantIndexModel {
 

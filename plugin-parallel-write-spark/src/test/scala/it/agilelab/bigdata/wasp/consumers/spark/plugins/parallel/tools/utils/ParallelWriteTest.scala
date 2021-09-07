@@ -40,7 +40,7 @@ trait ParallelWriteTest {
                  |            "secretKey": "WritesecretKey",
                  |            "sessionToken": "WritesessionToken"
                  |        }
-                 |    },
+                 |    }
                  |}""".stripMargin)
             response
           case _ =>

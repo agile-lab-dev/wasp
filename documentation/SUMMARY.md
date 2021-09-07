@@ -12,6 +12,7 @@
     * [Operations](ops.md)
     * [Monitoring](monitoring.md)
     * [Configuration](configuration.md)
+    * [Testing](testing.md)
     * [Troubleshooting](troubleshooting.md)
     * [HBase Writer](hbase_writer_dynamic_fields.md)
     * [Spark checkpoint directory](spark-structured-streaming-checkpointing.md)
