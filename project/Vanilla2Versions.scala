@@ -1,5 +1,5 @@
 class Vanilla2Versions {
-  val akka                      = "2.4.19" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
+  val akka                      = "2.4.20" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
   val akkaHttp                  = "10.0.9" // keep in sync with akka
   val akkaKryo                  = "0.5.0"
   val apacheCommonsLang3Version = "3.4"
