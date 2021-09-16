@@ -250,9 +250,10 @@ trait ActivationSteps {
           newStrategy
         } else {
           val strategy = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
+          strategy.configuration = conf
           strategy match {
             case enrichmentStrategy: EnrichmentStrategy => enrichmentStrategy.enricherConfig = pipegraph.enrichmentSources
-            case _ => strategy.configuration = conf
+            case _ =>
           }
           strategy
         }
