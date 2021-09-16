@@ -1,6 +1,9 @@
 ![WASP_logo](documentation/icons/WASP_logo.jpg)
 
-# WASP - Wide Analytics Streaming Platform
+# <a href="https://agilefactory.gitlab.io/Agile.Wasp2/">WASP</a> - Wide Analytics Streaming Platform
+
+**Official documentation website** : [Wasp documentation](https://agilefactory.gitlab.io/Agile.Wasp2/)
+
 
 [![Join the chat at https://gitter.im/agile-lab-dev/wasp](https://badges.gitter.im/agile-lab-dev/wasp.svg)](https://gitter.im/agile-lab-dev/wasp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
