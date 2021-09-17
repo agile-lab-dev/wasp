@@ -35,7 +35,7 @@ case class HttpBlImpl(waspDB: WaspMongoDB) extends HttpBL {
     waspDB.insertIfNotExists[HttpModel](HttpModel)
 
   override def upsert(HttpModel: HttpModel): Unit =
-    waspDB.insert[HttpModel](HttpModel)
+    waspDB.upsert[HttpModel](HttpModel)
 
   override def getAll(): Seq[HttpModel] = waspDB.getAllRaw[HttpModel]().map(factory)
 }
