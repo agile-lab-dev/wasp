@@ -6,11 +6,13 @@ import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.models.{HttpCompression, HttpModel}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.streaming.MemoryStream
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, StreamingQueryException}
 import org.scalatest.FunSuite
 
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{CountDownLatch, TimeUnit}
+import scala.collection.JavaConverters._
 
 class HttpWaspWriterSpec extends FunSuite with SparkSuite {
   test("Test with header, StringType value and response code equals to 200") {
@@ -263,4 +265,88 @@ class HttpWaspWriterSpec extends FunSuite with SparkSuite {
             new MockResponse().setResponseCode(404)
         }
     }
+
+  test("prepareDF passing an unsupported datatype as header column") {
+    val httpModel = HttpModel(
+      name = "name",
+      url = s"http://localhost/post-test",
+      method = "POST",
+      headersFieldName = Some("headers"),
+      valueFieldsNames = List("values"),
+      compression = HttpCompression.Disabled,
+      mediaType = "text/plain",
+      logBody = true,
+      structured = true
+    )
+    import spark.implicits._
+    val target = new HttpWaspWriter(httpModel)
+    intercept[RuntimeException] {
+      target.prepareDF(
+        spark
+          .createDataset(
+            Seq(3 -> Array((1, 2, 3), (1, 3, 4), (4, 5, 4)))
+          )
+          .toDF()
+          .select(col("_1").as("values"), col("_2").as("headers"))
+      )
+    }
+  }
+
+  test("prepareDF passing an array of struct as header column") {
+    val httpModel = HttpModel(
+      name = "name",
+      url = s"http://localhost/post-test",
+      method = "POST",
+      headersFieldName = Some("headers"),
+      valueFieldsNames = List("values"),
+      compression = HttpCompression.Disabled,
+      mediaType = "text/plain",
+      logBody = true,
+      structured = true
+    )
+    import spark.implicits._
+    val target = new HttpWaspWriter(httpModel)
+    val result = target
+      .prepareDF(
+        spark
+          .createDataset(
+            Seq(3 -> Array(KafkaMetadataHeader("k", "v".getBytes(StandardCharsets.UTF_8))))
+          )
+          .toDF()
+          .select(col("_1").as("values"), col("_2").as("headers"))
+      )
+      .first()
+    assert(result.getJavaMap[String, String](0).asScala === Map("k" -> "v"))
+    assert(new String(result.getAs[Array[Byte]](1), StandardCharsets.UTF_8) === """{"values":3}""")
+  }
+
+  test("prepareDF passing a map with wrong inner types") {
+    val httpModel = HttpModel(
+      name = "name",
+      url = s"http://localhost/post-test",
+      method = "POST",
+      headersFieldName = Some("headers"),
+      valueFieldsNames = List("values"),
+      compression = HttpCompression.Disabled,
+      mediaType = "text/plain",
+      logBody = true,
+      structured = true
+    )
+    import spark.implicits._
+    val target = new HttpWaspWriter(httpModel)
+    val result = target
+      .prepareDF(
+        spark
+          .createDataset(
+            Seq(3 -> Map(3 -> 4, 7 -> 8))
+          )
+          .toDF()
+          .select(col("_1").as("values"), col("_2").as("headers"))
+      )
+      .first()
+    assert(result.getJavaMap[String, String](0).asScala === Map("3" -> "4", "7" -> "8"))
+    assert(new String(result.getAs[Array[Byte]](1), StandardCharsets.UTF_8) === """{"values":3}""")
+  }
 }
+
+case class KafkaMetadataHeader(headerKey: String, headerValue: Array[Byte])
