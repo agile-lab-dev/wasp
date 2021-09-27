@@ -83,7 +83,7 @@ case class Field(
     sType.map(CatalystSqlParser.parseDataType).getOrElse {
       schema.map { x =>
         SchemaConverters.toSqlType(x).dataType
-      }.get
+      }.getOrElse(throw new RuntimeException(s"Cannot find dataType for $colName"))
     }
   }
 
@@ -250,25 +250,34 @@ object HBaseTableCatalog {
     */
   def apply(params: Map[String, String]): HBaseTableCatalog = {
     val parameters = convert(params)
-    //  println(jString)
     val jString = parameters(tableCatalog)
 
     val map = jString
       .parseJson
-      .convertTo[scala.collection.immutable.Map[String, String]]
-      .asInstanceOf[Map[String, _]]
+      .convertTo[scala.collection.immutable.Map[String, JsValue]]
 
-    val tableMeta = map.get(table).get.asInstanceOf[Map[String, _]]
-    val nSpace = tableMeta.get(nameSpace).getOrElse("default").asInstanceOf[String]
-    val tName = tableMeta.get(tableName).get.asInstanceOf[String]
-    val cIter = map.get(columns).get.asInstanceOf[Map[String, Map[String, String]]].toIterator
+    val tableMeta = map.get(table)
+      .map(_.convertTo[Map[String, JsValue]])
+      .getOrElse(throw new RuntimeException(s"Cannot find $table field in $jString"))
+
+    val tName = tableMeta.get(tableName).map(_.convertTo[String])
+      .getOrElse(throw new RuntimeException(s"Cannot find field $table.$tableName in $jString"))
+    val nSpace = tableMeta.get(nameSpace).map(_.convertTo[String])
+      .getOrElse("default")
+
+    val cIter = map
+      .get(columns)
+      .map(_.convertTo[Map[String, Map[String, String]]])
+      .getOrElse(throw new RuntimeException(s"Cannot find field $columns in $jString"))
+      .toIterator
+
     val schemaMap = mutable.HashMap.empty[String, Field]
     val clusteringFieldsMap = mutable.HashMap.empty[String, Seq[String]]
     cIter.foreach { case (name, column) =>
       clusteringRegex.findFirstIn(name) match {
         case Some(_) =>
           //Save clustering informations
-          if(column.get(cf).isEmpty){
+          if(!column.contains(cf)){
             throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
           }
           val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
@@ -289,7 +298,7 @@ object HBaseTableCatalog {
           val len = column.get(length).map(_.toInt).getOrElse(-1)
           val sAvro = column.get(avro).map(parameters(_))
           val f = Field(name, column.getOrElse(cf, rowKey),
-            column.get(col).get,
+            column(col),
             column.get(`type`),
             sAvro, sd, len)
           schemaMap.+=((name, f))
@@ -310,7 +319,7 @@ object HBaseTableCatalog {
       }
     })
 
-    val rKey = RowKey(map.get(rowKey).get.asInstanceOf[String])
+    val rKey = RowKey(map.get(rowKey).map(_.convertTo[String]).get)
 
     HBaseTableCatalog(nSpace, tName, rKey, SchemaMap(schemaMap), clusteringFieldsMap.toMap, parameters)
   }
