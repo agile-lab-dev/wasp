@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka
 
-import java.util.Date
-
+import java.util.{Date, UUID}
 import akka.actor.{Actor, ActorRef, Props}
 import it.agilelab.bigdata.wasp.core.kafka.WaspKafkaWriter
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -24,6 +23,9 @@ object KafkaCheckOffsetsGuardian {
     )
     kafkaProps.setProperty("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
     kafkaProps.setProperty("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+    if (kafkaProps.getProperty("group.id") == null){
+      kafkaProps.put("group.id", UUID.randomUUID().toString)
+    }
 
     val childActorFactory: String => Props =
       (topicName: String) => Props(new KafkaCheckOffsetsActor(topicName, kafkaProps))
