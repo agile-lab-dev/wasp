@@ -1,7 +1,10 @@
 package it.agilelab.bigdata.wasp.repository.mongo.bl
 
-import it.agilelab.bigdata.wasp.models.{HttpModel, HttpCompression}
+import it.agilelab.bigdata.wasp.models.{HttpCompression, HttpModel}
 import it.agilelab.bigdata.wasp.repository.core.bl.HttpBL
+import it.agilelab.bigdata.wasp.repository.core.dbModels.HttpDBModel
+import it.agilelab.bigdata.wasp.repository.core.mappers.HttpDBModelMapperSelector.applyMap
+import it.agilelab.bigdata.wasp.repository.core.mappers.HttpMapperV1.fromModelToDBModel
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 
@@ -24,18 +27,19 @@ case class HttpBlImpl(waspDB: WaspMongoDB) extends HttpBL {
 
   def getByName(name: String): Option[HttpModel] = {
     waspDB
-      .getDocumentByFieldRaw[HttpModel]("name", new BsonString(name))
-      .map(factory)
+      .getDocumentByField[HttpDBModel]("name", new BsonString(name))
+      .map(applyMap)
   }
 
   override def persist(HttpModel: HttpModel): Unit =
-    waspDB.insert[HttpModel](HttpModel)
+    waspDB.insert[HttpDBModel](fromModelToDBModel(HttpModel))
 
   override def insertIfNotExists(HttpModel: HttpModel): Unit =
-    waspDB.insertIfNotExists[HttpModel](HttpModel)
+    waspDB.insertIfNotExists[HttpDBModel](fromModelToDBModel(HttpModel))
 
   override def upsert(HttpModel: HttpModel): Unit =
-    waspDB.upsert[HttpModel](HttpModel)
+    waspDB.upsert[HttpDBModel](fromModelToDBModel(HttpModel))
 
-  override def getAll(): Seq[HttpModel] = waspDB.getAllRaw[HttpModel]().map(factory)
+  override def getAll(): Seq[HttpModel] =
+    waspDB.getAll[HttpDBModel]().map(applyMap)
 }

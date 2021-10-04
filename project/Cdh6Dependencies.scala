@@ -16,6 +16,8 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
     "com.fasterxml.jackson.module"   % "jackson-module-scala_2.11"       % "2.10.1" force ()
   )
 
+  lazy val mongoTest          = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
+
   implicit class Exclude(module: ModuleID) {
     def log4jExclude: ModuleID =
       module excludeAll ExclusionRule("log4j")
@@ -293,9 +295,9 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   // Module dependencies
   // ===================================================================================================================
 
-  val scalaTestDependencies = Seq(scalaTest)
+  val scalaTestDependencies = Seq(scalaTest, mongoTest)
 
-  val testDependencies = Seq(akkaTestKit, akkaClusterTestKit, scalaTest)
+  val testDependencies = Seq(akkaTestKit, akkaClusterTestKit, scalaTest, mongoTest)
 
   val modelDependencies = (
     json :+

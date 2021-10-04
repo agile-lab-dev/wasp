@@ -2,33 +2,42 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.models.{ProducerModel, TopicModel}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.ProducerDBModel
+import it.agilelab.bigdata.wasp.repository.core.mappers.ProducerDBModelMapperSelector.applyMap
+import it.agilelab.bigdata.wasp.repository.core.mappers.ProducerMapperV1
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.bson.BsonBoolean
 import org.mongodb.scala.bson.BsonString
 
-class ProducerBLImp(waspDB: WaspMongoDB) extends  ProducerBL {
 
-  private def factory(p: ProducerModel) = ProducerModel(p.name, p.className, p.topicName, p.isActive, p.configuration, p.isRemote, p.isSystem)
+class ProducerBLImp(waspDB: WaspMongoDB) extends ProducerBL {
+
 
   def getByName(name: String): Option[ProducerModel] = {
-    waspDB.getDocumentByField[ProducerModel]("name", new BsonString(name)).map(factory)
+
+    waspDB.getDocumentByField[ProducerDBModel]("name", new BsonString(name))
+      .map(applyMap)
   }
 
 
   def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerModel]("isActive", new BsonBoolean(isActive)).map(factory)
+    waspDB.getAllDocumentsByField[ProducerDBModel]("isActive", new BsonBoolean(isActive))
+      .map(applyMap)
   }
 
   def getSystemProducers: Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerModel]("isSystem", new BsonBoolean(true)).map(factory)
+    waspDB.getAllDocumentsByField[ProducerDBModel]("isSystem", new BsonBoolean(true))
+      .map(applyMap)
   }
 
   def getNonSystemProducers: Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerModel]("isSystem", new BsonBoolean(false)).map(factory)
+    waspDB.getAllDocumentsByField[ProducerDBModel]("isSystem", new BsonBoolean(false))
+      .map(applyMap)
   }
 
   def getByTopicName(topicName: String): Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerModel]("topicName", BsonString(topicName)).map(factory)
+    waspDB.getAllDocumentsByField[ProducerDBModel]("topicName", BsonString(topicName))
+      .map(applyMap)
   }
 
   def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
@@ -39,16 +48,23 @@ class ProducerBLImp(waspDB: WaspMongoDB) extends  ProducerBL {
   }
 
   def getAll: Seq[ProducerModel] = {
-    waspDB.getAll[ProducerModel]().map(factory)
+    waspDB.getAll[ProducerDBModel]()
+      .map(applyMap)
+
   }
 
+  // use newest mapper
   def update(producerModel: ProducerModel): Unit = {
-    waspDB.updateByName[ProducerModel](producerModel.name, producerModel)
+    waspDB.updateByName[ProducerDBModel](producerModel.name,
+      ProducerMapperV1.fromModelToDBModel(producerModel))
   }
 
-  override def persist(producerModel: ProducerModel): Unit = waspDB.insert[ProducerModel](producerModel)
+  override def persist(producerModel: ProducerModel): Unit =
+    waspDB.insert[ProducerDBModel](ProducerMapperV1.fromModelToDBModel(producerModel))
 
-  override def insertIfNotExists(producerModel: ProducerModel): Unit = waspDB.insertIfNotExists[ProducerModel](producerModel)
+  override def insertIfNotExists(producerModel: ProducerModel): Unit =
+    waspDB.insertIfNotExists[ProducerDBModel](ProducerMapperV1.fromModelToDBModel(producerModel))
 
-  override def upsert(producerModel: ProducerModel): Unit = waspDB.upsert[ProducerModel](producerModel)
+  override def upsert(producerModel: ProducerModel): Unit =
+    waspDB.upsert[ProducerDBModel](ProducerMapperV1.fromModelToDBModel(producerModel))
 }

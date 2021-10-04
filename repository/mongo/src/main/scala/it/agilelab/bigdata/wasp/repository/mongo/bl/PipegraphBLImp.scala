@@ -3,6 +3,11 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 import it.agilelab.bigdata.wasp.repository.core.bl.{PipegraphBL, PipegraphInstanceBl}
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus}
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{PipegraphDBModel, PipegraphInstanceDBModel}
+import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphMapperV1.fromModelToDBModel
+import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphInstanceMapperV1
+import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphInstanceDBModelMapperSelector
+import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphDBModelMapperSelector.applyMap
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonInt64, BsonString}
 
@@ -10,24 +15,24 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
 
   def getByName(name: String): Option[PipegraphModel] = {
     waspDB
-      .getDocumentByField[PipegraphModel]("name", new BsonString(name))
+      .getDocumentByField[PipegraphDBModel]("name", new BsonString(name)).map(applyMap)
   }
 
 
   def getAll: Seq[PipegraphModel] = {
-    waspDB.getAll[PipegraphModel]
+    waspDB.getAll[PipegraphDBModel].map(applyMap)
   }
 
   def getSystemPipegraphs: Seq[PipegraphModel] = {
-    waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(true))
+    waspDB.getAllDocumentsByField[PipegraphDBModel]("isSystem", new BsonBoolean(true)).map(applyMap)
   }
 
   def getByOwner(owner: String): Seq[PipegraphModel] = {
-    waspDB.getAllDocumentsByField[PipegraphModel]("owner", new BsonString(owner))
+    waspDB.getAllDocumentsByField[PipegraphDBModel]("owner", new BsonString(owner)).map(applyMap)
   }
 
   def getNonSystemPipegraphs: Seq[PipegraphModel] = {
-    waspDB.getAllDocumentsByField[PipegraphModel]("isSystem", new BsonBoolean(false))
+    waspDB.getAllDocumentsByField[PipegraphDBModel]("isSystem", new BsonBoolean(false)).map(applyMap)
   }
 
   def getActivePipegraphs(): Seq[PipegraphModel] = {
@@ -40,84 +45,51 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
   }
 
   def update(pipegraphModel: PipegraphModel): Unit = {
-    waspDB.updateByName[PipegraphModel](pipegraphModel.name, pipegraphModel)
+    waspDB.updateByName[PipegraphDBModel](pipegraphModel.name, fromModelToDBModel(pipegraphModel))
   }
 
   def insert(pipegraph: PipegraphModel): Unit = {
-    waspDB.insertIfNotExists[PipegraphModel](pipegraph)
+    waspDB.insertIfNotExists[PipegraphDBModel](fromModelToDBModel(pipegraph))
   }
 
-  override def insertIfNotExists(pipegraph: PipegraphModel): Unit = waspDB.insertIfNotExists[PipegraphModel](pipegraph)
+  override def insertIfNotExists(pipegraph: PipegraphModel): Unit =
+    waspDB.insertIfNotExists[PipegraphDBModel](fromModelToDBModel(pipegraph))
 
   def upsert(pipegraph: PipegraphModel): Unit = {
-    waspDB.upsert[PipegraphModel](pipegraph)
+    waspDB.upsert[PipegraphDBModel](fromModelToDBModel(pipegraph))
   }
 
   def deleteByName(name: String): Unit = {
-    waspDB.deleteByName[PipegraphModel](name)
+    waspDB.deleteByName[PipegraphDBModel](name)
   }
 
   lazy val instances: PipegraphInstanceBl = new PipegraphInstanceBlImp(waspDB)
 
 }
 
+// TODO: move everything to mongo level encoder/decoder
+
 class PipegraphInstanceBlImp(waspDB: WaspMongoDB) extends PipegraphInstanceBl {
   override def update(instance: PipegraphInstanceModel): PipegraphInstanceModel = {
-    waspDB.updateByNameRaw[PipegraphInstanceModel](instance.name, encode(instance))
+    waspDB.updateByName[PipegraphInstanceDBModel](instance.name, PipegraphInstanceMapperV1.fromModelToDBModel(instance))
     instance
   }
 
-  private def encode(instance: PipegraphInstanceModel): BsonDocument = {
-    val document = BsonDocument()
-      .append("name", BsonString(instance.name))
-      .append("instanceOf", BsonString(instance.instanceOf))
-      .append("startTimestamp", BsonInt64(instance.startTimestamp))
-      .append("currentStatusTimestamp", BsonInt64(instance.currentStatusTimestamp))
-      .append("status", BsonString(instance.status.toString))
-
-    val withError = instance.error
-      .map(error => document.append("error", BsonString(error)))
-      .getOrElse(document)
-
-    val withExecuted = instance.executedByNode
-      .map(node => document.append("executedByNode", BsonString(node)))
-      .getOrElse(withError)
-
-    val withPeer = instance.peerActor
-      .map(peer => document.append("peerActor", BsonString(peer)))
-      .getOrElse(withExecuted)
-
-    withPeer
-  }
-
   override def all(): Seq[PipegraphInstanceModel] =
-    waspDB.getAllRaw[PipegraphInstanceModel].map(decode)
+    waspDB.getAll[PipegraphInstanceDBModel].map(PipegraphInstanceDBModelMapperSelector.applyMap)
 
-  private def decode(bsonDocument: BsonDocument): PipegraphInstanceModel =
-    PipegraphInstanceModel(
-      name = bsonDocument.get("name").asString().getValue,
-      instanceOf = bsonDocument.get("instanceOf").asString().getValue,
-      startTimestamp = bsonDocument.get("startTimestamp").asInt64().getValue,
-      currentStatusTimestamp = bsonDocument.get("currentStatusTimestamp").asInt64().getValue,
-      status = PipegraphStatus.withName(bsonDocument.get("status").asString().getValue),
-      executedByNode =
-        if (bsonDocument.containsKey("executedByNode")) Some(bsonDocument.get("executedByNode").asString().getValue)
-        else None,
-      peerActor =
-        if (bsonDocument.containsKey("peerActor")) Some(bsonDocument.get("peerActor").asString().getValue)
-        else None,
-      error = if (bsonDocument.containsKey("error")) Some(bsonDocument.get("error").asString().getValue) else None
-    )
 
   override def instancesOf(name: String): Seq[PipegraphInstanceModel] =
-    waspDB.getAllDocumentsByFieldRaw[PipegraphInstanceModel]("instanceOf", BsonString(name)).map(decode)
+    waspDB.getAllDocumentsByField[PipegraphInstanceDBModel]("instanceOf", BsonString(name))
+      .map(PipegraphInstanceDBModelMapperSelector.applyMap)
 
   override def insert(instance: PipegraphInstanceModel): PipegraphInstanceModel = {
-    waspDB.insertRaw[PipegraphInstanceModel](encode(instance))
+    waspDB.insert[PipegraphInstanceDBModel](PipegraphInstanceMapperV1.fromModelToDBModel(instance))
     instance
   }
 
   override def getByName(name: String): Option[PipegraphInstanceModel] = {
-    waspDB.getDocumentByFieldRaw[PipegraphInstanceModel]("name", new BsonString(name)).map(decode)
+    waspDB.getDocumentByField[PipegraphInstanceDBModel]("name", new BsonString(name))
+      .map(PipegraphInstanceDBModelMapperSelector.applyMap)
   }
 }

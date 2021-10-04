@@ -6,16 +6,17 @@ import java.util.concurrent.TimeUnit
 import com.mongodb.ErrorCategory
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
-import it.agilelab.bigdata.wasp.repository.core.db.{RepositoriesFactory, WaspDB}
-import it.agilelab.bigdata.wasp.core.launcher.MasterCommandLineOptions
+import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, _}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils._
+import it.agilelab.bigdata.wasp.repository.core.dbModels._
 import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}
-import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, HttpCompressionCodecProvider, SubjectStrategyCodecProvider, TopicCompressionCodecProvider}
+import it.agilelab.bigdata.wasp.repository.mongo.providers.{BatchETLCodecProvider, BatchGdprETLModelCodecProvider, BatchJobInstanceDBProvider, BatchJobModelCodecProvider, DatastoreProductCodecProvider, HttpCompressionCodecProvider, PipegraphInstanceDBModelProvider, SubjectStrategyCodecProvider, TopicCompressionCodecProvider}
 import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper
+import it.agilelab.bigdata.wasp.repository.mongo.providers.VersionedRegistry._
 import org.bson.{BsonReader, BsonWriter}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
@@ -24,7 +25,7 @@ import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
-import org.mongodb.scala.gridfs.GridFSBucket
+import org.mongodb.scala.gridfs.{GridFSBucket, GridFSUploadStream}
 import org.mongodb.scala.model.Indexes
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{Completed, MongoCommandException, MongoDatabase, MongoWriteException}
@@ -81,6 +82,8 @@ trait WaspMongoDB extends MongoDBHelper with WaspDB {
   def insertIfNotExists[T <: Model](doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
   def deleteByName[T <: Model](name: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
+
+  def deleteByQuery[T <: Model](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit
 
   def updateByName[T <: Model](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
 
@@ -196,6 +199,13 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
     getDocumentByKey[T](field, value, collectionsLookupTable(typeTag.tpe))
   }
 
+//  def getDocumentByField(
+//                          field: String,
+//                          className: Class[_],
+//                          value: BsonValue): Option[Any] ={
+//    getDocumentByKey
+//  }
+
   def getDocumentByQueryParams[T <: Model](
                                             query: Map[String, BsonValue],
                                             sort: Option[BsonDocument]
@@ -260,7 +270,7 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
   }
 
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId = {
-    val uploadStreamFile = GridFSBucket(mongoDatabase).openUploadStream(file)
+    val uploadStreamFile= GridFSBucket(mongoDatabase).openUploadStream(file)
     uploadStreamFile
       .write(ByteBuffer.wrap(arrayBytes))
       .subscribe((x: Int) => None, (throwable: Throwable) => (), () => {
@@ -301,6 +311,10 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 
   override def deleteByName[T <: Model](name: String)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): Unit =
     removeDocumentFromCollection[T]("name", BsonString(name), collectionsLookupTable(typeTag.tpe))
+
+  override def deleteByQuery[T <: Model](query: Map[String, BsonValue])(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Unit = {
+    removeDocumentFromCollectionByQuery[T](BsonDocument(query), collectionsLookupTable(typeTag.tpe))
+  }
 
   override def updateByName[T <: Model](
                                          name: String,
@@ -359,37 +373,37 @@ object WaspMongoDB extends Logging {
 
   val collectionsLookupTable: Map[Type, String] = Map(
 
-    typeTag[PipegraphModel].tpe            -> pipegraphsName,
-    typeTag[ProducerModel].tpe             -> producersName,
-    typeTag[TopicModel].tpe                -> topicsName,
-    typeTag[MultiTopicModel].tpe           -> topicsName,
-    typeTag[IndexModel].tpe                -> indexesName,
-    typeTag[RawModel].tpe                  -> rawName,
-    typeTag[CdcModel].tpe                  -> cdcName,
-    typeTag[KeyValueModel].tpe             -> keyValueName,
-    typeTag[SqlSourceModel].tpe            -> sqlSourceName,
-    typeTag[BatchJobModel].tpe             -> batchjobName,
-    typeTag[MlModelOnlyInfo].tpe           -> mlModelsName,
-    typeTag[WebsocketModel].tpe            -> websocketsName,
-    typeTag[BatchSchedulerModel].tpe       -> batchSchedulersName,
-    typeTag[BatchJobInstanceModel].tpe     -> batchjobInstanceName,
-    typeTag[PipegraphInstanceModel].tpe    -> pipegraphInstanceName,
-    typeTag[KafkaConfigModel].tpe          -> configurationsName,
-    typeTag[SparkBatchConfigModel].tpe     -> configurationsName,
-    typeTag[SparkStreamingConfigModel].tpe -> configurationsName,
-    typeTag[ElasticConfigModel].tpe -> configurationsName,
-    typeTag[SolrConfigModel].tpe -> configurationsName,
-    typeTag[SolrConfigModel].tpe -> configurationsName,
-    typeTag[HBaseConfigModel].tpe -> configurationsName,
-    typeTag[JdbcConfigModel].tpe -> configurationsName,
-    typeTag[TelemetryConfigModel].tpe -> configurationsName,
-    typeTag[NifiConfigModel].tpe -> configurationsName,
-    typeTag[DocumentModel].tpe -> documentName,
-    typeTag[FreeCodeModel].tpe -> freeCodeName,
-    typeTag[ProcessGroupModel].tpe -> processGroupsName,
-    typeTag[CompilerConfigModel].tpe -> configurationsName,
-    typeTag[HttpModel].tpe -> httpName,
-    typeTag[GenericModel].tpe -> genericName
+    typeTag[PipegraphDBModel].tpe            -> pipegraphsName,
+    typeTag[ProducerDBModel].tpe             -> producersName,
+    typeTag[TopicModel].tpe                  -> topicsName,
+    typeTag[TopicDBModel].tpe                -> topicsName,
+    typeTag[MultiTopicDBModel].tpe           -> topicsName,
+    typeTag[IndexDBModel].tpe                -> indexesName,
+    typeTag[RawDBModel].tpe                  -> rawName,
+    typeTag[CdcDBModel].tpe                  -> cdcName,
+    typeTag[KeyValueDBModel].tpe             -> keyValueName,
+    typeTag[SqlSourceDBModel].tpe            -> sqlSourceName,
+    typeTag[BatchJobDBModel].tpe             -> batchjobName,
+    typeTag[MlDBModelOnlyInfo].tpe           -> mlModelsName,
+    typeTag[WebsocketDBModel].tpe            -> websocketsName,
+    typeTag[BatchSchedulerDBModel].tpe       -> batchSchedulersName,
+    typeTag[BatchJobInstanceDBModel].tpe     -> batchjobInstanceName,
+    typeTag[PipegraphInstanceDBModel].tpe    -> pipegraphInstanceName,
+    typeTag[KafkaConfigDBModel].tpe          -> configurationsName,
+    typeTag[SparkBatchConfigDBModel].tpe     -> configurationsName,
+    typeTag[SparkStreamingConfigDBModel].tpe -> configurationsName,
+    typeTag[ElasticConfigDBModel].tpe        -> configurationsName,
+    typeTag[SolrConfigDBModel].tpe           -> configurationsName,
+    typeTag[HBaseConfigDBModel].tpe          -> configurationsName,
+    typeTag[JdbcConfigDBModel].tpe           -> configurationsName,
+    typeTag[TelemetryConfigDBModel].tpe      -> configurationsName,
+    typeTag[NifiConfigDBModel].tpe           -> configurationsName,
+    typeTag[DocumentDBModel].tpe             -> documentName,
+    typeTag[FreeCodeDBModel].tpe             -> freeCodeName,
+    typeTag[ProcessGroupDBModel].tpe         -> processGroupsName,
+    typeTag[CompilerConfigDBModel].tpe       -> configurationsName,
+    typeTag[HttpDBModel].tpe                 -> httpName,
+    typeTag[GenericDBModel].tpe              -> genericName
 
   )
 
@@ -403,63 +417,37 @@ object WaspMongoDB extends Logging {
     HttpCompressionCodecProvider,
     SubjectStrategyCodecProvider,
     TypesafeConfigCodecProvider,
-    createCodecProviderIgnoreNone(classOf[ConnectionConfig]),
-    createCodecProviderIgnoreNone(classOf[BatchJobInstanceModel]),
-    createCodecProviderIgnoreNone(classOf[ZookeeperConnectionsConfig]),
-    createCodecProviderIgnoreNone(classOf[DashboardModel]),
-    createCodecProviderIgnoreNone(classOf[RTModel]),
-    createCodecProviderIgnoreNone(classOf[LegacyStreamingETLModel]),
-    createCodecProviderIgnoreNone(classOf[StreamingReaderModel]),
-    createCodecProviderIgnoreNone(classOf[StructuredStreamingETLModel]),
-    createCodecProviderIgnoreNone(classOf[PipegraphModel]),
-    createCodecProviderIgnoreNone(classOf[ProducerModel]),
-    createCodecProviderIgnoreNone(classOf[ReaderModel]),
-    createCodecProviderIgnoreNone(classOf[MlModelOnlyInfo]),
-    createCodecProviderIgnoreNone(classOf[StrategyModel]),
-    createCodecProviderIgnoreNone(classOf[WriterModel]),
-    createCodecProviderIgnoreNone(classOf[TopicModel]),
-    createCodecProviderIgnoreNone(classOf[MultiTopicModel]),
-    createCodecProviderIgnoreNone(classOf[IndexModel]),
-    createCodecProviderIgnoreNone(classOf[RawOptions]),
-    createCodecProviderIgnoreNone(classOf[RawModel]),
-    createCodecProviderIgnoreNone(classOf[CdcModel]),
-    createCodecProviderIgnoreNone(classOf[CdcOptions]),
-    createCodecProviderIgnoreNone(classOf[KeyValueOption]),
-    createCodecProviderIgnoreNone(classOf[KeyValueModel]),
-    createCodecProviderIgnoreNone(classOf[SqlSourceModel]),
-    createCodecProviderIgnoreNone(classOf[BatchJobExclusionConfig]),
-    createCodecProviderIgnoreNone(classOf[KafkaEntryConfig]),
-    createCodecProviderIgnoreNone(classOf[KafkaConfigModel]),
-    createCodecProviderIgnoreNone(classOf[SparkEntryConfig]),
-    createCodecProviderIgnoreNone(classOf[SparkDriverConfig]),
-    createCodecProviderIgnoreNone(classOf[KryoSerializerConfig]),
-    createCodecProviderIgnoreNone(classOf[SparkStreamingConfigModel]),
-    createCodecProviderIgnoreNone(classOf[SparkBatchConfigModel]),
-    createCodecProviderIgnoreNone(classOf[ElasticConfigModel]),
-    createCodecProviderIgnoreNone(classOf[SolrConfigModel]),
-    createCodecProviderIgnoreNone(classOf[HBaseEntryConfig]),
-    createCodecProviderIgnoreNone(classOf[HBaseConfigModel]),
-    createCodecProviderIgnoreNone(classOf[JdbcConnectionConfig]),
-    createCodecProviderIgnoreNone(classOf[JdbcConfigModel]),
-    createCodecProviderIgnoreNone(classOf[WebsocketModel]),
-    createCodecProviderIgnoreNone(classOf[BatchSchedulerModel]),
-    createCodecProviderIgnoreNone(classOf[JMXTelemetryConfigModel]),
-    createCodecProviderIgnoreNone(classOf[TelemetryTopicConfigModel]),
-    createCodecProviderIgnoreNone(classOf[TelemetryConfigModel]),
-    createCodecProviderIgnoreNone(classOf[NifiConfigModel]),
-    createCodecProviderIgnoreNone(classOf[DocumentModel]),
-    createCodecProviderIgnoreNone(classOf[BatchETLModel]),
-    createCodecProviderIgnoreNone(classOf[FreeCodeModel]),
-    createCodecProviderIgnoreNone(classOf[ProcessGroupModel]),
-    createCodecProviderIgnoreNone(classOf[NifiStatelessConfigModel]),
-    createCodecProviderIgnoreNone(classOf[CompilerConfigModel]),
-    createCodecProviderIgnoreNone(classOf[RetainedConfigModel]),
-    createCodecProviderIgnoreNone(classOf[SchedulingStrategyConfigModel]),
-    createCodecProviderIgnoreNone(classOf[HttpModel]),
-    createCodecProviderIgnoreNone(classOf[RestEnrichmentConfigModel]),
-    createCodecProviderIgnoreNone(classOf[RestEnrichmentSource]),
-    createCodecProviderIgnoreNone(classOf[GenericModel]),
-    createCodecProviderIgnoreNone(classOf[GenericOptions])
+    PipegraphInstanceDBModelProvider,
+    PipegraphInstanceDBModelProvider,
+    BatchJobInstanceDBProvider,
+    BatchJobModelCodecProvider,
+    DocumentProvider,
+    PipegraphProvider,
+    ProducerDBProvider,
+    TopicProvider,
+    MultiTopicProvider,
+    BatchJobProvider,
+    IndexProvider,
+    RawDBProvider,
+    KeyValueProvider,
+    SqlSourceProvider,
+    HttpProvider,
+    CdcDBProvider,
+    FreeCodeProvider,
+    GenericProvider,
+    WebsocketProvider,
+    BatchSchedulerProvider,
+    ProcessGroupProvider,
+    MlModelOnlyInfoProvider,
+    SolrConfigProvider,
+    HBaseConfigProvider,
+    KafkaConfigProvider,
+    JdbcConfigProvider,
+    TelemetryConfigProvider,
+    SparkStreamingConfigProvider,
+    SparkBatchConfigProvider,
+    NifiConfigProvider,
+    CompilerConfigProvider
   ).asJava
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(

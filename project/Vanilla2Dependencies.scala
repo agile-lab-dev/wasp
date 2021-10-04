@@ -41,6 +41,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val joptSimpleTests    = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
   lazy val jettySecurity      = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
   lazy val avro4sTest         = Seq(avro4sCore % Test, avro4sJson % Test, darwinMockConnector % Test)
+  lazy val mongoTest          = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
 
   lazy val _pluginKafkaSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     guava,
@@ -48,9 +49,9 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     scalaTest
   )
 
-  override val scalaTestDependencies: Seq[ModuleID] = Seq(scalaTest)
+  override val scalaTestDependencies: Seq[ModuleID] = Seq(scalaTest, mongoTest)
 
-  override val testDependencies: Seq[ModuleID] = Seq(akkaTestKit, akkaClusterTestKit, scalaTest)
+  override val testDependencies: Seq[ModuleID] = Seq(akkaTestKit, akkaClusterTestKit, scalaTest, mongoTest)
 
   override val modelDependencies: Seq[ModuleID] = (json ++ Seq(
     akkaHttpSpray,

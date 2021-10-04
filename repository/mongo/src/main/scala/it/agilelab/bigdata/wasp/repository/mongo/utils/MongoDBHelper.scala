@@ -96,6 +96,18 @@ private[mongo] trait MongoDBHelper extends Logging {
     logger.info(s"Removing document from collection $collection")
     val query = BsonDocument(key -> value)
 
+    try {
+      val result = getCollection(collection).deleteMany(query).results()
+      logger.info(s"Document correctly removed $result, filter: $query")
+    } catch {
+      case e: Exception =>
+        logger.error(s"Unable to delete document. Error message: ${e.getMessage} filter: $query")
+        throw e
+    }
+  }
+
+  protected def removeDocumentFromCollectionByQuery[T](query: BsonDocument, collection: String)(implicit ct: ClassTag[T]): Unit = {
+    logger.info(s"Removing document from collection $collection")
 
     try {
       val result = getCollection(collection).deleteMany(query).results()

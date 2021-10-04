@@ -2,6 +2,9 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 
 import it.agilelab.bigdata.wasp.repository.core.bl.MlModelBL
 import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
+import it.agilelab.bigdata.wasp.repository.core.dbModels.MlDBModelOnlyInfo
+import it.agilelab.bigdata.wasp.repository.core.mappers.MlDBModelMapperSelector.applyMap
+import it.agilelab.bigdata.wasp.repository.core.mappers.MlDBModelMapperV1.fromModelToDBModel
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString, BsonValue}
@@ -48,11 +51,11 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
                                   queryParams: Map[String, BsonValue],
                                   sort: Option[BsonDocument]
                                 ): Option[MlModelOnlyInfo] = {
-    waspDB.getDocumentByQueryParams[MlModelOnlyInfo](queryParams, sort)
+    waspDB.getDocumentByQueryParams[MlDBModelOnlyInfo](queryParams, sort).map(applyMap)
   }
 
   override def getAll: Seq[MlModelOnlyInfo] = {
-    waspDB.getAll[MlModelOnlyInfo]()
+    waspDB.getAll[MlDBModelOnlyInfo]().map(applyMap)
   }
 
 
@@ -64,7 +67,7 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
     }
   }
   def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
-    waspDB.insert(mlModelOnlyInfo)
+    waspDB.insert[MlDBModelOnlyInfo](fromModelToDBModel(mlModelOnlyInfo))
   }
 
 
@@ -76,16 +79,18 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
     val infoOptFuture: Option[MlModelOnlyInfo] = getMlModelOnlyInfo(name, version, timestamp)
     infoOptFuture.foreach(info => {
       if (info.modelFileId.isDefined) {
-        waspDB.deleteByName[MlModelOnlyInfo](info.name)
+        waspDB.deleteByQuery[MlDBModelOnlyInfo](Map("name" -> BsonString(info.name),
+                                                    "version" -> BsonString(info.version),
+                                                    "timestamp" -> BsonInt64(info.timestamp.get)))
         waspDB.deleteFileById(info.modelFileId.get)
-      } else {
-        waspDB.deleteByName[MlModelOnlyInfo](info.name)
       }
     })
   }
 
+
+
   def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
-    if (waspDB.updateByName[MlModelOnlyInfo](mlModelOnlyInfo.name, mlModelOnlyInfo).getMatchedCount != 1) {
+    if (waspDB.updateByName[MlDBModelOnlyInfo](mlModelOnlyInfo.name, fromModelToDBModel(mlModelOnlyInfo)).getMatchedCount != 1) {
       throw new RuntimeException(s"Model with name ${mlModelOnlyInfo.name} to update not found")
     }
   }

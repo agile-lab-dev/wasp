@@ -2,40 +2,39 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 
 import it.agilelab.bigdata.wasp.repository.core.bl.{BatchJobBL, BatchJobInstanceBL}
 import it.agilelab.bigdata.wasp.models.BatchJobModel
+import it.agilelab.bigdata.wasp.repository.core.dbModels.BatchJobDBModel
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.BsonString
+import it.agilelab.bigdata.wasp.repository.core.mappers.BatchJobModelMapperSelector.applyMap
+import it.agilelab.bigdata.wasp.repository.core.mappers.BatchJobMapperV1.fromModelToDBModel
 
 class BatchJobBLImp(waspDB: WaspMongoDB) extends BatchJobBL {
 
   val instanceBl = new BatchJobInstanceBlImp(waspDB)
 
   def deleteByName(name: String): Unit = {
-    waspDB.deleteByName(name)
+    waspDB.deleteByName[BatchJobDBModel](name)
   }
 
   def getAll: Seq[BatchJobModel] = {
-    waspDB.getAll[BatchJobModel]().map(factory)
+    waspDB.getAll[BatchJobDBModel]().map(applyMap)
   }
 
   def update(batchJobModel: BatchJobModel): Unit = {
-    waspDB.updateByName[BatchJobModel](batchJobModel.name, batchJobModel)
+    waspDB.updateByName[BatchJobDBModel](batchJobModel.name, fromModelToDBModel(batchJobModel))
   }
 
   def insert(batchJobModel: BatchJobModel): Unit = {
-    waspDB.insertIfNotExists[BatchJobModel](batchJobModel)
+    waspDB.insertIfNotExists[BatchJobDBModel](fromModelToDBModel(batchJobModel))
   }
 
   def upsert(batchJobModel: BatchJobModel): Unit = {
-    waspDB.upsert(batchJobModel)
+    waspDB.upsert[BatchJobDBModel](fromModelToDBModel(batchJobModel))
   }
 
   def getByName(name: String): Option[BatchJobModel] = {
-    waspDB.getDocumentByField[BatchJobModel]("name", new BsonString(name)).map(batchJob => {
-      factory(batchJob)
-    })
+    waspDB.getDocumentByField[BatchJobDBModel]("name", new BsonString(name)).map(applyMap)
   }
-
-  private def factory(p: BatchJobModel) = new BatchJobModel(p.name, p.description, p.owner, p.system, p.creationTime, p.etl, p.exclusivityConfig)
 
   override def instances(): BatchJobInstanceBL = instanceBl
 

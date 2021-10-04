@@ -6,7 +6,7 @@ import org.bson.codecs.{DecoderContext, EncoderContext}
 import org.bson.{BsonReader, BsonWriter}
 import org.mongodb.scala.bson.BsonDocument
 import SealedTraitCodecProvider.TYPE_FIELD
-import it.agilelab.bigdata.wasp.models.{BatchETL, BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, BatchJobModel, DataStoreConf, ReaderModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{BatchETL, BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, BatchJobModel, DataStoreConf, MlModelOnlyInfo, ReaderModel, StrategyModel, WriterModel}
 
 object BatchETLCodecProvider extends SealedTraitCodecProvider[BatchETL] {
 
@@ -69,6 +69,66 @@ object BatchGdprETLModelCodecProvider extends AbstractCodecProvider[BatchGdprETL
     writeObject(nameOf[BatchGdprETLModel](_.output), batchGdprETLModel.output, registry.get(classOf[WriterModel]))
     writer.writeString(nameOf[BatchGdprETLModel](_.group), batchGdprETLModel.group)
     writer.writeBoolean(nameOf[BatchGdprETLModel](_.isActive), batchGdprETLModel.isActive)
+
+  }
+}
+
+
+object BatchETLModelCodecProvider extends AbstractCodecProvider[BatchETLModel] {
+  override def decodeClass(registry: CodecRegistry)
+                          (implicit reader: BsonReader,
+                           decoderContext: DecoderContext): BatchETLModel = {
+    reader.readString(TYPE_FIELD)
+
+    val name = reader.readString(nameOf[BatchETLModel](_.name))
+    val inputs = readList[ReaderModel](nameOf[BatchETLModel](_.inputs), registry.get(classOf[ReaderModel]))
+    val output = readObject[WriterModel](nameOf[BatchETLModel](_.output), registry.get(classOf[WriterModel]))
+    val mlModels = readList[MlModelOnlyInfo](nameOf[BatchETLModel](_.mlModels), registry.get(classOf[MlModelOnlyInfo]))
+
+    var strategy: Option[StrategyModel] = null
+    try {
+      strategy = Some(readObject[StrategyModel](nameOf[BatchETLModel](_.strategy), registry.get(classOf[StrategyModel])))
+    }
+    catch {
+      case ex: org.bson.BsonInvalidOperationException =>
+        strategy = None
+        reader.skipValue
+    }
+
+    val kafkaAccessType = reader.readString(nameOf[BatchETLModel](_.kafkaAccessType))
+    val group = reader.readString(nameOf[BatchETLModel](_.group))
+    val isActive = reader.readBoolean(nameOf[BatchETLModel](_.isActive))
+
+    BatchETLModel(
+      name,
+      inputs,
+      output,
+      mlModels,
+      strategy,
+      kafkaAccessType,
+      group,
+      isActive
+    )
+  }
+
+  override def clazzOf: Class[BatchETLModel] = classOf[BatchETLModel]
+
+  override def encodeClass(registry: CodecRegistry, batchETLModel: BatchETLModel)
+                          (implicit writer: BsonWriter, encoderContext: EncoderContext): Unit = {
+
+    writer.writeString(TYPE_FIELD, BatchETLModel.TYPE)
+
+    writer.writeString(nameOf[BatchETLModel](_.name), batchETLModel.name)
+    writeList(nameOf[BatchETLModel](_.inputs), batchETLModel.inputs, registry.get(classOf[ReaderModel]))
+    writeObject(nameOf[BatchETLModel](_.output), batchETLModel.output, registry.get(classOf[WriterModel]))
+    writeList(nameOf[BatchETLModel](_.mlModels), batchETLModel.mlModels, registry.get(classOf[MlModelOnlyInfo]))
+    batchETLModel.strategy match {
+      case Some(x) =>  writeObject(nameOf[BatchETLModel](_.strategy), batchETLModel.strategy.get, registry.get(classOf[StrategyModel]))
+      case None => writer.writeNull(nameOf[BatchETLModel](_.strategy))
+    }
+    writer.writeString(nameOf[BatchETLModel](_.kafkaAccessType), batchETLModel.kafkaAccessType)
+    writer.writeString(nameOf[BatchETLModel](_.group), batchETLModel.group)
+    writer.writeBoolean(nameOf[BatchETLModel](_.isActive), batchETLModel.isActive)
 
   }
 }
