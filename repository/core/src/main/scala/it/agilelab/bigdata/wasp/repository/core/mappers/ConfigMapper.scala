@@ -1,14 +1,43 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
-import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, ElasticConfigModel, JdbcConfigModel, KafkaConfigModel, NifiConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{CompilerConfigDBModel, CompilerConfigDBModelV1, ElasticConfigDBModel, ElasticConfigDBModelV1, JdbcConfigDBModel, JdbcConfigDBModelV1, KafkaConfigDBModel, KafkaConfigDBModelV1, NifiConfigDBModel, NifiConfigDBModelV1, SolrConfigDBModel, SolrConfigDBModelV1, SparkBatchConfigDBModel, SparkBatchConfigDBModelV1, SparkStreamingConfigDBModel, SparkStreamingConfigDBModelV1, TelemetryConfigDBModel, TelemetryConfigDBModelV1}
+import it.agilelab.bigdata.wasp.models.configuration.{
+  CompilerConfigModel,
+  ElasticConfigModel,
+  JdbcConfigModel,
+  KafkaConfigModel,
+  NifiConfigModel,
+  SolrConfigModel,
+  SparkBatchConfigModel,
+  SparkStreamingConfigModel,
+  TelemetryConfigModel
+}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{
+  CompilerConfigDBModel,
+  CompilerConfigDBModelV1,
+  ElasticConfigDBModel,
+  ElasticConfigDBModelV1,
+  JdbcConfigDBModel,
+  JdbcConfigDBModelV1,
+  KafkaConfigDBModel,
+  KafkaConfigDBModelV1,
+  NifiConfigDBModel,
+  NifiConfigDBModelV1,
+  SolrConfigDBModel,
+  SolrConfigDBModelV1,
+  SparkBatchConfigDBModel,
+  SparkBatchConfigDBModelV1,
+  SparkStreamingConfigDBModel,
+  SparkStreamingConfigDBModelV1,
+  TelemetryConfigDBModel,
+  TelemetryConfigDBModelV1
+}
 
 object SolrConfigMapperSelector extends MapperSelector[SolrConfigModel, SolrConfigDBModel] {
   override def select(model: SolrConfigDBModel): Mapper[SolrConfigModel, SolrConfigDBModel] = {
 
     model match {
       case _: SolrConfigDBModelV1 => SolrConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                      => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
@@ -23,15 +52,14 @@ object SolrConfigMapperV1 extends Mapper[SolrConfigModel, SolrConfigDBModelV1] {
 
   override def fromModelToDBModel(p: SolrConfigModel): SolrConfigDBModelV1 = {
 
-    val values = SolrConfigModel.unapply(p).get
+    val values      = SolrConfigModel.unapply(p).get
     val makeDBModel = (SolrConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: SolrConfigDBModelV1](p: B): SolrConfigModel = {
 
-    val values = SolrConfigDBModelV1.unapply(p.asInstanceOf[SolrConfigDBModelV1]).get
+    val values       = SolrConfigDBModelV1.unapply(p.asInstanceOf[SolrConfigDBModelV1]).get
     val makeProducer = (SolrConfigModel.apply _).tupled
     makeProducer(values)
   }
@@ -42,7 +70,7 @@ object KafkaConfigMapperSelector extends MapperSelector[KafkaConfigModel, KafkaC
 
     model match {
       case _: KafkaConfigDBModelV1 => KafkaConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                       => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
@@ -57,15 +85,14 @@ object KafkaConfigMapperV1 extends Mapper[KafkaConfigModel, KafkaConfigDBModelV1
 
   override def fromModelToDBModel(p: KafkaConfigModel): KafkaConfigDBModelV1 = {
 
-    val values = KafkaConfigModel.unapply(p).get
+    val values      = KafkaConfigModel.unapply(p).get
     val makeDBModel = (KafkaConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: KafkaConfigDBModelV1](p: B): KafkaConfigModel = {
 
-    val values = KafkaConfigDBModelV1.unapply(p.asInstanceOf[KafkaConfigDBModelV1]).get
+    val values       = KafkaConfigDBModelV1.unapply(p.asInstanceOf[KafkaConfigDBModelV1]).get
     val makeProducer = (KafkaConfigModel.apply _).tupled
     makeProducer(values)
   }
@@ -75,8 +102,8 @@ object SparkBatchConfigMapperSelector extends MapperSelector[SparkBatchConfigMod
   override def select(model: SparkBatchConfigDBModel): Mapper[SparkBatchConfigModel, SparkBatchConfigDBModel] = {
 
     model match {
-      case _: KafkaConfigDBModelV1 => SparkBatchConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case _: SparkBatchConfigDBModelV1 => SparkBatchConfigMapperV1
+      case other                        => throw new Exception(s"There is no available mapper for this DBModel: $other, create one!")
     }
   }
 
@@ -91,26 +118,29 @@ object SparkBatchConfigMapperV1 extends Mapper[SparkBatchConfigModel, SparkBatch
 
   override def fromModelToDBModel(p: SparkBatchConfigModel): SparkBatchConfigDBModelV1 = {
 
-    val values = SparkBatchConfigModel.unapply(p).get
+    val values      = SparkBatchConfigModel.unapply(p).get
     val makeDBModel = (SparkBatchConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: SparkBatchConfigDBModelV1](p: B): SparkBatchConfigModel = {
 
-    val values = SparkBatchConfigDBModelV1.unapply(p.asInstanceOf[SparkBatchConfigDBModelV1]).get
+    val values       = SparkBatchConfigDBModelV1.unapply(p.asInstanceOf[SparkBatchConfigDBModelV1]).get
     val makeProducer = (SparkBatchConfigModel.apply _).tupled
     makeProducer(values)
   }
 }
 
-object SparkStreamingConfigMapperSelector extends MapperSelector[SparkStreamingConfigModel, SparkStreamingConfigDBModel] {
-  override def select(model: SparkStreamingConfigDBModel): Mapper[SparkStreamingConfigModel, SparkStreamingConfigDBModel] = {
+object SparkStreamingConfigMapperSelector
+    extends MapperSelector[SparkStreamingConfigModel, SparkStreamingConfigDBModel] {
+  override def select(
+      model: SparkStreamingConfigDBModel
+  ): Mapper[SparkStreamingConfigModel, SparkStreamingConfigDBModel] = {
 
     model match {
       case _: SparkStreamingConfigDBModelV1 => SparkStreamingConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                                => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+
     }
   }
 
@@ -125,15 +155,14 @@ object SparkStreamingConfigMapperV1 extends Mapper[SparkStreamingConfigModel, Sp
 
   override def fromModelToDBModel(p: SparkStreamingConfigModel): SparkStreamingConfigDBModelV1 = {
 
-    val values = SparkStreamingConfigModel.unapply(p).get
+    val values      = SparkStreamingConfigModel.unapply(p).get
     val makeDBModel = (SparkStreamingConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: SparkStreamingConfigDBModelV1](p: B): SparkStreamingConfigModel = {
 
-    val values = SparkStreamingConfigDBModelV1.unapply(p.asInstanceOf[SparkStreamingConfigDBModelV1]).get
+    val values       = SparkStreamingConfigDBModelV1.unapply(p.asInstanceOf[SparkStreamingConfigDBModelV1]).get
     val makeProducer = (SparkStreamingConfigModel.apply _).tupled
     makeProducer(values)
   }
@@ -144,7 +173,8 @@ object ElasticConfigMapperSelector extends MapperSelector[ElasticConfigModel, El
 
     model match {
       case _: ElasticConfigDBModelV1 => ElasticConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                         => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+
     }
   }
 
@@ -159,15 +189,14 @@ object ElasticConfigMapperV1 extends Mapper[ElasticConfigModel, ElasticConfigDBM
 
   override def fromModelToDBModel(p: ElasticConfigModel): ElasticConfigDBModelV1 = {
 
-    val values = ElasticConfigModel.unapply(p).get
+    val values      = ElasticConfigModel.unapply(p).get
     val makeDBModel = (ElasticConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: ElasticConfigDBModelV1](p: B): ElasticConfigModel = {
 
-    val values = ElasticConfigDBModelV1.unapply(p.asInstanceOf[ElasticConfigDBModelV1]).get
+    val values       = ElasticConfigDBModelV1.unapply(p.asInstanceOf[ElasticConfigDBModelV1]).get
     val makeProducer = (ElasticConfigModel.apply _).tupled
     makeProducer(values)
   }
@@ -178,7 +207,8 @@ object JdbcConfigMapperSelector extends MapperSelector[JdbcConfigModel, JdbcConf
 
     model match {
       case _: JdbcConfigDBModelV1 => JdbcConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                      => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+
     }
   }
 
@@ -193,15 +223,14 @@ object JdbcConfigMapperV1 extends Mapper[JdbcConfigModel, JdbcConfigDBModelV1] {
 
   override def fromModelToDBModel(p: JdbcConfigModel): JdbcConfigDBModelV1 = {
 
-    val values = JdbcConfigModel.unapply(p).get
+    val values      = JdbcConfigModel.unapply(p).get
     val makeDBModel = (JdbcConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: JdbcConfigDBModelV1](p: B): JdbcConfigModel = {
 
-    val values = JdbcConfigDBModelV1.unapply(p.asInstanceOf[JdbcConfigDBModelV1]).get
+    val values       = JdbcConfigDBModelV1.unapply(p.asInstanceOf[JdbcConfigDBModelV1]).get
     val makeProducer = (JdbcConfigModel.apply _).tupled
     makeProducer(values)
   }
@@ -212,7 +241,8 @@ object TelemetryConfigMapperSelector extends MapperSelector[TelemetryConfigModel
 
     model match {
       case _: TelemetryConfigDBModelV1 => TelemetryConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                           => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+
     }
   }
 
@@ -227,15 +257,14 @@ object TelemetryConfigMapperV1 extends Mapper[TelemetryConfigModel, TelemetryCon
 
   override def fromModelToDBModel(p: TelemetryConfigModel): TelemetryConfigDBModelV1 = {
 
-    val values = TelemetryConfigModel.unapply(p).get
+    val values      = TelemetryConfigModel.unapply(p).get
     val makeDBModel = (TelemetryConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: TelemetryConfigDBModelV1](p: B): TelemetryConfigModel = {
 
-    val values = TelemetryConfigDBModelV1.unapply(p.asInstanceOf[TelemetryConfigDBModelV1]).get
+    val values       = TelemetryConfigDBModelV1.unapply(p.asInstanceOf[TelemetryConfigDBModelV1]).get
     val makeProducer = (TelemetryConfigModel.apply _).tupled
     makeProducer(values)
   }
@@ -246,7 +275,8 @@ object NifiConfigMapperSelector extends MapperSelector[NifiConfigModel, NifiConf
 
     model match {
       case _: NifiConfigDBModelV1 => NifiConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                      => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+
     }
   }
 
@@ -261,15 +291,14 @@ object NifiConfigMapperV1 extends Mapper[NifiConfigModel, NifiConfigDBModelV1] {
 
   override def fromModelToDBModel(p: NifiConfigModel): NifiConfigDBModelV1 = {
 
-    val values = NifiConfigModel.unapply(p).get
+    val values      = NifiConfigModel.unapply(p).get
     val makeDBModel = (NifiConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: NifiConfigDBModelV1](p: B): NifiConfigModel = {
 
-    val values = NifiConfigDBModelV1.unapply(p.asInstanceOf[NifiConfigDBModelV1]).get
+    val values       = NifiConfigDBModelV1.unapply(p.asInstanceOf[NifiConfigDBModelV1]).get
     val makeProducer = (NifiConfigModel.apply _).tupled
     makeProducer(values)
   }
@@ -280,7 +309,8 @@ object CompilerConfigMapperSelector extends MapperSelector[CompilerConfigModel, 
 
     model match {
       case _: CompilerConfigDBModelV1 => CompilerConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                          => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+
     }
   }
 
@@ -295,15 +325,14 @@ object CompilerConfigMapperV1 extends Mapper[CompilerConfigModel, CompilerConfig
 
   override def fromModelToDBModel(p: CompilerConfigModel): CompilerConfigDBModelV1 = {
 
-    val values = CompilerConfigModel.unapply(p).get
+    val values      = CompilerConfigModel.unapply(p).get
     val makeDBModel = (CompilerConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: CompilerConfigDBModelV1](p: B): CompilerConfigModel = {
 
-    val values = CompilerConfigDBModelV1.unapply(p.asInstanceOf[CompilerConfigDBModelV1]).get
+    val values       = CompilerConfigDBModelV1.unapply(p.asInstanceOf[CompilerConfigDBModelV1]).get
     val makeProducer = (CompilerConfigModel.apply _).tupled
     makeProducer(values)
   }

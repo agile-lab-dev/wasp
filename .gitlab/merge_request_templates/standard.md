@@ -14,6 +14,10 @@ If any breaking changes were made, list how to handle them here.
 
 List any bug fixes made here.
 
+# How this feature was tested
+
+List test methodology and reference to them (i.e. unit test name)
+
 # Related issue
 
 Closes #{{issue.iid}}

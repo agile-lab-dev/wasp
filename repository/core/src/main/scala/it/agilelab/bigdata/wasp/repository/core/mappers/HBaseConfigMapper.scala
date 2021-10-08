@@ -8,7 +8,7 @@ object HBaseConfigMapperSelector extends MapperSelector[HBaseConfigModel, HBaseC
 
     model match {
       case _: HBaseConfigDBModelV1 => HBaseConfigMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                       => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
@@ -23,15 +23,14 @@ object HBaseConfigMapperV1 extends Mapper[HBaseConfigModel, HBaseConfigDBModelV1
 
   override def fromModelToDBModel(p: HBaseConfigModel): HBaseConfigDBModelV1 = {
 
-    val values = HBaseConfigModel.unapply(p).get
+    val values      = HBaseConfigModel.unapply(p).get
     val makeDBModel = (HBaseConfigDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: HBaseConfigDBModelV1](p: B): HBaseConfigModel = {
 
-    val values = HBaseConfigDBModelV1.unapply(p.asInstanceOf[HBaseConfigDBModelV1]).get
+    val values       = HBaseConfigDBModelV1.unapply(p.asInstanceOf[HBaseConfigDBModelV1]).get
     val makeProducer = (HBaseConfigModel.apply _).tupled
     makeProducer(values)
   }

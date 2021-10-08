@@ -8,7 +8,7 @@ object MultiTopicModelMapperSelector extends MapperSelector[MultiTopicModel, Mul
 
     model match {
       case _: MultiTopicDBModelV1 => MultiTopicModelMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                      => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
@@ -18,21 +18,19 @@ object MultiTopicModelMapperSelector extends MapperSelector[MultiTopicModel, Mul
   }
 }
 
-
 object MultiTopicModelMapperV1 extends Mapper[MultiTopicModel, MultiTopicDBModelV1] {
   override val version = "multiTopicV1"
 
   override def fromModelToDBModel(p: MultiTopicModel): MultiTopicDBModelV1 = {
 
-    val values = MultiTopicModel.unapply(p).get
+    val values      = MultiTopicModel.unapply(p).get
     val makeDBModel = (MultiTopicDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: MultiTopicDBModelV1](p: B): MultiTopicModel = {
 
-    val values = MultiTopicDBModelV1.unapply(p.asInstanceOf[MultiTopicDBModelV1]).get
+    val values       = MultiTopicDBModelV1.unapply(p.asInstanceOf[MultiTopicDBModelV1]).get
     val makeProducer = (MultiTopicModel.apply _).tupled
     makeProducer(values)
   }

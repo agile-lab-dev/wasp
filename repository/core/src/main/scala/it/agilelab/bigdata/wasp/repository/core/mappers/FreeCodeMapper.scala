@@ -9,7 +9,7 @@ object FreeCodeMapperSelector extends MapperSelector[FreeCodeModel, FreeCodeDBMo
 
     model match {
       case _: FreeCodeDBModelV1 => FreeCodeMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                    => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
@@ -24,18 +24,16 @@ object FreeCodeMapperV1 extends Mapper[FreeCodeModel, FreeCodeDBModelV1] {
 
   override def fromModelToDBModel(p: FreeCodeModel): FreeCodeDBModelV1 = {
 
-    val values = FreeCodeModel.unapply(p).get
+    val values      = FreeCodeModel.unapply(p).get
     val makeDBModel = (FreeCodeDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: FreeCodeDBModelV1](p: B): FreeCodeModel = {
 
-    val values = FreeCodeDBModelV1.unapply(p.asInstanceOf[FreeCodeDBModelV1]).get
+    val values       = FreeCodeDBModelV1.unapply(p.asInstanceOf[FreeCodeDBModelV1]).get
     val makeProducer = (FreeCodeModel.apply _).tupled
     makeProducer(values)
   }
 
 }
-

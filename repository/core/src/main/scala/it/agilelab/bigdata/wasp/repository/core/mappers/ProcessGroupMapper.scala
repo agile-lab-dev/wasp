@@ -3,18 +3,17 @@ package it.agilelab.bigdata.wasp.repository.core.mappers
 import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{ProcessGroupDBModel, ProcessGroupDBModelV1}
 
-object ProcessGroupMapperSelector extends MapperSelector[ProcessGroupModel, ProcessGroupDBModel]{
+object ProcessGroupMapperSelector extends MapperSelector[ProcessGroupModel, ProcessGroupDBModel] {
 
-
-  override def select(model : ProcessGroupDBModel) : Mapper[ProcessGroupModel, ProcessGroupDBModel] = {
+  override def select(model: ProcessGroupDBModel): Mapper[ProcessGroupModel, ProcessGroupDBModel] = {
 
     model match {
       case _: ProcessGroupDBModelV1 => ProcessGroupMapperV1
-      case _ => throw new Exception("There is no available mapper for this DBModel, create one!")
+      case o                        => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
-  def applyMap(p: ProcessGroupDBModel) : ProcessGroupModel = {
+  def applyMap(p: ProcessGroupDBModel): ProcessGroupModel = {
     val mapper = select(p)
     mapper.fromDBModelToModel(p)
   }
@@ -25,15 +24,14 @@ object ProcessGroupMapperV1 extends Mapper[ProcessGroupModel, ProcessGroupDBMode
 
   override def fromModelToDBModel(p: ProcessGroupModel): ProcessGroupDBModelV1 = {
 
-    val values = ProcessGroupModel.unapply(p).get
+    val values      = ProcessGroupModel.unapply(p).get
     val makeDBModel = (ProcessGroupDBModelV1.apply _).tupled
     makeDBModel(values)
   }
 
-
   override def fromDBModelToModel[B >: ProcessGroupDBModelV1](p: B): ProcessGroupModel = {
 
-    val values = ProcessGroupDBModelV1.unapply(p.asInstanceOf[ProcessGroupDBModelV1]).get
+    val values       = ProcessGroupDBModelV1.unapply(p.asInstanceOf[ProcessGroupDBModelV1]).get
     val makeProducer = (ProcessGroupModel.apply _).tupled
     makeProducer(values)
   }
