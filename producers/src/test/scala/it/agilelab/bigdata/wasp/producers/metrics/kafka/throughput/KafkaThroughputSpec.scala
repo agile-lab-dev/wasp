@@ -1,15 +1,17 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput
 
 import java.util.concurrent.TimeUnit
-
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 import it.agilelab.bigdata.wasp.producers.StartMainTask
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.Constants
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest.tagobjects.Retryable
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpecLike, Matchers, Retries}
 
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
 import scala.concurrent.duration.FiniteDuration
 
 class KafkaThroughputSpec
@@ -25,14 +27,24 @@ class KafkaThroughputSpec
     with ImplicitSender
     with FlatSpecLike
     with Matchers
-    with BeforeAndAfterAll {
+    with BeforeAndAfterAll
+    with BeforeAndAfterEach
+    with Retries {
+
+  override def withFixture(test: NoArgTest) = {
+    if (isRetryable(test))
+      withRetry { super.withFixture(test) } else
+      super.withFixture(test)
+  }
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  it should "correctly start and stop all the actors and output a correct throughput through epocs" in {
-    val throughputGuardian = system.actorOf(Props(new TestKafkaThroughputGuardian), "TestKafkaThroughputGuardian")
+  val throughputGuardianRef: AtomicReference[ActorRef] = new AtomicReference[ActorRef]()
+
+  it should "correctly start and stop all the actors and output a correct throughput through epocs" taggedAs (Retryable) in {
+    val throughputGuardian = throughputGuardianRef.get()
     throughputGuardian ! Start
     throughputGuardian ! StartMainTask
     Constants.testThroughputActor = testActor
@@ -56,5 +68,20 @@ class KafkaThroughputSpec
     expectMsg("0:24")
     throughputGuardian ! Stop
     expectNoMsg()
+  }
+
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
+    throughputGuardianRef.compareAndSet(null, system.actorOf(Props(new TestKafkaThroughputGuardian), "TestKafkaThroughputGuardian"))
+  }
+
+  override protected def afterEach(): Unit = {
+    throughputGuardianRef.getAndUpdate(new UnaryOperator[ActorRef] {
+      override def apply(t: ActorRef): ActorRef = {
+        t ! Stop
+        null
+      }
+    })
+    super.afterEach()
   }
 }
