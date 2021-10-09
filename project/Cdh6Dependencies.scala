@@ -250,7 +250,8 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val avro4s = Seq(avro4sCore, avro4sJson)
 
-  val avro4sTest = Seq(avro4sCore % Test, avro4sJson % Test, darwinMockConnector % Test)
+  val avro4sTest = avro4s.map(_ % Test)
+  val avro4sTestAndDarwin =  avro4sTest ++ Seq(darwinMockConnector % Test)
 
   val jaxRs = "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.5"
 
@@ -307,7 +308,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   ).map(excludeLog4j).map(excludeNetty) ++ testDependencies :+ darwinCore
 
   val coreDependencies = (akka ++
-    avro4s ++
+    avro4sTest ++
     logging ++
     jacksonDependencies ++
     testDependencies :+
@@ -342,7 +343,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val consumersSparkDependencies = schemaRegistry ++ (
     akka ++
       testDependencies ++
-      avro4sTest ++
+      avro4sTestAndDarwin ++
       hbase ++
       spark :+
       quartz :+

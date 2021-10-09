@@ -1,0 +1,30 @@
+{
+  "type" : "record",
+  "name" : "Event",
+  "namespace" : "it.agilelab.bigdata.wasp.core.eventengine",
+  "fields" : [ {
+    "name" : "eventId",
+    "type" : "string"
+  }, {
+    "name" : "eventType",
+    "type" : "string"
+  }, {
+    "name" : "severity",
+    "type" : "string"
+  }, {
+    "name" : "payload",
+    "type" : [ "null", "string" ]
+  }, {
+    "name" : "timestamp",
+    "type" : "long"
+  }, {
+    "name" : "source",
+    "type" : "string"
+  }, {
+    "name" : "sourceId",
+    "type" : [ "null", "string" ]
+  }, {
+    "name" : "eventRuleName",
+    "type" : "string"
+  } ]
+}

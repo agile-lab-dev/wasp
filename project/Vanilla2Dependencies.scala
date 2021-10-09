@@ -25,23 +25,23 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     with SttpDependencies {
   val exclusions: VanillaExclusions.type = VanillaExclusions
 
-  lazy val delta              = "io.delta" %% "delta-core" % versions.delta exclude exclusions.log4jExclude
-  lazy val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % versions.elasticSearchSpark
-  lazy val guava              = "com.google.guava" % "guava" % versions.guava
-  lazy val javaxMail          = "javax.mail" % "mail" % versions.javaxMail
-  lazy val metrics            = "com.yammer.metrics" % "metrics-core" % versions.yammerMetrics // TODO upgrade?
-  lazy val quartz             = "org.quartz-scheduler" % "quartz" % versions.quartz
-  lazy val swaggerCore        = "io.swagger.core.v3" % "swagger-core" % versions.swagger
-  lazy val velocity           = "org.apache.velocity" % "velocity" % versions.velocity
-  lazy val kryo               = "com.esotericsoftware" % "kryo-shaded" % versions.kryo
-  lazy val reflections        = "org.reflections" % "reflections" % versions.reflectionsVersion
-  lazy val mySqlJavaConnector = "mysql" % "mysql-connector-java" % versions.mySqlConnector
-  lazy val jaxRs              = "jakarta.ws.rs" % "jakarta.ws.rs-api" % versions.jakartaRsApi
-  lazy val nifiStateless      = "org.apache.nifi" % "nifi-stateless" % versions.nifi % Provided exclude exclusions.javaxRsExclude
-  lazy val joptSimpleTests    = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
-  lazy val jettySecurity      = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
-  lazy val avro4sTest         = Seq(avro4sCore % Test, avro4sJson % Test, darwinMockConnector % Test)
-  lazy val mongoTest          = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
+  lazy val delta               = "io.delta" %% "delta-core" % versions.delta exclude exclusions.log4jExclude
+  lazy val elasticSearchSpark  = "org.elasticsearch" %% "elasticsearch-spark-20" % versions.elasticSearchSpark
+  lazy val guava               = "com.google.guava" % "guava" % versions.guava
+  lazy val javaxMail           = "javax.mail" % "mail" % versions.javaxMail
+  lazy val metrics             = "com.yammer.metrics" % "metrics-core" % versions.yammerMetrics // TODO upgrade?
+  lazy val quartz              = "org.quartz-scheduler" % "quartz" % versions.quartz
+  lazy val swaggerCore         = "io.swagger.core.v3" % "swagger-core" % versions.swagger
+  lazy val velocity            = "org.apache.velocity" % "velocity" % versions.velocity
+  lazy val kryo                = "com.esotericsoftware" % "kryo-shaded" % versions.kryo
+  lazy val reflections         = "org.reflections" % "reflections" % versions.reflectionsVersion
+  lazy val mySqlJavaConnector  = "mysql" % "mysql-connector-java" % versions.mySqlConnector
+  lazy val jaxRs               = "jakarta.ws.rs" % "jakarta.ws.rs-api" % versions.jakartaRsApi
+  lazy val nifiStateless       = "org.apache.nifi" % "nifi-stateless" % versions.nifi % Provided exclude exclusions.javaxRsExclude
+  lazy val joptSimpleTests     = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
+  lazy val jettySecurity       = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
+  lazy val avro4sTestAndDarwin = avro4sTest ++ Seq(darwinMockConnector % Test)
+  lazy val mongoTest           = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
 
   lazy val _pluginKafkaSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     guava,
@@ -60,7 +60,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   )).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
 
   override val coreDependencies: Seq[ModuleID] = (akka ++
-    avro4s ++
+    avro4sTest ++
     logging ++
     testDependencies ++ Seq(
     akkaHttp,
@@ -99,7 +99,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   override val consumersSparkDependencies: Seq[ModuleID] = schemaRegistry ++ (
     akka ++
       testDependencies ++
-      avro4sTest ++
+      avro4sTestAndDarwin ++
       hbase2 ++ // maybe remove this, we need to refactor the gdpr part for hbase
       wireMock ++
       spark ++
@@ -232,11 +232,11 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val sparkPluginBasicDependencies: Seq[ModuleID] = spark ++ scalaTestDependencies
 
-  override val whitelabelMasterScriptClasspath = scriptClasspath +=":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whitelabelProducerScriptClasspath = scriptClasspath +=":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whitelabelSparkConsumerScriptClasspath = scriptClasspath +=":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whiteLabelConsumersRtScriptClasspath = scriptClasspath +=":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whiteLabelSingleNodeScriptClasspath = scriptClasspath +=":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
+  override val whitelabelMasterScriptClasspath        = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
+  override val whitelabelProducerScriptClasspath      = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
+  override val whitelabelSparkConsumerScriptClasspath = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
+  override val whiteLabelConsumersRtScriptClasspath   = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
+  override val whiteLabelSingleNodeScriptClasspath    = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
 }
 
 trait AkkaDependencies {
@@ -397,7 +397,8 @@ trait AvroDependencies {
   lazy val avro4sCore = "com.sksamuel.avro4s" %% "avro4s-core" % versions.avro4sVersion exclude exclusions.json4sExclude
   lazy val avro4sJson = "com.sksamuel.avro4s" %% "avro4s-json" % versions.avro4sVersion exclude exclusions.json4sExclude
 
-  lazy val avro4s = Seq(avro4sCore, avro4sJson)
+  lazy val avro4s      = Seq(avro4sCore, avro4sJson)
+  lazy val avro4sTest = avro4s.map(_ % Test)
 }
 
 trait ApacheCommonsDependencies {

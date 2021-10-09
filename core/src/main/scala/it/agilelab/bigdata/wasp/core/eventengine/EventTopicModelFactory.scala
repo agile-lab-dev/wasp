@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.core.eventengine
 
-import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
 import it.agilelab.bigdata.wasp.core.eventengine.settings.ModelSettings
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
@@ -13,7 +12,7 @@ object EventTopicModelFactory {
   val DEFAULT_REPLICAS = "3"
 
   def create(modelSettings: ModelSettings): TopicModel = {
-    lazy val eventTopicSchema: String = AvroSchema[Event].toString
+    lazy val eventTopicSchema: String = Event.SCHEMA.toString
 
     val topicName = modelSettings.dataStoreModelName
     val options = modelSettings.options

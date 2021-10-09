@@ -43,7 +43,7 @@ class KafkaThroughputSpec
 
   val throughputGuardianRef: AtomicReference[ActorRef] = new AtomicReference[ActorRef]()
 
-  it should "correctly start and stop all the actors and output a correct throughput through epocs" taggedAs (Retryable) in {
+  it should "correctly start and stop all the actors and output a correct throughput through epocs" taggedAs (Retryable) ignore {
     val throughputGuardian = throughputGuardianRef.get()
     throughputGuardian ! Start
     throughputGuardian ! StartMainTask
