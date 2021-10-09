@@ -94,7 +94,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val producersDependencies: Seq[ModuleID] = (
     akka ++ testDependencies ++ Seq(commonsIO, akkaHttp, akkaStream, netty)
-  ).map(_.exclude(exclusions.log4jExclude)) ++ log4j ++ Seq(log4j1)
+  ).map(_.exclude(exclusions.log4jExclude))
 
   override val consumersSparkDependencies: Seq[ModuleID] = schemaRegistry ++ (
     akka ++
@@ -111,12 +111,12 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
         sparkAvro
       )
   ).map(_.exclude(exclusions.nettyExclude)).map(_.exclude(exclusions.log4jExclude)) ++
-    log4j ++ Seq(log4j1, nettySpark, nettyAll, guava)
+    Seq(nettySpark, nettyAll, guava) ++ logging
 
   override val consumersRtDependencies: Seq[ModuleID] = (
     akka ++
       Seq(akkaCamel, camelKafka, camelWebsocket, kafka, netty)
-  ).map(_.exclude(exclusions.log4jExclude)) ++ log4j
+  ).map(_.exclude(exclusions.log4jExclude))
 
   override val masterDependencies: Seq[ModuleID] = (
     json ++
@@ -132,7 +132,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
         solrjMasterClient,
         httpClient
       )
-  ).map(_.exclude(exclusions.log4jExclude)) ++ log4j
+  ).map(_.exclude(exclusions.log4jExclude))
 
   override val pluginElasticSparkDependencies: Seq[ModuleID] = spark ++ Seq(elasticSearchSpark)
 
@@ -146,11 +146,11 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val pluginKafkaSparkDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
-      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
+      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
 
   override val pluginKafkaSparkOldDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafkaOld) ++ _pluginKafkaSparkDependencies)
-      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
+      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
 
   override val pluginSolrSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     httpClient,
@@ -182,7 +182,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val nifiStatelessDependencies: Seq[ModuleID] = Seq(jaxRs, nifiStateless)
 
-  override val pluginCdcSparkDependencies: Seq[ModuleID] = spark ++ Seq(delta, scalaTest) ++ log4j
+  override val pluginCdcSparkDependencies: Seq[ModuleID] = spark ++ Seq(delta, scalaTest)
 
   override val kmsTest: Seq[Def.Setting[_]] = Seq(
     Test / transitiveClassifiers := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
@@ -211,32 +211,49 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val sparkNifiPluginDependencies: Seq[ModuleID] = spark
 
-  override val whitelabelModelsDependencies: Seq[ModuleID] = log4j ++ avro4s ++ spark
-
-  override val whitelabelMasterDependencies: Seq[ModuleID] =
-    pluginHbaseSparkDependencies ++ Seq(log4j1) ++ log4j ++ Seq(darwinConfluentConnector)
-
-  override val whitelabelProducerDependencies: Seq[ModuleID] =
-    pluginHbaseSparkDependencies ++ Seq(log4j1) ++ log4j ++ Seq(darwinConfluentConnector)
-
-  override val whitelabelSparkConsumerDependencies: Seq[ModuleID] = log4j ++ Seq(
-    darwinConfluentConnector,
-    mySqlJavaConnector,
-    scalaTest,
-    darwinMockConnector
-  ) ++ spark ++ Seq(hbaseCommon2)
-
-  override val whiteLabelConsumersRtDependencies: Seq[ModuleID] = log4j
-
   override val repositoryCoreDependencies: Seq[ModuleID] = testDependencies ++ Seq(apacheCommonsLang3)
 
   override val sparkPluginBasicDependencies: Seq[ModuleID] = spark ++ scalaTestDependencies
 
-  override val whitelabelMasterScriptClasspath        = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whitelabelProducerScriptClasspath      = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whitelabelSparkConsumerScriptClasspath = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whiteLabelConsumersRtScriptClasspath   = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
-  override val whiteLabelSingleNodeScriptClasspath    = scriptClasspath += ":$SPARK_HOME/jars/*:$(hadoop classpath):$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HBASE_CONF_DIR"
+  override val whitelabelModelsDependencies: Seq[ModuleID] = avro4s ++ spark
+
+  override val whitelabelMasterDependencies: Seq[ModuleID] =
+    pluginHbaseSparkDependencies ++ Seq(darwinHBaseConnector, hbaseClient2Shaded, slf4jLog4j1Binding)
+
+  override val whitelabelProducerDependencies: Seq[ModuleID] =
+    pluginHbaseSparkDependencies ++ Seq(darwinHBaseConnector, hbaseClient2Shaded, slf4jLog4j1Binding)
+
+  override val whitelabelSparkConsumerDependencies: Seq[ModuleID] = Seq(
+    darwinHBaseConnector,
+    mySqlJavaConnector,
+    scalaTest,
+    darwinMockConnector % Test
+  ) ++ spark ++ Seq(hbaseClient2Shaded, slf4jLog4j1Binding)
+
+  override val whiteLabelConsumersRtDependencies: Seq[ModuleID] = Seq.empty
+
+  override val whitelabelMasterScriptClasspath =
+    scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
+      scriptClasspath.value ++
+      Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
+
+  override val whitelabelProducerScriptClasspath =
+    scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
+      scriptClasspath.value ++
+      Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
+
+  override val whitelabelSparkConsumerScriptClasspath =
+    scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
+      scriptClasspath.value ++
+      Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
+  override val whiteLabelConsumersRtScriptClasspath =
+    scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
+      scriptClasspath.value ++
+      Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
+  override val whiteLabelSingleNodeScriptClasspath =
+    scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
+      scriptClasspath.value ++
+      Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
 }
 
 trait AkkaDependencies {
@@ -288,6 +305,7 @@ trait HBaseDependencies {
   lazy val hbaseCommon2NoScope    = "org.apache.hbase" % "hbase-common" % versions.hbase2 exclude exclusions.hbaseExclusion
   lazy val hbaseServer2NoScope    = "org.apache.hbase" % "hbase-server" % versions.hbase2 exclude exclusions.hbaseExclusion
   lazy val hbaseMapreduce2NoScope = "org.apache.hbase" % "hbase-mapreduce" % versions.hbase2 exclude exclusions.hbaseExclusion
+  lazy val hbaseClient2Shaded     = "org.apache.hbase" % "hbase-shaded-client" % versions.hbase2 exclude exclusions.hbaseExclusion
   lazy val hbaseClient2           = hbaseClient2NoScope % Provided
   lazy val hbaseCommon2           = hbaseCommon2NoScope % Provided
   lazy val hbaseServer2           = hbaseServer2NoScope % Provided
@@ -320,13 +338,10 @@ trait HadoopDependencies {
 trait LoggingDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
-  lazy val log4jApi       = "org.apache.logging.log4j" % "log4j-api" % versions.log4j % "optional,test"
-  lazy val log4jCore      = "org.apache.logging.log4j" % "log4j-core" % versions.log4j % "optional,test"
-  lazy val log4jSlf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % versions.log4j % "optional,test"
-  lazy val log4j1         = "log4j" % "log4j" % versions.log4j1
-  lazy val slf4jApi       = "org.slf4j" % "slf4j-api" % versions.slf4j
-  lazy val logging        = Seq(slf4jApi)
-  lazy val log4j          = Seq(log4jApi, log4jCore, log4jSlf4jImpl)
+  lazy val slf4jApi           = "org.slf4j" % "slf4j-api" % versions.slf4j
+  lazy val slf4jLog4j1Binding = "org.slf4j" % "slf4j-log4j12" % versions.slf4j
+  lazy val log4j1             = "log4j" % "log4j" % versions.log4j1
+  lazy val logging            = Seq(slf4jApi, slf4jLog4j1Binding % Test, log4j1 % Test)
 }
 trait KafkaDependencies {
   val versions: Vanilla2Versions
@@ -365,9 +380,9 @@ trait Json4sDependencies {
 
 trait NettyDependencies {
   val versions: Vanilla2Versions
-  lazy val netty      = "io.netty" % "netty"     % versions.netty
-  lazy val nettySpark = "io.netty" % "netty"     % versions.nettySpark
-  lazy val nettyAll   = "io.netty" % "netty-all" % versions.nettyAllSpark
+  lazy val netty      = "io.netty" % "netty"     % versions.nettySpark    % Provided
+  lazy val nettySpark = "io.netty" % "netty"     % versions.nettySpark    % Provided
+  lazy val nettyAll   = "io.netty" % "netty-all" % versions.nettyAllSpark % Provided
 }
 
 trait TestFrameworkDependencies {

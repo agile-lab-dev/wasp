@@ -4,7 +4,8 @@ Wasp is built and tested under different flavours:
 
 | FLAVOR | Spark | Scala | Hadoop | Transitive dependencies | postfix |
 | ---- | ----  | ----  | ---- | ---- | ---- |
-| VANILLA2 | 2.4.7 | 2.11 | 2.x | ❌ | None |
+| VANILLA2 | 2.4.8 | 2.11 | 2.x | ❌ | None |
+| VANILLA2_2_12 | 2.4.8 | 2.12 | 2.x | ❌ | None |
 | CDH6 | 2.4cdh6.3.2 | 2.11 | 3.0.0cdh6.3.2 | ✅ | cdh6 |
 
 Flavors should change the artifact version (or the artifactId) so that they can all be published without conflicts. 

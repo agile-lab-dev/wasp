@@ -47,7 +47,7 @@ object HBaseDeletionHandler extends Logging {
                      dryRun: Boolean) = {
     val persisted = keysWithScanRDD.mapPartitions { keysWithScan: Iterator[(KeyWithCorrelation, Scan)] =>
       val hBaseConnection = new HBaseConnection(hbaseConfig)
-      TaskContext.get().addTaskCompletionListener(_ => hBaseConnection.closeConnection())
+      TaskContext.get().addTaskCompletionListener[Unit](_ => hBaseConnection.closeConnection())
       hBaseConnection.withTable(tableName) { table =>
         keyValueMatchingStrategy match {
           case _: ExactKeyValueMatchingStrategy =>

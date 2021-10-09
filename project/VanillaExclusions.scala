@@ -74,9 +74,14 @@ object VanillaExclusions {
         MavenCoordinate("org.lz4", "lz4-java")
       )
 
-  lazy val kafka08Exclude: Vector[MavenCoordinate] = Vector(MavenCoordinate("org.apache.kafka", "kafka_2.11"))
+  lazy val kafka08Exclude: Vector[MavenCoordinate] =
+    Vector(MavenCoordinate("org.apache.kafka", "kafka_2.11"),
+      MavenCoordinate("org.apache.kafka", "kafka_2.12")) // todo chec
 
-  lazy val hiveExclude = Vector(MavenCoordinate("org.apache.spark", "spark-core_2.11"))
+  lazy val hiveExclude = Vector(
+    MavenCoordinate("org.apache.spark", "spark-core_2.11"),
+    MavenCoordinate("org.apache.spark", "spark-core_2.12")
+  )
 
   // these are needed because kafka brings in jackson-core/databind 2.8.5, which are incompatible with Spark
   // and otherwise cause a jackson compatibility exception
@@ -86,6 +91,7 @@ object VanillaExclusions {
     MavenCoordinate("com.fasterxml.jackson.core", "jackson-databind"),
     MavenCoordinate("com.fasterxml.jackson.core", "jackson-annotations"),
     MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-scala_2.11"),
+    MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-scala_2.12"),
     MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-paranamer"),
     MavenCoordinate("com.fasterxml.jackson.datatype", "jackson-datatype-jdk8"),
     MavenCoordinate("org.codehaus.jackson", "jackson-core-asl")

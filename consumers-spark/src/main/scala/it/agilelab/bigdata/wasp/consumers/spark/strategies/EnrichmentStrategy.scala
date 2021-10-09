@@ -17,7 +17,7 @@ trait EnrichmentStrategy extends Strategy {
       case _ => Class.forName(sourceInfo.kind).newInstance().asInstanceOf[Enricher]
     }
 
-    TaskContext.get().addTaskCompletionListener(task => {
+    TaskContext.get().addTaskCompletionListener[Unit](task => {
       enricher.close()
     })
 

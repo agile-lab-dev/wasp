@@ -45,10 +45,10 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with HasPos
   private var postWriteActions: List[() => Try[Unit]] = List.empty
 
   private def addPostWriteAction[A](action: () => A): Unit = {
-    addPostWriteAction(() => Try(action.apply()))
+    addPostWriteTryAction(() => Try(action.apply()))
   }
 
-  private def addPostWriteAction[A](action: () => Try[A]): Unit = {
+  private def addPostWriteTryAction[A](action: () => Try[A]): Unit = {
     val unitAction: () => Try[Unit] = () => action.apply().map(_ => ())
     postWriteActions = unitAction :: postWriteActions
   }

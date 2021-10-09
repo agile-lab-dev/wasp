@@ -266,12 +266,12 @@ object KafkaWriters extends Logging {
       case Some(multiTopicModel: MultiTopicModel) =>
         val topics = multiTopicModel.topicModelNames
           .map(topicBL.getByName)
-          .flatMap({
+          .flatMap{
             case Some(topicModel: TopicModel) =>
               Seq(topicModel)
             case None =>
               throw new Exception(s"""Unable to retrieve topic datastore model with name "$topicDatastoreModelName"""")
-          })
+          }
         (Some(multiTopicModel.topicNameField), topics)
       case None =>
         throw new Exception(s"""Unable to retrieve topic datastore model with name "$topicDatastoreModelName"""")

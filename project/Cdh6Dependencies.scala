@@ -246,7 +246,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val spark = Seq(sparkCore, sparkMLlib, sparkSQL, sparkYarn)
 
-  val schemaRegistry = Seq(darwinCore, darwinConfluentConnector)
+  val schemaRegistry = Seq(darwinCore, darwinHBaseConnector)
 
   val avro4s = Seq(avro4sCore, avro4sJson)
 
@@ -470,12 +470,12 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val sparkNifiPluginDependencies: Seq[ModuleID]  = Seq(sparkCore)
   val whitelabelModelsDependencies: Seq[ModuleID] = log4j ++ avro4s
   val whitelabelMasterDependencies: Seq[ModuleID] =
-    pluginHbaseSparkDependencies ++ Seq(log4j1) ++ log4j ++ Seq(darwinConfluentConnector)
+    pluginHbaseSparkDependencies ++ Seq(log4j1) ++ log4j ++ Seq(darwinHBaseConnector)
   val whitelabelProducerDependencies: Seq[ModuleID] =
-    pluginHbaseSparkDependencies ++ Seq(log4j1) ++ log4j ++ Seq(darwinConfluentConnector)
+    pluginHbaseSparkDependencies ++ Seq(log4j1) ++ log4j ++ Seq(darwinHBaseConnector)
 
   val whitelabelSparkConsumerDependencies: Seq[ModuleID] = log4j :+
-    darwinConfluentConnector :+
+    darwinHBaseConnector :+
     "mysql" % "mysql-connector-java" % "5.1.6" :+
     scalaTest :+
     darwinMockConnector

@@ -21,7 +21,7 @@ class CdcSparkStructuredStreamingWriter(writer: Writer, model: CdcModel, ss: Spa
       .outputMode(mode)
       .options(extraOptions)
       .option("path", path)
-      .foreachBatch((df, id) =>
+      .foreachBatch((df: DataFrame, id: Long) =>
         writer.write(df, id)
       )
   }

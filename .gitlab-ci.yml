@@ -30,7 +30,7 @@ test-kernel:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-kernel/test coverageOff wasp-kernel/coverageReport wasp-kernel/coverageAggregate"
   after_script:
@@ -39,7 +39,7 @@ test-kernel:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.11/coverage-report/cobertura.xml'
+      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -54,7 +54,7 @@ test-plugin:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-plugin/test coverageOff wasp-plugin/coverageReport wasp-plugin/coverageAggregate"
   after_script:
@@ -63,7 +63,7 @@ test-plugin:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.11/coverage-report/cobertura.xml'
+      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -78,7 +78,7 @@ test-repo:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["VANILLA2", "CDH6"]
+      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-repository/test coverageOff wasp-repository/coverageReport wasp-repository/coverageAggregate"
   after_script:
@@ -87,7 +87,7 @@ test-repo:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.11/coverage-report/cobertura.xml'
+      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -127,7 +127,7 @@ snapshot:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
   script:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
@@ -149,9 +149,8 @@ release:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
   script:
-    - export WASP_FLAVOR=VANILLA2
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"

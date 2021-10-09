@@ -17,12 +17,19 @@ object Flavor {
     override val settings: Settings         = new BasicSettings(new BasicResolvers(), versions.jdk, versions.scala)
     override val dependencies: Dependencies = new Vanilla2Dependencies(versions)
   }
+  case object Vanilla2_2_12 extends Flavor {
+    private val versions                    = new Vanilla2_2_12Versions()
+    val postfix: Option[String]             = None
+    override val settings: Settings         = new BasicSettings(new BasicResolvers(), versions.jdk, versions.scala)
+    override val dependencies: Dependencies = new Vanilla2Dependencies(versions)
+  }
   val DEFAULT: Flavor = Vanilla2
 
   def parse(s: String): Either[String, Flavor] = {
     s.toUpperCase match {
       case "CDH6" => Right(CDH6)
       case "VANILLA2" => Right(Vanilla2)
+      case "VANILLA2_2_12" => Right(Vanilla2_2_12)
       case _      => Left(s"Cannot parse flavor [${s}]")
     }
   }

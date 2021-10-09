@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
@@ -8,9 +8,9 @@ import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 import it.agilelab.bigdata.wasp.producers.StartMainTask
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.Constants
 import org.scalatest.tagobjects.Retryable
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpecLike, Matchers, Retries}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Canceled, Failed, FlatSpecLike, Matchers, Outcome, Retries}
 
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.function.UnaryOperator
 import scala.concurrent.duration.FiniteDuration
 
@@ -31,10 +31,19 @@ class KafkaThroughputSpec
     with BeforeAndAfterEach
     with Retries {
 
+  val retries = 50
+
   override def withFixture(test: NoArgTest) = {
-    if (isRetryable(test))
-      withRetry { super.withFixture(test) } else
-      super.withFixture(test)
+    if (isRetryable(test)) withFixture(test, retries) else super.withFixture(test)
+
+  }
+
+  def withFixture(test: NoArgTest, count: Int): Outcome = {
+    val outcome = super.withFixture(test)
+    outcome match {
+      case Failed(_) | Canceled(_) => if (count == 1) super.withFixture(test) else withFixture(test, count - 1)
+      case other => other
+    }
   }
 
   override def afterAll: Unit = {

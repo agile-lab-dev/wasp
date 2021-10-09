@@ -3,7 +3,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.10.0")
 // sbt-native-packager, used for assembly jars for the start-wasp script
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.1")
 // test coverage
-addSbtPlugin("org.scoverage"  % "sbt-scoverage" % "1.8.2")
+addSbtPlugin("org.scoverage"  % "sbt-scoverage" % "1.9.0")
 // perform release on sonatype
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.10")
 // sign artifacts

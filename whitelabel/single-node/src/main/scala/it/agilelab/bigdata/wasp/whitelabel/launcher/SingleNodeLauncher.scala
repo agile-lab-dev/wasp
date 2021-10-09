@@ -4,16 +4,31 @@ import akka.actor.Props
 import akka.http.scaladsl.server.Directives.reject
 import akka.http.scaladsl.server.Route
 import it.agilelab.bigdata.wasp.consumers.spark.launcher.SparkConsumersStreamingNodeLauncherTrait
-import it.agilelab.bigdata.wasp.core.AroundLaunch
+import it.agilelab.bigdata.wasp.core.{AroundLaunch, WaspSystem}
 import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
+import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.producers.launcher.ProducersNodeLauncherTrait
+import it.agilelab.bigdata.wasp.producers.metrics.kafka.KafkaCheckOffsetsGuardian
 import it.agilelab.bigdata.wasp.whitelabel.master.launcher.MasterNodeLauncher
 import org.apache.commons.cli.CommandLine
+import org.slf4j.LoggerFactory
 
 object SingleNodeLauncher extends MultipleClusterSingletonsLauncher with WaspConfiguration {
+
+  def locations(clz: Class[_], classLoader:ClassLoader): List[String] = {
+    val enums = classLoader.getResources(clz.getCanonicalName.replace(".","/") + ".class")
+    val list = List.newBuilder[String]
+    while (enums.hasMoreElements){
+      list. += (enums.nextElement().toString)
+    }
+    list.result()
+  }
+
+  def locations(clz: Class[_]): List[String] = {
+    locations(clz, getClass.getClassLoader)
+  }
 
   private val launchers: List[MultipleClusterSingletonsLauncher with AroundLaunch] = List(
     new MasterNodeLauncherTrait                  {},
@@ -35,6 +50,10 @@ object SingleNodeLauncher extends MultipleClusterSingletonsLauncher with WaspCon
     launchers.foreach(_.afterLaunch())
     MasterNodeLauncher.addExampleRegisterAvroSchema()
     MasterNodeLauncher.addExamplePipegraphs()
+    WaspSystem.actorSystem.actorOf(
+      KafkaCheckOffsetsGuardian.props(ConfigManager.getKafkaConfig),
+      KafkaCheckOffsetsGuardian.name
+    )
   }
 
   override def validateConfigs(pluginsValidationRules: Seq[ValidationRule]): Unit = {
