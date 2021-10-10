@@ -96,6 +96,23 @@ test-repo:
     - merge_requests
   needs: []
 
+compile-whitelabel:
+  stage: deploy
+  interruptible: true
+  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  parallel:
+    matrix:
+      - WASP_FLAVOR: ["VANILLA2", "CDH6"]
+  script:
+    - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/Test/compile"
+  tags:
+    - gitlab-org
+  only:
+    - /^develop$/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
+  needs: []
+
 censor:
   stage: censor
   interruptible: true
