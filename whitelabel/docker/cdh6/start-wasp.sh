@@ -69,6 +69,7 @@ done
     ADDITIONAL_SBT_PARAMS="-Dsbt.coursier=false"
   fi
 
+  export WASP_FLAVOR=CDH6
   sbt $ADDITIONAL_SBT_PARAMS -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
   #sbt -v -mem 3072 ${SBT_STAGE_COMMAND_PROJECTID}/stage
 fi

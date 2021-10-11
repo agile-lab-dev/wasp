@@ -427,6 +427,7 @@ object WaspMongoDB extends Logging {
   }.toMap ++ Map(mlModelsName -> Indexes.ascending("name", "version", "timestamp"))
 
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
+    createCodecProviderIgnoreNone[RawModel](),
     DatastoreProductCodecProvider,
     TopicCompressionCodecProvider,
     HttpCompressionCodecProvider,
@@ -468,6 +469,8 @@ object WaspMongoDB extends Logging {
 
   private lazy val gdprCodecProviders: util.List[CodecProvider] = List(
     DatastoreProductCodecProvider,
+    RawDBProvider,
+    createCodecProviderIgnoreNone[RawModel](),
     createCodecProviderIgnoreNone(classOf[ExactKeyValueMatchingStrategy]),
     createCodecProviderIgnoreNone(classOf[PrefixKeyValueMatchingStrategy]),
     createCodecProviderIgnoreNone(classOf[PrefixAndTimeBoundKeyValueMatchingStrategy]),

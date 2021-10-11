@@ -49,6 +49,7 @@ done
 cd $SCRIPT_DIR/../../..
 
 echo "Running sbt stage task..."
+export WASP_FLAVOR=CDH6
 sbt ${SBT_STAGE_COMMAND_PROJECTID}/stage
 
 # get docker command, init network if needed

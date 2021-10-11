@@ -7,6 +7,7 @@ import org.scalatest.{BeforeAndAfterAll, Suites, Tag}
 object ProvidersTest extends Tag("ProvidersTest")
 
 class ProvidersTest extends Suites(new BatchJobBLImplTest,
+                                  new BatchGDPRJobTest,
                                   new CdcBLImplTest,
                                   new HttpBLImplTest,
                                   new IndexBLImplTest,

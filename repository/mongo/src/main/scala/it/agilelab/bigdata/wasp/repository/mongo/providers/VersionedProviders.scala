@@ -1,8 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, GenericProduct}
 import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, ConnectionConfig, ElasticConfigModel, HBaseEntryConfig, JMXTelemetryConfigModel, JdbcConfigModel, JdbcConnectionConfig, JdbcPartitioningInfo, KafkaEntryConfig, KryoSerializerConfig, NifiConfigModel, NifiStatelessConfigModel, RestEnrichmentConfigModel, RestEnrichmentSource, RetainedConfigModel, SchedulingStrategyConfigModel, SparkBatchConfigModel, SparkDriverConfig, SparkEntryConfig, SparkStreamingConfigModel, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
-import it.agilelab.bigdata.wasp.models.{BatchETL, BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, CdcOptions, DashboardModel, GenericOptions, KeyValueOption, LegacyStreamingETLModel, MlModelOnlyInfo, RTModel, RawOptions, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{BatchETL, BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, CdcOptions, ContainsRawMatchingStrategy, DashboardModel, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, GenericOptions, KeyValueModel, KeyValueOption, LegacyStreamingETLModel, MlModelOnlyInfo, NoPartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RTModel, RawModel, RawOptions, ReaderModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TimeBasedBetweenPartitionPruningStrategy, WriterModel}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.{createCodec, createCodecProvider, createCodecProviderIgnoreNone}
@@ -15,6 +14,7 @@ import org.bson.codecs.configuration.CodecRegistry
 
 object VersionedRegistry{
   val additionalCodecs: CodecRegistry = fromProviders(
+    createCodecProviderIgnoreNone[RawModel](),
     createCodecProvider[CdcOptions](),
     createCodecProvider[RawOptions](),
     createCodecProvider[JdbcConnectionConfig](),
@@ -33,10 +33,8 @@ object VersionedRegistry{
     createCodecProvider[WriterModel](),
     createCodecProvider[BatchJobExclusionConfig](),
     createCodecProvider[StrategyModel](),
-//    createCodecProvider[BatchETLModel](),
-//    createCodecProvider[BatchGdprETLModel],
-//    createCodecProvider[BatchETL](),
     createCodecProvider[KeyValueOption](),
+    createCodecProviderIgnoreNone[LegacyStreamingETLModel](),
     createCodecProvider[StructuredStreamingETLModel](),
     createCodecProvider[StreamingReaderModel](),
     createCodecProvider[RestEnrichmentConfigModel](),
@@ -107,6 +105,17 @@ object VersionedRegistry{
 
   val batchJobProviders = fromProviders(
     BatchETLCodecProvider,
+    createCodecProviderIgnoreNone[RawModel](),
+    createCodecProvider[RawOptions](),
+    createCodecProvider[ExactRawMatchingStrategy](),
+    createCodecProvider[PrefixRawMatchingStrategy](),
+    createCodecProvider[ContainsRawMatchingStrategy](),
+    createCodecProvider[TimeBasedBetweenPartitionPruningStrategy](),
+    createCodecProvider[KeyValueModel](),
+    createCodecProvider[ExactKeyValueMatchingStrategy](),
+    createCodecProvider[PrefixKeyValueMatchingStrategy](),
+    createCodecProvider[PrefixAndTimeBoundKeyValueMatchingStrategy](),
+    createCodecProvider[NoPartitionPruningStrategy](),
     BatchGdprETLModelCodecProvider,
     BatchETLModelCodecProvider,
     createCodecProvider[BatchETLModel](),

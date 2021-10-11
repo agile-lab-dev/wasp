@@ -84,14 +84,3 @@ object PipegraphInstanceDBModelProvider extends CodecProvider{
     bsonDocWriter.getDocument
   }
 }
-
-//case object PipegraphInstanceDBModelV1Provider{
-//  val additionalCodecs = fromProviders(
-//    createCodecProvider[PipegraphStatus]()
-//  )
-//  val codecRegistry = fromRegistries(
-//    additionalCodecs,
-//    DEFAULT_CODEC_REGISTRY
-//  )
-//  val pipegraphInstanceDBModelV1Codec = createCodec[PipegraphInstanceDBModelV1]()
-//}
