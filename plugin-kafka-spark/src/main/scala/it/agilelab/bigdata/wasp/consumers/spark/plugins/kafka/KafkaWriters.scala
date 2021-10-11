@@ -2,227 +2,17 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroSerializerExpression
-import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.core.WaspSystem.??
-import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, StringToByteArrayUtil, SubjectUtils}
+import it.agilelab.bigdata.wasp.core.utils.SubjectUtils
 import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, TopicModel}
-import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import org.apache.avro.Schema
-import org.apache.spark.sql.catalyst.expressions.Expression
-import org.apache.spark.sql.functions.{col, struct, udf}
+import org.apache.spark.sql.catalyst.expressions.{Cast, Expression}
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BinaryType, DataType, StringType, StructType}
 import org.apache.spark.sql.{Column, DataFrame}
 
 object KafkaWriters extends Logging {
-  private[kafka] def convertDfForBinary(
-      keyFieldName: Option[String],
-      headersFieldName: Option[String],
-      topicFieldName: Option[String],
-      valueFieldsNames: Option[Seq[String]],
-      df: DataFrame,
-      prototypeTopicModel: TopicModel
-  ) = {
-    // there must be exactly one value field name and it must be a column of type binary
-    require(
-      valueFieldsNames.isDefined && valueFieldsNames.get.size == 1,
-      "Exactly one value field name must be defined for binary topic data type but zero or more than one were " +
-        s"specified; value field names: ${valueFieldsNames.get.mkString("\"", "\", \"", "\"")}"
-    )
-    val valueFieldName   = valueFieldsNames.get.head
-    val maybeValueColumn = df.schema.find(_.name == valueFieldName)
-    require(
-      maybeValueColumn.isDefined,
-      s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
-        s"""${df.schema.map(_.name).mkString("[", "], [", "]")}"""
-    )
-    val valueColumn         = maybeValueColumn.get
-    val valueColumnDataType = valueColumn.dataType
-    require(
-      valueColumnDataType == BinaryType,
-      s"""The specified value field name "$valueFieldName" matches a column with a type that is not binary; """ +
-        s"incompatible type $valueColumnDataType found"
-    )
-
-    // generate select expressions to rename metadata and data columns
-    val selectExpressions =
-      keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
-        headersFieldName.map(hfn => s"$hfn AS headers").toList ++
-        topicFieldName.map(tfn => s"$tfn AS topic").toList :+
-        s"$valueFieldName AS value"
-
-    logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
-
-    // convert input
-    df.selectExpr(selectExpressions: _*)
-  }
-
-  private[kafka] def convertDfForAvro(
-      keyFieldName: Option[String],
-      headersFieldName: Option[String],
-      topicFieldName: Option[String],
-      valueFieldsNames: Option[Seq[String]],
-      df: DataFrame,
-      prototypeTopicModel: TopicModel
-  ) = {
-
-    val darwinConf = if (prototypeTopicModel.useAvroSchemaManager) {
-      Some(ConfigManager.getAvroSchemaManagerConfig)
-    } else {
-      None
-    }
-    val valueExpression: AvroSerializerExpression =
-      setupAvroValueConversion(valueFieldsNames, df, prototypeTopicModel, darwinConf)
-
-    val keyExpression: Option[Column] =
-      keyFieldName.map(setupAvroKeyConversion(_, df, prototypeTopicModel, darwinConf))
-
-    val metadataCols = (keyExpression ++
-      headersFieldName.map(col(_).as("headers")) ++
-      topicFieldName.map(col(_).as("topic"))).toSeq
-
-    val processedDf = df.select(metadataCols ++ Seq(new Column(valueExpression).as("value")): _*)
-
-    logger.debug(s"Actual final schema:\n${processedDf.schema.treeString}")
-
-    processedDf
-  }
-
-  private def setupAvroKeyConversion(
-      keyFieldName: String,
-      df: DataFrame,
-      prototypeTopicModel: TopicModel,
-      darwinConf: Option[Config]
-  ): Column = {
-
-    if (prototypeTopicModel.keySchema.isDefined) {
-      val exprToConvertToAvro = df.col(keyFieldName)
-      val keySchema           = exprToConvertToAvro.expr.dataType
-
-      val avroRecordName = prototypeTopicModel.name + "key"
-      // TODO use sensible namespace instead of wasp
-      val avroRecordNamespace = "wasp"
-
-      val rowToAvroExprFactory: (Expression, DataType) => AvroSerializerExpression =
-        if (prototypeTopicModel.useAvroSchemaManager) {
-          val avroSchema = new Schema.Parser().parse(prototypeTopicModel.keySchema.get)
-
-          val updatedSchema = SubjectUtils.attachSubjectToSchema(prototypeTopicModel, avroSchema, isKey = true)
-
-          AvroSerializerExpression(darwinConf.get, updatedSchema, avroRecordName, avroRecordNamespace)
-        } else {
-          AvroSerializerExpression(Some(prototypeTopicModel.getJsonSchema), avroRecordName, avroRecordNamespace)
-        }
-
-      val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro.expr, keySchema)
-      new Column(rowToAvroExpr).as("key")
-    } else {
-      col(keyFieldName).cast(BinaryType).as("key")
-    }
-  }
-
-  private def setupAvroValueConversion(
-      valueFieldsNames: Option[Seq[String]],
-      df: DataFrame,
-      prototypeTopicModel: TopicModel,
-      darwinConf: Option[Config]
-  ) = {
-    val columnsInValues = valueFieldsNames.getOrElse(df.columns.toSeq)
-    // generate a schema and avro converter for the values
-    val valueSchema = StructType(
-      columnsInValues.map(df.schema.apply)
-    )
-    val exprToConvertToAvro = struct(columnsInValues.map(col): _*)
-
-    val avroRecordName = prototypeTopicModel.name
-    // TODO use sensible namespace instead of wasp
-    val avroRecordNamespace = "wasp"
-
-    val rowToAvroExprFactory: (Expression, StructType) => AvroSerializerExpression =
-      if (prototypeTopicModel.useAvroSchemaManager) {
-        val avroSchema    = new Schema.Parser().parse(prototypeTopicModel.getJsonSchema)
-        val updatedSchema = SubjectUtils.attachSubjectToSchema(prototypeTopicModel, avroSchema, false)
-        AvroSerializerExpression(darwinConf.get, updatedSchema, avroRecordName, avroRecordNamespace)
-      } else {
-        AvroSerializerExpression(Some(prototypeTopicModel.getJsonSchema), avroRecordName, avroRecordNamespace)
-      }
-
-    val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro.expr, valueSchema)
-    rowToAvroExpr
-  }
-
-  private[kafka] def convertDfForJson(
-      keyFieldName: Option[String],
-      headersFieldName: Option[String],
-      topicFieldName: Option[String],
-      valueFieldsNames: Option[Seq[String]],
-      df: DataFrame,
-      prototypeTopicModel: TopicModel
-  ) = {
-    // generate select expressions to rename metadata columns and convert everything to json
-    val valueSelectExpression = valueFieldsNames.map(vfn => vfn).getOrElse(Seq("*")).mkString(", ")
-    val selectExpressions =
-      keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
-        headersFieldName.map(hfn => s"$hfn AS headers").toList ++
-        topicFieldName.map(tfn => s"$tfn AS topic").toList :+
-        s"to_json(struct($valueSelectExpression)) AS value"
-
-    logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
-
-    // TODO check that json produced matches schema
-
-    // convert input
-    df.selectExpr(selectExpressions: _*)
-  }
-
-  private[kafka] def convertDfForPlaintext(
-      keyFieldName: Option[String],
-      headersFieldName: Option[String],
-      topicFieldName: Option[String],
-      valueFieldsNames: Option[Seq[String]],
-      df: DataFrame,
-      prototypeTopicModel: TopicModel
-  ) = {
-    // there must be exactly one value field name and it must be a column of type string
-    require(
-      valueFieldsNames.isDefined && valueFieldsNames.get.size == 1,
-      "Exactly one value field name must be defined for plaintext topic data type but zero or more than one " +
-        s"were specified; value field names: ${valueFieldsNames.get.mkString("\"", "\", \"", "\"")}"
-    )
-    val valueFieldName   = valueFieldsNames.get.head
-    val maybeValueColumn = df.schema.find(_.name == valueFieldName)
-    require(
-      maybeValueColumn.isDefined,
-      s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
-        s"""${df.schema.map(_.name).mkString("[", "], [", "]")}"""
-    )
-    val valueColumn         = maybeValueColumn.get
-    val valueColumnDataType = valueColumn.dataType
-    require(
-      valueColumnDataType == StringType,
-      s"""The specified value field name "$valueFieldName" matches a column with a type that is not string; """ +
-        s"incompatible type $valueColumnDataType found"
-    )
-
-    // generate select expressions to rename metadata and data columns
-    val selectExpressions =
-      keyFieldName.map(kfn => s"CAST($kfn AS binary) key").toList ++
-        headersFieldName.map(hfn => s"$hfn AS headers").toList ++
-        topicFieldName.map(tfn => s"$tfn AS topic").toList :+
-        s"$valueFieldName AS value_string"
-
-    logger.debug(s"Generated select expressions: ${selectExpressions.mkString("[", "], [", "]")}")
-
-    // prepare the udf
-    val stringToByteArray: String => Array[Byte] = StringToByteArrayUtil.stringToByteArray
-    val stringToByteArrayUDF                     = udf(stringToByteArray)
-
-    // convert input
-    df.selectExpr(selectExpressions: _*)
-      .withColumn("value", stringToByteArrayUDF(col("value_string")))
-      .drop("value_string")
-  }
 
   private[kafka] def addTopicNameCheckIfNeeded(
       topicFieldName: Option[String],
@@ -247,61 +37,340 @@ object KafkaWriters extends Logging {
     }
   }
 
-  private[kafka] def askToCheckOrCreateTopics(topics: Seq[TopicModel]): Unit = {
-    logger.info(s"Creating topics $topics")
+  private[kafka] def prepareDfToWrite(
+      df: DataFrame,
+      topicFieldNameOpt: Option[String],
+      topics: Seq[TopicModel],
+      darwinConf: Option[Config]
+  ) = {
 
-    topics.foreach(topic =>
-      if (! ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas)))
-        throw new Exception(s"""Error creating topic "${topic.name}"""")
+    val throwException = udf { s: String =>
+      throw new Exception(s"Unknown topic name $s")
+    }
+
+    topicFieldNameOpt match {
+      case Some(topicFieldName) =>
+        require(topics.size > 1, s"Got topicFieldName = $topicFieldName but only one topic to write ($topics)")
+        val keyCol: Option[Column]     = keyExpression(topics, topicFieldNameOpt, throwException, df.col, darwinConf)
+        val headersCol: Option[Column] = headerExpression(topics, topicFieldNameOpt, throwException)
+        val topicCol: Column           = col(topicFieldName)
+        val valueCol: Column           = valueExpression(topics, topicFieldNameOpt, df.schema, df.col, throwException, darwinConf)
+
+        val columns =
+          (keyCol.map(_.as("key")) ++
+            headersCol.map(_.as("headers")) ++
+            Seq(topicCol.as("topic"), valueCol.as("value"))).toSeq
+
+        df.select(columns: _*)
+
+      case None =>
+        require(
+          topics.size == 1,
+          "More than one topic to write specified but there's no column containing the topics' name."
+        )
+        val keyCol: Option[Column]     = keyExpression(topics, topicFieldNameOpt, throwException, df.col, darwinConf)
+        val headersCol: Option[Column] = headerExpression(topics, topicFieldNameOpt, throwException)
+        val valueCol: Column           = valueExpression(topics, topicFieldNameOpt, df.schema, df.col, throwException, darwinConf)
+
+        val columns =
+          (keyCol.map(_.as("key")) ++
+            headersCol.map(_.as("headers")) ++
+            Seq(valueCol.as("value"))).toSeq
+        df.select(columns: _*)
+
+    }
+
+  }
+
+  private def keyExpression(
+      topics: Seq[TopicModel],
+      topicFieldName: Option[String],
+      exceptionUdf: UserDefinedFunction,
+      columnExtractor: String => Column,
+      darwinConf: Option[Config]
+  ) = {
+
+    def valueOfKey(topicModel: TopicModel): Column = {
+      val keyField = topicModel.keyFieldName.get
+      topicModel.topicDataType match {
+        case "avro" => convertKeyForAvro(columnExtractor(keyField), topicModel, darwinConf)
+        case dataType if dataType == "json" || dataType == "binary" || dataType == "plaintext" =>
+          convertKeyToBinary(columnExtractor(keyField))
+        case unknown => throw new UnsupportedOperationException(s"Unknown topic data type $unknown")
+      }
+    }
+
+    if (topics.exists(_.keyFieldName.isDefined)) {
+
+      if (topicFieldName.isDefined) {
+        val head = topics.head
+        val tail = topics.tail
+
+        Some(
+          tail
+            .foldLeft(when(conditionOnTopicName(topicFieldName.get, head), valueOfKey(head))) { (z, x) =>
+              z.when(conditionOnTopicName(topicFieldName.get, x), valueOfKey(x))
+            }
+            .otherwise(exceptionUdf(col(topicFieldName.get)))
+        )
+      } else {
+        Some(valueOfKey(topics.head))
+      }
+
+    } else {
+      None
+    }
+  }
+
+  private def valueExpression(
+      topics: Seq[TopicModel],
+      topicFieldName: Option[String],
+      dfSchema: StructType,
+      columnExtractor: String => Column,
+      exceptionUdf: UserDefinedFunction,
+      darwinConf: Option[Config]
+  ) = {
+
+    def valueOfValue(topicModel: TopicModel): Column = {
+      val columnsInValues = topicModel.valueFieldsNames match {
+        case Some(values) => values
+        case None =>
+          TopicModelUtils.getAllValueFieldsFromSchema(topicModel).getOrElse(dfSchema.fieldNames.toList)
+      }
+      topicModel.topicDataType match {
+        case "avro"      => convertValueForAvro(columnsInValues, topicModel, dfSchema, columnExtractor, darwinConf)
+        case "json"      => convertValueForJson(columnsInValues)
+        case "plaintext" => convertValueForPlainText(columnsInValues, dfSchema)
+        case "binary"    => convertValueForBinary(columnsInValues, dfSchema)
+        case unknown     => throw new UnsupportedOperationException(s"Unknown topic data type $unknown")
+      }
+    }
+
+    if (topicFieldName.isDefined) {
+      val head = topics.head
+      val tail = topics.tail
+
+      tail
+        .foldLeft(when(conditionOnTopicName(topicFieldName.get, head), valueOfValue(head))) {
+          (z: Column, x: TopicModel) =>
+            z.when(conditionOnTopicName(topicFieldName.get, x), valueOfValue(x))
+        }
+        .otherwise(exceptionUdf(col(topicFieldName.get)))
+
+    } else {
+      valueOfValue(topics.head)
+    }
+
+  }
+
+  private def headerExpression(
+      topics: Seq[TopicModel],
+      topicFieldName: Option[String],
+      exceptionUdf: UserDefinedFunction
+  ) = {
+
+    def valueOfHeader(head: TopicModel) = {
+      head.headersFieldName.map(col).getOrElse(lit(null))
+    }
+
+    if (topics.exists(_.headersFieldName.isDefined)) {
+
+      if (topicFieldName.isDefined) {
+        val head = topics.head
+        val tail = topics.tail
+        Some(
+          tail
+            .foldLeft(when(conditionOnTopicName(topicFieldName.get, head), valueOfHeader(head))) {
+              (z: Column, x: TopicModel) =>
+                z.when(conditionOnTopicName(topicFieldName.get, x), valueOfHeader(x))
+            }
+            .otherwise(exceptionUdf(col(topicFieldName.get)))
+        )
+      } else {
+        Some(valueOfHeader(topics.head))
+      }
+    } else {
+      None
+    }
+
+  }
+
+  private def conditionOnTopicName(topicFieldName: String, head: TopicModel) = {
+    col(topicFieldName).equalTo(head.name)
+  }
+
+  private def convertKeyForAvro(keyColumn: Column, topicModel: TopicModel, darwinConf: Option[Config]) = {
+
+    if (topicModel.keySchema.isDefined) {
+      val exprToConvertToAvro = keyColumn
+      val keySchema           = exprToConvertToAvro.expr.dataType
+
+      val avroRecordName = topicModel.name + "key"
+      // TODO use sensible namespace instead of wasp
+      val avroRecordNamespace = "wasp"
+
+      val rowToAvroExprFactory: (Expression, DataType) => AvroSerializerExpression =
+        if (topicModel.useAvroSchemaManager) {
+          val avroSchema = new Schema.Parser().parse(topicModel.keySchema.get)
+
+          val updatedSchema = SubjectUtils.attachSubjectToSchema(topicModel, avroSchema, isKey = true)
+
+          AvroSerializerExpression(darwinConf.get, updatedSchema, avroRecordName, avroRecordNamespace)
+        } else {
+          AvroSerializerExpression(Some(topicModel.keySchema.get), avroRecordName, avroRecordNamespace)
+        }
+
+      val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro.expr, keySchema)
+      new Column(rowToAvroExpr).as("key")
+    } else {
+      if (Cast.canCast(keyColumn.expr.dataType, BinaryType)) {
+        keyColumn.cast(BinaryType).as("key")
+      } else
+        throw new Exception(
+          s"Cannot serialize key for Kafka topic because column ${keyColumn.toString()} cannot " +
+            s"be cast to Binary. If you want to serialize it in Avro format, set TopicModel.keySchema accordingly."
+        )
+    }
+
+  }
+
+  private def convertKeyToBinary(keyColumn: Column) = {
+    if (Cast.canCast(keyColumn.expr.dataType, BinaryType)) {
+      keyColumn.cast(BinaryType).as("key")
+    } else
+      throw new Exception(
+        s"Cannot serialize key for Kafka topic because column ${keyColumn.toString()} cannot " +
+          s"be cast to Binary."
+      )
+  }
+
+  private def convertValueForJson(columnsInValues: Seq[String]) = {
+
+    val columnExpr = to_json(struct(columnsInValues.map(col): _*)).cast(BinaryType).as("value")
+
+    logger.debug(s"Generated select expression: ${columnExpr.expr.toString()}")
+    columnExpr
+  }
+
+  private def convertValueForPlainText(columnsInValues: Seq[String], schema: StructType) = {
+
+    require(
+      columnsInValues.size == 1,
+      "Exactly one value field name must be defined for plaintext topic data type but zero or more than one " +
+        s"were specified; value field names: ${columnsInValues.mkString("\"", "\", \"", "\"")}"
+    )
+    val valueFieldName = columnsInValues.head
+
+    val maybeValueColumn = schema.find(_.name == valueFieldName)
+    require(
+      maybeValueColumn.isDefined,
+      s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
+        s"""${schema.map(_.name).mkString("[", "], [", "]")}"""
+    )
+
+    val valueColumn         = maybeValueColumn.get
+    val valueColumnDataType = valueColumn.dataType
+    require(
+      Cast.canCast(valueColumnDataType, StringType),
+      s"""The specified value field name "$valueFieldName" matches a column with a type that is not string; """ +
+        s"incompatible type $valueColumnDataType found"
+    )
+
+    val columnExpr = col(valueFieldName).cast(StringType).cast(BinaryType).as("value")
+
+    logger.debug(s"Generated select expression: ${columnExpr.expr.toString()}")
+    columnExpr
+  }
+
+  def convertValueForBinary(columnsInValues: Seq[String], schema: StructType): Column = {
+    require(
+      columnsInValues.size == 1,
+      "Exactly one value field name must be defined for binary topic data type but zero or more than one were " +
+        s"specified; value field names: ${columnsInValues.mkString("\"", "\", \"", "\"")}"
+    )
+    val valueFieldName   = columnsInValues.head
+    val maybeValueColumn = schema.find(_.name == valueFieldName)
+    require(
+      maybeValueColumn.isDefined,
+      s"""The specified value field name "$valueFieldName" does not match any column; columns in schema: """ +
+        s"""${schema.map(_.name).mkString("[", "], [", "]")}"""
+    )
+    val valueColumn         = maybeValueColumn.get
+    val valueColumnDataType = valueColumn.dataType
+    require(
+      valueColumnDataType == BinaryType,
+      s"""The specified value field name "$valueFieldName" matches a column with a type that is not binary; """ +
+        s"incompatible type $valueColumnDataType found"
+    )
+
+    val expression = s"$valueFieldName AS value"
+    logger.debug(s"Generated select expressions: ${expression}")
+
+    expr(expression)
+  }
+
+  private def convertValueForAvro(
+      columnsInValues: Seq[String],
+      topicModel: TopicModel,
+      schema: StructType,
+      columnExtractor: String => Column,
+      darwinConf: Option[Config]
+  ): Column = {
+
+    val exprToConvertToAvro = struct(columnsInValues.map(columnExtractor): _*).expr
+    val valueSchema         = exprToConvertToAvro.dataType.asInstanceOf[StructType] // this is safe
+
+    val avroRecordName = topicModel.name
+    // TODO use sensible namespace instead of wasp
+    val avroRecordNamespace = "wasp"
+
+    val rowToAvroExprFactory: (Expression, StructType) => AvroSerializerExpression =
+      if (topicModel.useAvroSchemaManager) {
+        val avroSchema    = new Schema.Parser().parse(topicModel.getJsonSchema)
+        val updatedSchema = SubjectUtils.attachSubjectToSchema(topicModel, avroSchema, false)
+        AvroSerializerExpression(darwinConf.get, updatedSchema, avroRecordName, avroRecordNamespace)
+      } else {
+        AvroSerializerExpression(Some(topicModel.getJsonSchema), avroRecordName, avroRecordNamespace)
+      }
+
+    val rowToAvroExpr = rowToAvroExprFactory(exprToConvertToAvro, valueSchema)
+    new Column(rowToAvroExpr)
+  }
+
+  def convertDataframe(
+      stream: DataFrame,
+      topicFieldName: Option[String],
+      topics: Seq[TopicModel],
+      mainTopicModel: DatastoreModel,
+      darwinConf: Option[Config]
+  ): DataFrame = {
+
+    TopicModelUtils
+      .isTopicWritable(mainTopicModel, topics, stream)
+      .fold(
+        s => throw new IllegalArgumentException(s),
+        _ => ()
+      )
+
+    logger.info(s"Writing with topic models: ${topics.map(_.name).mkString(" ")}")
+    if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
+      logger.info(s"""Topic model "${mainTopicModel.name}" is a MultiTopicModel for topics: $topics""")
+    }
+
+    logger.debug(s"Input schema:\n${stream.schema.treeString}")
+
+    val topicsToWrite = if (topics.isEmpty) {
+      List(mainTopicModel.asInstanceOf[TopicModel])
+    } else {
+      topics
+    }
+
+    prepareDfToWrite(
+      stream,
+      topicFieldName,
+      topicsToWrite,
+      darwinConf
     )
   }
 
-  private[kafka] def retrieveTopicFieldNameAndTopicModels(
-      topicOpt: Option[DatastoreModel],
-      topicBL: TopicBL,
-      topicDatastoreModelName: String
-  ) = {
-    topicOpt match {
-      case Some(topicModel: TopicModel) => (None, Seq(topicModel))
-      case Some(multiTopicModel: MultiTopicModel) =>
-        val topics = multiTopicModel.topicModelNames
-          .map(topicBL.getByName)
-          .flatMap{
-            case Some(topicModel: TopicModel) =>
-              Seq(topicModel)
-            case None =>
-              throw new Exception(s"""Unable to retrieve topic datastore model with name "$topicDatastoreModelName"""")
-          }
-        (Some(multiTopicModel.topicNameField), topics)
-      case None =>
-        throw new Exception(s"""Unable to retrieve topic datastore model with name "$topicDatastoreModelName"""")
-    }
-  }
-
-  private[kafka] def prepareDfToWrite(
-      df: DataFrame,
-      topicFieldName: Option[String],
-      topics: Seq[TopicModel],
-      prototypeTopicModel: TopicModel,
-      keyFieldName: Option[String],
-      headersFieldName: Option[String],
-      valueFieldsNames: Option[Seq[String]]
-  ) = {
-    val convertedDF = prototypeTopicModel.topicDataType match {
-      case "avro" =>
-        convertDfForAvro(keyFieldName, headersFieldName, topicFieldName, valueFieldsNames, df, prototypeTopicModel)
-      case "json" =>
-        convertDfForJson(keyFieldName, headersFieldName, topicFieldName, valueFieldsNames, df, prototypeTopicModel)
-      case "plaintext" =>
-        convertDfForPlaintext(keyFieldName, headersFieldName, topicFieldName, valueFieldsNames, df, prototypeTopicModel)
-      case "binary" =>
-        convertDfForBinary(keyFieldName, headersFieldName, topicFieldName, valueFieldsNames, df, prototypeTopicModel)
-
-      case topicDataType =>
-        throw new UnsupportedOperationException(s"Unknown topic data type $topicDataType")
-    }
-
-    val finalDf = addTopicNameCheckIfNeeded(topicFieldName, topics, convertedDF)
-    finalDf
-  }
 }

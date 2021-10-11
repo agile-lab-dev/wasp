@@ -57,4 +57,14 @@ object TestStrategies {
     configuration = None
   )
 
+  lazy val identityStrategy = StrategyModel(
+    className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
+    configuration = None
+  )
+
+  lazy val multiTopicWriteMixedStrategy = StrategyModel(
+    className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestMultiTopicWriteMixedStrategy",
+    configuration = None
+  )
+
 }

@@ -1,10 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 
-import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
-import java.util
-
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
@@ -22,6 +18,9 @@ import org.apache.spark.sql.catalyst.util.{ArrayData, DateTimeUtils, MapData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.util
 import scala.collection.JavaConverters._
 
 object AvroSerializerExpression {
@@ -116,7 +115,7 @@ case class AvroSerializerExpression private(child: Expression,
     val builder = SchemaBuilder.record(structName).namespace(namespace)
 
     inputSchema match {
-      case struct : StructType =>
+      case struct: StructType =>
         AvroSchemaConverters.convertStructToAvro(struct, builder, namespace)
       case otherwise =>
         AvroSchemaConverters.convertTypeToAvro(otherwise, SchemaBuilder.builder(), "", recordNamespace = namespace)
@@ -136,9 +135,9 @@ case class AvroSerializerExpression private(child: Expression,
 
   override def inputTypes = {
     inputSchema match {
-      case s : StructType =>
+      case s: StructType =>
         Seq(StructType)
-      case d : DataType =>
+      case d: DataType =>
         Seq(d)
     }
   }
@@ -154,7 +153,7 @@ case class AvroSerializerExpression private(child: Expression,
     if (useAvroSchemaManager) {
       schemaManager.get.writeHeaderToStream(output, schemaId)
     }
-    val value= converter(row).asInstanceOf[AnyRef]
+    val value = converter(row).asInstanceOf[AnyRef]
     writer.write(value, encoder)
     encoder.flush()
     output.toByteArray
@@ -163,9 +162,11 @@ case class AvroSerializerExpression private(child: Expression,
   override protected def nullSafeEval(input: Any): Any = {
     val output = new ByteArrayOutputStream()
     val writer = new GenericDatumWriter[AnyRef](actualSchema)
-    serializeInternalRow(input.asInstanceOf[InternalRow], output,
+    serializeInternalRow(input.asInstanceOf[AnyRef], output,
       EncoderFactory.get().binaryEncoder(output, null),
       writer)
+
+
   }
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
@@ -294,13 +295,13 @@ case class AvroSerializerExpression private(child: Expression,
         }).map { field =>
           val maybeSubfieldSchema = Option(schema.getField(field.name)).map(_.schema())
 
-          if(maybeSubfieldSchema.isEmpty){
-             val message =
-               s"""spark schema contains a field [${field.name}] of type [${field.dataType}]
-                  |no corresponding field is present in the avro schema, maybe you forgot to
-                  |drop kafkaMetadata column or to configure 'valueFieldsNames' in TopicModel
-                  |to specify which columns should be treated as the value
-                  |""".stripMargin
+          if (maybeSubfieldSchema.isEmpty) {
+            val message =
+              s"""spark schema contains a field [${field.name}] of type [${field.dataType}]
+                 |no corresponding field is present in the avro schema, maybe you forgot to
+                 |drop kafkaMetadata column or to configure 'valueFieldsNames' in TopicModel
+                 |to specify which columns should be treated as the value
+                 |""".stripMargin
 
             throw new IllegalArgumentException(message)
           }

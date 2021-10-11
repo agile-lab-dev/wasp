@@ -1,12 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaWriters._
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.retrieveKafkaTopicSettings
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkStructuredStreamingWriter
-import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
@@ -14,57 +12,30 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL, topicDatastoreModelN
     extends SparkStructuredStreamingWriter
     with Logging {
 
-  override def write(stream: DataFrame): DataStreamWriter[Row] = {
-    val tinyKafkaConfig                                 = ConfigManager.getKafkaConfig.toTinyConfig()
-    val topicOpt: Option[DatastoreModel] = topicBL.getByName(topicDatastoreModelName)
+  override def write(df: DataFrame): DataStreamWriter[Row] = {
+    val settings = retrieveKafkaTopicSettings(topicBL, topicDatastoreModelName)
 
-    val (topicFieldName, topics) = retrieveTopicFieldNameAndTopicModels(topicOpt, topicBL, topicDatastoreModelName)
-    val mainTopicModel           = topicOpt.get
-    val prototypeTopicModel      = topics.head
-
-    MultiTopicModel
-      .areTopicsEqualForWriting(topics)
-      .fold(
-        s => throw new IllegalArgumentException(s),
-        _ => ()
+    val finalDf: DataFrame =
+      KafkaWriters.convertDataframe(
+        df,
+        settings.topicFieldName,
+        settings.topics,
+        settings.mainTopicModel,
+        settings.darwinConf
       )
 
-    logger.info(s"Writing with topic model: $mainTopicModel")
-    if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
-      logger.info(s"""Topic model "${mainTopicModel.name}" is a MultiTopicModel for topics: $topics""")
-    }
-
-    askToCheckOrCreateTopics(topics)
-
-    logger.debug(s"Input schema:\n${stream.schema.treeString}")
-
-    val keyFieldName     = prototypeTopicModel.keyFieldName
-    val headersFieldName = prototypeTopicModel.headersFieldName
-    val valueFieldsNames = prototypeTopicModel.valueFieldsNames
-
-    val finalDf: DataFrame = prepareDfToWrite(
-      stream,
-      topicFieldName,
-      topics,
-      prototypeTopicModel,
-      keyFieldName,
-      headersFieldName,
-      valueFieldsNames
-    )
-
-    val partialDataStreamWriter = finalDf
-      .writeStream
+    val partialDataStreamWriter = finalDf.writeStream
       .format("kafka")
 
     val partialDataStreamWriterAfterTopicConf =
-      if (topicFieldName.isDefined)
+      if (settings.isMultiTopic)
         partialDataStreamWriter
       else
-        partialDataStreamWriter.option("topic", prototypeTopicModel.name)
+        partialDataStreamWriter.option("topic", settings.topics.head.name)
 
-    val dataStreamWriterAfterKafkaConfig = addKafkaConf(partialDataStreamWriterAfterTopicConf, tinyKafkaConfig)
+    val dataStreamWriterAfterKafkaConfig = addKafkaConf(partialDataStreamWriterAfterTopicConf, settings.tinyKafkaConfig)
 
-    val compressionForKafka = topics.head.topicCompression.kafkaProp
+    val compressionForKafka = settings.topics.head.topicCompression.kafkaProp
 
     val finalDataStreamWriterAfterCompression = dataStreamWriterAfterKafkaConfig
       .option("kafka.compression.type", compressionForKafka)

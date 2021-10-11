@@ -5,6 +5,7 @@
 
 # Spark tmp dir
 tmp
+metastore_db
 
 #Docker Data
 docker/data

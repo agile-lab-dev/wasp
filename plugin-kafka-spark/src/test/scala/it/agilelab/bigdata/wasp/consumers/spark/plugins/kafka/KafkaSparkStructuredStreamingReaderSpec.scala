@@ -1,17 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
-import java.sql.Timestamp
-
 import com.sksamuel.avro4s.{AvroOutputStream, AvroSchema}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.topicNameToColumnName
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
-import it.agilelab.bigdata.wasp.models.MultiTopicModel.topicNameToColumnName
 import it.agilelab.bigdata.wasp.models.{MultiTopicModel, TopicCompression, TopicModel}
-import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas.{INPUT_SCHEMA, VALUE_ATTRIBUTE_NAME}
 import org.apache.spark.sql.functions._
 import org.bson.BsonDocument
 import org.scalatest.FlatSpec
+
+import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
+import java.sql.Timestamp
 
 class KafkaSparkStructuredStreamingReaderSpec extends FlatSpec with SparkSuite {
 
@@ -184,7 +183,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends FlatSpec with SparkSuite {
       )
       .toDF()
 
-    assert(MultiTopicModel.areTopicsEqualForReading(Seq(topic1, topic2, topic3, topic4)).isRight)
+    assert(TopicModelUtils.areTopicsEqualForReading(Seq(topic1, topic2, topic3, topic4)).isRight)
 
     val outDF = KafkaSparkStructuredStreamingReader
       .selectForOneSchema(topic1, df)

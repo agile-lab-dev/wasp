@@ -1,66 +1,39 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.KafkaWriters._
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.retrieveKafkaTopicSettings
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
-import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.models.configuration.{KafkaEntryConfig, TinyKafkaConfig}
-import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SparkSession}
 
-class KafkaBatchWriter(topicBL: TopicBL,
-                       topicDatastoreModelName: String,
-                       ss: SparkSession) extends SparkBatchWriter with Logging {
+class KafkaBatchWriter(topicBL: TopicBL, topicDatastoreModelName: String, ss: SparkSession)
+    extends SparkBatchWriter
+    with Logging {
 
   override def write(df: DataFrame): Unit = {
 
-    val tinyKafkaConfig = ConfigManager.getKafkaConfig.toTinyConfig()
-    val topicOpt: Option[DatastoreModel] = topicBL.getByName(topicDatastoreModelName)
+    val settings = retrieveKafkaTopicSettings(topicBL, topicDatastoreModelName)
 
-    val (topicFieldName, topics) = retrieveTopicFieldNameAndTopicModels(topicOpt, topicBL, topicDatastoreModelName)
-    val mainTopicModel = topicOpt.get
-    val prototypeTopicModel = topics.head
-
-    MultiTopicModel.areTopicsEqualForWriting(topics).fold(
-      s => throw new IllegalArgumentException(s),
-      _ => ()
+    val finalDf: DataFrame = KafkaWriters.convertDataframe(
+      df,
+      settings.topicFieldName,
+      settings.topics,
+      settings.mainTopicModel,
+      settings.darwinConf
     )
 
-    logger.info(s"Writing with topic model: $mainTopicModel")
-    if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
-      logger.info(s"""Topic model "${mainTopicModel.name}" is a MultiTopicModel for topics: $topics""")
-    }
-
-    askToCheckOrCreateTopics(topics)
-
-    logger.debug(s"Input schema:\n${df.schema.treeString}")
-
-    val keyFieldName = prototypeTopicModel.keyFieldName
-    val headersFieldName = prototypeTopicModel.headersFieldName
-    val valueFieldsNames = prototypeTopicModel.valueFieldsNames
-
-    val finalDf: DataFrame = prepareDfToWrite(df,
-      topicFieldName,
-      topics,
-      prototypeTopicModel,
-      keyFieldName,
-      headersFieldName,
-      valueFieldsNames)
-
-    val partialDfWriter = finalDf
-      .write
-      .format("kafka")
+    val partialDfWriter = finalDf.write.format("kafka")
 
     val partialDfWriterAfterTopicConf =
-      if (topicFieldName.isDefined)
+      if (settings.isMultiTopic)
         partialDfWriter
       else
-        partialDfWriter.option("topic", prototypeTopicModel.name)
+        partialDfWriter.option("topic", settings.topics.head.name)
 
-    val dataframeWriterAfterKafkaConfig = addKafkaConf(partialDfWriterAfterTopicConf, tinyKafkaConfig)
+    val dataframeWriterAfterKafkaConfig = addKafkaConf(partialDfWriterAfterTopicConf, settings.tinyKafkaConfig)
 
-    val compressionForKafka = topics.head.topicCompression.kafkaProp
+    val compressionForKafka = settings.topics.head.topicCompression.kafkaProp
 
     val finalDataframeWriterAfterCompression = dataframeWriterAfterKafkaConfig
       .option("kafka.compression.type", compressionForKafka)
@@ -70,9 +43,11 @@ class KafkaBatchWriter(topicBL: TopicBL,
 
   private def addKafkaConf(dsw: DataFrameWriter[Row], tkc: TinyKafkaConfig): DataFrameWriter[Row] = {
 
-    val connectionString = tkc.connections.map {
-      conn => s"${conn.host}:${conn.port}"
-    }.mkString(",")
+    val connectionString = tkc.connections
+      .map { conn =>
+        s"${conn.host}:${conn.port}"
+      }
+      .mkString(",")
 
     val kafkaConfigMap: Seq[KafkaEntryConfig] = tkc.others
 

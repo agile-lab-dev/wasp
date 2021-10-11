@@ -340,6 +340,29 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val kafkaMultitopicWriteMixed = PipegraphModel(
+        name = "TestKafkaWriterMultitopicMixedStructuredPipegraph",
+        description = "Test for writing to multiple topics with different schema and datatype",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        legacyStreamingComponents = List(),
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "MultitopicWrite",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.kafkaMultitopicWriter("Kafka Writer", TestTopicModel.multitopicWriteMixed),
+            mlModels = List(),
+            strategy = Some(TestStrategies.multiTopicWriteMixedStrategy),
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        rtComponents = List(),
+        dashboard = None
+      )
+
       lazy val solr = PipegraphModel(
         name = "TestSolrWriterStructuredJSONPipegraph",
         description = "Description of TestSolrWriterStructuredJSONPipegraph",

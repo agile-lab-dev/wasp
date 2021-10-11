@@ -113,6 +113,10 @@ lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-ka
 
 lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
   .settings(settings.commonSettings: _*)
+  .settings(
+    Compile / scalaSource := baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "main" / "scala",
+    Test / scalaSource := baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "test" / "scala"
+  )
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkOldDependencies)
 

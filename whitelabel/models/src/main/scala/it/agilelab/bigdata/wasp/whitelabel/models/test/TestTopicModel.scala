@@ -113,6 +113,45 @@ private[wasp] object TestTopicModel {
 
   lazy val jsonMultitopicWrite = MultiTopicModel.fromTopicModels("multitopic_write_json", "topic", Seq(json4, json5))
 
+  lazy val avro_forMixed = avro.copy(
+    name = TopicModel.name(topic_name + "_multi1"),
+    keyFieldName = Some("id"),
+    valueFieldsNames = Some(Seq("id", "number", "error")),
+    useAvroSchemaManager = false,
+    schema = JsonConverter
+      .fromString(TopicModel.generateField(
+        "test",
+        "test",
+        Some("""
+               |        {
+               |            "name": "id",
+               |            "type": "string",
+               |            "doc": ""
+               |        },
+               |        {
+               |            "name": "number",
+               |            "type": "int",
+               |            "doc": ""
+               |        },
+               |        {
+               |            "name": "error",
+               |            "type": "string",
+               |            "doc": ""
+               |        }
+      """.stripMargin)
+      ))
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
+
+  lazy val json_forMixed = json.copy(
+    name = TopicModel.name(topic_name + "_multi2"),
+    keyFieldName = Some("id"),
+    valueFieldsNames = Some(Seq("nested.field1", "nested.field2", "nested.field3")),
+    schema = org.mongodb.scala.bson.BsonDocument()
+  )
+
+  lazy val multitopicWriteMixed = MultiTopicModel.fromTopicModels("multitopic_write_mixed", "topic", Seq(avro_forMixed, json_forMixed))
+
   lazy val json2ForKafkaHeaders = TopicModel(
     name = TopicModel.name(topic2_name + "_json"),
     creationTime = System.currentTimeMillis,

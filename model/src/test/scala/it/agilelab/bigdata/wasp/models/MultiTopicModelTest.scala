@@ -43,9 +43,9 @@ class MultiTopicModelTest extends FunSuite {
     assert(message === "All topic models must have the same compression setting, found settings: [topic0,topic2] use snappy,[topic1,topic3] use gzip")
 
 
-    MultiTopicModel.areTopicsEqualForWriting(topicsWithSameCompression)
+    MultiTopicModel.areTopicsHealthy(topicsWithSameCompression)
 
-    assert(MultiTopicModel.areTopicsEqualForWriting(topicsWithDifferentCompression).isLeft)
+    assert(MultiTopicModel.areTopicsHealthy(topicsWithDifferentCompression).isLeft)
 
   }
 

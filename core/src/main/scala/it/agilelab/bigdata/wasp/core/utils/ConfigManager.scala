@@ -585,7 +585,7 @@ object ConfigManager extends Logging with CanOverrideNameInstances {
 
   def getAvroSchemaManagerConfig: Config = {
     if (avroSchemaManagerConfig == null) {
-      throw new Exception("The avroSchemaManagerConfigHbaseConnector configuration was not initialized")
+      throw new Exception("The avroSchemaManagerConfig configuration was not initialized")
     }
     avroSchemaManagerConfig
   }

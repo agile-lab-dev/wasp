@@ -102,7 +102,7 @@ compile-whitelabel:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["VANILLA2", "CDH6"]
+      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12"]
   script:
     - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/Test/compile"
   tags:

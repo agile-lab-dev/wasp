@@ -15,6 +15,7 @@
     * [Testing](testing.md)
     * [Troubleshooting](troubleshooting.md)
     * [HBase Writer](hbase_writer_dynamic_fields.md)
+    * [Kafka Integration](kafka_integration.md)
     * [Spark checkpoint directory](spark-structured-streaming-checkpointing.md)
 * [Building WASP](building.md)
 * [Whitelabel project](whitelabel/whitelabel.md)
