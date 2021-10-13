@@ -320,7 +320,7 @@ object Data {
       * Extractor returning true if should stop all
       */
     object ShouldStopAll {
-      def unapply(arg: ActivatingData): Boolean = arg.shouldStopAll
+      def unapply(arg: MaterializingData): Boolean = arg.shouldStopAll
     }
 
   }
