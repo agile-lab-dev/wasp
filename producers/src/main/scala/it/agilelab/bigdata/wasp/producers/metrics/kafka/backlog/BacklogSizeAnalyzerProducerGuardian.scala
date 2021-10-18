@@ -199,7 +199,7 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
 
   private val waitingForTelemetryMessageR: Receive = {
     case TelemetryActorRedirection(telemetryActorRef) =>
-      logger.info(
+      logger.debug(
         s"Successfully connected to the telemetry actor with actorRef: $telemetryActorRef. " +
           "From now on, messages will be sent also to this actor."
       )

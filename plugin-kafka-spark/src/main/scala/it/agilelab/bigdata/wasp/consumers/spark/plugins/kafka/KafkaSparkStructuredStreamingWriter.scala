@@ -31,11 +31,11 @@ class KafkaSparkStructuredStreamingWriter(topicBL: TopicBL, topicDatastoreModelN
       if (settings.isMultiTopic)
         partialDataStreamWriter
       else
-        partialDataStreamWriter.option("topic", settings.topics.head.name)
+        partialDataStreamWriter.option("topic", settings.topicsToWrite.head.name)
 
     val dataStreamWriterAfterKafkaConfig = addKafkaConf(partialDataStreamWriterAfterTopicConf, settings.tinyKafkaConfig)
 
-    val compressionForKafka = settings.topics.head.topicCompression.kafkaProp
+    val compressionForKafka = settings.topicsToWrite.head.topicCompression.kafkaProp
 
     val finalDataStreamWriterAfterCompression = dataStreamWriterAfterKafkaConfig
       .option("kafka.compression.type", compressionForKafka)

@@ -352,18 +352,18 @@ object KafkaWriters extends Logging {
         _ => ()
       )
 
-    logger.info(s"Writing with topic models: ${topics.map(_.name).mkString(" ")}")
-    if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
-      logger.info(s"""Topic model "${mainTopicModel.name}" is a MultiTopicModel for topics: $topics""")
-    }
-
-    logger.debug(s"Input schema:\n${stream.schema.treeString}")
-
     val topicsToWrite = if (topics.isEmpty) {
       List(mainTopicModel.asInstanceOf[TopicModel])
     } else {
       topics
     }
+
+    logger.info(s"Writing with topic models: ${topicsToWrite.map(_.name).mkString(" ")}")
+    if (mainTopicModel.isInstanceOf[MultiTopicModel]) {
+      logger.info(s"""Topic model "${mainTopicModel.name}" is a MultiTopicModel for topics: $topics""")
+    }
+
+    logger.debug(s"Input schema:\n${stream.schema.treeString}")
 
     prepareDfToWrite(
       stream,

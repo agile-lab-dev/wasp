@@ -27,23 +27,27 @@ object TopicModelUtils extends Logging {
     )
   }
 
+  sealed trait FieldNameAndTopicModels
+  case class SingleTopic(t: TopicModel)                                  extends FieldNameAndTopicModels
+  case class MultiTopic(topicFieldName: String, topics: Seq[TopicModel]) extends FieldNameAndTopicModels
+
   private[kafka] def retrieveTopicFieldNameAndTopicModels(
       dsModel: DatastoreModel,
       topicBL: TopicBL,
       topicDatastoreModelName: String
-  ) = {
+  ): FieldNameAndTopicModels = {
     dsModel match {
-      case topicModel: TopicModel => (None, Seq(topicModel))
+      case t: TopicModel => SingleTopic(t)
       case multiTopicModel: MultiTopicModel =>
         val topics = multiTopicModel.topicModelNames
           .map(topicBL.getByName)
-          .flatMap({
+          .flatMap {
             case Some(topicModel: TopicModel) =>
               Seq(topicModel)
-            case None =>
+            case _ =>
               throw new Exception(s"""Unable to retrieve topic datastore model with name "$topicDatastoreModelName"""")
-          })
-        (Some(multiTopicModel.topicNameField), topics)
+          }
+        MultiTopic(multiTopicModel.topicNameField, topics)
       case other => throw new Exception(s"Datastore model $other is not compatible with Kafka")
     }
   }
@@ -56,17 +60,28 @@ object TopicModelUtils extends Logging {
         throw new Exception(s"""Unable to retrieve topic datastore model with name "$topicDatastoreModelName"""")
       )
 
-    val (topicFieldName, topics) =
+    val topicFieldNameAndTopics =
       retrieveTopicFieldNameAndTopicModels(mainTopicModel, topicBL, topicDatastoreModelName)
 
-    askToCheckOrCreateTopics(topics)
+    topicFieldNameAndTopics match {
+      case SingleTopic(t) =>
+        askToCheckOrCreateTopics(Seq(t))
+        val darwinConf = if (t.useAvroSchemaManager) {
+          Some(ConfigManager.getAvroSchemaManagerConfig)
+        } else {
+          None
+        }
+        KafkaTopicSettings(tinyKafkaConfig, mainTopicModel, None, Seq.empty, darwinConf)
 
-    val darwinConf = if (topics.exists(_.useAvroSchemaManager)) {
-      Some(ConfigManager.getAvroSchemaManagerConfig)
-    } else {
-      None
+      case MultiTopic(topicFieldName, topics) =>
+        askToCheckOrCreateTopics(topics)
+        val darwinConf = if (topics.exists(_.useAvroSchemaManager)) {
+          Some(ConfigManager.getAvroSchemaManagerConfig)
+        } else {
+          None
+        }
+        KafkaTopicSettings(tinyKafkaConfig, mainTopicModel, Some(topicFieldName), topics, darwinConf)
     }
-    KafkaTopicSettings(tinyKafkaConfig, mainTopicModel, topicFieldName, topics, darwinConf)
   }
 
   def topicNameToColumnName(s: String): String = s.replaceAllLiterally(".", "_").replaceAllLiterally("-", "_")
@@ -324,4 +339,17 @@ case class KafkaTopicSettings(
     darwinConf: Option[Config]
 ) {
   val isMultiTopic: Boolean = topicFieldName.isDefined
+
+  /**
+    * For multi topic this is identical to topics field,
+    * for simple topic model is a seq containing
+    * the mainTopicModel
+    */
+  val topicsToWrite: Seq[TopicModel] =
+    if (isMultiTopic) {
+      topics
+    } else {
+      Seq(mainTopicModel.asInstanceOf[TopicModel])
+    }
+
 }

@@ -29,11 +29,11 @@ class KafkaBatchWriter(topicBL: TopicBL, topicDatastoreModelName: String, ss: Sp
       if (settings.isMultiTopic)
         partialDfWriter
       else
-        partialDfWriter.option("topic", settings.topics.head.name)
+        partialDfWriter.option("topic", settings.topicsToWrite.head.name)
 
     val dataframeWriterAfterKafkaConfig = addKafkaConf(partialDfWriterAfterTopicConf, settings.tinyKafkaConfig)
 
-    val compressionForKafka = settings.topics.head.topicCompression.kafkaProp
+    val compressionForKafka = settings.topicsToWrite.head.topicCompression.kafkaProp
 
     val finalDataframeWriterAfterCompression = dataframeWriterAfterKafkaConfig
       .option("kafka.compression.type", compressionForKafka)
