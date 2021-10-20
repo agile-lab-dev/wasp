@@ -4,7 +4,13 @@ import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
-import akka.http.scaladsl.server.{AuthenticationFailedRejection, ExceptionHandler, RejectionHandler, Route, ValidationRejection}
+import akka.http.scaladsl.server.{
+  AuthenticationFailedRejection,
+  ExceptionHandler,
+  RejectionHandler,
+  Route,
+  ValidationRejection
+}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
@@ -177,10 +183,10 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
           }
         case rejection @ AuthenticationFailedRejection(_, _) =>
           extractRequest { request =>
-              complete {
-                logger.error(s"request ${request} was rejected with rejection ${rejection}")
-                HttpResponse(StatusCodes.Unauthorized, entity = HttpEntity("Request was not authorized"))
-              }
+            complete {
+              logger.error(s"request ${request} was rejected with rejection ${rejection}")
+              HttpResponse(StatusCodes.Unauthorized, entity = HttpEntity("Request was not authorized"))
+            }
           }
         case rejection =>
           extractRequest { request =>
@@ -194,13 +200,13 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
     val httpSecurity: AuthenticationService = waspConfig.restApiKeys match {
       case Some(apiKey) => new ApiKeyAuthenticationVerifierImpl(apiKey)
-      case None => new NoSecurity()
+      case None         => new NoSecurity()
     }
 
     val finalRoute = handleExceptions(myExceptionHandler) {
       handleRejections(rejectionHandler) {
-        httpSecurity.authenticate {
-          _ => route
+        httpSecurity.authenticate { _ =>
+          route
         }
       }
     }
@@ -266,6 +272,9 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
   override def getNodeName: String = "master"
 
   override def getOptions: Seq[cli.Option] = super.getOptions ++ MasterCommandLineOptions.allOptions
+
+  override protected def shouldDropDb(commandLine: CommandLine): Boolean =
+    commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)
 }
 
 /**

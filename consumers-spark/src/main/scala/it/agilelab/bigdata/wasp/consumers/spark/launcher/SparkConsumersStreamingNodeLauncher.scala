@@ -143,6 +143,8 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
   }
 
   override def getNodeName: String = "streaming consumers spark"
+
+  override protected def shouldDropDb(commandLine: CommandLine): Boolean = false
 }
 
 /**

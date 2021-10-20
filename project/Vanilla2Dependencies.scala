@@ -93,7 +93,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
 
   override val producersDependencies: Seq[ModuleID] = (
-    akka ++ testDependencies ++ Seq(commonsIO, akkaHttp, akkaStream, netty)
+    akka ++ testDependencies ++ Seq(commonsIO, akkaHttp, akkaStream, netty, commonsCli)
   ).map(_.exclude(exclusions.log4jExclude))
 
   override val consumersSparkDependencies: Seq[ModuleID] = schemaRegistry ++ (
@@ -115,7 +115,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val consumersRtDependencies: Seq[ModuleID] = (
     akka ++
-      Seq(akkaCamel, camelKafka, camelWebsocket, kafka, netty)
+      Seq(akkaCamel, camelKafka, camelWebsocket, kafka, netty, commonsCli)
   ).map(_.exclude(exclusions.log4jExclude))
 
   override val masterDependencies: Seq[ModuleID] = (
@@ -180,7 +180,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     json4sJackson
   )
 
-  override val nifiStatelessDependencies: Seq[ModuleID] = Seq(jaxRs, nifiStateless)
+  override val nifiStatelessDependencies: Seq[ModuleID] = Seq(jaxRs, nifiStateless, commonsCli)
 
   override val pluginCdcSparkDependencies: Seq[ModuleID] = spark ++ Seq(delta, scalaTest)
 
@@ -230,7 +230,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     darwinMockConnector % Test
   ) ++ spark ++ Seq(hbaseClient2Shaded, slf4jLog4j1Binding)
 
-  override val whiteLabelConsumersRtDependencies: Seq[ModuleID] = Seq.empty
+  override val whiteLabelConsumersRtDependencies: Seq[ModuleID] = Seq(commonsCli)
 
   override val whitelabelMasterScriptClasspath =
     scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
@@ -312,6 +312,7 @@ trait HBaseDependencies {
   lazy val hbaseMapreduce2        = hbaseMapreduce2NoScope % Provided
   lazy val hbase2                 = Seq(hbaseClient2, hbaseCommon2, hbaseServer2, hbaseMapreduce2)
 }
+
 trait SparkDependencies extends HadoopDependencies {
   lazy val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst" % versions.spark % Test classifier "tests"
   lazy val sparkCore          = "org.apache.spark" %% "spark-core" % versions.spark % Provided
@@ -326,6 +327,7 @@ trait SparkDependencies extends HadoopDependencies {
   lazy val sparkAvro          = "org.apache.spark" %% "spark-avro" % versions.spark
   lazy val spark              = Seq(sparkMLlib, sparkYarn, sparkStreaming, hadoopCommon, sparkHive)
 }
+
 trait HadoopDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
@@ -343,6 +345,7 @@ trait LoggingDependencies {
   lazy val log4j1             = "log4j" % "log4j" % versions.log4j1
   lazy val logging            = Seq(slf4jApi, slf4jLog4j1Binding % Test, log4j1 % Test)
 }
+
 trait KafkaDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
@@ -405,6 +408,7 @@ trait ScalaCoreDependencies {
   lazy val scalaPool                 = "io.github.andrebeat"    %% "scala-pool"               % versions.scalaPool
   lazy val scalaCompiler             = "org.scala-lang"         % "scala-compiler"            % versions.scala
 }
+
 trait AvroDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
@@ -419,7 +423,7 @@ trait AvroDependencies {
 trait ApacheCommonsDependencies {
   val versions: Vanilla2Versions
   lazy val apacheCommonsLang3 = "org.apache.commons"        % "commons-lang3" % versions.apacheCommonsLang3Version // remove?
-  lazy val commonsCli         = "commons-cli"               % "commons-cli"   % versions.commonsCli
+  lazy val commonsCli         = "commons-cli"               % "commons-cli"   % versions.commonsCli % Provided
   lazy val httpClient         = "org.apache.httpcomponents" % "httpclient"    % versions.httpcomponents
   lazy val httpCore           = "org.apache.httpcomponents" % "httpcore"      % versions.httpcomponents
   lazy val commonsIO          = "commons-io"                % "commons-io"    % versions.commonsIO

@@ -43,6 +43,8 @@ trait ProducersNodeLauncherTrait extends MultipleClusterSingletonsLauncher with 
   }
 
   override def getNodeName: String = "producers"
+
+  override protected def shouldDropDb(commandLine: CommandLine): Boolean = false
 }
 
 /**

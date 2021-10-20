@@ -6,7 +6,7 @@ class Vanilla2Versions {
   val avro                      = "1.8.2"
   val avro4sVersion             = "1.8.3"
   val camel                     = "2.17.7"
-  val commonsCli                = "1.4"
+  val commonsCli                = "1.2"
   val darwin                    = "1.2.1"
   val elasticSearchSpark        = "6.1.2"
   val guava                     = "14.0.1"

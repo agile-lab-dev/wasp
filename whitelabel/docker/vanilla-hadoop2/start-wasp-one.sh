@@ -45,10 +45,6 @@ while [[ $# -gt 0 ]]; do
             export DELETE_DOCKER=false
             shift # past argument
         ;;
-        --clean)
-            CLEAN=true
-            shift
-        ;;
         --skip-build)
             SKIP_BUILD=true
             shift
@@ -91,6 +87,7 @@ $DOCKER_CMD run -it --name $NAME_CONTAINER \
   -v $SCRIPT_DIR/$WASP_CONFIGURATION_FILE:/wasp.conf \
   -v $SCRIPT_DIR/log4j-single.properties:/log4j-single.properties \
   -v $SCRIPT_DIR/docker-entrypoint-one.sh:/docker-entrypoint-one.sh \
+  -e DROP_WASPDB=${DROP_WASPDB} \
   -p 7180:7180 \
   -p 2222:22 \
   -p 60010:60010 \

@@ -5,15 +5,15 @@ import akka.http.scaladsl.server.Directives.reject
 import akka.http.scaladsl.server.Route
 import it.agilelab.bigdata.wasp.consumers.spark.launcher.SparkConsumersStreamingNodeLauncherTrait
 import it.agilelab.bigdata.wasp.core.{AroundLaunch, WaspSystem}
-import it.agilelab.bigdata.wasp.core.launcher.MultipleClusterSingletonsLauncher
+import it.agilelab.bigdata.wasp.core.launcher.{MasterCommandLineOptions, MultipleClusterSingletonsLauncher}
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, WaspConfiguration}
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.producers.launcher.ProducersNodeLauncherTrait
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.KafkaCheckOffsetsGuardian
 import it.agilelab.bigdata.wasp.whitelabel.master.launcher.MasterNodeLauncher
+import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
-import org.slf4j.LoggerFactory
 
 object SingleNodeLauncher extends MultipleClusterSingletonsLauncher with WaspConfiguration {
 
@@ -45,6 +45,7 @@ object SingleNodeLauncher extends MultipleClusterSingletonsLauncher with WaspCon
   override def getNodeName: String = "master_producers_spark-streaming"
 
   override def launch(commandLine: CommandLine): Unit = {
+    locations(classOf[org.apache.commons.cli.Options])
     launchers.foreach(_.beforeLaunch())
     super.launch(commandLine)
     launchers.foreach(_.afterLaunch())
@@ -62,4 +63,10 @@ object SingleNodeLauncher extends MultipleClusterSingletonsLauncher with WaspCon
   }
 
   def additionalRoutes(): Route = reject
+
+  override def getOptions: Seq[cli.Option] =
+    (super.getOptions ++ launchers.flatMap(_.getOptions)).distinct
+
+  override protected def shouldDropDb(commandLine: CommandLine): Boolean =
+    commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)
 }
