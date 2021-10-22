@@ -6,7 +6,8 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-class ConfigManagerBLImplTest extends PostgresSuite with JsonSupport{
+trait ConfigManagerBLImplTest extends JsonSupport{
+  self : PostgresSuite =>
 
   private val bl = ConfigManagerBLImpl(pgDB)
 

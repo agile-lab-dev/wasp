@@ -7,6 +7,7 @@ Wasp is built and tested under different flavours:
 | VANILLA2 | 2.4.8 | 2.11 | 2.x | ❌ | None |
 | VANILLA2_2_12 | 2.4.8 | 2.12 | 2.x | ❌ | None |
 | CDH6 | 2.4cdh6.3.2 | 2.11 | 3.0.0cdh6.3.2 | ✅ | cdh6 |
+| CDP711 | 2.4.7.7.1.7.0-551 | 2.11 | 3.1.1.7.1.7.0-551| ✅ | cdp711 |
 
 Flavors should change the artifact version (or the artifactId) so that they can all be published without conflicts. 
 For that reason, the "postfix" of the flavor is appended to the version of the artifact (before the SNAPSHOT qualifier, if present).

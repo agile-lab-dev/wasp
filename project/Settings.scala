@@ -4,6 +4,7 @@ import sbt.Keys._
 import sbt._
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
+
 /*
  * Common settings for all the modules.
  *
@@ -14,16 +15,24 @@ trait Resolvers {
 }
 
 trait Settings {
-  val commonSettings:  Seq[Def.Setting[_]]
+  val commonSettings: Seq[Def.Setting[_]]
   val sbtBuildInfoSettings: Seq[Def.Setting[_]]
   val disableParallelTests: Seq[Def.Setting[_]]
+}
+
+class CDP717Resolvers(other: Resolvers) extends Resolvers {
+
+  override val resolvers: Seq[MavenRepository] = other.resolvers ++ Seq(
+    "Cloudera runtime resolvers" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
+    "Agile lab snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+    "Twitter" at "https://maven.twttr.com/"
+  )
 }
 
 class BasicResolvers extends Resolvers {
   val mavenLocalRepo            = Resolver.mavenLocal
   val sonatypeReleaseRepo       = Resolver.sonatypeRepo("releases")
   val sonatypeSnapshotsRepo     = Resolver.sonatypeRepo("snapshots")
-  val bintraySparkSolrRepo      = Resolver.bintrayRepo("agile-lab-dev", "Spark-Solr")
   val restletMavenRepo          = "Restlet Maven repository" at "https://maven.restlet.com/"
   val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
   val clouderaReleaseLocalRepo  = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
@@ -37,7 +46,6 @@ class BasicResolvers extends Resolvers {
     mavenLocalRepo,
     sonatypeReleaseRepo,
     sonatypeSnapshotsRepo,
-    bintraySparkSolrRepo,
     //typesafeReleaseRepo,
     restletMavenRepo,
     clouderaReleaseLocalRepo,
@@ -47,7 +55,13 @@ class BasicResolvers extends Resolvers {
   )
 }
 
-class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionValue: String) extends Settings {
+class BasicSettings(
+    resolver: Resolvers,
+    jdkVersionValue: String,
+    scalaVersionValue: String,
+    overrideDep: Seq[ModuleID] = Seq.empty,
+    exclustionRules: Seq[ExclusionRule] = Seq.empty
+) extends Settings {
 
   /** settings related to project information */
   lazy val projectSettings = Seq(
@@ -58,7 +72,8 @@ class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionVa
     developers := List(
       Developer("AgileLabDev", "AgileLabDev", "wasp@agilelab.it", url("https://github.com/agile-lab-dev/wasp"))
     ),
-    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
+    licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
+    dependencyOverrides ++= overrideDep
   )
 
   /** base build settings */
@@ -93,19 +108,11 @@ class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionVa
       "-Xlint:unchecked"
     ),
     scalaVersion := scalaVersionValue,
-    excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api")
+    excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api"),
+    excludeDependencies ++= this.exclustionRules
+
+
   )
-
-  val sonatypeSnapshots = "SonatypeSnapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-  val sonatypeStaging   = "SonatypeStaging" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-
-  val sonatypeOssCredentials = Credentials(
-    "Sonatype Nexus Repository Manager",
-    "oss.sonatype.org",
-    System.getenv().get("SONATYPE_USER"),
-    System.getenv().get("SONATYPE_PASSWORD")
-  )
-
   lazy val publishSettings = Seq(
     sonatypeBundleDirectory := (ThisBuild / baseDirectory).value / target.value.getName / "sonatype-staging" / (ThisBuild / version).value,
     sonatypeSessionName := s"[sbt-sonatype] ${name.value} ${scalaVersion.value} ${version.value}",
@@ -124,6 +131,35 @@ class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionVa
   /** common settings for all modules */
   lazy val commonSettings = projectSettings ++ buildSettings ++ publishSettings ++ testSettings
 
+  /** sbt-buildinfo plugin configuration */
+  lazy val sbtBuildInfoSettings: Seq[Def.Setting[_]] = Seq(
+    buildInfoKeys := Seq[BuildInfoKey](
+      name,
+      version,
+      scalaVersion,
+      ("jdkVersion", jdkVersionValue),
+      sbtVersion,
+      gitCommitAction,
+      gitWorkDirStatusAction,
+      flavor
+    ),
+    buildInfoPackage := "it.agilelab.bigdata.wasp.core.build"
+  )
+
+  /** settings to disable parallel execution of tests, for Spark & co */
+  lazy val disableParallelTests: Seq[Def.Setting[Boolean]] = Seq(
+    (Test / parallelExecution) := false,
+    (IntegrationTest / parallelExecution) := false
+  )
+  val sonatypeSnapshots = "SonatypeSnapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+  val sonatypeStaging   = "SonatypeStaging" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+  val sonatypeOssCredentials = Credentials(
+    "Sonatype Nexus Repository Manager",
+    "oss.sonatype.org",
+    System.getenv().get("SONATYPE_USER"),
+    System.getenv().get("SONATYPE_PASSWORD")
+  )
+
   /** sbt-buildinfo action to get current git commit */
   val gitCommitAction = BuildInfoKey.action[String]("gitCommitHash") {
     scala.sys.process.Process("git rev-parse HEAD").lineStream.head
@@ -134,23 +170,5 @@ class BasicSettings(resolver: Resolvers, jdkVersionValue: String, scalaVersionVa
     scala.sys.process.Process("git status --porcelain").lineStream.isEmpty
   }
 
-  /** sbt-buildinfo plugin configuration */
-  lazy val sbtBuildInfoSettings: Seq[Def.Setting[_]] = Seq(
-    buildInfoKeys := Seq[BuildInfoKey](
-      name,
-      version,
-      scalaVersion,
-      ("jdkVersion", jdkVersionValue),
-      sbtVersion,
-      gitCommitAction,
-      gitWorkDirStatusAction
-    ),
-    buildInfoPackage := "it.agilelab.bigdata.wasp.core.build"
-  )
-
-  /** settings to disable parallel execution of tests, for Spark & co */
-  lazy val disableParallelTests: Seq[Def.Setting[Boolean]] = Seq(
-    (Test / parallelExecution) := false,
-    (IntegrationTest / parallelExecution) := false
-  )
+  val flavor = BuildInfoKey.action[String]("flavor")(Flavor.currentFlavor().id)
 }

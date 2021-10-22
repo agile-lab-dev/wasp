@@ -2,9 +2,9 @@ package it.agilelab.bigdata.wasp.consumers.spark.eventengine
 
 import java.io.{StringReader, StringWriter}
 import java.util.Properties
-
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingRule
 import it.agilelab.bigdata.wasp.core.eventengine.settings.MailingStrategySettingsFactory
 import org.apache.commons.lang3.RandomStringUtils
@@ -28,7 +28,6 @@ class MailStrategy extends Strategy {
   // Has to be lazy because it will be evaluated only when transform is called
   lazy val innerMailStrategy = new InnerMailStrategy(configuration)
 
-
   /**
     *
     * @param dataFrames
@@ -43,33 +42,20 @@ class MailStrategy extends Strategy {
 class InnerMailStrategy(config: Config) {
 
   private val settings = MailingStrategySettingsFactory.create(config)
-
-  private def randomStr(len: Int): String = RandomStringUtils.randomAlphanumeric(len)
-
-  private val templateStrings: Map[String, String] = settings.rules.map(r =>
-    r.templatePath -> Source.fromFile(r.templatePath).getLines.mkString("\n")
-  ).toMap
-
-  def compileMail(broadcastTemplateMap: Broadcast[Map[String, String]]): (String, String, String, String, String, String, String, String, String) => String = (eventId, eventType, severity, payload, timestamp, source, sourceId, ruleName, templateKey) => {
-
-    val templateString = broadcastTemplateMap.value(templateKey)
-    VelocityTemplateComposer.compose(eventId, eventType, severity, payload, timestamp, source, sourceId, ruleName, templateString)
-  }
-
-  def compileMailUDF(broadcastTemplateMap: Broadcast[Map[String, String]]):
-  UserDefinedFunction = udf(compileMail(broadcastTemplateMap))
-
+  private val templateStrings: Map[String, String] =
+    settings.rules.map(r => r.templatePath -> Source.fromFile(r.templatePath).getLines.mkString("\n")).toMap
 
   def transform(dataFrame: DataFrame): DataFrame = {
 
-    val broadcastTemplateMap: Broadcast[Map[String, String]] = dataFrame.sparkSession.sparkContext.broadcast(templateStrings)
+    val broadcastTemplateMap: Broadcast[Map[String, String]] =
+      dataFrame.sparkSession.sparkContext.broadcast(templateStrings)
 
-    val rawMails = fetchRawMails(dataFrame, settings.rules) // Merge N rules and applies them together to obtain a raw mail df. 1 row = 1-N events
-    val explodedMail = explodeByRule(rawMails, settings.rules) // Cross-join raw mails with rules and filter out meaningless rows. 1 row = 1 mail
+    val rawMails     = fetchRawMails(dataFrame, settings.rules)                            // Merge N rules and applies them together to obtain a raw mail df. 1 row = 1-N events
+    val explodedMail = explodeByRule(rawMails, settings.rules)                             // Cross-join raw mails with rules and filter out meaningless rows. 1 row = 1 mail
     val refinedMails = enrichAndRefine(explodedMail, settings.rules, broadcastTemplateMap) // Transform the DataModel from the one of the events to the one of the mails.
 
     settings.enableMailAggregation match {
-      case true => aggregateMails(refinedMails)
+      case true  => aggregateMails(refinedMails)
       case false => refinedMails
     }
   }
@@ -140,8 +126,8 @@ class InnerMailStrategy(config: Config) {
       val requests: Seq[String] = {
         val originalFields: Seq[String] = eventDf.schema.fields.map(f => f.name)
 
-        val ruleFields: Seq[String] = rules.map(rule =>
-          s" (${rule.ruleStatement}) AS ${rule.mailingRuleName}_$MATCHES_FLAG")
+        val ruleFields: Seq[String] =
+          rules.map(rule => s" (${rule.ruleStatement}) AS ${rule.mailingRuleName}_$MATCHES_FLAG")
 
         originalFields ++ ruleFields
       }
@@ -160,6 +146,8 @@ class InnerMailStrategy(config: Config) {
 
     rawMails
   }
+
+  private def randomStr(len: Int): String = RandomStringUtils.randomAlphanumeric(len)
 
   /**
     * Create an SQL statement which cross-join the raw mails and the mail rules, creating a line for each mail
@@ -204,8 +192,8 @@ class InnerMailStrategy(config: Config) {
     val ss = rawMailsDf.sparkSession
     import ss.implicits._
 
-    val rulesDF = ss.sparkContext.parallelize(rules).toDF
-    val mailTableName: String = s"TEMP_EXPLODE_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
+    val rulesDF                = ss.sparkContext.parallelize(rules).toDF
+    val mailTableName: String  = s"TEMP_EXPLODE_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
     val rulesTableName: String = s"TEMP_RULES_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
 
     rawMailsDf.registerTempTable(mailTableName)
@@ -226,15 +214,18 @@ class InnerMailStrategy(config: Config) {
       sb.append(s"FROM $mailTableName cross join $rulesTableName ")
       sb.append("ON ")
 
-      rules.init.foreach(r => sb.append(s"(${r.mailingRuleName}_$MATCHES_FLAG and $MAILING_RULE_NAME = '${r.mailingRuleName}') OR "))
-      sb.append(s"(${rules.last.mailingRuleName}_$MATCHES_FLAG and $MAILING_RULE_NAME = '${rules.last.mailingRuleName}') ")
+      rules.init.foreach(r =>
+        sb.append(s"(${r.mailingRuleName}_$MATCHES_FLAG and $MAILING_RULE_NAME = '${r.mailingRuleName}') OR ")
+      )
+      sb.append(
+        s"(${rules.last.mailingRuleName}_$MATCHES_FLAG and $MAILING_RULE_NAME = '${rules.last.mailingRuleName}') "
+      )
 
       sb.toString
     }
 
     println("EXPLODE QUERY: " + sqlQuery)
     val explodedMails = ss.sql(sqlQuery)
-
 
     ss.catalog.dropTempView(mailTableName)
     ss.catalog.dropTempView(rulesTableName)
@@ -286,11 +277,16 @@ class InnerMailStrategy(config: Config) {
     * @param broadcastTemplateMap is the broadcast variable containing (TemplateKey -> TemplateString) entries. The path of the template from config files is used as TemplateKey
     * @return A DataFrame of Mail object ready to be sent
     */
-  private def enrichAndRefine(explodedMails: DataFrame, rules: Seq[MailingRule], broadcastTemplateMap: Broadcast[Map[String, String]]): DataFrame = {
+  private def enrichAndRefine(
+      explodedMails: DataFrame,
+      rules: Seq[MailingRule],
+      broadcastTemplateMap: Broadcast[Map[String, String]]
+  ): DataFrame = {
 
     val mailWithContent = explodedMails
       .withColumn(CONTENT_TYPE, lit("text/html"))
-      .withColumn(MAIL_CONTENT,
+      .withColumn(
+        MAIL_CONTENT,
         compileMailUDF(broadcastTemplateMap)(
           col(EVENT_ID),
           col(EVENT_TYPE),
@@ -300,9 +296,11 @@ class InnerMailStrategy(config: Config) {
           col(SOURCE),
           col(SOURCE_ID),
           col(EVENT_RULE_NAME),
-          col(TEMPLATE_KEY)))
+          col(TEMPLATE_KEY)
+        )
+      )
 
-    val ss = mailWithContent.sparkSession
+    val ss                = mailWithContent.sparkSession
     val tableName: String = s"TEMP_ENRICH_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
 
     mailWithContent.registerTempTable(tableName)
@@ -330,6 +328,27 @@ class InnerMailStrategy(config: Config) {
 
   }
 
+  def compileMailUDF(broadcastTemplateMap: Broadcast[Map[String, String]]): UserDefinedFunction =
+    udf(compileMail(broadcastTemplateMap))
+
+  def compileMail(
+      broadcastTemplateMap: Broadcast[Map[String, String]]
+  ): (String, String, String, String, String, String, String, String, String) => String =
+    (eventId, eventType, severity, payload, timestamp, source, sourceId, ruleName, templateKey) => {
+
+      val templateString = broadcastTemplateMap.value(templateKey)
+      VelocityTemplateComposer.compose(
+        eventId,
+        eventType,
+        severity,
+        payload,
+        timestamp,
+        source,
+        sourceId,
+        ruleName,
+        templateString
+      )
+    }
 
   /**
     * Merge mails with same recipient concatenating their content.
@@ -339,7 +358,8 @@ class InnerMailStrategy(config: Config) {
     * TODO: reduce shuffling amount
     */
   private def aggregateMails(refinedMails: DataFrame): DataFrame = {
-    refinedMails.groupBy(MAIL_TO, MAIL_CC, MAIL_BCC)
+    refinedMails
+      .groupBy(MAIL_TO, MAIL_CC, MAIL_BCC)
       .agg(concat_ws(LINE_SEPARATOR, collect_list(MAIL_CONTENT)).as(MAIL_CONTENT))
       .withColumn(MAIL_SUBJECT, lit("Multi-Event merged e-mail"))
 
@@ -355,7 +375,9 @@ object VelocityTemplateComposer {
       // TODO: instead of null logging, redirect velocity log to wasp logging
       val p = new Properties()
       p.setProperty("runtime.log.logsystem.class", classOf[NullLogChute].getCanonicalName)
-      p.put("runtime.log.logsystem", new NullLogChute())
+      if (BuildInfo.flavor != "CDP717") {
+        p.put("runtime.log.logsystem", new NullLogChute())
+      }
       p
     }
 
@@ -364,7 +386,17 @@ object VelocityTemplateComposer {
     ve
   }
 
-  def compose(eventId: String, eventType: String, severity: String, payload: String, timestamp: String, source: String, sourceId: String, ruleName: String, templateString: String): String = {
+  def compose(
+      eventId: String,
+      eventType: String,
+      severity: String,
+      payload: String,
+      timestamp: String,
+      source: String,
+      sourceId: String,
+      ruleName: String,
+      templateString: String
+  ): String = {
 
     val context = new VelocityContext()
 
@@ -382,4 +414,3 @@ object VelocityTemplateComposer {
     message.toString
   }
 }
-

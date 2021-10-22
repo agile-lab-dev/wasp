@@ -1,13 +1,13 @@
 package it.agilelab.bigdata.wasp.repository.postgres.utils
 
 import java.sql.Connection
-
 import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import PostgresSuite._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+
 
 object PostgresSuite {
   private lazy val pg = {

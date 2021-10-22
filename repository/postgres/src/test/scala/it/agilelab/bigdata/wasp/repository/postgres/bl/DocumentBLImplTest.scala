@@ -3,9 +3,10 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.DocumentModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class DocumentBLImplTest extends PostgresSuite {
+trait DocumentBLImplTest {
+  self: PostgresSuite =>
 
-  val documentBL = DocumentBLImpl(pgDB)
+  private val documentBL = DocumentBLImpl(pgDB)
 
   it should "test documentBL" in {
 

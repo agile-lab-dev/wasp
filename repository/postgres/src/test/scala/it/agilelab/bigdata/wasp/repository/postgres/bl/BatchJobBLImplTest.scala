@@ -3,7 +3,9 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobModel, WriterModel}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class BatchJobBLImplTest extends PostgresSuite{
+trait BatchJobBLImplTest {
+
+  self : PostgresSuite =>
 
   val batchJobBL =  BatchJobBLImpl(pgDB)
 

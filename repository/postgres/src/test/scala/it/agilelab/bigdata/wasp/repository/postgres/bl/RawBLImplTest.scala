@@ -5,11 +5,11 @@ import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class RawBLImplTest extends PostgresSuite {
+trait RawBLImplTest {
 
-  val _config = PostgresDBConfigModel(jdbcUrl, user, pass, driver, 10)
-  val _pgDB   = new WaspPostgresDBImpl(_config)
-  val rawBL  = RawBLImpl(_pgDB)
+  self : PostgresSuite =>
+
+  val rawBL  = RawBLImpl(pgDB)
 
   it should "test RawBLImpl" in {
 

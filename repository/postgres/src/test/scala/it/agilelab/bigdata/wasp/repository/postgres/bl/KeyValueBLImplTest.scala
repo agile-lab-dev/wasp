@@ -3,9 +3,11 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.{KeyValueModel, KeyValueOption}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class KeyValueBLImplTest extends PostgresSuite{
+trait KeyValueBLImplTest {
+  self : PostgresSuite =>
 
-    val keyValueBL = KeyValueBLImpl(pgDB)
+
+  val keyValueBL = KeyValueBLImpl(pgDB)
 
     it should "test keyValueBL" in {
 

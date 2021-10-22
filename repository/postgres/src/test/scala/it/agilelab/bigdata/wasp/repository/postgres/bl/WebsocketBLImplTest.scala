@@ -3,9 +3,10 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.WebsocketModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class WebsocketBLImplTest extends PostgresSuite{
+trait WebsocketBLImplTest {
+  self : PostgresSuite =>
 
-  val bl = WebsocketBLImpl(pgDB)
+  private val bl = WebsocketBLImpl(pgDB)
 
   it should "test WebsocketBLImpl" in {
 

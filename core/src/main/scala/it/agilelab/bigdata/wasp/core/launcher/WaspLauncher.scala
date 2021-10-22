@@ -3,10 +3,10 @@ package it.agilelab.bigdata.wasp.core.launcher
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
-import it.agilelab.bigdata.wasp.repository.core.db.{RepositoriesFactory, WaspDB}
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.utils.{CliUtils, ConfigManager}
 import it.agilelab.bigdata.wasp.models.configuration.WaspConfigModel
+import it.agilelab.bigdata.wasp.repository.core.db.{RepositoriesFactory, WaspDB}
 import org.apache.commons.cli
 import org.apache.commons.cli.{CommandLine, ParseException}
 

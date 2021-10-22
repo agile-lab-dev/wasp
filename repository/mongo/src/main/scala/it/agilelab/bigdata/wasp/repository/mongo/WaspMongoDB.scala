@@ -462,6 +462,7 @@ object WaspMongoDB extends Logging {
     JdbcConfigProvider,
     TelemetryConfigProvider,
     SparkStreamingConfigProvider,
+    ElasticConfigProvider,
     SparkBatchConfigProvider,
     NifiConfigProvider,
     CompilerConfigProvider

@@ -4,12 +4,13 @@ import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobInstanceModel, BatchJobModel, JobStatus, WriterModel}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class BatchJobInstanceBLImplTest extends PostgresSuite{
+trait BatchJobInstanceBLImplTest {
+  self : PostgresSuite =>
 
-  val bl =  BatchJobInstanceBLImpl(pgDB)
+  private val bl =  BatchJobInstanceBLImpl(pgDB)
 
 
-  it should "test batchJobBL" in {
+  it should "test batchJobInstanceBL" in {
 
     bl.createTable()
 

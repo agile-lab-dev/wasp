@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.core.utils
 
+import java.io.PrintWriter
 import org.apache.commons.cli
 import org.apache.commons.cli.{BasicParser, CommandLine, HelpFormatter, Options}
 
-import java.io.PrintWriter
 import scala.util.{Failure, Success, Try}
 
 /**

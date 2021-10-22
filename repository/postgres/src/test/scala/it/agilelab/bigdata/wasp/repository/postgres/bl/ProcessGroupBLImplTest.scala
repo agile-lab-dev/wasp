@@ -4,9 +4,11 @@ import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 
-class ProcessGroupBLImplTest extends PostgresSuite  {
+trait ProcessGroupBLImplTest {
+  self : PostgresSuite =>
 
-  val processGroupBL = ProcessGroupBLImpl(pgDB)
+
+  private val processGroupBL = ProcessGroupBLImpl(pgDB)
   
   it should "test processGroupBL" in {
 

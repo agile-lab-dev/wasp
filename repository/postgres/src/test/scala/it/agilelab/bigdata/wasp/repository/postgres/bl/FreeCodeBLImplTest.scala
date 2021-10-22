@@ -4,9 +4,10 @@ import it.agilelab.bigdata.wasp.models.FreeCodeModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 
-class FreeCodeBLImplTest extends PostgresSuite{
+trait FreeCodeBLImplTest {
+  self : PostgresSuite =>
 
-  val freeCodeBL = FreeCodeBLImpl(pgDB)
+  private val freeCodeBL = FreeCodeBLImpl(pgDB)
 
 
   it should "test freeCodeBL" in {

@@ -5,9 +5,10 @@ import it.agilelab.bigdata.wasp.repository.postgres.tables.PipegraphTableDefinit
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.bson.BsonDocument
 
-class PipegraphBLImplTest extends PostgresSuite {
+trait PipegraphBLImplTest {
+  self : PostgresSuite =>
 
-  val bl = PipegraphBLImpl(pgDB)
+  private val bl = PipegraphBLImpl(pgDB)
 
   it should "test PipegraphBLImpl" in {
     bl.dropTable()

@@ -4,9 +4,11 @@ import it.agilelab.bigdata.wasp.repository.postgres.tables.PipegraphInstanceTabl
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphStatus}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class PipegraphInstanceBLImplTest extends PostgresSuite{
+trait PipegraphInstanceBLImplTest {
+  self : PostgresSuite =>
 
-  val bl =  PipegraphInstanceBlImpl(pgDB)
+
+  private val bl =  PipegraphInstanceBlImpl(pgDB)
 
 
   it should "test PipegraphInstanceBlImpl" in {

@@ -1,0 +1,16 @@
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration debug="true" xmlns:log4j='http://jakarta.apache.org/log4j/'>
+
+    <appender name="console" class="org.apache.log4j.ConsoleAppender">
+        <param name="Target" value="System.out"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[${wasp.process}] %d{yyyy-MM-dd'T'HH:mm:ss.SSSSZ} [%t] %p %c %m%n"/>
+        </layout>
+    </appender>
+
+    <root>
+        <priority value="info"></priority>
+        <appender-ref ref="console"></appender-ref>
+    </root>
+
+</log4j:configuration>

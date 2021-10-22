@@ -5,7 +5,9 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.bson.types.ObjectId
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
-class MlModelBLImplTest extends PostgresSuite {
+trait MlModelBLImplTest {
+  self : PostgresSuite =>
+
   private val bl = MlModelBLImpl(pgDB)
 
   it should "test MlModelBLImpl for postgres" in {

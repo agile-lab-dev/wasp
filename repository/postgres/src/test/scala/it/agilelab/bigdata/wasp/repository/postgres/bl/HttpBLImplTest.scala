@@ -3,8 +3,10 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.{HttpModel, HttpCompression}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class HttpBLImplTest extends PostgresSuite {
-  val bl = HttpBLImpl(pgDB)
+trait HttpBLImplTest {
+  self : PostgresSuite =>
+
+  private val bl = HttpBLImpl(pgDB)
 
   it should "test HttpBLImpl" in {
     bl.dropTable()

@@ -4,7 +4,8 @@ import java.sql.ResultSet
 
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class packageTest extends PostgresSuite{
+trait packageTest {
+  self: PostgresSuite =>
 
   it should "test" in {
     val connection = getConnection
@@ -14,7 +15,7 @@ class packageTest extends PostgresSuite{
     rs.next()
     rs.getOption[Int]("id").get shouldBe 1
     rs.getOption[String]("test").get shouldBe "tester"
-    an [ClassCastException] should be thrownBy rs.getOption[Int]("test").get
+    an[ClassCastException] should be thrownBy rs.getOption[Int]("test").get
     rs.getOption[String]("city") shouldBe None
 
   }

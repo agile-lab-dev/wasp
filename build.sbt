@@ -239,8 +239,7 @@ lazy val plugin = project
     plugin_mailer_spark,
     plugin_http_spark,
     plugin_mongo_spark,
-    microservice_catalog,
-    plugin_elastic_spark
+    microservice_catalog
   )
 
 /* Framework + Plugins */

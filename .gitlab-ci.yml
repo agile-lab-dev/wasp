@@ -13,7 +13,7 @@ stages:
   - deploy
 
 cache:
-  key: "mycachekey"
+  key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
   paths:
     - "sbt-cache/ivy/cache"
     - "sbt-cache/boot"
@@ -30,7 +30,7 @@ test-kernel:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-kernel/test coverageOff wasp-kernel/coverageReport wasp-kernel/coverageAggregate"
   after_script:
@@ -54,7 +54,7 @@ test-plugin:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-plugin/test coverageOff wasp-plugin/coverageReport wasp-plugin/coverageAggregate"
   after_script:
@@ -78,7 +78,7 @@ test-repo:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12"]
+      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-repository/test coverageOff wasp-repository/coverageReport wasp-repository/coverageAggregate"
   after_script:
@@ -102,7 +102,7 @@ compile-whitelabel:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12"]
+      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
   script:
     - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/Test/compile"
   tags:
@@ -144,7 +144,9 @@ snapshot:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
+  tags:
+    - gitlab-org
   script:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
@@ -166,7 +168,7 @@ release:
   image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12" ]
+      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
   script:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
@@ -200,6 +202,11 @@ pages:
       else
         true
       fi
+  cache:
+    key: pages
+    paths:
+      - node_modules/
+      - public/
   artifacts:
     paths:
       - public

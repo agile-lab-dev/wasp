@@ -5,9 +5,11 @@ import java.sql.SQLException
 import it.agilelab.bigdata.wasp.models.ProducerModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class ProducerBLImplTest extends PostgresSuite{
+trait ProducerBLImplTest {
+  self : PostgresSuite =>
 
-  val bl = ProducerBLImpl(pgDB)
+
+  private val bl = ProducerBLImpl(pgDB)
 
   it should "test producer bl" in {
 

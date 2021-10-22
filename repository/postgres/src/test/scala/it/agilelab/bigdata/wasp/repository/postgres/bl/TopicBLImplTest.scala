@@ -4,7 +4,9 @@ import it.agilelab.bigdata.wasp.models.{MultiTopicModel, TopicCompression, Topic
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.mongodb.scala.bson.BsonDocument
 
-class TopicBLImplTest extends PostgresSuite{
+trait TopicBLImplTest {
+  self : PostgresSuite =>
+
 
   private val bl = TopicBLImpl(pgDB)
 

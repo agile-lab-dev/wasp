@@ -3,7 +3,9 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.IndexModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class IndexBLImplTest extends PostgresSuite{
+trait IndexBLImplTest {
+  self : PostgresSuite =>
+
 
   private val bl = IndexBLImpl(pgDB)
 

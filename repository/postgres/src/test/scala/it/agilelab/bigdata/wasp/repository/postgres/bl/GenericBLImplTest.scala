@@ -6,8 +6,10 @@ import it.agilelab.bigdata.wasp.models.{GenericModel, HttpCompression, HttpModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.mongodb.scala.bson.BsonDocument
 
-class GenericBLImplTest extends PostgresSuite {
-  val bl = GenericBLImpl(pgDB)
+trait GenericBLImplTest {
+  self : PostgresSuite =>
+
+  private val bl = GenericBLImpl(pgDB)
 
   it should "test GenericBLImpl" in {
     bl.dropTable()

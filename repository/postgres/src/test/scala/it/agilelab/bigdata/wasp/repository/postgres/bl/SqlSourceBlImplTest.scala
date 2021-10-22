@@ -5,11 +5,11 @@ import it.agilelab.bigdata.wasp.models.configuration.{JdbcPartitioningInfo, Post
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class SqlSourceBlImplTest extends PostgresSuite {
+trait SqlSourceBlImplTest {
+  self : PostgresSuite =>
 
-  val _config     = PostgresDBConfigModel(jdbcUrl, user, pass, driver, 10)
-  val _pgDB       = new WaspPostgresDBImpl(_config)
-  val sqlSourceBL = SqlSourceBLImpl(_pgDB)
+
+  val sqlSourceBL = SqlSourceBLImpl(pgDB)
 
   it should "test sqlSourceBL" in {
 

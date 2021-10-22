@@ -3,8 +3,9 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.BatchSchedulerModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
-class BatchSchedulersBLImplTest extends PostgresSuite {
+trait BatchSchedulersBLImplTest {
 
+  self: PostgresSuite =>
   private val bl = BatchSchedulersBLImpl(pgDB)
 
   it should "Test BatchSchedulersBLImpl" in {
