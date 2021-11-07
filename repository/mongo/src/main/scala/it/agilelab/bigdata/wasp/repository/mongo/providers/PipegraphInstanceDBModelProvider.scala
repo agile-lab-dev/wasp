@@ -35,7 +35,7 @@ object PipegraphInstanceDBModelProvider extends CodecProvider{
                   else None,
                 error = if (bsonDocument.containsKey("error")) Some(bsonDocument.get("error").asString().getValue) else None
               ).asInstanceOf[T]
-            case _ => throw new Exception("This version of a mapper does not exist")
+            case other => throw new Exception(s"This version: [$other] of the mapper does not exist")
           }
         }
         override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext): Unit = {
@@ -44,7 +44,7 @@ object PipegraphInstanceDBModelProvider extends CodecProvider{
               case x: PipegraphInstanceDBModelV1 =>
                 version = PipegraphInstanceMapperV1.version
                 value.asInstanceOf[PipegraphInstanceDBModelV1]
-              case _ => throw new Exception("Another Model version does not exist")
+              case other => throw new Exception(s"There is no version of a mapper for [$other]")
             }
             val document = BsonDocument()
               .append("name", BsonString(instance.name))

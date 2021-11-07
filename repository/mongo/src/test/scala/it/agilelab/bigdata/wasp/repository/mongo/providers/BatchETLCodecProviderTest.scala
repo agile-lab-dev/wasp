@@ -1,15 +1,16 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
 import java.util
-
-import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, BatchJobModel, DataStoreConf, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, KeyValueDataStoreConf, MlModelOnlyInfo, NoPartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawModel, RawOptions, ReaderModel, StrategyModel, TimeBasedBetweenPartitionPruningStrategy, WriterModel}
+import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, BatchJobModel, ContainsRawMatchingStrategy, DataStoreConf, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, KeyValueDataStoreConf, KeyValueModel, MlModelOnlyInfo, NoPartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawModel, RawOptions, ReaderModel, StrategyModel, TimeBasedBetweenPartitionPruningStrategy, WriterModel}
+import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}
+import it.agilelab.bigdata.wasp.repository.mongo.providers.VersionedRegistry.{KeyValueProvider, RawDBProvider}
 import org.apache.spark.sql.types._
 import org.bson.BsonDocumentWriter
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.{DecoderContext, EncoderContext}
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
+import org.mongodb.scala.bson.codecs.Macros.{createCodecProvider, createCodecProviderIgnoreNone}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import org.scalatest.FunSuite
 
@@ -43,6 +44,7 @@ class BatchETLCodecProviderTest extends FunSuite {
     createCodecProviderIgnoreNone(classOf[WriterModel]),
     createCodecProviderIgnoreNone(classOf[BatchJobExclusionConfig]),
     BatchETLCodecProvider,
+    RawDBProvider,
     BatchJobModelCodecProvider
   ).asJava
 
