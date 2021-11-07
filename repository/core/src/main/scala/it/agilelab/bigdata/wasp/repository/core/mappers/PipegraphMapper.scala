@@ -24,6 +24,7 @@ object PipegraphDBModelMapperSelector extends MapperSelector[PipegraphModel, Pip
   }
 }
 
+// needs to be updated also at PipegraphInstanceDBModelProvider
 object PipegraphInstanceDBModelMapperSelector extends MapperSelector[PipegraphInstanceModel, PipegraphInstanceDBModel] {
 
   override def select(model: PipegraphInstanceDBModel): Mapper[PipegraphInstanceModel, PipegraphInstanceDBModel] = {

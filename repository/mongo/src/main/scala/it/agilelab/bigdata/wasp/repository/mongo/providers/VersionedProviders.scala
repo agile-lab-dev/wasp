@@ -106,6 +106,8 @@ object VersionedRegistry{
   val batchJobProviders = fromProviders(
     BatchETLCodecProvider,
     createCodecProviderIgnoreNone[RawModel](),
+    RawDBProvider,
+    KeyValueProvider,
     createCodecProvider[RawOptions](),
     createCodecProvider[ExactRawMatchingStrategy](),
     createCodecProvider[PrefixRawMatchingStrategy](),

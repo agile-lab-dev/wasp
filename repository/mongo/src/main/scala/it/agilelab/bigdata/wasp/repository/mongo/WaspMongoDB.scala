@@ -434,7 +434,6 @@ object WaspMongoDB extends Logging {
     SubjectStrategyCodecProvider,
     TypesafeConfigCodecProvider,
     PipegraphInstanceDBModelProvider,
-    PipegraphInstanceDBModelProvider,
     BatchJobInstanceDBProvider,
     BatchJobModelCodecProvider,
     DocumentProvider,
