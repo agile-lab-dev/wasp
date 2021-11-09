@@ -359,9 +359,10 @@ trait KafkaDependencies {
 
 trait MongoDependencies {
   val versions: Vanilla2Versions
+  val exclusions: VanillaExclusions.type
   lazy val mongodbScala        = "org.mongodb.scala" %% "mongo-scala-driver"    % versions.mongodbScala
   lazy val mongoBsonScala      = "org.mongodb.scala" %% "mongo-scala-bson"      % versions.mongodbScala
-  lazy val mongoSparkConnector = "org.mongodb.spark" %% "mongo-spark-connector" % versions.mongoSparkConnector
+  lazy val mongoSparkConnector = "org.mongodb.spark" %% "mongo-spark-connector" % versions.mongoSparkConnector exclude (exclusions.mongoJavaDriverExclude)
   lazy val mongoJavaDriver     = "org.mongodb"       % "mongo-java-driver"      % versions.mongoJavaDriver
 }
 
@@ -416,7 +417,7 @@ trait AvroDependencies {
   lazy val avro4sCore = "com.sksamuel.avro4s" %% "avro4s-core" % versions.avro4sVersion exclude exclusions.json4sExclude
   lazy val avro4sJson = "com.sksamuel.avro4s" %% "avro4s-json" % versions.avro4sVersion exclude exclusions.json4sExclude
 
-  lazy val avro4s      = Seq(avro4sCore, avro4sJson)
+  lazy val avro4s     = Seq(avro4sCore, avro4sJson)
   lazy val avro4sTest = avro4s.map(_ % Test)
 }
 

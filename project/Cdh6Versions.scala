@@ -26,7 +26,7 @@ class Cdh6Versions {
   val kryo = "3.0.0"
   val log4j = "2.9.1" // keep compatible with elastic
   val log4j1 = "1.2.16"
-  val mongodbScala = "2.8.0"
+  val mongodbScala = "2.9.0"
   val netty = "3.10.6.Final"
   val nettySpark = "3.9.9.Final"
   val nettyAllSpark = "4.1.17.Final"

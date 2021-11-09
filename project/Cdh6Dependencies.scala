@@ -412,8 +412,8 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   ).map(excludeNetty)
 
   val pluginMongoSparkDependencies = Seq(
-    "org.mongodb.spark" %% "mongo-spark-connector" % "2.2.7",
-    "org.mongodb"       % "mongo-java-driver"      % "3.12.0"
+    ("org.mongodb.spark" %% "mongo-spark-connector" % "2.4.3").exclude("org.mongodb", "mongo-java-driver"),
+    "org.mongodb"       % "mongo-java-driver"      % "3.12.2"
   ).map(excludeNetty)
 
   val pluginMailerSparkDependencies = Seq(

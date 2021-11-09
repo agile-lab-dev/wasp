@@ -21,7 +21,6 @@ class Vanilla2Versions {
   val kryo                      = "4.0.2"
   val log4j                     = "2.9.1" // keep compatible with elastic
   val log4j1                    = "1.2.17"
-  val mongodbScala              = "2.8.0"
   val nettySpark                = "3.9.9.Final"
   val nettyAllSpark             = "4.1.47.Final"
   val quartz                    = "2.3.0"
@@ -43,7 +42,7 @@ class Vanilla2Versions {
   val delta                     = "0.6.1" // + "-" + spark
   val kafka_                    = "2.2.1"
   val kafka: String             = kafka_
-  val sparkSqlKafka: String     = "0.1.0" + "-" + kafka_ + "-" + spark + "-SNAPSHOT"
+  val sparkSqlKafka: String     = "0.1.0" + "-" + kafka_ + "-" + spark
   val yammerMetrics             = "2.2.0"
   val swagger                   = "2.1.2"
   val typesafeConfig            = "1.3.0"
@@ -58,7 +57,8 @@ class Vanilla2Versions {
   val xmlUnit                   = "1.6"
   val codeHausJackson           = "1.9.13"
   val mongoSparkConnector       = "2.4.3"
-  val mongoJavaDriver           = "3.12.0"
+  val mongoJavaDriver           = "3.12.2"
+  val mongodbScala              = "2.9.0"
   val jettySecurity             = "9.3.25.v20180904"
 }
 

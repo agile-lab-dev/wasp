@@ -174,10 +174,7 @@ object MongoDBHelper extends Logging {
     //return a connection pool
 
     val settingsBuilder = MongoClientSettings.builder()
-      .applyToClusterSettings(new Block[ClusterSettings.Builder] {
-        override def apply(t: ClusterSettings.Builder): Unit =
-          t.applyConnectionString(new ConnectionString(mongoDBConfig.address))
-      })
+      .applyConnectionString(new ConnectionString(mongoDBConfig.address))
       //we need full consistency so we consider a write on mongo as successful when it lands on disk
       .writeConcern(WriteConcern.ACKNOWLEDGED.withFsync(true))
       .applyToSocketSettings(new Block[SocketSettings.Builder]{
