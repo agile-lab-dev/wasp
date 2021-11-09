@@ -602,8 +602,8 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   override lazy val pluginKafkaSparkOldDependencies: Seq[sbt.ModuleID] = Seq(spark_sql_kafka_old) ++ testDependencies
   override lazy val pluginSolrSparkDependencies: Seq[sbt.ModuleID]     = Seq(sparkSolr, solrj) ++ testDependencies
   override lazy val pluginMongoSparkDependencies: Seq[sbt.ModuleID] = Seq(
-    "org.mongodb.spark" %% "mongo-spark-connector" % "2.2.7",
-    "org.mongodb"       % "mongo-java-driver"      % "3.12.0"
+    ("org.mongodb.spark" %% "mongo-spark-connector" % "2.4.3").exclude("org.mongodb", "mongo-java-driver"),
+    "org.mongodb"       % "mongo-java-driver"      % "3.12.2"
   )
   override lazy val pluginMailerSparkDependencies: Seq[sbt.ModuleID]        = Seq(javaxMail) ++ testDependencies
   override lazy val pluginHttpSparkDependencies: Seq[sbt.ModuleID]          = wireMock ++ testDependencies ++ okHttp2

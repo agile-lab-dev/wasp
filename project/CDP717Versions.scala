@@ -23,7 +23,7 @@ class CDP717Versions {
   val json4s = "3.5.3"
   val kryo = "4.0.2"
   val log4j1 = "1.2.17-cloudera1"
-  val mongodbScala = "2.8.0"
+  val mongodbScala = "2.9.0"
   val netty = "3.10.6.Final"
   val nettySpark = "3.9.9.Final"
   val nettyAllSpark = "4.1.63.Final"

@@ -1,52 +1,35 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import java.nio.ByteBuffer
-import java.util
-import java.util.concurrent.TimeUnit
 import com.mongodb.ErrorCategory
 import com.mongodb.client.model.{CreateCollectionOptions, IndexOptions}
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
-import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models._
-import it.agilelab.bigdata.wasp.models.configuration.{CompilerConfigModel, _}
-import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper._
 import it.agilelab.bigdata.wasp.core.utils._
+import it.agilelab.bigdata.wasp.models._
+import it.agilelab.bigdata.wasp.models.configuration._
+import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.repository.core.dbModels._
-import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{
-  DataStoreConfCodecProvider,
-  KeyValueDataStoreConfCodecProvider,
-  KeyValueMatchingStrategyCodecProvider,
-  PartitionPruningStrategyCodecProvider,
-  RawDataStoreConfCodecProvider,
-  RawMatchingStrategyCodecProvider
-}
-import it.agilelab.bigdata.wasp.repository.mongo.providers.{
-  BatchETLCodecProvider,
-  BatchGdprETLModelCodecProvider,
-  BatchJobInstanceDBProvider,
-  BatchJobModelCodecProvider,
-  DatastoreProductCodecProvider,
-  HttpCompressionCodecProvider,
-  PipegraphInstanceDBModelProvider,
-  SubjectStrategyCodecProvider,
-  TopicCompressionCodecProvider
-}
-import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper
+import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders._
 import it.agilelab.bigdata.wasp.repository.mongo.providers.VersionedRegistry._
-import org.bson.{BsonReader, BsonWriter}
-import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
-import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
+import it.agilelab.bigdata.wasp.repository.mongo.providers._
+import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper
+import it.agilelab.bigdata.wasp.repository.mongo.utils.MongoDBHelper._
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
+import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
+import org.bson.{BsonReader, BsonWriter}
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonString, BsonValue}
-import org.mongodb.scala.gridfs.{GridFSBucket, GridFSUploadStream}
+import org.mongodb.scala.gridfs.GridFSBucket
 import org.mongodb.scala.model.Indexes
 import org.mongodb.scala.result.UpdateResult
-import org.mongodb.scala.{Completed, MongoCommandException, MongoDatabase, MongoWriteException}
+import org.mongodb.scala.{MongoCommandException, MongoDatabase, MongoWriteException, Observable}
 
+import java.nio.ByteBuffer
+import java.util
+import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -136,7 +119,7 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 
     val collections = collectionsLookupTable.values.toSet
 
-    val collectionOptions = new CreateCollectionOptions().autoIndex(true)
+    val collectionOptions = new CreateCollectionOptions()
 
     val COLLECTION_ALREADY_EXISTS = 48
 
@@ -216,13 +199,6 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
     getDocumentByKey[T](field, value, collectionsLookupTable(typeTag.tpe))
   }
 
-//  def getDocumentByField(
-//                          field: String,
-//                          className: Class[_],
-//                          value: BsonValue): Option[Any] ={
-//    getDocumentByKey
-//  }
-
   def getDocumentByQueryParams[T <: Model](
       query: Map[String, BsonValue],
       sort: Option[BsonDocument]
@@ -287,27 +263,23 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
   }
 
   def saveFile(arrayBytes: Array[Byte], file: String, metadata: BsonDocument): BsonObjectId = {
-    val uploadStreamFile = GridFSBucket(mongoDatabase).openUploadStream(file)
-    uploadStreamFile
-      .write(ByteBuffer.wrap(arrayBytes))
-      .subscribe((x: Int) => None, (throwable: Throwable) => (), () => {
-        uploadStreamFile.close().subscribe((x: Completed) => None, (throwable: Throwable) => (), () => {})
-      })
-
-    BsonObjectId(uploadStreamFile.objectId)
+    BsonObjectId(
+      GridFSBucket(mongoDatabase)
+        .uploadFromObservable(file, Observable(List(ByteBuffer.wrap(arrayBytes))))
+        .headResult()
+    )
   }
 
   def deleteFileById(id: BsonObjectId): Unit = GridFSBucket(mongoDatabase).delete(id).headResult()
 
   def enumerateFile(file: String): Array[Byte] = {
-    val gridFile = GridFSBucket(mongoDatabase).openDownloadStream(file)
-    val length   = gridFile.gridFSFile().headResult().getLength
-    // MUST be less than 4GB
-    assert(length < Integer.MAX_VALUE)
-    val resultFile = ByteBuffer.allocate(length.toInt)
-    gridFile.read(resultFile)
-    resultFile.array()
+    val downloadObservable = GridFSBucket(mongoDatabase).downloadToObservable(file)
+    val gridFile           = downloadObservable.getGridFSFile.headResult()
 
+    val length = gridFile.getLength
+    // MUST be less than 4GB
+    require(length < Integer.MAX_VALUE, s"File $file is bigger than 4GB")
+    downloadObservable.headResult().array()
   }
 
   def close() = {
@@ -317,13 +289,12 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
   def getFileByID(id: BsonObjectId): Array[Byte] = {
 
     logger.info(s"Locating file by id $id")
-    val gridFile = GridFSBucket(mongoDatabase).openDownloadStream(id)
-    val length   = gridFile.gridFSFile().headResult().getLength
+    val downloadObservable = GridFSBucket(mongoDatabase).downloadToObservable(id)
+    val gridFile           = downloadObservable.getGridFSFile.headResult()
+    val length             = gridFile.getLength
     // MUST be less than 4GB
-    assert(length < Integer.MAX_VALUE)
-    val resultFile = ByteBuffer.allocate(length.toInt)
-    gridFile.read(resultFile).headResult()
-    resultFile.array()
+    require(length < Integer.MAX_VALUE, s"File with id $id is bigger than 4GB")
+    downloadObservable.headResult().array()
   }
 
   override def deleteByName[T <: Model](name: String)(implicit ct: ClassTag[T], typeTag: universe.TypeTag[T]): Unit =

@@ -64,6 +64,10 @@ object VanillaExclusions {
       MavenCoordinate("org.apache.solr", "solr-test-framework")
     )
 
+  lazy val mongoJavaDriverExclude: Vector[MavenCoordinate] = Vector(
+    MavenCoordinate("org.mongodb", "mongo-java-driver")
+  )
+
   lazy val kafkaExclusions: Vector[MavenCoordinate] =
     slf4jExclude ++
       Vector(
@@ -75,8 +79,7 @@ object VanillaExclusions {
       )
 
   lazy val kafka08Exclude: Vector[MavenCoordinate] =
-    Vector(MavenCoordinate("org.apache.kafka", "kafka_2.11"),
-      MavenCoordinate("org.apache.kafka", "kafka_2.12")) // todo chec
+    Vector(MavenCoordinate("org.apache.kafka", "kafka_2.11"), MavenCoordinate("org.apache.kafka", "kafka_2.12")) // todo chec
 
   lazy val hiveExclude = Vector(
     MavenCoordinate("org.apache.spark", "spark-core_2.11"),
@@ -86,16 +89,16 @@ object VanillaExclusions {
   // these are needed because kafka brings in jackson-core/databind 2.8.5, which are incompatible with Spark
   // and otherwise cause a jackson compatibility exception
   lazy val jacksonExclude: Vector[MavenCoordinate] =
-  Vector(
-    MavenCoordinate("com.fasterxml.jackson.core", "jackson-core"),
-    MavenCoordinate("com.fasterxml.jackson.core", "jackson-databind"),
-    MavenCoordinate("com.fasterxml.jackson.core", "jackson-annotations"),
-    MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-scala_2.11"),
-    MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-scala_2.12"),
-    MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-paranamer"),
-    MavenCoordinate("com.fasterxml.jackson.datatype", "jackson-datatype-jdk8"),
-    MavenCoordinate("org.codehaus.jackson", "jackson-core-asl")
-  )
+    Vector(
+      MavenCoordinate("com.fasterxml.jackson.core", "jackson-core"),
+      MavenCoordinate("com.fasterxml.jackson.core", "jackson-databind"),
+      MavenCoordinate("com.fasterxml.jackson.core", "jackson-annotations"),
+      MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-scala_2.11"),
+      MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-scala_2.12"),
+      MavenCoordinate("com.fasterxml.jackson.module", "jackson-module-paranamer"),
+      MavenCoordinate("com.fasterxml.jackson.datatype", "jackson-datatype-jdk8"),
+      MavenCoordinate("org.codehaus.jackson", "jackson-core-asl")
+    )
 
   lazy val camelKafkaExclusions: Vector[MavenCoordinate] = Vector(MavenCoordinate("org.apache.kafka", "kafka-clients"))
 
