@@ -209,6 +209,7 @@ object VersionedRegistry {
     createCodecProvider[ContainsRawMatchingStrategy](),
     createCodecProvider[TimeBasedBetweenPartitionPruningStrategy](),
     createCodecProvider[KeyValueModel](),
+    createCodecProvider[KeyValueOption](),
     createCodecProvider[ExactKeyValueMatchingStrategy](),
     createCodecProvider[PrefixKeyValueMatchingStrategy](),
     createCodecProvider[PrefixAndTimeBoundKeyValueMatchingStrategy](),
