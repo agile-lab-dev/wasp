@@ -175,6 +175,8 @@ release:
     - sbt clean publishSigned sonatypeBundleRelease
   only:
     - tags
+  tags:
+    - gitlab-org
 
 pages:
   image: registry.gitlab.com/publicagilefactory/handbook/node:10
