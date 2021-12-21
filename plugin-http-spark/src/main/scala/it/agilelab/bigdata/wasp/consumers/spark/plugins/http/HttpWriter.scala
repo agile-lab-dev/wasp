@@ -1,11 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.http
 
-import it.agilelab.bigdata.wasp.models.HttpModel
-import it.agilelab.bigdata.wasp.core.utils.Utils.using
 import com.squareup.okhttp._
-import it.agilelab.bigdata.wasp.models.HttpCompression
-import org.apache.spark.sql.{ ForeachWriter, Row }
+import it.agilelab.bigdata.wasp.core.utils.Utils.using
+import it.agilelab.bigdata.wasp.models.{HttpCompression, HttpModel}
+import org.apache.spark.sql.{ForeachWriter, Row}
 import org.slf4j.LoggerFactory
+
+import java.nio.charset.StandardCharsets
 
 object HttpWriter {
   def apply(httpModel: HttpModel, bodyColumnName: String): HttpWriter =
@@ -21,14 +22,14 @@ object HttpWriter {
 }
 
 class HttpWriter(
-  headersFieldName: Option[String],
-  url: String,
-  mediaType: String,
-  method: String,
-  compressionStr: String,
-  logBody: Boolean,
-  bodyColumnName: String
-) extends ForeachWriter[Row] {
+                  headersFieldName: Option[String],
+                  url: String,
+                  mediaType: String,
+                  method: String,
+                  compressionStr: String,
+                  logBody: Boolean,
+                  bodyColumnName: String
+                ) extends ForeachWriter[Row] {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -60,9 +61,9 @@ class HttpWriter(
 
     header.foreach(requestBuilder.headers)
 
-    val requestBody = RequestBody.create(MediaType.parse(mediaType), value.getAs[Array[Byte]](bodyColumnName))
-
-    logB(s"requestBody: $requestBody")
+    val byteArray = value.getAs[Array[Byte]](bodyColumnName)
+    val requestBody = RequestBody.create(MediaType.parse(mediaType), byteArray)
+    logB(s"requestBody: ${new String(byteArray, StandardCharsets.UTF_8)}")
 
     requestBuilder
       .method(method, requestBody)
@@ -86,11 +87,12 @@ class HttpWriter(
     } else {
       None
     }
-    responseBody.foreach(b => logger.info("Body of request: {} \n==========\n{}\n==========", request: Any, b: Any))
+
+    responseBody.foreach(b => logger.info(s"Body of response: ${response}, ResponseBody{${b}}}"))
     if (response.code() / 100 != 2) {
       responseBody match {
         case Some(b) =>
-          throw new RuntimeException(s"Error during http call: ${response.toString} \n==========\n${b}\n==========")
+          throw new RuntimeException(s"Error during http call: ${response.toString}, ResponseBody{${b}}")
         case None    => throw new RuntimeException(s"Error during http call: ${response.toString}")
       }
     }
