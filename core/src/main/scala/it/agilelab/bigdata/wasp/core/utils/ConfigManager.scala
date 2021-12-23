@@ -494,7 +494,6 @@ object ConfigManager extends Logging with CanOverrideNameInstances {
     initializeSparkStreamingConfig()
     initializeSparkBatchConfig()
     initializeAvroSchemaManagerConfig()
-    initializeTelemetryConfig()
     initializeNifiConfig()
     initializeCompilerConfig()
   }
