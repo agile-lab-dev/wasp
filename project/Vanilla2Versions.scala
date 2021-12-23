@@ -19,7 +19,7 @@ class Vanilla2Versions {
   val jopt                      = "3.2"
   val json4s                    = "3.5.3"
   val kryo                      = "4.0.2"
-  val log4j                     = "2.9.1" // keep compatible with elastic
+  val log4j                     = "2.17.0" // keep compatible with elastic
   val log4j1                    = "1.2.17"
   val nettySpark                = "3.9.9.Final"
   val nettyAllSpark             = "4.1.47.Final"

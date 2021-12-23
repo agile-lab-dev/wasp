@@ -219,6 +219,8 @@ lazy val kernel = project
     consumers_rt,
     openapi,
     nifi_client,
+    spark_nifi_plugin_bridge,
+    spark_nifi_plugin,
     yarn,
     spark
   )
@@ -239,7 +241,8 @@ lazy val plugin = project
     plugin_mailer_spark,
     plugin_http_spark,
     plugin_mongo_spark,
-    microservice_catalog
+    microservice_catalog,
+    plugin_elastic_spark
   )
 
 /* Framework + Plugins */
