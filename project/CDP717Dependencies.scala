@@ -16,11 +16,10 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   lazy val javaxMail = "javax.mail" % "mail" % "1.4"
   lazy val globalExclusions: Seq[ExclusionRule] = Seq(
     ExclusionRule("org.apache.logging.log4j", "log4j-slf4j-impl"),
-      ExclusionRule ("com.fasterxml.jackson.module", "jackson-module-scala_2.12"),
+    ExclusionRule("com.fasterxml.jackson.module", "jackson-module-scala_2.12"),
     ExclusionRule("org.scala-lang.modules", "scala-java8-compat_2.12"),
     ExclusionRule("net.jpountz.lz4", "lz4"),
     ExclusionRule("org.apache.velocity", "velocity-engine-core")
-
   )
   lazy val parcelDependencies = Seq(
     "aopalliance"                      % "aopalliance"                                 % "1.0",
@@ -330,9 +329,9 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     "org.apache.knox"                 % "gateway-shell"                                  % "1.3.0.7.1.7.0-551",
     "org.apache.knox"                 % "gateway-util-common"                            % "1.3.0.7.1.7.0-551",
     "org.apache.kudu"                 % "kudu-client"                                    % "1.15.0.7.1.7.0-551",
-    "org.apache.logging.log4j"        % "log4j-api"                                      % "2.14.1",
-    "org.apache.logging.log4j"        % "log4j-core"                                     % "2.14.1",
-    "org.apache.logging.log4j"        % "log4j-web"                                      % "2.13.3",
+    "org.apache.logging.log4j"        % "log4j-api"                                      % "2.17.0",
+    "org.apache.logging.log4j"        % "log4j-core"                                     % "2.17.0",
+    "org.apache.logging.log4j"        % "log4j-web"                                      % "2.17.0",
     "org.apache.orc"                  % "orc-core"                                       % "1.5.1.7.1.7.0-551",
     "org.apache.orc"                  % "orc-mapreduce"                                  % "1.5.1.7.1.7.0-551",
     "org.apache.orc"                  % "orc-shims"                                      % "1.5.1.7.1.7.0-551",
@@ -571,16 +570,19 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     "com.squareup.okhttp" % "mockwebserver" % "2.7.5" % Test,
     "com.squareup.okhttp" % "mockwebserver" % "2.7.5"
   )
-  lazy val kafkaClients                                          = parcelDependencies.find(x => x.name == "kafka-clients").get
-  lazy val sparkCatalyst                                         = parcelDependencies.find(x => x.name == "spark-catalyst").get
-  lazy val sparkCatalystTests                                    = sparkCatalyst % Test classifier "tests"
-  lazy val sparkSql                                              = parcelDependencies.find(x => x.name == "spark-sql").get
-  lazy val sparkCoreTests                                        = sparkCore % Test classifier "tests"
-  lazy val sparkSQLTests                                         = sparkSql % Test classifier "tests"
-  lazy val sparkTags                                             = parcelDependencies.find(x => x.name == "spark-tags").get
-  lazy val sparkTagsTests                                        = sparkTags % Test classifier "tests"
-  lazy val kms                                                   = parcelDependencies.find(x => x.name == "hadoop-kms").get
-  lazy val kmsTestModule                                         = kms.classifier("tests") % "test"
+  lazy val kafkaClients       = parcelDependencies.find(x => x.name == "kafka-clients").get
+  lazy val sparkCatalyst      = parcelDependencies.find(x => x.name == "spark-catalyst").get
+  lazy val sparkCatalystTests = sparkCatalyst % Test classifier "tests"
+  lazy val sparkSql           = parcelDependencies.find(x => x.name == "spark-sql").get
+  lazy val sparkCoreTests     = sparkCore % Test classifier "tests"
+  lazy val sparkSQLTests      = sparkSql % Test classifier "tests"
+  lazy val sparkTags          = parcelDependencies.find(x => x.name == "spark-tags").get
+  lazy val sparkTagsTests     = sparkTags % Test classifier "tests"
+  lazy val kms                = parcelDependencies.find(x => x.name == "hadoop-kms").get
+  lazy val kmsTestModule      = kms.classifier("tests") % "test"
+  lazy val elasticSearch      = "org.elasticsearch" % "elasticsearch" % versions.elasticSearch
+  lazy val elasticSearchSpark = "org.elasticsearch" %% "elasticsearch-spark-20" % versions.elasticSearchSpark
+
   override lazy val scalaCompilerDependencies: Seq[sbt.ModuleID] = Seq(scalaPool) ++ testDependencies
   override lazy val modelDependencies
       : Seq[sbt.ModuleID] = parcelDependencies ++ allAkka ++ testDependencies :+ mongoTest :+ mongodbScala
@@ -596,14 +598,14 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   override lazy val consumersSparkDependencies
       : Seq[sbt.ModuleID]                                              = Seq(quartz, nameOf) ++ wireMock ++ hbase ++ avro4sTestAndDarwin ++ testDependencies ++ allAkka ++ avro4sTestAndDarwin
   override lazy val consumersRtDependencies: Seq[sbt.ModuleID]         = Seq(akkaCamel, camelWebsocket) ++ testDependencies
-  override lazy val pluginElasticSparkDependencies: Seq[sbt.ModuleID]  = testDependencies
+  override lazy val pluginElasticSparkDependencies: Seq[sbt.ModuleID]  = Seq(elasticSearch, elasticSearchSpark) ++ testDependencies
   override lazy val pluginHbaseSparkDependencies: Seq[sbt.ModuleID]    = testDependencies
   override lazy val pluginKafkaSparkDependencies: Seq[sbt.ModuleID]    = Seq(spark_sql_kafka) ++ testDependencies
   override lazy val pluginKafkaSparkOldDependencies: Seq[sbt.ModuleID] = Seq(spark_sql_kafka_old) ++ testDependencies
   override lazy val pluginSolrSparkDependencies: Seq[sbt.ModuleID]     = Seq(sparkSolr, solrj) ++ testDependencies
   override lazy val pluginMongoSparkDependencies: Seq[sbt.ModuleID] = Seq(
     ("org.mongodb.spark" %% "mongo-spark-connector" % "2.4.3").exclude("org.mongodb", "mongo-java-driver"),
-    "org.mongodb"       % "mongo-java-driver"      % "3.12.2"
+    "org.mongodb" % "mongo-java-driver" % "3.12.2"
   )
   override lazy val pluginMailerSparkDependencies: Seq[sbt.ModuleID]        = Seq(javaxMail) ++ testDependencies
   override lazy val pluginHttpSparkDependencies: Seq[sbt.ModuleID]          = wireMock ++ testDependencies ++ okHttp2

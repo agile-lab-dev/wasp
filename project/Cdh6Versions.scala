@@ -24,7 +24,7 @@ class Cdh6Versions {
   val jopt = "3.2"
   val json4s = "3.5.3"
   val kryo = "3.0.0"
-  val log4j = "2.9.1" // keep compatible with elastic
+  val log4j = "2.17.0" // keep compatible with elastic
   val log4j1 = "1.2.16"
   val mongodbScala = "2.9.0"
   val netty = "3.10.6.Final"
