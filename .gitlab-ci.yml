@@ -27,7 +27,7 @@ cache:
 test-kernel:
   stage: test
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
@@ -51,7 +51,7 @@ test-kernel:
 test-plugin:
   stage: test
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
@@ -75,7 +75,7 @@ test-plugin:
 test-repo:
   stage: test
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
@@ -99,7 +99,7 @@ test-repo:
 compile-whitelabel:
   stage: deploy
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
@@ -139,7 +139,7 @@ waspctl:
 snapshot:
   interruptible: false
   stage: deploy
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
@@ -163,7 +163,7 @@ snapshot:
 release:
   interruptible: false
   stage: deploy
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
