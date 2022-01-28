@@ -19,20 +19,9 @@ object TopicDBModelMapperSelector extends MapperSelector[TopicModel, TopicDBMode
   }
 }
 
-object TopicMapperV1 extends Mapper[TopicModel, TopicDBModelV1] {
+object TopicMapperV1 extends SimpleMapper[TopicModel, TopicDBModelV1] {
   override val version = "topicV1"
-
-  override def fromModelToDBModel(p: TopicModel): TopicDBModelV1 = {
-
-    val values      = TopicModel.unapply(p).get
-    val makeDBModel = (TopicDBModelV1.apply _).tupled
-    makeDBModel(values)
-  }
-
-  override def fromDBModelToModel[B >: TopicDBModelV1](p: B): TopicModel = {
-
-    val values       = TopicDBModelV1.unapply(p.asInstanceOf[TopicDBModelV1]).get
-    val makeProducer = (TopicModel.apply _).tupled
-    makeProducer(values)
-  }
-}
+  override def fromDBModelToModel[B >: TopicDBModelV1](m: B): TopicModel = m match {
+    case mm: TopicDBModelV1 => transform[TopicModel](mm)
+    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+  }}

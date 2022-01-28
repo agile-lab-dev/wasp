@@ -2,10 +2,10 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{MultiTopicDBModel, TopicDBModel}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{MultiTopicDBModel, MultiTopicDBModelV1, TopicDBModel, TopicDBModelV1}
 import it.agilelab.bigdata.wasp.repository.core.mappers.MultiTopicModelMapperV1
 import it.agilelab.bigdata.wasp.repository.core.mappers.TopicDBModelMapperSelector.applyMap
-import it.agilelab.bigdata.wasp.repository.core.mappers.TopicMapperV1.fromModelToDBModel
+import it.agilelab.bigdata.wasp.repository.core.mappers.TopicMapperV1.transform
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 
@@ -77,22 +77,22 @@ class TopicBLImp(waspDB: WaspMongoDB) extends TopicBL {
   // drop encoders and decoder?
 
   override def persist(topicDatastoreModel: DatastoreModel): Unit = topicDatastoreModel match {
-    case topicModel: TopicModel           => waspDB.insert[TopicDBModel](fromModelToDBModel(topicModel))
-    case multiTopicModel: MultiTopicModel => waspDB.insert[MultiTopicDBModel](MultiTopicModelMapperV1.fromModelToDBModel(multiTopicModel))
+    case topicModel: TopicModel           => waspDB.insert[TopicDBModel](transform[TopicDBModelV1](topicModel))
+    case multiTopicModel: MultiTopicModel => waspDB.insert[MultiTopicDBModel](MultiTopicModelMapperV1.transform[MultiTopicDBModelV1](multiTopicModel))
     case tdm                              => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
 
   }
 
   override def insertIfNotExists(topicDatastoreModel: DatastoreModel): Unit = topicDatastoreModel match {
-    case topicModel: TopicModel           => waspDB.insertIfNotExists[TopicDBModel](fromModelToDBModel(topicModel))
-    case multiTopicModel: MultiTopicModel => waspDB.insertIfNotExists[MultiTopicDBModel](MultiTopicModelMapperV1.fromModelToDBModel(multiTopicModel))
+    case topicModel: TopicModel           => waspDB.insertIfNotExists[TopicDBModel](transform[TopicDBModelV1](topicModel))
+    case multiTopicModel: MultiTopicModel => waspDB.insertIfNotExists[MultiTopicDBModel](MultiTopicModelMapperV1.transform[MultiTopicDBModelV1](multiTopicModel))
     case tdm                              => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
 
   }
 
   override def upsert(topicDatastoreModel: DatastoreModel): Unit = topicDatastoreModel match {
-    case topicModel: TopicModel           => waspDB.upsert[TopicDBModel](fromModelToDBModel(topicModel))
-    case multiTopicModel: MultiTopicModel => waspDB.upsert[MultiTopicDBModel](MultiTopicModelMapperV1.fromModelToDBModel(multiTopicModel))
+    case topicModel: TopicModel           => waspDB.upsert[TopicDBModel](transform[TopicDBModelV1](topicModel))
+    case multiTopicModel: MultiTopicModel => waspDB.upsert[MultiTopicDBModel](MultiTopicModelMapperV1.transform[MultiTopicDBModelV1](multiTopicModel))
     case tdm                              => throw new UnsupportedOperationException(s"Unsupported DatastoreModel[TopicCategory]: $tdm")
 
   }

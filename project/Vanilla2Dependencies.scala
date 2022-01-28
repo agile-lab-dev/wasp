@@ -42,6 +42,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val jettySecurity       = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
   lazy val avro4sTestAndDarwin = avro4sTest ++ Seq(darwinMockConnector % Test)
   lazy val mongoTest           = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
+  lazy val shapeless           = "com.chuusai"            %% "shapeless"                % "2.3.3"
 
   lazy val _pluginKafkaSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     guava,
@@ -79,7 +80,8 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   override val repositoryMongoDependencies: Seq[ModuleID] = Seq(
     mongodbScala,
     nameOf,
-    sparkSQL
+    sparkSQL,
+    shapeless
   ).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
 
   override val repositoryPostgresDependencies: Seq[ModuleID] = Seq(
@@ -211,7 +213,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val sparkNifiPluginDependencies: Seq[ModuleID] = spark
 
-  override val repositoryCoreDependencies: Seq[ModuleID] = testDependencies ++ Seq(apacheCommonsLang3)
+  override val repositoryCoreDependencies: Seq[ModuleID] = testDependencies ++ Seq(apacheCommonsLang3) ++ Seq(shapeless)
 
   override val sparkPluginBasicDependencies: Seq[ModuleID] = spark ++ scalaTestDependencies
 

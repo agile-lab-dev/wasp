@@ -2,11 +2,10 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 
 import it.agilelab.bigdata.wasp.repository.core.bl.MlModelBL
 import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
-import it.agilelab.bigdata.wasp.repository.core.dbModels.MlDBModelOnlyInfo
-import it.agilelab.bigdata.wasp.repository.core.mappers.MlDBModelMapperSelector.applyMap
-import it.agilelab.bigdata.wasp.repository.core.mappers.MlDBModelMapperV1.fromModelToDBModel
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{MlDBModelOnlyInfo, MlDBModelOnlyInfoV1}
+import it.agilelab.bigdata.wasp.repository.core.mappers.MlDBModelMapperSelector.factory
+import it.agilelab.bigdata.wasp.repository.core.mappers.MlDBModelMapperV1.transform
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
-import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString, BsonValue}
 
 /**
@@ -51,11 +50,11 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
                                   queryParams: Map[String, BsonValue],
                                   sort: Option[BsonDocument]
                                 ): Option[MlModelOnlyInfo] = {
-    waspDB.getDocumentByQueryParams[MlDBModelOnlyInfo](queryParams, sort).map(applyMap)
+    waspDB.getDocumentByQueryParams[MlDBModelOnlyInfo](queryParams, sort).map(factory)
   }
 
   override def getAll: Seq[MlModelOnlyInfo] = {
-    waspDB.getAll[MlDBModelOnlyInfo]().map(applyMap)
+    waspDB.getAll[MlDBModelOnlyInfo]().map(factory)
   }
 
 
@@ -67,7 +66,7 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
     }
   }
   def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
-    waspDB.insert[MlDBModelOnlyInfo](fromModelToDBModel(mlModelOnlyInfo))
+    waspDB.insert[MlDBModelOnlyInfo](transform[MlDBModelOnlyInfoV1](mlModelOnlyInfo))
   }
 
 
@@ -90,7 +89,7 @@ class MlModelBLImp(waspDB: WaspMongoDB) extends MlModelBL {
 
 
   def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = {
-    if (waspDB.updateByName[MlDBModelOnlyInfo](mlModelOnlyInfo.name, fromModelToDBModel(mlModelOnlyInfo)).getMatchedCount != 1) {
+    if (waspDB.updateByName[MlDBModelOnlyInfo](mlModelOnlyInfo.name, transform[MlDBModelOnlyInfoV1](mlModelOnlyInfo)).getMatchedCount != 1) {
       throw new RuntimeException(s"Model with name ${mlModelOnlyInfo.name} to update not found")
     }
   }

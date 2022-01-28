@@ -46,6 +46,7 @@ lazy val repository_core = Project("wasp-repository-core", file("repository/core
   .dependsOn(model)
   .settings(libraryDependencies ++= dependencies.repositoryCoreDependencies)
 
+
 lazy val repository_mongo = Project("wasp-repository-mongo", file("repository/mongo"))
   .settings(settings.commonSettings: _*)
   .dependsOn(repository_core)

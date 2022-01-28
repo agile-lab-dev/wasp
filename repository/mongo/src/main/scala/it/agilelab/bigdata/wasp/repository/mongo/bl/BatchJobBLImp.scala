@@ -2,11 +2,11 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 
 import it.agilelab.bigdata.wasp.repository.core.bl.{BatchJobBL, BatchJobInstanceBL}
 import it.agilelab.bigdata.wasp.models.BatchJobModel
-import it.agilelab.bigdata.wasp.repository.core.dbModels.BatchJobDBModel
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{BatchJobDBModel, BatchJobDBModelV1}
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.BsonString
-import it.agilelab.bigdata.wasp.repository.core.mappers.BatchJobModelMapperSelector.applyMap
-import it.agilelab.bigdata.wasp.repository.core.mappers.BatchJobMapperV1.fromModelToDBModel
+import it.agilelab.bigdata.wasp.repository.core.mappers.BatchJobModelMapperSelector.factory
+import it.agilelab.bigdata.wasp.repository.core.mappers.BatchJobMapperV1.transform
 
 class BatchJobBLImp(waspDB: WaspMongoDB) extends BatchJobBL {
 
@@ -17,23 +17,23 @@ class BatchJobBLImp(waspDB: WaspMongoDB) extends BatchJobBL {
   }
 
   def getAll: Seq[BatchJobModel] = {
-    waspDB.getAll[BatchJobDBModel]().map(applyMap)
+    waspDB.getAll[BatchJobDBModel]().map(factory)
   }
 
   def update(batchJobModel: BatchJobModel): Unit = {
-    waspDB.updateByName[BatchJobDBModel](batchJobModel.name, fromModelToDBModel(batchJobModel))
+    waspDB.updateByName[BatchJobDBModel](batchJobModel.name, transform[BatchJobDBModelV1](batchJobModel))
   }
 
   def insert(batchJobModel: BatchJobModel): Unit = {
-    waspDB.insertIfNotExists[BatchJobDBModel](fromModelToDBModel(batchJobModel))
+    waspDB.insertIfNotExists[BatchJobDBModel](transform[BatchJobDBModelV1](batchJobModel))
   }
 
   def upsert(batchJobModel: BatchJobModel): Unit = {
-    waspDB.upsert[BatchJobDBModel](fromModelToDBModel(batchJobModel))
+    waspDB.upsert[BatchJobDBModel](transform[BatchJobDBModelV1](batchJobModel))
   }
 
   def getByName(name: String): Option[BatchJobModel] = {
-    waspDB.getDocumentByField[BatchJobDBModel]("name", new BsonString(name)).map(applyMap)
+    waspDB.getDocumentByField[BatchJobDBModel]("name", new BsonString(name)).map(factory)
   }
 
   override def instances(): BatchJobInstanceBL = instanceBl

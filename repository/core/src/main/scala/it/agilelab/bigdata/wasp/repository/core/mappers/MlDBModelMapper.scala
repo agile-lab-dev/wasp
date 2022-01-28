@@ -3,36 +3,12 @@ package it.agilelab.bigdata.wasp.repository.core.mappers
 import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{MlDBModelOnlyInfo, MlDBModelOnlyInfoV1}
 
-object MlDBModelMapperSelector extends MapperSelector[MlModelOnlyInfo, MlDBModelOnlyInfo] {
+object MlDBModelMapperSelector extends MapperSelector[MlModelOnlyInfo, MlDBModelOnlyInfo]
 
-  override def select(model: MlDBModelOnlyInfo): Mapper[MlModelOnlyInfo, MlDBModelOnlyInfo] = {
-
-    model match {
-      case _: MlDBModelOnlyInfoV1 => MlDBModelMapperV1
-      case o                      => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
-    }
-  }
-
-  def applyMap(p: MlDBModelOnlyInfo): MlModelOnlyInfo = {
-    val mapper = select(p)
-    mapper.fromDBModelToModel(p)
-  }
-}
-
-object MlDBModelMapperV1 extends Mapper[MlModelOnlyInfo, MlDBModelOnlyInfoV1] {
+object MlDBModelMapperV1 extends SimpleMapper[MlModelOnlyInfo, MlDBModelOnlyInfoV1] {
   override val version = "mlModelV1"
-
-  override def fromModelToDBModel(p: MlModelOnlyInfo): MlDBModelOnlyInfoV1 = {
-
-    val values      = MlModelOnlyInfo.unapply(p).get
-    val makeDBModel = (MlDBModelOnlyInfoV1.apply _).tupled
-    makeDBModel(values)
-  }
-
-  override def fromDBModelToModel[B >: MlDBModelOnlyInfoV1](p: B): MlModelOnlyInfo = {
-
-    val values       = MlDBModelOnlyInfoV1.unapply(p.asInstanceOf[MlDBModelOnlyInfoV1]).get
-    val makeProducer = (MlModelOnlyInfo.apply _).tupled
-    makeProducer(values)
+  override def fromDBModelToModel[B >: MlDBModelOnlyInfoV1](m: B): MlModelOnlyInfo = m match {
+    case mm: MlDBModelOnlyInfoV1 => transform[MlModelOnlyInfo](mm)
+    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

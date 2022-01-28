@@ -224,6 +224,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val spark_sql_kafka_old = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % ("0.0.2" + "-" + versions.kafka_ + "-" + versions.spark)
   val prettyPrint         = "com.lihaoyi"      %% "pprint"                   % "0.6.6"
   val sparkAvro           = "org.apache.spark" %% "spark-avro"               % versions.spark
+  val shapeless           = "com.chuusai"      %% "shapeless"                % "2.3.3"
 
   // grouped dependencies, for convenience =============================================================================
   val akka = Seq(
@@ -323,7 +324,8 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val repositoryMongoDependencies = Seq(
     mongodbScala,
-    nameOf
+    nameOf,
+    shapeless
   ).map(excludeLog4j).map(excludeNetty) ++ testDependencies
 
   val repositoryPostgresDependencies = Seq(
@@ -482,7 +484,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val whiteLabelConsumersRtDependencies: Seq[ModuleID]     = log4j
   val openapiDependencies: Seq[ModuleID]                   = Seq(swaggerCore)
-  val repositoryCoreDependencies: Seq[ModuleID]            = testDependencies
+  val repositoryCoreDependencies: Seq[ModuleID]            = testDependencies ++ Seq(shapeless)
   override val sparkPluginBasicDependencies: Seq[ModuleID] = scalaTestDependencies
 
   override val whitelabelMasterScriptClasspath        = scriptClasspath += ""

@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.repository.mongo.providers
 import com.github.dwickern.macros.NameOf.nameOf
 import SealedTraitCodecProvider.TYPE_FIELD
 import it.agilelab.bigdata.wasp.models.{ContainsRawMatchingStrategy, DataStoreConf, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, KeyValueDataStoreConf, KeyValueMatchingStrategy, KeyValueModel, NoPartitionPruningStrategy, PartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawMatchingStrategy, RawModel, TimeBasedBetweenPartitionPruningStrategy}
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{KeyValueDBModel, RawDBModel}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{KeyValueDBModel, KeyValueDBModelV1, RawDBModel, RawDBModelV1}
 import it.agilelab.bigdata.wasp.repository.core.mappers.{KeyValueMapperSelector, KeyValueMapperV1, RawMapperSelector, RawMapperV1}
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.{DecoderContext, EncoderContext}
@@ -50,7 +50,7 @@ object DataStoreConfCodecProviders {
         corellationIdColumn,
 
         // automatically select corresponding mapper
-        RawMapperSelector.applyMap(rawModel),
+        RawMapperSelector.factory(rawModel),
 
         readObject(nameOf[RawDataStoreConf](_.rawMatchingStrategy), registry.get(classOf[RawMatchingStrategy])),
         readObject(nameOf[RawDataStoreConf](_.partitionPruningStrategy), registry.get(classOf[PartitionPruningStrategy]))
@@ -65,7 +65,7 @@ object DataStoreConfCodecProviders {
       writer.writeString(nameOf[RawDataStoreConf](_.correlationIdColumn), rawDataStoreConf.correlationIdColumn)
 
       // always use the last mapper
-      writeObject(nameOf[RawDataStoreConf](_.rawModel), RawMapperV1.fromModelToDBModel(rawDataStoreConf.rawModel), registry.get(classOf[RawDBModel]))
+      writeObject(nameOf[RawDataStoreConf](_.rawModel), RawMapperV1.transform[RawDBModelV1](rawDataStoreConf.rawModel), registry.get(classOf[RawDBModel]))
       writeObject(nameOf[RawDataStoreConf](_.rawMatchingStrategy), rawDataStoreConf.rawMatchingStrategy, registry.get(classOf[RawMatchingStrategy]))
       writeObject(nameOf[RawDataStoreConf](_.partitionPruningStrategy), rawDataStoreConf.partitionPruningStrategy, registry.get(classOf[PartitionPruningStrategy]))
     }
@@ -85,7 +85,7 @@ object DataStoreConfCodecProviders {
       KeyValueDataStoreConf(
         inputKeyColumn,
         corellationIdColumn,
-        KeyValueMapperSelector.applyMap(keyValueModel),
+        KeyValueMapperSelector.factory(keyValueModel),
         readObject(nameOf[KeyValueDataStoreConf](_.keyValueMatchingStrategy), registry.get(classOf[KeyValueMatchingStrategy]))
       )
     }
@@ -97,7 +97,7 @@ object DataStoreConfCodecProviders {
       writer.writeString(nameOf[KeyValueDataStoreConf](_.inputKeyColumn), keyValueDataStoreConf.inputKeyColumn)
       writer.writeString(nameOf[KeyValueDataStoreConf](_.correlationIdColumn), keyValueDataStoreConf.correlationIdColumn)
 
-      writeObject(nameOf[KeyValueDataStoreConf](_.keyValueModel), KeyValueMapperV1.fromModelToDBModel(keyValueDataStoreConf.keyValueModel), registry.get(classOf[KeyValueDBModel]))
+      writeObject(nameOf[KeyValueDataStoreConf](_.keyValueModel), KeyValueMapperV1.transform[KeyValueDBModelV1](keyValueDataStoreConf.keyValueModel), registry.get(classOf[KeyValueDBModel]))
       writeObject(nameOf[KeyValueDataStoreConf](_.keyValueMatchingStrategy), keyValueDataStoreConf.keyValueMatchingStrategy, registry.get(classOf[KeyValueMatchingStrategy]))
     }
 

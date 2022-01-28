@@ -13,6 +13,7 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     case "2.11" => ("it.agilelab.bigdata.spark" % "spark-solr"  % versions.sparkSolr)
     case "2.12" => ("it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr)
   }
+  lazy val shapeless           = "com.chuusai"      %% "shapeless"                % "2.3.3"
   lazy val javaxMail = "javax.mail" % "mail" % "1.4"
   lazy val globalExclusions: Seq[ExclusionRule] = Seq(
     ExclusionRule("org.apache.logging.log4j", "log4j-slf4j-impl"),
@@ -590,8 +591,8 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
       : Seq[sbt.ModuleID]                                             = Seq(darwinCore, darwinMockConnector) ++ avro4s ++ testDependencies
   override lazy val testDependencies: Seq[sbt.ModuleID]               = Seq(scalaTest)
   override lazy val scalaTestDependencies: Seq[sbt.ModuleID]          = testDependencies
-  override lazy val repositoryCoreDependencies: Seq[sbt.ModuleID]     = testDependencies
-  override lazy val repositoryMongoDependencies: Seq[sbt.ModuleID]    = Seq(nameOf, mongoTest) ++ testDependencies
+  override lazy val repositoryCoreDependencies: Seq[sbt.ModuleID]     = testDependencies ++ Seq(shapeless)
+  override lazy val repositoryMongoDependencies: Seq[sbt.ModuleID]    = Seq(nameOf, mongoTest) ++ testDependencies ++ Seq(shapeless)
   override lazy val repositoryPostgresDependencies: Seq[sbt.ModuleID] = Seq(postgresqlEmbedded) ++ testDependencies
   override lazy val masterDependencies: Seq[sbt.ModuleID]             = testDependencies ++ allAkka
   override lazy val producersDependencies: Seq[sbt.ModuleID]          = testDependencies ++ allAkka
