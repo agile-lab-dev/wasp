@@ -1,7 +1,7 @@
 image: alpine
 
 variables:
-  SBT_OPTS: "-Dglobal.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy -Dsbt.ci=true"
+  SBT_OPTS: "-Dglobal.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy -Divy.home=${CI_PROJECT_DIR}/sbt-cache/ivy -Dsbt.ci=true"
   COURSIER_CACHE: sbt-cache/coursier
   UNPRIVILEGED_USER: "tester"
 
@@ -30,7 +30,7 @@ test-kernel:
   image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-kernel/test coverageOff wasp-kernel/coverageReport wasp-kernel/coverageAggregate"
   after_script:
@@ -54,10 +54,11 @@ test-plugin:
   image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-plugin/test coverageOff wasp-plugin/coverageReport wasp-plugin/coverageAggregate"
   after_script:
+    - ls -R ${CI_PROJECT_DIR}/sbt-cache/ivy/jars/
     - mkdir test-output
     - find . -path '*/test-reports/*.xml' -exec cp '{}' ./test-output/ \;
   artifacts:
@@ -78,7 +79,7 @@ test-repo:
   image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-repository/test coverageOff wasp-repository/coverageReport wasp-repository/coverageAggregate"
   after_script:
@@ -102,7 +103,7 @@ compile-whitelabel:
   image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
   script:
     - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/Test/compile"
   tags:
@@ -142,7 +143,7 @@ snapshot:
   image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
   tags:
     - gitlab-org
   script:
@@ -166,7 +167,7 @@ release:
   image: "hseeberger/scala-sbt:8u312_1.6.0_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
   script:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"

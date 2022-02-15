@@ -48,4 +48,7 @@ class CDP717Versions {
   val delta = "0.6.1" + "-" + spark
   val kafka = "2.5.0.7.1.7.0-551"
   val kafkaSpark = "0.1.0-2.4.1-2.4.7-7.1.7.0-551-SNAPSHOT"
+  val hadoop = "3.1.1.7.1.7.0-551"
+  val awsBundle = "1.11.375"
+
 }

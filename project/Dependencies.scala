@@ -42,6 +42,7 @@ trait Dependencies {
   val whitelabelSparkConsumerDependencies: Seq[ModuleID]
   val whiteLabelConsumersRtDependencies: Seq[ModuleID]
   val openapiDependencies: Seq[ModuleID]
+  val awsAuth: Seq[ModuleID]
   val kmsTest: Seq[Def.Setting[_]]
   val sparkPluginBasicDependencies: Seq[ModuleID]
 

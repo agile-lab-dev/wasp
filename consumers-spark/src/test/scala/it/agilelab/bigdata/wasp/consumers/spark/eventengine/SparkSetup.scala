@@ -18,6 +18,7 @@ trait SparkSetup {
     .getOrCreate()
 
   def withSparkSession(testMethod: SparkSession => Any): Unit = {
+    System.setSecurityManager(null)
     testMethod(sparkSession)
     // finally sparkSession.stop()
   }

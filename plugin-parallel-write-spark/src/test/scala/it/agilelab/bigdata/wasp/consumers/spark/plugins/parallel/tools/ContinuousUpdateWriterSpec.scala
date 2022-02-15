@@ -1,9 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools
 
 import io.delta.tables.DeltaTable
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.{ContinuousUpdate, ParallelWriteModel}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.DeltaTableTest
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.ParallelWriteTestUtils.withServer
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.{ContinuousUpdateTempDirectoryEach, TempDirectoryEach}
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQueryException
@@ -12,49 +11,17 @@ import org.scalatest.Matchers.{an, be}
 
 case class Schema(ordering: Int, column1: String, column2: String)
 case class Schema2(ordering: Int, column1: String, column2: String, column3: String)
+case class NotSupportedSchema(ordering: Int, column1: String)
 case class Schema3(ordering1: Int, ordering2: Float, column1: String, column2: String)
+case class CaseSensitiveTest(orDeRing: Int, column1: String, column2: String)
 
-object ContinuousUpdateModels {
-  private val entityDetails: Map[String, String] = Map(("name", "mock"))
-  private val wrongDetails: Map[String, String] = Map(("key", "value"))
-  private val notExistingEntityDetails: Map[String, String] = Map(("name", "entity"))
-
-  val model1 = ParallelWriteModel(ContinuousUpdate(
-    tableName = "test_table",
-    keys = "column1" :: Nil,
-    orderingExpression = "ordering",
-    fieldsToDrop = List("ordering")
-  ), entityDetails)
-
-  val model2 = ParallelWriteModel(ContinuousUpdate(
-    tableName = "test_table",
-    keys = "column1" :: Nil,
-    orderingExpression = "-(ordering1 + ordering2)",
-    fieldsToDrop = List("ordering1", "ordering2")
-  ), entityDetails)
-
-  val wrongModel = ParallelWriteModel(ContinuousUpdate(
-    tableName = "test_table",
-    keys = "column1" :: Nil,
-    orderingExpression = "-(ordering1 + ordering2)",
-    fieldsToDrop = List("ordering1", "ordering2")
-  ), wrongDetails)
-
-  val notExistingEntityModel = ParallelWriteModel(ContinuousUpdate(
-    tableName = "test_table",
-    keys = "column1" :: Nil,
-    orderingExpression = "-(ordering1 + ordering2)",
-    fieldsToDrop = List("ordering1", "ordering2")
-  ), notExistingEntityDetails)
-}
-
-class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirectoryEach {
+class ContinuousUpdateWriterSpec extends FunSuite with DeltaTableTest {
   override def writeType = "Delta"
 
   test("Insert single record") {
     withServer(dispatcher) { serverData =>
       val myDf = buildData("key", 1)
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -71,7 +38,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
   test("Write to entity with wrong details") {
     withServer(dispatcher) { serverData =>
       val myDf = buildData("key", 1)
-      lazy val continuousUpdateModel = ContinuousUpdateModels.wrongModel
+      lazy val continuousUpdateModel = TestModels.wrongModel
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -85,7 +52,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
   test("Write to non existing entity") {
     withServer(dispatcher) { serverData =>
       val myDf = buildData("key", 1)
-      lazy val continuousUpdateModel = ContinuousUpdateModels.notExistingEntityModel
+      lazy val continuousUpdateModel = TestModels.notExistingEntityModel
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -100,7 +67,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
 
     withServer(dispatcher) { serverData =>
       val myDf = Schema(1, "key", "value1")
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -113,17 +80,36 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
     }
   }
 
-  test("Schema enforcement") {
+  test("Schema enforcement: delta table schema is a subset of input schema") {
 
     withServer(dispatcher) { serverData =>
       val key = "key1"
-      val column2 = "testColumn2"
-      val column3 = "testColumn3"
+      val column2 = "value1"
+      val column3 = "value2"
       val myDf = Schema2(1, key, column2, column3)
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema2] = MemoryStream[Schema2](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, continuousUpdateModel, Seq.fill(1000)(myDf): _*).isEmpty
+      )
+      val deltaTable = DeltaTable.forPath(spark, tempDir).toDF
+      assert(deltaTable.count() == 1)
+      assert(deltaTable.select("column2").first().get(0) == "value1")
+    }
+  }
+
+
+  test("Schema enforcement: some delta table columns are not in input schema") {
+
+    withServer(dispatcher) { serverData =>
+      val key = "notSupportedValue"
+      val myDf = NotSupportedSchema(1, key)
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
+
+      import spark.implicits._
+      val source: MemoryStream[NotSupportedSchema] = MemoryStream[NotSupportedSchema](0, spark.sqlContext)
       an[StreamingQueryException] should be thrownBy
         createAndExecuteStreamingQuery(
           serverData.latch,
@@ -131,6 +117,26 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
           continuousUpdateModel,
           Seq.fill(1000)(myDf): _*
         )
+    }
+  }
+
+
+  test("Schema enforcement should not be case sensitive") {
+
+    withServer(dispatcher) { serverData =>
+      val column1 = "value1"
+      val column2 = "value2"
+      val myDf = CaseSensitiveTest(1, column1, column2)
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
+
+      import spark.implicits._
+      val source: MemoryStream[CaseSensitiveTest] = MemoryStream[CaseSensitiveTest](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, continuousUpdateModel, Seq.fill(1000)(myDf): _*).isEmpty
+      )
+      val deltaTable = DeltaTable.forPath(spark, tempDir).toDF
+      assert(deltaTable.count() == 1)
+      assert(deltaTable.select("column1").first().get(0) == "value1")
     }
   }
 
@@ -142,7 +148,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
 
       val key2 = "key2"
       val myDf2 = Schema(2, key2, "value2")
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -160,7 +166,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
     withServer(dispatcher) { serverData =>
       val myDf1 = Schema(1, "key1", "value1")
       val myDf2 = Schema(2, "key1", "value2")
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -181,7 +187,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
     withServer(dispatcher) { serverData =>
       val myDf1 = Schema(2, "key1", "value1")
       val myDf2 = Schema(1, "key1", "value2")
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -202,7 +208,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
   test("Data deduplication") {
     withServer(dispatcher) { serverData =>
       val data: Seq[Schema] = buildData("key", 10000)
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -219,7 +225,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
     withServer(dispatcher) { serverData =>
       val data_1: Seq[Schema] = buildData("key1", 100)
       val data: Seq[Schema] = data_1 ++ buildData("key2", 10000)
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model1
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel1
 
       import spark.implicits._
       val source: MemoryStream[Schema] = MemoryStream[Schema](0, spark.sqlContext)
@@ -240,7 +246,7 @@ class ContinuousUpdateWriterSpec extends FunSuite with ContinuousUpdateTempDirec
         Schema3(1, 0.01f, "key1", "value3"),
         Schema3(1, 0.3f, "key1", "value4")
       )
-      lazy val continuousUpdateModel = ContinuousUpdateModels.model2
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel2
 
       import spark.implicits._
       val source: MemoryStream[Schema3] = MemoryStream[Schema3](0, spark.sqlContext)

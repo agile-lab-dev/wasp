@@ -9,7 +9,7 @@ class TestContinuousUpdateStrategy extends Strategy{
     println(s"Strategy configuration: $configuration")
     val df = dataFrames.head._2
     df.sparkSession.sqlContext.sql("CREATE TABLE IF NOT EXISTS topic_table (id STRING, number INTEGER) STORED AS PARQUET")
-    df.select("id", "number")
+    df
 
   }
 }

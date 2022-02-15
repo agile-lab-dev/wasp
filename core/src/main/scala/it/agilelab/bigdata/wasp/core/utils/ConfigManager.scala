@@ -237,7 +237,8 @@ object ConfigManager extends Logging with CanOverrideNameInstances {
       mongoDBSubConfig.getString("db-name"),
       mongoDBSubConfig.getString("username"),
       mongoDBSubConfig.getString("password"),
-      mongoDBSubConfig.getInt("timeout")
+      mongoDBSubConfig.getInt("timeout"),
+      mongoDBSubConfig.getString("collection-prefix")
     )
   }
 

@@ -1,8 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel
 
-import it.agilelab.bigdata.microservicecatalog.entity.ParallelWriteEntity
-import it.agilelab.bigdata.microservicecatalog.{MicroserviceCatalogBuilder, MicroserviceCatalogService}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.{ParallelWriteEntity, WriteExecutionPlanRequestBody}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{MicroserviceCatalogBuilder, MicroserviceCatalogService}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModel
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatalogService
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers.ParallelWriterFactory
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkStructuredStreamingWriter
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -10,11 +11,11 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row}
 
 
-class ParallelWriteSparkStructuredStreamingWriter(parallelWriteModel: ParallelWriteModel)
+class ParallelWriteSparkStructuredStreamingWriter(parallelWriteModel: ParallelWriteModel, catalogService: DataCatalogService)
   extends SparkStructuredStreamingWriter  with Logging {
 
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
-    val platformCatalogService: MicroserviceCatalogService[ParallelWriteEntity] = MicroserviceCatalogBuilder.getMicroserviceCatalogService[ParallelWriteEntity]()
+    val platformCatalogService: MicroserviceCatalogService = MicroserviceCatalogBuilder.getMicroserviceCatalogService()
     val entity: ParallelWriteEntity = platformCatalogService.getMicroservice(parallelWriteModel.entityDetails)
 
     // create and configure DataStreamWriter
@@ -24,8 +25,13 @@ class ParallelWriteSparkStructuredStreamingWriter(parallelWriteModel: ParallelWr
       (batch: DataFrame, batchId: Long) => {
 
         try {
-          val writeExecutionPlan = entity.getWriteExecutionPlan()
-          val writer = ParallelWriterFactory.getWriter(parallelWriteModel.writerDetails, writeExecutionPlan)
+          val request = WriteExecutionPlanRequestBody("External")
+          val writeExecutionPlan = entity.getWriteExecutionPlan(request)
+          val writer = ParallelWriterFactory.getWriter(
+            parallelWriteModel.writerDetails,
+            writeExecutionPlan, parallelWriteModel.entityDetails,
+            catalogService
+          )
 
           logger.info(s"Writing microbatch with id: ${batchId}")
           writer.write(writeExecutionPlan, batch)

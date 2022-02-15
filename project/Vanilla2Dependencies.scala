@@ -4,25 +4,25 @@ import sbt.Keys.transitiveClassifiers
 
 class Vanilla2Dependencies(val versions: Vanilla2Versions)
     extends Dependencies
-    with AkkaDependencies
-    with DarwinDependencies
-    with HBaseDependencies
-    with SparkDependencies
-    with LoggingDependencies
-    with KafkaDependencies
-    with MongoDependencies
-    with CamelDependencies
-    with Json4sDependencies
-    with NettyDependencies
-    with TestFrameworkDependencies
-    with ScalaCoreDependencies
-    with AvroDependencies
-    with ApacheCommonsDependencies
-    with SolrDependencies
-    with CodehausJacksonDependencies
-    with OkHttpDependencies
-    with PostgresDependencies
-    with SttpDependencies {
+    with Vanilla2AkkaDependencies
+    with Vanilla2DarwinDependencies
+    with Vanilla2HBaseDependencies
+    with Vanilla2SparkDependencies
+    with Vanilla2LoggingDependencies
+    with Vanilla2KafkaDependencies
+    with Vanilla2MongoDependencies
+    with Vanilla2CamelDependencies
+    with Vanilla2Json4sDependencies
+    with Vanilla2NettyDependencies
+    with Vanilla2TestFrameworkDependencies
+    with Vanilla2ScalaCoreDependencies
+    with Vanilla2AvroDependencies
+    with Vanilla2ApacheCommonsDependencies
+    with Vanilla2SolrDependencies
+    with Vanilla2CodehausJacksonDependencies
+    with Vanilla2OkHttpDependencies
+    with Vanilla2PostgresDependencies
+    with Vanilla2SttpDependencies {
   val exclusions: VanillaExclusions.type = VanillaExclusions
 
   lazy val delta               = "io.delta" %% "delta-core" % versions.delta exclude exclusions.log4jExclude
@@ -198,6 +198,12 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
       kms.classifier("classes") % Test
     )
   )
+
+  override val awsAuth: Seq[ModuleID] = Seq(
+    "org.apache.hadoop" % "hadoop-aws" % versions.hadoop,
+    "org.apache.hadoop" % "hadoop-common" % versions.hadoop,
+  "com.amazonaws"%"aws-java-sdk-bundle" % versions.awsBundle force())
+
   override val pluginParallelWriteSparkDependencies: Seq[ModuleID] =
     Seq(scalaTest) ++ pluginHttpSparkDependencies ++ Seq(delta, hadoopAWS)
 
@@ -258,7 +264,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
       Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
 }
 
-trait AkkaDependencies {
+trait Vanilla2AkkaDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val akkaActor          = "com.typesafe.akka"     %% "akka-actor"              % versions.akka
@@ -287,7 +293,7 @@ trait AkkaDependencies {
   )
 }
 
-trait DarwinDependencies {
+trait Vanilla2DarwinDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val darwinCore           = "it.agilelab" %% "darwin-core"             % versions.darwin
@@ -300,7 +306,7 @@ trait DarwinDependencies {
   lazy val schemaRegistry = Seq(darwinCore)
 }
 
-trait HBaseDependencies {
+trait Vanilla2HBaseDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val hbaseClient2NoScope    = "org.apache.hbase" % "hbase-client" % versions.hbase2 exclude exclusions.hbaseExclusion
@@ -315,7 +321,7 @@ trait HBaseDependencies {
   lazy val hbase2                 = Seq(hbaseClient2, hbaseCommon2, hbaseServer2, hbaseMapreduce2)
 }
 
-trait SparkDependencies extends HadoopDependencies {
+trait Vanilla2SparkDependencies extends Vanilla2HadoopDependencies {
   lazy val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst" % versions.spark % Test classifier "tests"
   lazy val sparkCore          = "org.apache.spark" %% "spark-core" % versions.spark % Provided
   lazy val sparkTagsTests     = "org.apache.spark" %% "spark-tags" % versions.spark % Test classifier "tests"
@@ -330,7 +336,7 @@ trait SparkDependencies extends HadoopDependencies {
   lazy val spark              = Seq(sparkMLlib, sparkYarn, sparkStreaming, hadoopCommon, sparkHive)
 }
 
-trait HadoopDependencies {
+trait Vanilla2HadoopDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val hadoopCommonNoScope = "org.apache.hadoop" % "hadoop-common" % versions.hadoop
@@ -339,7 +345,7 @@ trait HadoopDependencies {
   lazy val hadoopAWS           = "org.apache.hadoop" % "hadoop-aws" % versions.hadoop % Provided
 }
 
-trait LoggingDependencies {
+trait Vanilla2LoggingDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val slf4jApi           = "org.slf4j" % "slf4j-api" % versions.slf4j
@@ -348,7 +354,7 @@ trait LoggingDependencies {
   lazy val logging            = Seq(slf4jApi, slf4jLog4j1Binding % Test, log4j1 % Test)
 }
 
-trait KafkaDependencies {
+trait Vanilla2KafkaDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val kafka            = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
@@ -359,7 +365,7 @@ trait KafkaDependencies {
   lazy val sparkSqlKafkaOld = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % versions.sparkSqlKafka
 }
 
-trait MongoDependencies {
+trait Vanilla2MongoDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val mongodbScala        = "org.mongodb.scala" %% "mongo-scala-driver"    % versions.mongodbScala
@@ -368,14 +374,14 @@ trait MongoDependencies {
   lazy val mongoJavaDriver     = "org.mongodb"       % "mongo-java-driver"      % versions.mongoJavaDriver
 }
 
-trait CamelDependencies {
+trait Vanilla2CamelDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val camelKafka     = "org.apache.camel" % "camel-kafka"     % versions.camel exclude (exclusions.kafkaExclusions ++ exclusions.camelKafkaExclusions)
   lazy val camelWebsocket = "org.apache.camel" % "camel-websocket" % versions.camel
 }
 
-trait Json4sDependencies {
+trait Vanilla2Json4sDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val json4sCore    = "org.json4s" %% "json4s-core" % versions.json4s % Provided exclude exclusions.jacksonExclude
@@ -384,14 +390,14 @@ trait Json4sDependencies {
   lazy val json          = Seq(json4sCore, json4sJackson, json4sNative)
 }
 
-trait NettyDependencies {
+trait Vanilla2NettyDependencies {
   val versions: Vanilla2Versions
   lazy val netty      = "io.netty" % "netty"     % versions.nettySpark    % Provided
   lazy val nettySpark = "io.netty" % "netty"     % versions.nettySpark    % Provided
   lazy val nettyAll   = "io.netty" % "netty-all" % versions.nettyAllSpark % Provided
 }
 
-trait TestFrameworkDependencies {
+trait Vanilla2TestFrameworkDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val scalaTest  = "org.scalatest"  %% "scalatest"  % versions.scalaTest  % Test
@@ -403,7 +409,7 @@ trait TestFrameworkDependencies {
 
 }
 
-trait ScalaCoreDependencies {
+trait Vanilla2ScalaCoreDependencies {
   val versions: Vanilla2Versions
   lazy val typesafeConfig            = "com.typesafe"           % "config"                    % versions.typesafeConfig
   lazy val scalaParserAndCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % versions.scalaParserAndCombinators
@@ -412,7 +418,7 @@ trait ScalaCoreDependencies {
   lazy val scalaCompiler             = "org.scala-lang"         % "scala-compiler"            % versions.scala
 }
 
-trait AvroDependencies {
+trait Vanilla2AvroDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val avro       = "org.apache.avro"     % "avro"         % versions.avro % Provided
@@ -423,7 +429,7 @@ trait AvroDependencies {
   lazy val avro4sTest = avro4s.map(_ % Test)
 }
 
-trait ApacheCommonsDependencies {
+trait Vanilla2ApacheCommonsDependencies {
   val versions: Vanilla2Versions
   lazy val apacheCommonsLang3 = "org.apache.commons"        % "commons-lang3" % versions.apacheCommonsLang3Version // remove?
   lazy val commonsCli         = "commons-cli"               % "commons-cli"   % versions.commonsCli % Provided
@@ -434,7 +440,7 @@ trait ApacheCommonsDependencies {
 
 }
 
-trait SolrDependencies {
+trait Vanilla2SolrDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val solrj = "org.apache.solr" % "solr-solrj" % versions.solr exclude exclusions.solrExclusion
@@ -449,14 +455,14 @@ trait SolrDependencies {
   lazy val solrjMasterClient = "org.apache.solr" % "solr-solrj" % versions.solr exclude exclusions.solrExclusion
 }
 
-trait SttpDependencies {
+trait Vanilla2SttpDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
   lazy val sttpCore   = "com.softwaremill.sttp.client" %% "core"   % versions.sttpVersion exclude exclusions.json4sExclude
   lazy val sttpJson4s = "com.softwaremill.sttp.client" %% "json4s" % versions.sttpVersion exclude exclusions.json4sExclude
 }
 
-trait CodehausJacksonDependencies {
+trait Vanilla2CodehausJacksonDependencies {
   val versions: Vanilla2Versions
 
   lazy val codeHausJacksonCoreAsl   = "org.codehaus.jackson" % "jackson-core-asl"   % versions.codeHausJackson
@@ -464,14 +470,14 @@ trait CodehausJacksonDependencies {
   lazy val codeHausJacksonMapperAsl = "org.codehaus.jackson" % "jackson-mapper-asl" % versions.codeHausJackson
 }
 
-trait OkHttpDependencies {
+trait Vanilla2OkHttpDependencies {
   val versions: Vanilla2Versions
 
   lazy val mockOkHttp2 = "com.squareup.okhttp" % "mockwebserver" % versions.okHttp % Test // in sync with cdh6
   lazy val okHttp2     = "com.squareup.okhttp" % "okhttp"        % versions.okHttp // in sync with cdh6
 }
 
-trait PostgresDependencies {
+trait Vanilla2PostgresDependencies {
   val versions: Vanilla2Versions
 
   lazy val postgres           = "org.postgresql"           % "postgresql"      % versions.postgresqlVersion

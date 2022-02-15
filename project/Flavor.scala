@@ -38,6 +38,16 @@ object Flavor {
 
   }
 
+  case object EMR212 extends Flavor {
+    override lazy val settings: Settings =
+      new BasicSettings(new BasicResolvers(), versions.jdk, versions.scala ,dependencies.overrides, dependencies.removeShims)
+    override lazy val dependencies: EMR212Dependencies = new EMR212Dependencies(versions)
+    lazy val postfix: Option[String] = Some("emr212")
+    private lazy val versions        = new EMR212Versions()
+    override val id: String = "EMR_2_12"
+
+  }
+
   val DEFAULT: Flavor = Vanilla2
 
   def parse(s: String): Either[String, Flavor] = {
@@ -46,6 +56,7 @@ object Flavor {
       case "VANILLA2" => Right(Vanilla2)
       case "VANILLA2_2_12" => Right(Vanilla2_2_12)
       case "CDP717"   => Right(CDP717)
+      case "EMR_2_12" => Right(EMR212)
       case _      => Left(s"Cannot parse flavor [${s}]")
     }
   }

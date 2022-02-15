@@ -1,3 +1,5 @@
+import Flavor.EMR212
+
 lazy val flavor = {
   val f = Flavor.currentFlavor()
   println(Utils.printWithBorders(s"Building for flavor: ${f}", "*"))
@@ -162,6 +164,8 @@ lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark
   .settings(settings.disableParallelTests)
   .settings(libraryDependencies ++= dependencies.pluginParallelWriteSparkDependencies)
   .dependsOn(microservice_catalog % "compile->compile;test->test")
+  .dependsOn(aws_auth_temporary_credentials % "compile->compile;test->test")
+
 
 /* Yarn  */
 
@@ -223,7 +227,8 @@ lazy val kernel = project
     spark_nifi_plugin_bridge,
     spark_nifi_plugin,
     yarn,
-    spark
+    spark,
+    aws
   )
 
 lazy val plugin = project
@@ -260,6 +265,7 @@ lazy val wasp = Project("wasp", file("."))
 lazy val whiteLabelModels = Project("wasp-whitelabel-models", file("whitelabel/models"))
   .settings(settings.commonSettings: _*)
   .dependsOn(core)
+  .dependsOn(plugin_parallel_write_spark)
   .settings(libraryDependencies ++= dependencies.whitelabelModelsDependencies)
 
 lazy val whiteLabelMaster = Project("wasp-whitelabel-master", file("whitelabel/master"))
@@ -299,6 +305,7 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .dependsOn(spark_telemetry_plugin)
   .dependsOn(spark_nifi_plugin)
   .dependsOn(plugin_parallel_write_spark)
+  .dependsOn(aws_auth_temporary_credentials)
   .settings(libraryDependencies ++= dependencies.whitelabelSparkConsumerDependencies)
   .enablePlugins(JavaAppPackaging)
   .settings(dependencies.whitelabelSparkConsumerScriptClasspath)
@@ -345,3 +352,19 @@ lazy val openapi = Project("wasp-openapi", file("openapi"))
     generateOpenApi := (generateOpenApi dependsOn (Compile / compile)).value
   )
   .dependsOn(core)
+
+lazy val aws_auth_temporary_credentials = Project("wasp-aws-auth-temporary-credentials", file("aws/auth/temporary-credentials"))
+  .settings(settings.commonSettings: _*)
+  .settings(libraryDependencies ++= dependencies.scalaTestDependencies)
+  .settings(libraryDependencies ++= dependencies.awsAuth)
+  .settings(Test / skip := flavor != EMR212) //only test this in EMR212 build
+
+
+lazy val aws_auth = Project("wasp-aws-auth", file("aws/auth"))
+  .settings(settings.commonSettings: _*)
+  .aggregate(aws_auth_temporary_credentials)
+
+lazy val aws = Project("wasp-aws", file("aws"))
+  .settings(settings.commonSettings: _*)
+  .aggregate(aws_auth)
+

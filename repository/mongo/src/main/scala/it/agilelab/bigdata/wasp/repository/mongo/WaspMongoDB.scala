@@ -31,7 +31,7 @@ import java.nio.ByteBuffer
 import java.util
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
@@ -100,6 +100,8 @@ trait WaspMongoDB extends MongoDBHelper with WaspDB {
 
   def getFileByID(id: BsonObjectId): Array[Byte]
 
+  def initializeCollections(): Unit
+
 }
 
 class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
@@ -115,7 +117,7 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
     * To force name as key of models an index with unique constraint is concurrently created, if another node concurrently
     * created the index the current node backs off.
     */
-  def initializeCollections() {
+  override def initializeCollections(): Unit = {
 
     val collections = collectionsLookupTable.values.toSet
 
@@ -335,6 +337,23 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 }
 
 object WaspMongoDB extends Logging {
+  def resetCollections(): Unit = {
+    // drop db
+    val mongoDBConfig = ConfigManager.getMongoDBConfig
+
+    val mongoDBDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
+
+    val dropFutures = collectionsLookupTable.values.map { collection =>
+      mongoDBDatabase.getCollection(collection).drop().toFuture()
+    }.toList
+
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.global
+    val eventuallyDropped                     = Future.sequence(dropFutures)
+    Await.result(eventuallyDropped, Duration(10, TimeUnit.SECONDS))
+
+    waspDB.initializeCollections()
+  }
+
   private var waspDB: WaspMongoDB = _
 
   val pipegraphsName        = "pipegraphs"
@@ -391,11 +410,16 @@ object WaspMongoDB extends Logging {
     typeTag[CompilerConfigDBModel].tpe       -> configurationsName,
     typeTag[HttpDBModel].tpe                 -> httpName,
     typeTag[GenericDBModel].tpe              -> genericName
-  )
+  ).mapValues(name => appendPrefixOnlyIfNotEmptyOrNull(name))
+
+  private def appendPrefixOnlyIfNotEmptyOrNull(name: String) = {
+    Option(ConfigManager.getMongoDBConfig.collectionPrefix).filterNot(_ == "").map(x => s"$x-$name").getOrElse(name)
+  }
 
   lazy val indexKeys: Map[String, Bson] = collectionsLookupTable.map {
-    case (typ, name) => (name, Indexes.ascending("name"))
-  }.toMap ++ Map(mlModelsName -> Indexes.ascending("name", "version", "timestamp"))
+    case (_, `mlModelsName`) => (mlModelsName, Indexes.ascending("name", "version", "timestamp"))
+    case (_, name)           => (name, Indexes.ascending("name"))
+  }.toMap
 
   private lazy val codecProviders: java.util.List[CodecProvider] = List(
     createCodecProviderIgnoreNone[RawModel](),

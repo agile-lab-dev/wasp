@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model
 
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, GenericProduct}
-import it.agilelab.bigdata.wasp.models.DatastoreModel
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
 
 
 /**
@@ -9,4 +8,4 @@ import it.agilelab.bigdata.wasp.models.DatastoreModel
  * @param writerDetails details needed by writer
  * @param entityDetails entity coordinates needed to retrieve entity endpoints
  */
-case class ParallelWriteModel(writerDetails: WriterDetails, entityDetails: Map[String, String])
+case class ParallelWriteModel(writerDetails: WriterDetails, entityDetails: CatalogCoordinates)

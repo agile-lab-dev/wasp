@@ -4,12 +4,16 @@ import java.lang
 
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.{logger, _}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
+import it.agilelab.bigdata.wasp.models.configuration.{
+  KafkaConfigModel,
+  SparkConfigModel,
+  SparkStreamingConfigModel,
+  TelemetryConfigModel
+}
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.{Milliseconds, StreamingContext}
 import org.apache.spark.{SparkContext, SparkException}
-
 
 /**
   * Singletons an initialization code related to Spark.
@@ -19,10 +23,9 @@ import org.apache.spark.{SparkContext, SparkException}
   */
 object SparkSingletons extends Logging {
 
-  private var sparkSession: SparkSession = _
-  private var sparkContext: SparkContext = _
-  private var sqlContext: SQLContext = _
-  private var streamingContext: StreamingContext = _
+  private var sparkSession: SparkSession         = _
+  private var sparkContext: SparkContext         = _
+  private var sqlContext: SQLContext             = _
 
   /**
     * Try to initialize the SparkSession in the SparkSingleton with the provided configuration.
@@ -35,7 +38,11 @@ object SparkSingletons extends Logging {
     * @throws IllegalStateException if Spark was already initialized but <b>not by using this method</b>
     */
   @throws[lang.IllegalStateException]
-  def initializeSpark(sparkConfigModel: SparkConfigModel, telemetryConfig: TelemetryConfigModel, kafkaConfigModel: KafkaConfigModel): Boolean =
+  def initializeSpark(
+      sparkConfigModel: SparkConfigModel,
+      telemetryConfig: TelemetryConfigModel,
+      kafkaConfigModel: KafkaConfigModel
+  ): Boolean =
     SparkSingletons.synchronized {
       if (sparkSession == null) { // we don't have a singleton ready
         // TODO fix race condition: SparkSession being created after this check is false but before we do it in the else branch
@@ -99,58 +106,22 @@ object SparkSingletons extends Logging {
       }
     }
 
+
   /**
-    * Try to initialize the StreamingContext in the SparkSingleton with the provided configuration.
-    *
-    * This must be called after initializeSpark is called with the same configuration to ensure that Spark is initialized.
-    *
-    * If it does not exist, it will be created using the settings from `sparkStreamingConfigModel` and true will be
-    * returned.
-    *
-    * If the StreamingContext already exists, nothing will be done, and false will be returned.
+    * Returns the SparkContext singleton, or throws an exception if Spark was not initialized.
     *
     * @throws IllegalStateException if Spark was not already initialized
     */
   @throws[lang.IllegalStateException]
-  def initializeSparkStreaming(sparkStreamingConfigModel: SparkStreamingConfigModel): Boolean =
+  def getSparkContext: SparkContext =
     SparkSingletons.synchronized {
-      if (streamingContext == null) { // we don't have a singleton ready
-        if (sparkSession == null) {
-          throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with the same configuration " +
-            "before calling initializeSparkStreaming")
-        }
-
-        logger.info(s"Starting from SparkStreamingConfigModel:\n\t$sparkStreamingConfigModel")
-
-        // instantiate & assign StreamingContext
-        logger.info("Instantiating StreamingContext...")
-        val uniqueLegacyStreamingCheckpointDir = generateUniqueLegacyStreamingCheckpointDir
-
-        def createStreamingContext: () => StreamingContext = () => { // helper to create StreamingContext
-          val batchDuration = Milliseconds(sparkStreamingConfigModel.streamingBatchIntervalMs)
-          val newStreamingContext = new StreamingContext(getSparkContext, batchDuration)
-          newStreamingContext.checkpoint(uniqueLegacyStreamingCheckpointDir)
-          newStreamingContext
-        }
-
-        streamingContext = StreamingContext.getOrCreate(uniqueLegacyStreamingCheckpointDir, createStreamingContext)
-        logger.info("StreamingContext successfully instantiated")
-
-        true
-      } else {
-        false
+      if (sparkContext == null) {
+        throw new IllegalStateException(
+          "Spark was not initialized; invoke initializeSpark with a proper configuration " +
+            "before calling this getter"
+        )
       }
-    }
-
-  /**
-    * Try to deinitialize the StreamingContext in the SparkSingleton.
-    *
-    * This only removes the reference to the StreamingContext in the SparkSingletons; <b>it does not stop it.</b>
-    */
-  @throws[lang.IllegalStateException]
-  def deinitializeSparkStreaming(): Unit =
-    SparkSingletons.synchronized {
-      streamingContext = null
+      sparkContext
     }
 
   /**
@@ -162,25 +133,12 @@ object SparkSingletons extends Logging {
   def getSparkSession: SparkSession =
     SparkSingletons.synchronized {
       if (sparkSession == null) {
-        throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with a proper configuration " +
-          "before calling this getter")
+        throw new IllegalStateException(
+          "Spark was not initialized; invoke initializeSpark with a proper configuration " +
+            "before calling this getter"
+        )
       }
       sparkSession
-    }
-
-  /**
-    * Returns the SparkContext singleton, or throws an exception if Spark was not initialized.
-    *
-    * @throws IllegalStateException if Spark was not already initialized
-    */
-  @throws[lang.IllegalStateException]
-  def getSparkContext: SparkContext =
-    SparkSingletons.synchronized {
-      if (sparkContext == null) {
-        throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with a proper configuration " +
-          "before calling this getter")
-      }
-      sparkContext
     }
 
   /**
@@ -192,24 +150,12 @@ object SparkSingletons extends Logging {
   def getSQLContext: SQLContext =
     SparkSingletons.synchronized {
       if (sqlContext == null) {
-        throw new IllegalStateException("Spark was not initialized; invoke initializeSpark with a proper configuration " +
-          "before calling this getter")
+        throw new IllegalStateException(
+          "Spark was not initialized; invoke initializeSpark with a proper configuration " +
+            "before calling this getter"
+        )
       }
       sqlContext
     }
 
-  /**
-    * Returns the StreamingContext singleton, or throws an exception if Spark Streaming was not initialized.
-    *
-    * @throws IllegalStateException if Spark was not already initialized
-    */
-  @throws[lang.IllegalStateException]
-  def getStreamingContext: StreamingContext =
-    SparkSingletons.synchronized {
-      if (streamingContext == null) {
-        throw new IllegalStateException("Spark Streaming was not initialized; invoke initializeSparkStreaming with a proper " +
-          "configuration before calling this getter")
-      }
-      streamingContext
-    }
 }

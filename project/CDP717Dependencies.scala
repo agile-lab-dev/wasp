@@ -651,4 +651,10 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   lazy val avro4sTestAndDarwin                                      = avro4sTest ++ Seq(darwinMockConnector % Test)
   val wireMock =
     Seq("com.github.tomakehurst" % "wiremock-standalone" % "2.25.0" % Test, "xmlunit" % "xmlunit" % "1.6" % Test)
+
+  override val awsAuth: Seq[ModuleID] = Seq(
+    "org.apache.hadoop" % "hadoop-aws" % versions.hadoop,
+    "org.apache.hadoop" % "hadoop-common" % versions.hadoop,
+    "com.amazonaws"%"aws-java-sdk-bundle" % versions.awsBundle force()
+  )
 }
