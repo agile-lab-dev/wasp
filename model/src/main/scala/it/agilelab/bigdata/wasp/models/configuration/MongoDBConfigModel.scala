@@ -4,4 +4,5 @@ case class MongoDBConfigModel(address: String,
                               databaseName: String,
                               username: String,
                               password: String,
-                              millisecondsTimeoutConnection: Int)
+                              millisecondsTimeoutConnection: Int,
+                              collectionPrefix: String)

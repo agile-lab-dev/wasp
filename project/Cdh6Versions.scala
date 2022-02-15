@@ -42,6 +42,8 @@ class Cdh6Versions {
   val spark = s"${spark_}-${cdh6}"
   val sparkSolr = "3.8.1"
   val kms = s"3.0.0-$cdh6"
+  val hadoop = s"3.0.0-$cdh6"
+  val awsBundle = "1.11.375"
   val scalaParserAndCombinators = "1.0.4"
   val sttpVersion = "2.1.2"
   val reflectionsVersion = "0.9.11"

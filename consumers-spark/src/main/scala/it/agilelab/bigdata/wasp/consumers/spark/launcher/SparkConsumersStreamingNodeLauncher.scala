@@ -40,7 +40,6 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
       ConfigManager.getTelemetryConfig,
       ConfigManager.getKafkaConfig
     )
-    SparkSingletons.initializeSparkStreaming(ConfigManager.getSparkStreamingConfig)
   }
 
   def afterLaunch(): Unit = ()

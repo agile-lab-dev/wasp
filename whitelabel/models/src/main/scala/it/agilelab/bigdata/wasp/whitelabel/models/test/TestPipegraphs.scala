@@ -61,19 +61,19 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
-      lazy val generic = PipegraphModel(
-        name = "TestGeneric",
-        description = "Description of TestGeneric",
+      lazy val parallelWritePipegraph = PipegraphModel(
+        name = "TestParallelWrite",
+        description = "Description of TestParallelWrite",
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
         legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
-            name = "ETL TestGenericWriterStructuredJSONPipegraph",
+            name = "ETL TestParallelWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel.genericWriter("Generic Writer", TestParallelWriteModel.parallelWriteModel),
+            streamingOutput = WriterModel.genericWriter("Parallel Writer", TestParallelWriteModel.parallelWriteModel),
             mlModels = List(),
             strategy = None,
             triggerIntervalMs = None,

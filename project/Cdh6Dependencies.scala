@@ -486,6 +486,10 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val openapiDependencies: Seq[ModuleID]                   = Seq(swaggerCore)
   val repositoryCoreDependencies: Seq[ModuleID]            = testDependencies ++ Seq(shapeless)
   override val sparkPluginBasicDependencies: Seq[ModuleID] = scalaTestDependencies
+  override val awsAuth: Seq[ModuleID] = Seq(
+    "org.apache.hadoop" % "hadoop-aws" % versions.hadoop,
+    "org.apache.hadoop" % "hadoop-common" % versions.hadoop,
+      "com.amazonaws"%"aws-java-sdk-bundle" % versions.awsBundle force())
 
   override val whitelabelMasterScriptClasspath        = scriptClasspath += ""
   override val whitelabelProducerScriptClasspath      = scriptClasspath += ""

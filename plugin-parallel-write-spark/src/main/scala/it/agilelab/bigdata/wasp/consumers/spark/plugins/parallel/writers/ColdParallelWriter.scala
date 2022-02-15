@@ -1,23 +1,26 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers
-import it.agilelab.bigdata.microservicecatalog.entity.WriteExecutionPlanResponseBody
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.{ParallelWrite, WriterDetails}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.{HadoopS3aUtil, HadoopS3Utils}
-import org.apache.spark.sql.DataFrame
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.WriteExecutionPlanResponseBody
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.{GlueDataCatalogService, HadoopS3Utils}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
-case class ColdParallelWriter(format: String, parallelWriteDetails: ParallelWrite) extends ParallelWriter {
-  override def write(writeExecutionPlan: WriteExecutionPlanResponseBody, df: DataFrame): Unit = {
-    val s3path: String = HadoopS3Utils.useS3aScheme(writeExecutionPlan.writeUri).toString()
-    if (new HadoopS3aUtil(df.sparkSession.sparkContext.hadoopConfiguration, writeExecutionPlan.temporaryCredentials.w).performBulkHadoopCfgSetup.isFailure)
-      throw new Exception("Failed Hadoop settings configuration")
+import java.net.URI
 
-    write(df, s3path)
+trait ColdParallelWriter extends ParallelWriter {
+
+  val credentialsConfigurator: CredentialsConfigurator = CredentialsConfigurator.coldAreaCredentialsPersisterConfigurator
+
+  override final def write(writeExecutionPlan: WriteExecutionPlanResponseBody, df: DataFrame): Unit = {
+    val s3path: URI = HadoopS3Utils.useS3aScheme(new URI(writeExecutionPlan.writeUri))
+    credentialsConfigurator.configureCredentials(writeExecutionPlan, df.sparkSession.sparkContext.hadoopConfiguration)
+    val partitioningColumns: Seq[String] = catalogService.getPartitioningColumns(df.sparkSession, entityDetails)
+    performColdWrite(df, s3path, partitioningColumns)
+    recoverPartitions(df.sparkSession, partitioningColumns)
   }
 
-  private def write(df: DataFrame, s3path: String): Unit = {
-    df.write
-      .mode(parallelWriteDetails.saveMode)
-      .format(format)
-      .partitionBy(parallelWriteDetails.partitionBy.getOrElse(Nil):_*)
-      .save(s3path)
+  protected def performColdWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String]): Unit
+
+  private def recoverPartitions(sparkSession: SparkSession, partitions: Seq[String]): Unit = {
+    if (partitions.nonEmpty)
+      sparkSession.sql(s"""ALTER TABLE ${catalogService.getFullyQualifiedTableName(entityDetails)} RECOVER PARTITIONS""")
   }
 }

@@ -41,9 +41,12 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
 
   private def randomStr(len: Int): String = RandomStringUtils.randomAlphanumeric(len) //Special char free
 
-  private val generateId_UFD = udf(() => idGen.generate())
+  @transient
+  private lazy val generateId: () => String = () => idGen.generate()
+  private val generateId_UFD = udf(generateId)
 
-  private val currentTimeMillisUDF = udf(() => clock.millis())
+  private val currentTimeMillis: () => Long = () =>  clock.millis()
+  private val currentTimeMillisUDF = udf(currentTimeMillis)
 
 
   /**

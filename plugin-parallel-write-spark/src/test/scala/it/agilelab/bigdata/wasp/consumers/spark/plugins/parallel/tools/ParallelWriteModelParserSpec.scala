@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools
 
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModelParser.{parseParallelWriteModel, writerDetailsFormat}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.{ContinuousUpdate, ParallelWrite, ParallelWriteModel, WriterDetails}
 import it.agilelab.bigdata.wasp.datastores.GenericProduct
@@ -14,8 +15,7 @@ class ParallelWriteModelParserSpec extends FunSuite {
   test("Flavour parser") {
     val value =
       """{"writerType": "parallelWrite",
-        |"saveMode": "append",
-        |"partitionBy": []
+        |"saveMode": "append"
         |}""".stripMargin
 
     val parsed = value.parseJson.convertTo[WriterDetails]
@@ -30,15 +30,14 @@ class ParallelWriteModelParserSpec extends FunSuite {
         """{
           |"writerDetails": {
           | "writerType": "parallelWrite",
-          | "saveMode": "append",
-          | "partitionBy": []
+          | "saveMode": "append"
           |},
           |"entityDetails": {"name":"mock"}
           |}""".stripMargin),
       product = GenericProduct("parallelWrite", None)
     )
     val model: ParallelWriteModel = parseParallelWriteModel(genericModel)
-    val expectedModel = ParallelWriteModel(ParallelWrite("append", Some(List.empty)), Map(("name", "mock")))
+    val expectedModel = ParallelWriteModel(ParallelWrite("append"), CatalogCoordinates("", "mock", ""))
     assert(model == expectedModel)
   }
   test("Continuous update model") {
@@ -48,16 +47,14 @@ class ParallelWriteModelParserSpec extends FunSuite {
         """{"entityDetails": {"name":"mock"},
           |"writerDetails": {
           | "writerType": "continuousUpdate",
-          | "tableName": "test_table",
           | "keys": ["pk"],
           | "orderingExpression": "pk",
-          | "fieldsToDrop": []
           |}
           |}""".stripMargin),
       product = GenericProduct("parallelWrite", None)
     )
     val model = parseParallelWriteModel(genericModel)
-    val expectedModel = ParallelWriteModel(ContinuousUpdate("test_table", List("pk"), "pk", List.empty), Map(("name", "mock")))
+    val expectedModel = ParallelWriteModel(ContinuousUpdate(List("pk"), "pk"), CatalogCoordinates("", "mock", ""))
     assert(model == expectedModel)
   }
 
@@ -70,10 +67,8 @@ class ParallelWriteModelParserSpec extends FunSuite {
           |"entityDetails": {"name":"mock"},
           |"s3aEndpoint": "localhost:4566",
           |"deltaTableDetails": {
-          | "tableName": "test_table",
           | "keys": ["pk"],
           | "orderingExpression": "pk",
-          | "fieldsToDrop": []
           |}
           |}""".stripMargin),
       product = GenericProduct("wrongCategory", None)
@@ -90,10 +85,8 @@ class ParallelWriteModelParserSpec extends FunSuite {
           |"entityDetails": {"name":"mock"},
           |"s3aEndpointdasd": "localhost:4566",
           |"deltaTableDetails": {
-          | "tableName": "test_table",
           | "keys": ["pk"],
           | "orderingExpression": "pk",
-          | "fieldsToDrop": []
           |}
           |}""".stripMargin),
       product = GenericProduct("parallelWrite", None)

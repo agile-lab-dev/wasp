@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel
 import com.squareup.okhttp.OkHttpClient
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModelParser.parseParallelWriteModel
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.{DataCatalogService, GlueDataCatalogService}
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -63,9 +64,8 @@ class ParallelWriteConsumersSparkPlugin extends WaspConsumersSparkPlugin with Lo
     val genericModel: GenericModel = Try(genericBL.getByName(writerModel.datastoreModelName) getOrElse (throw new RuntimeException("generic model not found: $name"))).get
     logger.info(s"Retrieved genericModel: ${genericModel.toString}")
 
-    new ParallelWriteSparkStructuredStreamingWriter(parseParallelWriteModel(genericModel))
+    new ParallelWriteSparkStructuredStreamingWriter(parseParallelWriteModel(genericModel), GlueDataCatalogService)
   }
-
 
 
   override def getSparkStructuredStreamingReader(

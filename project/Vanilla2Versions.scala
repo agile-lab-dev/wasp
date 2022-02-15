@@ -32,6 +32,7 @@ class Vanilla2Versions {
   val spark                     = "2.4.8"
   val sparkSolr                 = "3.8.1" // solr8 client works also with solr 7 server
   val hadoop                    = "2.8.5"
+  val awsBundle                 = "1.11.375"
   val scalaParserAndCombinators = "1.0.4"
   val nifi                      = "1.11.4"
   val dbcp2Version              = "2.4.0"
@@ -63,7 +64,7 @@ class Vanilla2Versions {
 }
 
 class Vanilla2_2_12Versions extends Vanilla2Versions {
-  override val akkaKryo                  = "0.5.2"
-  override val scala                     = "2.12.10"
-  override val elasticSearchSpark        = "7.15.0"
+  override val akkaKryo           = "0.5.2"
+  override val scala              = "2.12.10"
+  override val elasticSearchSpark = "7.15.0"
 }

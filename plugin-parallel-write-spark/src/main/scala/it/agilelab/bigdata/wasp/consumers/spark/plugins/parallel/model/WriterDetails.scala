@@ -9,19 +9,13 @@ object WriterDetails {
 /**
  * Details needeed by parallel writer
  * @param saveMode spark save mode
- * @param partitionBy partition columns
  */
-case class ParallelWrite(saveMode: String, partitionBy: Option[List[String]]) extends WriterDetails
+case class ParallelWrite(saveMode: String) extends WriterDetails
 
 /**
  * Details needed by continuous update writer
- * @param tableName delta table name
  * @param keys delta table unique keys column list
  * @param orderingExpression monotonically increasing select expression to choose upsert candidate
- * @param fieldsToDrop columns used in orderingExpression but not needed in delta table
  */
-case class ContinuousUpdate(tableName: String,
-                            keys: List[String],
-                            orderingExpression: String,
-                            fieldsToDrop: List[String]) extends WriterDetails
+case class ContinuousUpdate(keys: List[String], orderingExpression: String) extends WriterDetails
 
