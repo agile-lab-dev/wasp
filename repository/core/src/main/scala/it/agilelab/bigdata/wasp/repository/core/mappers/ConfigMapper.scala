@@ -115,7 +115,7 @@ object NifiConfigMapperV1 extends SimpleMapper[NifiConfigModel, NifiConfigDBMode
 object CompilerConfigMapperSelector extends MapperSelector[CompilerConfigModel, CompilerConfigDBModel]
 
 object CompilerConfigMapperV1 extends SimpleMapper[CompilerConfigModel, CompilerConfigDBModelV1] {
-  override val version = "nifiConfigV1"
+  override val version = "compilerConfigV1"
   override def fromDBModelToModel[B >: CompilerConfigDBModelV1](m: B): CompilerConfigModel = m match {
     case mm: CompilerConfigDBModelV1 => transform[CompilerConfigModel](mm)
     case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
