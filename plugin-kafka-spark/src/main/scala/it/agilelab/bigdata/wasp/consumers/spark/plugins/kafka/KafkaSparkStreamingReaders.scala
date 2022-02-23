@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.topicNameToColumnName
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkLegacyStreamingReader, SparkStructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkStructuredStreamingReader
 import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroDeserializerExpression, SparkUtils}
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
@@ -17,8 +17,6 @@ import org.apache.spark.sql.catalyst.expressions.CaseWhen
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DataType, StringType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.DStream
 
 import scala.collection.mutable
 
@@ -349,18 +347,5 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       .otherwise(null)
       .as(topicNameToColumnName(topicName))
   }
-
-}
-
-object KafkaSparkLegacyStreamingReader extends SparkLegacyStreamingReader with Logging {
-
-  /**
-    * Kafka configuration
-    */
-  //TODO: check warning (not understood)
-  def createStream(group: String, accessType: String, topic: TopicModel)(
-      implicit ssc: StreamingContext
-  ): DStream[String] =
-    throw new Exception("Legacy Streaming was removed, migrate to structured streaming")
 
 }

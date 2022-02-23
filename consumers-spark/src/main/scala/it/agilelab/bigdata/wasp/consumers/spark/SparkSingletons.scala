@@ -12,7 +12,7 @@ import it.agilelab.bigdata.wasp.models.configuration.{
 }
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.{SQLContext, SparkSession}
-import org.apache.spark.streaming.{Milliseconds, StreamingContext}
+import org.apache.spark.streaming.{Milliseconds}
 import org.apache.spark.{SparkContext, SparkException}
 
 /**
@@ -23,9 +23,9 @@ import org.apache.spark.{SparkContext, SparkException}
   */
 object SparkSingletons extends Logging {
 
-  private var sparkSession: SparkSession         = _
-  private var sparkContext: SparkContext         = _
-  private var sqlContext: SQLContext             = _
+  private var sparkSession: SparkSession = _
+  private var sparkContext: SparkContext = _
+  private var sqlContext: SQLContext = _
 
   /**
     * Try to initialize the SparkSession in the SparkSingleton with the provided configuration.
@@ -105,8 +105,6 @@ object SparkSingletons extends Logging {
         false
       }
     }
-
-
   /**
     * Returns the SparkContext singleton, or throws an exception if Spark was not initialized.
     *

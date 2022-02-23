@@ -20,9 +20,7 @@ class FifoSchedulingStrategySpec
     owner = "owner",
     isSystem = false,
     creationTime = 0L,
-    legacyStreamingComponents = List.empty,
-    structuredStreamingComponents = List.empty,
-    rtComponents = List.empty
+    structuredStreamingComponents = List.empty
   )
 
   "Fifo scheduling strategy" must {

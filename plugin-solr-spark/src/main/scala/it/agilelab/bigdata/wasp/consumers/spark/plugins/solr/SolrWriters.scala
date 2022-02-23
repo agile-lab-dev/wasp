@@ -4,7 +4,7 @@ import java.util
 
 import akka.actor.ActorRef
 import com.lucidworks.spark.util.SolrSupport
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.repository.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -18,9 +18,6 @@ import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.types.{MapType, StructType}
 import org.apache.spark.sql.streaming.DataStreamWriter
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.api.java.JavaDStream
-import org.apache.spark.streaming.dstream.DStream
 
 import scala.collection.mutable.ListBuffer
 
@@ -74,63 +71,6 @@ object SolrSparkBatchWriter {
     convert(doc, r.schema, r)
 
     doc
-  }
-}
-
-class SolrSparkLegacyStreamingWriter(indexBL: IndexBL,
-                                     ssc: StreamingContext,
-                                     name: String,
-                                     solrAdminActor: ActorRef)
-  extends SparkLegacyStreamingWriter
-    with SolrConfiguration
-    with Logging {
-
-  override def write(stream: DStream[String]): Unit = {
-
-    val sqlContext = SQLContext.getOrCreate(ssc.sparkContext)
-    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
-    if (indexOpt.isDefined) {
-      val index = indexOpt.get
-      val indexName = index.eventuallyTimedName
-
-      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
-
-      if (??[Boolean](
-            solrAdminActor,
-            CheckOrCreateCollection(
-              indexName,
-              index.getJsonSchema,
-              index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1)))) {
-
-        val docs = stream.transform { rdd =>
-
-          val df = sqlContext.read.json(rdd)
-
-          df.rdd.map { r =>
-            try {
-                SolrSparkBatchWriter.createSolrDocument(r, index.idField)
-            } catch {
-              case e: Exception =>
-                val msg = s"Unable to create Solr document. Error message: ${e.getMessage}"
-                //logger.error(msg) executed in Spark workers-> the closure have to be serializable
-                throw new Exception(msg, e)
-            }
-          }
-        }
-
-        SolrSupport.indexDStreamOfDocs(solrConfig.zookeeperConnections.toString,
-                                       indexName,
-                                       100, docs)
-
-      } else {
-        val msg = s"Error creating solr index: $index with this index name $indexName"
-        logger.error(msg)
-        throw new Exception(msg)
-      }
-    } else {
-      logger.warn(s"The index '$name' does not exits pay ATTENTION the spark stream won't start")
-    }
   }
 }
 

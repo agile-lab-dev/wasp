@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
@@ -13,7 +13,6 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, TopicBL}
 import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.StreamingContext
 
 class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var topicBL: TopicBL = _
@@ -26,21 +25,6 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
-
-  override def getSparkLegacyStreamingWriter(ssc: StreamingContext,
-                                             legacyStreamingETLModel: LegacyStreamingETLModel,
-                                             writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the kafka spark streaming writer")
-    new KafkaSparkLegacyStreamingWriter(topicBL, ssc, writerModel.datastoreModelName)
-  }
-
-  override def getSparkLegacyStreamingReader(ssc: StreamingContext,
-                                             legacyStreamingETLModel: LegacyStreamingETLModel,
-                                             readerModel: ReaderModel): SparkLegacyStreamingReader = {
-    logger.info(s"Returning object $KafkaSparkLegacyStreamingReader")
-    // why is this an object? :/
-    KafkaSparkLegacyStreamingReader
-  }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,

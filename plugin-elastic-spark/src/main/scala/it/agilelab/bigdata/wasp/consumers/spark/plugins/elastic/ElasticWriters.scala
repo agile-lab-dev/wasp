@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import akka.actor.ActorRef
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.repository.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -11,62 +11,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.DStream
 import org.elasticsearch.spark.sparkRDDFunctions
 import org.elasticsearch.spark.sql.EsSparkSQL
-
-class ElasticsearchSparkLegacyStreamingWriter(indexBL: IndexBL,
-                                              ssc: StreamingContext,
-                                              name: String,
-                                              elasticAdminActor: ActorRef)
-    extends SparkLegacyStreamingWriter
-    with ElasticConfiguration
-    with Logging {
-
-  override def write(stream: DStream[String]): Unit = {
-
-    val indexOpt: Option[IndexModel] = indexBL.getByName(name)
-    if (indexOpt.isDefined) {
-      val index = indexOpt.get
-      val indexName = index.eventuallyTimedName
-      logger.info(
-        s"Check or create the index model: '${index.toString} with this index name: $indexName")
-
-      if (??[Boolean](elasticAdminActor,
-                      CheckOrCreateIndex(indexName,
-                                         index.name,
-                                         index.dataType,
-                                         index.getJsonSchema))) {
-        val resourceBroadcast = ssc.sparkContext.broadcast(index.resource)
-        val address = elasticConfig.connections
-          .filter(
-            _.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
-          .mkString(",")
-
-        val options = Map("es.nodes" -> address,
-                          "es.input.json" -> "true",
-                          "es.batch.size.entries" -> "1") ++ indexOpt.get.idField.map(it => ("es.mapping.id", it))
-
-        val optionsBroadcasted = ssc.sparkContext.broadcast(options)
-
-        logger.info(
-          s"Write to elastic with spark streaming. Configuration passed: options: ${optionsBroadcasted.value}, resource: ${resourceBroadcast.value}")
-
-        stream.foreachRDD((rdd: RDD[String]) => {
-          rdd.saveToEs(resourceBroadcast.value, optionsBroadcasted.value)
-        })
-
-      } else {
-        val msg = s"Error creating index $index"
-        logger.error(msg)
-        throw new Exception(msg)
-      }
-    } else {
-      logger.warn(s"The index '$name' does not exits pay ATTENTION spark won't start")
-    }
-  }
-}
 
 class ElasticsearchSparkStructuredStreamingWriter(indexBL: IndexBL,
                                                   ss: SparkSession,

@@ -18,7 +18,7 @@ trait PipegraphOpenApiComponentSupport
    implicit lazy val pipegraphInstanceOpenApi
     : ToOpenApiSchema[PipegraphInstanceModel] = product8(PipegraphInstanceModel)
 
-   implicit lazy val pipegraphOpenApi: ToOpenApiSchema[PipegraphModel] = product11(
+   implicit lazy val pipegraphOpenApi: ToOpenApiSchema[PipegraphModel] = product9(
     PipegraphModel
   )
 

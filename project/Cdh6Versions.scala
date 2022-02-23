@@ -8,7 +8,6 @@ class Cdh6Versions {
   val avro = "1.8.2"
   val avro4sVersion = "1.8.3"
   val avroSpark = "3.2.0"
-  val camel = "2.17.7"
   val cdh6 = "cdh6.3.2"
   val cdk = s"2.2.1-$cdh6" // Cloudera Distribution of Kafka
   val cds = "cloudera2" // Cloudera Distribution of Spark

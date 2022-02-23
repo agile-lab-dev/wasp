@@ -54,13 +54,13 @@ class VersionedCodecProvider[T](map: Map[String, Codec[T]], versionExtractor: T 
         override def decode(reader: BsonReader, decoderContext: DecoderContext): R = {
           val bsonDoc = codecBsonDocument.decode(reader, decoderContext)
           val version = bsonDoc.getString("version").getValue
-          val codec = map.getOrElse(version, throw new Exception("no decoder available"))
+          val codec = map.getOrElse(version, throw new Exception(s"no decoder available for version $version"))
           codec.decode(bsonDoc.asBsonReader(), decoderContext).asInstanceOf[R]
         }
 
         override def encode(writer: BsonWriter, value: R, encoderContext: EncoderContext): Unit = {
           val version = versionExtractor(value.asInstanceOf[T])
-          val codec = map.getOrElse(version, throw new Exception("no encoder available"))
+          val codec = map.getOrElse(version, throw new Exception(s"no encoder available for version $version"))
           val bsonDocument = createBsonDocument(codec.asInstanceOf[Codec[T]], version, value.asInstanceOf[T], encoderContext)
           codecBsonDocument.encode(writer, bsonDocument, encoderContext)
         }

@@ -82,10 +82,6 @@ lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark
   .settings(libraryDependencies ++= dependencies.consumersSparkDependencies)
   .settings(settings.disableParallelTests: _*)
 
-lazy val consumers_rt = Project("wasp-consumers-rt", file("consumers-rt"))
-  .settings(settings.commonSettings: _*)
-  .dependsOn(core)
-  .settings(libraryDependencies ++= dependencies.consumersRtDependencies)
 
 /* Plugins */
 
@@ -221,7 +217,6 @@ lazy val kernel = project
     master,
     producers,
     consumers_spark,
-    consumers_rt,
     openapi,
     nifi_client,
     spark_nifi_plugin_bridge,
@@ -310,14 +305,6 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .enablePlugins(JavaAppPackaging)
   .settings(dependencies.whitelabelSparkConsumerScriptClasspath)
 
-lazy val whiteLabelConsumersRt = Project("wasp-whitelabel-consumers-rt", file("whitelabel/consumers-rt"))
-  .settings(settings.commonSettings: _*)
-  .dependsOn(whiteLabelModels)
-  .dependsOn(consumers_rt)
-  .dependsOn(plugin_hbase_spark)
-  .settings(libraryDependencies ++= dependencies.whiteLabelConsumersRtDependencies)
-  .enablePlugins(JavaAppPackaging)
-  .settings(dependencies.whiteLabelConsumersRtScriptClasspath)
 
 lazy val whiteLabelSingleNode = project
   .withId("wasp-whitelabel-singlenode")
@@ -336,7 +323,6 @@ lazy val whiteLabel = Project("wasp-whitelabel", file("whitelabel"))
     whiteLabelMaster,
     whiteLabelProducers,
     whiteLabelConsumersSpark,
-    whiteLabelConsumersRt,
     whiteLabelSingleNode
   )
 

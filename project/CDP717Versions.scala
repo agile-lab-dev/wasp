@@ -8,7 +8,6 @@ class CDP717Versions {
   val avro = "1.8.2"
   val avro4sVersion = "1.8.3"
   val avroSpark = "2.4.7.7.1.7.0-551"
-  val camel = "2.17.7"
   val commonsCli = "1.2"
   val darwin = "1.2.1"
   val elasticSearch = "6.1.2"

@@ -15,7 +15,7 @@ trait PipegraphBLImplTest {
     bl.createTable()
 
 
-    val model1 = PipegraphModel("name1", "description", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model1 = PipegraphModel("name1", "description", "tester", true, 10L, List.empty, None)
     bl.insert(model1)
 
     val etl = StructuredStreamingETLModel("name_1", "not-default",
@@ -24,7 +24,7 @@ trait PipegraphBLImplTest {
       WriterModel.consoleWriter("console"),
       List.empty, None, Some(10))
     val rtModel = RTModel("model", List(ReaderModel.hbaseReader("made", KeyValueModel("hbase", "catalog", None, None, false, None))), true, None, None)
-    val model2 = PipegraphModel("name2", "description", "tester", true, 10L, List.empty, List(etl), List(rtModel), None)
+    val model2 = PipegraphModel("name2", "description", "tester", true, 10L, List(etl), None)
     bl.insert(model2)
 
     val list = bl.getAll
@@ -48,10 +48,10 @@ trait PipegraphBLImplTest {
     bl.createTable()
 
 
-    val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, List.empty, List.empty, None)
-    val model2 = PipegraphModel("name_1", "description2", "tester", true, 10L, List.empty, List.empty, List.empty, None)
-    val model3 = PipegraphModel("name_2", "description3", "tester", true, 10L, List.empty, List.empty, List.empty, None)
-    val model4 = PipegraphModel("name_2", "description4", "tester", true, 10L, List.empty, List.empty, List.empty, None)
+    val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, None)
+    val model2 = PipegraphModel("name_1", "description2", "tester", true, 10L, List.empty, None)
+    val model3 = PipegraphModel("name_2", "description3", "tester", true, 10L, List.empty, None)
+    val model4 = PipegraphModel("name_2", "description4", "tester", true, 10L, List.empty, None)
 
 
     bl.insert(model1)
@@ -86,10 +86,10 @@ trait PipegraphBLImplTest {
     bl.dropTable()
     bl.createTable()
 
-    val model1 = PipegraphModel("model_1", "description1", "tester", true, 10L, List.empty, List.empty, List.empty, None)
-    val model2 = PipegraphModel("model_2", "description2", "tester", true, 10L, List.empty, List.empty, List.empty, None)
-    val model3 = PipegraphModel("model_3", "description3", "tester", false, 10L, List.empty, List.empty, List.empty, None)
-    val model4 = PipegraphModel("model_4", "description4", "tester", false, 10L, List.empty, List.empty, List.empty, None)
+    val model1 = PipegraphModel("model_1", "description1", "tester", true, 10L,  List.empty, None)
+    val model2 = PipegraphModel("model_2", "description2", "tester", true, 10L,  List.empty, None)
+    val model3 = PipegraphModel("model_3", "description3", "tester", false, 10L, List.empty, None)
+    val model4 = PipegraphModel("model_4", "description4", "tester", false, 10L, List.empty, None)
 
 
     bl.insert(model1)
@@ -142,9 +142,9 @@ trait PipegraphBLImplTest {
     blInstance.all() should contain theSameElementsAs Seq(modelInstance1, modelInstance2, modelInstance3, modelInstance4)
 
 
-    val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, List.empty, List.empty, None)
-    val model2 = PipegraphModel("name_2", "description2", "tester", true, 10L, List.empty, List.empty, List.empty, None)
-    val model3 = PipegraphModel("name_3", "description3", "tester", false, 10L, List.empty, List.empty, List.empty, None)
+    val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, None)
+    val model2 = PipegraphModel("name_2", "description2", "tester", true, 10L, List.empty, None)
+    val model3 = PipegraphModel("name_3", "description3", "tester", false, 10L, List.empty, None)
     bl.insert(model1)
     bl.insert(model2)
     bl.insert(model3)

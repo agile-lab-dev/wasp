@@ -100,8 +100,6 @@ object VanillaExclusions {
       MavenCoordinate("org.codehaus.jackson", "jackson-core-asl")
     )
 
-  lazy val camelKafkaExclusions: Vector[MavenCoordinate] = Vector(MavenCoordinate("org.apache.kafka", "kafka-clients"))
-
   lazy val javaxRsExclude: Vector[MavenCoordinate] = Vector(
     MavenCoordinate("javax.ws.rs", "javax.ws.rs-api")
   )

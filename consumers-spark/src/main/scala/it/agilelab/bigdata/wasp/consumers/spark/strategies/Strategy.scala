@@ -4,7 +4,6 @@ import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.MlModels.MlModelsBroadcastDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.streaming.dstream.DStream
 
 trait Strategy extends Serializable {
 
@@ -26,9 +25,4 @@ trait Strategy extends Serializable {
    * @return
    */
   def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame
-
-  //TODO Implement join in ConsumerETLActor
-  def join(dsStreams: Map[ReaderKey, DStream[String]]): DStream[String] = dsStreams.head._2
-
-
 }

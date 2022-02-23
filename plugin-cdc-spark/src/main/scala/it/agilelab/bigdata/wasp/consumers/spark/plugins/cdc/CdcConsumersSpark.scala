@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.cdc
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
@@ -12,7 +12,6 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{CdcBL, ConfigBL, RawBL}
 import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.StreamingContext
 
 class CdcConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
@@ -26,20 +25,6 @@ class CdcConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   override def datastoreProduct: DatastoreProduct = CdcProduct
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
-
-  override def getSparkLegacyStreamingWriter(
-      ssc: StreamingContext,
-      legacyStreamingETLModel: LegacyStreamingETLModel,
-      writerModel: WriterModel
-  ): SparkLegacyStreamingWriter =
-    throw new Exception("Method 'getSparkLegacyStreamingWriter' not implemented.")
-
-  override def getSparkLegacyStreamingReader(
-      ssc: StreamingContext,
-      legacyStreamingETLModel: LegacyStreamingETLModel,
-      readerModel: ReaderModel
-  ): SparkLegacyStreamingReader =
-    throw new Exception("Method 'getSparkLegacyStreamingReader' not implemented.")
 
   override def getSparkStructuredStreamingWriter(
       ss: SparkSession,

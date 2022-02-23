@@ -169,14 +169,6 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
     }
   }
 
-  def generateUniqueLegacyStreamingCheckpointDir: String = {
-
-    val prefix = if (waspConfig.environmentPrefix == "") "" else "/" + waspConfig.environmentPrefix
-
-    sparkStreamingConfig.checkpointDir + prefix + "/" +
-      "legacy_streaming"
-  }
-
   def generateSpecificStructuredStreamingCheckpointDir(
       pipegraph: PipegraphModel,
       component: StructuredStreamingETLModel

@@ -10,8 +10,6 @@ private[wasp] object ExamplePipegraphModel {
     owner = "user",
     isSystem = false,
     creationTime = System.currentTimeMillis,
-
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
 	      name = "Write on console",
@@ -28,7 +26,5 @@ private[wasp] object ExamplePipegraphModel {
 	      options = Map()
       )
     ),
-    rtComponents = List(),
-
     dashboard = None)
 }

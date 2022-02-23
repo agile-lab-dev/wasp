@@ -14,9 +14,7 @@ package object enrichment {
     owner = "",
     isSystem = false,
     creationTime = System.currentTimeMillis(),
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(sampleStreamingETL),
-    rtComponents = List.empty,
     enrichmentSources =
       RestEnrichmentConfigModel(
         Map.apply(

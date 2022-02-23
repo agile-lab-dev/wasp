@@ -41,13 +41,11 @@ trait ProcessingComponentModel {
   
   def generateStandardProcessingComponentName: String = this match {
     case ss: StructuredStreamingETLModel => s"structuredstreaming_${ss.name.replace(" ", "_")}"
-    case ls: LegacyStreamingETLModel => s"legacystreaming_${ls.name.replace(" ", "_")}"
     case rt: RTModel => s"rt_${rt.name.replace(" ", "_")}"
   }
   
   def generateStandardWriterName: String = this match { // TODO: remove match once output member is moved into ProcessingComponentModel
     case ss: StructuredStreamingETLModel => s"writer_${ss.streamingOutput.name.replace(" ", "_")}"
-    case ls: LegacyStreamingETLModel => s"writer_${ls.output.name.replace(" ", "_")}"
     case rt: RTModel => rt.endpoint match {
       case Some(output) => s"writer_${output.name.replace(" ", "_")}"
       case None => "no_writer"
@@ -112,9 +110,7 @@ final case class PipegraphInstanceModel(override val name:String,
   * @param owner owner of the pipegraph
   * @param isSystem whether the pipegraph is from the WASP system
   * @param creationTime time of creation  of the pipegraph
-  * @param legacyStreamingComponents components describing processing built on Spark Legacy Streaming
   * @param structuredStreamingComponents components describing processing built on Spark Structured Streaming
-  * @param rtComponents components describing processing built on Akka actors
   * @param dashboard dashboard of the pipegraph
   */
 case class PipegraphModel(override val name: String,
@@ -122,18 +118,14 @@ case class PipegraphModel(override val name: String,
                           owner: String,
                           isSystem: Boolean,
                           creationTime: Long,
-                          legacyStreamingComponents: List[LegacyStreamingETLModel],
                           structuredStreamingComponents: List[StructuredStreamingETLModel],
-                          rtComponents: List[RTModel],
                           dashboard: Option[DashboardModel] = None,
                           labels: Set[String] = Set.empty,
                           enrichmentSources: RestEnrichmentConfigModel = RestEnrichmentConfigModel(Map.empty)) extends Model {
 
   def generateStandardPipegraphName: String = s"pipegraph_$name"
   
-  def hasSparkComponents: Boolean = legacyStreamingComponents.nonEmpty || structuredStreamingComponents.nonEmpty
-  
-  def hasRtComponents: Boolean = rtComponents.nonEmpty
+  def hasSparkComponents: Boolean = structuredStreamingComponents.nonEmpty
 }
 
 object LegacyStreamingETLModel {

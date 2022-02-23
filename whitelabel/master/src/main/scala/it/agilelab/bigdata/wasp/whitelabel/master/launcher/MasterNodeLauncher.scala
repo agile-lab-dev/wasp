@@ -151,11 +151,6 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 //    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.httpsPost)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.ERROR.multiETL)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.CHECKPOINT.console)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.console)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.kafka)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.solr)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.elastic)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Legacy.hdfs)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.autoDataLakeDebeziumMutations)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.console)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.kafka)
@@ -171,11 +166,6 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.ERROR.multiETL)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.CHECKPOINT.console)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Structured.avroEncoder)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.console)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.kafka)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.solr)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.elastic)
-    ConfigBL.pipegraphBL.upsert(TestPipegraphs.AVRO.Legacy.hdfs)
 
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.Plaintext.Structured.kafkaMultitopicWrite)
 

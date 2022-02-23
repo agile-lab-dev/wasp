@@ -27,9 +27,7 @@ trait SparkConsumersStreamingMasterGuardianSpecTestData {
     owner = "test",
     isSystem = false,
     creationTime = System.currentTimeMillis(),
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List.empty,
-    rtComponents = List.empty,
     dashboard = None
   )
 

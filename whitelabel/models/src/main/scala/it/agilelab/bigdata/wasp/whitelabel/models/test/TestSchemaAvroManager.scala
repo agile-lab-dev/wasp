@@ -76,7 +76,6 @@ object TestSchemaAvroManager {
                           owner = "user",
                           isSystem = false,
                           creationTime = System.currentTimeMillis,
-                          legacyStreamingComponents = List(),
                           structuredStreamingComponents = List(
                             StructuredStreamingETLModel(
                               name = "ETL TestKafkaReaderWithDifferentSchemaAvro",
@@ -108,7 +107,6 @@ object TestSchemaAvroManager {
                               options = Map()
                             )
                           ),
-                          rtComponents = List(),
                           dashboard = None
                         )
 

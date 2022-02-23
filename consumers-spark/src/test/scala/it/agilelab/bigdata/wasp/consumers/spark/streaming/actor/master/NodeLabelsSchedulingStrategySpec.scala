@@ -40,9 +40,7 @@ class NodeLabelsSchedulingStrategySpec
     owner = "owner",
     isSystem = false,
     creationTime = 0L,
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List.empty,
-    rtComponents = List.empty,
     labels = Set("label-1", "label-2")
   )
 
