@@ -20,7 +20,7 @@ abstract class BaseConsumersMasterGuadian(env: { val pipegraphBL: PipegraphBL })
 
   // type alias for pipegraph -> components map
   type PipegraphsToComponentsMap =
-    Map[PipegraphModel, (Seq[LegacyStreamingETLModel], Seq[StructuredStreamingETLModel], Seq[RTModel])]
+    Map[PipegraphModel, (Seq[StructuredStreamingETLModel])]
 
   // counter for ready components
   protected var numberOfReadyComponents = 0
@@ -130,11 +130,9 @@ abstract class BaseConsumersMasterGuadian(env: { val pipegraphBL: PipegraphBL })
     val pipegraphsToComponentsMap: PipegraphsToComponentsMap = pipegraphs map { pipegraph =>
       {
         // grab components
-        val lseComponents = pipegraph.legacyStreamingComponents
         val sseComponents = pipegraph.structuredStreamingComponents
-        val rtComponents  = pipegraph.rtComponents
 
-        pipegraph -> (lseComponents, sseComponents, rtComponents)
+        pipegraph -> (sseComponents)
       }
     } toMap
 

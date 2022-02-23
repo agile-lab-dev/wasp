@@ -125,7 +125,6 @@ class MasterGuardian(env: {
   // TODO revise
   private def restartPipegraphs(): Either[String, String] = {
     sparkConsumersStreamingMasterGuardian ! RestartConsumers
-    rtConsumersMasterGuardian ! RestartConsumers
     Right("Pipegraphs restart started.")
   }
 

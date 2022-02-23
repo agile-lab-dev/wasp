@@ -20,9 +20,7 @@ class LowestNodeUUIDSchedulingStrategySpec
     owner = "owner",
     isSystem = false,
     creationTime = 0L,
-    legacyStreamingComponents = List.empty,
-    structuredStreamingComponents = List.empty,
-    rtComponents = List.empty
+    structuredStreamingComponents = List.empty
   )
 
   "Lowest Node UUID scheduling strategy" must {

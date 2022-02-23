@@ -12,7 +12,6 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, HttpBL}
 import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.StreamingContext
 
 
 class HttpConsumersSparkPlugin extends WaspConsumersSparkPlugin {
@@ -24,20 +23,6 @@ class HttpConsumersSparkPlugin extends WaspConsumersSparkPlugin {
   override def initialize(waspDB: WaspDB): Unit = httpBL
 
   override def getValidationRules: Seq[ValidationRule] = Seq.empty
-
-  override def getSparkLegacyStreamingWriter(
-    ssc: StreamingContext,
-    legacyStreamingETLModel: LegacyStreamingETLModel,
-    writerModel: WriterModel
-  ): SparkLegacyStreamingWriter =
-    throw new UnsupportedOperationException("Unimplemented HTTP legacy streaming writer")
-
-  override def getSparkLegacyStreamingReader(
-    ssc: StreamingContext,
-    legacyStreamingETLModel: LegacyStreamingETLModel,
-    readerModel: ReaderModel
-  ): SparkLegacyStreamingReader =
-    throw new UnsupportedOperationException("Unimplemented HTTP legacy streaming reader")
 
   override def getSparkStructuredStreamingWriter(
     ss: SparkSession,

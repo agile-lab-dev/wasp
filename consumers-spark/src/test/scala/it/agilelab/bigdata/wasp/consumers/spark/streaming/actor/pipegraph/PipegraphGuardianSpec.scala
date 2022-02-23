@@ -47,7 +47,6 @@ class PipegraphGuardianSpec
     owner = "test",
     isSystem = false,
     creationTime = System.currentTimeMillis(),
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
         name = "component",
@@ -60,7 +59,6 @@ class PipegraphGuardianSpec
         options = Map()
       )
     ),
-    rtComponents = List.empty,
     dashboard = None
   )
   val defaultInstance = PipegraphInstanceModel(

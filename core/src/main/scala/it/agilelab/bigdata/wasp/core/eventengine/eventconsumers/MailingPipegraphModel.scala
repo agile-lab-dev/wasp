@@ -90,9 +90,7 @@ object MailingPipegraphModel {
     owner = "user",
     isSystem = isSystem,
     creationTime = System.currentTimeMillis,
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = mailingETLModels,
-    rtComponents = List.empty,
     dashboard = None,
     enrichmentSources = RestEnrichmentConfigModel(Map.empty))
 

@@ -325,7 +325,6 @@ private[wasp] object LoggerPipegraph {
       owner = "system",
       isSystem = true,
       creationTime = System.currentTimeMillis,
-      legacyStreamingComponents = List(),
       structuredStreamingComponents = List(
         StructuredStreamingETLModel(
           name = "write on index",
@@ -346,7 +345,6 @@ private[wasp] object LoggerPipegraph {
           options = Map()
         )
       ),
-      rtComponents = List(),
       dashboard = None,
       enrichmentSources = RestEnrichmentConfigModel(Map.empty)
     )
@@ -367,7 +365,6 @@ private[wasp] object TelemetryPipegraph {
       owner = "system",
       isSystem = true,
       creationTime = System.currentTimeMillis,
-      legacyStreamingComponents = List(),
       structuredStreamingComponents = List(
         StructuredStreamingETLModel(
           name = "write on index",
@@ -388,7 +385,6 @@ private[wasp] object TelemetryPipegraph {
           options = Map()
         )
       ),
-      rtComponents = List(),
       dashboard = None,
       enrichmentSources = RestEnrichmentConfigModel(Map.empty)
     )

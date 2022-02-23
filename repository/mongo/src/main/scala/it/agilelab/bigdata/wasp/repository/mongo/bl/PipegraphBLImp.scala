@@ -4,9 +4,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{PipegraphBL, PipegraphInstan
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus}
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{PipegraphDBModel, PipegraphDBModelV1, PipegraphInstanceDBModel, PipegraphInstanceDBModelV1}
-import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphMapperV1.transform
-import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphInstanceMapperV1
-import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphInstanceDBModelMapperSelector
+import it.agilelab.bigdata.wasp.repository.core.mappers.{PipegraphInstanceDBModelMapperSelector, PipegraphInstanceMapperV1, PipegraphMapperV1, PipegraphMapperV2}
 import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphDBModelMapperSelector.factory
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonInt64, BsonString}
@@ -45,18 +43,18 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
   }
 
   def update(pipegraph: PipegraphModel): Unit = {
-    waspDB.updateByName[PipegraphDBModel](pipegraph.name, transform[PipegraphDBModelV1](pipegraph))
+    waspDB.updateByName[PipegraphDBModel](pipegraph.name,PipegraphMapperV2.fromModelToDBModel(pipegraph))
   }
 
   def insert(pipegraph: PipegraphModel): Unit = {
-    waspDB.insertIfNotExists[PipegraphDBModel](transform[PipegraphDBModelV1](pipegraph))
+    waspDB.insertIfNotExists[PipegraphDBModel](PipegraphMapperV2.fromModelToDBModel(pipegraph))
   }
 
   override def insertIfNotExists(pipegraph: PipegraphModel): Unit =
-    waspDB.insertIfNotExists[PipegraphDBModel](transform[PipegraphDBModelV1](pipegraph))
+    waspDB.insertIfNotExists[PipegraphDBModel](PipegraphMapperV2.fromModelToDBModel(pipegraph))
 
   def upsert(pipegraph: PipegraphModel): Unit = {
-    waspDB.upsert[PipegraphDBModel](transform[PipegraphDBModelV1](pipegraph))
+    waspDB.upsert[PipegraphDBModel](PipegraphMapperV2.fromModelToDBModel(pipegraph))
   }
 
   def deleteByName(name: String): Unit = {
@@ -71,7 +69,7 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
 
 class PipegraphInstanceBlImp(waspDB: WaspMongoDB) extends PipegraphInstanceBl {
   override def update(instance: PipegraphInstanceModel): PipegraphInstanceModel = {
-    waspDB.updateByName[PipegraphInstanceDBModel](instance.name, PipegraphInstanceMapperV1.transform[PipegraphInstanceDBModelV1](instance))
+    waspDB.updateByName[PipegraphInstanceDBModel](instance.name, PipegraphInstanceMapperV1.fromModelToDBModel(instance))
     instance
   }
 
@@ -84,7 +82,7 @@ class PipegraphInstanceBlImp(waspDB: WaspMongoDB) extends PipegraphInstanceBl {
       .map(PipegraphInstanceDBModelMapperSelector.factory)
 
   override def insert(instance: PipegraphInstanceModel): PipegraphInstanceModel = {
-    waspDB.insert[PipegraphInstanceDBModel](PipegraphInstanceMapperV1.transform[PipegraphInstanceDBModelV1](instance))
+    waspDB.insert[PipegraphInstanceDBModel](PipegraphInstanceMapperV1.fromModelToDBModel(instance))
     instance
   }
 

@@ -1,8 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.jdbc
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, SqlSourceBl}
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.JDBCProduct
@@ -12,7 +12,6 @@ import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.StreamingContext
 
 class JdbcConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   var sqlModelBL: SqlSourceBl = _
@@ -25,22 +24,6 @@ class JdbcConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
-
-  override def getSparkLegacyStreamingWriter(ssc: StreamingContext,
-                                             legacyStreamingETLModel: LegacyStreamingETLModel,
-                                             writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    val msg = s"Invalid spark writer type: jdbc spark streaming writer"
-    logger.error(msg)
-    throw new UnsupportedOperationException(msg)
-  }
-  
-  override def getSparkLegacyStreamingReader(ssc: StreamingContext,
-                                             legacyStreamingETLModel: LegacyStreamingETLModel,
-                                             readerModel: ReaderModel): SparkLegacyStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
-    logger.error(msg)
-    throw new UnsupportedOperationException(msg)
-  }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,

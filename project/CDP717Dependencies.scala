@@ -4,7 +4,6 @@ import sbt._
 
 class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
 
-  lazy val camelWebsocket      = "org.apache.camel" % "camel-websocket"           % versions.camel
   lazy val spark_sql_kafka     = "it.agilelab"      %% "wasp-spark-sql-kafka"     % "0.1.0-2.4.1-2.4.7-7.1.7.0-551"
   lazy val spark_sql_kafka_old = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % "0.1.0-2.4.1-2.4.7-7.1.7.0-551"
   lazy val delta               = "it.agilelab"      %% "wasp-delta-lake"          % "0.6.1-2.4.7.7.1.7.0-551"
@@ -372,7 +371,6 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     "org.apache.spark"                %% "spark-network-shuffle"                         % "2.4.7.7.1.7.0-551",
     "org.apache.spark"                %% "spark-repl"                                    % "2.4.7.7.1.7.0-551",
     "org.apache.spark"                %% "spark-sketch"                                  % "2.4.7.7.1.7.0-551",
-    "org.apache.spark"                %% "spark-streaming"                               % "2.4.7.7.1.7.0-551",
     "org.apache.spark"                %% "spark-tags"                                    % "2.4.7.7.1.7.0-551",
     "org.apache.spark"                %% "spark-unsafe"                                  % "2.4.7.7.1.7.0-551",
     "org.apache.spark"                %% "spark-yarn"                                    % "2.4.7.7.1.7.0-551",
@@ -508,7 +506,6 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     ("org.apache.avro" % "trevni-avro" % "1.8.2.7.1.7.0-551").classifier("hadoop2")
   )
   lazy val akkaActor          = "com.typesafe.akka"            %% "akka-actor"              % versions.akka
-  lazy val akkaCamel          = "com.typesafe.akka"            %% "akka-camel"              % versions.akka
   lazy val akkaCluster        = "com.typesafe.akka"            %% "akka-cluster"            % versions.akka
   lazy val akkaClusterTools   = "com.typesafe.akka"            %% "akka-cluster-tools"      % versions.akka
   lazy val akkaContrib        = "com.typesafe.akka"            %% "akka-contrib"            % versions.akka
@@ -598,7 +595,6 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   override lazy val producersDependencies: Seq[sbt.ModuleID]          = testDependencies ++ allAkka
   override lazy val consumersSparkDependencies
       : Seq[sbt.ModuleID]                                              = Seq(quartz, nameOf) ++ wireMock ++ hbase ++ avro4sTestAndDarwin ++ testDependencies ++ allAkka ++ avro4sTestAndDarwin
-  override lazy val consumersRtDependencies: Seq[sbt.ModuleID]         = Seq(akkaCamel, camelWebsocket) ++ testDependencies
   override lazy val pluginElasticSparkDependencies: Seq[sbt.ModuleID]  = Seq(elasticSearch, elasticSearchSpark) ++ testDependencies
   override lazy val pluginHbaseSparkDependencies: Seq[sbt.ModuleID]    = testDependencies
   override lazy val pluginKafkaSparkDependencies: Seq[sbt.ModuleID]    = Seq(spark_sql_kafka) ++ testDependencies
@@ -635,7 +631,6 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   override lazy val whitelabelMasterDependencies: Seq[sbt.ModuleID]        = testDependencies
   override lazy val whitelabelProducerDependencies: Seq[sbt.ModuleID]      = testDependencies
   override lazy val whitelabelSparkConsumerDependencies: Seq[sbt.ModuleID] = testDependencies
-  override lazy val whiteLabelConsumersRtDependencies: Seq[sbt.ModuleID]   = testDependencies
   override lazy val openapiDependencies: Seq[sbt.ModuleID]                 = Seq(swaggerCore)
   override lazy val kmsTest: Seq[Def.Setting[_]] = Seq(
     (Test / transitiveClassifiers) := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),

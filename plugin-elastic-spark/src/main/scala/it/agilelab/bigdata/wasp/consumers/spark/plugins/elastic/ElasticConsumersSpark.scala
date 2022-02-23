@@ -6,8 +6,8 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.WaspSystem.waspConfig
@@ -18,10 +18,9 @@ import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.StreamingContext
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -51,21 +50,6 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
-
-  override def getSparkLegacyStreamingWriter(ssc: StreamingContext,
-                                             legacyStreamingETLModel: LegacyStreamingETLModel,
-                                             writerModel: WriterModel): SparkLegacyStreamingWriter = {
-    logger.info(s"Initialize the elastic spark streaming writer with this writer model name '${writerModel.name}'")
-    new ElasticsearchSparkLegacyStreamingWriter(indexBL, ssc, writerModel.datastoreModelName, elasticAdminActor_)
-  }
-  
-  override def getSparkLegacyStreamingReader(ssc: StreamingContext,
-                                             legacyStreamingETLModel: LegacyStreamingETLModel,
-                                             readerModel: ReaderModel): SparkLegacyStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $readerModel is not valid."
-    logger.error(msg)
-    throw new UnsupportedOperationException(msg)
-  }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,
                                                  structuredStreamingETLModel: StructuredStreamingETLModel,

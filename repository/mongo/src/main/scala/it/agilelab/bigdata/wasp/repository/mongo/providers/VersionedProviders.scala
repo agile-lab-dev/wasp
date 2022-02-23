@@ -167,11 +167,13 @@ object VersionedRegistry {
     )
 
   val pipegraphDBModelV1Codec: Codec[PipegraphDBModelV1] = createCodec[PipegraphDBModelV1](codecRegistry)
+  val pipegraphDBModelV2Codec: Codec[PipegraphDBModelV2] = createCodec[PipegraphDBModelV2](codecRegistry)
   val PipegraphProvider: VersionedCodecProvider[PipegraphDBModel] =
     VersionedCodecProvider.apply(
       PipegraphDBModelMapperSelector.versionExtractor,
       classOf[PipegraphDBModel],
-      (PipegraphMapperV1.version, pipegraphDBModelV1Codec)
+      (PipegraphMapperV1.version, pipegraphDBModelV1Codec),
+      (PipegraphMapperV2.version, pipegraphDBModelV2Codec)
     )
 
   val indexDBModelV1Codec: Codec[IndexDBModelV1] = createCodec[IndexDBModelV1](codecRegistry)

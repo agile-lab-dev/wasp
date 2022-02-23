@@ -72,10 +72,8 @@ trait PipegraphEditorService {
           dto.owner.map(x => if (x.isEmpty) "ui" else x).getOrElse("ui"),
           isSystem = false,
           creationTime = System.currentTimeMillis(),
-          legacyStreamingComponents = List.empty,
           structuredStreamingComponents =
             dto.structuredStreamingComponents.map(toStructuredStreamingETLModel(_).right.get),
-          rtComponents = List.empty,
           enrichmentSources = RestEnrichmentConfigModel(Map.empty)
         )
       )

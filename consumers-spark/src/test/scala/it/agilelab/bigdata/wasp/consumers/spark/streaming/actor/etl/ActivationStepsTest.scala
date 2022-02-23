@@ -26,7 +26,6 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     owner = "test",
     isSystem = false,
     creationTime = System.currentTimeMillis(),
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
         name = "component",
@@ -39,7 +38,6 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
         options = Map()
       )
     ),
-    rtComponents = List.empty,
     dashboard = None
   )
 
@@ -122,7 +120,6 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
       owner = "test",
       isSystem = false,
       creationTime = System.currentTimeMillis(),
-      legacyStreamingComponents = List.empty,
       structuredStreamingComponents = List(
         StructuredStreamingETLModel(
           name = "component",
@@ -135,7 +132,6 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
           options = Map()
         )
       ),
-      rtComponents = List.empty,
       dashboard = None,
       enrichmentSources =
         RestEnrichmentConfigModel(

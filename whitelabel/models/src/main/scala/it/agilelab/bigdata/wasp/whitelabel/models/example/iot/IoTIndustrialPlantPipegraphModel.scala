@@ -11,7 +11,6 @@ private[wasp] object IoTIndustrialPlantPipegraphModel {
     isSystem = false,
     creationTime = System.currentTimeMillis,
 
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
 	      name = "Write on console",
@@ -32,7 +31,6 @@ private[wasp] object IoTIndustrialPlantPipegraphModel {
 	      options = Map()
       )
     ),
-    rtComponents = List(),
 
     dashboard = None)
 

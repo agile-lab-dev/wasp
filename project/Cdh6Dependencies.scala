@@ -92,10 +92,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
         .exclude("com.fasterxml.jackson.core", "jackson-core")
         .exclude("com.fasterxml.jackson.core", "jackson-databind")
         .exclude("com.fasterxml.jackson.core", "jackson-annotations")
-
-    def camelKafkaExclusions: ModuleID =
-      module
-        .exclude("org.apache.kafka", "kafka-clients")
   }
 
   val excludeLog4j: (sbt.ModuleID) => ModuleID = (module: ModuleID) =>
@@ -127,7 +123,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   // Compile dependencies
   // ===================================================================================================================
   val akkaActor          = "com.typesafe.akka" %% "akka-actor" % versions.akka
-  val akkaCamel          = "com.typesafe.akka" %% "akka-camel" % versions.akka
   val akkaCluster        = "com.typesafe.akka" %% "akka-cluster" % versions.akka
   val akkaClusterTools   = "com.typesafe.akka" %% "akka-cluster-tools" % versions.akka
   val akkaContrib        = "com.typesafe.akka" %% "akka-contrib" % versions.akka
@@ -155,8 +150,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val darwinConfluentConnector  = excludeLog4j("it.agilelab" %% "darwin-confluent-connector" % versions.darwin)
   val darwinHBaseConnector      = "it.agilelab" %% "darwin-hbase-connector" % versions.darwin
   val darwinMockConnector       = "it.agilelab" %% "darwin-mock-connector" % versions.darwin
-  val camelKafka                = ("org.apache.camel" % "camel-kafka" % versions.camel).kafkaExclusions.camelKafkaExclusions
-  val camelWebsocket            = "org.apache.camel" % "camel-websocket" % versions.camel
   val commonsCli                = "commons-cli" % "commons-cli" % versions.commonsCli
   val elasticSearch             = "org.elasticsearch" % "elasticsearch" % versions.elasticSearch
   val elasticSearchSpark        = "org.elasticsearch" %% "elasticsearch-spark-20" % versions.elasticSearchSpark
@@ -198,7 +191,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
     case "2.12" => ("it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr).sparkExclusions.solrExclusion
   }
   val sparkTags                 = "org.apache.spark" %% "spark-tags" % versions.spark sparkExclusions
-  val sparkStreaming            = "org.apache.spark" %% "spark-streaming" % versions.spark sparkExclusions
   val sparkSQL                  = "org.apache.spark" %% "spark-sql" % versions.spark sparkExclusions
   val sparkYarn                 = "org.apache.spark" %% "spark-yarn" % versions.spark sparkExclusions
   val sparkHive                 = "org.apache.spark" %% "spark-hive" % versions.spark sparkExclusions
@@ -279,8 +271,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
     guava,
     kafkaClients,
     sparkSQL,
-    sparkTags,
-    sparkStreaming
+    sparkTags
   ) ++ Seq( // test dependencies
     joptSimpleTests,
     kafkaTests,
@@ -362,15 +353,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
     nettySpark :+
     nettyAll :+
     guava
-
-  val consumersRtDependencies = (
-    akka :+
-      akkaCamel :+
-      camelKafka :+
-      camelWebsocket :+
-      kafka :+
-      netty
-  ).map(excludeLog4j) ++ log4j
 
   val masterDependencies = (
     akka :+
@@ -482,7 +464,6 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
     scalaTest :+
     darwinMockConnector
 
-  val whiteLabelConsumersRtDependencies: Seq[ModuleID]     = log4j
   val openapiDependencies: Seq[ModuleID]                   = Seq(swaggerCore)
   val repositoryCoreDependencies: Seq[ModuleID]            = testDependencies ++ Seq(shapeless)
   override val sparkPluginBasicDependencies: Seq[ModuleID] = scalaTestDependencies

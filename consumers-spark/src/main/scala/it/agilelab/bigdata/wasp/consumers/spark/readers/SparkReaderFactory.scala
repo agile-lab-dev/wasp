@@ -4,17 +4,12 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.repository.core.bl._
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, ReaderModel, StreamingReaderModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.models.{ReaderModel, StreamingReaderModel, StructuredStreamingETLModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.StreamingContext
 
 
 trait SparkReaderFactory {
-  def createSparkLegacyStreamingReader(env: DatastoreModelBLs,
-                                       ssc: StreamingContext,
-                                       legacyStreamingETLModel: LegacyStreamingETLModel,
-                                       readerModel: ReaderModel): Option[SparkLegacyStreamingReader]
   def createSparkStructuredStreamingReader(env: DatastoreModelBLs,
                                            ss: SparkSession,
                                            structuredStreamingETLModel: StructuredStreamingETLModel,
@@ -27,14 +22,6 @@ trait SparkReaderFactory {
 class PluginBasedSparkReaderFactory(plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin])
     extends SparkReaderFactory
     with Logging {
-
-  override def createSparkLegacyStreamingReader(env: DatastoreModelBLs,
-                                                ssc: StreamingContext,
-                                                legacyStreamingETLModel: LegacyStreamingETLModel,
-                                                readerModel: ReaderModel): Option[SparkLegacyStreamingReader] = {
-    lookupPluginForReaderModel(readerModel)
-      .map(_.getSparkLegacyStreamingReader(ssc, legacyStreamingETLModel, readerModel))
-  }
 
   override def createSparkStructuredStreamingReader(env: DatastoreModelBLs,
                                                     ss: SparkSession,

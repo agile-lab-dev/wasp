@@ -1,1 +1,0 @@
-Compile / mainClass := Some("it.agilelab.bigdata.wasp.consumers.rt.launcher.RtConsumersNodeLauncher")

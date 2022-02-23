@@ -11,7 +11,6 @@ class EMR212Dependencies(val versions: EMR212Versions)
     with EMR212LoggingDependencies
     with EMR212KafkaDependencies
     with EMR212MongoDependencies
-    with EMR212CamelDependencies
     with EMR212Json4sDependencies
     with EMR212NettyDependencies
     with EMR212TestFrameworkDependencies
@@ -132,11 +131,6 @@ class EMR212Dependencies(val versions: EMR212Versions)
       )
   ).map(_.exclude(exclusions.nettyExclude)).map(_.exclude(exclusions.log4jExclude)) ++
     Seq(nettySpark, nettyAll, guava) ++ logging
-
-  override val consumersRtDependencies: Seq[ModuleID] = (
-    akka ++
-      Seq(akkaCamel, camelKafka, camelWebsocket, kafka, netty, commonsCli)
-  ).map(_.exclude(exclusions.log4jExclude))
 
   override val masterDependencies: Seq[ModuleID] = (
     json ++
@@ -270,8 +264,6 @@ class EMR212Dependencies(val versions: EMR212Versions)
     darwinMockConnector % Test
   ) ++ spark ++ Seq(hbaseClient2Shaded, slf4jLog4j1Binding)
 
-  override val whiteLabelConsumersRtDependencies: Seq[ModuleID] = Seq(commonsCli)
-
   override val whitelabelMasterScriptClasspath =
     scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
       scriptClasspath.value ++
@@ -300,7 +292,6 @@ trait EMR212AkkaDependencies {
   val versions: EMR212Versions
   val exclusions: EMR212Exclusions.type
   lazy val akkaActor          = "com.typesafe.akka"     %% "akka-actor"              % versions.akka
-  lazy val akkaCamel          = "com.typesafe.akka"     %% "akka-camel"              % versions.akka
   lazy val akkaCluster        = "com.typesafe.akka"     %% "akka-cluster"            % versions.akka
   lazy val akkaClusterTools   = "com.typesafe.akka"     %% "akka-cluster-tools"      % versions.akka
   lazy val akkaContrib        = "com.typesafe.akka"     %% "akka-contrib"            % versions.akka
@@ -360,12 +351,11 @@ trait EMR212SparkDependencies extends EMR212HadoopDependencies {
   lazy val sparkMLlib         = "org.apache.spark" %% "spark-mllib" % versions.spark % Provided
   lazy val sparkSQL           = "org.apache.spark" %% "spark-sql" % versions.spark % Provided
   lazy val sparkYarn          = "org.apache.spark" %% "spark-yarn" % versions.spark % Provided
-  lazy val sparkStreaming     = "org.apache.spark" %% "spark-streaming" % versions.spark % Provided
   lazy val sparkHive          = "org.apache.spark" %% "spark-hive" % versions.spark % Provided
   lazy val sparkCoreTests     = sparkCore classifier "tests"
   lazy val sparkSQLTests      = "org.apache.spark" %% "spark-sql" % versions.spark % "provided,test" classifier "tests"
   lazy val sparkAvro          = "org.apache.spark" %% "spark-avro" % versions.spark
-  lazy val spark              = Seq(sparkMLlib, sparkYarn, sparkStreaming, hadoopCommon, sparkHive)
+  lazy val spark              = Seq(sparkMLlib, sparkYarn, hadoopCommon, sparkHive)
 }
 
 trait EMR212HadoopDependencies {
@@ -391,7 +381,6 @@ trait EMR212KafkaDependencies {
   val exclusions: EMR212Exclusions.type
   lazy val kafka            = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
   lazy val kafkaClients     = "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaStreaming   = "org.apache.spark" %% "spark-streaming-kafka-0-8" % versions.spark exclude (exclusions.sparkExclusions ++ exclusions.kafka08Exclude) // TODO remove jersey?
   lazy val kafkaTests       = kafka              % Test exclude (exclusions.jacksonExclude)
   lazy val sparkSqlKafka    = "it.agilelab"      %% "wasp-spark-sql-kafka" % versions.sparkSqlKafka
   lazy val sparkSqlKafkaOld = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % versions.sparkSqlKafka
@@ -404,13 +393,6 @@ trait EMR212MongoDependencies {
   lazy val mongoBsonScala      = "org.mongodb.scala" %% "mongo-scala-bson"      % versions.mongodbScala
   lazy val mongoSparkConnector = "org.mongodb.spark" %% "mongo-spark-connector" % versions.mongoSparkConnector exclude (exclusions.mongoJavaDriverExclude)
   lazy val mongoJavaDriver     = "org.mongodb"       % "mongo-java-driver"      % versions.mongoJavaDriver
-}
-
-trait EMR212CamelDependencies {
-  val versions: EMR212Versions
-  val exclusions: EMR212Exclusions.type
-  lazy val camelKafka     = "org.apache.camel" % "camel-kafka"     % versions.camel exclude (exclusions.kafkaExclusions ++ exclusions.camelKafkaExclusions)
-  lazy val camelWebsocket = "org.apache.camel" % "camel-websocket" % versions.camel
 }
 
 trait EMR212Json4sDependencies {

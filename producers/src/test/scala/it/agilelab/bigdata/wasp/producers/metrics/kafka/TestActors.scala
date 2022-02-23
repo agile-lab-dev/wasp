@@ -130,9 +130,7 @@ object Constants {
     owner = "",
     isSystem = false,
     creationTime = 0L,
-    legacyStreamingComponents = Nil,
-    structuredStreamingComponents = TestEtl :: Nil,
-    rtComponents = Nil
+    structuredStreamingComponents = TestEtl :: Nil
   )
 
   val backlogTestMultiTopicName  = "multiTopicModelName"
@@ -161,9 +159,7 @@ object Constants {
     owner = "",
     isSystem = false,
     creationTime = 0L,
-    legacyStreamingComponents = Nil,
-    structuredStreamingComponents = TestMultiTopicModelEtl :: Nil,
-    rtComponents = Nil
+    structuredStreamingComponents = TestMultiTopicModelEtl :: Nil
   )
 
   val sourceIds = Map(

@@ -111,9 +111,7 @@ object EventPipegraphModel {
     owner = "user",
     isSystem = isSystem,
     creationTime = System.currentTimeMillis,
-    legacyStreamingComponents = List.empty,
     structuredStreamingComponents = eventETLModels :+ storageETLModel,
-    rtComponents = List.empty,
     dashboard = None,
     enrichmentSources = RestEnrichmentConfigModel(Map.empty))
 

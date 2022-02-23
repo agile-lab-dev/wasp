@@ -1,11 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.raw
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hdfs.HdfsUtils
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{
-  SparkBatchWriter,
-  SparkLegacyStreamingWriter,
-  SparkStructuredStreamingWriter
-}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.RawModel
 import org.apache.spark.SparkContext
@@ -13,49 +9,6 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.DStream
-
-class RawSparkLegacyStreamingWriter(hdfsModel: RawModel, ssc: StreamingContext)
-    extends SparkLegacyStreamingWriter
-    with Logging {
-
-  override def write(stream: DStream[String]): Unit = {
-    // get sql context
-    val sqlContext = SQLContext.getOrCreate(ssc.sparkContext)
-    // To avoid task not serializeble of spark
-    val hdfsModelLocal = hdfsModel
-    logger.info(s"Initialize DStream HDFS writer: $hdfsModel")
-    stream.foreachRDD { rdd =>
-      if (!rdd.isEmpty()) {
-
-        // create df from rdd using provided schema & spark's json datasource
-        val schema: StructType = DataType.fromJson(hdfsModelLocal.schema).asInstanceOf[StructType]
-        val df                 = sqlContext.read.schema(schema).json(rdd)
-
-        // calculate path
-        val path = HdfsUtils.getRawModelPathToWrite(hdfsModelLocal)
-
-        // get options
-        val options      = hdfsModelLocal.options
-        val mode         = if (options.saveMode == "default") "append" else options.saveMode
-        val format       = options.format
-        val extraOptions = options.extraOptions.getOrElse(Map())
-        val partitionBy  = options.partitionBy.getOrElse(Nil)
-
-        // setup writer
-        val writer = df.write
-          .mode(mode)
-          .format(format)
-          .options(extraOptions)
-          .partitionBy(partitionBy: _*)
-
-        // write
-        writer.save(path)
-      }
-    }
-  }
-}
 
 class RawSparkStructuredStreamingWriter(hdfsModel: RawModel, ss: SparkSession)
     extends SparkStructuredStreamingWriter

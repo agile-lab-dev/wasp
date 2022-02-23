@@ -20,6 +20,17 @@ case class PipegraphDBModelV1(override val name: String,
                             enrichmentSources: RestEnrichmentConfigModel = RestEnrichmentConfigModel(Map.empty)
                            ) extends PipegraphDBModel
 
+case class PipegraphDBModelV2(override val name: String,
+                              description: String,
+                              owner: String,
+                              isSystem: Boolean,
+                              creationTime: Long,
+                              structuredStreamingComponents: List[StructuredStreamingETLModel],
+                              dashboard: Option[DashboardModel] = None,
+                              labels: Set[String] = Set.empty,
+                              enrichmentSources: RestEnrichmentConfigModel = RestEnrichmentConfigModel(Map.empty)
+                             ) extends PipegraphDBModel
+
 case class PipegraphInstanceDBModelV1(
                                     override val name:String,
                                     instanceOf: String,

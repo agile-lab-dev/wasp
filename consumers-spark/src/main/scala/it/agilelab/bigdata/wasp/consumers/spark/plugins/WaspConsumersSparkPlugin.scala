@@ -1,14 +1,13 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins
 
-import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkLegacyStreamingReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkLegacyStreamingWriter, SparkStructuredStreamingWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.models.{LegacyStreamingETLModel, ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.StreamingContext
 
 
 /**
@@ -21,12 +20,7 @@ trait WaspConsumersSparkPlugin {
 	def datastoreProduct: DatastoreProduct
 	def initialize(waspDB: WaspDB)
 	def getValidationRules: Seq[ValidationRule]
-	def getSparkLegacyStreamingWriter(ssc: StreamingContext,
-                                    legacyStreamingETLModel: LegacyStreamingETLModel,
-                                    writerModel: WriterModel): SparkLegacyStreamingWriter
-	def getSparkLegacyStreamingReader(ssc: StreamingContext,
-	                                  legacyStreamingETLModel: LegacyStreamingETLModel,
-	                                  readerModel: ReaderModel): SparkLegacyStreamingReader
+
 	def getSparkStructuredStreamingWriter(ss: SparkSession,
                                         structuredStreamingModel: StructuredStreamingETLModel,
                                         writerModel: WriterModel): SparkStructuredStreamingWriter

@@ -53,8 +53,6 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
         false,
         System.currentTimeMillis(),
         List.empty,
-        List.empty,
-        List.empty,
         None
       )
       List(pipegraph)

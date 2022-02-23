@@ -20,7 +20,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestMutationsToSOEPipegraph",
@@ -34,7 +33,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -44,7 +42,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestConsoleWriterStructuredJSONPipegraph",
@@ -57,7 +54,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -67,7 +63,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestParallelWriterStructuredJSONPipegraph",
@@ -80,7 +75,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -91,7 +85,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestContinuousUpdateWriterStructuredJSONPipegraph",
@@ -104,7 +97,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -114,7 +106,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestConsoleWriterStructuredJSONPipegraph",
@@ -132,7 +123,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None,
         labels = Set("free-code")
       )
@@ -143,7 +133,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestConsoleWriterNifiStructuredJSONPipegraph",
@@ -164,7 +153,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -174,7 +162,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestConsoleWriterStructuredJSONPipegraph",
@@ -187,7 +174,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -197,7 +183,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "test-with-metadata-console-etl",
@@ -212,7 +197,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -222,7 +206,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestKafkaWriterStructuredJSONPipegraph",
@@ -235,7 +218,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -245,7 +227,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "InsertKafkaHeaders",
@@ -268,7 +249,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -278,7 +258,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "CopyFromTest1ToTest2",
@@ -302,7 +281,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -312,7 +290,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "MultitopicWrite",
@@ -336,7 +313,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -346,7 +322,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "MultitopicWrite",
@@ -359,7 +334,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -369,7 +343,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestSolrWriterStructuredJSONPipegraph",
@@ -382,7 +355,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -392,7 +364,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestElasticWriterStructuredJSONPipegraph",
@@ -405,7 +376,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -415,7 +385,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHdfsWriterStructuredJSONPipegraph",
@@ -428,7 +397,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -438,7 +406,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHBaseWriterStructuredJSONPipegraph",
@@ -451,7 +418,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -461,7 +427,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHBaseMultiClusteringWriterStructuredJSONPipegraph",
@@ -475,7 +440,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -485,13 +449,11 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents =
           console.structuredStreamingComponents :::
             solr.structuredStreamingComponents :::
             elastic.structuredStreamingComponents :::
             hdfs.structuredStreamingComponents,
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -501,7 +463,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHttpPostWriterStructuredJSONPipegraph",
@@ -514,7 +475,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
       lazy val httpPostHeaders = PipegraphModel(
@@ -523,7 +483,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHttpPostHeaderWriterStructuredJSONPipegraph",
@@ -536,7 +495,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 //      lazy val httpsPost = PipegraphModel(
@@ -546,7 +504,6 @@ private[wasp] object TestPipegraphs {
 //        isSystem = false,
 //        creationTime = System.currentTimeMillis,
 //
-//        legacyStreamingComponents = List(),
 //        structuredStreamingComponents = List(
 //          StructuredStreamingETLModel(
 //            name = "ETL TestHttpsPostWriterStructuredJSONPipegraph",
@@ -559,8 +516,6 @@ private[wasp] object TestPipegraphs {
 //            options = Map()
 //          )
 //        ),
-//        rtComponents = List(),
-//
 //        dashboard = None
 //      )
 //      lazy val httpsGet = PipegraphModel(
@@ -569,8 +524,6 @@ private[wasp] object TestPipegraphs {
 //        owner = "user",
 //        isSystem = false,
 //        creationTime = System.currentTimeMillis,
-//
-//        legacyStreamingComponents = List(),
 //        structuredStreamingComponents = List(
 //          StructuredStreamingETLModel(
 //            name = "ETL TestHttpsGetWriterStructuredJSONPipegraph",
@@ -583,7 +536,7 @@ private[wasp] object TestPipegraphs {
 //            options = Map()
 //          )
 //        ),
-//        rtComponents = List(),
+//
 //
 //        dashboard = None
 //      )
@@ -594,7 +547,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHttpEnrichmentStructuredJSONPipegraph",
@@ -607,7 +559,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None,
         enrichmentSources = RestEnrichmentConfigModel(
           Map.apply(
@@ -647,7 +598,6 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-          legacyStreamingComponents = List(),
           structuredStreamingComponents =
             console.structuredStreamingComponents :::
               solr.structuredStreamingComponents :::
@@ -661,7 +611,6 @@ private[wasp] object TestPipegraphs {
                 )
                 )
               ),
-          rtComponents = List(),
           dashboard = None
         )
       }
@@ -673,7 +622,6 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-          legacyStreamingComponents = List(),
           structuredStreamingComponents = List(
             StructuredStreamingETLModel(
               name = "ETL TestCheckpointConsoleWriterStructuredJSONPipegraph",
@@ -694,130 +642,11 @@ private[wasp] object TestPipegraphs {
               options = Map()
             )
           ),
-          rtComponents = List(),
           dashboard = None
         )
       }
 
     }
-
-    object Legacy {
-      lazy val console = PipegraphModel(
-        name = "TestConsoleWriterLegacyJSONPipegraph",
-        description = "Description of TestConsoleWriterLegacyJSONPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestConsoleWriterLegacyJSONPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json)
-            ),
-            output = WriterModel.consoleWriter("Console Writer"),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val kafka = PipegraphModel(
-        name = "TestKafkaWriterLegacyJSONPipegraph",
-        description = "Description of TestKafkaWriterLegacyJSONPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestKafkaWriterLegacyJSONPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json)
-            ),
-            output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.json2),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val solr = PipegraphModel(
-        name = "TestSolrWriterLegacyJSONPipegraph",
-        description = "Description of TestSolrWriterLegacyJSONPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestSolrWriterLegacyJSONPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json)
-            ),
-            output = WriterModel.solrWriter("Solr Writer", TestIndexModel.solr),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val elastic = PipegraphModel(
-        name = "TestElasticWriterLegacyJSONPipegraph",
-        description = "Description of TestElasticWriterLegacyJSONPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestElasticWriterLegacyJSONPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json)
-            ),
-            output = WriterModel.elasticWriter("Elastic Writer", TestIndexModel.elastic),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val hdfs = PipegraphModel(
-        name = "TestHdfsWriterLegacyJSONPipegraph",
-        description = "Description of TestHdfsWriterLegacyJSONPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestHdfsrWriterLegacyJSONPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json)
-            ),
-            output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-    }
-
   }
 
   object AVRO {
@@ -830,7 +659,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestConsoleWriterStructuredAVROPipegraph",
@@ -843,7 +671,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -853,7 +680,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestKafkaWriterStructuredAVROPipegraph",
@@ -876,7 +702,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -886,7 +711,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestKafkaWriterStructuredAVROPipegraph",
@@ -899,7 +723,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -909,7 +732,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "InsertKafkaHeaders",
@@ -932,7 +754,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -942,7 +763,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "CopyFromTest1ToTest2",
@@ -966,7 +786,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -976,7 +795,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "MultitopicWrite",
@@ -1000,7 +818,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1010,7 +827,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestSolrWriterStructuredAVROPipegraph",
@@ -1023,7 +839,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1033,7 +848,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestElasticWriterStructuredAVROPipegraph",
@@ -1046,7 +860,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1056,7 +869,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHdfsWriterStructuredAVROPipegraph",
@@ -1069,7 +881,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1079,7 +890,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL TestHBaseWriterStructuredAVROPipegraph",
@@ -1092,7 +902,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1102,13 +911,11 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents =
           console.structuredStreamingComponents :::
             solr.structuredStreamingComponents :::
             elastic.structuredStreamingComponents :::
             hdfs.structuredStreamingComponents,
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1118,7 +925,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "ETL AvroEncoderPipegraph",
@@ -1131,7 +937,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1143,7 +948,6 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-          legacyStreamingComponents = List(),
           structuredStreamingComponents =
             console.structuredStreamingComponents :::
               solr.structuredStreamingComponents :::
@@ -1157,7 +961,6 @@ private[wasp] object TestPipegraphs {
                 )
                 )
               ),
-          rtComponents = List(),
           dashboard = None
         )
       }
@@ -1169,7 +972,6 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-          legacyStreamingComponents = List(),
           structuredStreamingComponents = List(
             StructuredStreamingETLModel(
               name = "ETL TestCheckpointConsoleWriterStructuredAVROPipegraph",
@@ -1190,129 +992,10 @@ private[wasp] object TestPipegraphs {
               options = Map()
             )
           ),
-          rtComponents = List(),
           dashboard = None
         )
       }
 
-    }
-
-    object Legacy {
-
-      lazy val console = PipegraphModel(
-        name = "TestConsoleWriterLegacyAVROPipegraph",
-        description = "Description of TestConsoleWriterLegacyAVROPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestConsoleWriterLegacyAVROPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro)
-            ),
-            output = WriterModel.consoleWriter("Console Writer"),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val kafka = PipegraphModel(
-        name = "TestKafkaWriterLegacyAVROPipegraph",
-        description = "Description of TestKafkaWriterLegacyAVROPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestKafkaWriterLegacyAVROPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro)
-            ),
-            output = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.avro2),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val solr = PipegraphModel(
-        name = "TestSolrWriterLegacyAVROPipegraph",
-        description = "Description of TestSolrWriterLegacyAVROPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestSolrWriterLegacyAVROPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro)
-            ),
-            output = WriterModel.solrWriter("Solr Writer", TestIndexModel.solr),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val elastic = PipegraphModel(
-        name = "TestElasticWriterLegacyAVROPipegraph",
-        description = "Description of TestElasticWriterLegacyAVROPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestElasticWriterLegacyAVROPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro)
-            ),
-            output = WriterModel.elasticWriter("Elastic Writer", TestIndexModel.elastic),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
-
-      lazy val hdfs = PipegraphModel(
-        name = "TestHdfsWriterLegacyAVROPipegraph",
-        description = "Description of TestHdfsWriterLegacyAVROPipegraph",
-        owner = "user",
-        isSystem = false,
-        creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(
-          LegacyStreamingETLModel(
-            name = "ETL TestHdfsrWriterLegacyAVROPipegraph",
-            inputs = List(
-              ReaderModel.kafkaReader("Kafka Reader", TestTopicModel.avro)
-            ),
-            output = WriterModel.rawWriter("Raw Writer", TestRawModel.nested),
-            mlModels = List(),
-            strategy = None,
-            kafkaAccessType = LegacyStreamingETLModel.KAFKA_ACCESS_TYPE_RECEIVED_BASED
-          )
-        ),
-        structuredStreamingComponents = List(),
-        rtComponents = List(),
-        dashboard = None
-      )
     }
 
   }
@@ -1327,7 +1010,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "GenerateAndWriteKafkaData",
@@ -1351,7 +1033,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1369,7 +1050,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "GenerateAndWriteKafkaData",
@@ -1393,7 +1073,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1409,7 +1088,6 @@ private[wasp] object TestPipegraphs {
       owner = "user",
       isSystem = false,
       creationTime = System.currentTimeMillis,
-      legacyStreamingComponents = List(),
       structuredStreamingComponents =
         TestPipegraphs.AVRO.Structured.console.structuredStreamingComponents :::
           TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
@@ -1423,7 +1101,6 @@ private[wasp] object TestPipegraphs {
             )
             )
           ),
-      rtComponents = List(),
       dashboard = None
     )
   }
@@ -1437,7 +1114,6 @@ private[wasp] object TestPipegraphs {
       owner = "user",
       isSystem = false,
       creationTime = System.currentTimeMillis,
-      legacyStreamingComponents = List(),
       structuredStreamingComponents = List(
         StructuredStreamingETLModel(
           name = "TestSetShufflePartitionsTo10ETL",
@@ -1468,7 +1144,6 @@ private[wasp] object TestPipegraphs {
           options = Map()
         )
       ),
-      rtComponents = List(),
       dashboard = None
     )
 
@@ -1483,7 +1158,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "CopyFromTest1ToTest2jsonjson",
@@ -1497,7 +1171,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
 
@@ -1507,7 +1180,6 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "CopyFromTest1ToTest2-avrojson",
@@ -1521,7 +1193,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
     }
@@ -1561,7 +1232,6 @@ private[wasp] object TestPipegraphs {
         owner = "",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        legacyStreamingComponents = List(),
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
             name = "WriteRateToFile",
@@ -1584,7 +1254,6 @@ private[wasp] object TestPipegraphs {
             options = Map()
           )
         ),
-        rtComponents = List(),
         dashboard = None
       )
     }
