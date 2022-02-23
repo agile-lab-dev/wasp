@@ -545,6 +545,7 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   lazy val hbaseCommon         = "org.apache.hbase" % "hbase-common" % versions.hbase
   lazy val hbaseServer         = "org.apache.hbase" % "hbase-server" % versions.hbase
   lazy val hbaseMapreduce      = "org.apache.hbase" % "hbase-mapreduce" % versions.hbase
+  lazy val hbaseTestingUtils   = "org.apache.hbase" % "hbase-testing-util" % versions.hbase % Test
   lazy val hbase               = Seq(hbaseClient, hbaseCommon, hbaseServer, hbaseMapreduce)
   lazy val scalaPool           = "io.github.andrebeat" %% "scala-pool" % "0.4.3"
   lazy val darwinCore          = "it.agilelab" %% "darwin-core" % versions.darwin
@@ -594,9 +595,13 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   override lazy val masterDependencies: Seq[sbt.ModuleID]             = testDependencies ++ allAkka
   override lazy val producersDependencies: Seq[sbt.ModuleID]          = testDependencies ++ allAkka
   override lazy val consumersSparkDependencies
-      : Seq[sbt.ModuleID]                                              = Seq(quartz, nameOf) ++ wireMock ++ hbase ++ avro4sTestAndDarwin ++ testDependencies ++ allAkka ++ avro4sTestAndDarwin
-  override lazy val pluginElasticSparkDependencies: Seq[sbt.ModuleID]  = Seq(elasticSearch, elasticSearchSpark) ++ testDependencies
-  override lazy val pluginHbaseSparkDependencies: Seq[sbt.ModuleID]    = testDependencies
+      : Seq[sbt.ModuleID]                                      = Seq(quartz, nameOf) ++ wireMock ++ hbase ++ avro4sTestAndDarwin ++ testDependencies ++ allAkka ++ avro4sTestAndDarwin
+  override lazy val  pluginElasticSparkDependencies
+      : Seq[sbt.ModuleID]                                           = Seq(elasticSearch, elasticSearchSpark) ++ testDependencies
+  override lazy val pluginHbaseSparkDependencies: Seq[sbt.ModuleID] = testDependencies
+  override lazy val pluginPlainHbaseWriterSparkDependencies: Seq[sbt.ModuleID] = hbase ++ testDependencies ++ Seq(
+    hbaseTestingUtils
+  )
   override lazy val pluginKafkaSparkDependencies: Seq[sbt.ModuleID]    = Seq(spark_sql_kafka) ++ testDependencies
   override lazy val pluginKafkaSparkOldDependencies: Seq[sbt.ModuleID] = Seq(spark_sql_kafka_old) ++ testDependencies
   override lazy val pluginSolrSparkDependencies: Seq[sbt.ModuleID]     = Seq(sparkSolr, solrj) ++ testDependencies

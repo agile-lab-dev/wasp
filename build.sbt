@@ -6,7 +6,7 @@ lazy val flavor = {
   f
 }
 lazy val dependencies = flavor.dependencies
-lazy val settings     = flavor.settings
+lazy val settings = flavor.settings
 
 //integration tests should extend Test configuration and not Runtime configuration
 lazy val IntegrationTest = config("it") extend (Test)
@@ -99,6 +99,11 @@ lazy val plugin_hbase_spark = Project("wasp-plugin-hbase-spark", file("plugin-hb
   .settings(settings.commonSettings: _*)
   .dependsOn(consumers_spark)
   .settings(libraryDependencies ++= dependencies.pluginHbaseSparkDependencies)
+
+lazy val plugin_plain_hbase_writer_spark = Project("wasp-plugin-plain-hbase-writer-spark", file("plugin-plain-hbase-writer-spark"))
+  .settings(settings.commonSettings: _*)
+  .dependsOn(consumers_spark)
+  .settings(libraryDependencies ++= dependencies.pluginPlainHbaseWriterSparkDependencies)
 
 lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc-spark"))
   .settings(settings.commonSettings: _*)
@@ -232,6 +237,7 @@ lazy val plugin = project
   .aggregate(
     plugin_console_spark,
     plugin_hbase_spark,
+    plugin_plain_hbase_writer_spark,
     plugin_jdbc_spark,
     plugin_kafka_spark,
     plugin_kafka_spark_old,
