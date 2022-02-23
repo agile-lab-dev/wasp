@@ -43,6 +43,18 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val mongoTest           = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
   lazy val shapeless           = "com.chuusai"            %% "shapeless"                % "2.3.3"
 
+  val jacksonTestDependencies = Seq(
+    "com.fasterxml.jackson.core"     % "jackson-annotations"             % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.core"     % "jackson-core"                    % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.core"     % "jackson-databind"                % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8"           % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.jaxrs"    % "jackson-jaxrs-base"              % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.jaxrs"    % "jackson-jaxrs-json-provider"     % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.module"   % "jackson-module-jaxb-annotations" % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.module"   % "jackson-module-paranamer"        % "2.10.1" % Test force (),
+    "com.fasterxml.jackson.module"   %% "jackson-module-scala"           % "2.10.1" % Test force ()
+  )
+
   lazy val _pluginKafkaSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     guava,
     kafkaClients,
@@ -139,6 +151,12 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val pluginHbaseSparkDependencies: Seq[ModuleID] =
     (spark ++ hbase2 ++ Seq(scalaTest)).map(_.exclude(exclusions.nettyExclude))
+
+  override val pluginPlainHbaseWriterSparkDependencies: Seq[ModuleID] =
+    (spark ++
+      hbase2.map(_.exclude(exclusions.nettyExclude)) ++
+      jacksonTestDependencies ++
+      Seq(scalaTest, hbaseTestingUtils))
 
   override val pluginKafkaSparkDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
@@ -305,6 +323,7 @@ trait Vanilla2HBaseDependencies {
   lazy val hbaseServer2NoScope    = "org.apache.hbase" % "hbase-server" % versions.hbase2 exclude exclusions.hbaseExclusion
   lazy val hbaseMapreduce2NoScope = "org.apache.hbase" % "hbase-mapreduce" % versions.hbase2 exclude exclusions.hbaseExclusion
   lazy val hbaseClient2Shaded     = "org.apache.hbase" % "hbase-shaded-client" % versions.hbase2 exclude exclusions.hbaseExclusion
+  lazy val hbaseTestingUtils      = "org.apache.hbase" % "hbase-testing-util" % versions.hbase2
   lazy val hbaseClient2           = hbaseClient2NoScope % Provided
   lazy val hbaseCommon2           = hbaseCommon2NoScope % Provided
   lazy val hbaseServer2           = hbaseServer2NoScope % Provided

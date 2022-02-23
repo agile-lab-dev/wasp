@@ -15,6 +15,7 @@
     * [Testing](testing.md)
     * [Troubleshooting](troubleshooting.md)
     * [HBase Writer](hbase_writer_dynamic_fields.md)
+    * [Plain HBase Writer](plain_hbase_writer.md)
     * [Kafka Integration](kafka_integration.md)
     * [Spark checkpoint directory](spark-structured-streaming-checkpointing.md)
 * [Building WASP](building.md)

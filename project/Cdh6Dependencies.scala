@@ -158,6 +158,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val hbaseCommon               = "org.apache.hbase" % "hbase-common" % versions.hbase hbaseExclusion
   val hbaseServer               = "org.apache.hbase" % "hbase-server" % versions.hbase hbaseExclusion
   val hbaseMapreduce            = "org.apache.hbase" % "hbase-mapreduce" % versions.hbase hbaseExclusion
+  val hbaseTestingUtils         = "org.apache.hbase" % "hbase-testing-util" % versions.hbase % Test
   val httpClient                = "org.apache.httpcomponents" % "httpclient" % versions.httpcomponents
   val httpCore                  = "org.apache.httpcomponents" % "httpcore" % versions.httpcomponents
   val httpmime                  = "org.apache.httpcomponents" % "httpmime" % "4.3.1" // TODO remove?
@@ -375,6 +376,11 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val pluginHbaseSparkDependencies = (
     hbase :+
       scalaTest
+  ).map(excludeNetty)
+
+  val pluginPlainHbaseWriterSparkDependencies = (
+    hbase :+
+      scalaTest :+ hbaseTestingUtils
   ).map(excludeNetty)
 
   val _plugin_kafka_spark = Seq(
