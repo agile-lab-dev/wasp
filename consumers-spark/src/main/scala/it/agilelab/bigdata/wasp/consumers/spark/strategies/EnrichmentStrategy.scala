@@ -14,7 +14,7 @@ trait EnrichmentStrategy extends Strategy {
 
     val enricher = sourceInfo.kind.toLowerCase match {
       case "http" => new HttpEnricher(sourceInfo)
-      case _ => Class.forName(sourceInfo.kind).newInstance().asInstanceOf[Enricher]
+      case _ => Class.forName(sourceInfo.kind).getDeclaredConstructor().newInstance().asInstanceOf[Enricher]
     }
 
     TaskContext.get().addTaskCompletionListener[Unit](task => {

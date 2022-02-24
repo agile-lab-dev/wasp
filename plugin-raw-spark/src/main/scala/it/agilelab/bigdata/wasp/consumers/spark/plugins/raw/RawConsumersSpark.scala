@@ -27,7 +27,7 @@ object RawConsumersSpark {
   }.toOption.flatMap(safeGetShortNameC)
 
   private def safeGetShortNameC[T <: DataSourceRegister](cls: Class[T]): Option[String] = Try {
-    cls.newInstance().shortName
+    cls.getDeclaredConstructor().newInstance().shortName
   }.toOption
 
   // this list is only used to issue a warning log, so if we cannot get some short names,

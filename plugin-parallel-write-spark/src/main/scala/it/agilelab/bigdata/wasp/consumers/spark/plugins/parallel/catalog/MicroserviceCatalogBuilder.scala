@@ -33,7 +33,7 @@ trait MicroserviceCatalogBuilder {
     serviceInstance <- instantiateService(clazz)
   } yield serviceInstance
 
-  private def instantiateService(clazz: Class[_]): Try[MicroserviceCatalogService] = Try(clazz.newInstance().asInstanceOf[MicroserviceCatalogService])
+  private def instantiateService(clazz: Class[_]): Try[MicroserviceCatalogService] = Try(clazz.getDeclaredConstructor().newInstance().asInstanceOf[MicroserviceCatalogService])
   private def getClass(className: String): Try[Class[_]] = Try(Class.forName(className))
 }
 

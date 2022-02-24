@@ -227,7 +227,7 @@ trait ActivationSteps {
             s"Nifi.process-group-id Configuration for NifiStrategy isn't defined."
           )
 
-          val newStrategy = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
+          val newStrategy = Class.forName(strategyModel.className).getDeclaredConstructor().newInstance().asInstanceOf[Strategy]
           newStrategy.configuration = processGroupBL
             .getById(conf.getString("nifi.process-group-id"))
             .map(processGroup => conf.withValue("nifi.flow", ConfigValueFactory.fromAnyRef(processGroup.content.toJson))
@@ -235,7 +235,7 @@ trait ActivationSteps {
             .getOrElse(conf)
           newStrategy
         } else {
-          val strategy = Class.forName(strategyModel.className).newInstance().asInstanceOf[Strategy]
+          val strategy = Class.forName(strategyModel.className).getDeclaredConstructor().newInstance().asInstanceOf[Strategy]
           strategy.configuration = conf
           strategy match {
             case enrichmentStrategy: EnrichmentStrategy => enrichmentStrategy.enricherConfig = pipegraph.enrichmentSources

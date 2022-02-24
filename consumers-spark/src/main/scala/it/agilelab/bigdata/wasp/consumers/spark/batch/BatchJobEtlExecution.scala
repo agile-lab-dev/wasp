@@ -34,6 +34,7 @@ object BatchJobEtlExecution {
     case Some(strategyModel: StrategyModel) =>
       val result = Try {
         Class.forName(strategyModel.className)
+          .getDeclaredConstructor()
           .newInstance()
           .asInstanceOf[Strategy]
       }
