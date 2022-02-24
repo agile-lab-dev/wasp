@@ -58,7 +58,7 @@ object Flavor {
     override val id: String = "EMR_2_12"
   }
 
-  val DEFAULT: Flavor = Vanilla2
+  val DEFAULT: Flavor = Vanilla2_2_12
 
   def parse(s: String): Either[String, Flavor] = {
     s.toUpperCase match {
