@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.logging
 
-import java.time.{Instant, ZonedDateTime}
+import java.time.Instant
 
 import it.agilelab.bigdata.wasp.core.logging.LogLevel.LogLevel
 

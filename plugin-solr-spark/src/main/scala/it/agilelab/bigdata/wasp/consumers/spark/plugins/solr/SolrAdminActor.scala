@@ -198,12 +198,8 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
     ret
   }
 
-  private def collectionNameWShardsAndReplica(collectionName: String, numShards: Int, replicationFactor: Int) =
-    s"${collectionName}_shard${numShards}_replica$replicationFactor"
-
   private def addMapping(message: AddMapping): Boolean = {
-    import spray.json
-    import spray.json.{JsValue, RootJsonFormat, _}
+    import spray.json._
 
 
     case class Type(name :String)

@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
-import org.apache.spark.sql.streaming.{StreamingQuery, StreamingQueryException, StreamingQueryProgress, StreamingQueryStatus}
+import org.apache.spark.sql.streaming.StreamingQuery
 
 import scala.util.{Failure, Try}
 

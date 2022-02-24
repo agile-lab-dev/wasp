@@ -22,7 +22,7 @@ package object enrichment {
             RestEnrichmentSource("http",
               Map.apply(
                 "method" -> "get",
-                "url" -> "http://localhost:8080/${author}-v1/${version}/v2/${local}/123?id=test_id"
+                "url" -> s"http://localhost:8080/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
               ),
               Map.apply(
                 "Content-type" -> "text/plain",
@@ -33,7 +33,7 @@ package object enrichment {
             RestEnrichmentSource("http",
               Map.apply(
                 "method" -> "post",
-                "url" -> "http://localhost:8080/${author}-v1/${version}/v2/${local}/123?id=test_id"
+                "url" -> s"http://localhost:8080/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
               ),
               Map.apply(
                 "Content-type" -> "text/plain",

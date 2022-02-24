@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.core.dbModels
 
-import it.agilelab.bigdata.wasp.models.{Model, SubjectStrategy, TopicCompression, TopicModel}
 import org.bson.BsonDocument
+import it.agilelab.bigdata.wasp.models._
 
 trait TopicDBModel extends Model
 

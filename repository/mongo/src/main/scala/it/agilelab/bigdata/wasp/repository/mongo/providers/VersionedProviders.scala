@@ -1,61 +1,9 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
-import it.agilelab.bigdata.wasp.models.configuration.{
-  CompilerConfigModel,
-  ConnectionConfig,
-  ElasticConfigModel,
-  HBaseEntryConfig,
-  JMXTelemetryConfigModel,
-  JdbcConfigModel,
-  JdbcConnectionConfig,
-  JdbcPartitioningInfo,
-  KafkaEntryConfig,
-  KryoSerializerConfig,
-  NifiConfigModel,
-  NifiStatelessConfigModel,
-  RestEnrichmentConfigModel,
-  RestEnrichmentSource,
-  RetainedConfigModel,
-  SchedulingStrategyConfigModel,
-  SparkBatchConfigModel,
-  SparkDriverConfig,
-  SparkEntryConfig,
-  SparkStreamingConfigModel,
-  TelemetryConfigModel,
-  TelemetryTopicConfigModel,
-  ZookeeperConnectionsConfig
-}
-import it.agilelab.bigdata.wasp.models.{
-  BatchETL,
-  BatchETLModel,
-  BatchGdprETLModel,
-  BatchJobExclusionConfig,
-  CdcOptions,
-  ContainsRawMatchingStrategy,
-  DashboardModel,
-  ExactKeyValueMatchingStrategy,
-  ExactRawMatchingStrategy,
-  GenericOptions,
-  KeyValueModel,
-  KeyValueOption,
-  LegacyStreamingETLModel,
-  MlModelOnlyInfo,
-  NoPartitionPruningStrategy,
-  PrefixAndTimeBoundKeyValueMatchingStrategy,
-  PrefixKeyValueMatchingStrategy,
-  PrefixRawMatchingStrategy,
-  RTModel,
-  RawModel,
-  RawOptions,
-  ReaderModel,
-  StrategyModel,
-  StreamingReaderModel,
-  StructuredStreamingETLModel,
-  TimeBasedBetweenPartitionPruningStrategy,
-  WriterModel
-}
+import it.agilelab.bigdata.wasp.models.configuration._
+import it.agilelab.bigdata.wasp.models._
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.{createCodec, createCodecProvider, createCodecProviderIgnoreNone}
 import it.agilelab.bigdata.wasp.repository.core.mappers._
 import it.agilelab.bigdata.wasp.repository.core.dbModels._
@@ -71,6 +19,7 @@ import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecPro
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecRegistry
 
+@com.github.ghik.silencer.silent("deprecated")
 object VersionedRegistry {
   val additionalCodecs: CodecRegistry = fromProviders(
     createCodecProviderIgnoreNone[RawModel](),

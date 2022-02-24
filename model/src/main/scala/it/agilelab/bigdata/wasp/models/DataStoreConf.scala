@@ -90,7 +90,7 @@ final case class TimeBasedBetweenPartitionPruningStrategy(columnName: String,
   private def getDatesToConsider(startRefDate: ZonedDateTime,
                                  endRefDate: ZonedDateTime,
                                  dateFormatter: DateTimeFormatter,
-                                 granularity: TemporalUnit = ChronoUnit.HOURS,
+                                 granularity: TemporalUnit,
                                  dateToConsider: List[String] = Nil): List[String] = {
     if (startRefDate.isAfter(endRefDate)) {
       dateToConsider.reverse

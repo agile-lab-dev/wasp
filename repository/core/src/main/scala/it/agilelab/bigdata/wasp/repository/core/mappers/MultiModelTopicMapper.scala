@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
-import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel}
+import it.agilelab.bigdata.wasp.models.MultiTopicModel
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{MultiTopicDBModel, MultiTopicDBModelV1}
 
 object MultiTopicModelMapperSelector extends MapperSelector[MultiTopicModel, MultiTopicDBModel]

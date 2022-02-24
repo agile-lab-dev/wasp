@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.postgres.bl
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobInstanceModel, BatchJobModel, JobStatus, WriterModel}
+import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, JobStatus}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait BatchJobInstanceBLImplTest {

@@ -7,7 +7,8 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
 import it.agilelab.bigdata.wasp.models.IndexModel
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkSession
 
 /**
   * It read data from Solr with the configuration of SolrConfiguration.
@@ -21,9 +22,7 @@ class SolrSparkBatchReader(indexModel: IndexModel) extends SparkBatchReader with
 
   override def read(sc: SparkContext): DataFrame = {
 
-    //Fast Workaround to get sparkSession
-    val sqlContext = new SQLContext(sc)
-    val sparkSession = sqlContext.sparkSession
+    val sparkSession = SparkSession.builder().getOrCreate()
 
     new SolrDataframe(sparkSession, solrConfig.zookeeperConnections.toString, indexModel.name).df
   }

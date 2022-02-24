@@ -7,7 +7,7 @@ import akka.event.LoggingAdapter
 import akka.http.scaladsl.coding.{Deflate, Gzip, NoCoding}
 import akka.http.scaladsl.model.ContentTypes.`application/octet-stream`
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
-import akka.http.scaladsl.model.headers.{BasicHttpCredentials, HttpEncodings, `Content-Length`, `Content-Type`}
+import akka.http.scaladsl.model.headers.{`Content-Length`, `Content-Type`, HttpEncodings}
 import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.http.scaladsl.model.{Multipart => AkkaMultipart, StatusCode => _, _}
 import akka.http.scaladsl.settings.ConnectionPoolSettings
@@ -20,20 +20,16 @@ import sttp.model.{Header, HeaderNames, Headers, Method, Part, StatusCode}
 import sttp.client.monad.{FutureMonad, MonadError}
 import sttp.client.testing.SttpBackendStub
 import sttp.client.ws.WebSocketResponse
-import sttp.client.{ByteArrayBody, ByteBufferBody, FileBody, FollowRedirectsBackend, IgnoreResponse, InputStreamBody, MappedResponseAs, MultipartBody, NoBody, RequestBody, Response, ResponseAs, ResponseAsByteArray, ResponseAsFile, ResponseAsFromMetadata, ResponseAsStream, ResponseMetadata, StreamBody, StringBody, SttpBackend, SttpBackendOptions, _}
-
-
+import sttp.client._
 import scala.collection.immutable.Seq
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-
 
 object Types {
 
   type LambdaFlow[A] = Flow[Message, Message, A]
 
 }
-
 
 class AkkaHttpBackend private (
     actorSystem: ActorSystem,
@@ -82,9 +78,7 @@ class AkkaHttpBackend private (
 
     Future
       .fromTry(akkaWebsocketRequest)
-      .flatMap(request =>
-        http.singleWebsocketRequest(request, handler, connectionSettings(r).connectionSettings)
-      )
+      .flatMap(request => http.singleWebsocketRequest(request, handler, connectionSettings(r).connectionSettings))
       .flatMap {
         case (wsResponse, wsResult) =>
           responseFromAkka(r, wsResponse.response).map { r =>
@@ -348,6 +342,8 @@ class AkkaHttpBackend private (
   }
 }
 
+
+@com.github.ghik.silencer.silent("never used")
 object AkkaHttpBackend {
   private def make(
       actorSystem: ActorSystem,
@@ -387,7 +383,7 @@ object AkkaHttpBackend {
   )(
       implicit ec: ExecutionContext = ExecutionContext.global
   ): SttpBackend[Future, Source[ByteString, Any], Types.LambdaFlow] = {
-    val actorSystem = ActorSystem("sttp")
+    val actorSystem  = ActorSystem("sttp")
     val materializer = ActorMaterializer()(actorSystem)
     make(
       actorSystem,

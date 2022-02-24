@@ -65,6 +65,7 @@ case class LegacyStreamingETLModel(name: String,
                                    group: String = "default",
                                    var isActive: Boolean = false) extends ProcessingComponentModel
 
+
 /**
   * A streaming processing component that leverages Spark's Structured Streaming API.
   *

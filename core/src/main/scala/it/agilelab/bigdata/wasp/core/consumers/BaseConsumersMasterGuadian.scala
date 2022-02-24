@@ -5,10 +5,8 @@ import it.agilelab.bigdata.wasp.repository.core.bl.PipegraphBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
 import it.agilelab.bigdata.wasp.models.{
-  LegacyStreamingETLModel,
   PipegraphModel,
   ProcessingComponentModel,
-  RTModel,
   StructuredStreamingETLModel
 }
 

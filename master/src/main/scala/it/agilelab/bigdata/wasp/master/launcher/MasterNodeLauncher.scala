@@ -215,7 +215,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
     val optHttpsContext = createHttpsContext
 
-    val bindingFuture = if (optHttpsContext.isDefined) {
+    val _ = if (optHttpsContext.isDefined) {
       logger.info(
         s"Rest API will be available through HTTPS on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}"
       )

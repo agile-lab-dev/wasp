@@ -194,7 +194,7 @@ case class HBaseTableCatalog(
     }
   }
 
-  def initRowKey = {
+  def initRowKey() = {
     val fields = sMap.fields.filter(_.cf == HBaseTableCatalog.rowKey)
     row.fields = row.keys.flatMap(n => fields.find(_.col == n))
     // The length is determined at run time if it is string or binary and the length is undefined.
@@ -248,6 +248,7 @@ object HBaseTableCatalog {
     * "col2":{"cf":"cf2", "col":"col2", "type":"type2"}}}
     * Note that any col in the rowKey, there has to be one corresponding col defined in columns
     */
+  @com.github.ghik.silencer.silent("deprecated")
   def apply(params: Map[String, String]): HBaseTableCatalog = {
     val parameters = convert(params)
     val jString = parameters(tableCatalog)
@@ -343,8 +344,8 @@ object HBaseTableCatalog {
                       |}
                       |}""".stripMargin
    */
-  @deprecated("Please use new json format to define HBaseCatalog")
   // TODO: There is no need to deprecate since this is the first release.
+  @deprecated("Please use new json format to define HBaseCatalog","2.10")
   def convert(parameters: Map[String, String]): Map[String, String] = {
     val tableName = parameters.get(TABLE_KEY).orNull
     // if the hbase.table is not defined, we assume it is json format already.

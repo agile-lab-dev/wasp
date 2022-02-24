@@ -4,6 +4,7 @@ import akka.http.scaladsl.server.{Directives, Route}
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
 import it.agilelab.bigdata.wasp.models.editor.{ErrorDTO, PipegraphDTO}
 import it.agilelab.bigdata.wasp.utils.JsonSupport
+import scala.concurrent.ExecutionContext
 import spray.json._
 
 class EditorController(editorService: EditorService, pipegraphService: PipegraphEditorService)
@@ -13,7 +14,7 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
   def getRoutes: Route =
     postEditor ~ putEditor ~ getEditorPipegraphs ~ getEditorPipegraph ~ postEditorPipegraph ~ putEditorPipegraph
 
-  def postEditor: Route = extractExecutionContext { implicit ec =>
+  def postEditor: Route = extractExecutionContext { implicit ec: ExecutionContext =>
     pathPrefix("editor") {
       pathPrefix("nifi") {
         pathPrefix(Segment) { processGroupName =>
@@ -55,7 +56,7 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
     * Gets all pipegraphs created by editor
     * @return Array of pipegraphs created by editor
     */
-  def getEditorPipegraphs: Route = extractExecutionContext { implicit ec =>
+  def getEditorPipegraphs: Route =
     pathPrefix("editor") {
       pathPrefix("pipegraph") {
         parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
@@ -70,13 +71,12 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
         }
       }
     }
-  }
 
   /**
     * Gets specific pipegraph created by editor
     * @return Pipegraph created by editor
     */
-  def getEditorPipegraph: Route = extractExecutionContext { implicit ec =>
+  def getEditorPipegraph: Route =
     pathPrefix("editor") {
       pathPrefix("pipegraph") {
         pathPrefix(Segment) { pipegraphName =>
@@ -96,13 +96,12 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
         }
       }
     }
-  }
 
   /**
     * Validates and inserts new pipegraphs done in FE editor
     * @return Empty OK response or KO response with array of errors (as strings)
     */
-  def postEditorPipegraph: Route = extractExecutionContext { implicit ec =>
+  def postEditorPipegraph: Route =
     pathPrefix("editor") {
       pathPrefix("pipegraph") {
         parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
@@ -123,13 +122,12 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
         }
       }
     }
-  }
 
   /**
     * Validates and updates existing pipegraphs done in FE editor
     * @return Empty OK response or KO response with array of errors (as strings)
     */
-  def putEditorPipegraph: Route = extractExecutionContext { implicit ec =>
+  def putEditorPipegraph: Route =
     pathPrefix("editor") {
       pathPrefix("pipegraph") {
         parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
@@ -150,6 +148,5 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
         }
       }
     }
-  }
 
 }

@@ -48,7 +48,7 @@ object HBaseBulkPutExampleFromFile {
     val sc = new SparkContext(sparkConf)
 
     try {
-      var rdd = sc.hadoopFile(
+      val rdd = sc.hadoopFile(
         inputFile,
         classOf[TextInputFormat],
         classOf[LongWritable],

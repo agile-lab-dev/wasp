@@ -12,7 +12,7 @@ import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.fs.{LocatedFileStatus, Path, RemoteIterator}
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
-import org.apache.spark.sql.types.{ArrayType, StructField, StructType}
+import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.{ExecutorPlugin, SparkConf}
 import org.slf4j.{Logger, LoggerFactory}

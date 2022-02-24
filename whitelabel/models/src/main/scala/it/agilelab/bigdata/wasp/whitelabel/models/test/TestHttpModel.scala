@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.models.{HttpModel, KeyValueModel, KeyValueOption, HttpCompression}
-import it.agilelab.bigdata.wasp.whitelabel.models.test.TestKeyValueModel.{dfFieldsSchema, nestedAvroSchema}
+import it.agilelab.bigdata.wasp.models.{HttpModel, HttpCompression}
 
 object TestHttpModel {
 

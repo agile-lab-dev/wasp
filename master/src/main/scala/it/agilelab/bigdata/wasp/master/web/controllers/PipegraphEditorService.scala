@@ -1,56 +1,16 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import com.google.gson.JsonObject
-import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.{
-  GenericIndexProduct,
-  GenericKeyValueProduct,
-  GenericTopicProduct,
-  KafkaProduct,
-  RawProduct
-}
-import it.agilelab.bigdata.wasp.models.{
-  DatastoreModel,
-  FreeCodeModel,
-  IndexModel,
-  KeyValueModel,
-  MultiTopicModel,
-  PipegraphModel,
-  ProcessGroupModel,
-  RawModel,
-  RawOptions,
-  StrategyModel,
-  StreamingReaderModel,
-  StructuredStreamingETLModel,
-  TopicModel,
-  WriterModel
-}
-import it.agilelab.bigdata.wasp.models.editor.{
-  DatastoreModelDTO,
-  ErrorDTO,
-  FlowNifiDTO,
-  FreeCodeDTO,
-  IndexModelDTO,
-  KeyValueModelDTO,
-  PipegraphDTO,
-  RawModelDTO,
-  RawModelSetupDTO,
-  ReaderModelDTO,
-  StrategyClassDTO,
-  StrategyDTO,
-  StructuredStreamingETLDTO,
-  TopicModelDTO,
-  WriterModelDTO
-}
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
+import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
 import it.agilelab.bigdata.wasp.core.utils.FreeCodeCompilerUtils
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct._
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
+import it.agilelab.bigdata.wasp.models.editor._
+import it.agilelab.bigdata.wasp.models._
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.mongodb.scala.bson.BsonDocument
-import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
-
-import scala.util.Random
+import spray.json.{JsObject, JsValue}
 
 trait PipegraphEditorService {
 
@@ -109,7 +69,7 @@ trait PipegraphEditorService {
       getTopicModelById(name) match {
         case Some(x: TopicModel)      => Right(WriterModel.kafkaWriter(dto.name, x, dto.options))
         case Some(x: MultiTopicModel) => Right(WriterModel.kafkaMultitopicWriter(dto.name, x, dto.options))
-        case None                     => Left(List(ErrorDTO.notFound("Topic model", name)))
+        case _                     => Left(List(ErrorDTO.notFound("Topic model", name)))
       }
     case IndexModelDTO(name) =>
       getIndexModelById(name) match {
@@ -163,7 +123,7 @@ trait PipegraphEditorService {
               rateLimit = dto.rateLimit
             )
           )
-        case None => Left(List(ErrorDTO.notFound("Topic model", name)))
+        case _ => Left(List(ErrorDTO.notFound("Topic model", name)))
       }
     case x => Left(List(ErrorDTO.illegalArgument("Datastore model", x.toString)))
   }

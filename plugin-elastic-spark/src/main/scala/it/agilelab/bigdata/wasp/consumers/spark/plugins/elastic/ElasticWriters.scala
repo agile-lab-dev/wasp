@@ -3,15 +3,13 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 import akka.actor.ActorRef
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.core.WaspSystem.??
-import it.agilelab.bigdata.wasp.repository.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.ElasticConfiguration
 import it.agilelab.bigdata.wasp.models.IndexModel
+import it.agilelab.bigdata.wasp.repository.core.bl.IndexBL
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.elasticsearch.spark.sparkRDDFunctions
 import org.elasticsearch.spark.sql.EsSparkSQL
 
 class ElasticsearchSparkStructuredStreamingWriter(indexBL: IndexBL,

@@ -90,6 +90,7 @@ trait ReferencedResource {
 }
 
 @InterfaceAudience.Private
+@com.github.ghik.silencer.silent
 case class TableResource(relation: HBaseRelation) extends ReferencedResource {
   var connection: SmartConnection = _
   var table: Table = _
@@ -120,6 +121,7 @@ case class TableResource(relation: HBaseRelation) extends ReferencedResource {
 }
 
 @InterfaceAudience.Private
+@com.github.ghik.silencer.silent
 case class RegionResource(relation: HBaseRelation) extends ReferencedResource {
   var connection: SmartConnection = _
   var rl: RegionLocator = _

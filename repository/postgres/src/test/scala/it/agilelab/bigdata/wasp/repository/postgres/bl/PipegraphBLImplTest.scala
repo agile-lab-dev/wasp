@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.repository.postgres.bl
 
-import it.agilelab.bigdata.wasp.models.{KeyValueModel, PipegraphInstanceModel, PipegraphModel, PipegraphStatus, RTModel, ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
-import it.agilelab.bigdata.wasp.repository.postgres.tables.PipegraphTableDefinition
+import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.bson.BsonDocument
 
@@ -23,7 +22,6 @@ trait PipegraphBLImplTest {
       List.empty,
       WriterModel.consoleWriter("console"),
       List.empty, None, Some(10))
-    val rtModel = RTModel("model", List(ReaderModel.hbaseReader("made", KeyValueModel("hbase", "catalog", None, None, false, None))), true, None, None)
     val model2 = PipegraphModel("name2", "description", "tester", true, 10L, List(etl), None)
     bl.insert(model2)
 

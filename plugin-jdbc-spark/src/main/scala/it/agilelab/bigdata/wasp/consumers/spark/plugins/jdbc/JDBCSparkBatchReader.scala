@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.JdbcConfiguration
 import it.agilelab.bigdata.wasp.models.SqlSourceModel
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
   * It read data from JDBC with the configuration of JDBCConfiguration.
@@ -38,7 +38,8 @@ class JDBCSparkBatchReader(sqlModel: SqlSourceModel) extends SparkBatchReader wi
     logger.info(s"Initialize Spark JDBCReader with options (obfuscated): $readerOptionsObfuscated")
 
     //Workaround SparkSession retrieval
-    val ss: SparkSession = new SQLContext(sc).sparkSession
+    
+    val ss: SparkSession = SparkSession.builder().getOrCreate()
 
     val df: DataFrame =
       ss.read

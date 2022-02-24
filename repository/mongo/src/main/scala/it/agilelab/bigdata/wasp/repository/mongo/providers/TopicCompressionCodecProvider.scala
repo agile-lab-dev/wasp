@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
-import it.agilelab.bigdata.wasp.models.{SubjectStrategy, TopicCompression}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.{BsonReader, BsonWriter}
+import it.agilelab.bigdata.wasp.models.TopicCompression
 
 object TopicCompressionCodecProvider extends CodecProvider with Codec[TopicCompression] {
 

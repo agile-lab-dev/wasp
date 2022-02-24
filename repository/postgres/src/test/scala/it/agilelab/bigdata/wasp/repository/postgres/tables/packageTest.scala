@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.repository.postgres.tables
 
-import java.sql.ResultSet
-
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait packageTest {

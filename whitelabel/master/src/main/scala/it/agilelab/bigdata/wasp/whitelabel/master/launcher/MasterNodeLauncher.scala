@@ -213,6 +213,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   }
 }
 
+@com.github.ghik.silencer.silent("interpolator")
 private[wasp] object ExampleProcessGroupModel {
   lazy val processGroup = ProcessGroupModel(
     "c116c98bd5c9",

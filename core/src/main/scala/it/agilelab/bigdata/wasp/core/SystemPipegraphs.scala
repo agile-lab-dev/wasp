@@ -12,23 +12,24 @@ import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 	* Default system pipegraphs.
 	*/
 object SystemPipegraphs {
+
   /** Logger  */
-  lazy val loggerTopic: TopicModel = LoggerTopicModel()
-  lazy val solrLoggerIndex: IndexModel = SolrLoggerIndex()
-  lazy val elasticLoggerIndex: IndexModel = ElasticLoggerIndexModel()
-  lazy val loggerProducer: ProducerModel = LoggerProducer()
+  lazy val loggerTopic: TopicModel         = LoggerTopicModel()
+  lazy val solrLoggerIndex: IndexModel     = SolrLoggerIndex()
+  lazy val elasticLoggerIndex: IndexModel  = ElasticLoggerIndexModel()
+  lazy val loggerProducer: ProducerModel   = LoggerProducer()
   lazy val loggerPipegraph: PipegraphModel = LoggerPipegraph()
 
   /** Telemetry  */
-  lazy val telemetryTopic: TopicModel = TelemetryTopicModel()
-  lazy val solrTelemetryIndex: IndexModel = SolrTelemetryIndexModel()
-  lazy val elasticTelemetryIndex: IndexModel = ElasticLatencyIndexModel()
+  lazy val telemetryTopic: TopicModel         = TelemetryTopicModel()
+  lazy val solrTelemetryIndex: IndexModel     = SolrTelemetryIndexModel()
+  lazy val elasticTelemetryIndex: IndexModel  = ElasticLatencyIndexModel()
   lazy val telemetryPipegraph: PipegraphModel = TelemetryPipegraph()
 
   /** Event */
-  lazy val eventPipegraph: PipegraphModel = EventPipegraphModel.eventPipegraph
-  lazy val eventMultiTopicModel : MultiTopicModel = EventPipegraphModel.allEventTopicMultiTopicModel
-  lazy val eventIndex : IndexModel = SolrEventIndex.apply()
+  lazy val eventPipegraph: PipegraphModel        = EventPipegraphModel.eventPipegraph
+  lazy val eventMultiTopicModel: MultiTopicModel = EventPipegraphModel.allEventTopicMultiTopicModel
+  lazy val eventIndex: IndexModel                = SolrEventIndex.apply()
 
   lazy val mailerPipegraph: PipegraphModel =
     MailingPipegraphModel.mailingPipegraph
@@ -189,7 +190,6 @@ private[wasp] object SolrTelemetryIndexModel {
 
 private[wasp] object ElasticLatencyIndexModel {
   import spray.json._
-  import DefaultJsonProtocol._
 
   //noinspection ScalaUnnecessaryParentheses
   private lazy val indexElasticSchema =
@@ -230,8 +230,7 @@ private[wasp] object LoggerProducer {
   def apply() =
     ProducerModel(
       name = "LoggerProducer",
-      className =
-        "it.agilelab.bigdata.wasp.producers.InternalLogProducerGuardian",
+      className = "it.agilelab.bigdata.wasp.producers.InternalLogProducerGuardian",
       topicName = Some(SystemPipegraphs.loggerTopic.name),
       isActive = false,
       configuration = None,
@@ -268,11 +267,10 @@ private[wasp] object SolrLoggerIndex {
 
 private[wasp] object ElasticLoggerIndexModel {
   import spray.json._
-  import DefaultJsonProtocol._
 
   //noinspection ScalaUnnecessaryParentheses
   private lazy val indexElasticSchema =
-      """
+    """
         {
           "properties": {
             "log_source": {
@@ -414,6 +412,8 @@ private[wasp] object TelemetryPipegraph {
           "Write telemetry data to Solr",
           solrTelemetryIndex
         )
+      case other =>
+        throw new RuntimeException(s"Cannot write telemetry to $other")
     }
   }
 }

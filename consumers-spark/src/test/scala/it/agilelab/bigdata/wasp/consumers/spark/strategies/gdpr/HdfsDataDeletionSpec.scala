@@ -268,7 +268,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     // Wed Oct 09 2019 22:00:00 - Mon Oct 14 2019 22:00:00
-    val config = createConfig(Some(1570658400000L, 1571090400000L))
+    val config = createConfig(Some(1570658400000L -> 1571090400000L))
     val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)
@@ -348,7 +348,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     // Wed Oct 09 2019 22:00:00 - Mon Oct 14 2019 22:00:00
-    val config = createConfig(Some(1570658400000L, 1571090400000L))
+    val config = createConfig(Some(1570658400000L -> 1571090400000L))
     val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)
@@ -506,7 +506,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
     )
 
     // Wed Oct 09 2019 22:00:00 - Mon Oct 14 2019 22:00:00
-    val config = createConfig(Some(1570658400000L, 1571090400000L))
+    val config = createConfig(Some(1570658400000L -> 1571090400000L))
     val deletionConfig = HdfsDeletionConfig.create(config, rawDataStoreConf, keysToDelete)
 
     val deletionResult = target.delete(deletionConfig, spark)

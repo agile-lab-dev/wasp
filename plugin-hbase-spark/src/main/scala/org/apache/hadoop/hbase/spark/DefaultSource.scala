@@ -244,14 +244,14 @@ case class HBaseRelation(
         }
 
         if (!admin.isTableAvailable(tName)) {
-          val tableDesc = new HTableDescriptor(tName)
+          val tableDesc = TableDescriptorBuilder.newBuilder(tName)
           cfs.foreach { x =>
-            val cf = new HColumnDescriptor(x.getBytes())
+            val cf = ColumnFamilyDescriptorBuilder.newBuilder(x.getBytes())
             logDebug(s"add family $x to $tableName")
-            tableDesc.addFamily(cf)
+            tableDesc.setColumnFamily(cf.build())
           }
           val splitKeys = Bytes.split(startKey, endKey, numReg);
-          admin.createTable(tableDesc, splitKeys)
+          admin.createTable(tableDesc.build(), splitKeys)
 
         }
       } finally {
@@ -407,7 +407,6 @@ case class HBaseRelation(
       pushDownDynamicLogicExpression)
 
     val getList = new util.ArrayList[Get]()
-    val rddList = new util.ArrayList[RDD[Row]]()
 
     //add points to getList
     pushDownRowKeyFilter.points.foreach(p => {

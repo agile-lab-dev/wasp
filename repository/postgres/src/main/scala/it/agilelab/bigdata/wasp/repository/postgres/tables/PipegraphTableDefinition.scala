@@ -1,8 +1,6 @@
 package it.agilelab.bigdata.wasp.repository.postgres.tables
 
-import java.sql.ResultSet
-
-import it.agilelab.bigdata.wasp.models.{DashboardModel, LegacyStreamingETLModel, PipegraphModel, RTModel, StructuredStreamingETLModel}
+import it.agilelab.bigdata.wasp.models.PipegraphModel
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 

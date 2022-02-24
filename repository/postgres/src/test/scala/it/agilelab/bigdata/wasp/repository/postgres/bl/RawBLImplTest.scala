@@ -1,8 +1,6 @@
 package it.agilelab.bigdata.wasp.repository.postgres.bl
 
 import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
-import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
-import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait RawBLImplTest {

@@ -2,8 +2,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
 import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
 import it.agilelab.bigdata.wasp.consumers.spark.eventengine.SparkSetup
-import it.agilelab.bigdata.wasp.consumers.spark.http.Enricher
-import it.agilelab.bigdata.wasp.consumers.spark.http.etl.CustomEnrichmentStrategy
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{EnrichmentStrategy, EventIndexingStrategy, FreeCodeStrategy, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
 import it.agilelab.bigdata.wasp.models.configuration.{RestEnrichmentConfigModel, RestEnrichmentSource}
@@ -139,7 +137,7 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
             RestEnrichmentSource("http",
               Map.apply(
                 "method" -> "get",
-                "url" -> "http://localhost:8080/${author}-v1/{generic}/v2/${api_test}/123?author=pippo"
+                "url" -> s"http://localhost:8080/$${author}-v1/{generic}/v2/$${api_test}/123?author=pippo"
               )
             ),
             "msExample" ->

@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.RawProduct
 import it.agilelab.bigdata.wasp.models.RawModel
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{SparkSession, DataFrame}
 
 class RawSparkBatchReader(rawModel: RawModel) extends SparkBatchReader with Logging {
   val name: String       = rawModel.name
@@ -16,7 +16,7 @@ class RawSparkBatchReader(rawModel: RawModel) extends SparkBatchReader with Logg
   override def read(sc: SparkContext): DataFrame = {
     logger.info(s"Initialize Spark HDFSReader with this model: $rawModel")
     // get sql context
-    val sqlContext = SQLContext.getOrCreate(sc)
+    val sqlContext = SparkSession.builder().getOrCreate()
 
     // setup reader
     val schema: StructType = DataType.fromJson(rawModel.schema).asInstanceOf[StructType]

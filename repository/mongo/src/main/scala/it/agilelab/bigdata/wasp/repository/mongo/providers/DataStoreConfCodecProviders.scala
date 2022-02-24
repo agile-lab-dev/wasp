@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
 import com.github.dwickern.macros.NameOf.nameOf
-import SealedTraitCodecProvider.TYPE_FIELD
-import it.agilelab.bigdata.wasp.models.{ContainsRawMatchingStrategy, DataStoreConf, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, KeyValueDataStoreConf, KeyValueMatchingStrategy, KeyValueModel, NoPartitionPruningStrategy, PartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawMatchingStrategy, RawModel, TimeBasedBetweenPartitionPruningStrategy}
+import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{KeyValueDBModel, KeyValueDBModelV1, RawDBModel, RawDBModelV1}
 import it.agilelab.bigdata.wasp.repository.core.mappers.{KeyValueMapperSelector, KeyValueMapperV1, RawMapperSelector, RawMapperV1}
+import it.agilelab.bigdata.wasp.repository.mongo.providers.SealedTraitCodecProvider.TYPE_FIELD
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.{DecoderContext, EncoderContext}
 import org.bson.{BsonReader, BsonWriter}

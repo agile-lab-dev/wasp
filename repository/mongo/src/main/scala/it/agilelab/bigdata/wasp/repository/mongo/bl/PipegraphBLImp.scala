@@ -3,11 +3,11 @@ package it.agilelab.bigdata.wasp.repository.mongo.bl
 import it.agilelab.bigdata.wasp.repository.core.bl.{PipegraphBL, PipegraphInstanceBl}
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus}
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{PipegraphDBModel, PipegraphDBModelV1, PipegraphInstanceDBModel, PipegraphInstanceDBModelV1}
-import it.agilelab.bigdata.wasp.repository.core.mappers.{PipegraphInstanceDBModelMapperSelector, PipegraphInstanceMapperV1, PipegraphMapperV1, PipegraphMapperV2}
+import it.agilelab.bigdata.wasp.repository.core.dbModels._
+import it.agilelab.bigdata.wasp.repository.core.mappers._
 import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphDBModelMapperSelector.factory
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
-import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonInt64, BsonString}
+import org.mongodb.scala.bson.{BsonBoolean, BsonString}
 
 class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
 

@@ -18,7 +18,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.{col, _}
 import org.apache.spark.sql.{DataFrame, Encoder, Encoders, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
-import org.bson.BsonString
 
 import scala.util.{Failure, Success, Try}
 
@@ -75,8 +74,6 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with HasPos
 
     val outputPartitions = ConfigUtils.getOptionalInt(configuration, OUTPUT_PARTITIONS_CONFIG_KEY).getOrElse(1)
     val runId = configuration.getString(RUN_ID_CONFIG_KEY)
-
-    implicit val keyWithCorrelationEncoder: Encoder[KeyWithCorrelation] = Encoders.product[KeyWithCorrelation]
 
     val dataStoresWithRunIdDF = dataStoresDF.where(col("runId").equalTo(runId))
     val seqWithRunIdDF = dataStoresWithRunIdDF.collect().toSeq
@@ -146,8 +143,7 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with HasPos
   }
 
   /* Collect keys from `inputDF`, reading them from the column `inputKeyColumn` */
-  private def getKeys(inputRows: Seq[Row], inputKeyColumn: String, correlationIdColumn: String)
-                     (implicit ev: Encoder[KeyWithCorrelation]): Seq[KeyWithCorrelation] = {
+  private def getKeys(inputRows: Seq[Row], inputKeyColumn: String, correlationIdColumn: String): Seq[KeyWithCorrelation] = {
     inputRows.map { r =>
       KeyWithCorrelation(
         r.getAs[String](inputKeyColumn),
@@ -157,8 +153,7 @@ class GdprStrategy(dataStores: List[DataStoreConf]) extends Strategy with HasPos
   }
 
   /* Retrieve keys as RDD from `inputDF`, reading them from the column `inputKeyColumn` */
-  private def getKeysRDD(inputRows: Seq[Row], inputKeyColumn: String, correlationIdColumn: String, spark: SparkSession)
-                        (implicit ev: Encoder[KeyWithCorrelation]): RDD[KeyWithCorrelation] = {
+  private def getKeysRDD(inputRows: Seq[Row], inputKeyColumn: String, correlationIdColumn: String, spark: SparkSession): RDD[KeyWithCorrelation] = {
 
     spark.sparkContext.makeRDD(getKeys(inputRows, inputKeyColumn, correlationIdColumn))
   }

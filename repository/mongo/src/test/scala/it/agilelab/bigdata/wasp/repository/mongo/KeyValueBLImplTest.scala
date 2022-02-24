@@ -1,9 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import it.agilelab.bigdata.wasp.models.{KeyValueModel, KeyValueOption}
 import it.agilelab.bigdata.wasp.repository.mongo.bl.KeyValueBLImp
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class KeyValueBLImplTest extends FlatSpec with Matchers{

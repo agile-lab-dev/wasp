@@ -30,6 +30,7 @@ case class KVSchemaBuilder[ThisKVSchema <: KVSchema](keyField: Option[KeyField] 
     buildSeq.mkString(",\n")
   }
 
+  @com.github.ghik.silencer.silent("never used")
   def buildSeq[S <: KVSchema](implicit ev: ThisKVSchema =:= CompleteKVSchema): Seq[String] = {
     checkDuplicateColumns(columns)
 

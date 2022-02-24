@@ -1,9 +1,9 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.server.{Directives, Route}
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
 import it.agilelab.bigdata.wasp.models.DatastoreModel
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 

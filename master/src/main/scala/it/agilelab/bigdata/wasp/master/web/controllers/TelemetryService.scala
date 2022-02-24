@@ -1,14 +1,13 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.time.{Duration, Instant}
-import java.util.Date
-import java.util.regex.Pattern
-
 import it.agilelab.bigdata.wasp.core.SolrTelemetryIndexModel
-import it.agilelab.bigdata.wasp.models.{Aggregate, MetricEntry, Metrics, SourceEntry, Sources, TelemetryPoint, TelemetrySeries}
+import it.agilelab.bigdata.wasp.models._
 import org.apache.solr.client.solrj.util.ClientUtils
 import org.apache.solr.common.util.{NamedList, SimpleOrderedMap}
 
+import java.time.{Duration, Instant}
+import java.util.Date
+import java.util.regex.Pattern
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 

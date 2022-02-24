@@ -567,7 +567,7 @@ private[wasp] object TestPipegraphs {
                 "http",
                 Map.apply(
                   "method" -> "GET",
-                  "url"    -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
+                  "url"    -> s"http://localhost:4480/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
                 ),
                 Map.apply(
                   "Content-type" -> "text/plain",
@@ -579,7 +579,7 @@ private[wasp] object TestPipegraphs {
                 "http",
                 Map.apply(
                   "method" -> "POST",
-                  "url"    -> "http://localhost:4480/${author}-v1/${version}/v2/${local}/123?id=test_id"
+                  "url"    -> s"http://localhost:4480/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
                 ),
                 Map.apply(
                   "Content-type" -> "text/plain",

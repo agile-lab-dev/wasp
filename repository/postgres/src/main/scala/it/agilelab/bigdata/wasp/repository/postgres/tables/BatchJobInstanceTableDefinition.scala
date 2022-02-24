@@ -1,10 +1,6 @@
 package it.agilelab.bigdata.wasp.repository.postgres.tables
 
-import java.sql.ResultSet
-
-import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.models.BatchJobInstanceModel
-import it.agilelab.bigdata.wasp.models.JobStatus.JobStatus
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 

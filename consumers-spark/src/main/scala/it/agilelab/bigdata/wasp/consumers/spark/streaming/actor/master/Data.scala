@@ -1,11 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
-import akka.actor.{ActorRef, ActorSelection, Address}
+import akka.actor.{ActorRef, Address}
 import akka.cluster.UniqueAddress
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphStatus}
-
-import scala.collection.immutable.Queue
 
 /**
   * Trait marking classes holding [[SparkConsumersStreamingMasterGuardian]] State Data

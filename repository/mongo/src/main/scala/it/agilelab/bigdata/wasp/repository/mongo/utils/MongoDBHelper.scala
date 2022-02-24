@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.MongoDBConfigModel
 import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 import org.mongodb.scala.connection.SocketSettings.Builder
-import org.mongodb.scala.connection.{ClusterSettings, SocketSettings}
+import org.mongodb.scala.connection.SocketSettings
 import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.{MongoClient, MongoClientSettings, MongoDatabase, _}
 
@@ -25,6 +25,8 @@ private[mongo] trait MongoDBHelper extends Logging {
   def mongoDatabase: MongoDatabase
 
   protected def getCollection(collection: String) =  mongoDatabase.getCollection(collection)
+
+  @com.github.ghik.silencer.silent("deprecated")
   protected def createCollection(collection: String): Unit = {
     try {
       if (!mongoDatabase.listCollectionNames().results().contains(collection)) {
@@ -92,7 +94,7 @@ private[mongo] trait MongoDBHelper extends Logging {
     }
   }
 
-  protected def removeDocumentFromCollection[T](key: String, value: BsonValue, collection: String)(implicit ct: ClassTag[T]): Unit = {
+  protected def removeDocumentFromCollection[T: ClassTag](key: String, value: BsonValue, collection: String): Unit = {
     logger.info(s"Removing document from collection $collection")
     val query = BsonDocument(key -> value)
 
@@ -106,7 +108,7 @@ private[mongo] trait MongoDBHelper extends Logging {
     }
   }
 
-  protected def removeDocumentFromCollectionByQuery[T](query: BsonDocument, collection: String)(implicit ct: ClassTag[T]): Unit = {
+  protected def removeDocumentFromCollectionByQuery[T: ClassTag](query: BsonDocument, collection: String): Unit = {
     logger.info(s"Removing document from collection $collection")
 
     try {
@@ -121,7 +123,7 @@ private[mongo] trait MongoDBHelper extends Logging {
 
   protected def replaceDocumentToCollection[T](key: String, value: BsonValue, updateValue: T, collection: String, upsert:Boolean = false)(implicit ct: ClassTag[T]): UpdateResult = {
 
-    val updateOptions = model.UpdateOptions().upsert(upsert)
+    val updateOptions = model.ReplaceOptions().upsert(upsert)
 
     val selector = BsonDocument(key -> value)
     val result =
@@ -170,6 +172,8 @@ object MongoDBHelper extends Logging {
       mongoClient.close()
     }
   }
+
+  @com.github.ghik.silencer.silent("deprecated")
   def getDatabase(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {
     //return a connection pool
 

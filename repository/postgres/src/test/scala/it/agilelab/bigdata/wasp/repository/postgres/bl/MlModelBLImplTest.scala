@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 import it.agilelab.bigdata.wasp.models.{FreeCodeModel, MlModelOnlyInfo}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.bson.types.ObjectId
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+import org.mongodb.scala.bson.BsonObjectId
 
 trait MlModelBLImplTest {
   self : PostgresSuite =>

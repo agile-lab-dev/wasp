@@ -1,9 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 import io.swagger.v3.oas.models.media._
-import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 import it.agilelab.bigdata.wasp.models.editor._
 import org.json4s.JObject
-import org.mongodb.scala.bson.BsonObjectId
 import spray.json.JsObject
 
 case class ProcessGroupResponseTmp(name: String, processGroupData: String)

@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorRef, ActorRefFactory, Props, Stash}
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.utils.Quartz2Utils._
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkWriterFactory, SparkWriterFactoryDefault}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkWriterFactory
 import it.agilelab.bigdata.wasp.repository.core.bl._
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging

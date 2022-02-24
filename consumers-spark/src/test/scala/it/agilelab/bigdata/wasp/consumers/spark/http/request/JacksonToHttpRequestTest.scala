@@ -16,7 +16,7 @@ class JacksonToHttpRequestTest extends FlatSpec with Matchers {
         RestEnrichmentSource("http",
           Map.apply(
             "method" -> "get",
-            "url" -> "http://localhost:8080/${author}-v1/${version}/v2/${local}/123?id=test_id"
+            "url" -> s"http://localhost:8080/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
           ),
           Map.apply(
             "Accept-Language" -> "en-US",
@@ -56,7 +56,7 @@ class JacksonToHttpRequestTest extends FlatSpec with Matchers {
     request.getMethod shouldBe config.sources("httpExample").parameters("method")
     request.getURI.toString shouldBe  "http://localhost:8080/test-v1/1/v2/prova/123?id=test_id"
     request.getAllHeaders.foreach{ header =>
-      (header.getName, header.getValue) shouldBe (header.getName, headers(header.getName))
+      (header.getName, header.getValue) shouldBe (header.getName -> headers(header.getName))
     }
   }
 }

@@ -24,7 +24,6 @@ object ControllerServicesApi {
 
 class ControllerServicesApi(baseUrl: String)(implicit serializer: SttpSerializer) {
 
-  import it.agilelab.bigdata.nifi.client.core.Helpers._
   import serializer._
 
   /**

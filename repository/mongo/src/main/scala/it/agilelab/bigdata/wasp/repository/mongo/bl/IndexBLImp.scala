@@ -1,12 +1,12 @@
 package it.agilelab.bigdata.wasp.repository.mongo.bl
 
-import it.agilelab.bigdata.wasp.repository.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.models.IndexModel
+import it.agilelab.bigdata.wasp.repository.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{IndexDBModel, IndexDBModelV1}
-import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
-import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import it.agilelab.bigdata.wasp.repository.core.mappers.IndexDBModelMapperSelector.factory
 import it.agilelab.bigdata.wasp.repository.core.mappers.IndexMapperV1.transform
+import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
+import org.mongodb.scala.bson.BsonString
 
 class IndexBLImp(waspDB: WaspMongoDB) extends IndexBL {
 

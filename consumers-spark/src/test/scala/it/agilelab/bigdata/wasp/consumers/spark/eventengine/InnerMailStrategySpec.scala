@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.eventengine
 
-import java.io.{File, InputStreamReader}
+import java.io.InputStreamReader
 
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.eventengine.Event

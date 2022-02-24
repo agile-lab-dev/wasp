@@ -4,9 +4,9 @@ import akka.cluster.Cluster
 import akka.http.scaladsl.server.{Directives, Route}
 import com.typesafe.config.ConfigRenderOptions
 import it.agilelab.bigdata.wasp.core.WaspSystem
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper._
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 

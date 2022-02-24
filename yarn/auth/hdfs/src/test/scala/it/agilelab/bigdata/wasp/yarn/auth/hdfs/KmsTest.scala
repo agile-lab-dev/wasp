@@ -5,7 +5,6 @@ import java.nio.file.Files
 
 import it.agilelab.bigdata.wasp.yarn.auth.hdfs.HdfsCredentialProviderConfiguration.toSpark
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension
 import org.apache.hadoop.crypto.key.kms.server.MiniKMS
 import org.apache.hadoop.security.Credentials
 import org.scalatest.{Matchers, WordSpecLike}

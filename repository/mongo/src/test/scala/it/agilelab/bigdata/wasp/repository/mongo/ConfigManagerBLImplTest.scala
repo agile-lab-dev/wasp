@@ -1,9 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
-import it.agilelab.bigdata.wasp.models.configuration.{ConnectionConfig, HBaseConfigModel, JMXTelemetryConfigModel, JdbcConfigModel, JdbcConnectionConfig, KafkaConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkDriverConfig, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
+import it.agilelab.bigdata.wasp.models.configuration._
 import it.agilelab.bigdata.wasp.repository.mongo.bl.ConfigManagerBLImpl
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 
 @DoNotDiscover

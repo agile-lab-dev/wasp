@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.solr
 
-import java.util
-
 import akka.actor.ActorRef
 import com.lucidworks.spark.util.SolrSupport
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
@@ -11,7 +9,6 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.SolrConfiguration
 import it.agilelab.bigdata.wasp.models.IndexModel
 import org.apache.solr.client.solrj.SolrClient
-import org.apache.solr.client.solrj.impl.CloudSolrClient
 import org.apache.solr.common.SolrInputDocument
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
@@ -51,18 +48,17 @@ object SolrSparkBatchWriter {
       fieldType.foreach { structField =>
         if (!row.isNullAt(row.fieldIndex(structField.name))) {
           structField.dataType match {
-            case f: MapType => {
+            case f: MapType =>
               val path = parentPath.map(p => p + "." + structField.name).getOrElse(structField.name)
               doc.setField(path, row.getJavaMap(row.fieldIndex(structField.name)))
-            }
-            case f: StructType => {
+            
+            case f: StructType => 
               val path = parentPath.map(p => p + "." + structField.name).orElse(Some(structField.name))
               convert(doc, f, row.getStruct(row.fieldIndex(structField.name)), path)
-            }
-            case f => {
+            
+            case f => 
               val path = parentPath.map(p => p + "." + structField.name).getOrElse(structField.name)
-              doc.setField(path, row.getAs(structField.name))
-            }
+              doc.setField(path, row.getAs[Object](structField.name))
           }
         }
       }

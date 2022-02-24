@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.sql.{Date, Timestamp}
-import java.time.{LocalDate, ZoneId, ZoneOffset}
+import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicLong
 
 import scala.util.Random

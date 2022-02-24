@@ -58,7 +58,7 @@ class BasicResolvers extends Resolvers {
 class BasicSettings(
     resolver: Resolvers,
     jdkVersionValue: String,
-    scalaVersionValue: String,
+    scalaVersionValue: ScalaVersion,
     overrideDep: Seq[ModuleID] = Seq.empty,
     exclustionRules: Seq[ExclusionRule] = Seq.empty
 ) extends Settings {
@@ -89,7 +89,12 @@ class BasicSettings(
       "-deprecation",
       "-unchecked",
       //"-Ylog-classpath",
-      "-Xlint"
+      "-Xlint",
+      "-Ywarn-dead-code",
+      "-Xfatal-warnings",
+      "-Ywarn-inaccessible",
+      "-Ywarn-unused-import",
+      "-Ywarn-infer-any"
     ),
     javacOptions ++= Seq(
       "-encoding",
@@ -107,7 +112,21 @@ class BasicSettings(
       "-Xlint:deprecation",
       "-Xlint:unchecked"
     ),
-    scalaVersion := scalaVersionValue,
+    Compile / doc / scalacOptions --= Seq(
+      "-Xfatal-warnings"
+    ),
+    libraryDependencies ++= {
+      val silencerVersion = "1.4.3" // compatible with 2.11.12 and 2.12.10
+      if (scalaVersionValue.isMajorMinor(2, 11) || (scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision < 13)) {
+        Seq(
+          compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+          "com.github.ghik"        % "silencer-lib"             % silencerVersion % Provided cross CrossVersion.full
+        )
+      } else {
+        Seq()
+      }
+    },
+    scalaVersion := scalaVersionValue.raw,
     excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api"),
     excludeDependencies ++= this.exclustionRules
 

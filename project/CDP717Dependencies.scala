@@ -4,10 +4,10 @@ import sbt._
 
 class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
 
-  lazy val spark_sql_kafka     = "it.agilelab"      %% "wasp-spark-sql-kafka"     % "0.1.0-2.4.1-2.4.7-7.1.7.0-551"
-  lazy val spark_sql_kafka_old = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % "0.1.0-2.4.1-2.4.7-7.1.7.0-551"
-  lazy val delta               = "it.agilelab"      %% "wasp-delta-lake"          % "0.6.1-2.4.7.7.1.7.0-551"
-  lazy val solrj               = "org.apache.solr"  % "solr-solrj"                % versions.solr
+  lazy val spark_sql_kafka     = "it.agilelab"     %% "wasp-spark-sql-kafka"     % "0.1.0-2.4.1-2.4.7-7.1.7.0-551"
+  lazy val spark_sql_kafka_old = "it.agilelab"     %% "wasp-spark-sql-kafka-old" % "0.1.0-2.4.1-2.4.7-7.1.7.0-551"
+  lazy val delta               = "it.agilelab"     %% "wasp-delta-lake"          % "0.6.1-2.4.7.7.1.7.0-551"
+  lazy val solrj               = "org.apache.solr" % "solr-solrj"                % versions.solr
   lazy val sparkSolr = versions.scala.take(4) match {
     case "2.11" => ("it.agilelab.bigdata.spark" % "spark-solr"  % versions.sparkSolr)
     case "2.12" => ("it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr)

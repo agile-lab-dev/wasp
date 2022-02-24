@@ -8,7 +8,6 @@ import com.sksamuel.avro4s.{AvroJsonOutputStream, SchemaFor, ToRecord}
 import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.{ProducerActor, ProducerGuardian, StartMainTask}
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
-import it.agilelab.bigdata.wasp.whitelabel.models.example.FakeData
 import it.agilelab.bigdata.wasp.whitelabel.models.example.iot.{FakeIndustrialPlantData, IndustrialPlantData}
 import spray.json.DefaultJsonProtocol
 

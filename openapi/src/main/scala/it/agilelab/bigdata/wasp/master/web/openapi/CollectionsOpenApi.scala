@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
 import com.typesafe.config.Config
-import io.swagger.v3.oas.models.media.{ArraySchema, MapSchema, ObjectSchema, Schema}
+import io.swagger.v3.oas.models.media.{ArraySchema, ObjectSchema, Schema}
 
 trait CollectionsOpenApi extends OpenApiSchemaSupport with LangOpenApi {
   implicit def optionOpenApi[T: ToOpenApiSchema]: ToOpenApiSchema[Option[T]] =

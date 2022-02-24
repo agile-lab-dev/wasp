@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.time.Instant
-
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import it.agilelab.bigdata.wasp.utils.JsonSupport
+
+import java.time.Instant
 
 class LogsController(logs: LogsService) extends Directives with JsonSupport {
 
@@ -27,8 +27,8 @@ class LogsController(logs: LogsService) extends Directives with JsonSupport {
               parameter('size.as[Int]) { size =>
                 extractExecutionContext { implicit ec =>
                   complete {
-                    import spray.json._
                     import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
+                    import spray.json._
                     logs
                       .logs(search, startTimestamp, endTimestamp, page, size)
                       .map { x =>

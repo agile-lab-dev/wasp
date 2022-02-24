@@ -2,7 +2,6 @@ package it.agilelab.bigdata.wasp.whitelabel.models.example.iot
 
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.time.format.DateTimeFormatter
-import java.util.{Date, UUID}
 import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.models.{SubjectStrategy, TopicModel}

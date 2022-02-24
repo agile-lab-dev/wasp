@@ -75,6 +75,7 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     * @param evidence The evidence that the current Stage is a subclass of [[IndexModelBuilder.Stage.Complete]]
     * @return The built [[IndexModel]]
     */
+  @com.github.ghik.silencer.silent("never used")
   def build(implicit evidence: Stage <:< IndexModelBuilder.Stage.Complete[Kind]): IndexModel =
     schema.augment(
       config.augment(
@@ -358,6 +359,7 @@ object IndexModelBuilder {
       * @tparam A The type contained in this solr field
       *
       */
+    @com.github.ghik.silencer.silent("never used")
     case class Field[+A: JsonFormat] private(name: String,
                                  `type`: Type[A],
                                  defaultValue: Option[A] = None,

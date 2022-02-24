@@ -29,7 +29,7 @@ class JsonAvroConverterTest extends FlatSpec {
 
     val c = new GenericDatumReader[GenericRecord](schema)
 
-    val result1= c.read(null, DecoderFactory.get().createBinaryDecoder(result, 0, result.size, null))
+    val result1= c.read(null, DecoderFactory.get().binaryDecoder(result, 0, result.size, null))
 
     val deserialized = RecordFormat[JsonAvroConverterTestData].from(result1)
 

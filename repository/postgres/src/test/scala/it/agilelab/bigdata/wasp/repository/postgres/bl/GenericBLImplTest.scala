@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.repository.postgres.bl
 
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.genericProduct
 import it.agilelab.bigdata.wasp.datastores.GenericProduct
-import it.agilelab.bigdata.wasp.models.{GenericModel, HttpCompression, HttpModel}
+import it.agilelab.bigdata.wasp.models.GenericModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.mongodb.scala.bson.BsonDocument
 

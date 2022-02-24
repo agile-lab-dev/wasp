@@ -88,7 +88,7 @@ class AllBLsTestWrapper {
 
     override def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any] = {
       val arrayByte = fs.get(mlModelOnlyInfo.modelFileId.get.toString()).get
-      val obj: Any = SerializationUtils.deserialize(arrayByte)
+      val obj: Any = SerializationUtils.deserialize[Any](arrayByte)
       Some(obj)
     }
 
@@ -192,7 +192,7 @@ class AllBLsTestWrapper {
     }
 
     override def getByTopicName(name: String): Seq[ProducerModel] = {
-      database.filter(_.topicName == name)
+      database.filter(_.topicName.contains(name))
     }
   }
   

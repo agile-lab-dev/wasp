@@ -2,8 +2,7 @@ package it.agilelab.bigdata.wasp.master.web.openapi
 
 import com.typesafe.config.Config
 import io.swagger.v3.oas.models.media.{ComposedSchema, Discriminator, Schema}
-import it.agilelab.bigdata.wasp.models.KeyValueDataStoreConf._
-import it.agilelab.bigdata.wasp.models.{BatchETL, BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, BatchJobInstanceModel, BatchJobModel, ContainsRawMatchingStrategy, DataStoreConf, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, JobStatus, KeyValueDataStoreConf, KeyValueMatchingStrategy, NoPartitionPruningStrategy, PartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawMatchingStrategy, RawModel, RawOptions, TimeBasedBetweenPartitionPruningStrategy}
+import it.agilelab.bigdata.wasp.models._
 
 trait BatchOpenApiComponentsSupport
     extends LangOpenApi

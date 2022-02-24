@@ -3,9 +3,9 @@ package it.agilelab.bigdata.wasp.master.web.controllers
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.WaspSystem.masterGuardian
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.core.messages.StartBatchJob
 import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel}
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 
 object DefaultBatchJobService extends BatchJobService {
   override def delete(batchJob: BatchJobModel): Unit = {

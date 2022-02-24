@@ -7,8 +7,8 @@ import java.util.UUID
 import akka.actor.{ActorPath, ActorRef, ActorRefFactory, FSM, LoggingFSM, Props, RootActorPath, Stash}
 import akka.cluster.ClusterEvent._
 import akka.cluster._
-import akka.pattern.Patterns.{ask, pipe}
-import akka.pattern.{Patterns, PipeToSupport}
+import akka.pattern.Patterns.ask
+import akka.pattern.PipeToSupport
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkReaderFactory
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{ActivationSteps, MaterializationSteps}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Data._

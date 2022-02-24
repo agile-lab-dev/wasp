@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.producers
 
 import it.agilelab.bigdata.wasp.models.ProducerModel
-import org.mongodb.scala.bson.BsonObjectId
 
 object NifiProducerModel {
 

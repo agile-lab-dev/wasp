@@ -3,7 +3,7 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import java.util.{Properties, UUID}
 
-import akka.actor.{Actor, Cancellable, Props}
+import akka.actor.{Actor, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutcome
@@ -97,9 +97,11 @@ class TelemetryActor private() extends Actor {
 
   }
 
+  @com.github.ghik.silencer.silent("deprecated")
   private def toMessage(message: Any): String = {
     message match {
-      case data: Map[String, Any] => JSONObject(data).toString(JSONFormat.defaultFormatter)
+      case data: Map[_, _] => 
+        JSONObject(data.asInstanceOf[Map[String, Any]]).toString(JSONFormat.defaultFormatter)
       case data: TelemetryMessageSourcesSummary => data.toJson.toString()
     }
   }
@@ -175,7 +177,7 @@ class TelemetryActor private() extends Actor {
 
     implicit val ec: ExecutionContextExecutor = context.system.dispatcher
 
-    val cancellable = context.system.scheduler.schedule(
+    val _ = context.system.scheduler.schedule(
       FiniteDuration(5, TimeUnit.SECONDS),
       FiniteDuration(5, TimeUnit.SECONDS),
       mediator,

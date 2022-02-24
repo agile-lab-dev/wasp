@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.CdcProduct
 import it.agilelab.bigdata.wasp.models._
-import it.agilelab.bigdata.wasp.repository.core.bl.{CdcBL, ConfigBL, RawBL}
+import it.agilelab.bigdata.wasp.repository.core.bl.{CdcBL, ConfigBL}
 import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession

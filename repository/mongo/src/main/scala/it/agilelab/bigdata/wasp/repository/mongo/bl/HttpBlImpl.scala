@@ -1,14 +1,12 @@
 package it.agilelab.bigdata.wasp.repository.mongo.bl
 
-import it.agilelab.bigdata.wasp.models.{HttpCompression, HttpModel}
+import it.agilelab.bigdata.wasp.models.HttpModel
 import it.agilelab.bigdata.wasp.repository.core.bl.HttpBL
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{HttpDBModel, HttpDBModelV1}
 import it.agilelab.bigdata.wasp.repository.core.mappers.HttpDBModelMapperSelector.factory
 import it.agilelab.bigdata.wasp.repository.core.mappers.HttpMapperV1.transform
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
-import org.mongodb.scala.bson.{BsonDocument, BsonString}
-
-import scala.collection.JavaConverters._
+import org.mongodb.scala.bson.BsonString
 
 case class HttpBlImpl(waspDB: WaspMongoDB) extends HttpBL {
 

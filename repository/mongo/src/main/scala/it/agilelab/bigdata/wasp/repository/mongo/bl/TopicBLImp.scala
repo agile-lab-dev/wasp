@@ -4,7 +4,6 @@ import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{MultiTopicDBModel, MultiTopicDBModelV1, TopicDBModel, TopicDBModelV1}
 import it.agilelab.bigdata.wasp.repository.core.mappers.MultiTopicModelMapperV1
-import it.agilelab.bigdata.wasp.repository.core.mappers.TopicDBModelMapperSelector.applyMap
 import it.agilelab.bigdata.wasp.repository.core.mappers.TopicMapperV1.transform
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.mongodb.scala.bson.{BsonDocument, BsonString}

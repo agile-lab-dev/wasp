@@ -1,9 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import it.agilelab.bigdata.wasp.models.{FreeCodeModel, MlModelOnlyInfo}
 import it.agilelab.bigdata.wasp.repository.mongo.bl.MlModelBLImp
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class MlModelBLImplTest extends FlatSpec with Matchers {

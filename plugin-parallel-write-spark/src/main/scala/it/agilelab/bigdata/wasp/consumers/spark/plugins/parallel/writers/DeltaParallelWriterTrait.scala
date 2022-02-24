@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers
 import io.delta.tables.DeltaTable
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.GlueDataCatalogService
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.delta.DeltaTableUtils
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}

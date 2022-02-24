@@ -66,7 +66,7 @@ class Compiler {
 
   protected val compiler = new Global(settings, reporter)
 
-  private def jarPathOfClass(className: String) = try {
+  private def jarPathOfClass(className: String) = {
     val resource = className.split('.').mkString("/", "/", ".class")
     val path = getClass.getResource(resource).getPath
     val indexOfFile = path.indexOf("file:") + 5

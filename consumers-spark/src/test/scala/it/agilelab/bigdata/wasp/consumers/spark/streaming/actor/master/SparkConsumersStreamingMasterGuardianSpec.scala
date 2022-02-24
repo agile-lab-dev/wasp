@@ -5,9 +5,9 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorSystem
 import akka.cluster.Cluster
-import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.collaborator.CollaboratorActor
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SchedulingStrategy.SchedulingStrategyOutcome
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -51,7 +51,6 @@ class SparkConsumersStreamingMasterGuardianSpec
   import SparkConsumersStreamingMasterGuardian._
 
   import State._
-  import Data._
   import Protocol._
 
   import scala.concurrent.duration._
@@ -378,6 +377,8 @@ class SparkConsumersStreamingMasterGuardianSpec
 
     "Do not forget unschedulables when restarting" in {
 
+
+      @com.github.ghik.silencer.silent("never used")
       class MySchedulingStrategyForTestsFactory extends SchedulingStrategyFactory {
 
         override def create: SchedulingStrategy = new SchedulingStrategy {
@@ -815,7 +816,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       transitionProbe.send(fsm, SubscribeTransitionCallBack(transitionProbe.ref))
 
-      val collaborator = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-a10")
+      val _ = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-a10")
 
       transitionProbe.receiveWhile() {
         case CurrentState(_, Idle) =>
@@ -893,7 +894,7 @@ class SparkConsumersStreamingMasterGuardianSpec
 
       transitionProbe.send(fsm, SubscribeTransitionCallBack(transitionProbe.ref))
 
-      val collaborator = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-11")
+      val _ = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-11")
 
       transitionProbe.receiveWhile() {
         case CurrentState(_, Idle) =>

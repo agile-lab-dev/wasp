@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.catalog
 import com.squareup.okhttp.mockwebserver.{Dispatcher, MockResponse, RecordedRequest}
 import com.typesafe.config.ConfigException
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{CatalogCoordinates, MicroserviceCatalogService}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.{Entity, ParallelWriteEntity, ParallelWriteFormat, WriteExecutionPlanRequestBody, WriteExecutionPlanResponseBody}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity._
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.catalog.builders.mockbuilders._
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.ParallelWriteTestUtils.withServer
 import org.scalatest.FunSuite
@@ -29,27 +29,27 @@ class MicroserviceCatalogBuilderSpec extends FunSuite{
   test("Wrong catalog class") {
     withServer(dispatcher) { serverData =>
       var service: MicroserviceCatalogService = null
-      an[ConfigException] should be thrownBy (
+      an[ConfigException] should be thrownBy {
         service = WrongConfigurationPathBuilder.getMicroserviceCatalogService()
-        )
+      }
     }
   }
 
   test("Not existing catalog service class") {
     withServer(dispatcher) { serverData =>
       var service: MicroserviceCatalogService = null
-      an[ClassNotFoundException] should be thrownBy (
+      an[ClassNotFoundException] should be thrownBy {
         service = NotExistingServiceBuilder.getMicroserviceCatalogService()
-        )
+      }
     }
   }
 
   test("Try to instantiate service with no base constructor") {
     withServer(dispatcher) { serverData =>
       var service: MicroserviceCatalogService = null
-      an[InstantiationException] should be thrownBy (
+      an[InstantiationException] should be thrownBy {
         service = ParameterBuilder.getMicroserviceCatalogService()
-        )
+      }
     }
   }
   def dispatcher(latch: CountDownLatch): Dispatcher =

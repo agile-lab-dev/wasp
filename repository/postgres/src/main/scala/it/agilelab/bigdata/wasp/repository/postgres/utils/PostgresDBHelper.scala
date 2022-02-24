@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.repository.postgres.utils
 
-import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Statement}
-
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import org.postgresql.util.PGobject
 import spray.json.JsValue
+
+import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 
 trait PostgresDBHelper extends ConnectionSupport with ConnectionInfoProvider with Logging{
 
@@ -80,10 +80,10 @@ trait PostgresDBHelper extends ConnectionSupport with ConnectionInfoProvider wit
 
 
 
-  private def executeQuery[S](query: String,values:Array[Any]=Array.empty)(mapper: (ResultSet) => S) : Seq[S]= {
+  private def executeQuery[S](query: String, values : Array[Any])(mapper: (ResultSet) => S) : Seq[S]= {
     sqlExecution() { connection =>
         logger.debug(s"Executing the postgres query : $query;")
-        resultSetInterator[S](definePreparedStatement(connection,query,values).executeQuery(),mapper)
+        resultSetInterator[S](definePreparedStatement(connection, query, values).executeQuery(),mapper)
     }
   }
 
@@ -125,18 +125,6 @@ trait PostgresDBHelper extends ConnectionSupport with ConnectionInfoProvider wit
   protected def dropTable(table : String) : Unit = {
     execute(s"DROP TABLE IF EXISTS $table")
   }
-
-  private def format(value : Any): String = {
-    if(value.isInstanceOf[String]) s"'$value'"
-    else if (value.isInstanceOf[Long] ||
-      value.isInstanceOf[Int] ||
-      value.isInstanceOf[Double] ||
-      value.isInstanceOf[Float] ||
-      value.isInstanceOf[Boolean] ) value.toString
-    else if (value == null) null
-    else throw new Exception(s"Problem to map ${value} into a string : it is a ${value.getClass.getSimpleName}")
-  }
-
 
   protected def delete(table : String, whereCondition : Option[Array[(String,Any)]]=None) : Unit = {
     val where = whereCondition.map(w=>  s" WHERE ${w.map(e=> s"${e._1}=?").mkString(" AND ")} ").getOrElse("")

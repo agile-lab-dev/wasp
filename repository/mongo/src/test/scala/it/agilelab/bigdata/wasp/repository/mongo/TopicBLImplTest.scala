@@ -1,12 +1,9 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
-import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.models.{MultiTopicModel, TopicCompression, TopicModel}
-import it.agilelab.bigdata.wasp.repository.core.mappers.TopicMapperV1
 import it.agilelab.bigdata.wasp.repository.mongo.bl.TopicBLImp
 import org.mongodb.scala.bson.BsonDocument
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers, Tag}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 
 @DoNotDiscover

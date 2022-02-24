@@ -22,13 +22,14 @@ import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.mapreduce.InputFormat
 import org.apache.spark.rdd.NewHadoopRDD
 import org.apache.spark.{InterruptibleIterator, Partition, SparkContext, TaskContext}
+import scala.annotation.meta.param
 
 @InterfaceAudience.Public
-class NewHBaseRDD[K,V](@transient sc : SparkContext,
-                       @transient inputFormatClass: Class[_ <: InputFormat[K, V]],
-                       @transient keyClass: Class[K],
-                       @transient valueClass: Class[V],
-                   @transient conf: Configuration,
+class NewHBaseRDD[K,V](@(transient @param) sc : SparkContext,
+                       @(transient @param) inputFormatClass: Class[_ <: InputFormat[K, V]],
+                       @(transient @param) keyClass: Class[K],
+                       @(transient @param) valueClass: Class[V],
+                   @(transient @param) conf: Configuration,
                    val hBaseContext: HBaseContext) extends NewHadoopRDD(sc,inputFormatClass, keyClass, valueClass, conf) {
 
   override def compute(theSplit: Partition, context: TaskContext): InterruptibleIterator[(K, V)] = {

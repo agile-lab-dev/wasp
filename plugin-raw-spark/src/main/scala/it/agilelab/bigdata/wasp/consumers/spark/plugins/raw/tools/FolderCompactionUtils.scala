@@ -5,7 +5,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools.WhereCondition
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.bson.BsonString
 
 import scala.collection.JavaConverters._
 

@@ -7,8 +7,7 @@ import it.agilelab.bigdata.wasp.models.RawModel
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.DataStreamWriter
-import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 class RawSparkStructuredStreamingWriter(hdfsModel: RawModel, ss: SparkSession)
     extends SparkStructuredStreamingWriter

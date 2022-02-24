@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.catalog.
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.Entity
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{CatalogCoordinates, MicroserviceCatalogService, entity}
 
-import java.net.{URI, URL}
+import java.net.URL
 
 class ParameterConstructorService(param: String) extends MicroserviceCatalogService {
   override def getMicroservice(coordinates: CatalogCoordinates): Entity = coordinates.name match {

@@ -4,8 +4,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import org.apache.spark.sql.functions.{array, lit, struct}
 import org.apache.spark.sql.{DataFrame, Encoders}
 
-import scala.util.Random
-
 class TestToKafkaPlainStrategy extends Strategy {
   /**
     *

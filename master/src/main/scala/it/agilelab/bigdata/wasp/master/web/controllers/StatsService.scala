@@ -1,13 +1,11 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.time.Instant
-import java.util.Date
-
-import it.agilelab.bigdata.wasp.core.{SolrLoggerIndex, SolrTelemetryIndexModel}
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.SolrEventIndex
+import it.agilelab.bigdata.wasp.core.{SolrLoggerIndex, SolrTelemetryIndexModel}
 import it.agilelab.bigdata.wasp.models.{CountEntry, Counts}
 import org.apache.solr.client.solrj.response.QueryResponse
 
+import java.time.Instant
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}

@@ -12,7 +12,6 @@ import it.agilelab.bigdata.wasp.producers.{ProducerGuardian, StartMainTask}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.FiniteDuration
-import scala.language.implicitConversions
 
 /**
   * @author Eugenio Liso

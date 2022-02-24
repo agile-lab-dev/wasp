@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.producers
 
 import java.io.File
-import java.nio.file.{Files, Path, Paths}
 import java.util.Base64
 
 import akka.actor.Actor
@@ -42,7 +41,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
 
       if (nifiProducerConf.isDefined) {
         val uri = getUriFromConfiguration(nifiProducerConf.get)
-        val res = httpRequest(uri, request, httpMethod)
+        val _ = httpRequest(uri, request, httpMethod)
         sender() ! Right(())
       }
   }
@@ -58,7 +57,7 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
           val modelFile = ConfigBL.mlModelBL.getFileByID(mlModel.get)
           val encodedModel: Option[String] = Some(Base64.getEncoder().encodeToString(modelFile.get))
           val file = new File("/root/wasp/models/encodedModel")
-          FileUtils.writeStringToFile(file, encodedModel.get)
+          FileUtils.writeStringToFile(file, encodedModel.get, "UTF-8")
           NifiRequest(action, conf.id, conf.child, encodedModel).toJson
 
         }

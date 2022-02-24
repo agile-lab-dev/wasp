@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.repository.core.bl
 
-import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
 import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel}
 
 trait BatchJobInstanceBL {

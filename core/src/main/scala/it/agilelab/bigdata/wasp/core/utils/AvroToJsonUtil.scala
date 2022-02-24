@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.core.utils
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models.{SubjectStrategy, TopicModel}
+import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import org.apache.avro.Schema
 

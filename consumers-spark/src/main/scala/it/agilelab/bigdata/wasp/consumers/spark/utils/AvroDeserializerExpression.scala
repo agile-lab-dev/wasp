@@ -115,9 +115,6 @@ case class AvroDeserializerExpression(
 
     val defaultValue = CodeGenerator.defaultValue(dataType, typedNull = true)
 
-    val byteBufferClassName = classOf[ByteBuffer].getName
-
-    val genericDataArrayClassName = classOf[GenericData.Array[_]].getName
     ev.copy(
       code = code"""
             |${childEval.code}

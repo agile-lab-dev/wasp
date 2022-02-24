@@ -21,8 +21,8 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.hadoop.hbase.spark.datasources.AvroSerdes
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
-import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
  * @param col0 Column #0, Type is String
@@ -96,13 +96,11 @@ object AvroSource {
 
   def main(args: Array[String]) {
     val sparkConf = new SparkConf().setAppName("AvroSourceExample")
-    val sc = new SparkContext(sparkConf)
-    val sqlContext = new SQLContext(sc)
-
-    import sqlContext.implicits._
+    val ss = SparkSession.builder().config(sparkConf).getOrCreate()
+    import ss.implicits._
 
     def withCatalog(cat: String): DataFrame = {
-      sqlContext
+      ss
         .read
         .options(Map("avroSchema" -> AvroHBaseRecord.schemaString, HBaseTableCatalog.tableCatalog -> avroCatalog))
         .format("org.apache.hadoop.hbase.spark")
@@ -113,7 +111,7 @@ object AvroSource {
       AvroHBaseRecord(i)
     }
 
-    sc.parallelize(data).toDF.write.options(
+    ss.sparkContext.parallelize(data).toDF.write.options(
       Map(HBaseTableCatalog.tableCatalog -> catalog, HBaseTableCatalog.newTable -> "5"))
       .format("org.apache.hadoop.hbase.spark")
       .save()
@@ -121,8 +119,8 @@ object AvroSource {
     val df = withCatalog(catalog)
     df.show()
     df.printSchema()
-    df.registerTempTable("ExampleAvrotable")
-    val c = sqlContext.sql("select count(1) from ExampleAvrotable")
+    df.createOrReplaceTempView("ExampleAvrotable")
+    val c = ss.sqlContext.sql("select count(1) from ExampleAvrotable")
     c.show()
 
     val filtered = df.select($"col0", $"col1.favorite_array").where($"col0" === "name001")

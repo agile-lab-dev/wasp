@@ -398,7 +398,7 @@ class MultiMasterSpec
 
                 val hostingSingleton = whoIsRunningTheSingletonProbe.expectMsgType[UniqueAddress]
 
-                val nodeToPipegraph = multiple(6) {
+                multiple(6) {
                   probe.expectMsgPF() {
                     case HelperEnvelope(
                     address,

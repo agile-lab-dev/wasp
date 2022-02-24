@@ -20,6 +20,7 @@ class ElasticsearchSparkBatchReader(indexModel: IndexModel) extends SparkBatchRe
   val name: String = indexModel.name
   val readerType: String = ElasticProduct.getActualProductName
 
+  @com.github.ghik.silencer.silent("deprecated")
   override def read(sc: SparkContext): DataFrame = {
 
     val address = elasticConfig.connections

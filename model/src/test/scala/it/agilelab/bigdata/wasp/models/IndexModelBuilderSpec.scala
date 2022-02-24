@@ -4,6 +4,7 @@ import spray.json.JsObject
 import org.scalatest.WordSpec
 import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
+@com.github.ghik.silencer.silent("never used")
 class IndexModelBuilderSpec extends WordSpec {
 
 
