@@ -1,10 +1,9 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import it.agilelab.bigdata.wasp.models.{CdcModel, CdcOptions}
 import it.agilelab.bigdata.wasp.repository.mongo.bl.CdcBLImp
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
+import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class CdcBLImplTest extends FlatSpec with Matchers{

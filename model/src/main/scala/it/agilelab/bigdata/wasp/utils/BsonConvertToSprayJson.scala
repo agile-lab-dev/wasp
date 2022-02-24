@@ -81,6 +81,7 @@ class TopicDatastoreModelJsonFormat
     override def read(json: JsValue): TopicCompression =
       json match {
         case JsString(value) => TopicCompression.fromString(value)
+        case other => throw new RuntimeException(s"Cannot parse topic compression from $other")
       }
   }
 
@@ -91,6 +92,7 @@ class TopicDatastoreModelJsonFormat
     override def read(json: JsValue): SubjectStrategy =
       json match {
         case JsString(value) => SubjectStrategy.fromString(value)
+        case other => throw new RuntimeException(s"Cannot parse subject strategy from $other")
       }
   }
 
@@ -132,6 +134,7 @@ trait JsonSupport
         DateTimeFormatter.ISO_INSTANT.parse(value, new TemporalQuery[Instant] {
           override def queryFrom(temporal: TemporalAccessor): Instant = Instant.from(temporal)
         })
+      case other => throw new RuntimeException(s"Cannot parse Instant from $other")
     }
   }
   implicit lazy val batchSchedulerModelFormat: RootJsonFormat[BatchSchedulerModel] = jsonFormat5(BatchSchedulerModel.apply)
@@ -172,6 +175,7 @@ trait JsonSupport
     override def read(json: JsValue): HttpCompression =
       json match {
         case JsString(value) => HttpCompression.fromString(value)
+        case other => throw new RuntimeException(s"Cannot parse http compression format from $other")
       }
   }
   implicit lazy val httpModelFormat: RootJsonFormat[HttpModel] = jsonFormat9(HttpModel.apply)

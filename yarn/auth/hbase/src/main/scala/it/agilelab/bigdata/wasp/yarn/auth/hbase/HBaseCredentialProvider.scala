@@ -19,6 +19,7 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 
   override def serviceName: String = "wasp-hbase"
 
+  @com.github.ghik.silencer.silent("deprecated")
   override def obtainCredentials(hadoopConf: Configuration, sparkConf: SparkConf, creds: Credentials): Option[Long] = {
 
     val providerConfig: HbaseCredentialsProviderConfiguration = HbaseCredentialsProviderConfiguration.fromSpark(sparkConf)

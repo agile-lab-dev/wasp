@@ -15,8 +15,12 @@ trait ConfigurationSupport {
     TelemetryPluginConfiguration(interval, TelemetryMetadataProducerConfig(telemetry, kafka))
   }
 
+  private lazy val telemetry = parseTelemetry()
 
-  private lazy val telemetry = {
+  private lazy val kafka = parseKafka()
+
+  @com.github.ghik.silencer.silent("deprecated")
+  private def parseTelemetry() = {
     val telemetryConfigJSON = new String(Base64.getUrlDecoder.decode(System.getProperty("wasp.plugin.telemetry.topic")), StandardCharsets.UTF_8)
     val telemetryConfig = JSON.parseFull(telemetryConfigJSON)
 
@@ -46,7 +50,8 @@ trait ConfigurationSupport {
       jmx = jmx)
   }
 
-  private lazy val kafka = {
+  @com.github.ghik.silencer.silent("deprecated")
+  private def parseKafka() = {
     val kafkaTinyConfigJSON = new String(Base64.getUrlDecoder.decode(System.getProperty("wasp.plugin.telemetry.kafka")), StandardCharsets.UTF_8)
     val kafkaTinyConfig = JSON.parseFull(kafkaTinyConfigJSON)
     val kk = kafkaTinyConfig.get.asInstanceOf[Map[String, Any]]

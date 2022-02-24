@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.WaspSystem.??
 import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
-import it.agilelab.bigdata.wasp.models.MultiTopicModel.{areTopicsHealthy, TopicCompressionValidationError}
+import it.agilelab.bigdata.wasp.models.MultiTopicModel.areTopicsHealthy
 import it.agilelab.bigdata.wasp.models.configuration.TinyKafkaConfig
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL

@@ -1,27 +1,11 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
-import it.agilelab.bigdata.wasp.models.{
-  DatastoreModel,
-  FreeCodeModel,
-  IndexModel,
-  KeyValueModel,
-  PipegraphModel,
-  ProcessGroupModel,
-  RawModel,
-  StrategyModel,
-  TopicModel
-}
-import it.agilelab.bigdata.wasp.models.editor.{
-  ErrorDTO,
-  FlowNifiDTO,
-  NifiStatelessInstanceModel,
-  PipegraphDTO,
-  ProcessGroupResponse
-}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
+import it.agilelab.bigdata.wasp.models.PipegraphModel
+import it.agilelab.bigdata.wasp.models.editor._
 import it.agilelab.bigdata.wasp.utils.JsonSupport
-import org.json4s.JsonAST.{JObject}
+import org.json4s.JsonAST.JObject
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json._
 
@@ -201,7 +185,7 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
       |}
       |""".stripMargin
 
-    lazy val data: PipegraphDTO = implicitly[RootJsonFormat[PipegraphDTO]].read(spray.json.JsonParser(json))
+    val _: PipegraphDTO = implicitly[RootJsonFormat[PipegraphDTO]].read(spray.json.JsonParser(json))
   }
 
   it should "Parse the following json as PipegraphDTO" in {
@@ -274,16 +258,9 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
 
     lazy val data: PipegraphDTO = implicitly[RootJsonFormat[PipegraphDTO]].read(spray.json.JsonParser(json))
 
-    val strategyJson: String = data.structuredStreamingComponents
-      .filter(_.name == "etl_event-topic.topic_My NiFI Code_multitopic_plaintext")
-      .head
-      .strategy
-      .asInstanceOf[FlowNifiDTO]
-      .processGroup
-
     lazy val pipegraph: Either[List[ErrorDTO], PipegraphModel] = pipegraphEditorService.toPipegraphModel(data)
 
-    pipegraph shouldBe a [Left[List[ErrorDTO], PipegraphModel]]
+    pipegraph shouldBe a [Left[_, _]]
     data shouldBe a [PipegraphDTO]
   }
 
@@ -306,7 +283,6 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
   }
 
   it should "parse NIFI document" in {
-    import spray.json._
     val json = """{
                  |      "id":"6c919184-0173-1000-257c-b93f600c0774",
                  |      "content":{

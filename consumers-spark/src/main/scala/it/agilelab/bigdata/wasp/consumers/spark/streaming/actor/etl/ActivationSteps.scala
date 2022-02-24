@@ -96,20 +96,6 @@ trait ActivationSteps {
     } yield transformedStream
 
   /**
-    * Retries a [[TopicModel]] by name from DB
-    *
-    * @param named The name of the topic
-    * @return The retrieved [[TopicModel]]
-    */
-  private def retrieveTopic(named: String) =
-    Try {
-      topicsBl.getByName(named)
-    } flatMap {
-      case Some(topicModel) => Success(topicModel)
-      case None             => Failure(new Exception(s"Failed to retrieve topic named [$named]"))
-    }
-
-  /**
     * Creates structured stream for a streaming source
     *
     * @param etl                  The etl to activate streaming sources for

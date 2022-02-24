@@ -1,8 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.postgres.bl
 
 import it.agilelab.bigdata.wasp.models.SqlSourceModel
-import it.agilelab.bigdata.wasp.models.configuration.{JdbcPartitioningInfo, PostgresDBConfigModel}
-import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
+import it.agilelab.bigdata.wasp.models.configuration.JdbcPartitioningInfo
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait SqlSourceBlImplTest {

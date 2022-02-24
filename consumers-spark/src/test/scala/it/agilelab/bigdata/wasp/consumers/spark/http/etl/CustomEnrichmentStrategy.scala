@@ -4,7 +4,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{EnrichmentStrategy, 
 import it.agilelab.bigdata.wasp.consumers.spark.http.Enricher
 import it.agilelab.bigdata.wasp.consumers.spark.http.data.{FromKafka, SampleData}
 import org.apache.spark.sql.{DataFrame, Dataset}
-import it.agilelab.bigdata.wasp.consumers.spark.enrichment.enrichmentPipegraph
 
 import scala.collection.immutable.Map
 

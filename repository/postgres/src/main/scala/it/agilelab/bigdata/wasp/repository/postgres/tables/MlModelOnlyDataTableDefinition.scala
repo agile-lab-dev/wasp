@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.repository.postgres.tables
 
-import java.sql.ResultSet
-
 import org.bson.types.ObjectId
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
-import spray.json.{JsValue, _}
+import spray.json._
+
+import java.sql.ResultSet
 
 object MlModelOnlyDataTableDefinition extends TableDefinition[(BsonObjectId,String,BsonDocument,Array[Byte]),BsonObjectId] {
 

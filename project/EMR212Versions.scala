@@ -54,7 +54,7 @@ class EMR212Versions {
   lazy val postgresqlVersion         = "42.2.5"
   lazy val quartz                    = "2.3.0"
   lazy val reflectionsVersion        = "0.9.11"
-  lazy val scala                     = "2.12.8"
+  lazy val scala                     = "2.12.10"
   lazy val scalaCheck                = "1.13.5"
   lazy val scalaParserAndCombinators = "1.0.4"
   lazy val scalaPool                 = "0.4.3"

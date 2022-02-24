@@ -2,7 +2,6 @@ package it.agilelab.bigdata.wasp.master.security
 
 import akka.http.extension.{ApiKeyCredentials, SecurityUtils}
 import akka.http.scaladsl.model.headers.{HttpChallenges, HttpCredentials}
-import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.{AuthenticationFailedRejection, Directive1}
 import akka.http.scaladsl.server.Directives.{AsyncAuthenticator, AuthenticationResult}
 import akka.http.scaladsl.server.directives.{AuthenticationDirective, AuthenticationResult, Credentials}

@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 import com.sksamuel.avro4s.{AvroOutputStream, AvroSchema}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.topicNameToColumnName
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
-import it.agilelab.bigdata.wasp.models.{MultiTopicModel, TopicCompression, TopicModel}
+import it.agilelab.bigdata.wasp.models.{TopicCompression, TopicModel}
 import org.apache.spark.sql.functions._
 import org.bson.BsonDocument
 import org.scalatest.FlatSpec

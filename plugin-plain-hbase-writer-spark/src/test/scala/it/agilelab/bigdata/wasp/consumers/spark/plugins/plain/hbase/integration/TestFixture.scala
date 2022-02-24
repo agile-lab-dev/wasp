@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpec}
+import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 
 import java.io.File
 

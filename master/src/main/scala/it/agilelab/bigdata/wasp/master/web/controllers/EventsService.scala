@@ -1,12 +1,11 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.time.Instant
-import java.util.Date
-
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.SolrEventIndex
 import it.agilelab.bigdata.wasp.models.{EventEntry, Events}
 import org.apache.solr.client.solrj.util.ClientUtils
 
+import java.time.Instant
+import java.util.Date
 import scala.concurrent.{ExecutionContext, Future}
 
 trait EventsService {

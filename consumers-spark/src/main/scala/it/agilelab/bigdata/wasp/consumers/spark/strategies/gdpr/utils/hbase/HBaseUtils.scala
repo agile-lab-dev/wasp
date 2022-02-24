@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.utils.hbase
 
-import java.nio.charset.StandardCharsets
-
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.{Connection, Delete, Table}
 

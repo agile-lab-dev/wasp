@@ -1,16 +1,13 @@
 package it.agilelab.bigdata.wasp.repository.postgres.bl
 
-import java.sql.ResultSet
-
-import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
-import it.agilelab.bigdata.wasp.repository.postgres.tables.MlModelOnlyInfoTableDefinition.{name, timestamp, version}
-import it.agilelab.bigdata.wasp.repository.postgres.tables.MlModelOnlyInfoTableDefinition
 import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
 import it.agilelab.bigdata.wasp.repository.core.bl.MlModelBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{MlModelOnlyDataTableDefinition, MlModelOnlyInfoTableDefinition, TableDefinition}
 import org.bson.types.ObjectId
-import org.mongodb.scala.bson.{BsonDocument, BsonObjectId, BsonValue}
+import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
+
+import java.sql.ResultSet
 
 case class MlModelBLImpl(waspDB: WaspPostgresDB) extends MlModelBL with PostgresBL{
 
@@ -40,7 +37,7 @@ case class MlModelBLImpl(waspDB: WaspPostgresDB) extends MlModelBL with Postgres
     * @return
     */
   override def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Option[MlModelOnlyInfo] =
-    waspDB.getByPrimaryKey(name,version,timestamp)(tableDefinition)
+    waspDB.getByPrimaryKey(Tuple3(name,version,timestamp))(tableDefinition)
 
 
   /**
@@ -80,10 +77,10 @@ case class MlModelBLImpl(waspDB: WaspPostgresDB) extends MlModelBL with Postgres
     val infoOptFuture: Option[MlModelOnlyInfo] = getMlModelOnlyInfo(name, version, timestamp)
     infoOptFuture.foreach(info => {
       if (info.modelFileId.isDefined) {
-        waspDB.deleteByPrimaryKey(name,version,timestamp)
+        waspDB.deleteByPrimaryKey(Tuple3(name,version,timestamp))
         waspDB.deleteByPrimaryKey(info.modelFileId.get)(tableData)
       } else {
-        waspDB.deleteByPrimaryKey(name,version,timestamp)
+        waspDB.deleteByPrimaryKey(Tuple3(name,version,timestamp))
       }
     })
   }

@@ -1,12 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
-import it.agilelab.bigdata.wasp.models.IndexModelBuilder.{Elastic, Solr}
-import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
-import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder}
+import it.agilelab.bigdata.wasp.models.IndexModel
 import it.agilelab.bigdata.wasp.repository.mongo.bl.IndexBLImp
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
-import spray.json.{JsObject, JsString, JsValue}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class IndexBLImplTest extends FlatSpec with Matchers {

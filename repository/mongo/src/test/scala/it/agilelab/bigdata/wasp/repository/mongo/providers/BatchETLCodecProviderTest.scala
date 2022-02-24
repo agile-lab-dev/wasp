@@ -1,19 +1,18 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
-import java.util
-import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchGdprETLModel, BatchJobExclusionConfig, BatchJobModel, ContainsRawMatchingStrategy, DataStoreConf, ExactKeyValueMatchingStrategy, ExactRawMatchingStrategy, KeyValueDataStoreConf, KeyValueModel, MlModelOnlyInfo, NoPartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawModel, RawOptions, ReaderModel, StrategyModel, TimeBasedBetweenPartitionPruningStrategy, WriterModel}
-import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecProviders.{DataStoreConfCodecProvider, KeyValueDataStoreConfCodecProvider, KeyValueMatchingStrategyCodecProvider, PartitionPruningStrategyCodecProvider, RawDataStoreConfCodecProvider, RawMatchingStrategyCodecProvider}
-import it.agilelab.bigdata.wasp.repository.mongo.providers.VersionedRegistry.{KeyValueProvider, RawDBProvider}
+import it.agilelab.bigdata.wasp.models._
+import it.agilelab.bigdata.wasp.repository.mongo.providers.VersionedRegistry.RawDBProvider
 import org.apache.spark.sql.types._
 import org.bson.BsonDocumentWriter
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.{DecoderContext, EncoderContext}
-import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.bson.codecs.Macros.{createCodecProvider, createCodecProviderIgnoreNone}
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.codecs.Macros.createCodecProviderIgnoreNone
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 import org.scalatest.FunSuite
 
+import java.util
 import scala.collection.JavaConverters._
 
 class BatchETLCodecProviderTest extends FunSuite {
@@ -112,8 +111,6 @@ class BatchETLCodecProviderTest extends FunSuite {
 
     val writer = new BsonDocumentWriter(new BsonDocument("_id", new BsonObjectId))
     registry.get(classOf[BatchJobModel]).encode(writer, model, EncoderContext.builder().isEncodingCollectibleDocument(true).build())
-
-    val doc = writer.getDocument
 
     val reader = writer.getDocument.asBsonReader()
     val modelDecoded = registry.get(classOf[BatchJobModel]).decode(reader, DecoderContext.builder.build())

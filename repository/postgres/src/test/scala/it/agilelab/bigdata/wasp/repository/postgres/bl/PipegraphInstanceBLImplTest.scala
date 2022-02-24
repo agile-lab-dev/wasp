@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.repository.postgres.bl
 
-import it.agilelab.bigdata.wasp.repository.postgres.tables.PipegraphInstanceTableDefinition
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphStatus}
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 

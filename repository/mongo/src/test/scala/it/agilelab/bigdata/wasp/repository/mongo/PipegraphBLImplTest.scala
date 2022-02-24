@@ -1,11 +1,9 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
-import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.mongo.bl.{PipegraphBLImp, PipegraphInstanceBlImp}
 import org.bson.BsonDocument
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class PipegraphBLImplTest extends FlatSpec with Matchers{
@@ -24,7 +22,6 @@ class PipegraphBLImplTest extends FlatSpec with Matchers{
       List.empty,
       WriterModel.consoleWriter("console"),
       List.empty, None, Some(10))
-    val rtModel = RTModel("model", List(ReaderModel.hbaseReader("made", KeyValueModel("hbase", "catalog", None, None, false, None))), true, None, None)
     val model2 = PipegraphModel("name2", "description", "tester", true, 10L, List(etl), None)
     bl.insert(model2)
 

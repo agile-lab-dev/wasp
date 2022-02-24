@@ -1,13 +1,12 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.time.Instant
-import java.util.Date
-
-import it.agilelab.bigdata.wasp.models.Logs
 import it.agilelab.bigdata.wasp.core.SolrLoggerIndex
 import it.agilelab.bigdata.wasp.models
+import it.agilelab.bigdata.wasp.models.Logs
 import org.apache.solr.client.solrj.util.ClientUtils
 
+import java.time.Instant
+import java.util.Date
 import scala.concurrent.{ExecutionContext, Future}
 
 trait LogsService {

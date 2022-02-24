@@ -1,13 +1,12 @@
 package it.agilelab.bigdata.wasp.whitelabel.producers.test
 
-import java.util.UUID
 
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.models.{MetadataModel, PathModel, TopicModel}
 import it.agilelab.bigdata.wasp.producers.{ProducerActor, ProducerGuardian, StartMainTask}
-import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestDocument, TestDocumentWithMetadata, TestNestedDocument}
+import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestDocumentWithMetadata, TestNestedDocument}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContext

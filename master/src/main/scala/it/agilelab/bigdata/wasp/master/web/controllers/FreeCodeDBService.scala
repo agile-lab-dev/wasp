@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.models.FreeCodeModel
+import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 
 trait FreeCodeDBService {
 

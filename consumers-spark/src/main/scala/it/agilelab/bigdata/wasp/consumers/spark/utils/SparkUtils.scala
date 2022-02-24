@@ -1,17 +1,14 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.io.File
-import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-import com.google.gson.JsonObject
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, NifiStatelessConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
 import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SparkStreamingConfiguration, WaspConfiguration}
 import it.agilelab.bigdata.wasp.models.{PipegraphModel, StructuredStreamingETLModel}
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext, UtilsForwarder}
+import org.apache.spark.{SparkConf, UtilsForwarder}
 
 import scala.io.Source
 

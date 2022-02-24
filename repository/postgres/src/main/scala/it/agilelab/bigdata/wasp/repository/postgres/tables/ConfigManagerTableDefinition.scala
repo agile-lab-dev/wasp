@@ -34,9 +34,8 @@ object ConfigManagerTableDefinition extends SimpleModelTableDefinition[Model] wi
   override protected def fromJsonToModel(json: JsValue): Model = ??? //not used
 
 
-  override val from: ResultSet => Model = rs=> {
+  override val from: ResultSet => Model = rs => {
     val json = rs.getString(payload).parseJson
-    val c = ConfigManager.kafkaConfigName
     rs.getString(name) match {
       case ConfigManager.kafkaConfigName => json.convertTo[KafkaConfigModel]
       case ConfigManager.sparkBatchConfigName => json.convertTo[SparkBatchConfigModel]

@@ -4,9 +4,8 @@ import it.agilelab.bigdata.wasp.consumers.spark.http.request.{JacksonToHttpReque
 import it.agilelab.bigdata.wasp.consumers.spark.http.response.{FromHttpResponse, JacksonFromHttpResponse}
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentSource
 import org.apache.http.HttpResponse
-import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpEntityEnclosingRequestBase}
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder, HttpClients}
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 
 import scala.reflect.ClassTag
 

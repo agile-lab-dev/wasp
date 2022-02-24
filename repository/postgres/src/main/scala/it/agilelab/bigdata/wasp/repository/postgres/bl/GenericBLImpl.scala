@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.repository.postgres.bl
 
-import it.agilelab.bigdata.wasp.models.{GenericModel, HttpModel}
+import it.agilelab.bigdata.wasp.models.GenericModel
 import it.agilelab.bigdata.wasp.repository.core.bl.GenericBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{GenericTableDefinition, TableDefinition}

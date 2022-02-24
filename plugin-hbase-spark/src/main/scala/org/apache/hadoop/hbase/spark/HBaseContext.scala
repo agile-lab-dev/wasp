@@ -30,16 +30,16 @@ import org.apache.hadoop.hbase.mapreduce.{IdentityTableMapper, TableInputFormat,
 import org.apache.hadoop.mapred.JobConf
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SerializableWritable, SparkContext}
-import org.apache.hadoop.hbase.security.token.{TokenUtil, AuthenticationTokenIdentifier => HbaseTokenIdentifier}
+import org.apache.hadoop.hbase.security.token.{AuthenticationTokenIdentifier => HbaseTokenIdentifier}
 import scala.collection.JavaConverters._
 
 import scala.reflect.ClassTag
+import scala.annotation.meta.param
 
 /**
   * HBaseContext is a façade for HBase operations
@@ -50,8 +50,8 @@ import scala.reflect.ClassTag
   * to the working and managing the life cycle of Connections.
   */
 @InterfaceAudience.Public
-class HBaseContext(@transient sc: SparkContext,
-                   @transient val config: Configuration,
+class HBaseContext(@(transient @param) sc: SparkContext,
+                   @(transient @param) val config: Configuration,
                    val tmpHdfsConfgFile: String = null)
   extends Serializable with Logging {
 

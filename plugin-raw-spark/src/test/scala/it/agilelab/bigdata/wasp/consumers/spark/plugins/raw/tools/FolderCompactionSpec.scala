@@ -6,7 +6,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
-import org.apache.spark.sql.{Encoder, Encoders, SparkSession}
+import org.apache.spark.sql.{Encoder, Encoders}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import spray.json._
 
@@ -32,8 +32,8 @@ object FakeJsonFormat extends DefaultJsonProtocol {
 
 class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEach with SparkSuite {
 
-  import FolderCompactionSpec._
   import FakeJsonFormat._
+  import FolderCompactionSpec._
 
   private lazy val fs: FileSystem = FileSystem.getLocal(new Configuration())
   private lazy val testFolder = fs.makeQualified(new Path("./inputFolder"))

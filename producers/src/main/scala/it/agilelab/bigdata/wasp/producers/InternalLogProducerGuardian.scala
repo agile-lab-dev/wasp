@@ -130,6 +130,7 @@ private class InternalLogProducerActor(kafka_router: ActorRef,
     /* We don't have a task here because it's a system pipeline */
   }
 
+  @com.github.ghik.silencer.silent("deprecated")
   override def generateOutputJsonMessage(event: LogEvent) = {
     val all = JSONObject(
       Map(

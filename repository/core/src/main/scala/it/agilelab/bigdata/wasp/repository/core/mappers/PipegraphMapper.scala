@@ -59,27 +59,6 @@ object PipegraphMapperV2 extends Mapper[PipegraphModel, PipegraphDBModelV2] {
 object PipegraphMapperV1 extends Mapper[PipegraphModel, PipegraphDBModelV1] {
   override val version = "pipegraphV1"
 
-  // never used
-  private def fromModelToDBModel(p: PipegraphModel): PipegraphDBModelV1 = {
-    val values      = PipegraphModel.unapply(p).get
-    val makeDBModel = (PipegraphDBModelV1.apply _).tupled
-    val t = values match {
-      case (
-          name: String,
-          description: String,
-          owner: String,
-          isSystem: Boolean,
-          creationTime: Long,
-          structuredStreamingComponents: List[StructuredStreamingETLModel],
-          dashboard: Option[DashboardModel],
-          labels: Set[String],
-          enrichmentSources: RestEnrichmentConfigModel
-        ) =>
-        (name, description, owner, isSystem, creationTime, List.empty ,structuredStreamingComponents, List.empty, dashboard, labels, enrichmentSources)
-    }
-    makeDBModel(t)
-  }
-
   override def fromDBModelToModel[B >: PipegraphDBModelV1](p: B): PipegraphModel = {
 
     val values       = PipegraphDBModelV1.unapply(p.asInstanceOf[PipegraphDBModelV1]).get

@@ -1,10 +1,10 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.time.Instant
-
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import it.agilelab.bigdata.wasp.utils.JsonSupport
+
+import java.time.Instant
 
 class EventController(events: EventsService)
     extends Directives

@@ -104,7 +104,6 @@ object WaspSystem extends WaspConfiguration with Logging {
 
       // spawn admin actors
       logger.info("Spawning admin actors")
-      val useNewClient = ConfigManager.conf.getConfig("kafka").getBoolean("use-new-client")
 
       kafkaAdminActor_ =
           actorSystem.actorOf(Props(new NewKafkaAdminActor), NewKafkaAdminActor.name)
@@ -132,9 +131,6 @@ object WaspSystem extends WaspConfiguration with Logging {
       }
 
       logger.info("Connected to services")
-
-      // implicit timeout used below
-      implicit val implicitServicesTimeout = servicesTimeout
 
       // get distributed pub sub mediator
       logger.info("Initializing distributed pub sub mediator")
@@ -170,11 +166,6 @@ object WaspSystem extends WaspConfiguration with Logging {
 
     proxy
   }
-
-  private def startupHBase(wasptimeout: Long) = {
-    //TODO Initialize the HBase configurations and test if It's up
-  }
-
 
   /**
     * Unique global shutdown point.

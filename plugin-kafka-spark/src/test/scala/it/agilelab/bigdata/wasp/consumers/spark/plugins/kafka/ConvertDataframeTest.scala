@@ -98,7 +98,6 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
 
     val resultRows = result.as[KafkaOutput].collect()
     assert(resultRows.size === testDfTopicModelWithDifferentSchemaWithHeaders.collect().size)
-    val forTopicB = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicB)
     val forTopicA = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicA)
 
     assert(forTopicA.head.value === """{"name":"pippo","surname":"franco"}""")

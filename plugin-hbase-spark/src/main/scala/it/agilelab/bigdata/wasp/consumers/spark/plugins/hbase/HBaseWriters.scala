@@ -1,21 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.hbase
 
-import java.io.File
-
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import it.agilelab.bigdata.wasp.repository.core.bl.KeyValueBL
-import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.KeyValueModel
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.hbase.HBaseConfiguration
-import org.apache.hadoop.hbase.client.Put
-import org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf
-import org.apache.hadoop.hbase.spark.{HBaseContext, PutConverterFactory}
+import org.apache.hadoop.hbase.spark.PutConverterFactory
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 import org.apache.spark.sql.streaming.DataStreamWriter
-import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql._
 
 object HBaseBatchWriter {

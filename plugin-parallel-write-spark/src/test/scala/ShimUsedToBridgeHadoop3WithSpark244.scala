@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
-import scala.language.implicitConversions
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hive.common.`type`.HiveDecimal
@@ -49,7 +48,7 @@ import org.apache.spark.sql.internal.StaticSQLConf.{CATALOG_IMPLEMENTATION, WARE
 import org.apache.spark.sql.types._
 import org.apache.spark.util.{ChildFirstURLClassLoader, Utils}
 
-
+@com.github.ghik.silencer.silent("deprecated")
 private[spark] object HiveUtils extends Logging {
 
   def withHiveExternalCatalog(sc: SparkContext): SparkContext = {

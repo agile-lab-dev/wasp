@@ -1,10 +1,9 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.repository.mongo.bl.ProcessGroupBLImpl
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class ProcessGroupBLImplTest extends FlatSpec with Matchers{

@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
 import it.agilelab.bigdata.wasp.models.IndexModel
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{CdcDBModelV1, IndexDBModel, IndexDBModelV1}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{IndexDBModel, IndexDBModelV1}
 
 object IndexDBModelMapperSelector extends MapperSelector[IndexModel, IndexDBModel]
 

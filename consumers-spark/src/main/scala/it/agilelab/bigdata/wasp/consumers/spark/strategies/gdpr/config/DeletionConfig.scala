@@ -226,7 +226,7 @@ object HBaseDeletionConfig extends Logging {
   /* For each key to delete inside the RDD, creates an HBase Scan that matches it exactly with a rowkey */
   private def scanExact(keysToDelete: RDD[RowKeyWithCorrelation], conf: Option[Config]): RDD[(RowKeyWithCorrelation, Scan)] = {
     keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
-      val scan = new Scan(rowKey, rowKey)
+      val scan = new Scan().withStartRow(rowKey).withStopRow(rowKey)
       conf.foreach(ConfigUtils.getOptionalInt(_, BATCH_SIZE).foreach(scan.setBatch))
       rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
@@ -240,7 +240,7 @@ object HBaseDeletionConfig extends Logging {
   /* For each key to delete inside the RDD, creates an HBase Scan that matches any rowkey that has the same prefix of the key to delete */
   private def scanPrefix(keysToDelete: RDD[RowKeyWithCorrelation], conf: Option[Config]): RDD[(RowKeyWithCorrelation, Scan)] = {
     keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
-      val scan = new Scan(rowKey, rowKey ++ Array(Byte.MaxValue))
+      val scan = new Scan().withStartRow(rowKey).withStopRow(rowKey ++ Array(Byte.MaxValue))
       conf.foreach(ConfigUtils.getOptionalInt(_, BATCH_SIZE).foreach(scan.setBatch))
       rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
@@ -271,12 +271,10 @@ object HBaseDeletionConfig extends Logging {
     val startDateBytes = Bytes.toBytes(startDateString)
     val endDateBytes = Bytes.toBytes(endDateString)
     keysToDelete.map { case rowKeyWithCorrelation@RowKeyWithCorrelation(rowKey, _) =>
-      val scan = new Scan()
       val startRow = rowKey ++ Bytes.toBytes(matchingStrategy.separator) ++ startDateBytes :+ 0x00.toByte
       val stopRow = rowKey ++ Bytes.toBytes(matchingStrategy.separator) ++ endDateBytes :+ 0xFF.toByte
       logger.info(s"Scan start: '${new String(startRow, StandardCharsets.UTF_8)}', scan stop: '${new String(stopRow, StandardCharsets.UTF_8)}'")
-      scan.setStartRow(startRow)
-      scan.setStopRow(stopRow)
+      val scan = new Scan().withStartRow(startRow).withStopRow(stopRow)
       rowKeyWithCorrelation -> scan.setFilter(
         new FilterList(
           new KeyOnlyFilter()

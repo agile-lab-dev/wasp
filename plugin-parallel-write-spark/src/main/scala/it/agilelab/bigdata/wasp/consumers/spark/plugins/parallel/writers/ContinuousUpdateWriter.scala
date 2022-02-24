@@ -1,9 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers
 
-import io.delta.tables.DeltaTable
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ContinuousUpdate
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.{DataCatalogService, GlueDataCatalogService}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatalogService
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{col, expr, first}
 import org.apache.spark.sql.types.StructType

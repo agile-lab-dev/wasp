@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.postgres.tables
 
 import it.agilelab.bigdata.wasp.models.Model
-import spray.json.{JsValue, _}
+import spray.json.JsValue
 
 
 

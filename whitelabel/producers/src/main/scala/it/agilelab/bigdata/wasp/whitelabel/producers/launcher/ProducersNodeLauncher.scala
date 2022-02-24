@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.whitelabel.producers.launcher
 
-import akka.actor.Props
 import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.producers.launcher.ProducersNodeLauncherTrait

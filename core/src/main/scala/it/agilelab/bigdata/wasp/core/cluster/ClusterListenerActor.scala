@@ -21,6 +21,7 @@ object ClusterListenerActor {
   val downingTimeout = ConfigManager.getWaspConfig.actorDowningTimeout millisecond
 }
 
+@com.github.ghik.silencer.silent("deprecated")
 class ClusterListenerActor extends Actor with Logging {
 
   val cluster = Cluster(context.system)

@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.strategies
 
 import java.util.Properties
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.eventengine.{FakeData, SparkSetup}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{FlatSpec, Matchers}

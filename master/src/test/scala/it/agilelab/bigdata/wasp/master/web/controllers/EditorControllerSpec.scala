@@ -1,10 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
-import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper.AngularOkResponse
-import it.agilelab.bigdata.wasp.models.{PipegraphModel, StrategyModel}
-import it.agilelab.bigdata.wasp.models.editor.{ErrorDTO, NifiStatelessInstanceModel, PipegraphDTO, ProcessGroupResponse}
+import it.agilelab.bigdata.wasp.models.editor.{NifiStatelessInstanceModel, ProcessGroupResponse}
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.json4s.JsonAST.{JField, JObject, JString}
 import org.scalatest.{FlatSpec, Matchers}
@@ -39,9 +36,6 @@ class EditorControllerSpec extends FlatSpec with ScalatestRouteTest with Matcher
   val processGroupId   = "id"
 
   it should "Respond a post newEditorRequest" in {
-    val expectedResponse = new AngularOkResponse(
-      NifiStatelessInstanceModel(processGroupName, "www.test.com/" + processGroupName, "1234").toJson
-    ).toAngularOkResponse(false)
     val newEditorRequest = Post(
       s"/editor/nifi/$processGroupName"
     )

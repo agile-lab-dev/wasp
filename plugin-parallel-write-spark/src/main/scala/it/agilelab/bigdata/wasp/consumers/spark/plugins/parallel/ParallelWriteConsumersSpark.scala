@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel
 import com.squareup.okhttp.OkHttpClient
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModelParser.parseParallelWriteModel
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.{DataCatalogService, GlueDataCatalogService}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.GlueDataCatalogService
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
 import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
 import it.agilelab.bigdata.wasp.core.logging.Logging

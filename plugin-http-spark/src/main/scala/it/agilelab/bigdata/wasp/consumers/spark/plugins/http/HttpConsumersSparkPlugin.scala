@@ -15,12 +15,12 @@ import org.apache.spark.sql.SparkSession
 
 
 class HttpConsumersSparkPlugin extends WaspConsumersSparkPlugin {
-  private var httpBL: HttpBL = ConfigBL.httpBl
+  private val httpBL: HttpBL = ConfigBL.httpBl
 
   override def datastoreProduct: DatastoreProduct =
     it.agilelab.bigdata.wasp.datastores.DatastoreProduct.HttpProduct
 
-  override def initialize(waspDB: WaspDB): Unit = httpBL
+  override def initialize(waspDB: WaspDB): Unit = ()
 
   override def getValidationRules: Seq[ValidationRule] = Seq.empty
 

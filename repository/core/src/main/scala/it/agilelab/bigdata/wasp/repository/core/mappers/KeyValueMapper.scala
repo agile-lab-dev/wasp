@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
 import it.agilelab.bigdata.wasp.models.KeyValueModel
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{IndexDBModelV1, KeyValueDBModel, KeyValueDBModelV1}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{KeyValueDBModel, KeyValueDBModelV1}
 
 object KeyValueMapperSelector extends MapperSelector[KeyValueModel, KeyValueDBModel]
 

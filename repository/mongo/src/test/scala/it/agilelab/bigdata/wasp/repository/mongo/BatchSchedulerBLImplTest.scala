@@ -1,9 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import it.agilelab.bigdata.wasp.models.BatchSchedulerModel
 import it.agilelab.bigdata.wasp.repository.mongo.bl.BatchSchedulersBLImp
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class BatchSchedulerBLImplTest extends FlatSpec with Matchers {
@@ -28,8 +27,8 @@ class BatchSchedulerBLImplTest extends FlatSpec with Matchers {
     val active = bl.getActiveSchedulers(true)
     val inactive = bl.getActiveSchedulers(false)
 
-    bl.getActiveSchedulers(true) should contain theSameElementsAs Seq(model1,model2)
-    bl.getActiveSchedulers(false) should contain theSameElementsAs Seq(model3,model4)
+    active should contain theSameElementsAs Seq(model1,model2)
+    inactive should contain theSameElementsAs Seq(model3,model4)
   }
 
 

@@ -45,7 +45,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   override def getValidationRules: Seq[ValidationRule] = Seq.empty
 
   private def startupHBase(wasptimeout: Long)(implicit timeout: Timeout): Unit = {
-
+    val _ = timeout
   }
 
   override def getSparkStructuredStreamingWriter(ss: SparkSession,

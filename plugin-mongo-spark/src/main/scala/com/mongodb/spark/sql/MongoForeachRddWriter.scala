@@ -41,7 +41,7 @@ class MongoForeachRddWriter (writeConfig: WriteConfig, schema: StructType) exten
     }
   }
 
-  private def writeBatch = {
+  private def writeBatch() = {
     mongoConnector.withCollectionDo(writeConfig, { collection: MongoCollection[BsonDocument] =>
 
       val updateOptions = new UpdateOptions().upsert(true)
@@ -50,7 +50,7 @@ class MongoForeachRddWriter (writeConfig: WriteConfig, schema: StructType) exten
           val queryDocument = new BsonDocument()
           queryKeyList.foreach(key => queryDocument.append(key, doc.get(key)))
           if (writeConfig.replaceDocument) {
-            new ReplaceOneModel[BsonDocument](queryDocument, doc, updateOptions)
+            new ReplaceOneModel[BsonDocument](queryDocument, doc, new ReplaceOptions().upsert(true))
           } else {
             queryDocument.keySet().asScala.foreach(doc.remove(_))
             new UpdateOneModel[BsonDocument](queryDocument, new BsonDocument("$set", doc), updateOptions)

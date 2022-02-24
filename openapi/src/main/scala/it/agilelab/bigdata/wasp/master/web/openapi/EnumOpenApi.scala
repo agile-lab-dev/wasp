@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-import java.net.URLEncoder
-
 import io.swagger.v3.oas.models.media.{Schema, StringSchema}
 
 import scala.reflect.ClassTag

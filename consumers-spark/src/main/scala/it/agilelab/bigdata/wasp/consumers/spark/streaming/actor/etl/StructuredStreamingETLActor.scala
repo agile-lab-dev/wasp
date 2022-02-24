@@ -11,8 +11,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.StructuredSt
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => MyProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.telemetry.TelemetryActor
 import it.agilelab.bigdata.wasp.repository.core.bl._
-import it.agilelab.bigdata.wasp.core.models._
-import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.models.PipegraphModel
 import org.apache.spark.sql.SparkSession
 

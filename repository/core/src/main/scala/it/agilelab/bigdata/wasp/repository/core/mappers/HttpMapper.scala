@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
 import it.agilelab.bigdata.wasp.models.HttpModel
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{CdcDBModelV1, HttpDBModel, HttpDBModelV1}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{HttpDBModel, HttpDBModelV1}
 
 object HttpDBModelMapperSelector extends MapperSelector[HttpModel, HttpDBModel]
 

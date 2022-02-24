@@ -343,6 +343,7 @@ class PipegraphGuardianSpec
       val strategy: ComponentFailedStrategy = {
         case `failingEtl` => StopAll
         case `etl`        => DontCare
+        case other        => throw new IllegalArgumentException(s"Unknown value $other")
       }
 
       val fsm = TestFSMRef(
@@ -639,6 +640,7 @@ class PipegraphGuardianSpec
       val strategy: ComponentFailedStrategy = {
         case `failingEtl` => StopAll
         case `etl`        => DontCare
+        case other        => throw new IllegalArgumentException(s"Unknown value $other")
       }
 
       val fsm = TestFSMRef(
@@ -826,6 +828,7 @@ class PipegraphGuardianSpec
       val strategy: ComponentFailedStrategy = {
         case `failingEtl` => StopAll
         case `etl`        => DontCare
+        case other        => throw new IllegalArgumentException(s"Unknown value $other")
       }
 
       val fsm = TestFSMRef(
@@ -966,6 +969,7 @@ class PipegraphGuardianSpec
         case `failingEtl`  => Retry
         case `failingEtl2` => Retry
         case `etl`         => DontCare
+        case other        => throw new IllegalArgumentException(s"Unknown value $other")
       }
 
       val fsm = TestFSMRef(

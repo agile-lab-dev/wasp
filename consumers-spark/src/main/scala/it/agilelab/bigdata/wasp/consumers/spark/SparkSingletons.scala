@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark
 
 import java.lang
 
-import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils.{logger, _}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.{
   KafkaConfigModel,
@@ -12,7 +12,6 @@ import it.agilelab.bigdata.wasp.models.configuration.{
 }
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.{SQLContext, SparkSession}
-import org.apache.spark.streaming.{Milliseconds}
 import org.apache.spark.{SparkContext, SparkException}
 
 /**

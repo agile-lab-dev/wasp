@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import org.apache.spark.sql.{DataFrame, Encoder}
+import org.apache.spark.sql.DataFrame
 
 import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
@@ -35,7 +35,7 @@ final case class TableMutationFlatModel[A](
       primary_keys: Seq[String],
       tokens: Map[String, String],
       innerTable: T
-  )(implicit evidence: Encoder[T]): TableMutationFlatModel[T] =
+  ): TableMutationFlatModel[T] =
     TableMutationFlatModel(table, op_type, op_ts, current_ts, pos, primary_keys, tokens, innerTable)
 
   def map(f: A => A): TableMutationFlatModel[A] = {
@@ -55,8 +55,6 @@ final case class TableMutationFlatModel[A](
 object GoldenGateMutationUtils {
 
   import org.apache.spark.sql.{Dataset, Encoder}
-
-  import scala.language.higherKinds
 
   def ggMandatoryFields(): Set[String] =
     Set[String]("table", "op_type", "op_ts", "current_ts", "pos", "primary_keys", "tokens")
@@ -272,6 +270,7 @@ trait GoldenGateConversion extends CdcMapper {
         col(AFTER).as(BEFORE)
       )
 
+  @com.github.ghik.silencer.silent("dead")
   def truncateMappingFunction(df: DataFrame, keys: Seq[String]): DataFrame = {
     import org.apache.spark.sql.{Dataset, Row}
     import org.apache.spark.sql.catalyst.encoders.RowEncoder

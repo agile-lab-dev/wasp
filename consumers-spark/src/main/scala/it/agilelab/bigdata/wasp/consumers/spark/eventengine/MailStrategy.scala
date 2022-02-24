@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.eventengine
 
-import java.io.{StringReader, StringWriter}
+import java.io.StringWriter
 import java.util.Properties
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
@@ -12,11 +12,10 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.DataFrame
-import org.apache.velocity.{Template, VelocityContext}
+import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
-import org.apache.velocity.runtime.RuntimeInstance
 import it.agilelab.bigdata.wasp.core.eventengine.EventEngineConstants._
-import org.apache.velocity.runtime.log.{NullLogChute, NullLogSystem, SimpleLog4JLogSystem}
+import org.apache.velocity.runtime.log.NullLogChute
 
 import scala.io.Source
 
@@ -117,7 +116,7 @@ class InnerMailStrategy(config: Config) {
 
     val tableName: String = s"TEMP_RAW_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
 
-    eventDf.registerTempTable(tableName)
+    eventDf.createOrReplaceTempView(tableName)
 
     val sqlQuery: String = {
       val sb = new StringBuilder()
@@ -196,8 +195,8 @@ class InnerMailStrategy(config: Config) {
     val mailTableName: String  = s"TEMP_EXPLODE_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
     val rulesTableName: String = s"TEMP_RULES_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
 
-    rawMailsDf.registerTempTable(mailTableName)
-    rulesDF.registerTempTable(rulesTableName)
+    rawMailsDf.createOrReplaceTempView(mailTableName)
+    rulesDF.createOrReplaceTempView(rulesTableName)
 
     val sqlQuery = {
       val sb = new StringBuilder()
@@ -303,7 +302,7 @@ class InnerMailStrategy(config: Config) {
     val ss                = mailWithContent.sparkSession
     val tableName: String = s"TEMP_ENRICH_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
 
-    mailWithContent.registerTempTable(tableName)
+    mailWithContent.createOrReplaceTempView(tableName)
 
     val sqlQuery = {
       val sb = new StringBuilder()

@@ -5,7 +5,6 @@ import java.util.{Date, Properties}
 import akka.actor.Actor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.producers.StopMainTask
-import org.apache.commons.io.IOUtils
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 
@@ -22,8 +21,16 @@ class KafkaCheckOffsetsActor(topicName: String,
     consumer.subscribe(java.util.Arrays.asList(topicName))
   }
 
+  private def closeQuietly(a: AutoCloseable): Unit = {
+    try {
+      a.close()
+    } catch {
+      case _: Throwable =>
+    }
+  }
+
   override def postStop(): Unit = {
-    IOUtils.closeQuietly(consumer)
+    closeQuietly(consumer)
     super.postStop()
   }
 
@@ -43,7 +50,7 @@ class KafkaCheckOffsetsActor(topicName: String,
       }
     case StopMainTask =>
       logger.info(s"Shutting down actor: KafkaCheckOffsetsActor($topicName)")
-      IOUtils.closeQuietly(consumer)
+      closeQuietly(consumer)
   }
 
 }

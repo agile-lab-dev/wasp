@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 
 trait PipegraphDBModel extends Model
 trait PipegraphInstanceDBModel extends Model
-
+@com.github.ghik.silencer.silent("deprecated")
 case class PipegraphDBModelV1(override val name: String,
                             description: String,
                             owner: String,

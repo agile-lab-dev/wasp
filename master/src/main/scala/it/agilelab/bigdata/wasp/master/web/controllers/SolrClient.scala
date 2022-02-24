@@ -1,19 +1,16 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
-import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
-import java.util.{Optional, function}
-import java.util.regex.Pattern
-
+import it.agilelab.bigdata.wasp.models.configuration.SolrConfigModel
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.CloudSolrClient
 import org.apache.solr.client.solrj.response.QueryResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.time.{Duration, Instant}
+import java.util.concurrent.ConcurrentHashMap
+import java.util.regex.Pattern
+import java.util.{Optional, function}
 import scala.collection.JavaConverters._
-import java.time.Duration
-
-import it.agilelab.bigdata.wasp.models.configuration.SolrConfigModel
+import scala.concurrent.{ExecutionContext, Future}
 
 sealed trait PivotSort
 case object CountSort extends PivotSort

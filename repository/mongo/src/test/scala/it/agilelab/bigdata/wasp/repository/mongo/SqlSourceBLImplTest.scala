@@ -1,10 +1,9 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import it.agilelab.bigdata.wasp.models.SqlSourceModel
 import it.agilelab.bigdata.wasp.models.configuration.JdbcPartitioningInfo
 import it.agilelab.bigdata.wasp.repository.mongo.bl.SqlSourceBlImpl
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class SqlSourceBLImplTest extends FlatSpec with Matchers{

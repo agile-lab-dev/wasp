@@ -1,10 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Data.Collaborator
 import it.agilelab.bigdata.wasp.models.PipegraphModel
-import it.agilelab.bigdata.wasp.models.configuration.SchedulingStrategyConfigModel
-
 
 case class NodeLabelsSchedulingStrategy(data: Map[Set[String], SchedulingStrategy], tieBreakerFactory: SchedulingStrategyFactory) extends SchedulingStrategy {
   override def choose(members: Set[Collaborator], pipegraph: PipegraphModel): SchedulingStrategy.SchedulingStrategyOutcome = {

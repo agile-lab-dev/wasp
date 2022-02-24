@@ -10,6 +10,7 @@ import scala.util.{Failure, Success, Try}
 	* Command line utils leveraging Apache Commons CLI
 	*/
 object CliUtils {
+  @com.github.ghik.silencer.silent("deprecated")
   def parseArgsList(args: Array[String], options: Seq[cli.Option]): CommandLine = {
     val cliOptions = seqToCliOptions(options)
 

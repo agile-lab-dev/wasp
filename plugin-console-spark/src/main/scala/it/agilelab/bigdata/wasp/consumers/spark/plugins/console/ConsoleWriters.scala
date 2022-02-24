@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.console
 
-import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStructuredStreamingWriter, SparkBatchWriter}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.streaming.DataStreamWriter

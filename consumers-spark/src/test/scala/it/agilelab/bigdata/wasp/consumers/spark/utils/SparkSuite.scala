@@ -2,7 +2,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.hive.HiveContext
 import org.scalatest.Suite
 
 trait SparkSuite extends Suite {
@@ -15,7 +14,7 @@ trait SparkSuite extends Suite {
 }
 
 object SparkSuite {
-  private val warehouseLocation = "file:${system:user.dir}/spark-warehouse"
+  private val warehouseLocation = s"file:$${system:user.dir}/spark-warehouse"
   private lazy val spark = {
     val builder = SparkSession
       .builder()

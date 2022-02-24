@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-import io.swagger.v3.oas.models.media.{ObjectSchema, Schema, StringSchema}
+import io.swagger.v3.oas.models.media.Schema
 
 import scala.reflect.ClassTag
 

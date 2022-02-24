@@ -1,14 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
-import it.agilelab.bigdata.wasp.models.{ProducerModel, WebsocketModel}
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{ProducerDBModel, ProducerDBModelV1, ProducerDBModelV2}
-import it.agilelab.bigdata.wasp.repository.core.mappers.{ProducerMapperV1, ProducerMapperV2}
+import it.agilelab.bigdata.wasp.models.ProducerModel
 import it.agilelab.bigdata.wasp.repository.mongo.bl.ProducerBLImp
-import org.mongodb.scala.bson.BsonString
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
-
-import java.sql.SQLException
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class ProducerBLImplTest extends FlatSpec with Matchers{

@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.producers.metrics.kafka.throughput
 
-import java.util.concurrent.{CountDownLatch, TimeUnit}
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
@@ -8,9 +7,10 @@ import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 import it.agilelab.bigdata.wasp.producers.StartMainTask
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.Constants
 import org.scalatest.tagobjects.Retryable
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Canceled, Failed, FlatSpecLike, Matchers, Outcome, Retries}
+import org.scalatest._
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.UnaryOperator
 import scala.concurrent.duration.FiniteDuration
 

@@ -2,7 +2,9 @@ package it.agilelab.bigdata.wasp.repository.core.bl
 
 import it.agilelab.bigdata.wasp.models.MlModelOnlyInfo
 import org.apache.commons.lang3.SerializationUtils
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonObjectId, BsonString, BsonValue}
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.BsonString
+import org.mongodb.scala.bson.BsonObjectId
 
 /**
   * This class allow to read and persist the machine learning models

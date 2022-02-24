@@ -109,7 +109,7 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
 
     val tableName: String = s"TEMP_RAW_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
 
-    dataDf.registerTempTable(tableName)
+    dataDf.createOrReplaceTempView(tableName)
 
     val sqlQuery: String = {
       val sb = new StringBuilder()
@@ -190,8 +190,8 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     val eventsTableName: String = s"TEMP_EXPLODE_TABLE_${randomStr(RANDOM_STRING_LENGTH)}" //TODO: this is a mockup
     val rulesTableName: String = s"TEMP_RULES_TABLE_${randomStr(RANDOM_STRING_LENGTH)}" //TODO: this is a mockup
 
-    rawEventsDf.registerTempTable(eventsTableName)
-    rulesDF.registerTempTable(rulesTableName)
+    rawEventsDf.createOrReplaceTempView(eventsTableName)
+    rulesDF.createOrReplaceTempView(rulesTableName)
 
     val sqlQuery = {
       val sb = new StringBuilder()
@@ -291,7 +291,7 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     val payloadColumns = explodedEventsDf.columns.filterNot(c => c.equals(EVENT_RULE_NAME) || c.equals(STREAMING_SOURCE))
     val eventsWithPayload = explodedEventsDf.withColumn(PAYLOAD, to_json(struct(payloadColumns.head, payloadColumns.tail: _*)))
 
-    eventsWithPayload.registerTempTable(tableName)
+    eventsWithPayload.createOrReplaceTempView(tableName)
 
     val sqlQuery = {
       val sb = new StringBuilder()

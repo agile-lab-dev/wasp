@@ -10,7 +10,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.utils.HBaseConnection
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.{ExactKeyValueMatchingStrategy, KeyValueMatchingStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixKeyValueMatchingStrategy}
 import it.agilelab.bigdata.wasp.models.configuration.HBaseConfigModel
-import org.apache.commons.io.IOUtils
 import org.apache.hadoop.hbase.client.{Scan, Table}
 import org.apache.spark.TaskContext
 import org.apache.spark.rdd.RDD
@@ -98,7 +97,15 @@ object HBaseDeletionHandler extends Logging {
         false
       }
     } finally {
-      IOUtils.closeQuietly(scanner)
+      closeQuietly(scanner)
+    }
+  }
+
+  private def closeQuietly(a: AutoCloseable): Unit = {
+    try {
+      a.close()
+    } catch {
+      case _: Throwable =>
     }
   }
 
@@ -113,7 +120,7 @@ object HBaseDeletionHandler extends Logging {
       }
       buf
     } finally {
-      IOUtils.closeQuietly(scanner)
+      closeQuietly(scanner)
     }
   }
 

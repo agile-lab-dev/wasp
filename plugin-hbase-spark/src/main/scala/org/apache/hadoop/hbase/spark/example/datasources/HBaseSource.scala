@@ -17,8 +17,8 @@
 
 package org.apache.hadoop.hbase.spark.example.datasources
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 
 case class HBaseRecord(
@@ -66,13 +66,11 @@ object HBaseSource {
 
   def main(args: Array[String]) {
     val sparkConf = new SparkConf().setAppName("HBaseSourceExample")
-    val sc = new SparkContext(sparkConf)
-    val sqlContext = new SQLContext(sc)
-
-    import sqlContext.implicits._
+    val ss = SparkSession.builder().config(sparkConf).getOrCreate()
+    import ss.implicits._
 
     def withCatalog(cat: String): DataFrame = {
-      sqlContext
+      ss
         .read
         .options(Map(HBaseTableCatalog.tableCatalog->cat))
         .format("org.apache.hadoop.hbase.spark")
@@ -83,7 +81,7 @@ object HBaseSource {
       HBaseRecord(i)
     }
 
-    sc.parallelize(data).toDF.write.options(
+    ss.sparkContext.parallelize(data).toDF.write.options(
       Map(HBaseTableCatalog.tableCatalog -> cat, HBaseTableCatalog.newTable -> "5"))
       .format("org.apache.hadoop.hbase.spark")
       .save()
@@ -96,8 +94,8 @@ object HBaseSource {
       .select($"col0", $"col1").show
     df.filter($"col0" > "row250")
       .select($"col0", $"col1").show
-    df.registerTempTable("table1")
-    val c = sqlContext.sql("select count(col1) from table1 where col0 < 'row050'")
+    df.createOrReplaceTempView("table1")
+    val c = ss.sqlContext.sql("select count(col1) from table1 where col0 < 'row050'")
     c.show()
   }
 }

@@ -24,7 +24,7 @@ object SiteToSiteApi {
 
 class SiteToSiteApi(baseUrl: String)(implicit serializer: SttpSerializer) {
 
-  import it.agilelab.bigdata.nifi.client.core.Helpers._
+  
   import serializer._
 
   /**

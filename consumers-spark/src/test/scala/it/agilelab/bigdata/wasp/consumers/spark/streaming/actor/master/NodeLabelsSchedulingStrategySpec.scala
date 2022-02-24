@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Data.Coll
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.SchedulingStrategy.SchedulingStrategyOutcome
 import it.agilelab.bigdata.wasp.models.PipegraphModel
 import org.scalatest.concurrent.Eventually
-import org.scalatest.{BeforeAndAfterAll, EitherValues, Matchers, WordSpecLike, shortstacks}
+import org.scalatest.{BeforeAndAfterAll, EitherValues, Matchers, WordSpecLike}
 
 
 class MockedFactory extends SchedulingStrategyFactory {
@@ -49,7 +49,7 @@ class NodeLabelsSchedulingStrategySpec
 
     // should at least not throw
     val informed = new NodeLabelsSchedulingStrategyFactory().inform(ConfigFactory.empty())
-    val created = informed.create
+    informed.create
     // did not throw, everything ok
 
 
@@ -61,7 +61,7 @@ class NodeLabelsSchedulingStrategySpec
         |}
         |""".stripMargin))
 
-    val createdWithMock = result.create
+    result.create
 
     MockedFactoryHolder.informed.getString("other-param") should be("ciccio")
 

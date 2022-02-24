@@ -24,8 +24,9 @@ import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.spark.api.java.function.{FlatMapFunction, Function, VoidFunction}
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.annotation.meta.param
 
 /**
  * This is the Java Wrapper over HBaseContext which is written in
@@ -36,8 +37,8 @@ import scala.reflect.ClassTag
  * @param config This is the config information to out HBase cluster
  */
 @InterfaceAudience.Public
-class JavaHBaseContext(@transient jsc: JavaSparkContext,
-                       @transient config: Configuration) extends Serializable {
+class JavaHBaseContext(@(transient @param) jsc: JavaSparkContext,
+                       @(transient @param) config: Configuration) extends Serializable {
   val hbaseContext = new HBaseContext(jsc.sc, config)
 
   /**
@@ -58,7 +59,7 @@ class JavaHBaseContext(@transient jsc: JavaSparkContext,
 
     hbaseContext.foreachPartition(javaRdd.rdd,
       (it: Iterator[T], conn: Connection) => {
-        f.call((it, conn))
+        f.call((it.asJava, conn))
       })
   }
 
@@ -85,9 +86,7 @@ class JavaHBaseContext(@transient jsc: JavaSparkContext,
                             Connection), R]): JavaRDD[R] = {
 
     def fn = (it: Iterator[T], conn: Connection) =>
-      asScalaIterator(
-        f.call((asJavaIterator(it), conn))
-      )
+      f.call((it.asJava, conn)).asScala
 
     JavaRDD.fromRDD(hbaseContext.mapPartitions(javaRdd.rdd,
       (iterator: Iterator[T], connection: Connection) =>
@@ -186,7 +185,7 @@ class JavaHBaseContext(@transient jsc: JavaSparkContext,
       hbaseContext.hbaseRDD[U](tableName,
         scans,
         (v: (ImmutableBytesWritable, Result)) =>
-          f.call(v._1, v._2))(fakeClassTag[U]))(fakeClassTag[U])
+          f.call(v._1 ->  v._2))(fakeClassTag[U]))(fakeClassTag[U])
   }
 
   /**

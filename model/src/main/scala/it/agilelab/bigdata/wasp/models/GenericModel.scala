@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.genericProduct
 import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct, GenericProduct}
 import org.mongodb.scala.bson.BsonDocument
 

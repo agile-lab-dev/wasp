@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
 import it.agilelab.bigdata.wasp.models.DocumentModel
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{CdcDBModelV1, DocumentDBModel, DocumentDBModelV1}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{DocumentDBModel, DocumentDBModelV1}
 
 object DocumentDBModelMapperSelector extends MapperSelector[DocumentModel, DocumentDBModel]
 

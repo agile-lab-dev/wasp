@@ -1,10 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import it.agilelab.bigdata.wasp.models.{RawModel, RawOptions}
 import it.agilelab.bigdata.wasp.repository.mongo.bl.RawBLImp
-import org.apache.spark.sql.types._
-import org.scalatest.{BeforeAndAfter, DoNotDiscover, FlatSpec, FunSuite, Matchers}
+import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class RawBLImplTest extends FlatSpec with Matchers{

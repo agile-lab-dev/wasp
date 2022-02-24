@@ -1,24 +1,12 @@
 package it.agilelab.bigdata.wasp.repository.postgres.tables
 
-import java.sql.ResultSet
-
 import it.agilelab.bigdata.wasp.models.PipegraphInstanceModel
-import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
 object PipegraphInstanceTableDefinition extends ModelTableDefinition[PipegraphInstanceModel] with JsonSupport {
 
   val instanceOf =  "instance_of"
-  private val startTimestamp = "start_timestamp"
-  private val currentStatusTimestamp = "current_status_timestamp"
-  private val status = "status"
-  private val error = "error"
-
-
-
-
-
 
   override val tableName: String = "PIPEGRAPH_INSTANCE"
 

@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.KeyValueModel
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class HBaseSparkBatchReader(keyValueModel: KeyValueModel) extends SparkBatchReader with Logging {
   val name: String = keyValueModel.name
@@ -15,7 +15,7 @@ class HBaseSparkBatchReader(keyValueModel: KeyValueModel) extends SparkBatchRead
   override def read(sc: SparkContext): DataFrame = {
 
     logger.info(s"Initialize Spark HBaseReader with this model: $keyValueModel")
-    val sqlContext = SQLContext.getOrCreate(sc)
+    val sqlContext = SparkSession.builder().getOrCreate()
     val options: Map[String, String] = keyValueModel.getOptionsMap() ++
     Seq(
       HBaseTableCatalog.tableCatalog -> keyValueModel.tableCatalog,
