@@ -352,7 +352,7 @@ case class AvroDeserializerExpression(
                   item match {
                     case null                 => null
                     case l: java.lang.Long    => l
-                    case i: java.lang.Integer => new java.lang.Long(i.longValue())
+                    case i: java.lang.Integer => java.lang.Long.valueOf(i.longValue())
                   }
                 }
               case Seq(a, b) if Set(a, b) == Set(FLOAT, DOUBLE) && sparkSqlType == DoubleType =>
@@ -360,7 +360,7 @@ case class AvroDeserializerExpression(
                   item match {
                     case null                => null
                     case d: java.lang.Double => d
-                    case f: java.lang.Float  => new java.lang.Double(f.doubleValue())
+                    case f: java.lang.Float  => java.lang.Double.valueOf(f.doubleValue())
                   }
                 }
               case other =>

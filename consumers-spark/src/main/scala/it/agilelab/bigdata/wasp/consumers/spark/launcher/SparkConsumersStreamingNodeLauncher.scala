@@ -80,6 +80,7 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
       try {
         val strategy = Class
           .forName(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryClass)
+          .getDeclaredConstructor()
           .newInstance()
           .asInstanceOf[SchedulingStrategyFactory]
         strategy.inform(ConfigManager.getSparkStreamingConfig.schedulingStrategy.factoryParams)

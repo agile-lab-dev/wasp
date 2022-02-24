@@ -44,7 +44,7 @@ trait ConnectionSupport {
 
   private def registerDriver(driverClassName: String): Unit = {
     val driverClass = this.getClass.getClassLoader.loadClass(driverClassName)
-    val driverInstance = driverClass.newInstance().asInstanceOf[Driver]
+    val driverInstance = driverClass.getDeclaredConstructor().newInstance().asInstanceOf[Driver]
     DriverManager.registerDriver(driverInstance)
   }
 

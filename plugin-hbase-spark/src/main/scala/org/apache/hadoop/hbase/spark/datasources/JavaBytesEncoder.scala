@@ -103,7 +103,7 @@ object JavaBytesEncoder extends Enumeration with Logging{
     */
   def create(clsName: String): BytesEncoder = {
     try {
-      Class.forName(clsName).newInstance.asInstanceOf[BytesEncoder]
+      Class.forName(clsName).getDeclaredConstructor().newInstance().asInstanceOf[BytesEncoder]
     } catch {
       case _: Throwable =>
         logWarning(s"$clsName cannot be initiated, falling back to naive encoder")

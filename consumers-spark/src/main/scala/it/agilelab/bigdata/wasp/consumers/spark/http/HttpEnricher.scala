@@ -20,7 +20,7 @@ class HttpEnricher(sourceInfo: RestEnrichmentSource) extends Enricher {
                                      ): HttpEntityEnclosingRequestBase = {
     val toHttpRequest: ToHttpRequest =
       sourceInfo.parameters.get("toRequestClass") match {
-        case Some(className) => Class.forName(className).newInstance().asInstanceOf[ToHttpRequest]
+        case Some(className) => Class.forName(className).getDeclaredConstructor().newInstance().asInstanceOf[ToHttpRequest]
         case None => new JacksonToHttpRequest
       }
 
@@ -36,7 +36,7 @@ class HttpEnricher(sourceInfo: RestEnrichmentSource) extends Enricher {
     val toResponse: FromHttpResponse =
       sourceInfo.parameters.get("fromResponseClass") match {
         case None => new JacksonFromHttpResponse
-        case Some(className) => Class.forName(className).newInstance().asInstanceOf[FromHttpResponse]
+        case Some(className) => Class.forName(className).getDeclaredConstructor().newInstance().asInstanceOf[FromHttpResponse]
       }
 
     toResponse.fromResponse[B](response)

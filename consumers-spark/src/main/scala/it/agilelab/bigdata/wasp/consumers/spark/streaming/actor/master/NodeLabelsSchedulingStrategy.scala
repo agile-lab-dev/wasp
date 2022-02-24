@@ -55,7 +55,7 @@ class NodeLabelsSchedulingStrategyFactory extends SchedulingStrategyFactory {
       val innerConfig = config.getConfig("tie-breaker")
 
       if (innerConfig.hasPath("class-name")) {
-        Class.forName(innerConfig.getString("class-name")).newInstance().asInstanceOf[SchedulingStrategyFactory].inform(innerConfig)
+        Class.forName(innerConfig.getString("class-name")).getDeclaredConstructor().newInstance().asInstanceOf[SchedulingStrategyFactory].inform(innerConfig)
       } else {
         throw new Exception("Expected a [scheduling-strategy.class-name] config key")
       }
