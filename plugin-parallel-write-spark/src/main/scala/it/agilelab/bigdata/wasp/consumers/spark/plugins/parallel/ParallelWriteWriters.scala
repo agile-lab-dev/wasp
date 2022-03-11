@@ -33,16 +33,15 @@ class ParallelWriteSparkStructuredStreamingWriter(parallelWriteModel: ParallelWr
             catalogService
           )
 
-          logger.info(s"Writing microbatch with id: ${batchId}")
+          logger.info(s"Writing microbatch with id: $batchId")
           writer.write(writeExecutionPlan, batch)
-          logger.info(s"Successfully wrote microbatch with id: ${batchId}")
+          logger.info(s"Successfully wrote microbatch with id: $batchId")
 
         }
         catch {
-          case e: Exception => {
-            logger.info(s"Failed writing microbatch ${batchId} on S3 \n${e.printStackTrace()}")
+          case e: Exception =>
+            logger.info(s"Failed writing microbatch $batchId on S3", e)
             throw e
-          }
         }
       }
     )

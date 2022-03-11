@@ -2,8 +2,14 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.WriteExecutionPlanResponseBody
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatalogService
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.{
+  DataCatalogService,
+  DataframeSchemaUtils,
+  GlueDataCatalogTableNameBuilder
+}
 import org.apache.spark.sql.DataFrame
+
+import scala.util.{ Failure, Success }
 
 trait ParallelWriter {
   val entityDetails: CatalogCoordinates
@@ -15,4 +21,16 @@ trait ParallelWriter {
    * @param df data to write
    */
   def write(writeExecutionPlan: WriteExecutionPlanResponseBody, df: DataFrame): Unit
+
+  def enforceSchema(df: DataFrame): DataFrame = {
+    val tableSchema = catalogService.getSchema(df.sparkSession, entityDetails)
+    DataframeSchemaUtils.convertToSchema(df, tableSchema) match {
+      case Failure(ex) =>
+        throw new Exception(
+          s"Error while trying to write dataframe to table ${GlueDataCatalogTableNameBuilder.getTableName(entityDetails)}",
+          ex
+        )
+      case Success(d) => d
+    }
+  }
 }
