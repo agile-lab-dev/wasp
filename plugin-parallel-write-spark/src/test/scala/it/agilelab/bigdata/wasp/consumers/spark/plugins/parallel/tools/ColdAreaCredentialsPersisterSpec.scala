@@ -14,8 +14,6 @@ import java.net.URI
 
 class ColdAreaCredentialsPersisterSpec extends FunSuite with TempDirectoryTest {
 
-  override val tempDir: String = "/tmp/credentialsRenewer"
-
   lazy val configuration = ColdAreaCredentialsPersisterSpec.buildMockConfiguration()
 
   test("Save credentials") {
@@ -84,7 +82,7 @@ object ColdAreaCredentialsPersisterSpec extends ColdAreaCredentialsPersisterSpec
     val conf = new Configuration()
     conf.set("fs.s3a.aws.credentials.provider" , "it.agilelab.bigdata.wasp.aws.auth.v2.PlacementAwareCredentialsProvider")
     conf.set("fs.s3a.assumed.role.credentials.provider" , "it.agilelab.bigdata.wasp.aws.auth.v2.WebIdentityProvider")
-    conf.set("it.agilelab.bigdata.wasp.aws.auth.storage" , s"file://$tempDir")
+    conf.set("it.agilelab.bigdata.wasp.aws.auth.storage" , tempDir)
     conf.set("it.agilelab.bigdata.wasp.aws.auth.renewmillis" , "60000")
     conf.set("it.agilelab.bigdata.wasp.aws.auth.delegate" , classOf[MockCredentialProvider].getCanonicalName)
     conf

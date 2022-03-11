@@ -1,17 +1,17 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils
 
-import com.squareup.okhttp.mockwebserver.{Dispatcher, MockResponse, RecordedRequest}
+import com.squareup.okhttp.mockwebserver.{ Dispatcher, MockResponse, RecordedRequest }
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.ParallelWriteSparkStructuredStreamingWriter
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModel
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.streaming.MemoryStream
-import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, StreamingQueryException}
+import org.apache.spark.sql.streaming.{ DataStreamWriter, StreamingQuery, StreamingQueryException }
+import org.apache.spark.sql.types.StructType
 import org.scalatest.Suite
 
-import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
 
 trait ParallelWriteTest extends TempDirectoryTest { this: Suite =>
-  protected def tempDir: String = "/tmp/tmpbucket"
 
   protected def writeType: String
 
@@ -24,25 +24,23 @@ trait ParallelWriteTest extends TempDirectoryTest { this: Suite =>
             EqualAssertion("{\"source\":\"External\"}", request.getBody.readByteString().utf8())
             latch.countDown()
 
-
-            val response: MockResponse = new MockResponse().setBody(
-              s"""{
-                 |    "writeUri": "${tempDir}/",
-                 |    "format": "$writeType",
-                 |    "writeType": "Cold",
-                 |    "temporaryCredentials": {
-                 |        "r": {
-                 |            "accessKeyID": "ReadaccessKeyID",
-                 |            "secretKey": "ReadsecretKey",
-                 |            "sessionToken": "ReadsessionToken"
-                 |        },
-                 |        "w": {
-                 |            "accessKeyID": "WriteaccessKeyID",
-                 |            "secretKey": "WritesecretKey",
-                 |            "sessionToken": "WritesessionToken"
-                 |        }
-                 |    }
-                 |}""".stripMargin)
+            val response: MockResponse = new MockResponse().setBody(s"""{
+                                                                       |    "writeUri": "$tempDir/",
+                                                                       |    "format": "$writeType",
+                                                                       |    "writeType": "Cold",
+                                                                       |    "temporaryCredentials": {
+                                                                       |        "r": {
+                                                                       |            "accessKeyID": "ReadaccessKeyID",
+                                                                       |            "secretKey": "ReadsecretKey",
+                                                                       |            "sessionToken": "ReadsessionToken"
+                                                                       |        },
+                                                                       |        "w": {
+                                                                       |            "accessKeyID": "WriteaccessKeyID",
+                                                                       |            "secretKey": "WritesecretKey",
+                                                                       |            "sessionToken": "WritesessionToken"
+                                                                       |        }
+                                                                       |    }
+                                                                       |}""".stripMargin)
             response
           case _ =>
             new MockResponse().setResponseCode(404)
@@ -50,14 +48,16 @@ trait ParallelWriteTest extends TempDirectoryTest { this: Suite =>
     }
 
   def createAndExecuteStreamingQuery[A](
-                                         latch: CountDownLatch,
-                                         source: MemoryStream[A],
-                                         genericModel: ParallelWriteModel,
-                                         myDf: A*
-                                       ): Option[StreamingQueryException] = {
+    latch: CountDownLatch,
+    source: MemoryStream[A],
+    genericModel: ParallelWriteModel,
+    schema: StructType,
+    myDf: A*
+  ): Option[StreamingQueryException] = {
 
-
-    val dsw: DataStreamWriter[Row] = new ParallelWriteSparkStructuredStreamingWriter(genericModel, MockCatalogService).write(source.toDF().repartition(10))
+    val dsw: DataStreamWriter[Row] =
+      new ParallelWriteSparkStructuredStreamingWriter(genericModel, MockCatalogService(schema: StructType))
+        .write(source.toDF().repartition(10))
 
     val streamingQuery: StreamingQuery = dsw.start()
 

@@ -7,13 +7,16 @@ import org.apache.spark.sql.DataFrame
 
 import java.net.URI
 
-case class DeltaParallelWriter(parallelWriteDetails: ParallelWrite, entityDetails: CatalogCoordinates, override val catalogService: DataCatalogService) extends DeltaParallelWriterTrait {
+case class DeltaParallelWriter(
+  parallelWriteDetails: ParallelWrite,
+  entityDetails: CatalogCoordinates,
+  override val catalogService: DataCatalogService
+) extends DeltaParallelWriterTrait {
 
-  override def performDeltaWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String]): Unit = {
-    df.write
+  override def performDeltaWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String]): Unit =
+    enforceSchema(df).write
       .mode(parallelWriteDetails.saveMode)
       .format("delta")
-      .partitionBy(partitioningColumns:_*)
+      .partitionBy(partitioningColumns: _*)
       .save(path.toString)
-  }
 }
