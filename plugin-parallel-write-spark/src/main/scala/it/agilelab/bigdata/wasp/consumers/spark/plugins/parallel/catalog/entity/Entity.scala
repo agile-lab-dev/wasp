@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.
 import java.net.URL
 
 case class Entity(override val baseUrl: URL) extends ParallelWriteEntity {
-  private def getWriteExecutionPlanEndpoint(): URL = new URL(baseUrl, "/writeExecutionPlan")
+  private def getWriteExecutionPlanEndpoint(): URL = new URL(s"$baseUrl/writeExecutionPlan").toURI.normalize().toURL
 
   def getWriteExecutionPlan(requestBody: WriteExecutionPlanRequestBody): WriteExecutionPlanResponseBody = {
     post(getWriteExecutionPlanEndpoint(), Some(requestBody), Map.empty)(writeExecutionPlanRequestBodyFormat, writeExecutionPlanResponseBodyFormat)
