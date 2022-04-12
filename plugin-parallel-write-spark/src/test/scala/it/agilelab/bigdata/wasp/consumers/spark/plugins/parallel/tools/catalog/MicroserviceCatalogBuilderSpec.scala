@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.catalog
 
 import com.squareup.okhttp.mockwebserver.{Dispatcher, MockResponse, RecordedRequest}
 import com.typesafe.config.ConfigException
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{CatalogCoordinates, MicroserviceCatalogService}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{CatalogCoordinates, EntityCatalogService}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity._
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.catalog.builders.mockbuilders._
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.ParallelWriteTestUtils.withServer
@@ -17,7 +17,7 @@ class MicroserviceCatalogBuilderSpec extends FunSuite{
   val ms : CatalogCoordinates = CatalogCoordinates("msnoop", "mock", "v1")
   test("Right microservice catalog builder") {
     withServer(dispatcher) { serverData =>
-      val microservice: ParallelWriteEntity = RightMockBuilder.getMicroserviceCatalogService().getMicroservice(ms)
+      val microservice: ParallelWriteEntity = RightMockBuilder.getEntityCatalogService().getEntity(ms)
       val executionPlan: WriteExecutionPlanResponseBody = microservice.getWriteExecutionPlan(WriteExecutionPlanRequestBody(source = "External"))
       assert(ParallelWriteFormat.withName(executionPlan.format) == ParallelWriteFormat.delta)
       assert(executionPlan.writeUri == "s3://bucket/")
@@ -28,27 +28,27 @@ class MicroserviceCatalogBuilderSpec extends FunSuite{
 
   test("Wrong catalog class") {
     withServer(dispatcher) { serverData =>
-      var service: MicroserviceCatalogService = null
+      var service: EntityCatalogService = null
       an[ConfigException] should be thrownBy {
-        service = WrongConfigurationPathBuilder.getMicroserviceCatalogService()
+        service = WrongConfigurationPathBuilder.getEntityCatalogService()
       }
     }
   }
 
   test("Not existing catalog service class") {
     withServer(dispatcher) { serverData =>
-      var service: MicroserviceCatalogService = null
+      var service: EntityCatalogService = null
       an[ClassNotFoundException] should be thrownBy {
-        service = NotExistingServiceBuilder.getMicroserviceCatalogService()
+        service = NotExistingServiceBuilder.getEntityCatalogService()
       }
     }
   }
 
   test("Try to instantiate service with no base constructor") {
     withServer(dispatcher) { serverData =>
-      var service: MicroserviceCatalogService = null
+      var service: EntityCatalogService = null
       an[InstantiationException] should be thrownBy {
-        service = ParameterBuilder.getMicroserviceCatalogService()
+        service = ParameterBuilder.getEntityCatalogService()
       }
     }
   }

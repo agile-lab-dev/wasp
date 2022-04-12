@@ -2,18 +2,18 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.utils.EitherUtils._
-import org.apache.spark.sql.types.{ ArrayType, DataType, StructField, StructType }
+import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
 
 import scala.util.Try
 
 object SchemaChecker extends Logging {
 
   /**
-   * Checks if source schema matches target schema and returns Either an exception with
-   * rich information about the differences between schemas or ()
-   * @param target Schema that must be enforced
-   * @param source source schema of the data
-   */
+    * Checks if source schema matches target schema and returns Either an exception with
+    * rich information about the differences between schemas or ()
+    * @param target Schema that must be enforced
+    * @param source source schema of the data
+    */
   def isValid(target: StructType, source: StructType): Try[Unit] = {
     val zippedSchemas        = target.map(Some(_)).zipAll(source.map(Some(_)), None, None)
     val zippedIndexedSchemas = zippedSchemas.indices.zip(zippedSchemas)
@@ -32,11 +32,11 @@ object SchemaChecker extends Logging {
   }
 
   /**
-   * Checks if source schema contains all column names contained in the target schema, the objective is understand
-   * if sourceDf.select(target.map(_.name).map(_col) is possible.
-   * @param target Schema that must be enforced
-   * @param source source schema of the data
-   */
+    * Checks if source schema contains all column names contained in the target schema, the objective is understand
+    * if sourceDf.select(target.map(_.name).map(_col) is possible.
+    * @param target Schema that must be enforced
+    * @param source source schema of the data
+    */
   def isSelectable(target: StructType, source: StructType): Try[Unit] =
     for {
       _ <- Either.cond(
@@ -49,7 +49,17 @@ object SchemaChecker extends Logging {
             (),
             new Exception(s"Duplicate columns in source schema ${source.treeString}")
           )
-      missingColumns = target.map(_.name).toSet -- source.map(_.name).toSet
+      _ <- Either.cond(
+            target.map(_.name.toLowerCase).toSet.size == target.size,
+            (),
+            new Exception(s"More columns with same name in different case found in target schema ${target.treeString}")
+          )
+      _ <- Either.cond(
+            source.map(_.name.toLowerCase).toSet.size == source.size,
+            (),
+            new Exception(s"More columns with same name in different case found in source schema ${source.treeString}")
+          )
+      missingColumns = target.map(_.name.toLowerCase).toSet -- source.map(_.name.toLowerCase).toSet
       _ <- Either.cond(
             missingColumns.isEmpty,
             (),
@@ -68,20 +78,20 @@ object SchemaChecker extends Logging {
     } yield ()
 
   /**
-   * Nullability is not valid when target is not nullable but source is.
-   * We should never write nulls in non nullable fields, while writing to nullable fields is always available
-   * @param target
-   * @param source
-   * @return
-   */
+    * Nullability is not valid when target is not nullable but source is.
+    * We should never write nulls in non nullable fields, while writing to nullable fields is always available
+    * @param target
+    * @param source
+    * @return
+    */
   private def validateNullability(target: Boolean, source: Boolean): Boolean = {
     !source || target
   }
 
   private def validateField(
-    index: Int,
-    maybeTarget: Option[StructField],
-    maybeSource: Option[StructField]
+      index: Int,
+      maybeTarget: Option[StructField],
+      maybeSource: Option[StructField]
   ): Either[String, Unit] =
     (maybeTarget, maybeSource) match {
       case (Some(target), Some(source))
@@ -103,8 +113,8 @@ object SchemaChecker extends Logging {
     }
 
   /**
-   * Checks if 2 DataTypes are equal without considering nullable flag
-   */
+    * Checks if 2 DataTypes are equal without considering nullable flag
+    */
   private def dataTypeValid(target: DataType, source: DataType): Boolean =
     (target, source) match {
       case (StructType(fields1), StructType(fields2)) =>
