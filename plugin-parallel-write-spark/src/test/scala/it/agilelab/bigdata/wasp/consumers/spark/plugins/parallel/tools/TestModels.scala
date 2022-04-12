@@ -8,11 +8,11 @@ object TestModels {
   val model2 = ParallelWriteModel(ParallelWrite("overwrite"), entityDetails = CatalogCoordinates("default", "mock", "v1"))
 
   private val entityDetails: CatalogCoordinates = CatalogCoordinates("default", "mock", "v1")
-  private val entityDetailsWithGlueDB: CatalogCoordinates = CatalogCoordinates("default", "mock", "v1", Some("mock_glue_db"))
+  private val entityDetailsWithDB: CatalogCoordinates = CatalogCoordinates("default", "mock", "v1", Some("mock_db"))
   private val wrongDetails: CatalogCoordinates = CatalogCoordinates("default", "fake", "v1")
   private val notExistingEntityDetails: CatalogCoordinates = CatalogCoordinates("default", "entity", "v1")
 
-  val modelWithGlue = ParallelWriteModel(ParallelWrite("overwrite"), entityDetails = entityDetailsWithGlueDB)
+  val modelWithDB = ParallelWriteModel(ParallelWrite("overwrite"), entityDetails = entityDetailsWithDB)
 
   val continuousUpdateModel1 = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "ordering"), entityDetails)
 

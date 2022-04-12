@@ -147,4 +147,28 @@ class SchemaCheckerTest extends FunSuite {
     assert(res.left.get.getMessage.contains("Duplicate columns in source schema"))
   }
 
+  test("isSelectable should be case insensitive") {
+    val source =
+      StructType(StructField("A", StringType) :: StructField("b", StringType) :: Nil)
+    val target = StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
+    val res      = SchemaChecker.isSelectable(target, source)
+    assert(res.isSuccess)
+  }
+
+  test("isSelectable should fail when it encounters columns with same name with different case in source schema") {
+    val source =
+      StructType(StructField("A", StringType) :: StructField("a", StringType) :: StructField("b", StringType) :: Nil)
+    val target = StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
+    val res      = SchemaChecker.isSelectable(target, source)
+    assert(res.isFailure)
+    assert(res.left.get.getMessage.contains("More columns with same name in different case found in source schema"))
+  }
+  test("isSelectable should fail when it encounters columns with same name with different case in target schema") {
+    val source =
+      StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
+    val target = StructType(StructField("A", StringType) :: StructField("a", StringType) :: StructField("b", StringType) :: Nil)
+    val res      = SchemaChecker.isSelectable(target, source)
+    assert(res.isFailure)
+    assert(res.left.get.getMessage.contains("More columns with same name in different case found in target schema"))
+  }
 }

@@ -6,3 +6,4 @@
 * [Operations](ops.md)
 * [Monitoring](monitoring.md)
 * [Configuration](configuration.md)
+* [Parallel Write Sink](Parallel_write.md)

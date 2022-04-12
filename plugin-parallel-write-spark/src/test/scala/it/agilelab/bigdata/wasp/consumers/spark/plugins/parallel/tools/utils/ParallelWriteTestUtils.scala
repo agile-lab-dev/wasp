@@ -11,9 +11,11 @@ object ParallelWriteTestUtils {
   def withServer[A](dispatcherFactory: CountDownLatch => Dispatcher, latchCount: Int = 1)(
     f: ServerData => A
   ): A = {
-    val s = createAndStartServer(dispatcherFactory, latchCount)
-    try f(s)
-    finally s.mockedServer.shutdown()
+    this.synchronized {
+      val s = createAndStartServer(dispatcherFactory, latchCount)
+      try f(s)
+      finally s.mockedServer.shutdown()
+    }
   }
 
   def createAndStartServer(dispatcherFactory: CountDownLatch => Dispatcher, latchCount: Int): ServerData = {

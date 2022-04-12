@@ -9,21 +9,19 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.
   * @param name     entity name
   * @param version  entity version
   */
-case class CatalogCoordinates(domain: String, name: String, version: String, glueDbPrefix: Option[String] = None, overrideGlueDbName: Option[String] = None)
+case class CatalogCoordinates(domain: String, name: String, version: String, dbPrefix: Option[String] = None, overrideDbName: Option[String] = None)
 
 /**
   * This class is used to get microservice from catalog
-  * @param microserviceIdBuilder  Microservice id building logic
-  * @tparam T                     Type of microservice
   */
-abstract class MicroserviceCatalogService {
+abstract class EntityCatalogService {
 
   /**
     * Builds microservice id depending on microserviceDetails and retrieve microservice from catalog
-    * @param microserviceDetails Map containing microservice informations useful to id builder. Example: Map(("name", "microserviceName"), ("domain", "somedomain"))
     * @return Microservice instance
     */
-  def getMicroservice(coordinates: CatalogCoordinates): ParallelWriteEntity
+  def getEntity(coordinates: CatalogCoordinates): ParallelWriteEntity
+  def getEntityTableName(coordinates: CatalogCoordinates): String
 }
 
 

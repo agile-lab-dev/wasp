@@ -18,6 +18,7 @@
     * [Plain HBase Writer](plain_hbase_writer.md)
     * [Kafka Integration](kafka_integration.md)
     * [Spark checkpoint directory](spark-structured-streaming-checkpointing.md)
+    * [Parallel Write sink](Parallel_write.md)
 * [Building WASP](building.md)
 * [Whitelabel project](whitelabel/whitelabel.md)
     * [Project structure](whitelabel/structure.md)

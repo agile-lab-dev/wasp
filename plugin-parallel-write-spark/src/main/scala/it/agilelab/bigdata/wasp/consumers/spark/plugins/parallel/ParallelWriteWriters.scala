@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.{ParallelWriteEntity, WriteExecutionPlanRequestBody}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{MicroserviceCatalogBuilder, MicroserviceCatalogService}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{EntityCatalogBuilder, EntityCatalogService}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModel
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatalogService
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers.ParallelWriterFactory
@@ -15,8 +15,8 @@ class ParallelWriteSparkStructuredStreamingWriter(parallelWriteModel: ParallelWr
   extends SparkStructuredStreamingWriter  with Logging {
 
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
-    val platformCatalogService: MicroserviceCatalogService = MicroserviceCatalogBuilder.getMicroserviceCatalogService()
-    val entity: ParallelWriteEntity = platformCatalogService.getMicroservice(parallelWriteModel.entityDetails)
+    val platformCatalogService: EntityCatalogService = EntityCatalogBuilder.getEntityCatalogService()
+    val entity: ParallelWriteEntity = platformCatalogService.getEntity(parallelWriteModel.entityDetails)
 
     // create and configure DataStreamWriter
     stream.writeStream

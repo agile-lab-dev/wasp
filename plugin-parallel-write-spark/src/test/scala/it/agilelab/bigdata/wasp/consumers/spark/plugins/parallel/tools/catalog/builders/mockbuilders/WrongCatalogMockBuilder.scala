@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.catalog.
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog._
 
 
-object WrongCatalogMockBuilder extends MicroserviceCatalogBuilder {
-  override def getMicroserviceCatalogService(): MicroserviceCatalogService = {
-    getMicroserviceCatalogService("plugin.microservice-catalog-wrongcatalog.catalog-class")
+object WrongCatalogMockBuilder extends EntityCatalogBuilder {
+  override def getEntityCatalogService(): EntityCatalogService = {
+    getEntityCatalogService("plugin.microservice-catalog-wrongcatalog.catalog-class")
   }
 }

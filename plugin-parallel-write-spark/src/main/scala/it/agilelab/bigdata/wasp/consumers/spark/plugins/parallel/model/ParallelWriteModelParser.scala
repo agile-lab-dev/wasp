@@ -53,7 +53,9 @@ object ParallelWriteModelParser {
       CatalogCoordinates(
         entityDetails.getOrElse("domain", ""),
         entityDetails.getOrElse("name", ""),
-        entityDetails.getOrElse("version", "")
+        entityDetails.getOrElse("version", ""),
+        entityDetails.get("dbPrefix"),
+        entityDetails.get("overrideDbName")
       )
     }
 
