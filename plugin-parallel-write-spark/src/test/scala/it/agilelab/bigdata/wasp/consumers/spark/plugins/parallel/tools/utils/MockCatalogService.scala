@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatal
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{ DataType, StructField, StructType }
 
-class MockCatalogService(schema: StructType) extends DataCatalogService {
+class MockCatalogService(schema: StructType) extends DataCatalogService with Serializable {
   override def getSchema(sparkSession: SparkSession, entityCoordinates: CatalogCoordinates): StructType = schema
 
   override def getPartitioningColumns(sparkSession: SparkSession, entityCoordinates: CatalogCoordinates): Seq[String] =
@@ -15,7 +15,7 @@ class MockCatalogService(schema: StructType) extends DataCatalogService {
     MetastoreCatalogTableNameBuilder.getTableName(entityCoordinates)
 }
 
-object MockCatalogService {
+object MockCatalogService extends Serializable {
   def apply(): MockCatalogService =
     new MockCatalogService(
       StructType(

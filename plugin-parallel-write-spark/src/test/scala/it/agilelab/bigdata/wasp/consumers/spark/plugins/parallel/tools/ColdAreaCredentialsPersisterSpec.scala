@@ -19,13 +19,13 @@ class ColdAreaCredentialsPersisterSpec extends FunSuite with TempDirectoryTest {
   test("Save credentials") {
     val writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody =
       WriteExecutionPlanResponseBody(
-        "Parquet",
-        "file://bucket/dir",
+        Some("Parquet"),
+        Some("file://bucket/dir"),
         "Cold",
-        TemporaryCredentials(
+        Some(TemporaryCredentials(
           r = TemporaryCredential("ReadAccessKey", "ReadSecretKey", "ReadToken"),
           w = TemporaryCredential("WriteAccessKey", "WriteSecretKey", "WriteToken")
-        ))
+        )))
 
     ColdAreaCredentialsPersister.writeCredentials(writeExecutionPlanResponseBody, configuration)
     checkCredentials(writeExecutionPlanResponseBody)
@@ -36,22 +36,22 @@ class ColdAreaCredentialsPersisterSpec extends FunSuite with TempDirectoryTest {
     val bucket2 = "file://bucket2/dir"
     val writeExecutionPlanResponseBody1: WriteExecutionPlanResponseBody =
       WriteExecutionPlanResponseBody(
-        "Parquet",
-        bucket1,
+        Some("Parquet"),
+        Some(bucket1),
         "Cold",
-        TemporaryCredentials(
+        Some(TemporaryCredentials(
           r = TemporaryCredential("ReadAccessKey1", "ReadSecretKey1", "ReadToken1"),
           w = TemporaryCredential("WriteAccessKey1", "WriteSecretKey1", "WriteToken1")
-        ))
+        )))
     val writeExecutionPlanResponseBody2: WriteExecutionPlanResponseBody =
       WriteExecutionPlanResponseBody(
-        "Parquet",
-        bucket2,
+        Some("Parquet"),
+        Some(bucket2),
         "Cold",
-        TemporaryCredentials(
+        Some(TemporaryCredentials(
           r = TemporaryCredential("ReadAccessKey2", "ReadSecretKey2", "ReadToken2"),
           w = TemporaryCredential("WriteAccessKey2", "WriteSecretKey2", "WriteToken2")
-        ))
+        )))
 
     ColdAreaCredentialsPersister.writeCredentials(writeExecutionPlanResponseBody1, configuration)
     ColdAreaCredentialsPersister.writeCredentials(writeExecutionPlanResponseBody2, configuration)
@@ -60,12 +60,12 @@ class ColdAreaCredentialsPersisterSpec extends FunSuite with TempDirectoryTest {
   }
 
   private def checkCredentials(writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody) = {
-    val readedCredentials: AWSCredentials = readCredentials(writeExecutionPlanResponseBody.writeUri)
+    val readedCredentials: AWSCredentials = readCredentials(writeExecutionPlanResponseBody.writeUri.get)
     assert(readedCredentials.isInstanceOf[AWSSessionCredentials])
     val readedSessionCredentials = readedCredentials.asInstanceOf[AWSSessionCredentials]
-    assert(readedSessionCredentials.getAWSAccessKeyId == writeExecutionPlanResponseBody.temporaryCredentials.w.accessKeyID)
-    assert(readedSessionCredentials.getAWSSecretKey == writeExecutionPlanResponseBody.temporaryCredentials.w.secretKey)
-    assert(readedSessionCredentials.getSessionToken == writeExecutionPlanResponseBody.temporaryCredentials.w.sessionToken)
+    assert(readedSessionCredentials.getAWSAccessKeyId == writeExecutionPlanResponseBody.temporaryCredentials.get.w.accessKeyID)
+    assert(readedSessionCredentials.getAWSSecretKey == writeExecutionPlanResponseBody.temporaryCredentials.get.w.secretKey)
+    assert(readedSessionCredentials.getSessionToken == writeExecutionPlanResponseBody.temporaryCredentials.get.w.sessionToken)
   }
 
   private def readCredentials(writeUri: String): AWSCredentials = {

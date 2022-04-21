@@ -1,11 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.ParallelWriteEntity
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ContinuousUpdate
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatalogService
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{ col, expr, first }
-import org.apache.spark.sql.{ DataFrame, SparkSession }
+import org.apache.spark.sql.functions.{col, expr, first}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.net.URI
 
@@ -18,6 +19,7 @@ class SchemaException(message: String) extends Exception(message)
  */
 case class ContinuousUpdateWriter(
   writerDetails: ContinuousUpdate,
+  entityAPI: ParallelWriteEntity,
   entityDetails: CatalogCoordinates,
   catalogService: DataCatalogService
 ) extends DeltaParallelWriterTrait {

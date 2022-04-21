@@ -11,7 +11,7 @@ import org.slf4j.{Logger, LoggerFactory}
 /**
   * SLF4J logger wrapper that also logs to the logger actor at `WaspSystem.loggerActor`
   */
-private[logging] final class WaspLogger(protected val slf4jLogger: Logger) {
+private[logging] final class WaspLogger(protected val slf4jLogger: Logger) extends Serializable {
   val loggerName: String = slf4jLogger.getName
   
   def error(msg: => String) {

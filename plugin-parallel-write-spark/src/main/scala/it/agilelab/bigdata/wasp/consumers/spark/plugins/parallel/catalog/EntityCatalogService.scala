@@ -20,7 +20,7 @@ abstract class EntityCatalogService {
     * Builds microservice id depending on microserviceDetails and retrieve microservice from catalog
     * @return Microservice instance
     */
-  def getEntity(coordinates: CatalogCoordinates): ParallelWriteEntity
+  def getEntityApi(coordinates: CatalogCoordinates): ParallelWriteEntity
   def getEntityTableName(coordinates: CatalogCoordinates): String
 }
 

@@ -11,20 +11,23 @@ import org.scalatest.Matchers.{an, be}
 
 import java.util.concurrent.CountDownLatch
 
-
-
-class MicroserviceCatalogBuilderSpec extends FunSuite{
-  val ms : CatalogCoordinates = CatalogCoordinates("msnoop", "mock", "v1")
+class MicroserviceCatalogBuilderSpec extends FunSuite {
+  val ms: CatalogCoordinates = CatalogCoordinates("msnoop", "mock", "v1")
   test("Right microservice catalog builder") {
     withServer(dispatcher) { serverData =>
-      val microservice: ParallelWriteEntity = RightMockBuilder.getEntityCatalogService().getEntity(ms)
-      val executionPlan: WriteExecutionPlanResponseBody = microservice.getWriteExecutionPlan(WriteExecutionPlanRequestBody(source = "External"))
-      assert(ParallelWriteFormat.withName(executionPlan.format) == ParallelWriteFormat.delta)
-      assert(executionPlan.writeUri == "s3://bucket/")
+      val microservice: ParallelWriteEntity = RightMockBuilder.getEntityCatalogService().getEntityApi(ms)
+      val correlationId                     = ParallelWriteEntity.randomCorrelationId()
+      val executionPlan: WriteExecutionPlanResponseBody =
+        microservice.getWriteExecutionPlan(WriteExecutionPlanRequestBody(), correlationId)
+      assert(ParallelWriteFormat.withName(executionPlan.format.getOrElse(
+        throw new RuntimeException("Entity responded without a format field for a COLD case write")
+      )) == ParallelWriteFormat.delta)
+      assert(executionPlan.writeUri.getOrElse(
+        throw new RuntimeException("Entity responded without a writeUri field for a COLD case write")
+      ) == "s3://bucket/")
       assert(microservice.baseUrl.toString == "http://localhost:9999")
     }
   }
-
 
   test("Wrong catalog class") {
     withServer(dispatcher) { serverData =>
@@ -58,8 +61,7 @@ class MicroserviceCatalogBuilderSpec extends FunSuite{
         request.getPath match {
           case "/writeExecutionPlan" =>
             latch.countDown()
-            val response: MockResponse = new MockResponse().setBody(
-              s"""{
+            val response: MockResponse = new MockResponse().setBody(s"""{
                  |    "format": "Delta",
                  |    "writeUri": "s3://bucket/",
                  |    "writeType": "Cold",

@@ -21,7 +21,6 @@ trait ParallelWriteTest extends TempDirectoryTest { this: Suite =>
         request.getPath match {
           case "/writeExecutionPlan" =>
             EqualAssertion("POST", request.getMethod)
-            EqualAssertion("{\"source\":\"External\"}", request.getBody.readByteString().utf8())
             latch.countDown()
 
             val response: MockResponse = new MockResponse().setBody(s"""{
@@ -41,6 +40,20 @@ trait ParallelWriteTest extends TempDirectoryTest { this: Suite =>
                                                                        |        }
                                                                        |    }
                                                                        |}""".stripMargin)
+            response
+          case "/data/committed" =>
+            EqualAssertion("GET", request.getMethod)
+            val response: MockResponse = new MockResponse().setBody(s"""{
+                                                                       |    "commitStatus": "Success"
+                                                                       |}""".stripMargin)
+            response
+          case "/data/complete" =>
+            EqualAssertion("POST", request.getMethod)
+            val response: MockResponse = new MockResponse().setBody(s"""{}""".stripMargin)
+            response
+          case "/data/stream" =>
+            EqualAssertion("POST", request.getMethod)
+            val response: MockResponse = new MockResponse().setBody(s"""{}""".stripMargin)
             response
           case _ =>
             new MockResponse().setResponseCode(404)
