@@ -13,7 +13,7 @@ class MSEntityCatalogService extends EntityCatalogService{
     * @return Microservice instance
     */
   override def getEntityApi(coordinates: CatalogCoordinates): ParallelWriteEntity = {
-    EntityApi(new URL("http://ingress/batch/goofyhot/v1==>"))
+    EntityApi(new URL("http://ingress/http/entity/batch/goofyhot/v1"))
   }
 
   override def getEntityTableName(coordinates: CatalogCoordinates): String = "goofyhot_v1"
