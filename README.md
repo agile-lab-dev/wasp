@@ -9,18 +9,25 @@
 
 ## Table of contents
 
-- [General](#general)
-  - [Overview](#overview)
-  - [WASP in the wild](#wasp-in-the-wild)
-  - [Background](#background)
-  - [Architecture](#architecture)
-  - [Glossary](#glossary)
-  - [Services](#services)
-  - [Using WASP](#using-wasp)
-- [WASP RESTful APIs](documentation/api.md)
-- DevOps on Standalone applications
-    - [Development](documentation/dev.md)
-    - [Operations](documentation/ops.md)
+- [<a href="https://agilefactory.gitlab.io/Agile.Wasp2/">WASP</a> - Wide Analytics Streaming Platform](#wasp---wide-analytics-streaming-platform)
+  - [Table of contents](#table-of-contents)
+    - [General](#general)
+      - [Overview](#overview)
+      - [WASP in the wild](#wasp-in-the-wild)
+      - [Background](#background)
+      - [Architecture](#architecture)
+      - [Glossary](#glossary)
+      - [Services](#services)
+        - [Kafka](#kafka)
+        - [Spark](#spark)
+        - [Akka](#akka)
+        - [MongoDB](#mongodb)
+        - [Pluggable Datastore](#pluggable-datastore)
+      - [Using WASP](#using-wasp)
+        - [Setting up the development environment](#setting-up-the-development-environment)
+        - [Just try wasp without dev dependencies](#just-try-wasp-without-dev-dependencies)
+        - [Extension points](#extension-points)
+      - [Have a look at what's going on](#have-a-look-at-whats-going-on)
 
 
 ### General
@@ -40,6 +47,8 @@ WASP is a big data framework that allows you to not waste time with devops archi
 - applying schemas to unstructured data
 - feeding different datastores from the same data flow in a safe way
 - etc.
+
+For more technical documentation, head to the [documentation](documentation/) folder.
 
 #### WASP in the wild
 WASP has been added to Cloudera Solution Gallery as an Open Source tool to simplify streaming workflows.

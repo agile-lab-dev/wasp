@@ -1,4 +1,5 @@
-
+#!/bin/bash
+set -ex
 if [ -z "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" ]
 then
   echo "Not something that can be merged with this MR!"
@@ -6,8 +7,9 @@ then
 fi
 echo "base-commit: ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
 echo "target-commit ${CI_COMMIT_SHA}"
-
-censor ${CENSOR_ARGS} \
+ARGS=$(echo "${CENSOR_ARGS}" | base64 -d)
+echo $ARGS
+censor ${ARGS} \
 --repo-path '.' \
 --base-commit origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME} \
 --target-commit ${CI_COMMIT_SHA} \

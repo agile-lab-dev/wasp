@@ -2,6 +2,7 @@
 
 * [WASP](README.md)
     * [General](README.md)
+    * [Release](RELEASE.md)
     * [Architecture](Architecture.md)
     * [Glossary](Glossary.md)
     * [Services](Services.md)

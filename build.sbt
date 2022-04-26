@@ -1,12 +1,13 @@
+import org.checkerframework.checker.units.qual.s
 import Flavor.EMR212
 
 lazy val flavor = {
   val f = Flavor.currentFlavor()
-  println(Utils.printWithBorders(s"Building for flavor: ${f}", "*"))
+  System.err.println(Utils.printWithBorders(s"Building for flavor: ${f}", "*"))
   f
 }
 lazy val dependencies = flavor.dependencies
-lazy val settings = flavor.settings
+lazy val settings     = flavor.settings
 
 //integration tests should extend Test configuration and not Runtime configuration
 lazy val IntegrationTest = config("it") extend (Test)
@@ -48,7 +49,6 @@ lazy val repository_core = Project("wasp-repository-core", file("repository/core
   .dependsOn(model)
   .settings(libraryDependencies ++= dependencies.repositoryCoreDependencies)
 
-
 lazy val repository_mongo = Project("wasp-repository-mongo", file("repository/mongo"))
   .settings(settings.commonSettings: _*)
   .dependsOn(repository_core)
@@ -82,7 +82,6 @@ lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark
   .settings(libraryDependencies ++= dependencies.consumersSparkDependencies)
   .settings(settings.disableParallelTests: _*)
 
-
 /* Plugins */
 
 lazy val plugin_console_spark = Project("wasp-plugin-console-spark", file("plugin-console-spark"))
@@ -100,10 +99,11 @@ lazy val plugin_hbase_spark = Project("wasp-plugin-hbase-spark", file("plugin-hb
   .dependsOn(consumers_spark)
   .settings(libraryDependencies ++= dependencies.pluginHbaseSparkDependencies)
 
-lazy val plugin_plain_hbase_writer_spark = Project("wasp-plugin-plain-hbase-writer-spark", file("plugin-plain-hbase-writer-spark"))
-  .settings(settings.commonSettings: _*)
-  .dependsOn(consumers_spark)
-  .settings(libraryDependencies ++= dependencies.pluginPlainHbaseWriterSparkDependencies)
+lazy val plugin_plain_hbase_writer_spark =
+  Project("wasp-plugin-plain-hbase-writer-spark", file("plugin-plain-hbase-writer-spark"))
+    .settings(settings.commonSettings: _*)
+    .dependsOn(consumers_spark)
+    .settings(libraryDependencies ++= dependencies.pluginPlainHbaseWriterSparkDependencies)
 
 lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc-spark"))
   .settings(settings.commonSettings: _*)
@@ -166,7 +166,6 @@ lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark
   .settings(libraryDependencies ++= dependencies.pluginParallelWriteSparkDependencies)
   .dependsOn(microservice_catalog % "compile->compile;test->test")
   .dependsOn(aws_auth_temporary_credentials % "compile->compile;test->test")
-
 
 /* Yarn  */
 
@@ -311,7 +310,6 @@ lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", f
   .enablePlugins(JavaAppPackaging)
   .settings(dependencies.whitelabelSparkConsumerScriptClasspath)
 
-
 lazy val whiteLabelSingleNode = project
   .withId("wasp-whitelabel-singlenode")
   .in(file("whitelabel/single-node"))
@@ -345,12 +343,12 @@ lazy val openapi = Project("wasp-openapi", file("openapi"))
   )
   .dependsOn(core)
 
-lazy val aws_auth_temporary_credentials = Project("wasp-aws-auth-temporary-credentials", file("aws/auth/temporary-credentials"))
-  .settings(settings.commonSettings: _*)
-  .settings(libraryDependencies ++= dependencies.scalaTestDependencies)
-  .settings(libraryDependencies ++= dependencies.awsAuth)
-  .settings(Test / skip := flavor != EMR212) //only test this in EMR212 build
-
+lazy val aws_auth_temporary_credentials =
+  Project("wasp-aws-auth-temporary-credentials", file("aws/auth/temporary-credentials"))
+    .settings(settings.commonSettings: _*)
+    .settings(libraryDependencies ++= dependencies.scalaTestDependencies)
+    .settings(libraryDependencies ++= dependencies.awsAuth)
+    .settings(Test / skip := flavor != EMR212) //only test this in EMR212 build
 
 lazy val aws_auth = Project("wasp-aws-auth", file("aws/auth"))
   .settings(settings.commonSettings: _*)
@@ -359,4 +357,3 @@ lazy val aws_auth = Project("wasp-aws-auth", file("aws/auth"))
 lazy val aws = Project("wasp-aws", file("aws"))
   .settings(settings.commonSettings: _*)
   .aggregate(aws_auth)
-
