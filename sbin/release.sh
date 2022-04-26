@@ -72,7 +72,7 @@ sbt "bumpPatch"
 bumpedVersion=$(sbt $SBT_ARGS "print majorMinorPatch")
 git add baseVersion.version
 git commit -m "Bump to version $bumpedVersion"
-git push --set-upstream origin/$releaseBranch
+git push --set-upstream origin $releaseBranch
 
 echo "done!"
 echo "Have fun!"
