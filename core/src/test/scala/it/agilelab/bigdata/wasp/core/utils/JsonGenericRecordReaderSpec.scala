@@ -8,7 +8,7 @@ class JsonGenericRecordReaderSpec extends FlatSpec with Matchers {
     """{
       |    "type": "record",
       |    "name": "CommonSensorEvent",
-      |    "namespace": "it.enel.tlc.data",
+      |    "namespace": "it.tlc.data",
       |    "fields": [
       |        {
       |            "name": "ts",
