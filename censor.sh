@@ -7,9 +7,8 @@ then
 fi
 echo "base-commit: ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
 echo "target-commit ${CI_COMMIT_SHA}"
-ARGS=$(echo "${CENSOR_ARGS}" | base64 -d)
-echo $ARGS
-censor ${ARGS} \
+
+censor ${CENSOR_ARGS} \
 --repo-path '.' \
 --base-commit origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME} \
 --target-commit ${CI_COMMIT_SHA} \
