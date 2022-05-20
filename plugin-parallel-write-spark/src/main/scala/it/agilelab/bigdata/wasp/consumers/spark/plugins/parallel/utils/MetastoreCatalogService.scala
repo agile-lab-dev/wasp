@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function
 import scala.util.{Failure, Success, Try}
 
-object MetastoreCatalogService extends DataCatalogService {
+object MetastoreCatalogService extends DataCatalogService with Serializable {
   private lazy val catalogCache: ConcurrentHashMap[String, CatalogTable] = new ConcurrentHashMap[String, CatalogTable]()
 
   def getSchema(sparkSession: SparkSession, entityCoordinates: CatalogCoordinates): StructType =
