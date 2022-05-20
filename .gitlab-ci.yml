@@ -39,7 +39,9 @@ test-kernel:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
+      coverage_report:
+        coverage_format: cobertura
+        path: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -64,7 +66,9 @@ test-plugin:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
+      coverage_report:
+        coverage_format: cobertura
+        path: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -88,7 +92,9 @@ test-repo:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
+      coverage_report:
+        coverage_format: cobertura
+        path: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
