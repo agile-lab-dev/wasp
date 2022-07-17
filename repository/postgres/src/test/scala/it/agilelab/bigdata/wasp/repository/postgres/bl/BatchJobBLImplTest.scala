@@ -7,7 +7,7 @@ trait BatchJobBLImplTest {
 
   self : PostgresSuite =>
 
-  val batchJobBL =  BatchJobBLImpl(pgDB)
+  lazy val batchJobBL =  BatchJobBLImpl(pgDB)
 
 
   it should "test batchJobBL" in {

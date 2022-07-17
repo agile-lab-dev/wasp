@@ -40,8 +40,8 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val joptSimpleTests     = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
   lazy val jettySecurity       = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
   lazy val avro4sTestAndDarwin = avro4sTest ++ Seq(darwinMockConnector % Test)
-  lazy val mongoTest           = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
-  lazy val shapeless           = "com.chuusai"            %% "shapeless"                % "2.3.3"
+  lazy val mongoTest           = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.4.6" % Test
+  lazy val shapeless           = "com.chuusai" %% "shapeless" % "2.3.3"
 
   val jacksonTestDependencies = Seq(
     "com.fasterxml.jackson.core"     % "jackson-annotations"             % "2.10.1" % Test force (),
@@ -212,9 +212,10 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   )
 
   override val awsAuth: Seq[ModuleID] = Seq(
-    "org.apache.hadoop" % "hadoop-aws" % versions.hadoop,
-    "org.apache.hadoop" % "hadoop-common" % versions.hadoop,
-  "com.amazonaws"%"aws-java-sdk-bundle" % versions.awsBundle force())
+    "org.apache.hadoop" % "hadoop-aws"          % versions.hadoop,
+    "org.apache.hadoop" % "hadoop-common"       % versions.hadoop,
+    "com.amazonaws"     % "aws-java-sdk-bundle" % versions.awsBundle force ()
+  )
 
   override val pluginParallelWriteSparkDependencies: Seq[ModuleID] =
     Seq(scalaTest) ++ pluginHttpSparkDependencies ++ Seq(delta, hadoopAWS)

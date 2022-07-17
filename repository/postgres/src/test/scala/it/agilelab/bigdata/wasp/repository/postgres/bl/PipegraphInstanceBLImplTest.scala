@@ -7,7 +7,7 @@ trait PipegraphInstanceBLImplTest {
   self : PostgresSuite =>
 
 
-  private val bl =  PipegraphInstanceBlImpl(pgDB)
+  private lazy val bl =  PipegraphInstanceBlImpl(pgDB)
 
 
   it should "test PipegraphInstanceBlImpl" in {

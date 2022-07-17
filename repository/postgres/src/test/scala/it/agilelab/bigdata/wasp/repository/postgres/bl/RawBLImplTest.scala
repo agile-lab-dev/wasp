@@ -7,7 +7,7 @@ trait RawBLImplTest {
 
   self : PostgresSuite =>
 
-  val rawBL  = RawBLImpl(pgDB)
+  lazy val rawBL  = RawBLImpl(pgDB)
 
   it should "test RawBLImpl" in {
 

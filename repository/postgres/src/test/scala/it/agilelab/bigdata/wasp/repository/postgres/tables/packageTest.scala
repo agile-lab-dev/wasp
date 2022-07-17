@@ -6,7 +6,6 @@ trait packageTest {
   self: PostgresSuite =>
 
   it should "test" in {
-    val connection = getConnection
     connection.prepareStatement("""CREATE TABLE "TABLE_TEST"( id integer, test varchar, city varchar)""").execute()
     connection.prepareStatement("""INSERT INTO "TABLE_TEST"(id,test,city) VALUES(1,'tester',null)""").execute()
     val rs = connection.prepareStatement("""SELECT * FROM "TABLE_TEST"""").executeQuery()

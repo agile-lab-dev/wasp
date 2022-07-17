@@ -8,7 +8,7 @@ trait TopicBLImplTest {
   self : PostgresSuite =>
 
 
-  private val bl = TopicBLImpl(pgDB)
+  private lazy val bl = TopicBLImpl(pgDB)
 
   it should "test topic bl" in {
     bl.createTable()

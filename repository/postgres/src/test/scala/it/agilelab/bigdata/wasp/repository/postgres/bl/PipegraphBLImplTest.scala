@@ -7,7 +7,7 @@ import org.bson.BsonDocument
 trait PipegraphBLImplTest {
   self : PostgresSuite =>
 
-  private val bl = PipegraphBLImpl(pgDB)
+  private lazy val bl = PipegraphBLImpl(pgDB)
 
   it should "test PipegraphBLImpl" in {
     bl.dropTable()

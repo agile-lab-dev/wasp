@@ -35,7 +35,7 @@ class Vanilla2Versions {
   val scalaParserAndCombinators = "1.0.4"
   val nifi                      = "1.11.4"
   val dbcp2Version              = "2.4.0"
-  val postgresqlEmbeddedVersion = "0.13.1"
+  val postgresqlEmbeddedVersion = "0.13.4"
   val sttpVersion               = "2.1.2"
   val reflectionsVersion        = "0.9.11"
   val postgresqlVersion         = "42.2.5"

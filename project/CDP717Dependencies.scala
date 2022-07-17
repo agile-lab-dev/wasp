@@ -12,8 +12,8 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     case "2.11" => ("it.agilelab.bigdata.spark" % "spark-solr"  % versions.sparkSolr)
     case "2.12" => ("it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr)
   }
-  lazy val shapeless           = "com.chuusai"      %% "shapeless"                % "2.3.3"
-  lazy val javaxMail = "javax.mail" % "mail" % "1.4"
+  lazy val shapeless = "com.chuusai" %% "shapeless" % "2.3.3"
+  lazy val javaxMail = "javax.mail"  % "mail"       % "1.4"
   lazy val globalExclusions: Seq[ExclusionRule] = Seq(
     ExclusionRule("org.apache.logging.log4j", "log4j-slf4j-impl"),
     ExclusionRule("com.fasterxml.jackson.module", "jackson-module-scala_2.12"),
@@ -505,26 +505,26 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     ("org.apache.avro" % "avro-mapred" % "1.8.2.7.1.7.0-551").classifier("hadoop2"),
     ("org.apache.avro" % "trevni-avro" % "1.8.2.7.1.7.0-551").classifier("hadoop2")
   )
-  lazy val akkaActor          = "com.typesafe.akka"            %% "akka-actor"              % versions.akka
-  lazy val akkaCluster        = "com.typesafe.akka"            %% "akka-cluster"            % versions.akka
-  lazy val akkaClusterTools   = "com.typesafe.akka"            %% "akka-cluster-tools"      % versions.akka
-  lazy val akkaContrib        = "com.typesafe.akka"            %% "akka-contrib"            % versions.akka
-  lazy val akkaHttp           = "com.typesafe.akka"            %% "akka-http"               % versions.akkaHttp
-  lazy val akkaHttpSpray      = "com.typesafe.akka"            %% "akka-http-spray-json"    % versions.akkaHttp
-  lazy val akkaKryo           = "com.github.romix.akka"        %% "akka-kryo-serialization" % "0.5.0"
-  lazy val akkaRemote         = "com.typesafe.akka"            %% "akka-remote"             % versions.akka
-  lazy val akkaSlf4j          = "com.typesafe.akka"            %% "akka-slf4j"              % versions.akka
-  lazy val akkaStream         = "com.typesafe.akka"            %% "akka-stream"             % versions.akka
-  lazy val akkaStreamTestkit  = "com.typesafe.akka"            %% "akka-stream-testkit"     % versions.akka % Test
-  lazy val akkaHttpTestKit    = "com.typesafe.akka"            %% "akka-http-testkit"       % versions.akkaHttp % Test
-  lazy val akkaClusterTestKit = "com.typesafe.akka"            %% "akka-multi-node-testkit" % versions.akka % Test
-  lazy val akkaTestKit        = "com.typesafe.akka"            %% "akka-testkit"            % versions.akka % Test
-  lazy val sttpCore           = "com.softwaremill.sttp.client" %% "core"                    % versions.sttpVersion
-  lazy val sttpJson4s         = "com.softwaremill.sttp.client" %% "json4s"                  % versions.sttpVersion
-  lazy val json4sJackson      = "org.json4s"                   %% "json4s-jackson"          % versions.json4s
-  lazy val mongodbScala       = "org.mongodb.scala"            %% "mongo-scala-driver"      % versions.mongodbScala
-  lazy val mongoTest          = "com.github.simplyscala"       %% "scalatest-embedmongo"    % "0.2.4" % Test
-  lazy val scalaTest          = "org.scalatest"                %% "scalatest"               % versions.scalaTest % Test
+  lazy val akkaActor          = "com.typesafe.akka"            %% "akka-actor"               % versions.akka
+  lazy val akkaCluster        = "com.typesafe.akka"            %% "akka-cluster"             % versions.akka
+  lazy val akkaClusterTools   = "com.typesafe.akka"            %% "akka-cluster-tools"       % versions.akka
+  lazy val akkaContrib        = "com.typesafe.akka"            %% "akka-contrib"             % versions.akka
+  lazy val akkaHttp           = "com.typesafe.akka"            %% "akka-http"                % versions.akkaHttp
+  lazy val akkaHttpSpray      = "com.typesafe.akka"            %% "akka-http-spray-json"     % versions.akkaHttp
+  lazy val akkaKryo           = "com.github.romix.akka"        %% "akka-kryo-serialization"  % "0.5.0"
+  lazy val akkaRemote         = "com.typesafe.akka"            %% "akka-remote"              % versions.akka
+  lazy val akkaSlf4j          = "com.typesafe.akka"            %% "akka-slf4j"               % versions.akka
+  lazy val akkaStream         = "com.typesafe.akka"            %% "akka-stream"              % versions.akka
+  lazy val akkaStreamTestkit  = "com.typesafe.akka"            %% "akka-stream-testkit"      % versions.akka % Test
+  lazy val akkaHttpTestKit    = "com.typesafe.akka"            %% "akka-http-testkit"        % versions.akkaHttp % Test
+  lazy val akkaClusterTestKit = "com.typesafe.akka"            %% "akka-multi-node-testkit"  % versions.akka % Test
+  lazy val akkaTestKit        = "com.typesafe.akka"            %% "akka-testkit"             % versions.akka % Test
+  lazy val sttpCore           = "com.softwaremill.sttp.client" %% "core"                     % versions.sttpVersion
+  lazy val sttpJson4s         = "com.softwaremill.sttp.client" %% "json4s"                   % versions.sttpVersion
+  lazy val json4sJackson      = "org.json4s"                   %% "json4s-jackson"           % versions.json4s
+  lazy val mongodbScala       = "org.mongodb.scala"            %% "mongo-scala-driver"       % versions.mongodbScala
+  lazy val mongoTest          = "de.flapdoodle.embed"          % "de.flapdoodle.embed.mongo" % "3.4.6" % Test
+  lazy val scalaTest          = "org.scalatest"                %% "scalatest"                % versions.scalaTest % Test
   lazy val allAkka = Seq(
     akkaActor,
     akkaCluster,
@@ -586,17 +586,19 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   override lazy val modelDependencies
       : Seq[sbt.ModuleID] = parcelDependencies ++ allAkka ++ testDependencies :+ mongoTest :+ mongodbScala
   override lazy val coreDependencies
-      : Seq[sbt.ModuleID]                                             = Seq(darwinCore, darwinMockConnector) ++ avro4s ++ testDependencies
-  override lazy val testDependencies: Seq[sbt.ModuleID]               = Seq(scalaTest)
-  override lazy val scalaTestDependencies: Seq[sbt.ModuleID]          = testDependencies
-  override lazy val repositoryCoreDependencies: Seq[sbt.ModuleID]     = testDependencies ++ Seq(shapeless)
-  override lazy val repositoryMongoDependencies: Seq[sbt.ModuleID]    = Seq(nameOf, mongoTest) ++ testDependencies ++ Seq(shapeless)
+      : Seq[sbt.ModuleID]                                         = Seq(darwinCore, darwinMockConnector) ++ avro4s ++ testDependencies
+  override lazy val testDependencies: Seq[sbt.ModuleID]           = Seq(scalaTest)
+  override lazy val scalaTestDependencies: Seq[sbt.ModuleID]      = testDependencies
+  override lazy val repositoryCoreDependencies: Seq[sbt.ModuleID] = testDependencies ++ Seq(shapeless)
+  override lazy val repositoryMongoDependencies: Seq[sbt.ModuleID] = Seq(nameOf, mongoTest) ++ testDependencies ++ Seq(
+    shapeless
+  )
   override lazy val repositoryPostgresDependencies: Seq[sbt.ModuleID] = Seq(postgresqlEmbedded) ++ testDependencies
   override lazy val masterDependencies: Seq[sbt.ModuleID]             = testDependencies ++ allAkka
   override lazy val producersDependencies: Seq[sbt.ModuleID]          = testDependencies ++ allAkka
   override lazy val consumersSparkDependencies
-      : Seq[sbt.ModuleID]                                      = Seq(quartz, nameOf) ++ wireMock ++ hbase ++ avro4sTestAndDarwin ++ testDependencies ++ allAkka ++ avro4sTestAndDarwin
-  override lazy val  pluginElasticSparkDependencies
+      : Seq[sbt.ModuleID] = Seq(quartz, nameOf) ++ wireMock ++ hbase ++ avro4sTestAndDarwin ++ testDependencies ++ allAkka ++ avro4sTestAndDarwin
+  override lazy val pluginElasticSparkDependencies
       : Seq[sbt.ModuleID]                                           = Seq(elasticSearch, elasticSearchSpark) ++ testDependencies
   override lazy val pluginHbaseSparkDependencies: Seq[sbt.ModuleID] = testDependencies
   override lazy val pluginPlainHbaseWriterSparkDependencies: Seq[sbt.ModuleID] = hbase ++ testDependencies ++ Seq(
@@ -653,8 +655,8 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     Seq("com.github.tomakehurst" % "wiremock-standalone" % "2.25.0" % Test, "xmlunit" % "xmlunit" % "1.6" % Test)
 
   override val awsAuth: Seq[ModuleID] = Seq(
-    "org.apache.hadoop" % "hadoop-aws" % versions.hadoop,
-    "org.apache.hadoop" % "hadoop-common" % versions.hadoop,
-    "com.amazonaws"%"aws-java-sdk-bundle" % versions.awsBundle force()
+    "org.apache.hadoop" % "hadoop-aws"          % versions.hadoop,
+    "org.apache.hadoop" % "hadoop-common"       % versions.hadoop,
+    "com.amazonaws"     % "aws-java-sdk-bundle" % versions.awsBundle force ()
   )
 }

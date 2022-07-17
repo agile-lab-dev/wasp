@@ -7,7 +7,7 @@ trait KeyValueBLImplTest {
   self : PostgresSuite =>
 
 
-  val keyValueBL = KeyValueBLImpl(pgDB)
+  lazy val keyValueBL = KeyValueBLImpl(pgDB)
 
     it should "test keyValueBL" in {
 

@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 trait BatchJobInstanceBLImplTest {
   self : PostgresSuite =>
 
-  private val bl =  BatchJobInstanceBLImpl(pgDB)
+  lazy private val bl =  BatchJobInstanceBLImpl(pgDB)
 
 
   it should "test batchJobInstanceBL" in {

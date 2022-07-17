@@ -9,7 +9,7 @@ import spray.json._
 trait ConfigManagerBLImplTest extends JsonSupport{
   self : PostgresSuite =>
 
-  private val bl = ConfigManagerBLImpl(pgDB)
+  private lazy val bl = ConfigManagerBLImpl(pgDB)
 
   it should "test Config manager for postgres" in {
     bl.createTable()

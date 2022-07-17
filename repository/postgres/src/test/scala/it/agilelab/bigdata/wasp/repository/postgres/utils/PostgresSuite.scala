@@ -6,7 +6,7 @@ import PostgresSuite._
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers, Outcome}
 
 
 object PostgresSuite {
@@ -27,23 +27,30 @@ object PostgresSuite {
 
 trait PostgresSuite extends FlatSpec with Matchers with BeforeAndAfterAll with Logging {
 
-  def getConnection: Connection = {
+  private def getConnection: Connection = {
     val _conn = pg.getPostgresDatabase.getConnection()
     _conn.setAutoCommit(false)
     _conn
   }
 
-  private lazy val connection = getConnection
+  private def areWeOnAppleSilicon() = {
+    System.getProperty("os.name") == "Mac OS X" && System.getProperty("os.arch") == "aarch64"
+  }
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    connection
+  protected lazy val connection = getConnection
+
+
+  override protected def withFixture(test: NoArgTest): Outcome = {
+    this.assume(!areWeOnAppleSilicon(),"Postgres suite will not run on Apple Silicon")
+    test()
   }
 
   override def afterAll(): Unit = {
     super.afterAll()
-    if (!connection.isClosed) connection.close()
-    closePool()
+    if(!areWeOnAppleSilicon()) {
+      if (!connection.isClosed) connection.close()
+      closePool()
+    }
   }
 
 
@@ -55,8 +62,8 @@ trait PostgresSuite extends FlatSpec with Matchers with BeforeAndAfterAll with L
 
   def closePool():Unit = ConnectionSupport.poolingDriver.closePool(s"$jdbcUrl:$user")
 
-  val config: PostgresDBConfigModel = PostgresDBConfigModel(jdbcUrl,user,pass,driver,10)
-  val pgDB = new WaspPostgresDBImpl(config)
+  lazy val config: PostgresDBConfigModel = PostgresDBConfigModel(jdbcUrl,user,pass,driver,10)
+  lazy val pgDB = new WaspPostgresDBImpl(config)
 
 }
 

@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 trait FreeCodeBLImplTest {
   self : PostgresSuite =>
 
-  private val freeCodeBL = FreeCodeBLImpl(pgDB)
+  private lazy val freeCodeBL = FreeCodeBLImpl(pgDB)
 
 
   it should "test freeCodeBL" in {

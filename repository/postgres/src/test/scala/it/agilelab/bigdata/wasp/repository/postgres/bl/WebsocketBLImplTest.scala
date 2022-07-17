@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 trait WebsocketBLImplTest {
   self : PostgresSuite =>
 
-  private val bl = WebsocketBLImpl(pgDB)
+  private lazy val bl = WebsocketBLImpl(pgDB)
 
   it should "test WebsocketBLImpl" in {
 

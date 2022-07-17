@@ -8,7 +8,7 @@ trait ProcessGroupBLImplTest {
   self : PostgresSuite =>
 
 
-  private val processGroupBL = ProcessGroupBLImpl(pgDB)
+  private lazy val processGroupBL = ProcessGroupBLImpl(pgDB)
   
   it should "test processGroupBL" in {
 

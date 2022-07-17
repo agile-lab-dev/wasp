@@ -25,4 +25,5 @@ class AllPostgresTests
     with SqlSourceBlImplTest
     with TopicBLImplTest
     with WebsocketBLImplTest
-    with packageTest
+    with packageTest {
+}

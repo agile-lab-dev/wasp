@@ -9,7 +9,7 @@ trait ProducerBLImplTest {
   self : PostgresSuite =>
 
 
-  private val bl = ProducerBLImpl(pgDB)
+  private lazy val bl = ProducerBLImpl(pgDB)
 
   it should "test producer bl" in {
 

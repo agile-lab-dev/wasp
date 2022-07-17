@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 trait HttpBLImplTest {
   self : PostgresSuite =>
 
-  private val bl = HttpBLImpl(pgDB)
+  private lazy val bl = HttpBLImpl(pgDB)
 
   it should "test HttpBLImpl" in {
     bl.dropTable()

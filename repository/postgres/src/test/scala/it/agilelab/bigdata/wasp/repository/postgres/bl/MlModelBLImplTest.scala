@@ -8,7 +8,7 @@ import org.mongodb.scala.bson.BsonObjectId
 trait MlModelBLImplTest {
   self : PostgresSuite =>
 
-  private val bl = MlModelBLImpl(pgDB)
+  private lazy val bl = MlModelBLImpl(pgDB)
 
   it should "test MlModelBLImpl for postgres" in {
 

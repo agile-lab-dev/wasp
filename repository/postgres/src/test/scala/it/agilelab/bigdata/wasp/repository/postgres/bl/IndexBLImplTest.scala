@@ -7,7 +7,7 @@ trait IndexBLImplTest {
   self : PostgresSuite =>
 
 
-  private val bl = IndexBLImpl(pgDB)
+  private lazy val bl = IndexBLImpl(pgDB)
 
   it should "test IndexBLImpl" in {
 

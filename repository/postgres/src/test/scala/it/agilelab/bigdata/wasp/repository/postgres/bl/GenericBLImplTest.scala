@@ -9,7 +9,7 @@ import org.mongodb.scala.bson.BsonDocument
 trait GenericBLImplTest {
   self : PostgresSuite =>
 
-  private val bl = GenericBLImpl(pgDB)
+  private lazy val bl = GenericBLImpl(pgDB)
 
   it should "test GenericBLImpl" in {
     bl.dropTable()

@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 trait BatchSchedulersBLImplTest {
 
   self: PostgresSuite =>
-  private val bl = BatchSchedulersBLImpl(pgDB)
+  private lazy val bl = BatchSchedulersBLImpl(pgDB)
 
   it should "Test BatchSchedulersBLImpl" in {
 

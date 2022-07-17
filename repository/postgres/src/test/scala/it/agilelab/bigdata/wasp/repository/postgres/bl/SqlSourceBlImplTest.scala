@@ -8,7 +8,7 @@ trait SqlSourceBlImplTest {
   self : PostgresSuite =>
 
 
-  val sqlSourceBL = SqlSourceBLImpl(pgDB)
+  lazy val sqlSourceBL = SqlSourceBLImpl(pgDB)
 
   it should "test sqlSourceBL" in {
 

@@ -16,7 +16,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
     "com.fasterxml.jackson.module"   % "jackson-module-scala_2.11"       % "2.10.1" force ()
   )
 
-  lazy val mongoTest          = "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4" % Test
+  lazy val mongoTest = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.4.6" % Test
 
   implicit class Exclude(module: ModuleID) {
     def log4jExclude: ModuleID =
@@ -244,8 +244,8 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val avro4s = Seq(avro4sCore, avro4sJson)
 
-  val avro4sTest = avro4s.map(_ % Test)
-  val avro4sTestAndDarwin =  avro4sTest ++ Seq(darwinMockConnector % Test)
+  val avro4sTest          = avro4s.map(_                          % Test)
+  val avro4sTestAndDarwin = avro4sTest ++ Seq(darwinMockConnector % Test)
 
   val jaxRs = "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.5"
 
@@ -403,7 +403,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val pluginMongoSparkDependencies = Seq(
     ("org.mongodb.spark" %% "mongo-spark-connector" % "2.4.3").exclude("org.mongodb", "mongo-java-driver"),
-    "org.mongodb"       % "mongo-java-driver"      % "3.12.2"
+    "org.mongodb" % "mongo-java-driver" % "3.12.2"
   ).map(excludeNetty)
 
   val pluginMailerSparkDependencies = Seq(
@@ -474,9 +474,10 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val repositoryCoreDependencies: Seq[ModuleID]            = testDependencies ++ Seq(shapeless)
   override val sparkPluginBasicDependencies: Seq[ModuleID] = scalaTestDependencies
   override val awsAuth: Seq[ModuleID] = Seq(
-    "org.apache.hadoop" % "hadoop-aws" % versions.hadoop,
-    "org.apache.hadoop" % "hadoop-common" % versions.hadoop,
-      "com.amazonaws"%"aws-java-sdk-bundle" % versions.awsBundle force())
+    "org.apache.hadoop" % "hadoop-aws"          % versions.hadoop,
+    "org.apache.hadoop" % "hadoop-common"       % versions.hadoop,
+    "com.amazonaws"     % "aws-java-sdk-bundle" % versions.awsBundle force ()
+  )
 
   override val whitelabelMasterScriptClasspath        = scriptClasspath += ""
   override val whitelabelProducerScriptClasspath      = scriptClasspath += ""

@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 trait DocumentBLImplTest {
   self: PostgresSuite =>
 
-  private val documentBL = DocumentBLImpl(pgDB)
+  private lazy val documentBL = DocumentBLImpl(pgDB)
 
   it should "test documentBL" in {
 
