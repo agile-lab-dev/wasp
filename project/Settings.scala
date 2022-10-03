@@ -31,8 +31,8 @@ class CDP717Resolvers(other: Resolvers) extends Resolvers {
 
 class BasicResolvers extends Resolvers {
   val mavenLocalRepo            = Resolver.mavenLocal
-  val sonatypeReleaseRepo       = Resolver.sonatypeRepo("releases")
-  val sonatypeSnapshotsRepo     = Resolver.sonatypeRepo("snapshots")
+  val sonatypeReleaseRepos       = Resolver.sonatypeOssRepos("releases")
+  val sonatypeSnapshotsRepos     = Resolver.sonatypeOssRepos("snapshots")
   val restletMavenRepo          = "Restlet Maven repository" at "https://maven.restlet.com/"
   val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
   val clouderaReleaseLocalRepo  = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
@@ -44,15 +44,12 @@ class BasicResolvers extends Resolvers {
   /** custom resolvers for dependencies */
   val resolvers = Seq(
     mavenLocalRepo,
-    sonatypeReleaseRepo,
-    sonatypeSnapshotsRepo,
-    //typesafeReleaseRepo,
     restletMavenRepo,
     clouderaReleaseLocalRepo,
     clouderaHadoopReleaseRepo,
     repo1Maven2,
     confluent
-  )
+  ) ++ sonatypeReleaseRepos ++ sonatypeSnapshotsRepos
 }
 
 class BasicSettings(
