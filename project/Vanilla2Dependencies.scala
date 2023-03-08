@@ -40,7 +40,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val joptSimpleTests     = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
   lazy val jettySecurity       = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
   lazy val avro4sTestAndDarwin = avro4sTest ++ Seq(darwinMockConnector % Test)
-  lazy val mongoTest           = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.4.6" % Test
+  lazy val mongoTest           = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
   lazy val shapeless           = "com.chuusai" %% "shapeless" % "2.3.3"
 
   val jacksonTestDependencies = Seq(

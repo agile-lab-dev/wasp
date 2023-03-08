@@ -523,7 +523,7 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
   lazy val sttpJson4s         = "com.softwaremill.sttp.client" %% "json4s"                   % versions.sttpVersion
   lazy val json4sJackson      = "org.json4s"                   %% "json4s-jackson"           % versions.json4s
   lazy val mongodbScala       = "org.mongodb.scala"            %% "mongo-scala-driver"       % versions.mongodbScala
-  lazy val mongoTest          = "de.flapdoodle.embed"          % "de.flapdoodle.embed.mongo" % "3.4.6" % Test
+  lazy val mongoTest          = "de.flapdoodle.embed"          % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
   lazy val scalaTest          = "org.scalatest"                %% "scalatest"                % versions.scalaTest % Test
   lazy val allAkka = Seq(
     akkaActor,

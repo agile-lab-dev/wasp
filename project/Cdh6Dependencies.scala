@@ -16,7 +16,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
     "com.fasterxml.jackson.module"   % "jackson-module-scala_2.11"       % "2.10.1" force ()
   )
 
-  lazy val mongoTest = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.4.6" % Test
+  lazy val mongoTest = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
 
   implicit class Exclude(module: ModuleID) {
     def log4jExclude: ModuleID =

@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: wasp-api
-  version: 2.27.0-436-refactor-plugin-in-order-to-allow-plugin-defined-models-SNAPSHOT
+  version: 2.31.0-550-parallel-write-plugin-improving-error-handling-when-sending-streamed-data-SNAPSHOT
 servers:
 - url: http://localhost:2891
   description: default development server, beware of CORS
@@ -1114,9 +1114,7 @@ paths:
               - owner
               - isSystem
               - creationTime
-              - legacyStreamingComponents
               - structuredStreamingComponents
-              - rtComponents
               - labels
               - enrichmentSources
               type: object
@@ -1132,18 +1130,10 @@ paths:
                 creationTime:
                   type: integer
                   format: int64
-                legacyStreamingComponents:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/LegacyStreamingETLModel'
                 structuredStreamingComponents:
                   type: array
                   items:
                     $ref: '#/components/schemas/StructuredStreamingETLModel'
-                rtComponents:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/RTModel'
                 dashboard:
                   $ref: '#/components/schemas/DashboardModel'
                 labels:
@@ -1194,9 +1184,7 @@ paths:
               - owner
               - isSystem
               - creationTime
-              - legacyStreamingComponents
               - structuredStreamingComponents
-              - rtComponents
               - labels
               - enrichmentSources
               type: object
@@ -1212,18 +1200,10 @@ paths:
                 creationTime:
                   type: integer
                   format: int64
-                legacyStreamingComponents:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/LegacyStreamingETLModel'
                 structuredStreamingComponents:
                   type: array
                   items:
                     $ref: '#/components/schemas/StructuredStreamingETLModel'
-                rtComponents:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/RTModel'
                 dashboard:
                   $ref: '#/components/schemas/DashboardModel'
                 labels:
@@ -2620,40 +2600,6 @@ components:
       xml:
         name: CountEntry
         namespace: java://it.agilelab.bigdata.wasp.models
-    LegacyStreamingETLModel:
-      required:
-      - name
-      - inputs
-      - output
-      - mlModels
-      - kafkaAccessType
-      - group
-      - isActive
-      type: object
-      properties:
-        name:
-          type: string
-        inputs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ReaderModel'
-        output:
-          $ref: '#/components/schemas/WriterModel'
-        mlModels:
-          type: array
-          items:
-            $ref: '#/components/schemas/MlModelOnlyInfo'
-        strategy:
-          $ref: '#/components/schemas/StrategyModel'
-        kafkaAccessType:
-          type: string
-        group:
-          type: string
-        isActive:
-          type: boolean
-      xml:
-        name: LegacyStreamingETLModel
-        namespace: java://it.agilelab.bigdata.wasp.models
     Sources:
       required:
       - found
@@ -2978,17 +2924,17 @@ components:
     GenericModel:
       required:
       - name
-      - kind
       - value
+      - product
       - options
       type: object
       properties:
         name:
           type: string
-        kind:
-          type: string
         value:
           $ref: '#/components/schemas/BsonDocument'
+        product:
+          $ref: '#/components/schemas/GenericProduct'
         options:
           $ref: '#/components/schemas/GenericOptions'
       xml:
@@ -3509,7 +3455,6 @@ components:
           type: object
           additionalProperties:
             type: string
-      nullable: true
       xml:
         name: WriterModel
         namespace: java://it.agilelab.bigdata.wasp.models
@@ -3520,9 +3465,7 @@ components:
       - owner
       - isSystem
       - creationTime
-      - legacyStreamingComponents
       - structuredStreamingComponents
-      - rtComponents
       - labels
       - enrichmentSources
       type: object
@@ -3538,18 +3481,10 @@ components:
         creationTime:
           type: integer
           format: int64
-        legacyStreamingComponents:
-          type: array
-          items:
-            $ref: '#/components/schemas/LegacyStreamingETLModel'
         structuredStreamingComponents:
           type: array
           items:
             $ref: '#/components/schemas/StructuredStreamingETLModel'
-        rtComponents:
-          type: array
-          items:
-            $ref: '#/components/schemas/RTModel'
         dashboard:
           $ref: '#/components/schemas/DashboardModel'
         labels:
@@ -3622,6 +3557,7 @@ components:
       - kryoSerializer
       - streamingBatchIntervalMs
       - checkpointDir
+      - enableHiveSupport
       - others
       - schedulingStrategy
       - name
@@ -3660,6 +3596,8 @@ components:
           format: int32
         checkpointDir:
           type: string
+        enableHiveSupport:
+          type: boolean
         triggerIntervalMs:
           type: integer
           format: int64
@@ -4190,28 +4128,6 @@ components:
       xml:
         name: SolrConfigModel
         namespace: java://it.agilelab.bigdata.wasp.models.configuration
-    RTModel:
-      required:
-      - name
-      - inputs
-      - isActive
-      type: object
-      properties:
-        name:
-          type: string
-        inputs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ReaderModel'
-        isActive:
-          type: boolean
-        strategy:
-          $ref: '#/components/schemas/StrategyModel'
-        endpoint:
-          $ref: '#/components/schemas/WriterModel'
-      xml:
-        name: RTModel
-        namespace: java://it.agilelab.bigdata.wasp.models
     Events:
       required:
       - found
@@ -4465,6 +4381,19 @@ components:
       xml:
         name: KeyValueOption
         namespace: java://it.agilelab.bigdata.wasp.models
+    GenericProduct:
+      required:
+      - categoryName
+      type: object
+      properties:
+        categoryName:
+          type: string
+        productName:
+          type: string
+          nullable: true
+      xml:
+        name: GenericProduct
+        namespace: java://it.agilelab.bigdata.wasp.datastores
     PipegraphStatus:
       type: string
       enum:

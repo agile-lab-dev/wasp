@@ -33,7 +33,7 @@ class BasicResolvers extends Resolvers {
   val mavenLocalRepo            = Resolver.mavenLocal
   val sonatypeReleaseRepos       = Resolver.sonatypeOssRepos("releases")
   val sonatypeSnapshotsRepos     = Resolver.sonatypeOssRepos("snapshots")
-  val restletMavenRepo          = "Restlet Maven repository" at "https://maven.restlet.com/"
+  val restletMavenRepo          = "Restlet Maven repository" at "https://maven.restlet.talend.com" // this is needed for CDP build to resolve org.restlet.jee:org.restlet.ext.servlet:2.3.0
   val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
   val clouderaReleaseLocalRepo  = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
   val repo1Maven2               = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"

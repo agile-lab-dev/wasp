@@ -30,7 +30,7 @@ test-kernel:
   image: "hseeberger/scala-sbt:8u312_1.6.2_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "EMR_2_12", "CDP717"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-kernel/test coverageOff wasp-kernel/coverageReport wasp-kernel/coverageAggregate"
   after_script:
@@ -56,7 +56,7 @@ test-plugin:
   image: "hseeberger/scala-sbt:8u312_1.6.2_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "EMR_2_12", "CDP717"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-plugin/test coverageOff wasp-plugin/coverageReport wasp-plugin/coverageAggregate"
   after_script:
@@ -83,7 +83,7 @@ test-repo:
   image: "hseeberger/scala-sbt:8u312_1.6.2_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "EMR_2_12", "CDP717"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverageOn wasp-repository/test coverageOff wasp-repository/coverageReport wasp-repository/coverageAggregate"
   after_script:
@@ -109,7 +109,7 @@ compile-whitelabel:
   image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "EMR_2_12", "CDP717"]
   script:
     - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/Test/compile"
   tags:
@@ -128,11 +128,28 @@ censor:
   script:
     - ./censor.sh
 
+generate-open-api:
+  stage: test
+  interruptible: true
+  image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
+  script:
+    - ./run-sbt-unprivileged.sh "generateOpenApi"
+  tags:
+    - gitlab-org
+  only:
+    - /^develop$/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
+    - tags
+  artifacts:
+    paths: ['documentation/wasp-openapi.yaml']
+  needs: []
+
 
 waspctl:
   interruptible: true
   stage: deploy
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/waspctl-build:0.1.0"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/waspctl-build:0.2.0"
   script:
     - bash waspctl/build-for-all-archs.bash
   artifacts:
@@ -142,6 +159,10 @@ waspctl:
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
     - tags
+  needs:
+    - generate-open-api
+  dependencies:
+    - generate-open-api
 
 snapshot:
   interruptible: false
@@ -149,7 +170,7 @@ snapshot:
   image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "EMR_2_12", "CDP717"]
   tags:
     - gitlab-org
   script:
@@ -173,7 +194,7 @@ release:
   image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP717" , "EMR_2_12"]
+      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "EMR_2_12", "CDP717"]
   script:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"

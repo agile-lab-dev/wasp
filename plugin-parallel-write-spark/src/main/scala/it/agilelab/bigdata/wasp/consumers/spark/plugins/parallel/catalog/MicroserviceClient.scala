@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog
 
-import com.squareup.okhttp.{MediaType, OkHttpClient, Request, RequestBody}
+import com.squareup.okhttp.{MediaType, OkHttpClient, Request, RequestBody, Response}
 import okio.BufferedSink
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -82,10 +82,15 @@ trait MicroserviceClient {
   }
 
 
-  private def callAndForget(request: Request.Builder, headers: Map[String, String]): Unit = {
-    headers.keys.foreach(key => request.addHeader(key, headers(key)))
-    new OkHttpClient().newCall(request.build()).execute().body()
-    ()
+  private def callAndForget(requestBuilder: Request.Builder, headers: Map[String, String]): Unit = {
+    headers.keys.foreach(key => requestBuilder.addHeader(key, headers(key)))
+    val request = requestBuilder.build()
+    val response: Response = new OkHttpClient().newCall(request).execute()
+    if(!response.isSuccessful) {
+      throw new IllegalArgumentException(
+        "request - " + request.url().toString + ", " +request.body().contentType().toString+ "\tresponse - status code: " + response.code() + ", response contentType: " + response.body().contentType() + ", status description: " + response.message()
+      )
+    }
   }
 
 
