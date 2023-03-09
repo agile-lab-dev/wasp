@@ -3,9 +3,8 @@ package it.agilelab.bigdata.wasp.models
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.RawProduct
 import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
 
-
-object RawModel{
-	val metadata = """
+object RawModel {
+  val metadata = """
     {"name": "id", "type":"string", "nullable":false, "metadata":{}},
     {"name": "sourceId", "type":"string", "nullable":false, "metadata":{}},
     {"name": "arrivalTimestamp", "type":"long", "nullable":false, "metadata":{}},
@@ -13,30 +12,28 @@ object RawModel{
     {"name": "path", "type":"string", "nullable":false, "metadata":{}}
   """
 
-	/**
+  /**
 		* Generate final schema for RawModel. Use this method if you schema have a field metadata.
 		* @param ownSchema
 		* @return
 		*/
+  def generateField(ownSchema: Option[String]): String = {
+    val schema = (ownSchema :: Nil).flatten.mkString(", ")
+    generate(schema)
+  }
 
-	def generateField(ownSchema: Option[String]): String = {
-		val schema = (ownSchema :: Nil).flatten.mkString(", ")
-		generate(schema)
-	}
-
-	/**
+  /**
 		* Generate final schema for RawModel. Use this method if you schema not have a field metadata.
 		* @param ownSchema
 		* @return
 		*/
+  def generateMetadataAndField(ownSchema: Option[String]): String = {
+    val schema = (Some(metadata) :: ownSchema :: Nil).flatten.mkString(", ")
+    generate(schema)
+  }
 
-	def generateMetadataAndField(ownSchema: Option[String]): String = {
-		val schema = (Some(metadata)  :: ownSchema :: Nil).flatten.mkString(", ")
-		generate(schema)
-	}
-
-	private def generate(schema: String) = {
-		s"""
+  private def generate(schema: String) = {
+    s"""
 			 |{
 			 |      "type":"struct",
 			 |      "fields":[
@@ -44,7 +41,7 @@ object RawModel{
 			 |      ]
 			 |}
        """.stripMargin
-	}
+  }
 }
 
 // TODO external scaladocs links
@@ -65,14 +62,14 @@ object RawModel{
 	* @param schema the schema of the data
 	* @param options the options for the datastore
 	*/
-
-case class RawModel(override val name: String,
-                    uri: String,
-                    timed: Boolean = true,
-                    schema: String,
-                    options: RawOptions = RawOptions.default)
-	  extends DatastoreModel {
-	override def datastoreProduct: DatastoreProduct = RawProduct
+case class RawModel(
+    override val name: String,
+    uri: String,
+    timed: Boolean = false,
+    schema: String,
+    options: RawOptions = RawOptions.default
+) extends DatastoreModel {
+  override def datastoreProduct: DatastoreProduct = RawProduct
 }
 
 // TODO external scaladocs links
@@ -101,12 +98,14 @@ case class RawModel(override val name: String,
 	* @param format specifies the format to use
 	* @param extraOptions extra options for the underlying writer
 	*/
-case class RawOptions(saveMode: String,
-                      format: String,
-                      extraOptions: Option[Map[String, String]] = None,
-                      partitionBy: Option[List[String]] = None)
+case class RawOptions(
+    saveMode: String,
+    format: String,
+    extraOptions: Option[Map[String, String]] = None,
+    partitionBy: Option[List[String]] = None
+)
 
 object RawOptions {
-	lazy val default = RawOptions("default", "parquet")
-	lazy val defaultAppend = RawOptions("append", "parquet")
+  lazy val default       = RawOptions("default", "parquet")
+  lazy val defaultAppend = RawOptions("append", "parquet")
 }

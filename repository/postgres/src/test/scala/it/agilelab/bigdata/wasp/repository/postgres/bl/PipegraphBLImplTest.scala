@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.bson.BsonDocument
 
 trait PipegraphBLImplTest {
-  self : PostgresSuite =>
+  self: PostgresSuite =>
 
   private lazy val bl = PipegraphBLImpl(pgDB)
 
@@ -13,15 +13,24 @@ trait PipegraphBLImplTest {
     bl.dropTable()
     bl.createTable()
 
-
     val model1 = PipegraphModel("name1", "description", "tester", true, 10L, List.empty, None)
     bl.insert(model1)
 
-    val etl = StructuredStreamingETLModel("name_1", "not-default",
-      StreamingReaderModel.topicReader("name", TopicModel("name", 10L, 3, 3, "topic", None, None, None, true, new BsonDocument), Some(10), Map.empty),
-      List.empty,
-      WriterModel.consoleWriter("console"),
-      List.empty, None, Some(10))
+    val etl = StructuredStreamingETLModel(
+      name = "name_1",
+      group = "not-default",
+      streamingInput = StreamingReaderModel.topicReader(
+        "name",
+        TopicModel("name", 10L, 3, 3, "topic", None, None, None, true, new BsonDocument),
+        Some(10),
+        Map.empty
+      ),
+      staticInputs = List.empty,
+      streamingOutput = WriterModel.consoleWriter("console"),
+      strategy = None,
+      triggerIntervalMs = Some(10)
+    )
+
     val model2 = PipegraphModel("name2", "description", "tester", true, 10L, List(etl), None)
     bl.insert(model2)
 
@@ -45,12 +54,10 @@ trait PipegraphBLImplTest {
     bl.dropTable()
     bl.createTable()
 
-
     val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, None)
     val model2 = PipegraphModel("name_1", "description2", "tester", true, 10L, List.empty, None)
     val model3 = PipegraphModel("name_2", "description3", "tester", true, 10L, List.empty, None)
     val model4 = PipegraphModel("name_2", "description4", "tester", true, 10L, List.empty, None)
-
 
     bl.insert(model1)
     bl.getByName(model1.name).get shouldBe model1
@@ -59,14 +66,12 @@ trait PipegraphBLImplTest {
     bl.upsert(model2)
     bl.getByName(model1.name).get shouldBe model2
 
-
     bl.update(model3)
     bl.getByName(model3.name).isEmpty shouldBe true
     bl.upsert(model3)
     bl.getByName(model3.name).get shouldBe model3
     bl.update(model4)
     bl.getByName(model3.name).get shouldBe model4
-
 
     bl.deleteByName(model1.name)
     bl.deleteByName(model2.name)
@@ -77,18 +82,15 @@ trait PipegraphBLImplTest {
 
   }
 
-
   it should "test getSystemPipegraphs" in {
-
 
     bl.dropTable()
     bl.createTable()
 
-    val model1 = PipegraphModel("model_1", "description1", "tester", true, 10L,  List.empty, None)
-    val model2 = PipegraphModel("model_2", "description2", "tester", true, 10L,  List.empty, None)
+    val model1 = PipegraphModel("model_1", "description1", "tester", true, 10L, List.empty, None)
+    val model2 = PipegraphModel("model_2", "description2", "tester", true, 10L, List.empty, None)
     val model3 = PipegraphModel("model_3", "description3", "tester", false, 10L, List.empty, None)
     val model4 = PipegraphModel("model_4", "description4", "tester", false, 10L, List.empty, None)
-
 
     bl.insert(model1)
     bl.insert(model2)
@@ -107,7 +109,6 @@ trait PipegraphBLImplTest {
     notSystemPipegraphs.size shouldBe 2
     notSystemPipegraphs should contain theSameElementsAs Seq(model3, model4)
 
-
     bl.deleteByName(model1.name)
     bl.deleteByName(model2.name)
     bl.deleteByName(model3.name)
@@ -125,20 +126,18 @@ trait PipegraphBLImplTest {
     blInstance.dropTable()
     blInstance.createTable()
 
-
     val modelInstance1 = PipegraphInstanceModel("name_i_1", "name_1", 100L, 10L, PipegraphStatus.PENDING, None, None)
     val modelInstance2 = PipegraphInstanceModel("name_i_2", "name_2", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
     val modelInstance3 = PipegraphInstanceModel("name_i_3", "name_3", 100L, 10L, PipegraphStatus.FAILED, None, None)
     val modelInstance4 = PipegraphInstanceModel("name_i_4", "name_4", 100L, 10L, PipegraphStatus.PROCESSING, None, None)
-
 
     blInstance.insert(modelInstance1)
     blInstance.insert(modelInstance2)
     blInstance.insert(modelInstance3)
     blInstance.insert(modelInstance4)
 
-    blInstance.all() should contain theSameElementsAs Seq(modelInstance1, modelInstance2, modelInstance3, modelInstance4)
-
+    blInstance
+      .all() should contain theSameElementsAs Seq(modelInstance1, modelInstance2, modelInstance3, modelInstance4)
 
     val model1 = PipegraphModel("name_1", "description1", "tester", true, 10L, List.empty, None)
     val model2 = PipegraphModel("name_2", "description2", "tester", true, 10L, List.empty, None)
@@ -147,7 +146,6 @@ trait PipegraphBLImplTest {
     bl.insert(model2)
     bl.insert(model3)
     bl.getAll should contain theSameElementsAs Seq(model1, model2, model3)
-
 
     bl.getActivePipegraphs() should contain theSameElementsAs Seq(model1, model2)
 

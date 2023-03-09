@@ -28,7 +28,7 @@ trait PipegraphOpenApiComponentSupport
 
    implicit lazy val structuredStreamingOpenApiModel
     : ToOpenApiSchema[StructuredStreamingETLModel] = product9(
-    StructuredStreamingETLModel
+    StructuredStreamingETLModel.apply
   )
 
   implicit lazy val enrichmentSourcesOpenApiModel

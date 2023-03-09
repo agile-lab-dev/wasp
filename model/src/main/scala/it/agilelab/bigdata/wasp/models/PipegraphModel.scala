@@ -4,7 +4,6 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 
-
 object PipegraphStatus extends Enumeration {
   type PipegraphStatus = Value
 
@@ -18,19 +17,20 @@ case class StrategyModel(className: String, configuration: Option[String] = None
 }
 
 object StrategyModel {
-  def create(className: String, configuration: Config): StrategyModel = StrategyModel(className, Some(configuration.root().render(ConfigRenderOptions.concise())))
+  def create(className: String, configuration: Config): StrategyModel =
+    StrategyModel(className, Some(configuration.root().render(ConfigRenderOptions.concise())))
 }
 
-case class GdprStrategyModel(className: String,
-                             dataStoresConf: List[DataStoreConf],
-                             configuration: Option[String] = None) {
+case class GdprStrategyModel(
+    className: String,
+    dataStoresConf: List[DataStoreConf],
+    configuration: Option[String] = None
+) {
   def configurationConfig(): Option[Config] = configuration.map(ConfigFactory.parseString)
 }
 
 object GdprStrategyModel {
-  def create(className: String,
-             dataStores: List[DataStoreConf],
-             configuration: Config): GdprStrategyModel = {
+  def create(className: String, dataStores: List[DataStoreConf], configuration: Config): GdprStrategyModel = {
     GdprStrategyModel(className, dataStores, Some(configuration.root().render(ConfigRenderOptions.concise())))
   }
 }
@@ -38,33 +38,37 @@ object GdprStrategyModel {
 // TODO: move common members from child classes here
 trait ProcessingComponentModel {
   def name: String
-  
+
   def generateStandardProcessingComponentName: String = this match {
     case ss: StructuredStreamingETLModel => s"structuredstreaming_${ss.name.replace(" ", "_")}"
-    case rt: RTModel => s"rt_${rt.name.replace(" ", "_")}"
+    case rt: RTModel                     => s"rt_${rt.name.replace(" ", "_")}"
   }
-  
-  def generateStandardWriterName: String = this match { // TODO: remove match once output member is moved into ProcessingComponentModel
-    case ss: StructuredStreamingETLModel => s"writer_${ss.streamingOutput.name.replace(" ", "_")}"
-    case rt: RTModel => rt.endpoint match {
-      case Some(output) => s"writer_${output.name.replace(" ", "_")}"
-      case None => "no_writer"
+
+  def generateStandardWriterName: String =
+    this match { // TODO: remove match once output member is moved into ProcessingComponentModel
+      case ss: StructuredStreamingETLModel => s"writer_${ss.streamingOutput.name.replace(" ", "_")}"
+      case rt: RTModel =>
+        rt.endpoint match {
+          case Some(output) => s"writer_${output.name.replace(" ", "_")}"
+          case None         => "no_writer"
+        }
     }
-  }
 }
 
-@deprecated("Legacy Streaming ETL Model are deprecated, running of pipegraph containing legacy components will not " +
-  "work, keeping the definition only for api compatibility, the definition will be removed in a future wasp version",
-  "2.8.0")
-case class LegacyStreamingETLModel(name: String,
-                                   inputs: List[ReaderModel],
-                                   output: WriterModel,
-                                   mlModels: List[MlModelOnlyInfo],
-                                   strategy: Option[StrategyModel],
-                                   kafkaAccessType: String,
-                                   group: String = "default",
-                                   var isActive: Boolean = false) extends ProcessingComponentModel
-
+@deprecated(
+  "Legacy Streaming ETL Model are deprecated, running of pipegraph containing legacy components will not " + "work, keeping the definition only for api compatibility, the definition will be removed in a future wasp version",
+  "2.8.0"
+)
+case class LegacyStreamingETLModel(
+    name: String,
+    inputs: List[ReaderModel],
+    output: WriterModel,
+    mlModels: List[MlModelOnlyInfo],
+    strategy: Option[StrategyModel],
+    kafkaAccessType: String,
+    group: String = "default",
+    var isActive: Boolean = false
+) extends ProcessingComponentModel
 
 /**
   * A streaming processing component that leverages Spark's Structured Streaming API.
@@ -78,31 +82,62 @@ case class LegacyStreamingETLModel(name: String,
   * @param triggerIntervalMs trigger interval to use, in milliseconds
   * @param options has no effect at all
   */
-case class StructuredStreamingETLModel(name: String,
-                                       group: String = "default",
-                                       streamingInput: StreamingReaderModel,
-                                       staticInputs: List[ReaderModel],
-                                       streamingOutput: WriterModel,
-                                       mlModels: List[MlModelOnlyInfo],
-                                       strategy: Option[StrategyModel],
-                                       triggerIntervalMs: Option[Long],
-                                       options: Map[String, String] = Map.empty) extends ProcessingComponentModel
+case class StructuredStreamingETLModel(
+    name: String,
+    group: String = "default",
+    streamingInput: StreamingReaderModel,
+    staticInputs: List[ReaderModel],
+    streamingOutput: WriterModel,
+    mlModels: List[MlModelOnlyInfo],
+    strategy: Option[StrategyModel],
+    triggerIntervalMs: Option[Long],
+    options: Map[String, String] = Map.empty
+) extends ProcessingComponentModel
 
-case class RTModel(name: String,
-                   inputs: List[ReaderModel],
-                   var isActive: Boolean = false,
-                   strategy: Option[StrategyModel] = None,
-                   endpoint: Option[WriterModel] = None) extends ProcessingComponentModel
+object StructuredStreamingETLModel {
 
+  // Alternative constructor to avoid passing (often) empty machine learning models
+  def apply(
+      name: String,
+      group: String,
+      streamingInput: StreamingReaderModel,
+      staticInputs: List[ReaderModel],
+      streamingOutput: WriterModel,
+      strategy: Option[StrategyModel],
+      triggerIntervalMs: Option[Long]
+  ): StructuredStreamingETLModel =
+    new StructuredStreamingETLModel(
+      name = name,
+      group = group,
+      streamingInput = streamingInput,
+      staticInputs = staticInputs,
+      streamingOutput = streamingOutput,
+      mlModels = List.empty[MlModelOnlyInfo],
+      strategy = strategy,
+      triggerIntervalMs = triggerIntervalMs
+    )
 
-final case class PipegraphInstanceModel(override val name:String,
-                                        instanceOf: String,
-                                        startTimestamp: Long,
-                                        currentStatusTimestamp: Long,
-                                        status: PipegraphStatus,
-                                        executedByNode: Option[String],
-                                        peerActor: Option[String],
-                                        error: Option[String] = None) extends Model
+}
+
+case class RTModel(
+    name: String,
+    inputs: List[ReaderModel],
+    var isActive: Boolean = false,
+    strategy: Option[StrategyModel] = None,
+    endpoint: Option[WriterModel] = None
+) extends ProcessingComponentModel
+
+final case class PipegraphInstanceModel(
+    override val name: String,
+    instanceOf: String,
+    startTimestamp: Long,
+    currentStatusTimestamp: Long,
+    status: PipegraphStatus,
+    executedByNode: Option[String],
+    peerActor: Option[String],
+    error: Option[String] = None
+) extends Model
+
 /**
   * A model for a pipegraph, a processing pipeline abstraction.
   *
@@ -114,22 +149,45 @@ final case class PipegraphInstanceModel(override val name:String,
   * @param structuredStreamingComponents components describing processing built on Spark Structured Streaming
   * @param dashboard dashboard of the pipegraph
   */
-case class PipegraphModel(override val name: String,
-                          description: String,
-                          owner: String,
-                          isSystem: Boolean,
-                          creationTime: Long,
-                          structuredStreamingComponents: List[StructuredStreamingETLModel],
-                          dashboard: Option[DashboardModel] = None,
-                          labels: Set[String] = Set.empty,
-                          enrichmentSources: RestEnrichmentConfigModel = RestEnrichmentConfigModel(Map.empty)) extends Model {
+case class PipegraphModel(
+    override val name: String,
+    description: String,
+    owner: String,
+    isSystem: Boolean,
+    creationTime: Long,
+    structuredStreamingComponents: List[StructuredStreamingETLModel],
+    dashboard: Option[DashboardModel] = None,
+    labels: Set[String] = Set.empty,
+    enrichmentSources: RestEnrichmentConfigModel = RestEnrichmentConfigModel(Map.empty)
+) extends Model {
 
   def generateStandardPipegraphName: String = s"pipegraph_$name"
-  
+
   def hasSparkComponents: Boolean = structuredStreamingComponents.nonEmpty
 }
 
 object LegacyStreamingETLModel {
-  val KAFKA_ACCESS_TYPE_DIRECT = "direct"
+  val KAFKA_ACCESS_TYPE_DIRECT         = "direct"
   val KAFKA_ACCESS_TYPE_RECEIVED_BASED = "receiver-based"
+
+  // Alternative constructor to avoid passing (often) empty machine learning models
+  def apply(
+      name: String,
+      inputs: List[ReaderModel],
+      output: WriterModel,
+      strategy: Option[StrategyModel],
+      kafkaAccessType: String,
+      group: String,
+      isActive: Boolean
+  ): LegacyStreamingETLModel =
+    new LegacyStreamingETLModel(
+      name = name,
+      inputs = inputs,
+      output = output,
+      mlModels = List.empty[MlModelOnlyInfo],
+      strategy = strategy,
+      kafkaAccessType = kafkaAccessType,
+      group = group,
+      isActive = isActive
+    )
 }
