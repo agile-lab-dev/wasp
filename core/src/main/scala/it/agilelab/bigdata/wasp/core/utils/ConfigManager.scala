@@ -16,7 +16,8 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-object ConfigManager extends Logging with CanOverrideNameInstances {
+object ConfigManager extends ConfigManager
+class ConfigManager extends Logging with CanOverrideNameInstances {
   val conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
   val kafkaConfigName = "Kafka"
@@ -237,6 +238,7 @@ object ConfigManager extends Logging with CanOverrideNameInstances {
       mongoDBSubConfig.getString("db-name"),
       mongoDBSubConfig.getString("username"),
       mongoDBSubConfig.getString("password"),
+      mongoDBSubConfig.getString("authentication-db"),
       mongoDBSubConfig.getInt("timeout"),
       mongoDBSubConfig.getString("collection-prefix")
     )

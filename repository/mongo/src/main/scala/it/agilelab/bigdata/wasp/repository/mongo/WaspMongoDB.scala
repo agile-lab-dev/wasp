@@ -507,7 +507,7 @@ object WaspMongoDB extends Logging {
     println(s"Dropping MongoDB database '${mongoDBConfig.databaseName}'")
     val mongoDBDatabase = MongoDBHelper.getDatabase(mongoDBConfig)
     val dropFuture      = mongoDBDatabase.drop().toFuture()
-    Await.result(dropFuture, Duration(10, TimeUnit.SECONDS))
+    Await.result(dropFuture, Duration(mongoDBConfig.millisecondsTimeoutConnection, TimeUnit.MILLISECONDS))
     println(s"Dropped MongoDB database '${mongoDBConfig.databaseName}'")
     System.exit(0)
 
@@ -518,9 +518,7 @@ object WaspMongoDB extends Logging {
   def initializeDB(): WaspMongoDB = {
     // MongoDB initialization
     val mongoDBConfig = ConfigManager.getMongoDBConfig
-    logger.info(
-      s"Create connection to MongoDB: address ${mongoDBConfig.address}, databaseName: ${mongoDBConfig.databaseName}"
-    )
+    logger.info(s"Create connection to MongoDB:\n" + printMongoConfigModel(mongoDBConfig))
 
     val codecRegistry = fromRegistries(
       fromProviders(codecProviders),
