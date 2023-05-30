@@ -192,7 +192,7 @@ object MongoDBHelper extends Logging {
     val settings = if(mongoDBConfig.username != ""){
       settingsBuilder.credential(MongoCredential.createCredential(
         mongoDBConfig.username,
-        mongoDBConfig.databaseName,
+        mongoDBConfig.credentialDb,
         mongoDBConfig.password.toCharArray)).build()
     } else {
       settingsBuilder.build()
@@ -201,11 +201,8 @@ object MongoDBHelper extends Logging {
     resultTimeout = Duration(mongoDBConfig.millisecondsTimeoutConnection, TimeUnit.MILLISECONDS)
 
     mongoClient = MongoClient(settings)
-    //sys.addShutdownHook(() -> {
-    //  close()
-    //})
     val mongoDatabase = mongoClient.getDatabase(mongoDBConfig.databaseName)
-
+    // this is done to eagerly initialize connection and fail as early as possible if something is wrong
     mongoDatabase.listCollectionNames().results()
     mongoDatabase
   }
@@ -245,5 +242,16 @@ object MongoDBHelper extends Logging {
 
         key -> value
     } toMap
+  }
+
+  def printMongoConfigModel(mongoDBConfigModel: MongoDBConfigModel): String = {
+
+      s"""address: ${mongoDBConfigModel.address},
+         |databaseName: ${mongoDBConfigModel.databaseName},
+         |username: ${mongoDBConfigModel.username},
+         |password: ************,
+         |credentialDb: ${mongoDBConfigModel.credentialDb},
+         |millisecondsTimeoutConnection: ${mongoDBConfigModel.millisecondsTimeoutConnection},
+         |collectionPrefix: ${mongoDBConfigModel.collectionPrefix}""".stripMargin
   }
 }
