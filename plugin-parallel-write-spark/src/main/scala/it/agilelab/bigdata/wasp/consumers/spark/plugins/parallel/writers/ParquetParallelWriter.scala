@@ -15,7 +15,7 @@ case class ParquetParallelWriter(
   catalogService: DataCatalogService
 ) extends ColdParallelWriter {
 
-  override protected def performColdWrite(df: DataFrame, s3path: URI, partitioningColumns: Seq[String]): Unit =
+  override protected def performColdWrite(df: DataFrame, s3path: URI, partitioningColumns: Seq[String], batchId: Long): Unit =
     enforceSchema(df).write
       .mode(parallelWriteDetails.saveMode)
       .format("parquet")

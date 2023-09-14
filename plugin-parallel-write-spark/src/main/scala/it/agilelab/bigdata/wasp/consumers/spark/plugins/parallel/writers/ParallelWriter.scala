@@ -25,7 +25,7 @@ trait ParallelWriter extends Logging{
     * @param writeExecutionPlan execution plan obtained from entity
     * @param df data to write
     */
-  def write(writeExecutionPlan: WriteExecutionPlanResponseBody, df: DataFrame, correlationId: CorrelationId): Unit
+  def write(writeExecutionPlan: WriteExecutionPlanResponseBody, df: DataFrame, correlationId: CorrelationId, batchId: Long): Unit
 
   def rollback(correlationId: CorrelationId): Unit =
     entityAPI.postDataComplete(DataCompleteRequestBody(false), correlationId)

@@ -14,11 +14,11 @@ object TestModels {
 
   val modelWithDB = ParallelWriteModel(ParallelWrite("overwrite"), entityDetails = entityDetailsWithDB)
 
-  val continuousUpdateModel1 = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "ordering"), entityDetails)
+  val continuousUpdateModel1 = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "ordering", Some(100), Some(64), Some(168), Some(100)), entityDetails)
 
-  val continuousUpdateModel2 = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "-(ordering1 + ordering2)"), entityDetails)
+  val continuousUpdateModel2 = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "-(ordering1 + ordering2)", Some(100), Some(64), Some(168), Some(100)), entityDetails)
 
-  val wrongModel = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "-(ordering1 + ordering2)"), wrongDetails)
+  val wrongModel = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "-(ordering1 + ordering2)", Some(100), Some(64), Some(168), Some(100)), wrongDetails)
 
-  val notExistingEntityModel = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "-(ordering1 + ordering2)"), notExistingEntityDetails)
+  val notExistingEntityModel = ParallelWriteModel(ContinuousUpdate(keys = "column1" :: Nil, orderingExpression = "-(ordering1 + ordering2)", Some(100), Some(64), Some(168), Some(100)), notExistingEntityDetails)
 }

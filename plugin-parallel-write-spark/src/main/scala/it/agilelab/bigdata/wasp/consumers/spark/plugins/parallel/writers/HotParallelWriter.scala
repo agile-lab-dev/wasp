@@ -23,7 +23,8 @@ case class HotParallelWriter(
   override def write(
       writeExecutionPlan: WriteExecutionPlanResponseBody,
       df: DataFrame,
-      correlationId: CorrelationId
+      correlationId: CorrelationId,
+      batchId: Long
   ): Unit = {
     logger.info(s"Writing to entity ${entityDetails.name}")
     df.select(to_json(struct(df.columns.map(col): _*))).foreachPartition { it: Iterator[Row] =>

@@ -1,8 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModelParser.{parseParallelWriteModel, writerDetailsFormat}
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.{ContinuousUpdate, ParallelWrite, ParallelWriteModel, WriterDetails}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModelParser.{
+  parseParallelWriteModel,
+  writerDetailsFormat
+}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.{
+  ContinuousUpdate,
+  ParallelWrite,
+  ParallelWriteModel,
+  WriterDetails
+}
 import it.agilelab.bigdata.wasp.datastores.GenericProduct
 import it.agilelab.bigdata.wasp.models.GenericModel
 import org.mongodb.scala.bson.BsonDocument
@@ -26,8 +34,7 @@ class ParallelWriteModelParserSpec extends FunSuite {
   test("ParallelWrite writer") {
     lazy val genericModel = GenericModel(
       name = "test-generic",
-      value = BsonDocument(
-        """{
+      value = BsonDocument("""{
           |"writerDetails": {
           | "writerType": "parallelWrite",
           | "saveMode": "append"
@@ -37,14 +44,13 @@ class ParallelWriteModelParserSpec extends FunSuite {
       product = GenericProduct("parallelWrite", None)
     )
     val model: ParallelWriteModel = parseParallelWriteModel(genericModel)
-    val expectedModel = ParallelWriteModel(ParallelWrite("append"), CatalogCoordinates("", "mock", ""))
+    val expectedModel             = ParallelWriteModel(ParallelWrite("append"), CatalogCoordinates("", "mock", ""))
     assert(model == expectedModel)
   }
-  test("Continuous update model") {
+  test("Continuous update model without compaction") {
     lazy val genericModel = GenericModel(
       name = "test-generic",
-      value = BsonDocument(
-        """{"entityDetails": {"name":"mock"},
+      value = BsonDocument("""{"entityDetails": {"name":"mock"},
           |"writerDetails": {
           | "writerType": "continuousUpdate",
           | "keys": ["pk"],
@@ -53,16 +59,46 @@ class ParallelWriteModelParserSpec extends FunSuite {
           |}""".stripMargin),
       product = GenericProduct("parallelWrite", None)
     )
-    val model = parseParallelWriteModel(genericModel)
+    val model         = parseParallelWriteModel(genericModel)
     val expectedModel = ParallelWriteModel(ContinuousUpdate(List("pk"), "pk"), CatalogCoordinates("", "mock", ""))
+    assert(model == expectedModel)
+  }
+
+  test("Continuous update model with compaction") {
+    lazy val genericModel = GenericModel(
+      name = "test-generic",
+      value = BsonDocument("""{"entityDetails": {"name":"mock"},
+          |"writerDetails": {
+          | "writerType": "continuousUpdate",
+          | "keys": ["pk"],
+          | "orderingExpression": "pk",
+          | "compactFrequency": 100,
+          | "compactNumFile": 1,
+          | "retentionHours": 168,
+          | "vacuumFrequency": 100
+          |}
+          |}""".stripMargin),
+      product = GenericProduct("parallelWrite", None)
+    )
+    val model = parseParallelWriteModel(genericModel)
+    val expectedModel = ParallelWriteModel(
+      ContinuousUpdate(
+        keys = List("pk"),
+        orderingExpression = "pk",
+        compactFrequency = Some(100),
+        compactNumFile = Some(1),
+        retentionHours = Some(168),
+        vacuumFrequency = Some(100)
+      ),
+      CatalogCoordinates("", "mock", "")
+    )
     assert(model == expectedModel)
   }
 
   test("Wrong generic model kind JSON") {
     lazy val genericModel = GenericModel(
       name = "test-generic",
-      value = BsonDocument(
-        """{"mode": "append",
+      value = BsonDocument("""{"mode": "append",
           |"partitionBy": [],
           |"entityDetails": {"name":"mock"},
           |"s3aEndpoint": "localhost:4566",
@@ -79,8 +115,7 @@ class ParallelWriteModelParserSpec extends FunSuite {
   test("Wrong value JSON") {
     lazy val genericModel = GenericModel(
       name = "test-generic",
-      value = BsonDocument(
-        """{"mode": "append",
+      value = BsonDocument("""{"mode": "append",
           |"partitionBy": [],
           |"entityDetails": {"name":"mock"},
           |"s3aEndpointdasd": "localhost:4566",

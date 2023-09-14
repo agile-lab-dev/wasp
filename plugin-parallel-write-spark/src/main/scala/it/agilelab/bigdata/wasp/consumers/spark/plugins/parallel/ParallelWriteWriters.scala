@@ -46,7 +46,7 @@ class ParallelWriteSparkStructuredStreamingWriter(
           )
           logger.info(s"Writing microbatch with id: $batchId")
           try
-            writer.write(writeExecutionPlan, batch, correlationId)
+            writer.write(writeExecutionPlan, batch, correlationId, batchId)
           catch {
             case e: Exception =>
               logger.error("Failed writing a microbatch", e)
