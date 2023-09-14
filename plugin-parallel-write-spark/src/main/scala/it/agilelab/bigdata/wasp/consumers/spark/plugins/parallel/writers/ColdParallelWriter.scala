@@ -14,7 +14,8 @@ trait ColdParallelWriter extends ParallelWriter {
   final override def write(
       writeExecutionPlan: WriteExecutionPlanResponseBody,
       df: DataFrame,
-      correlationId: CorrelationId
+      correlationId: CorrelationId,
+      batchId: Long
   ): Unit = {
     val s3path: URI = HadoopS3Utils.useS3aScheme(
       new URI(writeExecutionPlan.writeUri.getOrElse(
@@ -22,11 +23,11 @@ trait ColdParallelWriter extends ParallelWriter {
     val spark       = df.sparkSession
     credentialsConfigurator.configureCredentials(writeExecutionPlan, spark.sparkContext.hadoopConfiguration)
     val partitioningColumns: Seq[String] = catalogService.getPartitioningColumns(spark, entityDetails)
-    performColdWrite(df, s3path, partitioningColumns)
+    performColdWrite(df, s3path, partitioningColumns, batchId)
     recoverPartitions(spark, partitioningColumns)
   }
 
-  protected def performColdWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String]): Unit
+  protected def performColdWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String], batchId: Long): Unit
 
   private def recoverPartitions(sparkSession: SparkSession, partitions: Seq[String]): Unit =
     if (partitions.nonEmpty)

@@ -15,7 +15,7 @@ case class DeltaParallelWriter(
   override val catalogService: DataCatalogService
 ) extends DeltaParallelWriterTrait {
 
-  override def performDeltaWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String]): Unit =
+  override def performDeltaWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String], batchId: Long): Unit =
     enforceSchema(df).write
       .mode(parallelWriteDetails.saveMode)
       .format("delta")

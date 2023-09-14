@@ -11,7 +11,7 @@ import spray.json._
 object ParallelWriteModelParser {
   implicit lazy val parallelWriteFormat: RootJsonFormat[ParallelWrite] = jsonFormat1((saveMode: String) => ParallelWrite.apply(saveMode))
   implicit lazy val catalogCoordinatesFormat: RootJsonFormat[CatalogCoordinates] = jsonFormat5(CatalogCoordinates.apply)
-  implicit lazy val continuousUpdateFormat: RootJsonFormat[ContinuousUpdate] = jsonFormat2((keys: List[String], orderingExpression: String) => ContinuousUpdate.apply(keys, orderingExpression))
+  implicit lazy val continuousUpdateFormat: RootJsonFormat[ContinuousUpdate] = jsonFormat6(ContinuousUpdate)
 
   implicit lazy val writerDetailsFormat: RootJsonFormat[WriterDetails] = new RootJsonFormat[WriterDetails] {
     override def read(json: JsValue): WriterDetails =

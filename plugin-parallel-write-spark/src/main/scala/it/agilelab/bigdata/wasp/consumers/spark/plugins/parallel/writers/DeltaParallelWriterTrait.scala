@@ -8,12 +8,12 @@ import java.net.URI
 
 trait DeltaParallelWriterTrait extends ColdParallelWriter {
 
-  override final def performColdWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String]): Unit = {
-    performDeltaWrite(df, path, partitioningColumns)
+  override final def performColdWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String], batchId: Long): Unit = {
+    performDeltaWrite(df, path, partitioningColumns, batchId)
     reconciliateManifest(getDeltaTable(path, df.sparkSession, partitioningColumns))
   }
 
-  protected def performDeltaWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String]): Unit
+  protected def performDeltaWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String], batchId: Long): Unit
 
   private def reconciliateManifest(deltaTable: DeltaTable): Unit =
     deltaTable.generate("symlink_format_manifest")
