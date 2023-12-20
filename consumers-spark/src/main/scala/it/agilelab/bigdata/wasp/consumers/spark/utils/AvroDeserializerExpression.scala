@@ -19,9 +19,12 @@ import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression,
 import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, ArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
+import org.slf4j
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 /**
   * An `Expression` which deserializes a binary field encoded in Avro and returns the corresponding
@@ -81,10 +84,14 @@ case class AvroDeserializerExpression(
     val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
     val avroReader = avroDatumReader(avroValue)
 
-    val decoder        = DecoderFactory.get.binaryDecoder(avroValue, null)
-    val record: Object = avroReader.read(null, decoder)
+    val decoder = DecoderFactory.get.binaryDecoder(avroValue, null)
+    Try(avroReader.read(null, decoder)) match {
+      case Success(value) => convertRecordToInternalRow(value)
+      case Failure(exception) =>
+        AvroDeserializerExpression.logger.warn(exception.getMessage)
+        null
+    }
 
-    convertRecordToInternalRow(record)
   }
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
@@ -115,24 +122,29 @@ case class AvroDeserializerExpression(
 
     val defaultValue = CodeGenerator.defaultValue(dataType, typedNull = true)
 
+    val logger = classOf[AvroDeserializerExpression].getName + ".logger"
+
     ev.copy(
       code = code"""
-            |${childEval.code}
-            |$returnType ${ev.value} = $defaultValue;
-            |if (!${childEval.isNull}) {
-            |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
-            |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
-            |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
-            |  try {
-            |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
-            |  } catch (java.io.IOException e) {
-            |    throw new java.lang.RuntimeException("Unable to deserialize Avro.", e);
-            |  }
-            |
-            |  Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
-            |
-            |  ${ev.value} = ($boxedType) $resultVarName;
-            |}
+              |${childEval.code}
+              |$returnType ${ev.value} = $defaultValue;
+              |if (!${childEval.isNull}) {
+              |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
+              |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
+              |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
+              |  try {
+              |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
+              |  } catch (java.io.IOException e) {
+              |    $logger.info("Unable to deserialize Avro.", e);
+              |    $genericRecordName = null
+              |  }
+              |  if ($genericRecordName){
+              |    Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
+              |    ${ev.value} = ($boxedType) $resultVarName;
+              |  } else {
+              |    ${ev.value} = $genericRecordName
+              |  }
+              |}
        """.stripMargin,
       isNull = childEval.isNull
     )
@@ -403,4 +415,8 @@ case class AvroDeserializerExpression(
     createConverter(sourceAvroSchema, targetSqlType, List.empty[String])
   }
 
+}
+
+object AvroDeserializerExpression {
+  val logger: slf4j.Logger = LoggerFactory.getLogger(AvroDeserializerExpression.getClass.getName)
 }

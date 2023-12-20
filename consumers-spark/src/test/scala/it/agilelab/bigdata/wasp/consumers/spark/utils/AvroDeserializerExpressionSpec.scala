@@ -4,13 +4,13 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.sql.{Date, Timestamp}
 import java.util
-
 import com.sksamuel.avro4s._
 import com.typesafe.config.ConfigFactory
 import org.apache.avro.generic.GenericDatumWriter
 import org.apache.avro.io.EncoderFactory
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.catalyst.expressions.Literal
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.{Column, Row}
 import org.scalatest.{Matchers, WordSpec}
@@ -93,6 +93,19 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       val expr    = AvroDeserializerExpression($"serialized".expr, TestSchemas.schema.toString, None)
       val results = df.select(new Column(expr)).collect().map(_.getStruct(0))
       elements.zip(results).foreach { case (truth, res) => compareRowWithUglyClass(truth, res) }
+    }
+    "return null when raw data can't be parsed" in testAllCodegen {
+      import ss.implicits._
+      val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 10)
+      val serialized = serializeElements(elements.toList) :+ "bad avro value".getBytes
+
+      val df = sc.parallelize(serialized, 4).toDF("serialized")
+      val expr = AvroDeserializerExpression($"serialized".expr, TestSchemas.schema.toString, None)
+      val dfResult = df.select(new Column(expr).as("deserialized")).cache
+      dfResult.where(col("deserialized").isNull).count should be(1)
+      val goodParsing = dfResult.where(col("deserialized").isNotNull)
+      goodParsing.count should be(10)
+      elements.zip(goodParsing.collect().map(_.getStruct(0))).foreach { case (truth, res) => compareRowWithUglyClass(truth, res) }
     }
 
     "Handle values not boxed in generic record, Integer" in testAllCodegen {
