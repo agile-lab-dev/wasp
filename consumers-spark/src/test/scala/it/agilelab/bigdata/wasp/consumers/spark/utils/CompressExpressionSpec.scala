@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets
 import java.util
 import java.util.zip.{DeflaterOutputStream, GZIPOutputStream}
 
-import net.jpountz.lz4.LZ4BlockOutputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.hadoop.io.compress.DefaultCodec
 import org.apache.spark.sql.SparkSession
@@ -50,10 +49,6 @@ class CompressExpressionSpec extends FunSuite with SparkSuite {
     sessions.foreach(testProto("bz2", new Random(5), _))
   }
 
-  ignore("compress using lz4") {
-    sessions.foreach(testProto("lz4", new Random(5), _))
-  }
-
   ignore("compress using snappy") {
     sessions.foreach(testProto("snappy", new Random(5), _))
   }
@@ -82,13 +77,6 @@ class CompressExpressionSpec extends FunSuite with SparkSuite {
       case "snappy"  =>
         val bos = new ByteArrayOutputStream()
         val gos = new SnappyOutputStream(bos)
-        gos.write(data)
-        gos.flush()
-        gos.close()
-        bos.toByteArray
-      case "lz4"     =>
-        val bos = new ByteArrayOutputStream()
-        val gos = new LZ4BlockOutputStream(bos)
         gos.write(data)
         gos.flush()
         gos.close()

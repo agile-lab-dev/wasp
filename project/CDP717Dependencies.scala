@@ -19,6 +19,8 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     ExclusionRule("com.fasterxml.jackson.module", "jackson-module-scala_2.12"),
     ExclusionRule("org.scala-lang.modules", "scala-java8-compat_2.12"),
     ExclusionRule("net.jpountz.lz4", "lz4"),
+    ExclusionRule("org.spire-math", "spire_2.11"),
+    ExclusionRule("org.spire-math", "spire-macros_2.11"),
     ExclusionRule("org.apache.velocity", "velocity-engine-core")
   )
   lazy val parcelDependencies = Seq(
@@ -159,7 +161,6 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     "joda-time"                        % "joda-time"                                   % "2.10.6",
     "net.hydromatic"                   % "aggdesigner-algorithm"                       % "6.0",
     "net.java.dev.jna"                 % "jna"                                         % "5.2.0",
-//    "net.jpountz.lz4"                  % "lz4"                                            % "1.2.0",
     "net.minidev"                     % "accessors-smart"                                % "1.2",
     "net.minidev"                     % "json-smart"                                     % "2.3",
     "net.razorvine"                   % "pyrolite"                                       % "4.13",
@@ -481,13 +482,10 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     "org.scala-lang.modules"          %% "scala-xml"                                     % "1.0.5",
     "org.scalanlp"                    %% "breeze"                                        % "0.13.2",
     "org.scalanlp"                    %% "breeze-macros"                                 % "0.13.2",
-    "org.sklsft.commons"              % "commons-crypto"                                 % "1.0.0",
     "org.slf4j"                       % "jcl-over-slf4j"                                 % "1.7.30",
     "org.slf4j"                       % "jul-to-slf4j"                                   % "1.7.30",
     "org.slf4j"                       % "slf4j-api"                                      % "1.7.30",
     "org.slf4j"                       % "slf4j-log4j12"                                  % "1.7.30",
-    "org.spire-math"                  %% "spire"                                         % "0.13.0",
-    "org.spire-math"                  %% "spire-macros"                                  % "0.13.0",
     "org.springframework"             % "spring-aop"                                     % "4.3.29.RELEASE",
     "org.springframework"             % "spring-beans"                                   % "4.3.29.RELEASE",
     "org.springframework"             % "spring-context"                                 % "4.3.29.RELEASE",

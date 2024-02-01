@@ -8,7 +8,9 @@ trait SparkSuite extends Suite {
 
   lazy val spark: SparkSession = {
     System.setSecurityManager(null)
-    SparkSuite.spark.newSession()
+    val s = SparkSuite.spark.newSession()
+    s.sparkContext.setLogLevel("ERROR")
+    s
   }
 
 }
@@ -21,11 +23,12 @@ object SparkSuite {
       .appName("test")
       .enableHiveSupport()
       .config("spark.sql.warehouse.dir", warehouseLocation)
-      .config("spark.master", "local")
+      .config("spark.master", "local[*]")
       .config("spark.ui.enabled", "false")
       .config("spark.sql.shuffle.partitions", "1")
       .config("spark.sql.session.timeZone", "UTC")
       .getOrCreate()
+    ss.sparkContext.setLogLevel("ERROR")
     sys.addShutdownHook {
       ss.close()
     }
