@@ -1,7 +1,7 @@
 image: alpine
 
 variables:
-  SBT_OPTS: "-Dglobal.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy -Dsbt.ci=true"
+  SBT_OPTS: "-Dglobal.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy -Divy.home=${CI_PROJECT_DIR}/sbt-cache/ivy -Dsbt.ci=true"
   COURSIER_CACHE: sbt-cache/coursier
   UNPRIVILEGED_USER: "tester"
 
@@ -27,7 +27,7 @@ cache:
 test-kernel:
   stage: test
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.2_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
@@ -39,7 +39,9 @@ test-kernel:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
+      coverage_report:
+        coverage_format: cobertura
+        path: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -51,7 +53,7 @@ test-kernel:
 test-plugin:
   stage: test
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.2_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717" ]
@@ -63,7 +65,9 @@ test-plugin:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
+      coverage_report:
+        coverage_format: cobertura
+        path: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -75,7 +79,7 @@ test-plugin:
 test-repo:
   stage: test
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:8u312_1.6.2_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
@@ -87,7 +91,9 @@ test-repo:
   artifacts:
     reports:
       junit: 'test-output/*.xml'
-      cobertura: 'target/scala-2.*/coverage-report/cobertura.xml'
+      coverage_report:
+        coverage_format: cobertura
+        path: 'target/scala-2.*/coverage-report/cobertura.xml'
   tags:
     - gitlab-org
   only:
@@ -99,7 +105,7 @@ test-repo:
 compile-whitelabel:
   stage: deploy
   interruptible: true
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: ["VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
@@ -121,11 +127,28 @@ censor:
   script:
     - ./censor.sh
 
+generate-open-api:
+  stage: test
+  interruptible: true
+  image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
+  script:
+    - ./run-sbt-unprivileged.sh "generateOpenApi"
+  tags:
+    - gitlab-org
+  only:
+    - /^develop$/
+    - /(^release\/v([0-9]+)\.([0-9]+))/
+    - merge_requests
+    - tags
+  artifacts:
+    paths: ['documentation/wasp-openapi.yaml']
+  needs: []
+
 
 waspctl:
   interruptible: true
   stage: deploy
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/waspctl-build:0.1.0"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/waspctl-build:0.2.0"
   script:
     - bash waspctl/build-for-all-archs.bash
   artifacts:
@@ -135,11 +158,15 @@ waspctl:
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
     - tags
+  needs:
+    - generate-open-api
+  dependencies:
+    - generate-open-api
 
 snapshot:
   interruptible: false
   stage: deploy
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
@@ -163,7 +190,7 @@ snapshot:
 release:
   interruptible: false
   stage: deploy
-  image: "hseeberger/scala-sbt:8u282_1.5.5_2.11.12"
+  image: "hseeberger/scala-sbt:11.0.14.1_1.6.2_2.12.15"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "CDH6", "VANILLA2_2_12", "CDP717"]
