@@ -1,7 +1,7 @@
 import com.jsuereth.sbtpgp.PgpKeys._
 import xerial.sbt.Sonatype.SonatypeKeys._
 import sbt.Keys._
-import sbt._
+import sbt.{ScalaVersion => _, _}
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 

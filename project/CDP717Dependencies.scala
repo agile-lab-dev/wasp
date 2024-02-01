@@ -188,7 +188,6 @@ class CDP717Dependencies(versions: CDP717Versions) extends Dependencies {
     "org.apache.avro"                 % "avro-ipc"                                       % "1.8.2.7.1.7.0-551",
     "org.apache.avro"                 % "avro-maven-plugin"                              % "1.8.2.7.1.7.0-551",
     "org.apache.avro"                 % "avro-protobuf"                                  % "1.8.2.7.1.7.0-551",
-    "org.apache.avro"                 % "avro-service-archetype"                         % "1.8.2.7.1.7.0-551",
     "org.apache.avro"                 % "avro-thrift"                                    % "1.8.2.7.1.7.0-551",
     "org.apache.avro"                 % "trevni-core"                                    % "1.8.2.7.1.7.0-551",
     "org.apache.calcite"              % "calcite-core"                                   % "1.19.0.7.1.7.0-551",

@@ -1,3 +1,7 @@
+// This is needed because the meta-build (i.e. the build of sbt code to actually build the project)
+// has some incosistent scala_xml dependencies (due to plugins) but luckily they don't cause
+// any issue
+ThisBuild / evictionErrorLevel := Level.Info
 // sbt-buildinfo, for accessing build information in the code - https://github.com/sbt/sbt-buildinfo/
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.10.0")
 // sbt-native-packager, used for assembly jars for the start-wasp script
