@@ -24,29 +24,23 @@ class CDP717Resolvers(other: Resolvers) extends Resolvers {
 
   override val resolvers: Seq[MavenRepository] = other.resolvers ++ Seq(
     "Cloudera runtime resolvers" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
-    "Agile lab snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+    "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/",
+    "Restlet Maven repository" at "https://maven.restlet.talend.com", // this is needed for CDP build to resolve org.restlet.jee:org.restlet.ext.servlet:2.3.0
     "Twitter" at "https://maven.twttr.com/"
   )
 }
 
 class BasicResolvers extends Resolvers {
-  val mavenLocalRepo            = Resolver.mavenLocal
-  val sonatypeReleaseRepos       = Resolver.sonatypeOssRepos("releases")
-  val sonatypeSnapshotsRepos     = Resolver.sonatypeOssRepos("snapshots")
-  val restletMavenRepo          = "Restlet Maven repository" at "https://maven.restlet.talend.com" // this is needed for CDP build to resolve org.restlet.jee:org.restlet.ext.servlet:2.3.0
-  val clouderaHadoopReleaseRepo = "Cloudera Hadoop Release" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
-  val clouderaReleaseLocalRepo  = "Cloudera Release Local" at "https://repository.cloudera.com/artifactory/libs-release-local/"
-  val repo1Maven2               = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
+  val mavenLocalRepo = Resolver.mavenLocal
+  val repo1Maven2    = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
+  val confluent      = "confluent" at "https://packages.confluent.io/maven/"
 
-  val typesafeReleaseRepo = "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/"
-  val confluent           = "confluent" at "https://packages.confluent.io/maven/"
+  val sonatypeReleaseRepos   = Resolver.sonatypeOssRepos("releases")
+  val sonatypeSnapshotsRepos = Resolver.sonatypeOssRepos("snapshots")
 
   /** custom resolvers for dependencies */
   val resolvers = Seq(
     mavenLocalRepo,
-    restletMavenRepo,
-    clouderaReleaseLocalRepo,
-    clouderaHadoopReleaseRepo,
     repo1Maven2,
     confluent
   ) ++ sonatypeReleaseRepos ++ sonatypeSnapshotsRepos
@@ -57,7 +51,7 @@ class BasicSettings(
     jdkVersionValue: String,
     scalaVersionValue: ScalaVersion,
     overrideDep: Seq[ModuleID] = Seq.empty,
-    exclustionRules: Seq[ExclusionRule] = Seq.empty
+    exclusionRules: Seq[ExclusionRule] = Seq.empty
 ) extends Settings {
 
   /** settings related to project information */
@@ -114,10 +108,11 @@ class BasicSettings(
     ),
     libraryDependencies ++= {
       val silencerVersion = "1.4.3" // compatible with 2.11.12 and 2.12.10
-      if (scalaVersionValue.isMajorMinor(2, 11) || (scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision < 13)) {
+      if (scalaVersionValue
+            .isMajorMinor(2, 11) || (scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision < 13)) {
         Seq(
           compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-          "com.github.ghik"        % "silencer-lib"             % silencerVersion % Provided cross CrossVersion.full
+          "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
         )
       } else {
         Seq()
@@ -125,9 +120,7 @@ class BasicSettings(
     },
     scalaVersion := scalaVersionValue.raw,
     excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api"),
-    excludeDependencies ++= this.exclustionRules
-
-
+    excludeDependencies ++= this.exclusionRules
   )
   lazy val publishSettings = Seq(
     sonatypeBundleDirectory := (ThisBuild / baseDirectory).value / target.value.getName / "sonatype-staging" / (ThisBuild / version).value,
