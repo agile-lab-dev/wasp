@@ -111,7 +111,7 @@ compile-whitelabel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "EMR_2_12", "CDP717"]
   script:
-    - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/Test/compile"
+    - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/test"
   tags:
     - gitlab-org
   only:

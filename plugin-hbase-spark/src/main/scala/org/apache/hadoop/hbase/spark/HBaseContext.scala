@@ -51,7 +51,7 @@ import scala.annotation.meta.param
   */
 @InterfaceAudience.Public
 class HBaseContext(@(transient @param) sc: SparkContext,
-                   @(transient @param) val config: Configuration,
+                   @transient val config: Configuration,
                    val tmpHdfsConfgFile: String = null)
   extends Serializable with Logging {
 

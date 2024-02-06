@@ -278,6 +278,7 @@ class EMR212Dependencies(val versions: EMR212Versions)
     darwinHBaseConnector,
     mySqlJavaConnector,
     scalaTest,
+    hadoopAuth % Test,
     darwinMockConnector % Test
   ) ++ spark ++ Seq(hbaseClient2Shaded, slf4jLog4j1Binding)
 
@@ -373,6 +374,8 @@ trait EMR212SparkDependencies extends EMR212HadoopDependencies {
   lazy val sparkCoreTests     = sparkCore classifier "tests"
   lazy val sparkSQLTests      = "org.apache.spark" %% "spark-sql" % versions.spark % "provided,test" classifier "tests"
   lazy val sparkAvro          = "org.apache.spark" %% "spark-avro" % versions.spark
+  lazy val hadoopAuth         = "org.apache.hadoop" % "hadoop-auth" % versions.hadoop
+
   lazy val spark              = Seq(sparkMLlib, sparkYarn, hadoopCommon, sparkHive)
 }
 
