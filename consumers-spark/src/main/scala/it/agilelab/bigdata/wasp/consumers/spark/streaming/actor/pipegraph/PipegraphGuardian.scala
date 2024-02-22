@@ -146,7 +146,7 @@ class PipegraphGuardian(private val master: ActorRef,
         materialized = data.materialized + association)
 
     case Event(ChildrenProtocol.ETLNotMaterialized(etl, reason), data: MaterializingData) =>
-      log.info("Could not materialize etl [{}] on worker [{}] reason: [{}]", etl.name, sender(), ExceptionUtils.getStackTrace(reason))
+      log.error("Could not materialize etl [{}] on worker [{}] reason: [{}]", etl.name, sender(), ExceptionUtils.getStackTrace(reason))
 
       val association = WorkerToEtlAssociation(sender(), etl)
 
@@ -166,7 +166,7 @@ class PipegraphGuardian(private val master: ActorRef,
       }
 
     case Event(MyProtocol.PerformRetry, data: MaterializingData) =>
-      log.info("Materialization round finished, performing retry")
+      log.warning("Materialization round finished, performing retry")
       goto(Materializing) using data.copy(toBeMaterialized = data.toBeRetried,
         toBeRetried = Set.empty)
 
