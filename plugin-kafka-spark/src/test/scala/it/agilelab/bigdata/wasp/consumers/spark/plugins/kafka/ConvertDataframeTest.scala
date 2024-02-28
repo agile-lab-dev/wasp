@@ -105,6 +105,32 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
 
   }
 
+  it should "correctly work with topic models having different schema, one of them has null topic keyfield " in {
+    val topics = Seq(
+      testTopicModelErrorPerson_avro_key.copy(name = nameTopicB, keyFieldName = None), // avro, keyField
+      testTopicModelPerson_json_keyValueHeaders.copy(name = nameTopicA)
+    ) // json, keyField, valueFields
+    val multiTopicModel: MultiTopicModel = MultiTopicModel.fromTopicModels("name", "topic", topics)
+
+    val result = KafkaWriters.convertDataframe(
+      testDfTopicModelWithDifferentSchemaWithHeaders,
+      topicFieldName,
+      topics,
+      multiTopicModel,
+      Some(darwinConf)
+    )
+    testDfTopicModelWithDifferentSchemaWithHeaders.show
+result.show
+    val resultRows = result.as[KafkaOutput].collect()
+    assert(resultRows.size === testDfTopicModelWithDifferentSchemaWithHeaders.collect().size)
+    val forTopicA = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicA)
+    val forTopicB = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicB)
+
+    assert(forTopicA.forall(_.key != null))
+    assert(forTopicB.forall(_.key == null))
+
+  }
+
   it should "correctly work with topic models having different schema and TopicDataType avro" in {
 
     val topics = Seq(
@@ -121,7 +147,6 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
       multiTopicModel,
       Some(darwinConf)
     )
-
     val resultRows = result.as[KafkaOutput].collect()
 
     assert(resultRows.size === testDfTopicModelWithDifferentSchema.collect().size)
@@ -1010,7 +1035,7 @@ trait ConvertDataframeTestData { self: SparkSuite =>
     (Some("hey"), "pippo", "franco", "TOPIC-A", Some("headerValue"), None, None),
     (None, "mickey", "mouse", "TOPIC-B", None, Some("AA23"), Some("ErrorMsg")),
     (Some("buh"), "pluto", "franco", "TOPIC-A", Some("headerValue"), None, None),
-    (None, "donald", "duck", "TOPIC-B", None, Some("AA44"), Some("ErrorMsg"))
+    (None, "donald", "duck", "TOPIC-B", None, None, Some("ErrorMsg"))
   ).toDF("id", "name", "surname", "topic", "headers", "key", "error")
 
   val schemaAddress = StructType(
