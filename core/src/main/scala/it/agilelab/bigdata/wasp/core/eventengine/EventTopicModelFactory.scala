@@ -45,8 +45,9 @@ object EventReaderModelFactory {
     val name = modelSettings.modelName
     val dataStoreName = TopicModel.name(modelSettings.dataStoreModelName)
     val options = modelSettings.options
+    val parsingMode = modelSettings.parsingMode
     val rateLimit: Option[Int] = options.get("rate-limit").flatMap(s => Some(s.toInt))
 
-    new StreamingReaderModel(name, dataStoreName, KafkaProduct, rateLimit, options)
+    new StreamingReaderModel(name, dataStoreName, KafkaProduct, rateLimit, options, parsingMode)
   }
 }

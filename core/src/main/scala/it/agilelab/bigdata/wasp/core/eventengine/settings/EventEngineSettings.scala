@@ -3,6 +3,7 @@ package it.agilelab.bigdata.wasp.core.eventengine.settings
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingRule
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventRule
+import it.agilelab.bigdata.wasp.models.configuration.{ParsingMode, Strict}
 
 /**
   * Models supported by the event engine to load and store events
@@ -61,7 +62,8 @@ case class EventConsumerETLSettings(name: String,
 case class ModelSettings(modelName: String,
                          dataStoreModelName: String,
                          modelType: ModelTypes.Value,
-                         options: Map[String, String] = Map.empty)
+                         options: Map[String, String] = Map.empty,
+                         parsingMode: ParsingMode = Strict)
 
 /**
   * Defines settings for a single EventStrategy

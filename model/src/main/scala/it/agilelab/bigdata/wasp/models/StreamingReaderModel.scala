@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.models
 
+import it.agilelab.bigdata.wasp.models.configuration.{ParsingMode, Strict}
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 
 case class StreamingReaderModel private[wasp] (
@@ -7,7 +8,8 @@ case class StreamingReaderModel private[wasp] (
     datastoreModelName: String,
     datastoreProduct: DatastoreProduct,
     rateLimit: Option[Int],
-    options: Map[String, String]
+    options: Map[String, String],
+    parsingMode: ParsingMode
 )
 
 object StreamingReaderModel {
@@ -18,43 +20,50 @@ object StreamingReaderModel {
       datastoreModel: DatastoreModel,
       datastoreProduct: DatastoreProduct,
       rateLimit: Option[Int],
-      options: Map[String, String] = Map.empty
+      options: Map[String, String] = Map.empty,
+      parsingMode: ParsingMode = Strict
   ): StreamingReaderModel = {
-    StreamingReaderModel(name, datastoreModel.name, datastoreProduct, rateLimit, options)
+    StreamingReaderModel(name, datastoreModel.name, datastoreProduct, rateLimit, options, parsingMode)
   }
 
   def topicReader(
       name: String,
       topicModel: TopicModel,
       rateLimit: Option[Int],
-      options: Map[String, String] = Map.empty
+      options: Map[String, String] = Map.empty,
+      parsingMode: ParsingMode = Strict
+
   ): StreamingReaderModel =
-    apply(name, topicModel.name, GenericTopicProduct, rateLimit, options)
+    apply(name, topicModel.name, GenericTopicProduct, rateLimit, options, parsingMode)
 
   def kafkaReader(
       name: String,
       topicModel: TopicModel,
       rateLimit: Option[Int],
-      options: Map[String, String] = Map.empty
+      options: Map[String, String] = Map.empty,
+      parsingMode: ParsingMode = Strict
   ): StreamingReaderModel =
-    apply(name, topicModel.name, KafkaProduct, rateLimit, options)
+    apply(name, topicModel.name, KafkaProduct, rateLimit, options, parsingMode)
 
   def kafkaReaderMultitopic(
       name: String,
       multiTopicModel: MultiTopicModel,
       rateLimit: Option[Int],
-      options: Map[String, String] = Map.empty
+      options: Map[String, String] = Map.empty,
+      parsingMode: ParsingMode = Strict
   ): StreamingReaderModel =
-    apply(name, multiTopicModel.name, KafkaProduct, rateLimit, options)
+    apply(name, multiTopicModel.name, KafkaProduct, rateLimit, options, parsingMode)
 
-  def rawReader(name: String, rawModel: RawModel, options: Map[String, String] = Map.empty): StreamingReaderModel =
-    apply(name, rawModel.name, RawProduct, None, options)
+  def rawReader(name: String, rawModel: RawModel, options: Map[String, String] = Map.empty,
+                parsingMode: ParsingMode = Strict): StreamingReaderModel =
+    apply(name, rawModel.name, RawProduct, None, options, parsingMode)
 
   def websocketReader(
       name: String,
       websocketModel: WebsocketModel,
       rateLimit: Option[Int],
-      options: Map[String, String] = Map.empty
+      options: Map[String, String] = Map.empty,
+      parsingMode: ParsingMode = Strict
   ): StreamingReaderModel =
-    apply(name, websocketModel.name, WebSocketProduct, rateLimit, options)
+    apply(name, websocketModel.name, WebSocketProduct, rateLimit, options, parsingMode)
 }
