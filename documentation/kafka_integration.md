@@ -85,4 +85,27 @@ Write operation with MultiTopicModel also fully supports complex data in the sou
 
 Correctly declaring the `valueFieldsNames` property in the respective TopicModel with the classical SQL dot notation `(valueFieldsNames = Some("personaInfo.name", "personalInfo.surname", ...))` the conversion works properly.
 
+### Parsing modes
+
+Sometimes reading from a source with serialized data in avro/json, can happen that a record with some typo or serialized with an unknown avro schema came in, with the actual readers behaviour, when this happens, an exceptions will be raised and pipegraph will crash.
+The decision on how to handle parsing errors should be left to downstream implementations, especially for streaming jobs in which is often desirable that the application keep running.
+
+The way to change parsing modes is to add a `parsingMode` option in the reader options of your strategy.
+An example:
+```scala
+val streamingInput = StreamingReaderModel.kafkaReader(  
+  topicModel.name,
+  topicModel,
+  rateLimit,
+  Map("parsingMode" -> "handle")
+)
+```
+
+The possible options are:
+- **strict**
+    - throws an exception if there is an malformed row(default behaviour)
+- **handle**
+    - returns the malformed rows to the user, so that the downstream can handle them as preferred
+- **ignore**
+    - filters out malformed records and continues job execution without them
 

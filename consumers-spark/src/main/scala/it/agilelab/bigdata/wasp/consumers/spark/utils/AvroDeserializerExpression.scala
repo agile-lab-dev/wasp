@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import java.nio.ByteBuffer
-
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters.IncompatibleSchemaException
@@ -19,9 +17,13 @@ import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression,
 import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, ArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
+import org.slf4j
+import org.slf4j.LoggerFactory
 
+import java.nio.ByteBuffer
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 /**
   * An `Expression` which deserializes a binary field encoded in Avro and returns the corresponding
@@ -41,7 +43,8 @@ case class AvroDeserializerExpression(
     child: Expression,
     schemaAvroJson: String,
     darwinConfig: Option[Config],
-    avoidReevaluation: Boolean = true) extends UnaryExpression
+    avoidReevaluation: Boolean = true
+) extends UnaryExpression
     with ExpectsInputTypes {
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
@@ -56,7 +59,11 @@ case class AvroDeserializerExpression(
 
   val mapDatumReader: mutable.HashMap[Long, GenericDatumReader[Object]] = mutable.HashMap.empty
 
+  override def prettyName: String = "from_avro"
+
   override def dataType: DataType = AvroSchemaConverters.toSqlType(userSchema).dataType
+
+  override def nullable: Boolean = true
 
   // Set as non-deterministic in order to avoid re-execution of the deserialization
   // See CollapseProject + ProjectExec
@@ -81,10 +88,14 @@ case class AvroDeserializerExpression(
     val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
     val avroReader = avroDatumReader(avroValue)
 
-    val decoder        = DecoderFactory.get.binaryDecoder(avroValue, null)
-    val record: Object = avroReader.read(null, decoder)
+    val decoder = DecoderFactory.get.binaryDecoder(avroValue, null)
+    Try(avroReader.read(null, decoder)) match {
+      case Success(value) => convertRecordToInternalRow(value)
+      case Failure(exception) =>
+        AvroDeserializerExpression.logger.warn(exception.getMessage)
+        null
+    }
 
-    convertRecordToInternalRow(record)
   }
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
@@ -111,13 +122,13 @@ case class AvroDeserializerExpression(
     val returnType = CodeGenerator.javaType(dataType)
     val boxedType  = CodeGenerator.boxedType(dataType)
 
-    val childEval = child.genCode(ctx)
-
+    val childEval    = child.genCode(ctx)
     val defaultValue = CodeGenerator.defaultValue(dataType, typedNull = true)
 
-    ev.copy(
-      code = code"""
+    val c =
+      code"""
             |${childEval.code}
+            |boolean ${ev.isNull} = false;
             |$returnType ${ev.value} = $defaultValue;
             |if (!${childEval.isNull}) {
             |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
@@ -125,17 +136,14 @@ case class AvroDeserializerExpression(
             |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
             |  try {
             |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
-            |  } catch (java.io.IOException e) {
-            |    throw new java.lang.RuntimeException("Unable to deserialize Avro.", e);
+            |    Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
+            |    ${ev.value} = ($boxedType) $resultVarName;
+            |  } catch (java.lang.Exception e) {
+            |    ${ev.isNull} = true;
             |  }
-            |
-            |  Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
-            |
-            |  ${ev.value} = ($boxedType) $resultVarName;
             |}
-       """.stripMargin,
-      isNull = childEval.isNull
-    )
+   """.stripMargin
+    ev.copy(code = c)
   }
 
   @inline
@@ -403,4 +411,8 @@ case class AvroDeserializerExpression(
     createConverter(sourceAvroSchema, targetSqlType, List.empty[String])
   }
 
+}
+
+object AvroDeserializerExpression {
+  val logger: slf4j.Logger = LoggerFactory.getLogger(AvroDeserializerExpression.getClass.getName)
 }

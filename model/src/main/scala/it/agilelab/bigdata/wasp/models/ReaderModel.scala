@@ -11,7 +11,7 @@ import it.agilelab.bigdata.wasp.datastores._
 	* @param datastoreProduct the datastore software product to be used when reading
   * @param options additional options for the reader
 	*/
-case class ReaderModel private[wasp](
+case class ReaderModel private[wasp] (
     name: String,
     datastoreModelName: String,
     datastoreProduct: DatastoreProduct,
@@ -27,31 +27,80 @@ object ReaderModel {
       datastoreProduct: DatastoreProduct,
       options: Map[String, String] = Map.empty
   ): ReaderModel = {
-    ReaderModel(name, datastoreModel, datastoreProduct, options)
+    new ReaderModel(name, datastoreModel.name, datastoreProduct, options)
   }
 
-  def jdbcReader(name: String, sqlSourceModel: SqlSourceModel, options: Map[String, String] = Map.empty) =
-    apply(name, sqlSourceModel.name, JDBCProduct, options)
-  def indexReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
-    apply(name, indexModel.name, GenericIndexProduct, options)
-  def elasticReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
-    apply(name, indexModel.name, ElasticProduct, options)
-  def solrReader(name: String, indexModel: IndexModel, options: Map[String, String] = Map.empty) =
-    apply(name, indexModel.name, SolrProduct, options)
-  def keyValueReader(name: String, keyValueModel: KeyValueModel, options: Map[String, String] = Map.empty) =
-    apply(name, keyValueModel.name, GenericKeyValueProduct, options)
-  def hbaseReader(name: String, keyValueModel: KeyValueModel, options: Map[String, String] = Map.empty) =
-    apply(name, keyValueModel.name, HBaseProduct, options)
-  def topicReader(name: String, topicModel: TopicModel, options: Map[String, String] = Map.empty) =
-    apply(name, topicModel.name, GenericTopicProduct, options)
-  def kafkaReader(name: String, topicModel: TopicModel, options: Map[String, String] = Map.empty) =
-    apply(name, topicModel.name, KafkaProduct, options)
-  def kafkaReaderMultitopic(name: String, multiTopicModel: MultiTopicModel, options: Map[String, String] = Map.empty) =
-    apply(name, multiTopicModel.name, KafkaProduct, options)
-  def rawReader(name: String, rawModel: RawModel, options: Map[String, String] = Map.empty) =
-    apply(name, rawModel.name, RawProduct, options)
-  def websocketReader(name: String, websocketModel: WebsocketModel, options: Map[String, String] = Map.empty) =
-    apply(name, websocketModel.name, WebSocketProduct, options)
-  def mongoDbReader(name: String, documentModel: DocumentModel, options: Map[String, String]): ReaderModel =
-    apply(name, documentModel.name, MongoDbProduct, options)
+  def jdbcReader(
+      name: String,
+      sqlSourceModel: SqlSourceModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, sqlSourceModel, JDBCProduct, options)
+  def indexReader(
+      name: String,
+      indexModel: IndexModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, indexModel, GenericIndexProduct, options)
+  def elasticReader(
+      name: String,
+      indexModel: IndexModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, indexModel, ElasticProduct, options)
+  def solrReader(
+      name: String,
+      indexModel: IndexModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, indexModel, SolrProduct, options)
+  def keyValueReader(
+      name: String,
+      keyValueModel: KeyValueModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, keyValueModel, GenericKeyValueProduct, options)
+  def hbaseReader(
+      name: String,
+      keyValueModel: KeyValueModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, keyValueModel, HBaseProduct, options)
+  def topicReader(
+      name: String,
+      topicModel: TopicModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, topicModel, GenericTopicProduct, options)
+  def kafkaReader(
+      name: String,
+      topicModel: TopicModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, topicModel, KafkaProduct, options)
+  def kafkaReaderMultitopic(
+      name: String,
+      multiTopicModel: MultiTopicModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, multiTopicModel, KafkaProduct, options)
+  def rawReader(
+      name: String,
+      rawModel: RawModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, rawModel, RawProduct, options)
+  def websocketReader(
+      name: String,
+      websocketModel: WebsocketModel,
+      options: Map[String, String] = Map.empty
+  ) =
+    apply(name, websocketModel, WebSocketProduct, options)
+  def mongoDbReader(
+      name: String,
+      documentModel: DocumentModel,
+      options: Map[String, String]
+  ): ReaderModel =
+    apply(name, documentModel, MongoDbProduct, options)
+
 }

@@ -48,21 +48,17 @@ class PipegraphGuardianSpec
     isSystem = false,
     creationTime = System.currentTimeMillis(),
     structuredStreamingComponents = List(
-      StructuredStreamingETLModel(
-        name = "component",
-        streamingInput = StreamingReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json, None),
-        staticInputs = List.empty,
-        streamingOutput = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
-        mlModels = List(),
-        strategy = None,
-        triggerIntervalMs = None,
-        options = Map()
-      )
-    ),
-    dashboard = None
-  )
-  val defaultInstance = PipegraphInstanceModel(
-    name = "pipegraph-1",
+      StructuredStreamingETLModel(name = "component",
+                                  streamingInput = StreamingReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json, None),
+                                  staticInputs = List.empty,
+                                  streamingOutput = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
+                                  mlModels = List(),
+                                  strategy = None,
+                                  triggerIntervalMs = None,
+                                  options = Map()
+      )),
+    dashboard = None)
+  val defaultInstance = PipegraphInstanceModel(name = "pipegraph-1",
     instanceOf = "pipegraph",
     startTimestamp = 1L,
     currentStatusTimestamp = 0L,

@@ -13,6 +13,7 @@ trait CodegenTester extends SparkTestKit {
   def testWholestageCodegen(f: => Unit) = {
     val defValue = ss.conf.getOption(SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key).getOrElse("true")
     ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=true")
+    ss.sql(s"set ${SQLConf.CODEGEN_FALLBACK.key}=false")
     f
     ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=$defValue")
   }
@@ -20,6 +21,7 @@ trait CodegenTester extends SparkTestKit {
   def testNonWholestageCodegen(f: => Unit) = {
     val defValue = ss.conf.getOption(SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key).getOrElse("true")
     ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=false")
+    ss.sql(s"set ${SQLConf.CODEGEN_FALLBACK.key}=false")
     f
     ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=$defValue")
   }

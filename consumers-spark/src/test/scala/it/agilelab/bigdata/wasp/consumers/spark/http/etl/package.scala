@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.models.{StrategyModel, StreamingReaderModel, Str
 package object etl {
   lazy val sampleStreamingETL = StructuredStreamingETLModel(
     name = "sample-data-to-console",
-    streamingInput = StreamingReaderModel.kafkaReader("read-from-kafka", topic.fromKafkaInputTopic, None),
+    streamingInput = StreamingReaderModel.kafkaReader("read-from-kafka", topic.fromKafkaInputTopic, None, Map.empty),
     staticInputs = List.empty,
     streamingOutput = WriterModel.kafkaWriter("write-to-kafka", topic.sampleDataOutputTopic),
     mlModels = List.empty,
