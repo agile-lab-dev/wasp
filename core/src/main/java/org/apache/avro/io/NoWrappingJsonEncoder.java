@@ -12,14 +12,6 @@ public class NoWrappingJsonEncoder extends JsonEncoder {
         super(sc, out);
     }
 
-    public NoWrappingJsonEncoder(Schema sc, OutputStream out, boolean pretty) throws IOException {
-        super(sc, out, pretty);
-    }
-
-    public NoWrappingJsonEncoder(Schema sc, JsonGenerator out) throws IOException {
-        super(sc, out);
-    }
-
     @Override
     public void writeIndex(int unionIndex) throws IOException {
         parser.advance(Symbol.UNION);

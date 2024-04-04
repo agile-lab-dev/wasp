@@ -32,20 +32,20 @@ object Flavor {
     override val id: String                 = "VANILLA2_2_12"
   }
 
-  case object CDP717 extends Flavor {
+  case object CDP719 extends Flavor {
     override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
     override lazy val settings: Settings =
       new BasicSettings(
-        new CDP717Resolvers(new BasicResolvers()),
+        new CDP719Resolvers(new BasicResolvers()),
         versions.jdk,
         scalaVersion,
         dependencies.parcelDependencies,
         dependencies.globalExclusions
       )
-    override lazy val dependencies: CDP717Dependencies = new CDP717Dependencies(versions)
-    lazy val postfix: Option[String]                   = Some("cdp717")
-    private lazy val versions                          = new CDP717Versions()
-    override val id: String                            = "CDP717"
+    override lazy val dependencies: CDP719Dependencies = new CDP719Dependencies(versions)
+    lazy val postfix: Option[String]                   = Some("cdp719")
+    private lazy val versions                          = new CDP719Versions()
+    override val id: String                            = "CDP719"
   }
 
   case object EMR212 extends Flavor {
@@ -65,7 +65,7 @@ object Flavor {
       case "CDH6" => Right(CDH6)
       case "VANILLA2" => Right(Vanilla2)
       case "VANILLA2_2_12" => Right(Vanilla2_2_12)
-      case "CDP717"   => Right(CDP717)
+      case "CDP719"   => Right(CDP719)
       case "EMR_2_12" => Right(EMR212)
       case _      => Left(s"Cannot parse flavor [${s}]")
     }

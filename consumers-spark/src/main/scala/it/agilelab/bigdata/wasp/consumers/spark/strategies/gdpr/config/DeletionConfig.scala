@@ -257,7 +257,7 @@ object HBaseDeletionConfig extends Logging {
   private def scanPrefixWithTime(config: Config,
                                  keysToDelete: RDD[RowKeyWithCorrelation],
                                  matchingStrategy: PrefixAndTimeBoundKeyValueMatchingStrategy): RDD[(RowKeyWithCorrelation, Scan)] = {
-    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern(matchingStrategy.pattern, new Locale(matchingStrategy.locale))
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern(matchingStrategy.pattern,  Locale.forLanguageTag(matchingStrategy.locale))
 
     val startDate = wrapConfigException(config.getLong(START_PERIOD_KEY))
     val endDate = wrapConfigException(config.getLong(END_PERIOD_KEY))

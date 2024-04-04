@@ -20,7 +20,7 @@ trait Settings {
   val disableParallelTests: Seq[Def.Setting[_]]
 }
 
-class CDP717Resolvers(other: Resolvers) extends Resolvers {
+class CDP719Resolvers(other: Resolvers) extends Resolvers {
 
   override val resolvers: Seq[MavenRepository] = other.resolvers ++ Seq(
     "Cloudera runtime resolvers" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
@@ -34,16 +34,20 @@ class BasicResolvers extends Resolvers {
   val mavenLocalRepo = Resolver.mavenLocal
   val repo1Maven2    = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
   val confluent      = "confluent" at "https://packages.confluent.io/maven/"
+  val google         = "Google Maven" at "https://maven.google.com/"
 
-  val sonatypeReleaseRepos   = Resolver.sonatypeOssRepos("releases")
-  val sonatypeSnapshotsRepos = Resolver.sonatypeOssRepos("snapshots")
+  val sonatypeReleaseRepos   = Resolver.sonatypeRepo("releases")
+  val sonatypeSnapshotsRepos = Resolver.sonatypeRepo("snapshots")
 
   /** custom resolvers for dependencies */
   val resolvers = Seq(
-    mavenLocalRepo,
     repo1Maven2,
-    confluent
-  ) ++ sonatypeReleaseRepos ++ sonatypeSnapshotsRepos
+    confluent,
+    sonatypeReleaseRepos,
+    sonatypeSnapshotsRepos,
+    google,
+    mavenLocalRepo,
+  )
 }
 
 class BasicSettings(

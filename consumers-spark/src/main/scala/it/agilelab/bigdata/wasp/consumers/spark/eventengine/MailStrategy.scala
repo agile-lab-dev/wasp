@@ -374,7 +374,7 @@ object VelocityTemplateComposer {
       // TODO: instead of null logging, redirect velocity log to wasp logging
       val p = new Properties()
       p.setProperty("runtime.log.logsystem.class", classOf[NullLogChute].getCanonicalName)
-      if (BuildInfo.flavor != "CDP717") {
+      if (BuildInfo.flavor != "CDP719") {
         p.put("runtime.log.logsystem", new NullLogChute())
       }
       p
