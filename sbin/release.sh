@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 export SBT_NATIVE_CLIENT=false
 SBT_ARGS='--no-colors --error'
 MAIN_BRANCH='develop'
