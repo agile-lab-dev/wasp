@@ -14,6 +14,7 @@ case class Schema(ordering: Int, column1: String, column2: String)
 case class Schema2(ordering: Int, column1: String, column2: String, column3: String)
 case class NotSupportedSchema(ordering: Int, column1: String)
 case class Schema3(ordering1: Int, ordering2: Float, column1: String, column2: String)
+case class Schema4(ordering1: Int, ordering2: Float, column1: String, column2: String, colThatIsNotPartOfDeltaTableSchema: String)
 case class CaseSensitiveTest(orDeRing: Int, column1: String, column2: String)
 
 class ContinuousUpdateWriterSpec extends FunSuite with DeltaTableTest {
@@ -312,6 +313,30 @@ class ContinuousUpdateWriterSpec extends FunSuite with DeltaTableTest {
       val deltaTable = DeltaTable.forPath(spark, tempDir).toDF
       assert(deltaTable.count() == 1)
       assert(deltaTable.filter("column1 == 'key1'").collectAsList().get(0).get(1) == "value3")
+    }
+  }
+
+  test("Data deduplication when enforcing schema involves dropping columns and the result of the ordering expression is ambiguous") {
+    withServer(dispatcher) { serverData =>
+      val data: Seq[Schema4] = Seq(
+        Schema4(1, 0.4f, "key1", "value1", "thisColWillBeDroppedBeforeWriting1"),
+        Schema4(1, 0.5f, "key1", "value2", "thisColWillBeDroppedBeforeWriting2"),
+        Schema4(1, 0.4f, "key1", "value1", "thisColWillBeDroppedBeforeWriting2"),
+        Schema4(1, 0.01f, "key2", "value3", "thisColWillBeDroppedBeforeWriting3"),
+        Schema4(1, 0.01f, "key2", "value3", "thisColWillBeDroppedBeforeWriting4")
+      )
+      lazy val continuousUpdateModel = TestModels.continuousUpdateModel2
+
+      import spark.implicits._
+      val source: MemoryStream[Schema4] = MemoryStream[Schema4](0, spark.sqlContext)
+      assert(
+        createAndExecuteStreamingQuery(serverData.latch, source, continuousUpdateModel, tableSchema, data: _*).isEmpty
+      )
+      val deltaTable = DeltaTable.forPath(spark, tempDir).toDF
+      deltaTable.show()
+      assert(deltaTable.count() == 2)
+      assert(deltaTable.filter("column1 == 'key1'").collectAsList().get(0).get(1) == "value1")
+      assert(deltaTable.filter("column1 == 'key2'").collectAsList().get(0).get(1) == "value3")
     }
   }
 

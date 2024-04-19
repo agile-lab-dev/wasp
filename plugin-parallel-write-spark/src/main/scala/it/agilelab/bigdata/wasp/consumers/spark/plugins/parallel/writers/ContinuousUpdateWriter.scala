@@ -30,6 +30,7 @@ case class ContinuousUpdateWriter(
     val spark: SparkSession = df.sparkSession
     val orderedDF           = applyOrderingLogic(df, writerDetails.keys, writerDetails.orderingExpression)
     val enforcedDf          = enforceSchema(orderedDF)
+    val deduplicatedDf      = enforcedDf.distinct()
     val condition           = writerDetails.keys.map(x => s"table.$x = table2.$x").mkString(" AND ")
     val deltaTable          = getDeltaTable(s3path, spark, partitioningColumns)
     (writerDetails.compactFrequency, writerDetails.compactNumFile) match {
@@ -65,7 +66,7 @@ case class ContinuousUpdateWriter(
     }
     deltaTable
       .as("table")
-      .merge(enforcedDf.as("table2"), condition)
+      .merge(deduplicatedDf.as("table2"), condition)
       .whenMatched()
       .updateAll()
       .whenNotMatched()
@@ -80,7 +81,6 @@ case class ContinuousUpdateWriter(
     val windowSpec              = Window.partitionBy(keys.map(col): _*).orderBy(col(orderingColName).desc)
 
     dfWithOrderingColumn
-      .distinct()
       .withColumn(
         "max_" + orderingColName,
         first(col(orderingColName))
