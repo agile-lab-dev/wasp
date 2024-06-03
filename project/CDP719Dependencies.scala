@@ -1,6 +1,6 @@
 import com.typesafe.sbt.packager.Keys.scriptClasspath
-import sbt.Keys.{excludeDependencies, libraryDependencies, transitiveClassifiers}
-import sbt._
+import sbt.*
+import sbt.Keys.{libraryDependencies, transitiveClassifiers}
 
 class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
 
@@ -526,6 +526,7 @@ class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
   lazy val mongodbScala       = "org.mongodb.scala"            %% "mongo-scala-driver"       % versions.mongodbScala
   lazy val mongoTest          = "de.flapdoodle.embed"          % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
   lazy val scalaTest          = "org.scalatest"                %% "scalatest"                % versions.scalaTest % Test
+  lazy val scalaTestMockito   = "org.mockito"                  %% "mockito-scala"            % versions.scalaTestMockito % Test
   lazy val allAkka = Seq(
     akkaActor,
     akkaCluster,
@@ -603,7 +604,7 @@ class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
       : Seq[sbt.ModuleID]                                           = Seq(elasticSearch, elasticSearchSpark) ++ testDependencies
   override lazy val pluginHbaseSparkDependencies: Seq[sbt.ModuleID] = testDependencies
   override lazy val pluginPlainHbaseWriterSparkDependencies: Seq[sbt.ModuleID] = hbase ++ testDependencies ++ Seq(
-    hbaseTestingUtils
+    hbaseTestingUtils, scalaTestMockito
   )
   override lazy val pluginKafkaSparkDependencies: Seq[sbt.ModuleID]    = Seq(spark_sql_kafka) ++ testDependencies
   override lazy val pluginKafkaSparkOldDependencies: Seq[sbt.ModuleID] = Seq(spark_sql_kafka_old) ++ testDependencies

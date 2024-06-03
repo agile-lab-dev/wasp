@@ -1,5 +1,5 @@
 import com.typesafe.sbt.packager.Keys.scriptClasspath
-import sbt._
+import sbt.*
 import sbt.Keys.transitiveClassifiers
 
 class EMR212Dependencies(val versions: EMR212Versions)
@@ -173,7 +173,7 @@ class EMR212Dependencies(val versions: EMR212Versions)
     (spark ++
       hbase2.map(_.exclude(exclusions.nettyExclude)) ++
       jacksonTestDependencies ++
-      Seq(scalaTest, hbaseTestingUtils))
+      Seq(scalaTest,scalaTestMockito, hbaseTestingUtils))
 
   override val pluginKafkaSparkDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
@@ -437,6 +437,7 @@ trait EMR212TestFrameworkDependencies {
   val exclusions: EMR212Exclusions.type
   lazy val scalaTest  = "org.scalatest"  %% "scalatest"  % versions.scalaTest  % Test
   lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
+  lazy val scalaTestMockito = "org.mockito" %% "mockito-scala" % versions.scalaTestMockito % Test
   lazy val wireMock: Seq[ModuleID] = Seq(
     "com.github.tomakehurst" % "wiremock-jre8" % versions.wireMock % Test,
     "xmlunit"                % "xmlunit"       % versions.xmlUnit  % Test

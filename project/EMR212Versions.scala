@@ -60,6 +60,7 @@ class EMR212Versions {
   lazy val scalaPool                 = "0.4.3"
   lazy val scalaTest                 = "3.0.4"
   lazy val scalaTest2                = "2.2.6"
+  lazy val scalaTestMockito          = "1.17.31"
   lazy val slf4j                     = "1.7.12"
   lazy val solr                      = "7.4.0"
   lazy val spark                     = s"${spark_}"
