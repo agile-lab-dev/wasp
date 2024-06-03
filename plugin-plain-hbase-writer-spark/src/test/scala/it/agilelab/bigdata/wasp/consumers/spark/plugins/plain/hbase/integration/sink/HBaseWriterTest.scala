@@ -1,13 +1,19 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.sink
 
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.TestFixture
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration._
+import org.apache.hadoop.hbase.TableName
+import org.apache.hadoop.hbase.client.Connection
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.types._
-import org.scalatest.BeforeAndAfterAll
+import org.mockito.ArgumentMatchers.{any, anyInt}
+import org.mockito.Mockito.when
+import org.mockito.MockitoSugar.withObjectMocked
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterAll, Matchers}
 
-
-class HBaseWriterTest extends TestFixture with BeforeAndAfterAll{
+class HBaseWriterTest extends TestFixture  with Matchers with MockitoSugar with BeforeAndAfterAll{
 
   val spark = sparkSession
 
@@ -155,6 +161,38 @@ class HBaseWriterTest extends TestFixture with BeforeAndAfterAll{
     }
 
 
+  }
+
+  "launch exception if mutate fails" in {
+    //scalastyle:off
+
+    val mockSmartConnection = mock[SmartConnection]
+
+    val mockIterator = mock[Iterator[InternalRow]]
+    val tableName = TableName.valueOf("table")
+
+    val caught = intercept[Throwable] {
+      withObjectMocked[HBaseWriterTask.type]{
+        when(HBaseWriterTask.mutate(any[Iterator[InternalRow]],
+          any[TableName],
+          any[Connection],
+          any[Map[String, Int]],
+          anyInt())).thenThrow(new RuntimeException("mock exception"))
+
+        HBaseWriter
+          .mutate(1,
+            Map.empty[String, Int],
+            mockIterator,
+            mockSmartConnection,
+            tableName)
+      }
+
+    }
+
+    caught
+      .getMessage shouldEqual "mock exception"
+
+    //scalastyle:on
   }
 
 }

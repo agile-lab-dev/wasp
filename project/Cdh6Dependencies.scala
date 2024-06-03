@@ -261,6 +261,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   val kafkaTests         = kafka % Test kafkaJacksonExclusions
   val scalaCheck         = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
   val scalaTest          = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
+  val scalaTestMockito = "org.mockito" %% "mockito-scala" % versions.scalaTestMockito % Test
   val sparkCatalystTests = sparkCatalyst % Test classifier "tests"
   val sparkCoreTests     = sparkCore % Test classifier "tests"
   val sparkSQLTests      = sparkSQL % Test classifier "tests"
@@ -289,7 +290,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
   // Module dependencies
   // ===================================================================================================================
 
-  val scalaTestDependencies = Seq(scalaTest, mongoTest)
+  val scalaTestDependencies = Seq(scalaTest, scalaTestMockito, mongoTest)
 
   val testDependencies = Seq(akkaTestKit, akkaClusterTestKit, scalaTest, mongoTest)
 
@@ -380,7 +381,7 @@ class Cdh6Dependencies(versions: Cdh6Versions) extends Dependencies {
 
   val pluginPlainHbaseWriterSparkDependencies = (
     hbase :+
-      scalaTest :+ hbaseTestingUtils
+      scalaTest :+ hbaseTestingUtils :+ scalaTestMockito
   ).map(excludeNetty)
 
   val _plugin_kafka_spark = Seq(

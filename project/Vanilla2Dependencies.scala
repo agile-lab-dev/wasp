@@ -156,7 +156,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     (spark ++
       hbase2.map(_.exclude(exclusions.nettyExclude)) ++
       jacksonTestDependencies ++
-      Seq(scalaTest, hbaseTestingUtils))
+      Seq(scalaTest, scalaTestMockito, hbaseTestingUtils))
 
   override val pluginKafkaSparkDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
@@ -406,11 +406,11 @@ trait Vanilla2TestFrameworkDependencies {
   val exclusions: VanillaExclusions.type
   lazy val scalaTest  = "org.scalatest"  %% "scalatest"  % versions.scalaTest  % Test
   lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
+  lazy val scalaTestMockito = "org.mockito" %% "mockito-scala" % versions.scalaTestMockito % Test
   lazy val wireMock: Seq[ModuleID] = Seq(
     "com.github.tomakehurst" % "wiremock-jre8" % versions.wireMock % Test,
     "xmlunit"                % "xmlunit"       % versions.xmlUnit  % Test
   ).map(_ exclude exclusions.jacksonExclude)
-
 }
 
 trait Vanilla2ScalaCoreDependencies {

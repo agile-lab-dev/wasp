@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.sink
 
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.{HBaseConnectionCache, HBaseContext, HBaseCredentialsManager, HBaseTableCatalog}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.{HBaseConnectionCache, HBaseContext, HBaseCredentialsManager, HBaseTableCatalog, SmartConnection}
 import org.apache.hadoop.hbase.TableName
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
@@ -31,14 +31,22 @@ object HBaseWriter extends Logging with Serializable {
         HBaseCredentialsManager.applyCredentials()
         val smartConnection = HBaseConnectionCache.getConnection(config)
         val tableName = TableName.valueOf(table)
-        try {
-          HBaseWriterTask.mutate(iter, tableName, smartConnection.connection, fieldIdx, batchSize)
-        } catch {
-          case e: Throwable => logError("Unable to write hbase mutation, reason:", e)
-        } finally {
-          smartConnection.close()
-        }
+        mutate(batchSize, fieldIdx, iter, smartConnection, tableName)
       }
+  }
+
+  def mutate(batchSize: Int, fieldIdx: Map[String, Int], iter: Iterator[InternalRow],
+             smartConnection: SmartConnection, tableName: TableName): Unit = {
+    try {
+      HBaseWriterTask.mutate(iter, tableName, smartConnection.connection, fieldIdx, batchSize)
+    } catch {
+      case e: Throwable => {
+        logError("Unable to write hbase mutation, reason:", e)
+        throw e
+      }
+    } finally {
+      smartConnection.close()
+    }
   }
 
   private def fieldIndexes(schema: StructType): Map[String, Int] = {

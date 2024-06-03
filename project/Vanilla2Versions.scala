@@ -26,6 +26,7 @@ class Vanilla2Versions {
   val scala                     = "2.11.12"
   val scalaCheck                = "1.13.5"
   val scalaTest                 = "3.0.4"
+  val scalaTestMockito          = "1.17.31"
   val slf4j                     = "1.7.12"
   val solr                      = "8.4.1" // solr8 client works also with solr 7 server
   val spark                     = "2.4.8"

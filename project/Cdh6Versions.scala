@@ -35,6 +35,7 @@ class Cdh6Versions {
   val scalaCheck = "1.13.5"
   val scalaTest = "3.0.4"
   val scalaTest2 = "2.2.6"
+  val scalaTestMockito = "1.17.31"
   val slf4j = "1.7.12"
   val solr = "7.4.0.7.0.3.0-79"
   val spark_ = s"2.4.0"

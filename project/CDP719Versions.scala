@@ -18,6 +18,7 @@ class CDP719Versions {
   val scalaCheck = "1.13.5"
   val scalaTest = "3.0.4"
   val scalaTest2 = "2.2.6"
+  val scalaTestMockito = "1.17.31"
   val solr = "8.11.2.7.1.9.0-387"
   val spark = s"2.4.8.7.1.9.0-387"
   val sparkSolr = "3.8.1"
