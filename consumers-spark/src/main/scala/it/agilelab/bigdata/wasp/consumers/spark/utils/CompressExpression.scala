@@ -1,15 +1,15 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import java.io.{ ByteArrayOutputStream, OutputStream }
-
-import CompressExpression._
+import it.agilelab.bigdata.wasp.consumers.spark.utils.CompressExpression._
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.io.compress.{ CompressionCodec, CompressionCodecFactory }
+import org.apache.hadoop.io.compress.{CompressionCodec, CompressionCodecFactory}
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.expressions.codegen.Block.BlockHelper
-import org.apache.spark.sql.catalyst.expressions.codegen.{ CodeGenerator, CodegenContext, ExprCode }
-import org.apache.spark.sql.catalyst.expressions.{ ExpectsInputTypes, Expression, UnaryExpression }
-import org.apache.spark.sql.types.{ BinaryType, DataType }
+import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
+import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, UnaryExpression}
+import org.apache.spark.sql.types.{BinaryType, DataType}
+
+import java.io.{ByteArrayOutputStream, OutputStream}
 
 object CompressExpression {
   def compress(col: Column, codec: String, conf: Configuration): Column =
@@ -37,11 +37,9 @@ object CompressExpression {
 
 }
 
-case class CompressExpression(codecName: String, conf: HadoopConfiguration, _child: Expression)
+case class CompressExpression(codecName: String, conf: HadoopConfiguration, override val child: Expression)
     extends UnaryExpression
-    with ExpectsInputTypes {
-
-  override def child: Expression = _child
+    with ExpectsInputTypes with CompatibilityCompressExpression{
 
   @transient
   private lazy val factory = new CompressionCodecFactory(conf.value)

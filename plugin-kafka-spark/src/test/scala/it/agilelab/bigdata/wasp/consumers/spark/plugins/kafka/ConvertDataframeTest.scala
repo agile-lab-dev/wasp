@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.CompatibilityKafkaException.{unresolvedColKey, unresolvedColTopic}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.bigdata.wasp.models.{MultiTopicModel, SubjectStrategy, TopicCompression, TopicModel}
@@ -316,76 +317,6 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
 
   }
 
-  it should "throw an exception when the TopicModel schema is defined and some of its fields are not set in the definition of the model as headers, nor key, nor part of the value. " in {
-
-    val topicModel1 = testTopicModelPerson_avro_keyKeySchema_1.copy(
-      name = "TOPIC-A",
-      valueFieldsNames = Some(Seq("name")),
-      keySchema = Some(SchemaBuilder.builder().stringBuilder().endString().toString)
-    ) //topic and surname missing
-    val topicModel2 = testTopicModelPerson_json_key_1.copy(name = "TOPIC-B", valueFieldsNames = Some(Seq("surname"))) //topic and name missing
-
-    val topics = Seq(
-      topicModel1,
-      topicModel2
-    )
-    val multiTopicModel: MultiTopicModel =
-      MultiTopicModel.fromTopicModels("name", "topic", Seq(topicModel1, topicModel2))
-
-    val df = Seq(
-      (Some("boom"), Some("sergio"), None),
-      (None, None, Some("giallini"))
-    ).toDF("id", "name", "surname")
-
-    val caught =
-      intercept[IllegalArgumentException] {
-        KafkaWriters.convertDataframe(
-          df,
-          topicFieldName,
-          topics,
-          multiTopicModel,
-          None
-        )
-      }
-    assert(
-      caught.getMessage === """Expected column named `topic` for topic TOPIC-A to be used as topic, but found None: Cannot resolve column name "topic" among (id, name, surname);"""
-    )
-
-  }
-
-  it should "throw an exception when the schema does not contain the fields set as key fields" in {
-
-    val topicModel1 = testTopicModelPerson_avro_keyKeySchema_1.copy(name = "TOPIC-A", keyFieldName = Some("id-WRONG"))
-    val topicModel2 = testTopicModelPerson_json_key_1.copy(name = "TOPIC-B")
-
-    val topics = Seq(
-      topicModel1,
-      topicModel2
-    )
-    val multiTopicModel: MultiTopicModel =
-      MultiTopicModel.fromTopicModels("name", "topic", Seq(topicModel1, topicModel2))
-
-    val df = Seq(
-      (Some("A1"), "sergio", "castellitto", "TOPIC-A"),
-      (None, "marco", "giallini", "TOPIC-B")
-    ).toDF("id", "name", "surname", "topic")
-
-    val caught =
-      intercept[IllegalArgumentException] {
-        KafkaWriters.convertDataframe(
-          df,
-          topicFieldName,
-          topics,
-          multiTopicModel,
-          None
-        )
-      }
-
-    assert(
-      caught.getMessage === s"""Expected column named `id-WRONG` for topic TOPIC-A to be used as key, but found None: Cannot resolve column name "id-WRONG" among (id, name, surname, topic);"""
-    )
-  }
-
   it should "correctly work with three topic models, all different in everything" in {
 
     val topicModel1 = testTopicModelErrorPerson_avro_key.copy(name = "TOPIC-1")
@@ -456,6 +387,76 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
     assert(new String(resultRows.last.value) === "errorMsg")
     assert(new String(resultRows.head.key) === "hello")
 
+  }
+
+  it should "throw an exception when the TopicModel schema is defined and some of its fields are not set in the definition of the model as headers, nor key, nor part of the value. " in {
+
+    val topicModel1 = testTopicModelPerson_avro_keyKeySchema_1.copy(
+      name = "TOPIC-A",
+      valueFieldsNames = Some(Seq("name")),
+      keySchema = Some(SchemaBuilder.builder().stringBuilder().endString().toString)
+    ) //topic and surname missing
+    val topicModel2 = testTopicModelPerson_json_key_1.copy(name = "TOPIC-B", valueFieldsNames = Some(Seq("surname"))) //topic and name missing
+
+    val topics = Seq(
+      topicModel1,
+      topicModel2
+    )
+    val multiTopicModel: MultiTopicModel =
+      MultiTopicModel.fromTopicModels("name", "topic", Seq(topicModel1, topicModel2))
+
+    val df = Seq(
+      (Some("boom"), Some("sergio"), None),
+      (None, None, Some("giallini"))
+    ).toDF("id", "name", "surname")
+
+    val caught =
+      intercept[IllegalArgumentException] {
+        KafkaWriters.convertDataframe(
+          df,
+          topicFieldName,
+          topics,
+          multiTopicModel,
+          None
+        )
+      }
+    assert(
+      caught.getMessage === unresolvedColTopic
+    )
+
+  }
+
+  it should "throw an exception when the schema does not contain the fields set as key fields" in {
+
+    val topicModel1 = testTopicModelPerson_avro_keyKeySchema_1.copy(name = "TOPIC-A", keyFieldName = Some("id-WRONG"))
+    val topicModel2 = testTopicModelPerson_json_key_1.copy(name = "TOPIC-B")
+
+    val topics = Seq(
+      topicModel1,
+      topicModel2
+    )
+    val multiTopicModel: MultiTopicModel =
+      MultiTopicModel.fromTopicModels("name", "topic", Seq(topicModel1, topicModel2))
+
+    val df = Seq(
+      (Some("A1"), "sergio", "castellitto", "TOPIC-A"),
+      (None, "marco", "giallini", "TOPIC-B")
+    ).toDF("id", "name", "surname", "topic")
+
+    val caught =
+      intercept[IllegalArgumentException] {
+        KafkaWriters.convertDataframe(
+          df,
+          topicFieldName,
+          topics,
+          multiTopicModel,
+          None
+        )
+      }
+
+    assert(
+      caught.getMessage === unresolvedColKey
+    )
   }
 
   // plaintext single

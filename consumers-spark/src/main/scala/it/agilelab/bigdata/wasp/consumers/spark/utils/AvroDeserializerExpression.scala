@@ -39,13 +39,15 @@ import scala.util.{Failure, Success, Try}
   *                          of the struct returned). If you set this flag to false, the expression may be evaluated
   *                          once for each occurence of ti you see in the physical plan.
   */
+
+
 case class AvroDeserializerExpression(
     child: Expression,
     schemaAvroJson: String,
     darwinConfig: Option[Config],
     avoidReevaluation: Boolean = true
 ) extends UnaryExpression
-    with ExpectsInputTypes {
+    with ExpectsInputTypes with CompatibilityAvroDeserializerExpression{
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
 
@@ -85,7 +87,7 @@ case class AvroDeserializerExpression(
   }
 
   override protected def nullSafeEval(input: Any): Any = {
-    val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
+    val avroValue = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
     val avroReader = avroDatumReader(avroValue)
 
     val decoder = DecoderFactory.get.binaryDecoder(avroValue, null)
@@ -122,7 +124,7 @@ case class AvroDeserializerExpression(
     val returnType = CodeGenerator.javaType(dataType)
     val boxedType  = CodeGenerator.boxedType(dataType)
 
-    val childEval    = child.genCode(ctx)
+    val childEval = child.genCode(ctx)
     val defaultValue = CodeGenerator.defaultValue(dataType, typedNull = true)
 
     val c =

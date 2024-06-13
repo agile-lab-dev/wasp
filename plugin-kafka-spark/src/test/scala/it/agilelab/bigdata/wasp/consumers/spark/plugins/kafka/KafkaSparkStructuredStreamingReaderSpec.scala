@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import com.sksamuel.avro4s.{AvroOutputStream, AvroSchema}
+import org.apache.spark.sql.functions.col
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.topicNameToColumnName
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.models.configuration._
@@ -113,8 +114,8 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Handle).cache
       assert(outDf.where(col("raw").isNull).count() === 2)
       assert(outDf.where(col("raw").isNotNull).count() === 1)
-      assert(outDf.where(col("value").isNull).count() === 1)
-      assert(outDf.where(col("value").isNotNull).count() === 2)
+      assert(outDf.where(col("value").isNull || KafkaSparkStructuredStreamingReader.isNull(col("value"))).count() === 1)
+      assert(outDf.where(col("value").isNotNull && !KafkaSparkStructuredStreamingReader.isNull(col("value"))).count() === 2)
       checkResultSchema(outDf, true)
     }
 
@@ -368,7 +369,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
         val name = t.name
         assert(outDF.where(rawCol.isNull && col(name).isNotNull).count() === 1)
       }
-      assert(outDF.where(rawCol.isNotNull && col(topicJsonColName).isNull).count() === 1)
+      assert(outDF.where(rawCol.isNotNull && ( col(topicJsonColName).isNull || KafkaSparkStructuredStreamingReader.isNull(col(topicJsonColName))) ).count() === 1)
     }
 
     "break when parsing error on avro and Strict mode" in {

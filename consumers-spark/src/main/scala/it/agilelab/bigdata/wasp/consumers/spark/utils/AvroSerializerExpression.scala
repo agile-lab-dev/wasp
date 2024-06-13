@@ -13,8 +13,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
 import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, TimeZoneAwareExpression, UnaryExpression}
-import org.apache.spark.sql.catalyst.util.DateTimeUtils.SQLDate
-import org.apache.spark.sql.catalyst.util.{ArrayData, DateTimeUtils, MapData}
+import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -94,8 +93,7 @@ case class AvroSerializerExpression private(child: Expression,
                                             structName: String,
                                             namespace: String,
                                             fieldsToWrite: Option[Set[String]],
-                                            timeZoneId: Option[String]) extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression {
-
+                                            timeZoneId: Option[String]) extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression with CompatibilityAvroSerializerExpression {
 
   @transient private lazy val schemaManager = avroSchemaManagerConfig.map(AvroSchemaManagerFactory.initialize)
 
@@ -231,19 +229,12 @@ case class AvroSerializerExpression private(child: Expression,
       }
       case ByteType | ShortType | IntegerType | LongType |
            FloatType | DoubleType | BooleanType => identity
-      case TimestampType => (item: Any) =>
-        item.asInstanceOf[Long] / 1000
-
+      case TimestampType => (item: Any) => serializeTimestamp(item)
       case _: DecimalType => (item: Any) => if (item == null) null else item.toString
       // identity because we return the long as is
       // case TimestampType => (item: Any) =>
       //  if (item == null) null else item.asInstanceOf[Long]
-      case DateType => (item: Any) =>
-        if (item == null) {
-          null
-        } else {
-          DateTimeUtils.daysToMillis(item.asInstanceOf[SQLDate], timeZone)
-        }
+      case DateType => (item: Any) => serializeDateType(item)
       case ArrayType(elementType, _) =>
         val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
         val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getElementType))

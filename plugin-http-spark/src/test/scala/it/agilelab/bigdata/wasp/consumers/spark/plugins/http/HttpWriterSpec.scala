@@ -80,7 +80,7 @@ class HttpWriterSpec extends FunSuite with SparkSuite with Retries {
         createAndExecuteStreamingQuery(serverData.latch, source, httpModel, processAllAvailable = false, myDf)
       assert(exception.isDefined)
       assert(
-        exception.get.cause.getCause.getCause.getMessage startsWith
+        CompatibilityHttpWriter.getMessageFromStreamingQException(exception) startsWith
           "Error during http call: Response{protocol=http/1.1, code=404, message=OK, " +
             s"url=http://localhost:${serverData.port}/failure-test}"
       )

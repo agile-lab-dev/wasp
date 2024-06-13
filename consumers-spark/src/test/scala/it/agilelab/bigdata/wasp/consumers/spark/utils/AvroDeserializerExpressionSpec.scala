@@ -111,7 +111,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     "Handle values not boxed in generic record, Integer" in testAllCodegen {
       import ss.implicits._
 
-      val elements   = Seq.range(0, 1000).map(new Integer(_))
+      val elements   = Seq.range(0, 1000).map(Integer.valueOf)
       val schema     = SchemaBuilder.builder().intBuilder().endInt()
       val serialized = serializeUnboxed(elements.toList, schema)
 
@@ -130,7 +130,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     "Handle values not boxed in generic record, Float" in testAllCodegen {
       import ss.implicits._
 
-      val elements   = Seq.range(0, 1000).map(f => new java.lang.Float(f + 0.1))
+      val elements   = Seq.range(0, 1000).map(f => java.lang.Float.valueOf(f + 0.1f))
       val schema     = SchemaBuilder.builder().floatBuilder().endFloat()
       val serialized = serializeUnboxed(elements.toList, schema)
 
@@ -149,7 +149,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     "Handle values not boxed in generic record, Double" in testAllCodegen {
       import ss.implicits._
 
-      val elements   = Seq.range(0, 1000).map(f => new java.lang.Double(f + 0.1d))
+      val elements   = Seq.range(0, 1000).map(f => java.lang.Double.valueOf(f + 0.1d))
       val schema     = SchemaBuilder.builder().doubleBuilder().endDouble()
       val serialized = serializeUnboxed(elements.toList, schema)
 
@@ -244,7 +244,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     "Handle values not boxed in generic record, Long" in testAllCodegen {
       import ss.implicits._
 
-      val elements   = Seq.range(Int.MaxValue.toLong, Int.MaxValue + 1000L).map(new java.lang.Long(_))
+      val elements   = Seq.range(Int.MaxValue.toLong, Int.MaxValue + 1000L).map(java.lang.Long.valueOf)
       val schema     = SchemaBuilder.builder().longBuilder().endLong()
       val serialized = serializeUnboxed(elements.toList, schema)
 
@@ -282,7 +282,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     "Handle values not boxed in generic record, Byte" in testAllCodegen {
       import ss.implicits._
 
-      val elements   = Seq.range(0.toByte, Byte.MaxValue).map(new java.lang.Byte(_))
+      val elements   = Seq.range(0.toByte, Byte.MaxValue).map(java.lang.Byte.valueOf)
       val schema     = SchemaBuilder.builder().intBuilder().endInt()
       val serialized = serializeUnboxed(elements.toList, schema)
 

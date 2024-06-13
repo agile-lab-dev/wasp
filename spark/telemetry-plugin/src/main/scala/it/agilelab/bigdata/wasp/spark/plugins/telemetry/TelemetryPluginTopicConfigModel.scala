@@ -8,3 +8,4 @@ case class TelemetryPluginTopicConfigModel(topicName: String,
                                            replica: Int,
                                            kafkaSettings: Seq[(String, String)],
                                            jmx: Seq[TelemetryPluginJMXTelemetryConfigModel])
+

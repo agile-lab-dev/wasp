@@ -118,7 +118,15 @@ class BasicSettings(
           compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
           "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
         )
-      } else {
+      } else if(scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision >= 13){
+        val silencerVersion = "1.17.13" // compatible with 2.11.12 and 2.12.10
+
+        Seq(
+          compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+          "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
+        )      }
+      else
+      {
         Seq()
       }
     },

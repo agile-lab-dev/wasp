@@ -19,7 +19,6 @@ package org.apache.hadoop.hbase.spark
 
 import java.io._
 import java.util.Date
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.hbase._
@@ -31,13 +30,13 @@ import org.apache.hadoop.mapred.JobConf
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SerializableWritable, SparkContext}
 import org.apache.hadoop.hbase.security.token.{AuthenticationTokenIdentifier => HbaseTokenIdentifier}
-import scala.collection.JavaConverters._
+import org.apache.spark.deploy.SparkHadoopUtil
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.annotation.meta.param
 

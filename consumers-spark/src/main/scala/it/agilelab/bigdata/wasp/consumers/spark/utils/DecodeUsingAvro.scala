@@ -1,7 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import java.io.ByteArrayInputStream
-
 import it.agilelab.bigdata.wasp.consumers.spark.utils.DecodeUsingAvro.AvroDeserializer
 import it.agilelab.darwin.manager.AvroSchemaManager
 import org.apache.avro.Schema
@@ -12,6 +10,7 @@ import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, Codegen
 import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression, UnaryExpression}
 import org.apache.spark.sql.types.{DataType, ObjectType}
 
+import java.io.ByteArrayInputStream
 import scala.reflect.ClassTag
 
 case class DecodeUsingAvro[A](
@@ -21,7 +20,7 @@ case class DecodeUsingAvro[A](
                                avroSchemaManager: () => AvroSchemaManager,
                                fromGenericRecord: GenericRecord => A
                              ) extends UnaryExpression
-  with NonSQLExpression {
+  with NonSQLExpression with CompatibilityDecodeUsingAvro[A] {
 
   private lazy val deserializer = new AvroDeserializer[A](new Schema.Parser().parse(schema),
     avroSchemaManager(),

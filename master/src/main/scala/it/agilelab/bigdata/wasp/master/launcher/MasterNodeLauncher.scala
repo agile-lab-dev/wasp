@@ -30,7 +30,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import org.apache.avro.Schema
 import org.apache.commons.cli
 import org.apache.commons.cli.CommandLine
-import org.apache.commons.lang.exception.ExceptionUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import sttp.client.SttpBackend
 import sttp.client.akkahttp.AkkaHttpBackend
 import sttp.client.akkahttp.Types.LambdaFlow

@@ -155,19 +155,23 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
   private def assertCollectionsAreEqual(elements: Seq[UglyCaseClass], results: Array[UglyCaseClass]): Unit = {
     elements.zip(results).foreach {
       case (
-          UglyCaseClass(a1, z1, y1, b1, c1, d1, sm1, som1, mm1, m1),
-          UglyCaseClass(a2, z2, y2, b2, c2, d2, sm2, som2, mm2, m2)
-          ) =>
-        assert(a1 sameElements a2)
-        assert(b1 == b2)
-        assert(c1 == c2)
-        assert(d1 == d2)
-        assert(z1 sameElements z2)
-        assert(y1 sameElements y2)
-        assert(m1 == m2)
-        assert(sm1 == sm2)
-        assert(mm1 == mm2)
-        assert(som1 == som2)
+        UglyCaseClass(a1, z1, y1, b1, c1, d1, sm1, som1, mm1, m1),
+        UglyCaseClass(a2, z2, y2, b2, c2, d2, sm2, som2, mm2, m2)
+        ) =>
+        myAssert(a1 sameElements a2, s"$a1!=$a2")
+        myAssert(b1 == b2, s"$b1!= $b2")
+        myAssert(c1 == c2, s"$c1!= $c2")
+        myAssert(d1 == d2, s"$d1!= $d2")
+        myAssert(z1 sameElements z2, s"$z1!=$z2")
+        myAssert(y1 sameElements y2, s"$y1!=$y2")
+        myAssert(m1 == m2, s"$m1!= $m2")
+        myAssert(sm1 == sm2, s"$sm1!= $sm2")
+        myAssert(mm1 == mm2, s"$mm1!= $mm2")
+        myAssert(som1 == som2, s"$som1!= $som2")
     }
+  }
+
+  private def myAssert(a:Boolean, hint:String ): Unit = {
+    if (!a) fail(hint)
   }
 }

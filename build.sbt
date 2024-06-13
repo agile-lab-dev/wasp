@@ -1,5 +1,6 @@
 import org.checkerframework.checker.units.qual.s
 import Flavor.EMR212
+import Flavor.EMR613
 
 lazy val flavor = {
   val f = Flavor.currentFlavor()
@@ -35,6 +36,12 @@ lazy val model = Project("wasp-model", file("model"))
   .settings(libraryDependencies ++= dependencies.modelDependencies)
 
 lazy val core = Project("wasp-core", file("core"))
+  .settings(
+    Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
+      / s"java${if (flavor == EMR613) "-emr613" else "-legacy"}",
+    Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+  )
   .settings(settings.commonSettings: _*)
   .dependsOn(scala_compiler)
   .dependsOn(model)
@@ -77,6 +84,10 @@ lazy val producers = Project("wasp-producers", file("producers"))
   .settings(libraryDependencies ++= dependencies.producersDependencies)
 
 lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark"))
+  .settings(
+    Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
+  )
   .settings(settings.commonSettings: _*)
   .dependsOn(core)
   .settings(libraryDependencies ++= dependencies.consumersSparkDependencies)
@@ -112,6 +123,10 @@ lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc
 
 lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-kafka-spark"))
   .settings(settings.commonSettings: _*)
+  .settings(
+    Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+  )
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkDependencies)
 
@@ -119,7 +134,9 @@ lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("p
   .settings(settings.commonSettings: _*)
   .settings(
     Compile / scalaSource := baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "main" / "scala",
-    Test / scalaSource := baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "test" / "scala"
+    Test / scalaSource := baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "test" / "scala",
+    Test / unmanagedSourceDirectories += baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "test"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
   )
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkOldDependencies)
@@ -145,6 +162,10 @@ lazy val plugin_mailer_spark = Project("wasp-plugin-mailer-spark", file("plugin-
   .settings(libraryDependencies ++= dependencies.pluginMailerSparkDependencies)
 
 lazy val plugin_http_spark = Project("wasp-plugin-http-spark", file("plugin-http-spark"))
+  .settings(
+    Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
+  )
   .settings(settings.commonSettings: _*)
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .settings(libraryDependencies ++= dependencies.pluginHttpSparkDependencies)
@@ -160,6 +181,10 @@ lazy val microservice_catalog = Project("wasp-microservice-catalog", file("micro
   .dependsOn(consumers_spark % "compile->compile;test->test")
 
 lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark", file("plugin-parallel-write-spark"))
+  .settings(
+    Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
+  )
   .settings(Defaults.itSettings)
   .settings(settings.commonSettings: _*)
   .settings(settings.disableParallelTests)
@@ -169,14 +194,24 @@ lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark
 
 /* Yarn  */
 
-lazy val yarn_auth_hdfs = Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
-  .settings(settings.commonSettings: _*)
-  .settings(dependencies.kmsTest: _*)
-  .settings(libraryDependencies ++= dependencies.yarnAuthHdfsDependencies)
+lazy val yarn_auth_hdfs =
+  Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
+    .settings(
+      Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
+        / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+    )
+    .settings(settings.commonSettings: _*)
+    .settings(dependencies.kmsTest: _*)
+    .settings(libraryDependencies ++= dependencies.yarnAuthHdfsDependencies)
 
-lazy val yarn_auth_hbase = Project("wasp-yarn-auth-hbase", file("yarn/auth/hbase"))
-  .settings(settings.commonSettings: _*)
-  .settings(libraryDependencies ++= dependencies.yarnAuthHBaseDependencies)
+lazy val yarn_auth_hbase =
+  Project("wasp-yarn-auth-hbase", file("yarn/auth/hbase"))
+    .settings(
+      Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
+        / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
+    )
+    .settings(settings.commonSettings: _*)
+    .settings(libraryDependencies ++= dependencies.yarnAuthHBaseDependencies)
 
 lazy val yarn_auth = Project("wasp-yarn-auth", file("yarn/auth"))
   .settings(settings.commonSettings: _*)
@@ -187,10 +222,18 @@ lazy val yarn = Project("wasp-yarn", file("yarn"))
   .aggregate(yarn_auth)
 
 lazy val spark_telemetry_plugin = Project("wasp-spark-telemetry-plugin", file("spark/telemetry-plugin"))
+  .settings(
+    Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
+  )
   .settings(settings.commonSettings: _*)
   .settings(libraryDependencies ++= dependencies.sparkTelemetryPluginDependencies)
 
 lazy val spark_nifi_plugin = Project("wasp-spark-nifi-plugin", file("spark/nifi-plugin"))
+  .settings(
+    Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
+  )
   .settings(settings.commonSettings: _*)
   .settings(libraryDependencies ++= dependencies.sparkNifiPluginDependencies)
   .dependsOn(consumers_spark)
@@ -230,26 +273,40 @@ lazy val kernel = project
     aws
   )
 
-lazy val plugin = project
-  .withId("wasp-plugin")
-  .settings(settings.commonSettings: _*)
-  .aggregate(
-    plugin_console_spark,
-    plugin_hbase_spark,
-    plugin_plain_hbase_writer_spark,
-    plugin_jdbc_spark,
-    plugin_kafka_spark,
-    plugin_kafka_spark_old,
-    plugin_raw_spark,
-    plugin_solr_spark,
-    plugin_cdc_spark,
-    plugin_parallel_write_spark,
-    plugin_mailer_spark,
-    plugin_http_spark,
-    plugin_mongo_spark,
-    microservice_catalog,
-    plugin_elastic_spark
-  )
+lazy val plugin =
+  if (flavor != EMR613) {
+    project
+      .withId("wasp-plugin")
+      .settings(settings.commonSettings: _*)
+      .aggregate(
+        plugin_console_spark,
+        plugin_hbase_spark,
+        plugin_plain_hbase_writer_spark,
+        plugin_jdbc_spark,
+        plugin_kafka_spark,
+        plugin_kafka_spark_old,
+        plugin_raw_spark,
+        plugin_solr_spark,
+        plugin_cdc_spark,
+        plugin_parallel_write_spark,
+        plugin_mailer_spark,
+        plugin_http_spark,
+        plugin_mongo_spark,
+        microservice_catalog,
+        plugin_elastic_spark
+      )
+  }
+  else{
+    project
+      .withId("wasp-plugin")
+      .settings(settings.commonSettings: _*)
+      .aggregate(
+        plugin_parallel_write_spark,
+        plugin_http_spark,
+        plugin_kafka_spark
+      )
+
+  }
 
 /* Framework + Plugins */
 lazy val wasp = Project("wasp", file("."))
@@ -287,28 +344,48 @@ lazy val whiteLabelProducers = Project("wasp-whitelabel-producers", file("whitel
   .settings(dependencies.whitelabelProducerScriptClasspath)
   .enablePlugins(JavaAppPackaging)
 
-lazy val whiteLabelConsumersSpark = Project("wasp-whitelabel-consumers-spark", file("whitelabel/consumers-spark"))
-  .settings(settings.commonSettings: _*)
-  .dependsOn(whiteLabelModels)
-  .dependsOn(consumers_spark)
-  .dependsOn(repository_mongo)
-  .dependsOn(plugin_console_spark)
-  .dependsOn(plugin_hbase_spark)
-  .dependsOn(plugin_jdbc_spark)
-  .dependsOn(plugin_kafka_spark)
-  .dependsOn(plugin_mailer_spark)
-  .dependsOn(plugin_raw_spark)
-  .dependsOn(plugin_solr_spark)
-  .dependsOn(plugin_mongo_spark)
-  .dependsOn(plugin_http_spark)
-  .dependsOn(plugin_cdc_spark)
-  .dependsOn(spark_telemetry_plugin)
-  .dependsOn(spark_nifi_plugin)
-  .dependsOn(plugin_parallel_write_spark)
-  .dependsOn(aws_auth_temporary_credentials)
-  .settings(libraryDependencies ++= dependencies.whitelabelSparkConsumerDependencies)
-  .enablePlugins(JavaAppPackaging)
-  .settings(dependencies.whitelabelSparkConsumerScriptClasspath)
+lazy val whiteLabelConsumersSpark =
+  if (flavor != EMR613) {
+    Project("wasp-whitelabel-consumers-spark", file("whitelabel/consumers-spark"))
+      .settings(settings.commonSettings: _*)
+      .dependsOn(whiteLabelModels)
+      .dependsOn(consumers_spark)
+      .dependsOn(repository_mongo)
+      .dependsOn(plugin_console_spark)
+      .dependsOn(plugin_hbase_spark)
+      .dependsOn(plugin_jdbc_spark)
+      .dependsOn(plugin_kafka_spark)
+      .dependsOn(plugin_mailer_spark)
+      .dependsOn(plugin_raw_spark)
+      .dependsOn(plugin_solr_spark)
+      .dependsOn(plugin_mongo_spark)
+      .dependsOn(plugin_http_spark)
+      .dependsOn(plugin_cdc_spark)
+      .dependsOn(spark_telemetry_plugin)
+      .dependsOn(spark_nifi_plugin)
+      .dependsOn(plugin_parallel_write_spark)
+      .dependsOn(aws_auth_temporary_credentials)
+      .settings(libraryDependencies ++= dependencies.whitelabelSparkConsumerDependencies)
+      .enablePlugins(JavaAppPackaging)
+      .settings(dependencies.whitelabelSparkConsumerScriptClasspath)
+  } else {
+    Project("wasp-whitelabel-consumers-spark", file("whitelabel/consumers-spark"))
+      .settings(settings.commonSettings: _*)
+      .settings(
+        Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
+          / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+      )
+      .dependsOn(whiteLabelModels)
+      .dependsOn(consumers_spark)
+      .dependsOn(repository_mongo)
+      .dependsOn(plugin_http_spark)
+      .dependsOn(plugin_parallel_write_spark)
+      .dependsOn(plugin_kafka_spark)
+      .dependsOn(aws_auth_temporary_credentials)
+      .settings(libraryDependencies ++= dependencies.whitelabelSparkConsumerDependencies)
+      .enablePlugins(JavaAppPackaging)
+      .settings(dependencies.whitelabelSparkConsumerScriptClasspath)
+  }
 
 lazy val whiteLabelSingleNode = project
   .withId("wasp-whitelabel-singlenode")
@@ -348,7 +425,7 @@ lazy val aws_auth_temporary_credentials =
     .settings(settings.commonSettings: _*)
     .settings(libraryDependencies ++= dependencies.scalaTestDependencies)
     .settings(libraryDependencies ++= dependencies.awsAuth)
-    .settings(Test / skip := flavor != EMR212) //only test this in EMR212 build
+    .settings(Test / skip := !(flavor == EMR212 || flavor == EMR613))   //only test this in EMR212 build
 
 lazy val aws_auth = Project("wasp-aws-auth", file("aws/auth"))
   .settings(settings.commonSettings: _*)

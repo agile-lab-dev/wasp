@@ -15,7 +15,7 @@ import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import org.apache.avro.Schema
 import org.apache.spark.SparkException
-import org.apache.spark.sql.catalyst.expressions.{CaseWhen, Hex}
+import org.apache.spark.sql.catalyst.expressions.{CaseWhen, GenericRowWithSchema, Hex}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DataType, StringType}
@@ -301,19 +301,19 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         df.withColumn(
             computedValue,
             when(
-              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull,
+              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)),
               strictExceptionLauncherUdf(col(RAW_VALUE_ATTRIBUTE_NAME), lit(topicDataType))
             ).otherwise(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME))
           )
           .select(selectMetadata(metadataKey), col(s"$computedValue.*"))
       case Ignore =>
         df.select(selectMetadata(metadataKey), col(s"${KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME}.*"))
-          .where(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNotNull)
+          .where(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNotNull && !isNull(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)))
       case Handle =>
         df.select(
           selectMetadata(metadataKey),
           when(
-            col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull,
+            col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)),
             col(RAW_VALUE_ATTRIBUTE_NAME)
           ).otherwise(null)
             .as(RAW_VALUE_ATTRIBUTE_NAME),
@@ -321,7 +321,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         )
     }
   }
-
+  val isNull = udf((value: Any) => value.asInstanceOf[GenericRowWithSchema].toSeq.forall(_ == null))
   /**
     * function that prints the content of the serialized value which is not deserializable,
     * it's useful to know which record caused the error
@@ -404,7 +404,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     val goodCaseSelect = parsedCols.map(c => when(col(c).isNotNull, parsedValueCol(c)).otherwise(null).as(c))
     val parsingErrorFilteredCondition = parsedCols
       .map(c =>
-        col(c).isNull || !dataTypeToCheckCondition(c) || (dataTypeToCheckCondition(c) && parsedValueCol(c).isNotNull)
+        col(c).isNull || !dataTypeToCheckCondition(c) || (dataTypeToCheckCondition(c) && (parsedValueCol(c).isNotNull && !isNull(parsedValueCol(c))))
       )
       .reduce(_ and _)
 
@@ -415,7 +415,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
             df.withColumn(
               "workingColumn",
               when(
-                dataTypeToCheckCondition(c) && col(c).isNotNull && parsedValueCol(c).isNull,
+                dataTypeToCheckCondition(c) && col(c).isNotNull && (parsedValueCol(c).isNull || isNull(parsedValueCol(c))),
                 strictExceptionLauncherUdf(col(RAW_VALUE_ATTRIBUTE_NAME), parsedDataTypeCol(c))
               ).otherwise(null)
             )

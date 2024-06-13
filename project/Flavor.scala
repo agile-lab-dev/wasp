@@ -58,6 +58,16 @@ object Flavor {
     override val id: String = "EMR_2_12"
   }
 
+  case object EMR613 extends Flavor {
+    override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
+    override lazy val settings: Settings =
+      new BasicSettings(new BasicResolvers(), versions.jdk, scalaVersion, dependencies.overrides, dependencies.removeShims)
+    override lazy val dependencies: EMR613Dependencies = new EMR613Dependencies(versions)
+    lazy val postfix: Option[String] = Some("emr613")
+    private lazy val versions = new EMR613Versions()
+    override val id: String = "EMR_6_13"
+  }
+
   val DEFAULT: Flavor = Vanilla2_2_12
 
   def parse(s: String): Either[String, Flavor] = {
@@ -67,6 +77,7 @@ object Flavor {
       case "VANILLA2_2_12" => Right(Vanilla2_2_12)
       case "CDP719"   => Right(CDP719)
       case "EMR_2_12" => Right(EMR212)
+      case "EMR_6_13" => Right(EMR613)
       case _      => Left(s"Cannot parse flavor [${s}]")
     }
   }

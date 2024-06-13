@@ -4,12 +4,10 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-
 import javax.management.ObjectName
-
 import scala.annotation.tailrec
-import scala.util.Try
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 object JmxTelemetry {
 
@@ -41,11 +39,11 @@ object JmxTelemetry {
   val underscoreNormalizer: String => String = _.replaceAll("_", "")
 
   val defaultNormalizer: String => String = Seq(removeBraces,
-                                                removeQuotes,
-                                                underscoreNormalizer,
-                                                spaceToDashesNormalizer,
-                                                lowercaseIfDashesNormalizer,
-                                                camelCaseToKebabCaseNormalizer).reduce(_.andThen(_))
+    removeQuotes,
+    underscoreNormalizer,
+    spaceToDashesNormalizer,
+    lowercaseIfDashesNormalizer,
+    camelCaseToKebabCaseNormalizer).reduce(_.andThen(_))
 
   def scrape(query: String,
              tag: String,

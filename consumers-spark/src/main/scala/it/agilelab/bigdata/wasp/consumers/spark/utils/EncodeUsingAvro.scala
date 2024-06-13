@@ -1,16 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import java.io.ByteArrayOutputStream
-
 import it.agilelab.bigdata.wasp.consumers.spark.utils.EncodeUsingAvro.AvroSerializer
 import it.agilelab.darwin.manager.AvroSchemaManager
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{BinaryEncoder, EncoderFactory}
-import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression, UnaryExpression}
-import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
-import org.apache.spark.sql.types.{BinaryType, DataType}
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
+import org.apache.spark.sql.catalyst.expressions.codegen.{CodeGenerator, CodegenContext, ExprCode}
+import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression, UnaryExpression}
+import org.apache.spark.sql.types.{BinaryType, DataType}
+
+import java.io.ByteArrayOutputStream
 
 case class EncodeUsingAvro[A](
     child: Expression,
@@ -18,7 +18,7 @@ case class EncodeUsingAvro[A](
     avroSchemaManager: () => AvroSchemaManager,
     toGenericRecord: A => org.apache.avro.generic.GenericRecord
 ) extends UnaryExpression
-    with NonSQLExpression {
+    with NonSQLExpression with CompatibilityEncodeUsingAvro[A] {
 
   private lazy val serializer =
     new AvroSerializer[A](new Schema.Parser().parse(schema), avroSchemaManager(), toGenericRecord)

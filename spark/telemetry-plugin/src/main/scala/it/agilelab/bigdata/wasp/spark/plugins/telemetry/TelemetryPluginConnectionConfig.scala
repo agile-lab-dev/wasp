@@ -5,3 +5,4 @@ case class TelemetryPluginConnectionConfig(protocol: String,
                                            port: Int = 0,
                                            timeout: Option[Long] = None,
                                            metadata: Option[Map[String, String]])
+

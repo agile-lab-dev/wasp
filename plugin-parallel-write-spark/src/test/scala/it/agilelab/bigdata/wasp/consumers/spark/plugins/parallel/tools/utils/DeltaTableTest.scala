@@ -12,7 +12,10 @@ trait DeltaTableTest extends SparkSuite with ParallelWriteTest {
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    val emptyDF = spark.createDataFrame(spark.sparkContext.emptyRDD[Row],
+    
+    val sparkDelta = CompatibilityDeltaTableTest.configureSparkSession(spark)
+
+    val emptyDF = sparkDelta.createDataFrame(sparkDelta.sparkContext.emptyRDD[Row],
       StructType(List(StructField("column1", CatalystSqlParser.parseDataType("STRING")), StructField("column2", CatalystSqlParser.parseDataType("STRING")))))
     emptyDF.write.format("delta").save(tempDir)
   }

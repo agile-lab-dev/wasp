@@ -37,7 +37,7 @@ class KmsTest extends WordSpecLike with Matchers {
 
       val credentials = new Credentials()
 
-      prov.obtainCredentials(hadoopConf, sparkConf, credentials)
+      prov.getDelegationTokens(hadoopConf, sparkConf, credentials)
 
       val tokens = credentials.getAllTokens.asScala.toSeq
 

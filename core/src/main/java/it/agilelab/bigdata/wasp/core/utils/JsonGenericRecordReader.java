@@ -6,8 +6,6 @@ import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.codehaus.jackson.map.ObjectMapper;
-import scala.io.Codec;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,13 +21,13 @@ import static java.util.stream.Collectors.toList;
 
 public class JsonGenericRecordReader {
     private static final Object INCOMPATIBLE = new Object();
-    private final ObjectMapper mapper;
+    private final CompatibilityObjectMapper mapper;
 
     public JsonGenericRecordReader() {
-        this(new ObjectMapper());
+        this(new CompatibilityObjectMapper());
     }
 
-    public JsonGenericRecordReader(ObjectMapper mapper) {
+    public JsonGenericRecordReader(CompatibilityObjectMapper mapper) {
         this.mapper = mapper;
     }
 

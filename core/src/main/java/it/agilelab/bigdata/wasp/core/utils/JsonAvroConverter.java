@@ -1,20 +1,18 @@
 package it.agilelab.bigdata.wasp.core.utils;
 
+import it.agilelab.bigdata.wasp.core.utils.CompatibilityObjectMapper;
 import it.agilelab.darwin.manager.AvroSchemaManager;
 import org.apache.avro.Schema;
-import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.*;
-import org.codehaus.jackson.map.ObjectMapper;
 import scala.Option;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class JsonAvroConverter {
     private JsonGenericRecordReader recordReader;
@@ -23,7 +21,7 @@ public class JsonAvroConverter {
         this.recordReader = new JsonGenericRecordReader();
     }
 
-    public JsonAvroConverter(ObjectMapper objectMapper) {
+    public JsonAvroConverter(CompatibilityObjectMapper objectMapper) {
         this.recordReader = new JsonGenericRecordReader(objectMapper);
     }
 

@@ -1,8 +1,5 @@
 package it.agilelab.bigdata.wasp.yarn.auth.hbase
 
-import java.util.Date
-import java.util.regex.Pattern
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hbase.HBaseConfiguration
@@ -10,17 +7,18 @@ import org.apache.hadoop.hbase.client.ConnectionFactory
 import org.apache.hadoop.hbase.security.token.{TokenUtil, AuthenticationTokenIdentifier => HbaseTokenIdentifier}
 import org.apache.hadoop.security.Credentials
 import org.apache.spark.SparkConf
-import org.apache.spark.deploy.yarn.security.ServiceCredentialProvider
-import org.apache.spark.internal.Logging
 
-class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
+import java.util.Date
+import java.util.regex.Pattern
+
+class HBaseCredentialsProvider extends CompatibilityHBaseCredentialProvider {
 
   import HBaseWaspCredentialsProvider._
 
   override def serviceName: String = "wasp-hbase"
 
   @com.github.ghik.silencer.silent("deprecated")
-  override def obtainCredentials(hadoopConf: Configuration, sparkConf: SparkConf, creds: Credentials): Option[Long] = {
+  def getCredentials(hadoopConf: Configuration, sparkConf: SparkConf, creds: Credentials): Option[Long] = {
 
     val providerConfig: HbaseCredentialsProviderConfiguration = HbaseCredentialsProviderConfiguration.fromSpark(sparkConf)
     logInfo(s"Provider config is: $providerConfig")
@@ -55,7 +53,6 @@ class HBaseCredentialsProvider extends ServiceCredentialProvider with Logging {
 
   }
 
-  override def credentialsRequired(hadoopConf: Configuration): Boolean = super.credentialsRequired(hadoopConf)
 }
 
 object HBaseWaspCredentialsProvider {

@@ -1,11 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.telemetry
-import java.nio.charset.StandardCharsets
-import java.util.concurrent.TimeUnit
-import java.util.{Properties, UUID}
 
 import akka.actor.{Actor, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import it.agilelab.bigdata.wasp.consumer.spark.streaming.actor.telemetry.CompatibilityTelemetryActor
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutcome
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.TelemetryMessageJsonProtocol._
@@ -17,11 +15,14 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.sql.streaming.StreamingQueryProgress
 import spray.json._
 
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
+import java.util.{Properties, UUID}
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.FiniteDuration
-import scala.util.parsing.json.{JSONFormat, JSONObject}
 import scala.util.{Success, Try}
+
 
 
 object TelemetryActorKafkaProducer extends Logging {
@@ -76,7 +77,7 @@ object TelemetryActorKafkaProducer extends Logging {
 }
 
 
-class TelemetryActor private() extends Actor {
+class TelemetryActor private() extends Actor with CompatibilityTelemetryActor{
 
 
   private val mediator = DistributedPubSub(context.system).mediator
@@ -95,15 +96,6 @@ class TelemetryActor private() extends Actor {
       actorRefMessagesRedirect = aRef
     case _ =>
 
-  }
-
-  @com.github.ghik.silencer.silent("deprecated")
-  private def toMessage(message: Any): String = {
-    message match {
-      case data: Map[_, _] => 
-        JSONObject(data.asInstanceOf[Map[String, Any]]).toString(JSONFormat.defaultFormatter)
-      case data: TelemetryMessageSourcesSummary => data.toJson.toString()
-    }
   }
 
   private def metric(header: Map[String, Any], metric: String, value:Double) =

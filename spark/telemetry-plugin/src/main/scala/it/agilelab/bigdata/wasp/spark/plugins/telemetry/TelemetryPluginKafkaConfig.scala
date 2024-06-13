@@ -7,3 +7,4 @@ case class TelemetryPluginKafkaConfig(connections: Seq[TelemetryPluginConnection
                                       encoder_fqcn: String,
                                       partitioner_fqcn: String,
                                       others: Seq[(String, String)])
+

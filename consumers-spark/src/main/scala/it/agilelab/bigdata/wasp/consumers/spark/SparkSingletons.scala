@@ -1,16 +1,9 @@
 package it.agilelab.bigdata.wasp.consumers.spark
 
 import java.lang
-
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models.configuration.{
-  KafkaConfigModel,
-  SparkConfigModel,
-  SparkStreamingConfigModel,
-  TelemetryConfigModel
-}
-import org.apache.spark.deploy.SparkHadoopUtil
+import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkContext, SparkException}
 
@@ -90,7 +83,7 @@ object SparkSingletons extends Logging {
           sparkSession = builder.getOrCreate()
           logger.info("SparkSession successfully instantiated")
           logger.info(s"SparkContext configuration: ${sparkSession.sparkContext.hadoopConfiguration.toString}")
-          logger.info(s"SparkHadoopUtil configuration: ${SparkHadoopUtil.get.conf.toString}")
+          logger.info(s"SparkHadoopUtil configuration: ${sparkSession.sessionState.newHadoopConf().toString}")
 
           // assign SparkContext & SQLContext
           sparkContext = sparkSession.sparkContext

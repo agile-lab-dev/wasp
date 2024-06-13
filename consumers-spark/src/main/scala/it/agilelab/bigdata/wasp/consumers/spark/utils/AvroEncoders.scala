@@ -4,13 +4,11 @@ import com.typesafe.config.Config
 import it.agilelab.darwin.manager.{AvroSchemaManager, AvroSchemaManagerFactory}
 import org.apache.spark.sql.Encoder
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.{BoundReference, Cast}
 import org.apache.spark.sql.types.{BinaryType, ObjectType, StructType}
-
 import scala.reflect.{ClassTag, classTag}
 
-object AvroEncoders {
+object AvroEncoders extends CompatibilityEncoders{
   def avroEncoder[A: ClassTag](
                                 readerSchema: org.apache.avro.Schema,
                                 avroSchemaManagerConfig: Config,
@@ -30,25 +28,26 @@ object AvroEncoders {
                                toGenericRecord: A => org.apache.avro.generic.GenericRecord,
                                fromGenericRecord: org.apache.avro.generic.GenericRecord => A
                               ): Encoder[A] = {
-    ExpressionEncoder[A](
-      schema = new StructType().add("value", BinaryType),
-      flat = true,
-      serializer = Seq(
-        EncodeUsingAvro[A](
-          BoundReference(0, ObjectType(classOf[AnyRef]), nullable = true),
-          readerSchema.toString(),
-          avroSchemaManager,
-          toGenericRecord
-        )
-      ),
-      deserializer = DecodeUsingAvro[A](
-        Cast(GetColumnByOrdinal(0, BinaryType), BinaryType),
-        classTag[A],
-        readerSchema.toString(),
-        avroSchemaManager,
-        fromGenericRecord
-      ),
-      clsTag = classTag[A]
+
+    val serializer = Seq(EncodeUsingAvro[A](
+      BoundReference(0, ObjectType(classOf[AnyRef]), nullable = true),
+      readerSchema.toString(),
+      avroSchemaManager,
+      toGenericRecord
+    ))
+
+    val deserializer = DecodeUsingAvro[A](
+      Cast(GetColumnByOrdinal(0, BinaryType), BinaryType),
+      classTag[A],
+      readerSchema.toString(),
+      avroSchemaManager,
+      fromGenericRecord
     )
+
+    val clsTag = classTag[A]
+    val schema = new StructType().add("value", BinaryType)
+    val flat = true
+
+    expressionEncoder[A](serializer, deserializer, clsTag, schema, flat)
   }
 }
