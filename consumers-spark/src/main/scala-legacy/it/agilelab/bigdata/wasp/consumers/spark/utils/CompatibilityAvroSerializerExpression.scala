@@ -13,11 +13,7 @@ trait CompatibilityAvroSerializerExpression {
   def serializeDateType =
     (item: Any) =>
       if (item == null) null
-      else
-      {
-    println("---item")
-    println(item)
-    println(item.getClass.getName)
-    DateTimeUtils.daysToMillis(item.asInstanceOf[SQLDate], timeZone)
-  }
+      else {
+        DateTimeUtils.daysToMillis(item.asInstanceOf[SQLDate], timeZone)
+      }
 }

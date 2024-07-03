@@ -136,12 +136,12 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     logger.info(s"Retrieved topic model(s): $topics")
 
     // get the config
-    val kafkaConfig = ConfigManager.getKafkaConfig
+    val kafkaConfig = ConfigManager.getKafkaConfig.resolve(topics.head.clusterAlias)
     logger.info(s"Kafka configuration: $kafkaConfig")
 
     // check or create
     val allCheckOrCreateResult = topics map { topic =>
-      ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))
+      ??[Boolean](WaspSystem.kafkaAdminActor(topic.clusterAlias), CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))
     } reduce (_ && _)
 
     if (allCheckOrCreateResult) {
@@ -364,7 +364,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     )
 
     val metadataExpr = topics.collectFirst {
-      case t @ TopicModel(_, _, _, _, TopicDataTypes.AVRO, _, _, _, _, _, _, _, _) => t
+      case t @ TopicModel(_, _, _, _, TopicDataTypes.AVRO, _, _, _, _, _, _, _, _, _, _) => t
     } match {
       case Some(t) => selectMetadata(parseKey(t))
       case None    => selectMetadata()

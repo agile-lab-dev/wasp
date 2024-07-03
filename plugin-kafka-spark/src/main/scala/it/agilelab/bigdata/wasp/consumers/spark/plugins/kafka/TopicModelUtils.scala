@@ -22,7 +22,7 @@ object TopicModelUtils extends Logging {
     logger.info(s"Creating topics $topics")
 
     topics.foreach(topic =>
-      if (! ??[Boolean](WaspSystem.kafkaAdminActor, CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas)))
+      if (! ??[Boolean](WaspSystem.kafkaAdminActor(topic.clusterAlias), CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas)))
         throw new Exception(s"""Error creating topic "${topic.name}"""")
     )
   }
@@ -53,7 +53,6 @@ object TopicModelUtils extends Logging {
   }
 
   def retrieveKafkaTopicSettings(topicBL: TopicBL, topicDatastoreModelName: String): KafkaTopicSettings = {
-    val tinyKafkaConfig = ConfigManager.getKafkaConfig.toTinyConfig()
     val mainTopicModel = topicBL
       .getByName(topicDatastoreModelName)
       .getOrElse(
@@ -71,6 +70,7 @@ object TopicModelUtils extends Logging {
         } else {
           None
         }
+        val tinyKafkaConfig = ConfigManager.getKafkaConfig.resolve(t.clusterAlias).toTinyConfig()
         KafkaTopicSettings(tinyKafkaConfig, mainTopicModel, None, Seq.empty, darwinConf)
 
       case MultiTopic(topicFieldName, topics) =>
@@ -80,6 +80,7 @@ object TopicModelUtils extends Logging {
         } else {
           None
         }
+        val tinyKafkaConfig = ConfigManager.getKafkaConfig.resolve(topics.head.clusterAlias).toTinyConfig()
         KafkaTopicSettings(tinyKafkaConfig, mainTopicModel, Some(topicFieldName), topics, darwinConf)
     }
   }

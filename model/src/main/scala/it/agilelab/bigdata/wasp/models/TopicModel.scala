@@ -291,8 +291,11 @@ case class TopicModel(
     schema: BsonDocument,
     topicCompression: TopicCompression = TopicCompression.Disabled,
     subjectStrategy: SubjectStrategy = SubjectStrategy.None,
-    keySchema: Option[String] = None
-) extends DatastoreModel {
+    keySchema: Option[String] = None,
+    clusterAlias: Option[String] = None,
+    schemaId: Option[Long] = None
+                     ) extends DatastoreModel {
+
   def getJsonSchema: String = schema.toJson
 
   override def datastoreProduct: DatastoreProduct = KafkaProduct

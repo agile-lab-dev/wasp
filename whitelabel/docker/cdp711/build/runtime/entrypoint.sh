@@ -24,6 +24,8 @@ zookeeper-server start /etc/zookeeper/conf/zoo.cfg
 
 kafka-server-start -daemon /etc/kafka/conf/server.properties
 
+/usr/lib/kafka/bin/kafka-server-start.sh /etc/kafka2/conf/server.properties &
+
 mkdir -p /var/log/hbase
 
 set -u nounset

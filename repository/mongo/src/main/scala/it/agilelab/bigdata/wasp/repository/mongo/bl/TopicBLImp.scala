@@ -49,6 +49,14 @@ class TopicBLImp(waspDB: WaspMongoDB) extends TopicBL {
       if (bsonDocument.containsKey("keySchema") && !bsonDocument.get("keySchema").isNull)
         Some(bsonDocument.get("keySchema").asString().getValue)
       else
+        None,
+      if (bsonDocument.containsKey("clusterAlias") && !bsonDocument.get("clusterAlias").isNull)
+        Some(bsonDocument.get("clusterAlias").asString().getValue)
+      else
+        None,
+      if (bsonDocument.containsKey("schemaId") && !bsonDocument.get("schemaId").isNull)
+        Some(bsonDocument.get("schemaId").asInt64().getValue)
+      else
         None
     )
   }

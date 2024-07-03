@@ -54,6 +54,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Topic, Index, Raw, SqlSource for Producers, Pipegraphs, BatchJobs */
     ConfigBL.topicBL.upsert(TestTopicModel.json)
+    ConfigBL.topicBL.upsert(TestTopicModel.json_broker1)
+    ConfigBL.topicBL.upsert(TestTopicModel.json_broker2)
     ConfigBL.topicBL.upsert(TestTopicModel.json2)
     ConfigBL.topicBL.upsert(TestTopicModel.json3)
     ConfigBL.topicBL.upsert(TestTopicModel.json4)
@@ -109,6 +111,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     /* Producers */
     ConfigBL.producerBL.upsert(TestProducerModel.json)
+    ConfigBL.producerBL.upsert(TestProducerModel.jsonOnFirstBroker)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonWithMetadata)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonCheckpoint)
     ConfigBL.producerBL.upsert(TestProducerModel.avro)
@@ -118,7 +121,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.producerBL.upsert(TestProducerModel.jsonDeduplication)
     ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
     ConfigBL.producerBL.upsert(IoTIndustrialPlantProducerModel.iotIndustrialPlantProducer) //IoT
-
+    ConfigBL.producerBL.upsert(TestProducerModel.jsonKafka2)
 
     /* Free code models */
 
@@ -127,6 +130,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     /* Pipegraphs */
 
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.console)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.kafkaToKafkaDifferentBrokers)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.freecode)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.nifi)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.mongo)
@@ -191,6 +195,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.topicBL.upsert(TestSchemaAvroManager.topicAvro_v1)
     ConfigBL.topicBL.upsert(TestSchemaAvroManager.topicAvro_v2)
     ConfigBL.topicBL.upsert(TestSchemaAvroManager.topicAvro_v3)
+    ConfigBL.topicBL.upsert(TestTopicModel.jsonKafka2)
     ConfigBL.producerBL.upsert(TestSchemaAvroManager.producer_v1)
     ConfigBL.producerBL.upsert(TestSchemaAvroManager.producer_v2)
     ConfigBL.keyValueBL.upsert(TestSchemaAvroManagerKeyValueModel.avroSchemaManagerHBaseModel)

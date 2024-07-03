@@ -23,4 +23,7 @@ trait CanOverrideNameInstances {
     CanOverrideName((instance, newName) => instance.copy(name = newName))
   implicit val hbaseConfigModelCanOverrideName: CanOverrideName[HBaseConfigModel] =
     CanOverrideName((instance, newName) => instance.copy(name = newName))
+  implicit val additionalKafkaClustersCanOverrideName: CanOverrideName[AdditionalKafkaClustersConfig] =
+    CanOverrideName((instance, newName) => instance.copy(name = newName))
+
 }

@@ -1,36 +1,8 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
-import it.agilelab.bigdata.wasp.models.configuration.{
-  CompilerConfigModel,
-  ElasticConfigModel,
-  JdbcConfigModel,
-  KafkaConfigModel,
-  NifiConfigModel,
-  SolrConfigModel,
-  SparkBatchConfigModel,
-  SparkStreamingConfigModel,
-  TelemetryConfigModel
-}
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{
-  CompilerConfigDBModel,
-  CompilerConfigDBModelV1,
-  ElasticConfigDBModel,
-  ElasticConfigDBModelV1,
-  JdbcConfigDBModel,
-  JdbcConfigDBModelV1,
-  KafkaConfigDBModel,
-  KafkaConfigDBModelV1,
-  NifiConfigDBModel,
-  NifiConfigDBModelV1,
-  SolrConfigDBModel,
-  SolrConfigDBModelV1,
-  SparkBatchConfigDBModel,
-  SparkBatchConfigDBModelV1,
-  SparkStreamingConfigDBModel,
-  SparkStreamingConfigDBModelV1,
-  TelemetryConfigDBModel,
-  TelemetryConfigDBModelV1
-}
+import it.agilelab.bigdata.wasp.models.configuration.{AdditionalKafkaClustersConfig, CompilerConfigModel, ElasticConfigModel, JdbcConfigModel, KafkaConfigModel, NifiConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{CompilerConfigDBModel, CompilerConfigDBModelV1, ElasticConfigDBModel, ElasticConfigDBModelV1, JdbcConfigDBModel, JdbcConfigDBModelV1, KafkaAdditionalConfigDBModel, KafkaAdditionalConfigDBModelV1, KafkaConfigDBModel, KafkaConfigDBModelV1, NifiConfigDBModel, NifiConfigDBModelV1, SolrConfigDBModel, SolrConfigDBModelV1, SparkBatchConfigDBModel, SparkBatchConfigDBModelV1, SparkStreamingConfigDBModel, SparkStreamingConfigDBModelV1, TelemetryConfigDBModel, TelemetryConfigDBModelV1}
+
 
 object SolrConfigMapperSelector extends MapperSelector[SolrConfigModel, SolrConfigDBModel]
 
@@ -48,6 +20,16 @@ object KafkaConfigMapperV1 extends SimpleMapper[KafkaConfigModel, KafkaConfigDBM
   override val version = "kafkaConfigV1"
   override def fromDBModelToModel[B >: KafkaConfigDBModelV1](m: B): KafkaConfigModel = m match {
     case mm: KafkaConfigDBModelV1 => transform[KafkaConfigModel](mm)
+    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+  }
+}
+
+object KafkaAdditionalConfigMapperSelector extends MapperSelector[AdditionalKafkaClustersConfig, KafkaAdditionalConfigDBModel]
+
+object KafkaAdditionalConfigMapperV1 extends SimpleMapper[AdditionalKafkaClustersConfig, KafkaAdditionalConfigDBModelV1] {
+  override val version = "kafkaAdditionalConfigV1"
+  override def fromDBModelToModel[B >: KafkaAdditionalConfigDBModelV1](m: B): AdditionalKafkaClustersConfig = m match {
+    case mm: KafkaAdditionalConfigDBModelV1 => transform[AdditionalKafkaClustersConfig](mm)
     case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

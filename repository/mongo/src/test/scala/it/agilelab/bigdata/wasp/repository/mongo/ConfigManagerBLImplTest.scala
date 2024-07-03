@@ -19,7 +19,7 @@ class ConfigManagerBLImplTest extends FlatSpec with Matchers{
     val kafka = KafkaConfigModel(
       Seq(),
       "ingest_rate",
-      ZookeeperConnectionsConfig(Seq(), "name"),
+      Some(ZookeeperConnectionsConfig(Seq(), "name")),
       "broker",
       "partitioner",
       "encoder",

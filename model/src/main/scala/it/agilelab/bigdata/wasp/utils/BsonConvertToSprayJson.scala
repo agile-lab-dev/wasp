@@ -97,7 +97,7 @@ class TopicDatastoreModelJsonFormat
   }
 
 
-  implicit val topicModelFormat: RootJsonFormat[TopicModel] = jsonFormat13(TopicModel.apply)
+  implicit val topicModelFormat: RootJsonFormat[TopicModel]           = jsonFormat15(TopicModel.apply)
   implicit val multiTopicModelFormat: RootJsonFormat[MultiTopicModel] = jsonFormat3(MultiTopicModel.apply)
 
   override def write(obj: DatastoreModel): JsValue = {
@@ -224,6 +224,7 @@ trait JsonSupport
   )
   implicit lazy val kafkaEntryConfigModelFormat: RootJsonFormat[KafkaEntryConfig] = jsonFormat2(KafkaEntryConfig.apply)
   implicit lazy val kafkaConfigModelFormat: RootJsonFormat[KafkaConfigModel] = jsonFormat13(KafkaConfigModel.apply)
+  implicit lazy val additionalKafkaConfigModelFormat: RootJsonFormat[AdditionalKafkaClustersConfig] = jsonFormat2(AdditionalKafkaClustersConfig.apply)
   implicit lazy val sparkDriverConfigFormat: RootJsonFormat[SparkDriverConfig] = jsonFormat7(SparkDriverConfig.apply)
   implicit lazy val kryoSerializerConfigFormat: RootJsonFormat[KryoSerializerConfig] = jsonFormat3(
     KryoSerializerConfig.apply

@@ -52,7 +52,7 @@ object SingleNodeLauncher extends MultipleClusterSingletonsLauncher with WaspCon
     MasterNodeLauncher.addExampleRegisterAvroSchema()
     MasterNodeLauncher.addExamplePipegraphs()
     WaspSystem.actorSystem.actorOf(
-      KafkaCheckOffsetsGuardian.props(ConfigManager.getKafkaConfig),
+      KafkaCheckOffsetsGuardian.props(ConfigManager.getKafkaConfig.getDefaultKafka),
       KafkaCheckOffsetsGuardian.name
     )
   }

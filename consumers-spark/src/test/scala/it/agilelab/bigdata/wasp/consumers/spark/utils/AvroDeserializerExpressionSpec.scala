@@ -9,6 +9,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.avro.generic.GenericDatumWriter
 import org.apache.avro.io.EncoderFactory
 import org.apache.avro.{Schema, SchemaBuilder}
+import org.apache.parquet.bytes.BytesUtils.intToBytes
 import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.BinaryType
@@ -81,6 +82,34 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
   }
 
   "AvroToRowExpression" must {
+
+    "correctly handle serialization when not using darwin but data is produced using avro schema manager" in testAllCodegen {
+
+      import ss.implicits._
+
+      val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
+      val serialized = serializeElements(elements.toList)
+      val b: Seq[Array[Byte]] = serialized.map {
+        originalArray: Array[Byte] =>
+          val a = originalArray
+
+          val idBytes = intToBytes(1234) // Example ID: 1234
+          val newArray = new Array[Byte](a.length + 5)
+          // Prepend 0 as the first byte
+          newArray(0) = 0
+          // Copy the ID bytes to the new array starting from index 1
+          System.arraycopy(idBytes, 0, newArray, 1, 4)
+
+          // Copy the original array to the new array starting from index 5
+          System.arraycopy(a, 0, newArray, 5, a.length)
+          newArray
+      }
+
+      val df = sc.parallelize(b, 4).toDF("serialized")
+      val expr = AvroDeserializerExpression($"serialized".expr, TestSchemas.schema.toString, None, useSchemaManager = true)
+      val results = df.select(new Column(expr)).collect().map(_.getStruct(0))
+      elements.zip(results).foreach { case (truth, res) => compareRowWithUglyClass(truth, res) }
+    }
 
     "correctly handle serialization when not using darwin" in testAllCodegen {
 

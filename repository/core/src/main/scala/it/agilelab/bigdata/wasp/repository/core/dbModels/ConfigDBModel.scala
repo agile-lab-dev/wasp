@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.repository.core.dbModels
 
 import it.agilelab.bigdata.wasp.models.Model
-import it.agilelab.bigdata.wasp.models.configuration.{ConnectionConfig, HBaseEntryConfig, JdbcConnectionConfig, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, RetainedConfigModel, SchedulingStrategyConfigModel, SparkDriverConfig, SparkEntryConfig, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
+import it.agilelab.bigdata.wasp.models.configuration.{ConnectionConfig, HBaseEntryConfig, JdbcConnectionConfig, KafkaConfigModel, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, RetainedConfigModel, SchedulingStrategyConfigModel, SparkDriverConfig, SparkEntryConfig, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
 
 trait ConfigDBModel extends Model
 
@@ -10,6 +10,8 @@ trait SolrConfigDBModel extends ConfigDBModel
 trait HBaseConfigDBModel extends ConfigDBModel
 
 trait KafkaConfigDBModel extends ConfigDBModel
+
+trait KafkaAdditionalConfigDBModel extends ConfigDBModel
 
 trait SparkBatchConfigDBModel extends ConfigDBModel
 
@@ -36,7 +38,7 @@ case class HBaseConfigDBModelV1(coreSiteXmlPath: String,
 
 case class KafkaConfigDBModelV1(connections: Seq[ConnectionConfig],
                                 ingest_rate: String,
-                                zookeeperConnections: ZookeeperConnectionsConfig,
+                                zookeeperConnections: Option[ZookeeperConnectionsConfig],
                                 broker_id: String,
                                 partitioner_fqcn: String,
                                 default_encoder: String,
@@ -47,6 +49,9 @@ case class KafkaConfigDBModelV1(connections: Seq[ConnectionConfig],
                                 acks: String,
                                 others: Seq[KafkaEntryConfig],
                                 name: String) extends KafkaConfigDBModel
+
+case class KafkaAdditionalConfigDBModelV1(name: String,
+                                          clusters: Map[String, KafkaConfigModel]) extends KafkaAdditionalConfigDBModel
 
 case class SparkBatchConfigDBModelV1(appName: String,
                                      master: ConnectionConfig,

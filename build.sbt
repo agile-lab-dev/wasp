@@ -303,6 +303,7 @@ lazy val plugin =
       .aggregate(
         plugin_parallel_write_spark,
         plugin_http_spark,
+        microservice_catalog,
         plugin_kafka_spark
       )
 

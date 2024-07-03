@@ -12,8 +12,10 @@ import it.agilelab.bigdata.wasp.core.kafka.NewKafkaAdminActor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.core.utils.WaspConfiguration
+import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigProxy
 
-import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.global
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.{Failure, Success}
 
@@ -60,7 +62,7 @@ object WaspSystem extends WaspConfiguration with Logging {
   private var loggerActor_ : ActorRef = _
 
   // actor refs of admin actors
-  private var kafkaAdminActor_ : ActorRef = _
+  private var kafkaAdminActor_ : Map[String, ActorRef] = _
 
   // actor ref of clusterListener actor
   private var clusterListenerActor_ : ActorRef = _
@@ -105,8 +107,9 @@ object WaspSystem extends WaspConfiguration with Logging {
       // spawn admin actors
       logger.info("Spawning admin actors")
 
-      kafkaAdminActor_ =
-          actorSystem.actorOf(Props(new NewKafkaAdminActor), NewKafkaAdminActor.name)
+      kafkaAdminActor_ = ConfigManager.getKafkaConfig.getMap.keys.map { k =>
+        k -> actorSystem.actorOf(Props(new NewKafkaAdminActor), s"${NewKafkaAdminActor.name}-$k")
+      }.toMap
       logger.info("Spawned admin actors")
 
       // spawn clusterListener actor
@@ -117,8 +120,18 @@ object WaspSystem extends WaspConfiguration with Logging {
       logger.info("Connecting to services")
 
       // check connectivity with kafka's zookeper
-      val kafkaResult = kafkaAdminActor.ask(it.agilelab.bigdata.wasp.core.kafka.Initialization(ConfigManager.getKafkaConfig))((NewKafkaAdminActor.connectionTimeout + 1000).millis)
-      val zkKafka = Await.ready(kafkaResult, servicesTimeout.duration)
+      val results = for {
+        (k1, conf) <- ConfigManager.getKafkaConfig.getMap
+        (k2, actor) <- kafkaAdminActor_
+        if k1 == k2
+      } yield {
+        actor.ask(it.agilelab.bigdata.wasp.core.kafka.Initialization(conf))((NewKafkaAdminActor.connectionTimeout + 1000).millis)
+      }
+      implicit val context: ExecutionContextExecutor = global
+      //Succeeds only if connection all zookeepers of all defined clusters are available
+      val zkKafka = Await.ready(Future.sequence(results), servicesTimeout.duration)
+
+
       zkKafka.value match {
         case Some(Failure(t)) =>
           logger.error(t.getMessage)
@@ -220,7 +233,10 @@ object WaspSystem extends WaspConfiguration with Logging {
   def producersMasterGuardian: ActorRef = producersMasterGuardian_
   def sparkConsumersStreamingMasterGuardian: ActorRef = sparkConsumersStreamingMasterGuardian_
   def loggerActor: ActorRef = loggerActor_
-  def kafkaAdminActor: ActorRef = kafkaAdminActor_
+  def kafkaAdminActor(clusterAlias: Option[String]): ActorRef = clusterAlias match {
+    case Some(alias) => kafkaAdminActor_(alias)
+    case None => kafkaAdminActor_(KafkaConfigProxy.MainKafkaClusterName)
+  }
   def clusterListenerActor: ActorRef = clusterListenerActor_
   def mediator: ActorRef = mediator_
 }

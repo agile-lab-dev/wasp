@@ -30,6 +30,7 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
   val telemetryConfigName = "Telemetry"
   val nifiConfigName = "Nifi"
   val compilerConfigName = "Compiler"
+  val additionalKafkaClustersName = "AdditionalKafkaClusters"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
     /* sparkStreamingConfig validation-rules */
@@ -98,6 +99,8 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
   private var avroSchemaManagerConfig: Config = _
   private var nifiConfig: NifiConfigModel = _
   private var compilerConfig: CompilerConfigModel = _
+  private var additionalKafkaClusters: AdditionalKafkaClustersConfig = _
+  private var kafkaConfigProxy: KafkaConfigProxy = _
 
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
     (globalValidationRules ++ pluginsValidationRules)
@@ -261,14 +264,28 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
 
   private def initializeKafkaConfig(): Unit = {
     kafkaConfig = retrieveConf[KafkaConfigModel](getDefaultKafkaConfig, kafkaConfigName).get
+    kafkaConfigProxy = KafkaConfigProxy(kafkaConfig, Map())
   }
 
-  private def getDefaultKafkaConfig: KafkaConfigModel = {
-    val kafkaSubConfig = conf.getConfig("kafka")
+  private def initializeAdditionalKafkaConfig(): Unit = {
+    additionalKafkaClusters = retrieveConf[AdditionalKafkaClustersConfig](getDefaultAdditionalKafkaConfig, additionalKafkaClustersName).get
+    require(!additionalKafkaClusters.clusters.keySet.contains(KafkaConfigProxy.MainKafkaClusterName))
+    kafkaConfigProxy = KafkaConfigProxy(kafkaConfig, additionalKafkaClusters.clusters)
+  }
+
+  private def getDefaultAdditionalKafkaConfig: AdditionalKafkaClustersConfig = {
+    val additionalKafkaSubConf = conf.getConfig("additional-kafka-clusters")
+    val kafkaMap = additionalKafkaSubConf.root.keySet.asScala.map {
+      key ⇒ key → getKafkaFromConfig(additionalKafkaSubConf.getConfig(key))
+    }.toMap
+    AdditionalKafkaClustersConfig(additionalKafkaClustersName, kafkaMap)
+  }
+
+  private def getKafkaFromConfig(kafkaSubConfig: Config): KafkaConfigModel = {
     KafkaConfigModel(
       readConnectionsConfig(kafkaSubConfig, "connections"),
       kafkaSubConfig.getString("ingest-rate"),
-      readZookeeperConnectionsConfig(kafkaSubConfig),
+      None,
       kafkaSubConfig.getString("broker-id"),
       kafkaSubConfig.getString("partitioner-fqcn"),
       kafkaSubConfig.getString("default-encoder"),
@@ -280,6 +297,11 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
       readOthersConfig(kafkaSubConfig).map(e => KafkaEntryConfig(e._1, e._2)),
       kafkaConfigName
     )
+  }
+
+  private def getDefaultKafkaConfig: KafkaConfigModel = {
+    val kafkaSubConfig = conf.getConfig("kafka")
+    getKafkaFromConfig(kafkaSubConfig)
   }
 
   def initializeSparkStreamingConfig(): Unit = {
@@ -490,6 +512,7 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
 
     initializeTelemetryConfig()
     initializeKafkaConfig()
+    initializeAdditionalKafkaConfig()
     initializeElasticConfig()
     initializeSolrConfig()
     initializeHBaseConfig()
@@ -529,11 +552,11 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
     pgDBConfig
   }
 
-  def getKafkaConfig: KafkaConfigModel = {
-    if (kafkaConfig == null) {
+  def getKafkaConfig: KafkaConfigProxy = {
+    if (kafkaConfigProxy == null || kafkaConfig == null || additionalKafkaClusters == null) {
       throw new Exception("The kafka configuration was not initialized")
     }
-    kafkaConfig
+    kafkaConfigProxy
   }
 
   def getSparkBatchConfig: SparkBatchConfigModel = {

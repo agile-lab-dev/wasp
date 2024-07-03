@@ -106,6 +106,26 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
       assertCollectionsAreEqual(elements, results)
     }
 
+    "correctly handle serialization when not using darwin but data is produced using avro schema manager" in testAllCodegen {
+
+      import ss.implicits._
+
+      val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
+
+      val df = sc.parallelize(elements, 4).toDF()
+
+      val child = struct(df.columns.map(df.col): _*).expr
+
+      val expr = AvroSerializerExpression(Some(TestSchemas.schema.toString), "pippo", "wasp", avroSchemaId = 1234l)(child, df.schema)
+
+      val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap { data =>
+        val element = data.asInstanceOf[Array[Byte]].drop(5)
+        AvroInputStream.binary[UglyCaseClass](element).iterator.toSeq
+      }
+
+      assertCollectionsAreEqual(elements, results)
+    }
+
     "correctly handle serialization when using darwin" in testAllCodegen {
 
       import ss.implicits._

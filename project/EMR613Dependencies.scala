@@ -412,7 +412,7 @@ trait EMR613KafkaDependencies {
   val versions: EMR613Versions
   val exclusions: EMR613Exclusions.type
   lazy val kafka            = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaClients     = "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaClients     = "org.apache.kafka" % "kafka-clients" % "3.3.2" exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
   lazy val kafkaTests       = kafka              % Test exclude (exclusions.jacksonExclude)
   lazy val sparkSqlKafka    = "org.apache.spark" %"spark-sql-kafka-0-10_2.12" % versions.spark
 }

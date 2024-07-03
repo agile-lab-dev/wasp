@@ -1,10 +1,11 @@
 package it.agilelab.bigdata.wasp.models.configuration
 
 import it.agilelab.bigdata.wasp.models.Model
+import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigProxy.MainKafkaClusterName
 
 case class KafkaConfigModel(connections: Seq[ConnectionConfig],
 														ingest_rate: String,
-														zookeeperConnections: ZookeeperConnectionsConfig,
+														zookeeperConnections: Option[ZookeeperConnectionsConfig],
 														broker_id: String,
 														partitioner_fqcn: String,
 														default_encoder: String,
@@ -43,4 +44,35 @@ case class KafkaEntryConfig(
 														 value: String
 													 ) {
 	def toTupla = (key, value)
+}
+
+
+case class AdditionalKafkaClustersConfig(name: String, clusters: Map[String, KafkaConfigModel]) extends Model
+
+class KafkaConfigProxy(kafkaConfigModel: KafkaConfigModel, additionalClusters: Map[String, KafkaConfigModel]) {
+  def getDefaultKafka: KafkaConfigModel = kafkaConfigModel
+
+  def getByName(name: String): Option[KafkaConfigModel] = {
+    if (name == MainKafkaClusterName)
+      Some(getDefaultKafka)
+    else
+      additionalClusters.get(name)
+  }
+
+  def resolve(clusterAlias: Option[String]): KafkaConfigModel = clusterAlias match {
+    case Some(alias) => additionalClusters.getOrElse(alias,
+      throw new Exception(s"Could not found cluster alias $alias in list of known clusters: ${additionalClusters.keys.mkString(",")}")
+    )
+    case None => getDefaultKafka
+  }
+
+  def getAll: Seq[KafkaConfigModel] = Seq(getDefaultKafka) ++ additionalClusters.values
+
+  def getMap: Map[String, KafkaConfigModel] = Map(MainKafkaClusterName -> getDefaultKafka) ++ additionalClusters
+}
+
+object KafkaConfigProxy {
+  val MainKafkaClusterName = "main_kafka_cluster"
+
+  def apply(kafkaConfigModel: KafkaConfigModel, additionalClusters: Map[String, KafkaConfigModel]) = new KafkaConfigProxy(kafkaConfigModel, additionalClusters)
 }

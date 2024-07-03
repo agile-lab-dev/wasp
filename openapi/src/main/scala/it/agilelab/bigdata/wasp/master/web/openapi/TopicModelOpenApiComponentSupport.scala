@@ -25,7 +25,7 @@ trait TopicModelOpenApiComponentSupport
   implicit lazy val multiTopicModelOpenApi: ToOpenApiSchema[MultiTopicModel] = product3(MultiTopicModel.apply)
 
   implicit lazy val topicModelOpenApi: ToOpenApiSchema[TopicModel] =
-    product13(TopicModel.apply)
+    product15(TopicModel.apply)
 
   implicit lazy val subjectStrategy: ToOpenApiSchema[SubjectStrategy] =
     new ToOpenApiSchema[SubjectStrategy] {

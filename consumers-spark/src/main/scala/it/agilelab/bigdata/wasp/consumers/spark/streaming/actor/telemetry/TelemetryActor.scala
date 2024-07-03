@@ -32,7 +32,7 @@ object TelemetryActorKafkaProducer extends Logging {
     * We want one telemetry producer per jvm
     */
   private lazy val producer = {
-    val kafkaConfig = ConfigManager.getKafkaConfig
+    val kafkaConfig = ConfigManager.getKafkaConfig.getDefaultKafka
 
     val telemetryConfig = ConfigManager.getTelemetryConfig
 

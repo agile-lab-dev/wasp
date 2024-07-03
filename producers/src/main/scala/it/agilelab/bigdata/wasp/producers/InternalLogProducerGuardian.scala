@@ -51,7 +51,7 @@ final class InternalLogProducerGuardian(env: {
         associatedTopic = topicOption
         logger.info(s"Producer '$name': topic found: $associatedTopic")
         val result = ??[Boolean](
-          WaspSystem.kafkaAdminActor,
+          WaspSystem.kafkaAdminActor(topicOption.get.clusterAlias),
           CheckOrCreateTopic(
             topicOption.get.name,
             topicOption.get.partitions,
@@ -63,7 +63,7 @@ final class InternalLogProducerGuardian(env: {
             s"kafka-ingestion-router-$name-${producer.name}-${System.currentTimeMillis()}"
           kafka_router = actorSystem.actorOf(
             BalancingPool(5).props(
-              Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig))
+              Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig.resolve(topicOption.get.clusterAlias)))
             ),
             router_name
           )

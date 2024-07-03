@@ -11,7 +11,7 @@ object ProducersNodeLauncher extends ProducersNodeLauncherTrait {
   override def launch(commandLine: CommandLine): Unit = {
     super.launch(commandLine)
     WaspSystem.actorSystem.actorOf(
-      KafkaCheckOffsetsGuardian.props(ConfigManager.getKafkaConfig),
+      KafkaCheckOffsetsGuardian.props(ConfigManager.getKafkaConfig.getDefaultKafka),
       KafkaCheckOffsetsGuardian.name
     )
   }

@@ -26,28 +26,28 @@ import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 /**
-  * An `Expression` which deserializes a binary field encoded in Avro and returns the corresponding
-  * representation in Spark.
-  *
-  * @param child             the `Expression` containing the binary Avro to be deserialized
-  * @param schemaAvroJson    the JSON representation of the Avro schema
-  * @param darwinConfig      the configuration for the AvroSchemaManager
-  * @param avoidReevaluation this filed forces the Expression to be non-deterministic. Setting this to true
-  *                          measn that this expression is executed only once even though the Optimizer creates
-  *                          several copies of it (eg. it happens usually with CollapseProject if the value
-  *                          returned by the expression is used several times, as with a selection of fields
-  *                          of the struct returned). If you set this flag to false, the expression may be evaluated
-  *                          once for each occurence of ti you see in the physical plan.
-  */
-
+ * An `Expression` which deserializes a binary field encoded in Avro and returns the corresponding
+ * representation in Spark.
+ *
+ * @param child             the `Expression` containing the binary Avro to be deserialized
+ * @param schemaAvroJson    the JSON representation of the Avro schema
+ * @param darwinConfig      the configuration for the AvroSchemaManager
+ * @param avoidReevaluation this filed forces the Expression to be non-deterministic. Setting this to true
+ *                          measn that this expression is executed only once even though the Optimizer creates
+ *                          several copies of it (eg. it happens usually with CollapseProject if the value
+ *                          returned by the expression is used several times, as with a selection of fields
+ *                          of the struct returned). If you set this flag to false, the expression may be evaluated
+ *                          once for each occurence of ti you see in the physical plan.
+ */
 
 case class AvroDeserializerExpression(
-    child: Expression,
-    schemaAvroJson: String,
-    darwinConfig: Option[Config],
-    avoidReevaluation: Boolean = true
-) extends UnaryExpression
-    with ExpectsInputTypes with CompatibilityAvroDeserializerExpression{
+                                       child: Expression,
+                                       schemaAvroJson: String,
+                                       darwinConfig: Option[Config],
+                                       avoidReevaluation: Boolean = true,
+                                       useSchemaManager: Boolean = false
+                                     ) extends UnaryExpression
+  with ExpectsInputTypes with CompatibilityAvroDeserializerExpression{
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
 
@@ -127,25 +127,50 @@ case class AvroDeserializerExpression(
     val childEval = child.genCode(ctx)
     val defaultValue = CodeGenerator.defaultValue(dataType, typedNull = true)
 
-    val c =
-      code"""
-            |${childEval.code}
-            |boolean ${ev.isNull} = false;
-            |$returnType ${ev.value} = $defaultValue;
-            |if (!${childEval.isNull}) {
-            |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
-            |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
-            |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
-            |  try {
-            |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
-            |    Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
-            |    ${ev.value} = ($boxedType) $resultVarName;
-            |  } catch (java.lang.Exception e) {
-            |    ${ev.isNull} = true;
-            |  }
-            |}
+    if (!useSchemaManager)
+      ev.copy(
+        code =
+          code"""
+                |${childEval.code}
+                |boolean ${ev.isNull} = false;
+                |$returnType ${ev.value} = $defaultValue;
+                |if (!${childEval.isNull}) {
+                |  final $seekableClassName $seekableInput = new $seekableClassName(${childEval.value});
+                |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
+                |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
+                |  try {
+                |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
+                |    Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
+                |    ${ev.value} = ($boxedType) $resultVarName;
+                |  } catch (java.lang.Exception e) {
+                |    ${ev.isNull} = true;
+                |  }
+                |}
    """.stripMargin
-    ev.copy(code = c)
+      )
+    else
+      ev.copy(
+        code = code"""
+                     |${childEval.code}
+                     |boolean ${ev.isNull} = false;
+                     |$returnType ${ev.value} = $defaultValue;
+                     |if (!${childEval.isNull}) {
+                     |  byte[] modifiedInput = new byte[${childEval.value}.length - 5];
+                     |  System.arraycopy(${childEval.value}, 5, modifiedInput, 0, modifiedInput.length);
+                     |
+                     |  final $seekableClassName $seekableInput = new $seekableClassName(modifiedInput);
+                     |  final $genericReaderClassName $genericReaderName = $avroDecoderExpression.avroDatumReader($seekableInput);
+                     |  $decoderName = $decoderFactoryClassName.get().binaryDecoder($seekableInput, $decoderName);
+                     |  try {
+                     |    $genericRecordName = ($genericRecordClassName) $genericReaderName.read($genericRecordName, $decoderName);
+                     |    Object $resultVarName =  $avroDecoderExpression.convertRecordToInternalRow($genericRecordName);
+                     |    ${ev.value} = ($boxedType) $resultVarName;
+                     |} catch (java.lang.Exception e) {
+                     |    ${ev.isNull} = true;
+                     |  }
+                     |}
+   """.stripMargin
+      )
   }
 
   @inline
@@ -168,13 +193,13 @@ case class AvroDeserializerExpression(
   }
 
   /**
-    * Returns a converter function to convert row in avro format to GenericRow of catalyst.
-    *
-    * @param sourceAvroSchema Source schema before conversion inferred from avro file by passed in
-    *                         by user.
-    * @param targetSqlType    Target catalyst sql type after the conversion.
-    * @return returns a converter function to convert row in avro format to GenericRow of catalyst.
-    */
+   * Returns a converter function to convert row in avro format to GenericRow of catalyst.
+   *
+   * @param sourceAvroSchema Source schema before conversion inferred from avro file by passed in
+   *                         by user.
+   * @param targetSqlType    Target catalyst sql type after the conversion.
+   * @return returns a converter function to convert row in avro format to GenericRow of catalyst.
+   */
   private def createConverterToSQL(sourceAvroSchema: Schema, targetSqlType: DataType): AnyRef => AnyRef = {
 
     def createConverter(avroSchema: Schema, sqlType: DataType, path: List[String]): AnyRef => AnyRef = {
@@ -183,9 +208,9 @@ case class AvroDeserializerExpression(
         case (StringType, STRING) | (StringType, ENUM) =>
           (item: AnyRef) =>
             convertString(item)
-          // Byte arrays are reused by avro, so we have to make a copy of them.
+        // Byte arrays are reused by avro, so we have to make a copy of them.
         case (IntegerType, INT) | (BooleanType, BOOLEAN) | (DoubleType, DOUBLE) | (FloatType, FLOAT) |
-            (LongType, LONG) =>
+             (LongType, LONG) =>
           identity
         case (BinaryType, FIXED) =>
           (item: AnyRef) =>

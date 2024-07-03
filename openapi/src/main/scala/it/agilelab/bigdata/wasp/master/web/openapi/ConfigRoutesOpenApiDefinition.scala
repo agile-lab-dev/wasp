@@ -4,7 +4,7 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.models.configuration.{ConnectionConfig, ElasticConfigModel, JMXTelemetryConfigModel, KafkaConfigModel, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, RetainedConfigModel, SchedulingStrategyConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkDriverConfig, SparkEntryConfig, SparkStreamingConfigModel, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
+import it.agilelab.bigdata.wasp.models.configuration.{AdditionalKafkaClustersConfig, ConnectionConfig, ElasticConfigModel, JMXTelemetryConfigModel, KafkaConfigModel, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, RetainedConfigModel, SchedulingStrategyConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkDriverConfig, SparkEntryConfig, SparkStreamingConfigModel, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
 
 trait ConfigModelOpenApiComponentSupport
     extends ProductOpenApi
@@ -59,6 +59,9 @@ trait ConfigModelOpenApiComponentSupport
   implicit lazy val kafkaConfigOpenApi: ToOpenApiSchema[KafkaConfigModel] =
     product13(KafkaConfigModel)
 
+  implicit lazy val AdditionalKafkaClustersOpenApi: ToOpenApiSchema[AdditionalKafkaClustersConfig] =
+    product2(AdditionalKafkaClustersConfig)
+
   implicit lazy val retainedOpenApi: ToOpenApiSchema[RetainedConfigModel] =
     product5(RetainedConfigModel)
 
@@ -75,7 +78,9 @@ trait ConfigRoutesOpenApiDefinition
       "/config/kafka" -> kafka(ctx),
       "/config/telemetry" -> telemetry(ctx),
       "/config/sparkbatch" -> sparkBatch(ctx),
-      "/config/sparkstreaming" -> sparkStreaming(ctx)
+      "/config/sparkstreaming" -> sparkStreaming(ctx),
+      "/configs/kafkaclusters" -> allKafkaClusters(ctx)
+
     )
   }
 
@@ -143,7 +148,7 @@ trait ConfigRoutesOpenApiDefinition
       .get(
         new Operation()
           .operationId("get-kafka-config")
-          .description("Retrieves the configuration used to connect to Kafka")
+          .description("Retrieves the configuration used to connect to the main Kafka cluster")
           .addTagsItem("configuration")
           .addParametersItem(pretty(ctx))
           .responses(
@@ -159,6 +164,36 @@ trait ConfigRoutesOpenApiDefinition
                         new MediaType()
                           .schema(
                             ToOpenApiSchema[AngularResponse[KafkaConfigModel]]
+                              .schema(ctx)
+                          )
+                      )
+                  )
+              )
+          )
+      )
+  }
+
+  private def allKafkaClusters(ctx: Context) = {
+    new PathItem()
+      .get(
+        new Operation()
+          .operationId("get-additional-kafka-clusters-config")
+          .description("Retrieves the configuration for all Kafka clusters available")
+          .addTagsItem("configuration")
+          .addParametersItem(pretty(ctx))
+          .responses(
+            new ApiResponses()
+              .addApiResponse(
+                "200",
+                new ApiResponse()
+                  .description("kafka configuration")
+                  .content(
+                    new Content()
+                      .addMediaType(
+                        "text/json",
+                        new MediaType()
+                          .schema(
+                            ToOpenApiSchema[AngularResponse[Map[String, KafkaConfigModel]]]
                               .schema(ctx)
                           )
                       )

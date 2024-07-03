@@ -14,6 +14,26 @@ private[wasp] object TestProducerModel {
       isSystem = false
     )
 
+  lazy val jsonOnFirstBroker = ProducerModel(
+    name = "TestJSONProducerFirstBroker",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
+    topicName = Some(TestTopicModel.json_broker1.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
+
+  lazy val jsonKafka2 = ProducerModel(
+    name = "TestKafka2Producer",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
+    topicName = Some(TestTopicModel.jsonKafka2.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
+
   lazy val backlog = ProducerModel(
     name = "backlog",
     className = "it.agilelab.bigdata.wasp.producers.metrics.kafka.backlog.ImplBacklogSizeAnalyzerProducerGuardian",

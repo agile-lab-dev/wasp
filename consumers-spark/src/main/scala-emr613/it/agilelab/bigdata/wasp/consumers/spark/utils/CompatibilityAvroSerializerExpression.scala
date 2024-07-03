@@ -16,9 +16,6 @@ trait CompatibilityAvroSerializerExpression {
     (item: Any) =>
       if (item == null) null
       else {
-        println("---item")
-        println(item)
-        println(item.getClass.getName)
         DateTimeUtils.toJavaDate(item.asInstanceOf[Int]).getTime
     }
 

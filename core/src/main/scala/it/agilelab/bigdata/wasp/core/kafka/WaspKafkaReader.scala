@@ -49,7 +49,6 @@ object WaspKafkaReader {
   def createConfig(brokers: Set[String], group: String, zookeper: String) = {
     val props = new Properties()
     props.put("bootstrap.servers", brokers.mkString(","))
-    props.put("zookeeper.connect", zookeper)
     props.put("group.id", group)
     props.put("session.timeout.ms", "1000")
     props.put("auto.commit.enable", "true")

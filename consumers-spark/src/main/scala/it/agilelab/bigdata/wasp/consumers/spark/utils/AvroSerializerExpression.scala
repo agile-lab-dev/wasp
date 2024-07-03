@@ -38,6 +38,21 @@ object AvroSerializerExpression {
     new AvroSerializerExpression(child, maybeAvroSchemaAsJsonWrapped, None, false, sparkSchema, avroRecordName, avroNamespace, None, None)
   }
 
+  def apply(avroSchemaAsJson: Option[String],
+            avroRecordName: String,
+            avroNamespace: String,
+            avroSchemaId: Long)
+           (child: Expression,
+            sparkSchema: DataType): AvroSerializerExpression = {
+
+    avroSchemaAsJson.foreach(s => checkSchemas(sparkSchema, new Schema.Parser().parse(s)))
+
+    val maybeAvroSchemaAsJsonWrapped: Option[Either[String, Long]] =
+      avroSchemaAsJson.map(x => Left(x))
+
+    new AvroSerializerExpression(child, maybeAvroSchemaAsJsonWrapped, None, false, sparkSchema, avroRecordName, avroNamespace, None, None, avroSchemaId = Some(avroSchemaId))
+  }
+
   def apply(schemaManagerConfig: Config,
             avroSchema: Schema,
             avroRecordName: String,
@@ -93,7 +108,9 @@ case class AvroSerializerExpression private(child: Expression,
                                             structName: String,
                                             namespace: String,
                                             fieldsToWrite: Option[Set[String]],
-                                            timeZoneId: Option[String]) extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression with CompatibilityAvroSerializerExpression {
+                                            timeZoneId: Option[String],
+                                            avroSchemaId: Option[Long] = None)
+  extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression with CompatibilityAvroSerializerExpression {
 
   @transient private lazy val schemaManager = avroSchemaManagerConfig.map(AvroSchemaManagerFactory.initialize)
 
@@ -123,10 +140,11 @@ case class AvroSerializerExpression private(child: Expression,
   // convenient method for accessing the schema in codegen
   def getActualSchema: Schema = actualSchema
 
-  private val schemaId = {
-    maybeSchemaAvroJsonOrFingerprint match {
-      case Some(Right(fingerprint)) if useAvroSchemaManager => fingerprint
-      case _ if useAvroSchemaManager => throw new IllegalStateException("We should have a fingerprint because we are using the schema registry")
+  private val schemaId: Long = {
+    (maybeSchemaAvroJsonOrFingerprint, avroSchemaId) match {
+      case (Some(Right(fingerprint)), _) if useAvroSchemaManager => fingerprint
+      case (_, _) if useAvroSchemaManager => throw new IllegalStateException("We should have a fingerprint because we are using the schema registry")
+      case (_, Some(schemaId)) => schemaId // we will not access schema id in this case, take care.
       case _ => -1L // we will not access schema id in this case, take care.
     }
   }
@@ -150,6 +168,13 @@ case class AvroSerializerExpression private(child: Expression,
                            writer: GenericDatumWriter[AnyRef]): Array[Byte] = {
     if (useAvroSchemaManager) {
       schemaManager.get.writeHeaderToStream(output, schemaId)
+    } else if (avroSchemaId.isDefined) {
+      output.write(Array[Byte](0.toByte))
+      val id = avroSchemaId.get.toInt
+      output.write(id >>> 24)
+      output.write(id >>> 16)
+      output.write(id >>> 8)
+      output.write(id >>> 0)
     }
     val value = converter(row).asInstanceOf[AnyRef]
     writer.write(value, encoder)

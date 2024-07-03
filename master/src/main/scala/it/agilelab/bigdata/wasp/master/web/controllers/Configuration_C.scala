@@ -18,7 +18,7 @@ object Configuration_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              ConfigManager.getKafkaConfig.toJson.toAngularOkResponse(pretty)
+              ConfigManager.getKafkaConfig.getDefaultKafka.toJson.toAngularOkResponse(pretty)
             }
           }
         } ~
@@ -59,6 +59,14 @@ object Configuration_C extends Directives with JsonSupport {
               complete {
                 // complete with serialized Future result
                 ConfigManager.getTelemetryConfig.toJson.toAngularOkResponse(pretty)
+              }
+            }
+          } ~
+          path("kafkaclusters") {
+            get {
+              complete {
+                // complete with serialized Future result
+                ConfigManager.getKafkaConfig.getMap.toJson.toAngularOkResponse(pretty)
               }
             }
           }

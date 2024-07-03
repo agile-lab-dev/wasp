@@ -35,6 +35,7 @@ object VersionedRegistry {
     createCodecProvider[SparkDriverConfig](),
     createCodecProvider[ZookeeperConnectionsConfig](),
     createCodecProvider[KafkaEntryConfig](),
+    createCodecProvider[KafkaConfigModel](),
     createCodecProvider[HBaseEntryConfig](),
     createCodecProvider[ReaderModel](),
     createCodecProvider[GenericOptions](),
@@ -278,6 +279,14 @@ object VersionedRegistry {
       KafkaConfigMapperSelector.versionExtractor,
       classOf[KafkaConfigDBModel],
       (KafkaConfigMapperV1.version, kafkaConfigDBModelV1Codec)
+    )
+
+  val kafkaAdditionalConfigDBModelV1Codec: Codec[KafkaAdditionalConfigDBModelV1] = createCodec[KafkaAdditionalConfigDBModelV1](codecRegistry)
+  val KafkaAdditionalConfigProvider: VersionedCodecProvider[KafkaAdditionalConfigDBModel] =
+    VersionedCodecProvider.apply(
+      KafkaAdditionalConfigMapperSelector.versionExtractor,
+      classOf[KafkaAdditionalConfigDBModel],
+      (KafkaAdditionalConfigMapperV1.version, kafkaAdditionalConfigDBModelV1Codec)
     )
 
   val sparkBatchConfigDBModelV1Codec: Codec[SparkBatchConfigDBModelV1] =

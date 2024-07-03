@@ -1,4 +1,4 @@
-FROM ubuntu:21.10  as cache
+FROM ubuntu:23.10  as cache
 
 RUN apt-get update && apt-get -y install axel wget
 
@@ -69,6 +69,7 @@ COPY templates/resolve-spark-templates.sh $BUILD_TEMPLATES_DIR
 
 ENV KAFKA_HOME=/usr/lib/kafka
 COPY templates/kafka $BUILD_TEMPLATES_DIR/kafka
+COPY templates/kafka2 $BUILD_TEMPLATES_DIR/kafka2
 COPY templates/resolve-kafka-templates.sh $BUILD_TEMPLATES_DIR
 
 ENV ZOOKEEPER_HOME=/usr/lib/zookeeper

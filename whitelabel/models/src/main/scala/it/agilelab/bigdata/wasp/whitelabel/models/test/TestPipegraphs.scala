@@ -14,6 +14,41 @@ private[wasp] object TestPipegraphs {
 
     object Structured {
 
+      lazy val kafkaToKafkaDifferentBrokers = PipegraphModel(
+        name = "TestKafkaToKafkaDifferentBrokers",
+        description = "Description of TestKafkaToKafkaDifferentBrokers",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestKafkaToKafka",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json_broker1, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.kafkaWriter("Kafka Writer", TestTopicModel.json_broker2),
+            mlModels = List(),
+            strategy = Some(
+              StrategyModel(
+                className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.DropKafkaMetadata"
+              )
+            ),
+            triggerIntervalMs = None,
+            options = Map()
+          ),
+          StructuredStreamingETLModel(
+            name = "ETL Topic from broker2 to console",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json_broker2, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Console Writer"),
+            mlModels = List(),
+            strategy = None,
+            triggerIntervalMs = None,
+            options = Map()
+          )
+        ),
+        dashboard = None
+      )
+
       lazy val autoDataLakeDebeziumMutations = PipegraphModel(
         name = "TestAutoDataLakeDebezium",
         description = "Description of TestAutoDataLakeDebezium",

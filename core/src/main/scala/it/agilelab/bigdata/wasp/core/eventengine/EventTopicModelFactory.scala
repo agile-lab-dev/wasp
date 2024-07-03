@@ -28,7 +28,8 @@ object EventTopicModelFactory {
       valueFieldsNames = options.get("valueFiledsName").flatMap(s => Some(s.split(","))), //Evaluate
       useAvroSchemaManager = true,
       schema = JsonConverter.fromString(eventTopicSchema).getOrElse(org.mongodb.scala.bson.BsonDocument()),
-      subjectStrategy = SubjectStrategy.Topic
+      subjectStrategy = SubjectStrategy.Topic,
+      clusterAlias = options.get("cluster")
     )
   }
 }

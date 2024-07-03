@@ -56,6 +56,37 @@ private[wasp] object TestTopicModel {
       .getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
+  lazy val json_broker1 = TopicModel(
+    name = TopicModel.name(topic_name + "_json_broker_1"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "json",
+    keyFieldName = None,
+    headersFieldName = None,
+    valueFieldsNames = None,
+    useAvroSchemaManager = false,
+    schema = JsonConverter
+      .fromString(topicSchema)
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
+
+  lazy val json_broker2 = TopicModel(
+    name = TopicModel.name(topic_name + "_json_broker_2"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "json",
+    keyFieldName = None,
+    headersFieldName = None,
+    valueFieldsNames = None,
+    useAvroSchemaManager = false,
+    schema = JsonConverter
+      .fromString(topicSchema)
+      .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+    clusterAlias = Some("kafka2")
+  )
+
   lazy val json6 = TopicModel(
     name = TopicModel.name(topic6_name + "_json"),
     creationTime = System.currentTimeMillis,
@@ -550,4 +581,21 @@ private[wasp] object TestTopicModel {
     "topic",
     Seq(TestTopicModel.json, TestTopicModel.json2ForKafkaHeaders, TestTopicModel.json3)
   )
+
+  lazy val jsonKafka2 = TopicModel(
+    name = TopicModel.name("kafka2_json"),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "json",
+    keyFieldName = None,
+    headersFieldName = None,
+    valueFieldsNames = None,
+    useAvroSchemaManager = false,
+    schema = JsonConverter
+      .fromString(topicSchema)
+      .getOrElse(org.mongodb.scala.bson.BsonDocument()),
+    clusterAlias = Some("kafka2")
+  )
+
 }

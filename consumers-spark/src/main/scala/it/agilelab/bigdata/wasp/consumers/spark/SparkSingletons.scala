@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark
 import java.lang
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
+import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, KafkaConfigProxy, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkContext, SparkException}
 
@@ -18,6 +18,17 @@ object SparkSingletons extends Logging {
   private var sparkSession: SparkSession = _
   private var sparkContext: SparkContext = _
   private var sqlContext: SQLContext = _
+
+  /**
+   * Wrapper around [[initializeSpark(sparkConfigModel: SparkConfigModel, telemetryConfig: TelemetryConfigModel, kafkaConfigModel: KafkaConfigModel)]]
+   * that uses the default kafka cluster for telemetry
+   *
+   * @throws IllegalStateException if Spark was already initialized but <b>not by using this method</b>
+   */
+  @throws[lang.IllegalStateException]
+  def initializeSpark(sparkConfigModel: SparkConfigModel, telemetryConfig: TelemetryConfigModel, kafkaConfigProxy: KafkaConfigProxy): Boolean = {
+    initializeSpark(sparkConfigModel, telemetryConfig, kafkaConfigProxy.getDefaultKafka)
+  }
 
   /**
     * Try to initialize the SparkSession in the SparkSingleton with the provided configuration.

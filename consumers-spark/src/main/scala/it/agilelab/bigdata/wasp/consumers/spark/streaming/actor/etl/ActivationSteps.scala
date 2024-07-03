@@ -299,8 +299,7 @@ trait ActivationSteps {
   ): Try[DataFrame] = Try {
 
     val config =
-      TelemetryMetadataProducerConfig(ConfigManager.getKafkaConfig.toTinyConfig(), ConfigManager.getTelemetryConfig)
-
+      TelemetryMetadataProducerConfig(ConfigManager.getKafkaConfig.getDefaultKafka.toTinyConfig(), ConfigManager.getTelemetryConfig)
     val keyDefaultOneMessageEveryKey   = "wasp.telemetry.latency.sample-one-message-every"
     val valueDefaultOneMessageEveryKey = ConfigManager.getTelemetryConfig.sampleOneMessageEvery
 

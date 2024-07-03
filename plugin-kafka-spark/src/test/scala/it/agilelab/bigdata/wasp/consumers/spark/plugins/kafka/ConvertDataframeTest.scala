@@ -985,6 +985,22 @@ trait ConvertDataframeTestData { self: SparkSuite =>
     keySchema = None
   )
 
+  val topicRight2 = TopicModel(
+    name = "TopicRight2",
+    creationTime = System.currentTimeMillis,
+    partitions = 1,
+    replicas = 1,
+    topicDataType = "avro",
+    keyFieldName = Some("id"),
+    headersFieldName = Some("headers"),
+    valueFieldsNames = Some(Seq("right.name", "right.surname")),
+    useAvroSchemaManager = false,
+    schema = BsonDocument(
+      AvroSchemaConverters.convertStructToAvro(schemaRight, SchemaBuilder.builder().record("schema"), "wasp").toString
+    ),
+    keySchema = None
+  )
+
   val dfForNestedValues = Seq(
     Message("A", None, Some(RightPart("john", "travolta")), "someHeaders", "TopicRight"),
     Message("B", Some(LeftPart("someErrorMessage")), None, "someHeaders", "TopicLeft")
