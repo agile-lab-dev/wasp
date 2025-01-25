@@ -39,11 +39,10 @@ class EMR613Dependencies(val versions: EMR613Versions)
     "com.fasterxml.jackson.module"     % "jackson-module-paranamer"        % "2.13.4",
     "com.fasterxml.jackson.module"     % "jackson-module-scala_2.12"       % "2.13.4",
     guava,
-    "org.codehaus.janino"              % "commons-compiler"                % "3.1.9",
-    "org.codehaus.janino"              % "janino"                          % "3.1.9",
-    "org.codehaus.jackson"             % "jackson-mapper-asl"              % versions.codeHausJackson,
-    "org.codehaus.jackson"             % "jackson-core-asl"                % versions.codeHausJackson
-
+    "org.codehaus.janino"  % "commons-compiler"   % "3.1.9",
+    "org.codehaus.janino"  % "janino"             % "3.1.9",
+    "org.codehaus.jackson" % "jackson-mapper-asl" % versions.codeHausJackson,
+    "org.codehaus.jackson" % "jackson-core-asl"   % versions.codeHausJackson
   )
 
   lazy val delta               = "io.delta" %% "delta-core" % "2.4.0" exclude exclusions.log4jExclude
@@ -123,6 +122,7 @@ class EMR613Dependencies(val versions: EMR613Versions)
     postgres,
     dpcp2,
     postgresqlEmbedded,
+    postgresqlEmbeddedArm64,
     sparkSQL,
     slf4jSimple
   ).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
@@ -188,9 +188,9 @@ class EMR613Dependencies(val versions: EMR613Versions)
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
       .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
 
- override val pluginKafkaSparkOldDependencies: Seq[ModuleID] =
-   (_pluginKafkaSparkDependencies)
-     .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
+  override val pluginKafkaSparkOldDependencies: Seq[ModuleID] =
+    (_pluginKafkaSparkDependencies)
+      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
 
   override val pluginSolrSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     httpClient,
@@ -233,13 +233,13 @@ class EMR613Dependencies(val versions: EMR613Versions)
   override val kmsTest: Seq[Def.Setting[_]] = Seq(
     Test / transitiveClassifiers := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
     Keys.libraryDependencies ++= Seq(
-      jacksonDatabind   % Test,
+      jacksonDatabind % Test,
       jacksonCore     % Test,
       //codeHausJacksonMapperAsl % Test,
-      jettySecurity            % Test,
-      hadoopCommonNoScope      % Test,
-      metrics         % Test,
-      kms.classifier("tests")  % Test
+      jettySecurity           % Test,
+      hadoopCommonNoScope     % Test,
+      metrics                 % Test,
+      kms.classifier("tests") % Test
     )
   )
   override val pluginParallelWriteSparkDependencies: Seq[ModuleID] =
@@ -252,13 +252,13 @@ class EMR613Dependencies(val versions: EMR613Versions)
       on an EMR cluster do the right thing because they are patched
       by aws with proper support for hadoop3
        */
-      apacheCommonsLang3 ,
-      guava              % Provided,
+      apacheCommonsLang3,
+      guava % Provided,
       delta,
-      "org.apache.hive"          % "hive-exec"      % "2.3.9"  % Provided classifier "core" ,
-      "org.apache.hive"          % "hive-metastore" % "2.3.9"  % Provided,
-      log4jCore          % Provided,
-      slf4jSimple        % Provided,
+      "org.apache.hive" % "hive-exec" % "2.3.9" % Provided classifier "core",
+      "org.apache.hive" % "hive-metastore" % "2.3.9" % Provided,
+      log4jCore         % Provided,
+      slf4jSimple       % Provided,
       parquet
     ).map(_ exclude exclusions.hiveExclude)
 
@@ -411,10 +411,10 @@ trait EMR613LoggingDependencies {
 trait EMR613KafkaDependencies {
   val versions: EMR613Versions
   val exclusions: EMR613Exclusions.type
-  lazy val kafka            = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaClients     = "org.apache.kafka" % "kafka-clients" % "3.3.2" exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaTests       = kafka              % Test exclude (exclusions.jacksonExclude)
-  lazy val sparkSqlKafka    = "org.apache.spark" %"spark-sql-kafka-0-10_2.12" % versions.spark
+  lazy val kafka         = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaClients  = "org.apache.kafka" % "kafka-clients" % "3.3.2" exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaTests    = kafka              % Test exclude (exclusions.jacksonExclude)
+  lazy val sparkSqlKafka = "org.apache.spark" % "spark-sql-kafka-0-10_2.12" % versions.spark
 }
 
 trait EMR613MongoDependencies {
@@ -449,7 +449,7 @@ trait EMR613TestFrameworkDependencies {
   lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
   lazy val wireMock: Seq[ModuleID] = Seq(
     "com.github.tomakehurst" % "wiremock" % versions.wireMock % Test,
-    "xmlunit"                % "xmlunit"       % versions.xmlUnit  % Test
+    "xmlunit"                % "xmlunit"  % versions.xmlUnit  % Test
   ).map(_ exclude exclusions.jacksonExclude)
 
 }
@@ -509,10 +509,10 @@ trait EMR613SttpDependencies {
 
 trait EMR613CodehausJacksonDependencies {
   val versions: EMR613Versions
-  lazy val jacksonDatabind   = "com.fasterxml.jackson.core" % "jackson-databind"   % versions.fasterxmlJackson
-  lazy val jacksonCore       = "com.fasterxml.jackson.core" % "jackson-core"        % versions.fasterxmlJackson
-  lazy val codeHausJacksonMapperAsl = "org.codehaus.jackson" % "jackson-mapper-asl" % versions.codeHausJackson
-  lazy val codeHausJacksonCoreAsl   = "org.codehaus.jackson" % "jackson-core-asl" % versions.codeHausJackson
+  lazy val jacksonDatabind          = "com.fasterxml.jackson.core" % "jackson-databind"   % versions.fasterxmlJackson
+  lazy val jacksonCore              = "com.fasterxml.jackson.core" % "jackson-core"       % versions.fasterxmlJackson
+  lazy val codeHausJacksonMapperAsl = "org.codehaus.jackson"       % "jackson-mapper-asl" % versions.codeHausJackson
+  lazy val codeHausJacksonCoreAsl   = "org.codehaus.jackson"       % "jackson-core-asl"   % versions.codeHausJackson
 }
 
 trait EMR613OkHttpDependencies {
@@ -525,7 +525,8 @@ trait EMR613OkHttpDependencies {
 trait EMR613PostgresDependencies {
   val versions: EMR613Versions
 
-  lazy val postgres           = "org.postgresql"           % "postgresql"      % versions.postgresqlVersion
-  lazy val postgresqlEmbedded = "com.opentable.components" % "otj-pg-embedded" % versions.postgresqlEmbeddedVersion % Test
+  lazy val postgres                = "org.postgresql"         % "postgresql"                                % versions.postgresqlVersion
+  lazy val postgresqlEmbedded      = "io.zonky.test"          % "embedded-postgres"                         % versions.postgresqlEmbeddedVersion % Test
+  lazy val postgresqlEmbeddedArm64 = "io.zonky.test.postgres" % "embedded-postgres-binaries-darwin-arm64v8" % "17.2.0" % Test
 
 }

@@ -51,7 +51,7 @@ class EMR613Versions {
   lazy val nettySpark                = "3.9.9.Final"
   lazy val nifi                      = "1.11.4"
   lazy val okHttp                    = "2.7.5"
-  lazy val postgresqlEmbeddedVersion = "0.13.1"
+  lazy val postgresqlEmbeddedVersion = "2.1.0"
   lazy val postgresqlVersion         = "42.2.5"
   lazy val quartz                    = "2.3.0"
   lazy val reflectionsVersion        = "0.9.11"

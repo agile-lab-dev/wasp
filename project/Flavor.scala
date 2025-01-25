@@ -7,24 +7,9 @@ sealed trait Flavor {
 }
 
 object Flavor {
-  case object CDH6 extends Flavor {
-    private val versions                    = new Cdh6Versions()
-    val postfix: Option[String]             = Some("cdh6")
-    override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
-    override val settings: Settings         = new BasicSettings(new BasicResolvers(), versions.jdk, scalaVersion)
-    override val dependencies: Dependencies = new Cdh6Dependencies(versions)
-    override val id: String                 = "CDH6"
-  }
-  case object Vanilla2 extends Flavor {
-    private val versions                    = new Vanilla2Versions()
-    val postfix: Option[String]             = None
-    override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
-    override val settings: Settings         = new BasicSettings(new BasicResolvers(), versions.jdk, scalaVersion)
-    override val dependencies: Dependencies = new Vanilla2Dependencies(versions)
-    override val id: String                 = "VANILLA2"
-  }
+
   case object Vanilla2_2_12 extends Flavor {
-    private val versions                    = new Vanilla2_2_12Versions()
+    private val versions                    = new Vanilla2Versions()
     val postfix: Option[String]             = None
     override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
     override val settings: Settings         = new BasicSettings(new BasicResolvers(), versions.jdk, scalaVersion)
@@ -48,16 +33,6 @@ object Flavor {
     override val id: String                            = "CDP719"
   }
 
-  case object EMR212 extends Flavor {
-    override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
-    override lazy val settings: Settings =
-      new BasicSettings(new BasicResolvers(), versions.jdk, scalaVersion ,dependencies.overrides, dependencies.removeShims)
-    override lazy val dependencies: EMR212Dependencies = new EMR212Dependencies(versions)
-    lazy val postfix: Option[String] = Some("emr212")
-    private lazy val versions        = new EMR212Versions()
-    override val id: String = "EMR_2_12"
-  }
-
   case object EMR613 extends Flavor {
     override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
     override lazy val settings: Settings =
@@ -72,11 +47,8 @@ object Flavor {
 
   def parse(s: String): Either[String, Flavor] = {
     s.toUpperCase match {
-      case "CDH6" => Right(CDH6)
-      case "VANILLA2" => Right(Vanilla2)
       case "VANILLA2_2_12" => Right(Vanilla2_2_12)
       case "CDP719"   => Right(CDP719)
-      case "EMR_2_12" => Right(EMR212)
       case "EMR_6_13" => Right(EMR613)
       case _      => Left(s"Cannot parse flavor [${s}]")
     }

@@ -1,4 +1,4 @@
--Xmx6G
+-Xmx16G
 -Xms2G
 #-XX:+UseConcMarkSweepGC
 #-XX:+CMSClassUnloadingEnabled

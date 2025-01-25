@@ -99,6 +99,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     postgres,
     dpcp2,
     postgresqlEmbedded,
+    postgresqlEmbeddedArm64,
     sparkSQL
   ).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
 
@@ -248,7 +249,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     darwinHBaseConnector,
     mySqlJavaConnector,
     scalaTest,
-    hadoopAuth % Test,
+    hadoopAuth          % Test,
     darwinMockConnector % Test
   ) ++ spark ++ Seq(hbaseClient2Shaded, slf4jLog4j1Binding)
 
@@ -404,9 +405,9 @@ trait Vanilla2NettyDependencies {
 trait Vanilla2TestFrameworkDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
-  lazy val scalaTest  = "org.scalatest"  %% "scalatest"  % versions.scalaTest  % Test
-  lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
-  lazy val scalaTestMockito = "org.mockito" %% "mockito-scala" % versions.scalaTestMockito % Test
+  lazy val scalaTest        = "org.scalatest"  %% "scalatest"     % versions.scalaTest        % Test
+  lazy val scalaCheck       = "org.scalacheck" %% "scalacheck"    % versions.scalaCheck       % Test
+  lazy val scalaTestMockito = "org.mockito"    %% "mockito-scala" % versions.scalaTestMockito % Test
   lazy val wireMock: Seq[ModuleID] = Seq(
     "com.github.tomakehurst" % "wiremock-jre8" % versions.wireMock % Test,
     "xmlunit"                % "xmlunit"       % versions.xmlUnit  % Test
@@ -484,7 +485,8 @@ trait Vanilla2OkHttpDependencies {
 trait Vanilla2PostgresDependencies {
   val versions: Vanilla2Versions
 
-  lazy val postgres           = "org.postgresql"           % "postgresql"      % versions.postgresqlVersion
-  lazy val postgresqlEmbedded = "com.opentable.components" % "otj-pg-embedded" % versions.postgresqlEmbeddedVersion % Test
+  lazy val postgres                = "org.postgresql"         % "postgresql"                                % versions.postgresqlVersion
+  lazy val postgresqlEmbedded      = "io.zonky.test"          % "embedded-postgres"                         % versions.postgresqlEmbeddedVersion % Test
+  lazy val postgresqlEmbeddedArm64 = "io.zonky.test.postgres" % "embedded-postgres-binaries-darwin-arm64v8" % "17.2.0" % Test
 
 }

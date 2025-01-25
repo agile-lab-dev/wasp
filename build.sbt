@@ -1,5 +1,3 @@
-import org.checkerframework.checker.units.qual.s
-import Flavor.EMR212
 import Flavor.EMR613
 
 lazy val flavor = {
@@ -40,7 +38,7 @@ lazy val core = Project("wasp-core", file("core"))
     Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
       / s"java${if (flavor == EMR613) "-emr613" else "-legacy"}",
     Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
-      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
   )
   .settings(settings.commonSettings: _*)
   .dependsOn(scala_compiler)
@@ -125,7 +123,7 @@ lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-ka
   .settings(settings.commonSettings: _*)
   .settings(
     Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
-      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
   )
   .dependsOn(consumers_spark % "compile->compile;test->test")
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkDependencies)
@@ -198,7 +196,7 @@ lazy val yarn_auth_hdfs =
   Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
     .settings(
       Compile / unmanagedSourceDirectories += sourceDirectory.value / "main"
-        / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+        / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
     )
     .settings(settings.commonSettings: _*)
     .settings(dependencies.kmsTest: _*)
@@ -295,8 +293,7 @@ lazy val plugin =
         microservice_catalog,
         plugin_elastic_spark
       )
-  }
-  else{
+  } else {
     project
       .withId("wasp-plugin")
       .settings(settings.commonSettings: _*)
@@ -374,7 +371,7 @@ lazy val whiteLabelConsumersSpark =
       .settings(settings.commonSettings: _*)
       .settings(
         Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
-          / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}",
+          / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
       )
       .dependsOn(whiteLabelModels)
       .dependsOn(consumers_spark)
@@ -426,7 +423,7 @@ lazy val aws_auth_temporary_credentials =
     .settings(settings.commonSettings: _*)
     .settings(libraryDependencies ++= dependencies.scalaTestDependencies)
     .settings(libraryDependencies ++= dependencies.awsAuth)
-    .settings(Test / skip := !(flavor == EMR212 || flavor == EMR613))   //only test this in EMR212 build
+    .settings(Test / skip := flavor != EMR613) //only test this in EMR212 build
 
 lazy val aws_auth = Project("wasp-aws-auth", file("aws/auth"))
   .settings(settings.commonSettings: _*)

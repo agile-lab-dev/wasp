@@ -10,13 +10,13 @@ FROM eclipse-temurin:${BASE_IMAGE_TAG:-11.0.16.1_1-jdk}
 
 # Env variables
 ARG SCALA_VERSION
-ENV SCALA_VERSION ${SCALA_VERSION:-2.13.10}
+ENV SCALA_VERSION=${SCALA_VERSION:-2.13.10}
 ARG SBT_VERSION
-ENV SBT_VERSION ${SBT_VERSION:-1.6.2}
+ENV SBT_VERSION=${SBT_VERSION:-1.6.2}
 ARG USER_ID
-ENV USER_ID ${USER_ID:-1001}
+ENV USER_ID=${USER_ID:-1001}
 ARG GROUP_ID
-ENV GROUP_ID ${GROUP_ID:-1001}
+ENV GROUP_ID=${GROUP_ID:-1001}
 
 # Install sbt
 RUN \
@@ -61,14 +61,13 @@ WORKDIR /home/sbtuser
 
 # Prepare sbt (warm cache)
 RUN \
-  sbt sbtVersion && \
   mkdir -p project && \
   echo "scalaVersion := \"${SCALA_VERSION}\"" > build.sbt && \
   echo "sbt.version=${SBT_VERSION}" > project/build.properties && \
   echo "// force sbt compiler-bridge download" > project/Dependencies.scala && \
   echo "case object Temp" > Temp.scala && \
   sbt compile && \
-  rm -r project && rm build.sbt && rm Temp.scala && rm -r target
+  rm -r project && rm build.sbt && rm Temp.scala && rm -rf target
 
 # Link everything into root as well
 # This allows users of this container to choose, whether they want to run the container as sbtuser (non-root) or as root

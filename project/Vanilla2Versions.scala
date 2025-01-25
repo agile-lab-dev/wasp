@@ -1,13 +1,11 @@
 class Vanilla2Versions {
   val akka                      = "2.4.20" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
   val akkaHttp                  = "10.0.9" // keep in sync with akka
-  val akkaKryo                  = "0.5.0"
   val apacheCommonsLang3Version = "3.4"
   val avro                      = "1.8.2"
   val avro4sVersion             = "1.8.3"
   val commonsCli                = "1.2"
   val darwin                    = "1.2.1"
-  val elasticSearchSpark        = "6.1.2"
   val guava                     = "14.0.1"
   val hbase2                    = "2.1.10"
   val httpcomponents            = "4.3.3"
@@ -23,7 +21,6 @@ class Vanilla2Versions {
   val nettySpark                = "3.9.9.Final"
   val nettyAllSpark             = "4.1.47.Final"
   val quartz                    = "2.3.0"
-  val scala                     = "2.11.12"
   val scalaCheck                = "1.13.5"
   val scalaTest                 = "3.0.4"
   val scalaTestMockito          = "1.17.31"
@@ -36,7 +33,7 @@ class Vanilla2Versions {
   val scalaParserAndCombinators = "1.0.4"
   val nifi                      = "1.11.4"
   val dbcp2Version              = "2.4.0"
-  val postgresqlEmbeddedVersion = "0.13.4"
+  val postgresqlEmbeddedVersion = "2.1.0"
   val sttpVersion               = "2.1.2"
   val reflectionsVersion        = "0.9.11"
   val postgresqlVersion         = "42.2.5"
@@ -61,10 +58,7 @@ class Vanilla2Versions {
   val mongoJavaDriver           = "3.12.2"
   val mongodbScala              = "2.9.0"
   val jettySecurity             = "9.3.25.v20180904"
-}
-
-class Vanilla2_2_12Versions extends Vanilla2Versions {
-  override val akkaKryo           = "0.5.2"
-  override val scala              = "2.12.10"
-  override val elasticSearchSpark = "7.15.0"
+  val akkaKryo                  = "0.5.2"
+  val scala                     = "2.12.10"
+  val elasticSearchSpark        = "7.15.0"
 }

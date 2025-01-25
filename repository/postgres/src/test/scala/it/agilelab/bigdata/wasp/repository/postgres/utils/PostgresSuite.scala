@@ -1,13 +1,12 @@
 package it.agilelab.bigdata.wasp.repository.postgres.utils
 
 import java.sql.Connection
-import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import PostgresSuite._
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.PostgresDBConfigModel
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDBImpl
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers, Outcome}
-
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 object PostgresSuite {
   private lazy val pg = {
@@ -22,7 +21,6 @@ object PostgresSuite {
     _pg
   }
 
-
 }
 
 trait PostgresSuite extends FlatSpec with Matchers with BeforeAndAfterAll with Logging {
@@ -33,37 +31,22 @@ trait PostgresSuite extends FlatSpec with Matchers with BeforeAndAfterAll with L
     _conn
   }
 
-  private def areWeOnAppleSilicon() = {
-    System.getProperty("os.name") == "Mac OS X" && System.getProperty("os.arch") == "aarch64"
-  }
-
   protected lazy val connection = getConnection
-
-
-  override protected def withFixture(test: NoArgTest): Outcome = {
-    this.assume(!areWeOnAppleSilicon(),"Postgres suite will not run on Apple Silicon")
-    test()
-  }
 
   override def afterAll(): Unit = {
     super.afterAll()
-    if(!areWeOnAppleSilicon()) {
-      if (!connection.isClosed) connection.close()
-      closePool()
-    }
+    if (!connection.isClosed) connection.close()
+    closePool()
   }
 
-
-  val user = "postgres"
-  val pass = "postgres"
+  val user                 = "postgres"
+  val pass                 = "postgres"
   lazy val jdbcUrl: String = pg.getJdbcUrl(user, "postgres")
-  val driver = "org.postgresql.Driver"
+  val driver               = "org.postgresql.Driver"
 
+  def closePool(): Unit = ConnectionSupport.poolingDriver.closePool(s"$jdbcUrl:$user")
 
-  def closePool():Unit = ConnectionSupport.poolingDriver.closePool(s"$jdbcUrl:$user")
-
-  lazy val config: PostgresDBConfigModel = PostgresDBConfigModel(jdbcUrl,user,pass,driver,10)
-  lazy val pgDB = new WaspPostgresDBImpl(config)
+  lazy val config: PostgresDBConfigModel = PostgresDBConfigModel(jdbcUrl, user, pass, driver, 10)
+  lazy val pgDB                          = new WaspPostgresDBImpl(config)
 
 }
-
