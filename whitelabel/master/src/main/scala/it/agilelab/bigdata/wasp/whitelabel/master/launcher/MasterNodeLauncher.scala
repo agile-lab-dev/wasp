@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.whitelabel.master.launcher
 
-
 import it.agilelab.bigdata.wasp.master.launcher.MasterNodeLauncherTrait
 import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
@@ -22,8 +21,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     *
     * @return [[Seq[(Key, Schema)]]
     */
-  def addExampleRegisterAvroSchema(): Unit = {
-  }
+  def addExampleRegisterAvroSchema(): Unit = {}
 
   def addExamplePipegraphs(): Unit = {
 
@@ -91,8 +89,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.indexBL.upsert(TestIndexModel.solr)
     ConfigBL.indexBL.upsert(TestIndexModel.elastic)
     ConfigBL.rawBL.upsert(TestRawModel.nested) // used by TestPipegraphs.JSON.XYZ.hdfs
-    ConfigBL.rawBL.upsert(TestRawModel.flat) // used by TestBatchJobModels.FromHdfs.toConsole
-    ConfigBL.rawBL.upsert(TestRawModel.text) // used by TestBatchJobModels.FromHdfs.toConsole
+    ConfigBL.rawBL.upsert(TestRawModel.flat)   // used by TestBatchJobModels.FromHdfs.toConsole
+    ConfigBL.rawBL.upsert(TestRawModel.text)   // used by TestBatchJobModels.FromHdfs.toConsole
     ConfigBL.keyValueBL.upsert(TestKeyValueModel.hbase)
     ConfigBL.keyValueBL.upsert(TestKeyValueModel.hbaseMultipleClusteringKeyValueModel)
     ConfigBL.sqlSourceBl.upsert(TestSqlSouceModel.mySql)
@@ -100,14 +98,13 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.outputRawModel)
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.inputRawModel)
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.dataRawModel)
-    ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel) //EVENT ENGINE
+    ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel)                  //EVENT ENGINE
     ConfigBL.topicBL.upsert(IoTIndustrialPlantTopicModel.industrialPlantTopicModel) //IoT
-    ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel()) //IoT
+    ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel())                         //IoT
     ConfigBL.topicBL.upsert(TestTopicModel.dbzMutations)
     ConfigBL.cdcBL.upsert(TestCdcModel.debeziumMutation)
     ConfigBL.genericBL.upsert(TestParallelWriteModel.parallelWriteModel)
     ConfigBL.genericBL.upsert(TestParallelWriteModel.continuousUpdateModel)
-
 
     /* Producers */
     ConfigBL.producerBL.upsert(TestProducerModel.json)
@@ -119,7 +116,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.producerBL.upsert(TestProducerModel.avroCheckpoint)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonHbaseMultipleClustering)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonDeduplication)
-    ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator) //EVENT ENGINE
+    ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator)            //EVENT ENGINE
     ConfigBL.producerBL.upsert(IoTIndustrialPlantProducerModel.iotIndustrialPlantProducer) //IoT
     ConfigBL.producerBL.upsert(TestProducerModel.jsonKafka2)
 
@@ -131,6 +128,7 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.console)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.kafkaToKafkaDifferentBrokers)
+    ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.stuckConsole)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.freecode)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.nifi)
     ConfigBL.pipegraphBL.upsert(TestPipegraphs.JSON.Structured.mongo)
@@ -218,12 +216,10 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
   }
 }
 
-@com.github.ghik.silencer.silent("interpolator")
 private[wasp] object ExampleProcessGroupModel {
   lazy val processGroup = ProcessGroupModel(
     "c116c98bd5c9",
-    BsonDocument(
-      """{
+    BsonDocument(s"""{
         |      "comments": "",
         |      "componentType": "PROCESS_GROUP",
         |      "connections": [
@@ -347,8 +343,8 @@ private[wasp] object ExampleProcessGroupModel {
         |          "name": "JsonTreeReader",
         |          "properties": {
         |            "schema-access-strategy": "infer-schema",
-        |            "schema-name": "${schema.name}",
-        |            "schema-text": "${avro.schema}"
+        |            "schema-name": "$${schema.name}",
+        |            "schema-text": "$${avro.schema}"
         |          },
         |          "propertyDescriptors": {
         |            "Date Format": {
@@ -441,8 +437,8 @@ private[wasp] object ExampleProcessGroupModel {
         |            "compression-level": "1",
         |            "output-grouping": "output-array",
         |            "schema-access-strategy": "inherit-record-schema",
-        |            "schema-name": "${schema.name}",
-        |            "schema-text": "${avro.schema}",
+        |            "schema-name": "$${schema.name}",
+        |            "schema-text": "$${avro.schema}",
         |            "suppress-nulls": "never-suppress"
         |          },
         |          "propertyDescriptors": {
@@ -620,7 +616,7 @@ private[wasp] object ExampleProcessGroupModel {
         |            "y": 152
         |          },
         |          "properties": {
-        |            "/id": "${field.value} pippo",
+        |            "/id": "$${field.value} pippo",
         |            "record-reader": "72fa712e-27fe-3f57-968e-aea1ddec970c",
         |            "record-writer": "372aa60b-f822-3e6c-a7e6-8f933294195a",
         |            "replacement-value-strategy": "literal-value"

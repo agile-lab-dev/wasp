@@ -3,6 +3,8 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.StreamingQuery
 
+import java.time.Instant
+
 /**
   * Trait marking classes holding [[StructuredStreamingETLActor]] State Data
   */
@@ -25,5 +27,5 @@ object Data {
     * Data held by the state machine when in [[State.WaitingToBeMonitored]]
     * @param streamingQuery The streaming query to be monitored
     */
-  case class MaterializedData(streamingQuery: StreamingQuery) extends Data
+  case class MaterializedData(streamingQuery: StreamingQuery, materiazationTimestamp: Instant, triggerInterval: Long, killed:Boolean) extends Data
 }

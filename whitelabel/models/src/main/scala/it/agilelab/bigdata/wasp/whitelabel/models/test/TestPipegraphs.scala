@@ -92,6 +92,28 @@ private[wasp] object TestPipegraphs {
         dashboard = None
       )
 
+      lazy val stuckConsole = PipegraphModel(
+        name = "TestStuckConsoleWriterStructuredJSONPipegraph",
+        description = "pipegraph to test stuck queries",
+        owner = "user",
+        isSystem = false,
+        creationTime = System.currentTimeMillis,
+        structuredStreamingComponents = List(
+          StructuredStreamingETLModel(
+            name = "ETL TestConsoleWriterStructuredJSONPipegraph",
+            streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
+            staticInputs = List.empty,
+            streamingOutput = WriterModel.consoleWriter("Console Writer"),
+            mlModels = List(),
+            strategy =
+              Some(TestStrategies.stuckStrategy),
+            triggerIntervalMs = Some(1000),
+            options = Map()
+          )
+        ),
+        dashboard = None
+      )
+
       lazy val parallelWritePipegraph = PipegraphModel(
         name = "TestParallelWrite",
         description = "Description of TestParallelWrite",
@@ -100,10 +122,10 @@ private[wasp] object TestPipegraphs {
         creationTime = System.currentTimeMillis,
         structuredStreamingComponents = List(
           StructuredStreamingETLModel(
-            name = "ETL TestParallelWriterStructuredJSONPipegraph",
+            name = "ETL TestGenericWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel.genericWriter("Parallel Writer", TestParallelWriteModel.parallelWriteModel),
+            streamingOutput = WriterModel.genericWriter("Generic Writer", TestParallelWriteModel.parallelWriteModel),
             mlModels = List(),
             strategy = None,
             triggerIntervalMs = None,

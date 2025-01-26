@@ -33,7 +33,7 @@ trait MaterializationSteps {
     * @return The Materialized [[StreamingQuery]]
     */
   protected def materialize(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel, dataFrame: DataFrame)
-    : Try[StreamingQuery] =
+    : Try[(StreamingQuery, Long)] =
     for {
       config <- retrieveSparkStreamingConfig.recoverWith {
       case e: Throwable => Failure(new Exception(s"Cannot retrieve Spark Streaming config for etl ${etl.name}", e))
@@ -79,17 +79,18 @@ trait MaterializationSteps {
                          config: SparkStreamingConfigModel,
                          etl: StructuredStreamingETLModel,
                          queryName: String,
-                         checkpointDir: String): Try[StreamingQuery] =
+                         checkpointDir: String): Try[(StreamingQuery,Long)] =
     Try {
       val triggerInterval = SparkUtils.getTriggerIntervalMs(config, etl)
 
       val trigger = Trigger.ProcessingTime(triggerInterval)
 
-      dataStreamWriter
+      val query = dataStreamWriter
         .queryName(queryName)
         .option("checkpointLocation", checkpointDir)
         .trigger(trigger)
         .start()
+      (query, triggerInterval)
     }
 
   private def queryName(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel) = generateUniqueComponentName(pipegraph, etl)

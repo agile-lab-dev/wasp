@@ -57,6 +57,11 @@ object TestStrategies {
     configuration = None
   )
 
+  lazy val stuckStrategy = StrategyModel(
+    className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestStuckQueryStrategy",
+    configuration = None
+  )
+
   lazy val identityStrategy = StrategyModel(
     className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestIdentityStrategy",
     configuration = None
@@ -66,5 +71,4 @@ object TestStrategies {
     className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestMultiTopicWriteMixedStrategy",
     configuration = None
   )
-
 }
