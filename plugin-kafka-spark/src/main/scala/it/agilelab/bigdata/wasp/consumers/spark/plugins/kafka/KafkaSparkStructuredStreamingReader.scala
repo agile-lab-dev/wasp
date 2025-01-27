@@ -18,7 +18,7 @@ import org.apache.spark.SparkException
 import org.apache.spark.sql.catalyst.expressions.{CaseWhen, GenericRowWithSchema, Hex}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{DataType, StringType}
+import org.apache.spark.sql.types.{DataType, StringType, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import scala.collection.mutable
@@ -141,7 +141,10 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
     // check or create
     val allCheckOrCreateResult = topics map { topic =>
-      ??[Boolean](WaspSystem.kafkaAdminActor(topic.clusterAlias), CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas))
+      ??[Boolean](
+        WaspSystem.kafkaAdminActor(topic.clusterAlias),
+        CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas)
+      )
     } reduce (_ && _)
 
     if (allCheckOrCreateResult) {
@@ -252,11 +255,12 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         val parsedDf = df.withColumn(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME, parseAvroValue(prototypeTopic))
         checkParsingMode(parsedDf, parsingMode, TopicDataTypes.AVRO, parseKey(prototypeTopic))
       case TopicDataTypes.JSON =>
+        val actualReaderSchema = getDataType(prototypeTopic.getJsonSchema)
         val parsedDf = df.withColumn(
           KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME,
-          from_json(parseString, getDataType(prototypeTopic.getJsonSchema))
+          from_json(parseString, actualReaderSchema) // will return a dataframe with every column nullable since 3.0.0
         )
-        checkParsingMode(parsedDf, parsingMode, TopicDataTypes.JSON)
+        checkParsingMode(parsedDf, parsingMode, TopicDataTypes.JSON, actualSchema = Some(actualReaderSchema))
       case TopicDataTypes.PLAINTEXT =>
         df.withColumn("value_string", parseString)
           .select(selectMetadata(), expr("value_string AS value"))
@@ -285,6 +289,7 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     * @param parsingMode
     * @param topicDataType
     * @param metadataKey
+    * @param actualSchema
     * @return metadata + exploded parsed fields for Strict and Ignore, metadata+ raw + value column when Handle mode,
     *         parsed values are in value column and can be exploded through value.*
     *  @throws SparkException when unable to parse a record in Strict mode
@@ -293,7 +298,8 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       df: DataFrame,
       parsingMode: ParsingMode,
       topicDataType: String,
-      metadataKey: Column = col(KafkaSparkSQLSchemas.KEY_ATTRIBUTE_NAME)
+      metadataKey: Column = col(KafkaSparkSQLSchemas.KEY_ATTRIBUTE_NAME),
+      actualSchema: Option[DataType] = None
   ): DataFrame = {
     parsingMode match {
       case Strict =>
@@ -301,19 +307,27 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         df.withColumn(
             computedValue,
             when(
-              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)),
+              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(actualSchema)(
+                col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)
+              ),
               strictExceptionLauncherUdf(col(RAW_VALUE_ATTRIBUTE_NAME), lit(topicDataType))
             ).otherwise(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME))
           )
           .select(selectMetadata(metadataKey), col(s"$computedValue.*"))
       case Ignore =>
         df.select(selectMetadata(metadataKey), col(s"${KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME}.*"))
-          .where(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNotNull && !isNull(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)))
+          .where(
+            col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNotNull && !isNull(actualSchema)(
+              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)
+            )
+          )
       case Handle =>
         df.select(
           selectMetadata(metadataKey),
           when(
-            col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)),
+            col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(actualSchema)(
+              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)
+            ),
             col(RAW_VALUE_ATTRIBUTE_NAME)
           ).otherwise(null)
             .as(RAW_VALUE_ATTRIBUTE_NAME),
@@ -321,7 +335,29 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
         )
     }
   }
-  val isNull = udf((value: Any) => value.asInstanceOf[GenericRowWithSchema].toSeq.forall(_ == null))
+
+  private[kafka] def isNull(actualSchema: Option[DataType]): UserDefinedFunction = {
+    def isNullImpl(rowWithSchema: GenericRowWithSchema): Boolean =
+      rowWithSchema.toSeq
+        .zip(rowWithSchema.schema)
+        .exists { case (value, dt) => !dt.nullable && value == null }
+    actualSchema match {
+      case Some(schema) =>
+        udf { (value: Any) =>
+          isNullImpl(
+            new GenericRowWithSchema(
+              value.asInstanceOf[GenericRowWithSchema].toSeq.toArray,
+              schema.asInstanceOf[StructType]
+            )
+          )
+        }
+      case None =>
+        udf { (value: Any) =>
+          isNullImpl(value.asInstanceOf[GenericRowWithSchema])
+        }
+    }
+  }
+
   /**
     * function that prints the content of the serialized value which is not deserializable,
     * it's useful to know which record caused the error
@@ -372,7 +408,11 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
     val ret = df.select(metadataExpr :: col(RAW_VALUE_ATTRIBUTE_NAME) :: valueColumns: _*)
     logger.debug(s"DataFrame schema before parsing mode check: ${ret.schema.treeString}")
-    val retChecked = checkParsingModeMultipleTopics(ret, parsingMode)
+    val retChecked = checkParsingModeMultipleTopics(
+      ret,
+      parsingMode,
+      topics.map(t => topicNameToColumnName(t.name) -> getDataType(t.getJsonSchema)).toMap
+    )
     logger.debug(s"DataFrame schema after parsing mode check: ${ret.schema.treeString}")
     retChecked
   }
@@ -390,7 +430,11 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     * @return df parsed according to input parsing mode
     * @throws SparkException
     */
-  private[wasp] def checkParsingModeMultipleTopics(df: DataFrame, parsingMode: ParsingMode) = {
+  private[wasp] def checkParsingModeMultipleTopics(
+      df: DataFrame,
+      parsingMode: ParsingMode,
+      schemas: Map[String, DataType]
+  ) = {
     val parsedCols = df.columns.diff(Seq(KAFKA_METADATA_COL, RAW_VALUE_ATTRIBUTE_NAME))
 
     def parsedValueCol(colName: String) = col(s"$colName.${KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME}")
@@ -404,7 +448,9 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     val goodCaseSelect = parsedCols.map(c => when(col(c).isNotNull, parsedValueCol(c)).otherwise(null).as(c))
     val parsingErrorFilteredCondition = parsedCols
       .map(c =>
-        col(c).isNull || !dataTypeToCheckCondition(c) || (dataTypeToCheckCondition(c) && (parsedValueCol(c).isNotNull && !isNull(parsedValueCol(c))))
+        col(c).isNull || !dataTypeToCheckCondition(c) || (dataTypeToCheckCondition(c) && (parsedValueCol(c).isNotNull && !isNull(
+          schemas.get(c)
+        )(parsedValueCol(c))))
       )
       .reduce(_ and _)
 
@@ -415,7 +461,9 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
             df.withColumn(
               "workingColumn",
               when(
-                dataTypeToCheckCondition(c) && col(c).isNotNull && (parsedValueCol(c).isNull || isNull(parsedValueCol(c))),
+                dataTypeToCheckCondition(c) && col(c).isNotNull && (parsedValueCol(c).isNull || isNull(schemas.get(c))(
+                  parsedValueCol(c)
+                )),
                 strictExceptionLauncherUdf(col(RAW_VALUE_ATTRIBUTE_NAME), parsedDataTypeCol(c))
               ).otherwise(null)
             )
@@ -442,6 +490,8 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     col(RAW_VALUE_ATTRIBUTE_NAME).cast(StringType)
   }
 
+  // parses json without checking the schema
+  // from_json returns all nested fields as nullable
   private def parseJson(t: TopicModel) = {
     from_json(parseString, getDataType(t.getJsonSchema))
   }

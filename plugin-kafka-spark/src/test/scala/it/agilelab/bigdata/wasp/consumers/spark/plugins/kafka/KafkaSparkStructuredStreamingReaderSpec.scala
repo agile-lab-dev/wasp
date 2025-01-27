@@ -4,11 +4,12 @@ import com.sksamuel.avro4s.{AvroOutputStream, AvroSchema}
 import org.apache.spark.sql.functions.col
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.topicNameToColumnName
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
+import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.bigdata.wasp.models.configuration._
 import it.agilelab.bigdata.wasp.models.{TopicCompression, TopicDataTypes, TopicModel}
+import org.apache.avro.Schema
 import org.apache.spark.SparkException
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BinaryType, StringType, StructField, StructType}
 import org.bson.BsonDocument
 import org.scalatest.WordSpec
@@ -46,7 +47,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
           Seq(
             KafkaFakeRecord(
               key = "1".getBytes(StandardCharsets.UTF_8),
-              raw = """{"key":"1", "raw":"valore"}""".getBytes(StandardCharsets.UTF_8),
+              raw = """{"key":"1", "v1":"valore"}""".getBytes(StandardCharsets.UTF_8),
               headers = Array.empty,
               topic = topic1.name,
               partition = 1,
@@ -56,7 +57,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
             ),
             KafkaFakeRecord(
               key = "1".getBytes(StandardCharsets.UTF_8),
-              raw = """{"key":"1", "raw":"valore"}""".getBytes(StandardCharsets.UTF_8),
+              raw = """{"key":"1", "v1":"valore"}""".getBytes(StandardCharsets.UTF_8),
               headers = Array.empty,
               topic = topic2.name,
               partition = 1,
@@ -79,12 +80,34 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       val topic = topicTest("json")
       val allRightData = mockedSingleJsonData match {
         case start :+ last =>
-          start :+ last.copy(raw = """{"key":"1", "value":"value3"}""".getBytes(StandardCharsets.UTF_8))
+          start :+ last.copy(raw = """{"key":"1", "v1":"value3"}""".getBytes(StandardCharsets.UTF_8))
       }
       val df = spark.createDataFrame(allRightData)
       val outDf = KafkaSparkStructuredStreamingReader
         .selectForOneSchema(topic, df, Strict)
       assert(outDf.where(col("value").isNull).count() === 0)
+    }
+
+    "fail in STRICT mode a dataset to json with a missmatched column" in {
+      val topic = topicTest("json")
+      val allRightData = mockedSingleJsonData match {
+        case start :+ last =>
+          start :+ last.copy(raw = """{"key":"1", "badCol":"value3"}""".getBytes(StandardCharsets.UTF_8))
+      }
+      val df = spark.createDataFrame(allRightData)
+      val outDf = KafkaSparkStructuredStreamingReader
+        .selectForOneSchema(topic, df, Strict)
+      strictExceptionCheck(outDf, "json")
+    }
+
+    "throw an exception parsing in STRICT mode a dataset with null in json" in {
+      val topic = topicTest2("json")
+      val df = spark.createDataFrame(mockedSingleNullJsonData)
+
+      val outDf = KafkaSparkStructuredStreamingReader
+        .selectForOneSchema(topic, df, Strict)
+
+      strictExceptionCheck(outDf, "json")
     }
 
     "throw an exception parsing in STRICT mode a dataset with errors to json" in {
@@ -111,12 +134,23 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       val topic = topicTest("json")
       val df = spark.createDataFrame(mockedSingleJsonData)
 
+      val schemaAvro = new Schema.Parser().parse(topic.getJsonSchema)
+      val schema = AvroSchemaConverters.toSqlType(schemaAvro).dataType
+
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Handle).cache
       assert(outDf.where(col("raw").isNull).count() === 2)
       assert(outDf.where(col("raw").isNotNull).count() === 1)
-      assert(outDf.where(col("value").isNull || KafkaSparkStructuredStreamingReader.isNull(col("value"))).count() === 1)
-      assert(outDf.where(col("value").isNotNull && !KafkaSparkStructuredStreamingReader.isNull(col("value"))).count() === 2)
+      assert(outDf.where(col("value").isNull || KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col("value"))).count() === 1)
+      assert(outDf.where(col("value").isNotNull && !KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col("value"))).count() === 2)
       checkResultSchema(outDf, true)
+    }
+
+    "parse incorrectly in STRICT mode a null dataset to avro" in {
+      val topic = topicTest2("avro")
+      val correctedData = mockedSingleNullAvroData
+      val df = spark.createDataFrame(correctedData)
+      val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Strict)
+      strictExceptionCheck(outDf, "avro")
     }
 
     "parse correctly in STRICT mode a dataset to avro" in {
@@ -211,7 +245,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
           Seq(
             KafkaFakeRecord(
               key = "1".getBytes(StandardCharsets.UTF_8),
-              raw = """{"key":"1", "raw":"valore"}""".getBytes(StandardCharsets.UTF_8),
+              raw = """{"key":"1", "v1":"valore"}""".getBytes(StandardCharsets.UTF_8),
               headers = Array.empty,
               topic = topic1.name,
               partition = 1,
@@ -221,7 +255,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
             ),
             KafkaFakeRecord(
               key = "1".getBytes(StandardCharsets.UTF_8),
-              raw = """{"key":"1", "raw":"valore"}""".getBytes(StandardCharsets.UTF_8),
+              raw = """{"key":"1", "v1":"valore"}""".getBytes(StandardCharsets.UTF_8),
               headers = Array.empty,
               topic = topic2.name,
               partition = 1,
@@ -323,6 +357,19 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       }
     }
 
+    "break when schema error on json and Strict mode" in {
+      val editedSample = mockedMultiTopicData match {
+        case d1 :: tail =>
+          val editD1 = d1.copy(raw = """{"key":"1"}""".getBytes(StandardCharsets.UTF_8))
+          editD1 +: tail
+      }
+      val df = spark.createDataset(editedSample).toDF()
+
+      val outDF = KafkaSparkStructuredStreamingReader
+        .selectForMultipleSchema(multiTopicSeq, df, Strict)
+      strictExceptionCheck(outDF, "json")
+    }
+
     "break when parsing error on json and Strict mode" in {
       val editedSample = mockedMultiTopicData match {
         case d1 :: tail =>
@@ -365,11 +412,15 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       val topicJsonColName = s"${multiTopicSeq.head.name}"
       val outDF = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
 
+      // get json schema
+      val schemaAvro = new Schema.Parser().parse(multiTopicSeq.head.getJsonSchema)
+      val schema = AvroSchemaConverters.toSqlType(schemaAvro).dataType
+
       multiTopicSeq.tail.foreach { t =>
         val name = t.name
         assert(outDF.where(rawCol.isNull && col(name).isNotNull).count() === 1)
       }
-      assert(outDF.where(rawCol.isNotNull && ( col(topicJsonColName).isNull || KafkaSparkStructuredStreamingReader.isNull(col(topicJsonColName))) ).count() === 1)
+      assert(outDF.where(rawCol.isNotNull && ( col(topicJsonColName).isNull || KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col(topicJsonColName))) ).count() === 1)
     }
 
     "break when parsing error on avro and Strict mode" in {
@@ -476,7 +527,8 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
   def strictExceptionCheck(df: DataFrame, string2contain: String) = {
     Try(df.collect) match {
       case Success(_) => fail("a spark exception should be thrown, not a Success")
-      case Failure(e: SparkException) => assert(e.getCause.toString.contains(string2contain))
+      case Failure(e: SparkException) =>
+        assert(e.getCause.toString.contains(string2contain))
       case Failure(e) => fail(s"a spark exception should be thrown, not $e ")
     }
   }
@@ -498,6 +550,20 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       assert(parsedValue.toString().replaceAll(",true", ",false") == toCheck)
     }
   }
+
+  def topicTest2(_type: String, name: String = "topic-test"): TopicModel = TopicModel(
+    name,
+    0L,
+    0,
+    0,
+    _type,
+    None,
+    None,
+    Some(Nil),
+    useAvroSchemaManager = false,
+    BsonDocument.parse(AvroSchema[MockRecord4].toString(true)),
+    TopicCompression.Snappy
+  )
 
   def topicTest(_type: String, name: String = "topic-test"): TopicModel = TopicModel(
     name,
@@ -572,6 +638,23 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       )
     )
   }
+
+  val mockedSingleNullJsonData = {
+    val topic = topicTest("json")
+    Seq(
+      KafkaFakeRecord(
+        key = "1".getBytes(StandardCharsets.UTF_8),
+        raw = """{"key":"1"}""".getBytes(StandardCharsets.UTF_8),
+        headers = Array.empty,
+        topic = topic.name,
+        partition = 1,
+        offset = 0L,
+        timestamp = new Timestamp(0L),
+        timestampType = 0
+      )
+    )
+  }
+
   val mockedSingleJsonData = {
     val topic = topicTest("json")
     Seq(
@@ -607,6 +690,30 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       )
     )
   }
+
+  val mockedSingleNullAvroData = {
+    val topic = topicTest2("avro")
+    Seq(
+      KafkaFakeRecord(
+        key = "1".getBytes(StandardCharsets.UTF_8),
+        raw = {
+          val bos = new ByteArrayOutputStream()
+          val aos = AvroOutputStream.binary[MockRecord3](bos)
+          aos.write(MockRecord3("k"))
+          aos.flush()
+          aos.close()
+          bos.toByteArray
+        },
+        headers = Array.empty,
+        topic = topic.name,
+        partition = 1,
+        offset = 0L,
+        timestamp = new Timestamp(0L),
+        timestampType = 0
+      )
+    )
+  }
+
   val mockedSingleAvroData = {
     val topic = topicTest("avro")
     Seq(
@@ -659,6 +766,8 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 }
 
 case class MockRecord(key: String, v1: String)
+case class MockRecord3(key: String)
+case class MockRecord4(key: String, v1: Int)
 
 case class MockRecord2(raw: String)
 
