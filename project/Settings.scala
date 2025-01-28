@@ -36,18 +36,17 @@ class BasicResolvers extends Resolvers {
   val confluent      = "confluent" at "https://packages.confluent.io/maven/"
   val google         = "Google Maven" at "https://maven.google.com/"
 
-  val sonatypeReleaseRepos   = Resolver.sonatypeRepo("releases")
-  val sonatypeSnapshotsRepos = Resolver.sonatypeRepo("snapshots")
+  val sonatypeReleaseRepos   = Resolver.sonatypeOssRepos("releases")
+  val sonatypeSnapshotsRepos = Resolver.sonatypeOssRepos("snapshots")
 
   /** custom resolvers for dependencies */
   val resolvers = Seq(
     repo1Maven2,
     confluent,
-    sonatypeReleaseRepos,
-    sonatypeSnapshotsRepos,
     google,
-    mavenLocalRepo,
-  )
+    mavenLocalRepo
+  ) ++ sonatypeReleaseRepos ++ sonatypeSnapshotsRepos
+
 }
 
 class BasicSettings(
@@ -118,15 +117,14 @@ class BasicSettings(
           compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
           "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
         )
-      } else if(scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision >= 13){
+      } else if (scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision >= 13) {
         val silencerVersion = "1.17.13" // compatible with 2.11.12 and 2.12.10
 
         Seq(
           compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
           "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
-        )      }
-      else
-      {
+        )
+      } else {
         Seq()
       }
     },

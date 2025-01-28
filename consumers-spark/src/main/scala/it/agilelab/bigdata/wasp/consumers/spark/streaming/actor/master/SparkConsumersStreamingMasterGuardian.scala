@@ -145,7 +145,7 @@ class SparkConsumersStreamingMasterGuardian(
     case (Initializing, Initialized) =>
       unstashAll()
       log.debug("Unstashing")
-      log.info(s"Setting ${Timers.unschedulableCheck} to recover unshedulable pipegraphs")
+      log.info(s"Setting ${Timers.unschedulableCheck} to recover unschedulable pipegraphs")
       setTimer(Timers.unschedulableCheck, RecoverUnschedulable, unschedulableCheckInterval, repeat = true)
   }
 
