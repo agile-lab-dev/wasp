@@ -377,6 +377,7 @@ object WaspMongoDB extends Logging {
   val processGroupsName   = "processGroups"
   val httpName            = "http"
   val genericName         = "generic"
+  val sqlSinkName         = "sqlSink"
 
   val collectionsLookupTable: Map[Type, String] = Map(
     typeTag[PipegraphDBModel].tpe             -> pipegraphsName,
@@ -410,7 +411,8 @@ object WaspMongoDB extends Logging {
     typeTag[ProcessGroupDBModel].tpe          -> processGroupsName,
     typeTag[CompilerConfigDBModel].tpe        -> configurationsName,
     typeTag[HttpDBModel].tpe                  -> httpName,
-    typeTag[GenericDBModel].tpe               -> genericName
+    typeTag[GenericDBModel].tpe               -> genericName,
+    typeTag[SQLSinkModel].tpe                 -> sqlSinkName
   ).mapValues(name => appendPrefixOnlyIfNotEmptyOrNull(name))
 
   private def appendPrefixOnlyIfNotEmptyOrNull(name: String) = {

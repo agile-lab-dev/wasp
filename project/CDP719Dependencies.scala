@@ -1,5 +1,5 @@
 import com.typesafe.sbt.packager.Keys.scriptClasspath
-import sbt.*
+import sbt._
 import sbt.Keys.{libraryDependencies, transitiveClassifiers}
 
 class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
@@ -561,11 +561,17 @@ class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
   lazy val swaggerCore                  = "io.swagger.core.v3" % "swagger-core" % "2.1.2"
   lazy val nameOf                       = "com.github.dwickern" %% "scala-nameof" % "1.0.3" % "provided"
   lazy val sparkYarn                    = parcelDependencies.find(x => x.name == "spark-yarn").get
+  lazy val sparkStreaming               = "org.apache.spark" %% "spark-streaming" % versions.spark % Provided
+  lazy val sparkSQL                     = parcelDependencies.find(x => x.name == "spark-sql").get % Provided
+  lazy val sparkHive                    = parcelDependencies.find(x => x.name == "spark-hive").get % Provided
   lazy val guava                        = parcelDependencies.find(x => x.name == "guava").get
   lazy val sparkCore                    = parcelDependencies.find(x => x.name == "spark-core").get
   lazy val parserCombinators            = parcelDependencies.find(x => x.name.contains("scala-parser-combinators")).get
+  lazy val dpcp2                        = parcelDependencies.find(x => x.name == "commons-dbcp2").get
+  lazy val postgres                     = parcelDependencies.find(x => x.name == "postgresql" && x.organization == "org.postgresql").get
   lazy val postgresqlEmbedded           = "io.zonky.test" % "embedded-postgres" % versions.postgresqlEmbeddedVersion % Test
   lazy val postgresqlEmbeddedArm64      = "io.zonky.test.postgres" % "embedded-postgres-binaries-darwin-arm64v8" % "17.2.0" % Test
+  lazy val postgresqlEmbeddedArm64Linux = "io.zonky.test.postgres" % "embedded-postgres-binaries-linux-arm64v8" % "17.2.0" % Test
   lazy val mockOkHttp2                  = "com.squareup.okhttp" % "mockwebserver" % "2.7.5" % Test // in sync with CDP
   lazy val okHttp2 = Seq(
     "com.squareup.okhttp" % "mockwebserver" % "2.7.5" % Test,
@@ -595,8 +601,11 @@ class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
   override lazy val repositoryMongoDependencies: Seq[sbt.ModuleID] = Seq(nameOf, mongoTest) ++ testDependencies ++ Seq(
     shapeless
   )
-  override lazy val repositoryPostgresDependencies
-      : Seq[sbt.ModuleID]                                    = Seq(postgresqlEmbedded, postgresqlEmbeddedArm64) ++ testDependencies
+  override lazy val repositoryPostgresDependencies: Seq[sbt.ModuleID] = Seq(
+    postgresqlEmbedded,
+    postgresqlEmbeddedArm64,
+    postgresqlEmbeddedArm64Linux
+  ) ++ testDependencies
   override lazy val masterDependencies: Seq[sbt.ModuleID]    = testDependencies ++ allAkka
   override lazy val producersDependencies: Seq[sbt.ModuleID] = testDependencies ++ allAkka
   override lazy val consumersSparkDependencies
@@ -607,6 +616,17 @@ class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
   override lazy val pluginPlainHbaseWriterSparkDependencies: Seq[sbt.ModuleID] = hbase ++ testDependencies ++ Seq(
     hbaseTestingUtils,
     scalaTestMockito
+  )
+  override val pluginPostgreSQLSparkDependencies = Seq(
+    sparkSQL,
+    sparkHive,
+    sparkStreaming,
+    postgres,
+    dpcp2,
+    postgresqlEmbedded,
+    postgresqlEmbeddedArm64,
+    postgresqlEmbeddedArm64Linux,
+    scalaTest
   )
   override lazy val pluginKafkaSparkDependencies: Seq[sbt.ModuleID]    = Seq(spark_sql_kafka) ++ testDependencies
   override lazy val pluginKafkaSparkOldDependencies: Seq[sbt.ModuleID] = Seq(spark_sql_kafka_old) ++ testDependencies

@@ -23,7 +23,6 @@ class CDP719Versions {
   val spark                     = s"2.4.8.7.1.9.0-387"
   val sparkSolr                 = "3.8.1"
   val sttpVersion               = "2.1.2"
-  val postgresqlVersion         = "42.2.5"
   val postgresqlEmbeddedVersion = "2.1.0"
   val hadoop                    = "3.1.1.7.1.9.0-387"
   val awsBundle                 = "1.11.375"

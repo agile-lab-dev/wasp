@@ -100,6 +100,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     dpcp2,
     postgresqlEmbedded,
     postgresqlEmbeddedArm64,
+    postgresqlEmbeddedArm64Linux,
     sparkSQL
   ).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
 
@@ -158,6 +159,18 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
       hbase2.map(_.exclude(exclusions.nettyExclude)) ++
       jacksonTestDependencies ++
       Seq(scalaTest, scalaTestMockito, hbaseTestingUtils))
+
+  override val pluginPostgreSQLSparkDependencies = Seq(
+    sparkSQL,
+    sparkHive,
+    sparkStreaming,
+    postgres,
+    dpcp2,
+    postgresqlEmbedded,
+    postgresqlEmbeddedArm64,
+    postgresqlEmbeddedArm64Linux,
+    scalaTest
+  )
 
   override val pluginKafkaSparkDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
@@ -341,6 +354,7 @@ trait Vanilla2SparkDependencies extends Vanilla2HadoopDependencies {
   lazy val sparkMLlib         = "org.apache.spark" %% "spark-mllib" % versions.spark % Provided
   lazy val sparkSQL           = "org.apache.spark" %% "spark-sql" % versions.spark % Provided
   lazy val sparkYarn          = "org.apache.spark" %% "spark-yarn" % versions.spark % Provided
+  lazy val sparkStreaming     = "org.apache.spark" %% "spark-streaming" % versions.spark % Provided
   lazy val sparkHive          = "org.apache.spark" %% "spark-hive" % versions.spark % Provided
   lazy val sparkCoreTests     = sparkCore classifier "tests"
   lazy val sparkSQLTests      = "org.apache.spark" %% "spark-sql" % versions.spark % "provided,test" classifier "tests"
@@ -372,6 +386,7 @@ trait Vanilla2KafkaDependencies {
   val exclusions: VanillaExclusions.type
   lazy val kafka            = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
   lazy val kafkaClients     = "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaStreaming   = "org.apache.spark" %% "spark-streaming-kafka-0-8" % versions.spark exclude (exclusions.sparkExclusions ++ exclusions.kafka08Exclude) // TODO remove jersey?
   lazy val kafkaTests       = kafka              % Test exclude (exclusions.jacksonExclude)
   lazy val sparkSqlKafka    = "it.agilelab"      %% "wasp-spark-sql-kafka" % versions.sparkSqlKafka
   lazy val sparkSqlKafkaOld = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % versions.sparkSqlKafka
@@ -485,8 +500,9 @@ trait Vanilla2OkHttpDependencies {
 trait Vanilla2PostgresDependencies {
   val versions: Vanilla2Versions
 
-  lazy val postgres                = "org.postgresql"         % "postgresql"                                % versions.postgresqlVersion
-  lazy val postgresqlEmbedded      = "io.zonky.test"          % "embedded-postgres"                         % versions.postgresqlEmbeddedVersion % Test
-  lazy val postgresqlEmbeddedArm64 = "io.zonky.test.postgres" % "embedded-postgres-binaries-darwin-arm64v8" % "17.2.0" % Test
+  lazy val postgres                     = "org.postgresql"         % "postgresql"                                % versions.postgresqlVersion
+  lazy val postgresqlEmbedded           = "io.zonky.test"          % "embedded-postgres"                         % versions.postgresqlEmbeddedVersion % Test
+  lazy val postgresqlEmbeddedArm64      = "io.zonky.test.postgres" % "embedded-postgres-binaries-darwin-arm64v8" % "17.2.0" % Test
+  lazy val postgresqlEmbeddedArm64Linux = "io.zonky.test.postgres" % "embedded-postgres-binaries-linux-arm64v8"  % "17.2.0" % Test
 
 }

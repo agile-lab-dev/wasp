@@ -119,6 +119,11 @@ lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc
   .settings(libraryDependencies ++= dependencies.sparkPluginBasicDependencies)
   .dependsOn(consumers_spark)
 
+lazy val plugin_postgresql_spark = Project("wasp-plugin-postgresql-spark", file("plugin-postgresql-spark"))
+  .settings(settings.commonSettings: _*)
+  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .settings(libraryDependencies ++= dependencies.pluginPostgreSQLSparkDependencies)
+
 lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-kafka-spark"))
   .settings(settings.commonSettings: _*)
   .settings(
@@ -281,6 +286,7 @@ lazy val plugin =
         plugin_hbase_spark,
         plugin_plain_hbase_writer_spark,
         plugin_jdbc_spark,
+        plugin_postgresql_spark,
         plugin_kafka_spark,
         plugin_kafka_spark_old,
         plugin_raw_spark,
@@ -352,6 +358,7 @@ lazy val whiteLabelConsumersSpark =
       .dependsOn(plugin_console_spark)
       .dependsOn(plugin_hbase_spark)
       .dependsOn(plugin_jdbc_spark)
+      .dependsOn(plugin_postgresql_spark)
       .dependsOn(plugin_kafka_spark)
       .dependsOn(plugin_mailer_spark)
       .dependsOn(plugin_raw_spark)

@@ -29,6 +29,11 @@ object VanillaExclusions {
     MavenCoordinate("org.slf4j", "slf4j-log4j12")
   )
 
+  lazy val logbackExclude: Vector[MavenCoordinate] = Vector(
+    MavenCoordinate("ch.qos.logback", "logback-classic"),
+    MavenCoordinate("ch.qos.logback", "logback-core")
+  )
+
   lazy val akkaKryoExclude: Vector[MavenCoordinate] =
     Vector(MavenCoordinate("net.jpountz.lz4", "lz4"), MavenCoordinate("org.lz4", "lz4-java"))
 

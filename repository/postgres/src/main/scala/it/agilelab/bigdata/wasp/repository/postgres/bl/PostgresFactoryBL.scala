@@ -23,13 +23,13 @@ class PostgresFactoryBL extends FactoryBL {
 
   override def getCdcBL: CdcBL = CdcBLImpl(WaspPostgresDB.getDB())
 
-  override def getKeyValueBL: KeyValueBL =  KeyValueBLImpl(WaspPostgresDB.getDB())
+  override def getKeyValueBL: KeyValueBL = KeyValueBLImpl(WaspPostgresDB.getDB())
 
   override def getBatchSchedulersBL: BatchSchedulersBLImpl = BatchSchedulersBLImpl(WaspPostgresDB.getDB())
 
   override def getDocumentBL: DocumentBL = DocumentBLImpl(WaspPostgresDB.getDB())
 
-  override def getFreeCodeBL: FreeCodeBL =  FreeCodeBLImpl(WaspPostgresDB.getDB())
+  override def getFreeCodeBL: FreeCodeBL = FreeCodeBLImpl(WaspPostgresDB.getDB())
 
   override def getProcessGroupBL: ProcessGroupBL = ProcessGroupBLImpl(WaspPostgresDB.getDB())
 
@@ -40,4 +40,7 @@ class PostgresFactoryBL extends FactoryBL {
   override def getHttpBl: HttpBL = HttpBLImpl(WaspPostgresDB.getDB)
 
   override def getGenericBL: GenericBL = GenericBLImpl(WaspPostgresDB.getDB())
+
+  override def getSQLSinkBL: SQLSinkBL = SQLSinkBLImpl(WaspPostgresDB.getDB())
+
 }

@@ -184,6 +184,16 @@ class EMR613Dependencies(val versions: EMR613Versions)
       jacksonTestDependencies ++
       Seq(scalaTest, hbaseTestingUtils))
 
+  override val pluginPostgreSQLSparkDependencies = Seq(
+    sparkSQL,
+    sparkHive,
+    sparkStreaming,
+    postgres,
+    dpcp2,
+    postgresqlEmbedded,
+    scalaTest
+  )
+
   override val pluginKafkaSparkDependencies: Seq[ModuleID] =
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
       .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
@@ -381,6 +391,7 @@ trait EMR613SparkDependencies extends EMR613HadoopDependencies {
   lazy val sparkMLlib         = "org.apache.spark" %% "spark-mllib" % versions.spark % Provided
   lazy val sparkSQL           = "org.apache.spark" %% "spark-sql" % versions.spark % Provided
   lazy val sparkYarn          = "org.apache.spark" %% "spark-yarn" % versions.spark % Provided
+  lazy val sparkStreaming     = "org.apache.spark" %% "spark-streaming" % versions.spark % Provided
   lazy val sparkHive          = "org.apache.spark" %% "spark-hive" % versions.spark % Provided
   lazy val sparkCoreTests     = sparkCore classifier "tests"
   lazy val sparkSQLTests      = "org.apache.spark" %% "spark-sql" % versions.spark % "provided,test" classifier "tests"

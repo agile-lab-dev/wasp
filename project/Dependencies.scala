@@ -21,6 +21,7 @@ trait Dependencies {
   val pluginElasticSparkDependencies: Seq[ModuleID]
   val pluginHbaseSparkDependencies: Seq[ModuleID]
   val pluginPlainHbaseWriterSparkDependencies: Seq[ModuleID]
+  val pluginPostgreSQLSparkDependencies: Seq[ModuleID]
   val pluginKafkaSparkDependencies: Seq[ModuleID]
   val pluginKafkaSparkOldDependencies: Seq[ModuleID]
   val pluginSolrSparkDependencies: Seq[ModuleID]
