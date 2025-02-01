@@ -4,9 +4,8 @@ import org.apache.spark.SparkEnv
 import org.apache.spark.sql.SparkSession
 import org.scalatest.FunSuite
 
-class HBaseContextSerializationSuite extends FunSuite {
+class HBaseContextSerializationSuite extends FunSuite with SparkSuite {
   test("hbase context is serializable") {
-    val spark = SparkSession.builder().master("local[4]").getOrCreate()
     try {
       SparkEnv.get.closureSerializer
         .newInstance()

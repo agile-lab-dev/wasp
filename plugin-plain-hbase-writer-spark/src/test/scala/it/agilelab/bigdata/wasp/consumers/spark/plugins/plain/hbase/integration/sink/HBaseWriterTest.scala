@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.sink
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration._
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.Connection
 import org.apache.spark.sql.Row
@@ -10,22 +11,21 @@ import org.apache.spark.sql.types._
 import org.mockito.ArgumentMatchers.{any, anyInt}
 import org.mockito.Mockito.when
 import org.mockito.MockitoSugar.withObjectMocked
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.mockito.MockitoSugar.mock
 
-class HBaseWriterTest extends TestFixture  with Matchers with MockitoSugar with BeforeAndAfterAll{
-
-  val spark = sparkSession
-
-  override def afterAll(): Unit = {
-    spark.stop()
-  }
+class HBaseWriterTest extends TestFixture with SparkSuite with BeforeAndAfterAll {
 
   "HBaseWriter" should {
 
     "validate input dataframe schema" in {
       val simpleData = Seq(
-        Row(HBaseWriterProperties.UpsertOperation, "aaa".getBytes(), "col".getBytes(), Map("value".getBytes() -> "v".getBytes()))
+        Row(
+          HBaseWriterProperties.UpsertOperation,
+          "aaa".getBytes(),
+          "col".getBytes(),
+          Map("value".getBytes() -> "v".getBytes())
+        )
       )
 
       val expectedSchema = StructType(
@@ -91,7 +91,6 @@ class HBaseWriterTest extends TestFixture  with Matchers with MockitoSugar with 
       caught.getMessage shouldEqual "columnFamily attribute unsupported type string. It must be a BinaryType"
     }
 
-
     "launch exception if values is not in the right format" in {
       val simpleData = Seq(
         Row(HBaseWriterProperties.UpsertOperation, "aaa".getBytes(), "col", Map("value" -> "v"))
@@ -113,8 +112,7 @@ class HBaseWriterTest extends TestFixture  with Matchers with MockitoSugar with 
           .validateQuery(df.schema.fields.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()))
       }
 
-      caught
-        .getMessage shouldEqual "values attribute unsupported type map<string,string>. It must be a MapType(BinaryType,BinaryType,true)"
+      caught.getMessage shouldEqual "values attribute unsupported type map<string,string>. It must be a MapType(BinaryType,BinaryType,true)"
     }
 
     "launch exception if required field is not present" in {
@@ -137,8 +135,7 @@ class HBaseWriterTest extends TestFixture  with Matchers with MockitoSugar with 
           .validateQuery(df.schema.fields.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()))
       }
 
-      caught
-        .getMessage shouldEqual "operation is mandatory"
+      caught.getMessage shouldEqual "operation is mandatory"
     }
 
     "validate input dataframe if missing a non mandatory field" in {
@@ -154,12 +151,12 @@ class HBaseWriterTest extends TestFixture  with Matchers with MockitoSugar with 
         )
       )
 
-      val df = spark.createDataFrame(spark.sparkContext.parallelize(simpleData), expectedSchema)
+      val rdd = spark.sparkContext.parallelize(simpleData)
+      val df = spark.createDataFrame(rdd, expectedSchema)
 
       HBaseWriter
-          .validateQuery(df.schema.fields.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()))
+        .validateQuery(df.schema.fields.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()))
     }
-
 
   }
 

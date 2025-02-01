@@ -1,5 +1,7 @@
 import Flavor.EMR613
 
+val dependCompileOnCompileAndTestOnTest = "compile->compile;test->test"
+
 lazy val flavor = {
   val f = Flavor.currentFlavor()
   System.err.println(Utils.printWithBorders(s"Building for flavor: ${f}", "*"))
@@ -111,7 +113,7 @@ lazy val plugin_hbase_spark = Project("wasp-plugin-hbase-spark", file("plugin-hb
 lazy val plugin_plain_hbase_writer_spark =
   Project("wasp-plugin-plain-hbase-writer-spark", file("plugin-plain-hbase-writer-spark"))
     .settings(settings.commonSettings: _*)
-    .dependsOn(consumers_spark)
+    .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
     .settings(libraryDependencies ++= dependencies.pluginPlainHbaseWriterSparkDependencies)
 
 lazy val plugin_jdbc_spark = Project("wasp-plugin-jdbc-spark", file("plugin-jdbc-spark"))
@@ -130,7 +132,7 @@ lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-ka
     Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
       / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
   )
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkDependencies)
 
 lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
@@ -141,13 +143,13 @@ lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("p
     Test / unmanagedSourceDirectories += baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "test"
       / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
   )
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkOldDependencies)
 
 lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
   .settings(settings.commonSettings: _*)
   .settings(libraryDependencies ++= dependencies.sparkPluginBasicDependencies)
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
 
 lazy val plugin_solr_spark = Project("wasp-plugin-solr-spark", file("plugin-solr-spark"))
   .settings(settings.commonSettings: _*)
@@ -170,30 +172,26 @@ lazy val plugin_http_spark = Project("wasp-plugin-http-spark", file("plugin-http
       / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
   )
   .settings(settings.commonSettings: _*)
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
   .settings(libraryDependencies ++= dependencies.pluginHttpSparkDependencies)
 
 lazy val plugin_cdc_spark = Project("wasp-plugin-cdc-spark", file("plugin-cdc-spark"))
   .settings(settings.commonSettings: _*)
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
   .settings(libraryDependencies ++= dependencies.pluginCdcSparkDependencies)
 
 lazy val microservice_catalog = Project("wasp-microservice-catalog", file("microservice-catalog"))
   .settings(settings.commonSettings: _*)
   .settings(libraryDependencies ++= dependencies.microserviceCatalogDependencies)
-  .dependsOn(consumers_spark % "compile->compile;test->test")
+  .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
 
 lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark", file("plugin-parallel-write-spark"))
-  .settings(
-    Test / unmanagedSourceDirectories += sourceDirectory.value / "test"
-      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
-  )
   .settings(Defaults.itSettings)
   .settings(settings.commonSettings: _*)
   .settings(settings.disableParallelTests)
   .settings(libraryDependencies ++= dependencies.pluginParallelWriteSparkDependencies)
-  .dependsOn(microservice_catalog % "compile->compile;test->test")
-  .dependsOn(aws_auth_temporary_credentials % "compile->compile;test->test")
+  .dependsOn(microservice_catalog % dependCompileOnCompileAndTestOnTest)
+  .dependsOn(aws_auth_temporary_credentials % dependCompileOnCompileAndTestOnTest)
 
 /* Yarn  */
 

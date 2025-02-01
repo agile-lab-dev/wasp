@@ -1,15 +1,15 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils
 
-import com.squareup.okhttp.mockwebserver.{ Dispatcher, MockResponse, RecordedRequest }
+import com.squareup.okhttp.mockwebserver.{Dispatcher, MockResponse, RecordedRequest}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.ParallelWriteSparkStructuredStreamingWriter
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModel
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.streaming.MemoryStream
-import org.apache.spark.sql.streaming.{ DataStreamWriter, StreamingQuery, StreamingQueryException }
+import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, StreamingQueryException}
 import org.apache.spark.sql.types.StructType
 import org.scalatest.Suite
 
-import java.util.concurrent.{ CountDownLatch, TimeUnit }
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 trait ParallelWriteTest extends TempDirectoryTest { this: Suite =>
 
@@ -61,16 +61,16 @@ trait ParallelWriteTest extends TempDirectoryTest { this: Suite =>
     }
 
   def createAndExecuteStreamingQuery[A](
-    latch: CountDownLatch,
-    source: MemoryStream[A],
-    genericModel: ParallelWriteModel,
-    schema: StructType,
-    myDf: A*
+      latch: CountDownLatch,
+      source: MemoryStream[A],
+      genericModel: ParallelWriteModel,
+      schema: StructType,
+      myDf: A*
   ): Option[StreamingQueryException] = {
 
     val dsw: DataStreamWriter[Row] =
       new ParallelWriteSparkStructuredStreamingWriter(genericModel, MockCatalogService(schema: StructType))
-        .write(source.toDF().repartition(10))
+        .write(source.toDF().repartition(1))
 
     val streamingQuery: StreamingQuery = dsw.start()
 

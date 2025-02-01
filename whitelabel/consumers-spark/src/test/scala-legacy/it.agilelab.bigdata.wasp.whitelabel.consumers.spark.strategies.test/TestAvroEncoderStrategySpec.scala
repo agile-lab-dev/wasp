@@ -2,10 +2,10 @@ package it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test
 
 import java.io.{ByteArrayInputStream, DataInputStream, InputStream}
 import java.nio.ByteOrder
-
 import com.google.common.io.ByteStreams
 import com.sksamuel.avro4s.{AvroSchema, FromRecord}
 import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestNestedDocument, TestState}
 import it.agilelab.darwin.common.Logging
 import it.agilelab.darwin.connector.mock.MockConnector
@@ -22,20 +22,11 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
-class TestAvroEncoderStrategySpec extends FlatSpec with Matchers with BeforeAndAfterEach with Logging {
+class TestAvroEncoderStrategySpec extends FlatSpec with Matchers with SparkSuite with Logging {
 
   private val master = "local"
 
   private val appName = "Test"
-
-  var spark: SparkSession = _
-
-  override def beforeEach(): Unit = {
-    spark = new SparkSession.Builder()
-      .appName(appName)
-      .master(master)
-      .getOrCreate()
-  }
 
   /**
     * The test checks if the state generated in it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestAvroEncoderStrategy

@@ -1,9 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.http.utils
 
 import it.agilelab.bigdata.wasp.consumers.spark.http.data.{EnrichedData, FromKafka}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import org.apache.spark.sql.DataFrame
 
-trait SampleEnrichmentUtil { _: SparkSessionTestWrapper =>
+trait SampleEnrichmentUtil { _: SparkSuite =>
 
   protected val dataInEv1 = {
     FromKafka("abc123", "Author1", 1L)
@@ -12,7 +13,7 @@ trait SampleEnrichmentUtil { _: SparkSessionTestWrapper =>
     FromKafka("def456", "Author2", 2L)
   }
 
-  protected val dataOutEnv =  {
+  protected val dataOutEnv = {
     EnrichedData("abc123", "Text1", "Author1", 1L)
   }
 

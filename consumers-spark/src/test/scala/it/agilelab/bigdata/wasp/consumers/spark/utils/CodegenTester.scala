@@ -1,9 +1,8 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import it.agilelab.bigdata.wasp.core.utils.SparkTestKit
 import org.apache.spark.sql.internal.SQLConf
 
-trait CodegenTester extends SparkTestKit {
+trait CodegenTester extends SparkSuite {
 
   def testAllCodegen(f: => Unit) = {
     testWholestageCodegen(f)
@@ -11,19 +10,19 @@ trait CodegenTester extends SparkTestKit {
   }
 
   def testWholestageCodegen(f: => Unit) = {
-    val defValue = ss.conf.getOption(SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key).getOrElse("true")
-    ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=true")
-    ss.sql(s"set ${SQLConf.CODEGEN_FALLBACK.key}=false")
+    val defValue = spark.conf.getOption(SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key).getOrElse("true")
+    spark.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=true")
+    spark.sql(s"set ${SQLConf.CODEGEN_FALLBACK.key}=false")
     f
-    ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=$defValue")
+    spark.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=$defValue")
   }
 
   def testNonWholestageCodegen(f: => Unit) = {
-    val defValue = ss.conf.getOption(SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key).getOrElse("true")
-    ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=false")
-    ss.sql(s"set ${SQLConf.CODEGEN_FALLBACK.key}=false")
+    val defValue = spark.conf.getOption(SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key).getOrElse("true")
+    spark.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=false")
+    spark.sql(s"set ${SQLConf.CODEGEN_FALLBACK.key}=false")
     f
-    ss.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=$defValue")
+    spark.sql(s"set ${SQLConf.WHOLESTAGE_CODEGEN_ENABLED.key}=$defValue")
   }
 
 }

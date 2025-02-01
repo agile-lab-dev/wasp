@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.sink.HBaseWriterProperties
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.{HBaseTestingUtility, HConstants, TableName}
 import org.apache.spark.sql.execution.streaming.{LongOffset, MemoryStream}
@@ -15,7 +16,7 @@ import scala.collection.JavaConverters._
   * vanilla flavours, so it can be run only with CDP or CDH flavours
   */
 @Ignore
-class DefaultSourceTest extends TestFixture with BeforeAndAfterAll{
+class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterAll {
 
   val hbaseTestUtils = new HBaseTestingUtility
 
@@ -32,20 +33,18 @@ class DefaultSourceTest extends TestFixture with BeforeAndAfterAll{
       hbaseTestUtils.getConfiguration.addResource("hbase/hbase-policy-local.xml")
       hbaseTestUtils.getConfiguration.reloadConfiguration()
       hbaseTestUtils.startMiniCluster
-      new HBaseContext(sqlContext.sparkContext, hbaseTestUtils.getConfiguration)
+      new HBaseContext(spark.sparkContext, hbaseTestUtils.getConfiguration)
     } catch {
       case e: Exception => logger.error("Unable to start hbase mini cluster", e)
     }
 
   }
 
-  val spark = sparkSession
-
-  import spark.implicits._
-
   implicit val sqlContext = spark.sqlContext
 
   "DefaultSource" should {
+
+    import spark.implicits._
 
     "write data to hbase" in {
       val connection = ConnectionFactory.createConnection(hbaseTestUtils.getConfiguration)

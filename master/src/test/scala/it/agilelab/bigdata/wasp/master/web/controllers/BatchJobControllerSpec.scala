@@ -1,17 +1,27 @@
 package it.agilelab.bigdata.wasp.master.web.controllers
 
 import java.util.UUID
-
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.typesafe.config.{Config, ConfigFactory}
 import it.agilelab.bigdata.wasp.models.IndexModelBuilder.Solr
-import it.agilelab.bigdata.wasp.models.{BatchETLModel, BatchJobInstanceModel, BatchJobModel, IndexModel, IndexModelBuilder, JobStatus, LegacyStreamingETLModel, RawModel, ReaderModel, StrategyModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  BatchETLModel,
+  BatchJobInstanceModel,
+  BatchJobModel,
+  IndexModel,
+  IndexModelBuilder,
+  JobStatus,
+  LegacyStreamingETLModel,
+  RawModel,
+  ReaderModel,
+  StrategyModel,
+  WriterModel
+}
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsObject, JsString, JsonFormat, RootJsonFormat}
 import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
-
 
 class MockBatchJobService extends BatchJobService {
 
@@ -76,8 +86,7 @@ class MockBatchJobService extends BatchJobService {
     storage = storage.filterNot(m => m.name == batchJob.name) :+ batchJob
   }
 
-  override def start(name: String,
-                     restConfig: Config): Either[String, String] = {
+  override def start(name: String, restConfig: Config): Either[String, String] = {
 
     val maybeModel = storage.find(_.name == name)
 
@@ -97,7 +106,7 @@ class MockBatchJobService extends BatchJobService {
       Right(
         JsObject(
           "startResult" -> JsString(s"Batch job '$name' start accepted'"),
-          "instance" -> JsString(s"${maybeInstance.get.name}")
+          "instance"    -> JsString(s"${maybeInstance.get.name}")
         ).toString
       )
     } else {
@@ -124,19 +133,15 @@ class MockBatchJobService extends BatchJobService {
 case class AngularResponse[T](Result: String, data: T)
 case class BatchJobStartResult(startResult: String, instance: String)
 
-class BatchJobControllerSpec
-    extends FlatSpec
-    with ScalatestRouteTest
-    with Matchers
-    with JsonSupport {
+class BatchJobControllerSpec extends FlatSpec with ScalatestRouteTest with Matchers with JsonSupport {
 
-  implicit def angularResponse[T: JsonFormat]
-    : RootJsonFormat[AngularResponse[T]] = jsonFormat2(AngularResponse.apply[T])
+  implicit def angularResponse[T: JsonFormat]: RootJsonFormat[AngularResponse[T]] =
+    jsonFormat2(AngularResponse.apply[T])
   implicit val batchJobStartResult: RootJsonFormat[BatchJobStartResult] =
     jsonFormat2(BatchJobStartResult.apply)
 
   it should "Respond to get requests" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
     Get("/batchjobs") ~> controller.getRoute ~> check {
@@ -147,7 +152,7 @@ class BatchJobControllerSpec
   }
 
   it should "insert new batch jobs" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
     val batchJob = service.storage.head.copy(name = "TestBatch")
@@ -160,7 +165,7 @@ class BatchJobControllerSpec
   }
 
   it should "update other batch jobs" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
     val batchJob = service.storage.head.copy(owner = "ciccio")
@@ -173,7 +178,7 @@ class BatchJobControllerSpec
   }
 
   it should "It should delete batch jobs" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
     Delete("/batchjobs/TestBatchJobFromSolrToHdfs") ~> controller.getRoute ~> check {
@@ -184,7 +189,7 @@ class BatchJobControllerSpec
   }
 
   it should "It should start jobs" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
     Post("/batchjobs/TestBatchJobFromSolrToHdfs/start") ~> controller.getRoute ~> check {
@@ -201,20 +206,19 @@ class BatchJobControllerSpec
   }
 
   it should "It should start jobs with rest config" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
-    val restConfig =  ConfigFactory.parseString("""
+    val restConfig = ConfigFactory.parseString("""
         |{
         | "ciccio": "pasticcio"
         |}
         |""".stripMargin)
 
-
-    Post("/batchjobs/TestBatchJobFromSolrToHdfs/start", restConfig) ~> controller.getRoute ~>  check {
+    Post("/batchjobs/TestBatchJobFromSolrToHdfs/start", restConfig) ~> controller.getRoute ~> check {
       val response = responseAs[AngularResponse[BatchJobStartResult]]
 
-      service.instances.head.restConfig shouldEqual(restConfig)
+      service.instances.head.restConfig shouldEqual (restConfig)
 
       response shouldEqual AngularResponse(
         "OK",
@@ -227,7 +231,7 @@ class BatchJobControllerSpec
   }
 
   it should "list instances" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
     service.start("TestBatchJobFromSolrToHdfs", ConfigFactory.empty())
@@ -242,9 +246,8 @@ class BatchJobControllerSpec
     }
   }
 
-
   it should "retrieve specific instances" in {
-    val service = new MockBatchJobService()
+    val service    = new MockBatchJobService()
     val controller = new BatchJobController(service)
 
     service.start("TestBatchJobFromSolrToHdfs", ConfigFactory.empty())

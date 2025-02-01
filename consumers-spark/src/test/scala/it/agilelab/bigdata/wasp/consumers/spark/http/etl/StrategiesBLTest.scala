@@ -5,11 +5,12 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, get, post, stubFor, urlEqualTo}
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import it.agilelab.bigdata.wasp.consumers.spark.enrichment.enrichmentPipegraph
-import it.agilelab.bigdata.wasp.consumers.spark.http.utils.{SampleEnrichmentUtil, SparkSessionTestWrapper, StrategiesUtil}
+import it.agilelab.bigdata.wasp.consumers.spark.http.utils.{SampleEnrichmentUtil, StrategiesUtil}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.ReaderKey
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 
-class CustomEnrichmentStrategyTest extends FunSuite with SparkSessionTestWrapper with StrategiesUtil with SampleEnrichmentUtil {
+class CustomEnrichmentStrategyTest extends FunSuite with SparkSuite with StrategiesUtil with SampleEnrichmentUtil {
   test("CustomEnrichmentTest") {
     val customEnrichmentStrategy = new CustomEnrichmentStrategy
     customEnrichmentStrategy.enricherConfig = enrichmentPipegraph.enrichmentSources
@@ -20,7 +21,7 @@ class CustomEnrichmentStrategyTest extends FunSuite with SparkSessionTestWrapper
   }
 }
 
-class HttpEnrichmentStrategyTest extends FunSuite with BeforeAndAfterEach with SparkSessionTestWrapper with StrategiesUtil with SampleEnrichmentUtil {
+class HttpEnrichmentStrategyTest extends FunSuite with BeforeAndAfterEach with SparkSuite with StrategiesUtil with SampleEnrichmentUtil {
 
   val Port = 8080
   val Host = "localhost"

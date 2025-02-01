@@ -1,5 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.jdbc
 
+import it.agilelab.bigdata.wasp.consumers.spark.SparkSingletons
 import it.agilelab.bigdata.wasp.consumers.spark.readers.SparkBatchReader
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.JDBCProduct
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -39,7 +40,7 @@ class JDBCSparkBatchReader(sqlModel: SqlSourceModel) extends SparkBatchReader wi
 
     //Workaround SparkSession retrieval
     
-    val ss: SparkSession = SparkSession.builder().getOrCreate()
+    val ss: SparkSession = SparkSingletons.getSparkSession
 
     val df: DataFrame =
       ss.read

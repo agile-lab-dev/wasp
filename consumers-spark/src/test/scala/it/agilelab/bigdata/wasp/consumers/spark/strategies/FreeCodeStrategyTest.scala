@@ -1,23 +1,24 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies
 
-import java.util.Properties
-
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.eventengine.{FakeData, SparkSetup}
+import it.agilelab.bigdata.wasp.consumers.spark.eventengine.FakeData
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{FlatSpec, Matchers}
 
-class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSetup {
+import java.util.Properties
+
+class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSuite {
 
 
-  def createDataframe(ss: SparkSession, prefix: String, range: Seq[Int]): DataFrame = {
-    import ss.implicits._
-    ss.sparkContext.parallelize(range).map(i => FakeData(prefix, i.toFloat, i.toLong, i.toString, i)).toDF
+  def createDataframe(spark: SparkSession, prefix: String, range: Seq[Int]): DataFrame = {
+    import spark.implicits._
+    spark.sparkContext.parallelize(range).map(i => FakeData(prefix, i.toFloat, i.toLong, i.toString, i)).toDF
   }
 
-  it should "test create a reflection strategy" in withSparkSession { ss =>
+  it should "test create a reflection strategy" in {
 
-    val map = (1 to 2).map(i => ReaderKey(s"key_$i", "2") -> createDataframe(ss, s"test_$i", 1 to 10)).toMap
+    val map = (1 to 2).map(i => ReaderKey(s"key_$i", "2") -> createDataframe(spark, s"test_$i", 1 to 10)).toMap
     val strategy = new FreeCodeStrategy(
       """
         |import it.agilelab.bigdata.wasp.consumers.spark.strategies.TestObj._
@@ -42,9 +43,9 @@ class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSetup {
   }
 
 
-  it should "test using the config on reflation" in withSparkSession { ss =>
+  it should "test using the config on reflation" in {
 
-    val map = (1 to 2).map(i => ReaderKey(s"key_$i", "2") -> createDataframe(ss, s"test_$i", 1 to 10)).toMap
+    val map = (1 to 2).map(i => ReaderKey(s"key_$i", "2") -> createDataframe(spark, s"test_$i", 1 to 10)).toMap
     val strategy = new FreeCodeStrategy(
       """
         |

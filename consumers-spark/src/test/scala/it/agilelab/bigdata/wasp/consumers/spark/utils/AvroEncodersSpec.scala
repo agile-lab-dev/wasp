@@ -40,7 +40,7 @@ class AvroEncodersSpec extends WordSpec with Matchers with CodegenTester {
         toRecord1,
         fromRecord1
       )
-      val df = ss.createDataset(elements)(encoder)
+      val df = spark.createDataset(elements)(encoder)
 
       assert(df.schema.fieldNames.toList == Seq("value"))
       val result = df.collect()

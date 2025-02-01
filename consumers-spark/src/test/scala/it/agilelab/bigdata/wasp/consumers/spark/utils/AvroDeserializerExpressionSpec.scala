@@ -85,7 +85,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
 
     "correctly handle serialization when not using darwin but data is produced using avro schema manager" in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
 
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
       val serialized = serializeElements(elements.toList)
@@ -105,7 +105,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
           newArray
       }
 
-      val df = sc.parallelize(b, 4).toDF("serialized")
+      val df = spark.sparkContext.parallelize(b, 4).toDF("serialized")
       val expr = AvroDeserializerExpression($"serialized".expr, TestSchemas.schema.toString, None, useSchemaManager = true)
       val results = df.select(new Column(expr)).collect().map(_.getStruct(0))
       elements.zip(results).foreach { case (truth, res) => compareRowWithUglyClass(truth, res) }
@@ -113,22 +113,22 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
 
     "correctly handle serialization when not using darwin" in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
       val serialized = serializeElements(elements.toList)
 
-      val df      = sc.parallelize(serialized, 4).toDF("serialized")
+      val df      = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr    = AvroDeserializerExpression($"serialized".expr, TestSchemas.schema.toString, None)
       val results = df.select(new Column(expr)).collect().map(_.getStruct(0))
       elements.zip(results).foreach { case (truth, res) => compareRowWithUglyClass(truth, res) }
     }
     "return null when raw data can't be parsed" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 10)
       val serialized = serializeElements(elements.toList) :+ "bad avro value".getBytes
 
-      val df = sc.parallelize(serialized, 4).toDF("serialized")
+      val df = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr = AvroDeserializerExpression($"serialized".expr, TestSchemas.schema.toString, None)
       val dfResult = df.select(new Column(expr).as("deserialized")).cache
       dfResult.where(col("deserialized").isNull).count should be(1)
@@ -138,13 +138,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Integer" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(Integer.valueOf)
       val schema     = SchemaBuilder.builder().intBuilder().endInt()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
       // resultDf.queryExecution.debug.codegen()
@@ -157,13 +157,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Float" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(f => java.lang.Float.valueOf(f + 0.1f))
       val schema     = SchemaBuilder.builder().floatBuilder().endFloat()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -176,13 +176,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Double" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(f => java.lang.Double.valueOf(f + 0.1d))
       val schema     = SchemaBuilder.builder().doubleBuilder().endDouble()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -195,13 +195,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Boolean" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(f => (f % 1) == 0)
       val schema     = SchemaBuilder.builder().booleanBuilder().endBoolean()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -214,13 +214,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Bytes" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(f => Seq.range(0, f).map(_ % 100).map(_.toByte).toArray)
       val schema     = SchemaBuilder.builder().bytesBuilder().endBytes()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -233,13 +233,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Array[Int]" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(f => Seq.range(0, f).map(_ % 100).toArray)
       val schema     = SchemaBuilder.builder().array().items(SchemaBuilder.builder().intBuilder().endInt())
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -252,13 +252,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Array[String]" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(f => Seq.range(0, f).map(_.toString).toArray)
       val schema     = SchemaBuilder.builder().array().items(SchemaBuilder.builder().stringBuilder().endString())
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -271,13 +271,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Long" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(Int.MaxValue.toLong, Int.MaxValue + 1000L).map(java.lang.Long.valueOf)
       val schema     = SchemaBuilder.builder().longBuilder().endLong()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -290,13 +290,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, String" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0, 1000).map(_.toString)
       val schema     = SchemaBuilder.builder().stringBuilder().endString()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -309,13 +309,13 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
     }
 
     "Handle values not boxed in generic record, Byte" in testAllCodegen {
-      import ss.implicits._
+      import spark.implicits._
 
       val elements   = Seq.range(0.toByte, Byte.MaxValue).map(java.lang.Byte.valueOf)
       val schema     = SchemaBuilder.builder().intBuilder().endInt()
       val serialized = serializeUnboxed(elements.toList, schema)
 
-      val df       = sc.parallelize(serialized, 4).toDF("serialized")
+      val df       = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
       val expr     = AvroDeserializerExpression($"serialized".expr, schema.toString(), None)
       val resultDf = df.select(new Column(expr))
 //       resultDf.queryExecution.debug.codegen()
@@ -329,11 +329,11 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
 
     "correctly handle serialization when using darwin" in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
       val elements   = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
       val serialized = serializeElements(elements)
 
-      val df = sc.parallelize(serialized, 4).toDF("serialized")
+      val df = spark.sparkContext.parallelize(serialized, 4).toDF("serialized")
 
       val darwinConf = ConfigFactory.parseString("""
           |type: cached_eager
@@ -355,7 +355,7 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       val child      = Literal(null, BinaryType)
       val expr1      = AvroDeserializerExpression(child, TestSchemas.schema.toString, Some(darwinConf))
       val expr2      = AvroDeserializerExpression(child, TestSchemas.schema.toString, None)
-      val res        = ss.range(1).select(new Column(expr1), new Column(expr2)).collect()
+      val res        = spark.range(1).select(new Column(expr1), new Column(expr2)).collect()
       assert(res sameElements Array(Row(null, null)))
     }
   }

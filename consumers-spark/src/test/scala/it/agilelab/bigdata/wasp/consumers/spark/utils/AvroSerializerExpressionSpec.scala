@@ -22,11 +22,11 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
     "Serialize with unboxed value schema String " in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
 
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000).toList
 
-      val df = sc.parallelize(elements, 4).toDF()
+      val df = spark.sparkContext.parallelize(elements, 4).toDF()
 
       val child = df.col("n.s").expr
 
@@ -56,11 +56,11 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
     "Serialize with unboxed value schema Long" in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
 
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000).toList
 
-      val df = sc.parallelize(elements, 4).toDF()
+      val df = spark.sparkContext.parallelize(elements, 4).toDF()
 
       val child = df.col("n.l").expr
 
@@ -89,11 +89,11 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
     "correctly handle serialization when not using darwin" in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
 
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
 
-      val df = sc.parallelize(elements, 4).toDF()
+      val df = spark.sparkContext.parallelize(elements, 4).toDF()
 
       val child = struct(df.columns.map(df.col): _*).expr
 
@@ -108,11 +108,11 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
     "correctly handle serialization when not using darwin but data is produced using avro schema manager" in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
 
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
 
-      val df = sc.parallelize(elements, 4).toDF()
+      val df = spark.sparkContext.parallelize(elements, 4).toDF()
 
       val child = struct(df.columns.map(df.col): _*).expr
 
@@ -128,11 +128,11 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
     "correctly handle serialization when using darwin" in testAllCodegen {
 
-      import ss.implicits._
+      import spark.implicits._
 
       val elements = RowToAvroExpressionTestDataGenerator.generate(1L, 1000)
 
-      val df = sc.parallelize(elements, 4).toDF()
+      val df = spark.sparkContext.parallelize(elements, 4).toDF()
 
       val child = struct(df.columns.map(df.col): _*).expr
 
@@ -166,7 +166,7 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
       val child      = Literal(null, schema)
       val expr1      = AvroSerializerExpression(Some(avroSchema.toString), "pippo", "wasp")(child, schema)
       val expr2      = AvroSerializerExpression(darwinConf, avroSchema, "pippo", "wasp")(child, schema)
-      val res        = ss.range(1).select(new Column(expr1), new Column(expr2)).collect()
+      val res        = spark.range(1).select(new Column(expr1), new Column(expr2)).collect()
       assert(res sameElements Array(Row(null, null)))
     }
 

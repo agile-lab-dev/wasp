@@ -1,12 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.eventengine
 
 import java.io.InputStreamReader
-
 import com.typesafe.config.ConfigFactory
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.eventengine.Event
 import org.scalatest.{Matchers, WordSpec}
 
-class InnerMailStrategySpec extends WordSpec with Matchers with SparkSetup {
+class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
 
   private val reader =  new InputStreamReader(getClass.getResourceAsStream("inner_mail_strategy.conf"))
   private val fakeConfig = try {
@@ -179,11 +179,11 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSetup {
 
     val target: InnerMailStrategy = new InnerMailStrategy(fakeConfig.getConfig("multipleRules"))
 
-    s"retrieve exactly $totalMailQty in testSeq which match the control Seq" in withSparkSession { ss => {
+    s"retrieve exactly $totalMailQty in testSeq which match the control Seq" in { 
 
-      import ss.implicits._
+      import spark.implicits._
 
-      val eventsDf = ss.sparkContext.parallelize(testSeq).toDF
+      val eventsDf = spark.sparkContext.parallelize(testSeq).toDF
       val mails = target.transform(eventsDf).as[Mail].collect()
       mails.length.equals(totalMailQty) should be (true)
 
@@ -193,46 +193,46 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSetup {
           mails.map(test => fakeEquals(control, test))      // Check if control event is equal to test event (can be false for a single check), cannot be for every check
             .fold(false)((b1, b2) => b1 || b2))             // Return true if the control event was found among the many test event
         .forall(identity) should be (true)                  // Return true if every control event has been found among test events
-    }}
+    }
 
-    "Find no mails in fruitlessSeq" in withSparkSession { ss => {
-      import ss.implicits._
-      val mails: Array[Mail] = target.transform(ss.sparkContext.parallelize(fruitlessSeq).toDF).as[Mail].collect()
+    "Find no mails in fruitlessSeq" in { 
+      import spark.implicits._
+      val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(fruitlessSeq).toDF).as[Mail].collect()
       mails.length should be (0)
-    }}
+    }
 
-    "Find no mails in emptySeq" in withSparkSession { ss => {
-      import ss.implicits._
-      val mails: Array[Mail] = target.transform(ss.sparkContext.parallelize(emptySeq).toDF).as[Mail].collect()
+    "Find no mails in emptySeq" in { 
+      import spark.implicits._
+      val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(emptySeq).toDF).as[Mail].collect()
       mails.length should be (0)
-    }}
+    }
   }
 
   "When dealing with single mail rule" should {
 
     val target: InnerMailStrategy = new InnerMailStrategy(fakeConfig.getConfig("singleRule"))
 
-    s"retrieve exactly $highTempMailQty in testSeq" in withSparkSession { ss => {
+    s"retrieve exactly $highTempMailQty in testSeq" in { 
 
-      import ss.implicits._
+      import spark.implicits._
 
-      val eventsDf = ss.sparkContext.parallelize(testSeq).toDF
+      val eventsDf = spark.sparkContext.parallelize(testSeq).toDF
       val mails = target.transform(eventsDf).as[Mail].collect()
       mails.length.equals(highTempMailQty) should be (true)
 
-    }}
+    }
 
-    "Find no mails in fruitlessSeq" in withSparkSession { ss => {
-      import ss.implicits._
-      val mails: Array[Mail] = target.transform(ss.sparkContext.parallelize(fruitlessSeq).toDF).as[Mail].collect()
+    "Find no mails in fruitlessSeq" in { 
+      import spark.implicits._
+      val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(fruitlessSeq).toDF).as[Mail].collect()
       mails.length should be (0)
-    }}
+    }
 
-    "Find no mails in emptySeq" in withSparkSession { ss => {
-      import ss.implicits._
-      val mails: Array[Mail] = target.transform(ss.sparkContext.parallelize(emptySeq).toDF).as[Mail].collect()
+    "Find no mails in emptySeq" in { 
+      import spark.implicits._
+      val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(emptySeq).toDF).as[Mail].collect()
       mails.length should be (0)
-    }}
+    }
   }
 
   // Fake equals method which test the mail equality unless the event id

@@ -1,22 +1,20 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
 import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
-import it.agilelab.bigdata.wasp.consumers.spark.eventengine.SparkSetup
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{EnrichmentStrategy, EventIndexingStrategy, FreeCodeStrategy, ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.models.configuration.{RestEnrichmentConfigModel, RestEnrichmentSource}
-import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, TopicBL}
+import it.agilelab.bigdata.wasp.models._
 import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
-import it.agilelab.bigdata.wasp.models.{FreeCodeModel, PipegraphModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.collection.immutable.Map
 import scala.collection.mutable.ListBuffer
 import scala.tools.reflect.ToolBoxError
 import scala.util.Try
 
-class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
+class ActivationStepsTest extends FlatSpec with Matchers with SparkSuite {
 
   val defaultPipegraph = PipegraphModel(
     name = "pipegraph",
@@ -39,16 +37,16 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     dashboard = None
   )
 
-  "this" should "not create a strategy" in withSparkSession { ss =>
-    val aSM         = new ActivationStepsMock(ss)
+  "this" should "not create a strategy" in { 
+    val aSM         = new ActivationStepsMock(spark)
     val etl         = StructuredStreamingETLModel("name", "dafault", null, List.empty, null, List.empty, None, None)
     val strategyTry = aSM.createStrategy(etl, defaultPipegraph)
     strategyTry.isSuccess shouldBe true
     strategyTry.get.isEmpty shouldBe true
   }
 
-  "this" should "throw a exception" in withSparkSession { ss =>
-    val aSM           = new ActivationStepsMock(ss)
+  "this" should "throw a exception" in {
+    val aSM           = new ActivationStepsMock(spark)
     val strategyModel = StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.WRONG")
     val etl =
       StructuredStreamingETLModel("name", "dafault", null, List.empty, null, List.empty, Some(strategyModel), None)
@@ -57,8 +55,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     strategyTry.failed.get shouldBe a[ClassNotFoundException]
   }
 
-  "this" should "create a EventIndexingStrategy" in withSparkSession { ss =>
-    val aSM           = new ActivationStepsMock(ss)
+  "this" should "create a EventIndexingStrategy" in {
+    val aSM           = new ActivationStepsMock(spark)
     val strategyModel = StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.EventIndexingStrategy")
     val etl =
       StructuredStreamingETLModel("name", "dafault", null, List.empty, null, List.empty, Some(strategyModel), None)
@@ -68,8 +66,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     strategyTry.get.get shouldBe a[EventIndexingStrategy]
   }
 
-  "this" should "create a FreeCodeStrategy without config" in withSparkSession { ss =>
-    val aSM           = new ActivationStepsMock(ss)
+  "this" should "create a FreeCodeStrategy without config" in {
+    val aSM           = new ActivationStepsMock(spark)
     val strategyModel = StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy")
     val etl =
       StructuredStreamingETLModel("name", "dafault", null, List.empty, null, List.empty, Some(strategyModel), None)
@@ -78,8 +76,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     strategyTry.failed.get shouldBe a[IllegalArgumentException]
   }
 
-  "this" should "create a FreeCodeStrategy with config wrong" in withSparkSession { ss =>
-    val aSM = new ActivationStepsMock(ss)
+  "this" should "create a FreeCodeStrategy with config wrong" in {
+    val aSM = new ActivationStepsMock(spark)
     val strategyModel =
       StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy", Some(s"""{XXX:"test"}"""))
     val etl =
@@ -89,8 +87,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     strategyTry.failed.get shouldBe a[IllegalArgumentException]
   }
 
-  "this" should "create a FreeCodeStrategy without FreeCodeBL" in withSparkSession { ss =>
-    val aSM = new ActivationStepsMock(ss, null)
+  "this" should "create a FreeCodeStrategy without FreeCodeBL" in {
+    val aSM = new ActivationStepsMock(spark, null)
     val strategyModel =
       StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy", Some(s"""{name:"test"}"""))
     val etl =
@@ -100,8 +98,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     strategyTry.failed.get shouldBe a[NullPointerException]
   }
 
-  "this" should "create a FreeCodeStrategy without freeCodeName on db" in withSparkSession { ss =>
-    val aSM = new ActivationStepsMock(ss)
+  "this" should "create a FreeCodeStrategy without freeCodeName on db" in {
+    val aSM = new ActivationStepsMock(spark)
     val strategyModel =
       StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy", Some(s"""{name:"test"}"""))
     val etl =
@@ -150,8 +148,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
         )
     )
 
-  "this" should "create a correct CustomEnrichmentStrategy" in withSparkSession { ss =>
-    val aSM         = new ActivationStepsMock(ss)
+  "this" should "create a correct CustomEnrichmentStrategy" in {
+    val aSM         = new ActivationStepsMock(spark)
     val strategyModel =
       StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.http.etl.CustomEnrichmentStrategy", None)
     val etl =
@@ -162,8 +160,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     config shouldBe enrichmentPipegraph.enrichmentSources
   }
 
-  "this" should "create a FreeCodeStrategy with freeCode wrong" in withSparkSession { ss =>
-    val aSM           = new ActivationStepsMock(ss)
+  "this" should "create a FreeCodeStrategy with freeCode wrong" in {
+    val aSM           = new ActivationStepsMock(spark)
     val freeCodeModel = FreeCodeModel("test", "dataFramesWrong")
     val strategyModel = StrategyModel(
       "it.agilelab.bigdata.wasp.consumers.spark.strategies.FreeCodeStrategy",
@@ -178,8 +176,8 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     strategyTry.failed.get shouldBe a[ToolBoxError]
   }
 
-  "this" should "create a correct FreeCodeStrategy with columns wrong" in withSparkSession { ss =>
-    val aSM = new ActivationStepsMock(ss)
+  "this" should "create a correct FreeCodeStrategy with columns wrong" in {
+    val aSM = new ActivationStepsMock(spark)
     val freeCodeModel = FreeCodeModel(
       "test",
       """dataFrames.getFirstDataFrame.withColumn("column_test",concat(col("column_test"),lit("pippo"))) """
@@ -195,13 +193,13 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     val strategyTry = aSM.createStrategy(etl, defaultPipegraph)
     strategyTry.isSuccess shouldBe true
     strategyTry.get.get shouldBe a[FreeCodeStrategy]
-    val df  = ss.createDataFrame(List((1, "1"), (2, "2"), (3, "3")))
+    val df  = spark.createDataFrame(List((1, "1"), (2, "2"), (3, "3")))
     val map = Map(ReaderKey("test", "test") -> df)
     an[Exception] should be thrownBy strategyTry.get.get.transform(map).count
   }
 
-  "this" should "create a correct FreeCodeStrategy" in withSparkSession { ss =>
-    val aSM = new ActivationStepsMock(ss)
+  "this" should "create a correct FreeCodeStrategy" in {
+    val aSM = new ActivationStepsMock(spark)
     val freeCodeModel = FreeCodeModel(
       "test",
       """dataFrames.getFirstDataFrame.withColumn("column_test",concat(col("_2"),lit("pippo"))) """
@@ -217,7 +215,7 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSetup {
     val strategyTry = aSM.createStrategy(etl, defaultPipegraph)
     strategyTry.isSuccess shouldBe true
     strategyTry.get.get shouldBe a[FreeCodeStrategy]
-    val df     = ss.createDataFrame(List((1, "1"), (2, "2"), (3, "3")))
+    val df     = spark.createDataFrame(List((1, "1"), (2, "2"), (3, "3")))
     val map    = Map(ReaderKey("test", "test") -> df)
     val output = strategyTry.get.get.transform(map).cache()
     output.count() shouldBe 3

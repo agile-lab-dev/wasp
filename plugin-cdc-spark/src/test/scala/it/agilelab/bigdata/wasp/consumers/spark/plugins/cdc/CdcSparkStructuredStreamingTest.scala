@@ -1,13 +1,13 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.cdc
 
 import io.delta.tables.DeltaTable
-import it.agilelab.bigdata.wasp.consumers.spark.eventengine.SparkSetup
+import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.models.{CdcModel, CdcOptions}
 import org.apache.spark.sql.types.{DataType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.WordSpec
 
-class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach with SparkSetup {
+class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach with SparkSuite {
 
   val cdcTestModel: CdcModel = CdcModel(
     name = "TestMutationSchemaModel",
@@ -117,18 +117,18 @@ class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach wi
 
   "Method 'initDeltaTable'" should {
 
-    "correctly initialize an empty delta table at the given path with the given schema." in withSparkSession { ss =>
+    "correctly initialize an empty delta table at the given path with the given schema." in {
       {
 
         DeltaLakeOperations.initDeltaTable(
           cdcTestModel.uri,
           DataType.fromJson(cdcTestModel.schema).asInstanceOf[StructType],
-          ss
+          spark
         )
 
         assert(DeltaTable.isDeltaTable(cdcTestModel.uri))
 
-        val readDF = ss.read.format("delta").load(cdcTestModel.uri)
+        val readDF = spark.read.format("delta").load(cdcTestModel.uri)
         assert(readDF.isEmpty)
 
         val readDF_fields   = readDF.schema.fields
@@ -141,14 +141,14 @@ class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach wi
   }
 
   "Method 'getLatestChangeForKey'" should {
-    "correctly filter out only the most recent mutations." in withSparkSession { ss =>
+    "correctly filter out only the most recent mutations." in {
       {
 
-        val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, ss)
-        import ss.implicits._
+        val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, spark)
+        import spark.implicits._
 
-        val ds = Seq(mutation1, mutation2, mutation3, mutation4, mutation5).toDS
-        val df        = ss.read.schema(mutationSchema).json(ds)
+        val ds        = Seq(mutation1, mutation2, mutation3, mutation4, mutation5).toDS
+        val df        = spark.read.schema(mutationSchema).json(ds)
         val compactDf = deltaLakeWriter.getLatestChangeForKey(df, keys)
 
         compactDf.printSchema()
@@ -157,7 +157,7 @@ class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach wi
           .map(keyField => s"coalesce(value.beforeImage.$keyField, value.afterImage.$keyField) as $keyField")
           .mkString(",")
 
-        val expectedDf = ss.read
+        val expectedDf = spark.read
           .schema(mutationSchema)
           .json(Seq(mutation3, mutation5).toDS)
           .selectExpr(
@@ -174,18 +174,18 @@ class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach wi
       }
     }
 
-    "correctly work even with a single row dataset." in withSparkSession { ss =>
+    "correctly work even with a single row dataset." in {
       {
-        val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, ss)
-        import ss.implicits._
-        val df2        = ss.read.schema(mutationSchema).json(Seq(mutation1).toDS)
+        val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, spark)
+        import spark.implicits._
+        val df2        = spark.read.schema(mutationSchema).json(Seq(mutation1).toDS)
         val compactDf2 = deltaLakeWriter.getLatestChangeForKey(df2, keys)
 
         val keyColumns: String = keys
           .map(keyField => s"coalesce(value.beforeImage.$keyField, value.afterImage.$keyField) as $keyField")
           .mkString(",")
 
-        val expectedDf2 = ss.read
+        val expectedDf2 = spark.read
           .schema(mutationSchema)
           .json(Seq(mutation1).toDS)
           .selectExpr(
@@ -204,85 +204,74 @@ class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach wi
   }
 
   "Method 'write'" should {
-    "correctly execute the merge operation into the delta table with mutations only containing 'insert' operations." in withSparkSession {
-      ss =>
-        {
-          val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, ss)
-          import ss.implicits._
+    "correctly execute the merge operation into the delta table with mutations only containing 'insert' operations." in {
+      val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, spark)
+      import spark.implicits._
 
-          val stringDf  = Seq(mutation2, mutation3, mutation4, mutation5).toDS
-          val toMergeDf = ss.read.schema(mutationSchema).json(stringDf)
+      val stringDf  = Seq(mutation2, mutation3, mutation4, mutation5).toDS
+      val toMergeDf = spark.read.schema(mutationSchema).json(stringDf)
 
-          val expected3        = """{"A":"x", "A2":"yy", "B":"z", "B2":"xx"}"""
-          val expected5        = """{"A":"a", "A2":"qq", "B":"b", "B2":"qq"}"""
-          val expectedStringDf = Seq(expected3, expected5).toDS
-          val expectedDf       = ss.read.json(expectedStringDf)
+      val expected3        = """{"A":"x", "A2":"yy", "B":"z", "B2":"xx"}"""
+      val expected5        = """{"A":"a", "A2":"qq", "B":"b", "B2":"qq"}"""
+      val expectedStringDf = Seq(expected3, expected5).toDS
+      val expectedDf       = spark.read.json(expectedStringDf)
 
-          deltaLakeWriter.write(toMergeDf, 0)
+      deltaLakeWriter.write(toMergeDf, 0)
 
-          val actualDf = ss.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
+      val actualDf = spark.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
 
-          assertSameRows(expectedDf, actualDf)
-        }
+      assertSameRows(expectedDf, actualDf)
     }
 
-    "not write anything into an empty delta table with mutation only containing 'delete' operations. " in withSparkSession {
-      ss =>
-        {
-          val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, ss)
-          import ss.implicits._
+    "not write anything into an empty delta table with mutation only containing 'delete' operations. " in {
 
-          val toMergeDf =
-            ss.read.schema(mutationSchema).json(Seq(mutation6, mutation7, mutation8, mutation9, mutation10).toDS)
-          val expectedDf = ss.createDataFrame(
-            ss.sparkContext.emptyRDD[Row],
-            DataType.fromJson(cdcTestModel.schema).asInstanceOf[StructType]
-          )
+      val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, spark)
+      import spark.implicits._
 
-          deltaLakeWriter.write(toMergeDf, 0)
-          val actualDf = ss.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
-          assertSameRows(expectedDf, actualDf)
-        }
+      val toMergeDf =
+        spark.read.schema(mutationSchema).json(Seq(mutation6, mutation7, mutation8, mutation9, mutation10).toDS)
+      val expectedDf = spark.createDataFrame(
+        spark.sparkContext.emptyRDD[Row],
+        DataType.fromJson(cdcTestModel.schema).asInstanceOf[StructType]
+      )
+
+      deltaLakeWriter.write(toMergeDf, 0)
+      val actualDf = spark.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
+      assertSameRows(expectedDf, actualDf)
     }
 
-    "correctly execute the merge operation into the delta table with mutations only containg 'update' operations and with null value in after/beforeImage." in withSparkSession {
-      ss =>
-        {
-          val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, ss)
-          import ss.implicits._
+    "correctly execute the merge operation into the delta table with mutations only containg 'update' operations and with null value in after/beforeImage." in {
 
-          val toMergeDf = ss.read.schema(mutationSchema).json(Seq(mutation11, mutation12, mutation13).toDS)
+      val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, spark)
+      import spark.implicits._
 
-          val expectedJson1 = """{"A":"x", "A2":"aa", "B":"z", "B2":"bb"}"""
-          val expectedJson2 = """{"A":"a", "A2":"ww", "B":"b", "B2":"qq"}"""
-          val expectedDf    = ss.read.json(Seq(expectedJson1, expectedJson2).toDS)
+      val toMergeDf = spark.read.schema(mutationSchema).json(Seq(mutation11, mutation12, mutation13).toDS)
 
-          deltaLakeWriter.write(toMergeDf, 0)
-          val actualDf = ss.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
-          assertSameRows(expectedDf, actualDf)
-        }
+      val expectedJson1 = """{"A":"x", "A2":"aa", "B":"z", "B2":"bb"}"""
+      val expectedJson2 = """{"A":"a", "A2":"ww", "B":"b", "B2":"qq"}"""
+      val expectedDf    = spark.read.json(Seq(expectedJson1, expectedJson2).toDS)
+
+      deltaLakeWriter.write(toMergeDf, 0)
+      val actualDf = spark.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
+      assertSameRows(expectedDf, actualDf)
     }
 
-    "correctly execute the merge operation into the delta table with mutations containing all the three operations." in withSparkSession {
-      ss =>
-        {
-          val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, ss)
-          import ss.implicits._
+    "correctly execute the merge operation into the delta table with mutations containing all the three operations." in {
+      val deltaLakeWriter: DeltaLakeWriter = new DeltaLakeWriter(cdcTestModel, spark)
+      import spark.implicits._
 
-          val toMergeDf = ss.read
-            .schema(mutationSchema)
-            .json(Seq(mutation15, mutation16, mutation17, mutation18, mutation19, mutation20).toDS)
+      val toMergeDf = spark.read
+        .schema(mutationSchema)
+        .json(Seq(mutation15, mutation16, mutation17, mutation18, mutation19, mutation20).toDS)
 
-          val expectedJson1 = """{"A":"a", "A2":"xx", "B":"b", "B2":"xx"}"""
-          val expectedJson2 = """{"A":"e", "A2":"ee", "B":"f", "B2":"ff"}"""
-          val expectedDf    = ss.read.json(Seq(expectedJson1, expectedJson2).toDS)
+      val expectedJson1 = """{"A":"a", "A2":"xx", "B":"b", "B2":"xx"}"""
+      val expectedJson2 = """{"A":"e", "A2":"ee", "B":"f", "B2":"ff"}"""
+      val expectedDf    = spark.read.json(Seq(expectedJson1, expectedJson2).toDS)
 
-          deltaLakeWriter.write(toMergeDf, 0)
-          val actualDf = ss.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
-          assertSameRows(expectedDf, actualDf)
-        }
+      deltaLakeWriter.write(toMergeDf, 0)
+      val actualDf = spark.read.format(cdcTestModel.options.format).load(cdcTestModel.uri)
+      assertSameRows(expectedDf, actualDf)
     }
-
   }
 
 }
