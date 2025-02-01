@@ -21,8 +21,8 @@ cache:
     - "sbt-cache/target"
     - "sbt-cache/coursier"
     - node_modules/
-    - public/
-    # Node modules and dependencies
+    - public/ 
+      # Node modules and dependencies
 
 test-kernel:
   stage: test
@@ -30,7 +30,7 @@ test-kernel:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP719", "EMR_6_13" ]
+      - WASP_FLAVOR: [ "VANILLA2_2_12", "CDP719", "EMR_6_13"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverage wasp-kernel/test wasp-kernel/coverageAggregate"
   after_script:
@@ -49,7 +49,7 @@ test-kernel:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
-  needs: [ ]
+  needs: []
 
 test-plugin:
   stage: test
@@ -57,7 +57,7 @@ test-plugin:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP719", "EMR_6_13" ]
+      - WASP_FLAVOR: [ "VANILLA2_2_12", "CDP719", "EMR_6_13"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverage wasp-plugin/test wasp-plugin/coverageAggregate"
   after_script:
@@ -77,7 +77,7 @@ test-plugin:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
-  needs: [ ]
+  needs: []
 
 test-repo:
   stage: test
@@ -85,7 +85,7 @@ test-repo:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP719", "EMR_6_13" ]
+      - WASP_FLAVOR: [ "VANILLA2_2_12", "CDP719", "EMR_6_13"]
   script:
     - ./run-sbt-unprivileged.sh "clean coverage wasp-repository/test wasp-repository/coverageAggregate"
   after_script:
@@ -104,7 +104,7 @@ test-repo:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
-  needs: [ ]
+  needs: []
 
 compile-whitelabel:
   stage: deploy
@@ -112,7 +112,7 @@ compile-whitelabel:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP719", "EMR_6_13" ]
+      - WASP_FLAVOR: [ "VANILLA2_2_12", "CDP719", "EMR_6_13"]
   script:
     - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/test"
   tags:
@@ -121,13 +121,13 @@ compile-whitelabel:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
     - merge_requests
-  needs: [ ]
+  needs: []
 
 censor:
   stage: censor
   interruptible: true
   image: "registry.gitlab.com/agilefactory/developers/censor:0.1.0"
-  only: [ merge_requests ]
+  only: [merge_requests]
   script:
     - ./censor.sh
 
@@ -145,8 +145,8 @@ generate-open-api:
     - merge_requests
     - tags
   artifacts:
-    paths: [ 'documentation/wasp-openapi.yaml' ]
-  needs: [ ]
+    paths: ['documentation/wasp-openapi.yaml']
+  needs: []
 
 
 waspctl:
@@ -156,7 +156,7 @@ waspctl:
   script:
     - bash waspctl/build-for-all-archs.bash
   artifacts:
-    paths: [ 'waspctl/output' ]
+    paths: ['waspctl/output']
   only:
     - /^develop$/
     - /(^release\/v([0-9]+)\.([0-9]+))/
@@ -173,7 +173,7 @@ snapshot:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP719", "EMR_6_13" ]
+      - WASP_FLAVOR: [ "VANILLA2_2_12", "CDP719", "EMR_6_13"]
   tags:
     - saas-linux-medium-arm64
   script:
@@ -197,7 +197,7 @@ release:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "VANILLA2", "VANILLA2_2_12", "CDP719", "EMR_6_13" ]
+      - WASP_FLAVOR: [ "VANILLA2_2_12", "CDP719", "EMR_6_13"]
   script:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
@@ -216,7 +216,7 @@ pages:
     - npm install gitbook-cli -g # install gitbook
     - gitbook fetch 3.2.3 # fetch final stable version
     - gitbook install # add any requested plugins in book.json
-    - |
+    - | 
       if [[ $CI_COMMIT_REF_NAME == 'develop'  ]]
       then 
         rm -rf public/*
@@ -243,8 +243,8 @@ pages:
       - public
   only:
     refs:
-      - merge_requests
-      - /^develop$/
+    - merge_requests
+    - /^develop$/
     changes:
-      - documentation/*
+    - documentation/*
 

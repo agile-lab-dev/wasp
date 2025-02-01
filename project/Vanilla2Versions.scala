@@ -1,4 +1,4 @@
-class Vanilla2_212_Versions {
+class Vanilla2Versions {
   val akka                      = "2.4.20" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
   val akkaHttp                  = "10.0.9" // keep in sync with akka
   val apacheCommonsLang3Version = "3.4"
@@ -61,10 +61,4 @@ class Vanilla2_212_Versions {
   val akkaKryo                  = "0.5.2"
   val scala                     = "2.12.10"
   val elasticSearchSpark        = "7.15.0"
-}
-
-class Vanilla2Versions extends Vanilla2_212_Versions {
-  override val akkaKryo           = "0.5.0"
-  override val elasticSearchSpark = "6.1.2"
-  override val scala              = "2.11.12"
 }
