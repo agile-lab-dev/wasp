@@ -6,15 +6,21 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.Par
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQueryException
-import org.apache.spark.sql.types.{ DataType, StructField, StructType }
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.scalatest.FunSuite
-import org.scalatest.Matchers.{ an, be }
+import org.scalatest.Matchers.{an, be}
 
 case class Schema(ordering: Int, column1: String, column2: String)
 case class Schema2(ordering: Int, column1: String, column2: String, column3: String)
 case class NotSupportedSchema(ordering: Int, column1: String)
 case class Schema3(ordering1: Int, ordering2: Float, column1: String, column2: String)
-case class Schema4(ordering1: Int, ordering2: Float, column1: String, column2: String, colThatIsNotPartOfDeltaTableSchema: String)
+case class Schema4(
+    ordering1: Int,
+    ordering2: Float,
+    column1: String,
+    column2: String,
+    colThatIsNotPartOfDeltaTableSchema: String
+)
 case class CaseSensitiveTest(orDeRing: Int, column1: String, column2: String)
 
 class ContinuousUpdateWriterSpec extends FunSuite with DeltaTableTest {
@@ -316,7 +322,9 @@ class ContinuousUpdateWriterSpec extends FunSuite with DeltaTableTest {
     }
   }
 
-  test("Data deduplication when enforcing schema involves dropping columns and the result of the ordering expression is ambiguous") {
+  test(
+    "Data deduplication when enforcing schema involves dropping columns and the result of the ordering expression is ambiguous"
+  ) {
     withServer(dispatcher) { serverData =>
       val data: Seq[Schema4] = Seq(
         Schema4(1, 0.4f, "key1", "value1", "thisColWillBeDroppedBeforeWriting1"),
