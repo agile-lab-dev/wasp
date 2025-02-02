@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import com.typesafe.config.Config
+import it.agilelab.bigdata.utils.NonEmptyList
 import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroSerializerExpression
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.SubjectUtils
@@ -40,21 +41,17 @@ object KafkaWriters extends Logging {
   private[kafka] def prepareDfToWrite(
       df: DataFrame,
       topicFieldNameOpt: Option[String],
-      topics: Seq[TopicModel],
+      topics: NonEmptyList[TopicModel],
       darwinConf: Option[Config]
   ) = {
-
-    val throwException = udf { s: String =>
-      throw new Exception(s"Unknown topic name $s")
-    }
 
     topicFieldNameOpt match {
       case Some(topicFieldName) =>
         require(topics.size > 1, s"Got topicFieldName = $topicFieldName but only one topic to write ($topics)")
-        val keyCol: Option[Column]     = keyExpression(topics, topicFieldNameOpt, throwException, df.col, darwinConf)
-        val headersCol: Option[Column] = headerExpression(topics, topicFieldNameOpt, throwException)
+        val keyCol: Option[Column]     = keyExpression(topics, topicFieldNameOpt, df.col, darwinConf)
+        val headersCol: Option[Column] = headerExpression(topics, topicFieldNameOpt)
         val topicCol: Column           = col(topicFieldName)
-        val valueCol: Column           = valueExpression(topics, topicFieldNameOpt, df.schema, df.col, throwException, darwinConf)
+        val valueCol: Column           = valueExpression(topics, topicFieldNameOpt, df.schema, df.col, darwinConf)
 
         val columns =
           (keyCol.map(_.as("key")) ++
@@ -68,9 +65,9 @@ object KafkaWriters extends Logging {
           topics.size == 1,
           "More than one topic to write specified but there's no column containing the topics' name."
         )
-        val keyCol: Option[Column]     = keyExpression(topics, topicFieldNameOpt, throwException, df.col, darwinConf)
-        val headersCol: Option[Column] = headerExpression(topics, topicFieldNameOpt, throwException)
-        val valueCol: Column           = valueExpression(topics, topicFieldNameOpt, df.schema, df.col, throwException, darwinConf)
+        val keyCol: Option[Column]     = keyExpression(topics, topicFieldNameOpt, df.col, darwinConf)
+        val headersCol: Option[Column] = headerExpression(topics, topicFieldNameOpt)
+        val valueCol: Column           = valueExpression(topics, topicFieldNameOpt, df.schema, df.col, darwinConf)
 
         val columns =
           (keyCol.map(_.as("key")) ++
@@ -83,53 +80,38 @@ object KafkaWriters extends Logging {
   }
 
   private def keyExpression(
-      topics: Seq[TopicModel],
+      topics: NonEmptyList[TopicModel],
       topicFieldName: Option[String],
-      exceptionUdf: UserDefinedFunction,
       columnExtractor: String => Column,
       darwinConf: Option[Config]
-  ) = {
+  ): Option[Column] = {
 
     def valueOfKey(topicModel: TopicModel): Column = {
-      val keyField = topicModel.keyFieldName.get
-      topicModel.topicDataType match {
-        case "avro" => convertKeyForAvro(columnExtractor(keyField), topicModel, darwinConf)
-        case dataType if dataType == "json" || dataType == "binary" || dataType == "plaintext" =>
-          convertKeyToBinary(columnExtractor(keyField))
-        case unknown => throw new UnsupportedOperationException(s"Unknown topic data type $unknown")
-      }
-    }
-
-    if (topics.exists(_.keyFieldName.isDefined)) {
-
-      if (topicFieldName.isDefined) {
-        val head = topics.head
-        val tail = topics.tail
-
-        Some(
-          tail
-            .foldLeft(when(conditionOnTopicName(topicFieldName.get, head), valueOfKey(head))) { (z, x) =>
-              z.when(conditionOnTopicName(topicFieldName.get, x), valueOfKey(x))
-            }
-            .otherwise(exceptionUdf(col(topicFieldName.get)))
+      topicModel.keyFieldName
+        .map(keyField =>
+          topicModel.topicDataType match {
+            case "avro"                          => convertKeyForAvro(columnExtractor(keyField), topicModel, darwinConf)
+            case "json" | "binary" | "plaintext" => convertKeyToBinary(columnExtractor(keyField))
+            case unknown                         => throw new UnsupportedOperationException(s"Unknown topic data type $unknown")
+          }
         )
-      } else {
-        Some(valueOfKey(topics.head))
-      }
-
+        .getOrElse(lit(null).cast(BinaryType))
+    }
+    if (topics.exists(_.keyFieldName.isDefined)) {
+      Some(computeFieldExpression(topics, topicFieldName, valueOfKey))
     } else {
       None
     }
+
   }
 
   private def valueExpression(
-      topics: Seq[TopicModel],
+      topics: NonEmptyList[TopicModel],
       topicFieldName: Option[String],
       dfSchema: StructType,
       columnExtractor: String => Column,
-      exceptionUdf: UserDefinedFunction,
       darwinConf: Option[Config]
-  ) = {
+  ): Column = {
 
     def valueOfValue(topicModel: TopicModel): Column = {
       val columnsInValues = topicModel.valueFieldsNames match {
@@ -145,54 +127,45 @@ object KafkaWriters extends Logging {
         case unknown     => throw new UnsupportedOperationException(s"Unknown topic data type $unknown")
       }
     }
-
-    if (topicFieldName.isDefined) {
-      val head = topics.head
-      val tail = topics.tail
-
-      tail
-        .foldLeft(when(conditionOnTopicName(topicFieldName.get, head), valueOfValue(head))) {
-          (z: Column, x: TopicModel) =>
-            z.when(conditionOnTopicName(topicFieldName.get, x), valueOfValue(x))
-        }
-        .otherwise(exceptionUdf(col(topicFieldName.get)))
-
-    } else {
-      valueOfValue(topics.head)
-    }
-
+    computeFieldExpression(topics, topicFieldName, valueOfValue)
   }
 
   private def headerExpression(
-      topics: Seq[TopicModel],
-      topicFieldName: Option[String],
-      exceptionUdf: UserDefinedFunction
-  ) = {
+      topics: NonEmptyList[TopicModel],
+      topicFieldName: Option[String]
+  ): Option[Column] = {
 
     def valueOfHeader(head: TopicModel) = {
       head.headersFieldName.map(col).getOrElse(lit(null))
     }
 
     if (topics.exists(_.headersFieldName.isDefined)) {
-
-      if (topicFieldName.isDefined) {
-        val head = topics.head
-        val tail = topics.tail
-        Some(
-          tail
-            .foldLeft(when(conditionOnTopicName(topicFieldName.get, head), valueOfHeader(head))) {
-              (z: Column, x: TopicModel) =>
-                z.when(conditionOnTopicName(topicFieldName.get, x), valueOfHeader(x))
-            }
-            .otherwise(exceptionUdf(col(topicFieldName.get)))
-        )
-      } else {
-        Some(valueOfHeader(topics.head))
-      }
+      Some(computeFieldExpression(topics, topicFieldName, valueOfHeader))
     } else {
       None
     }
 
+  }
+
+  private val unknownTopicExpression: UserDefinedFunction = udf { s: String =>
+    throw new Exception(s"Unknown topic name $s")
+  }
+
+  private def computeFieldExpression(
+      topics: NonEmptyList[TopicModel], // this list is non empty
+      maybeTopicFieldName: Option[String],
+      valueExtractor: TopicModel => Column
+  ): Column = {
+    val NonEmptyList(head, tail) = topics
+    maybeTopicFieldName
+      .map(topicFieldName =>
+        tail
+          .foldLeft(when(conditionOnTopicName(topicFieldName, head), valueExtractor(head))) { (z, x) =>
+            z.when(conditionOnTopicName(topicFieldName, x), valueExtractor(x))
+          }
+          .otherwise(unknownTopicExpression(col(topicFieldName)))
+      )
+      .getOrElse(valueExtractor(head))
   }
 
   private def conditionOnTopicName(topicFieldName: String, head: TopicModel) = {
@@ -352,10 +325,9 @@ object KafkaWriters extends Logging {
         _ => ()
       )
 
-    val topicsToWrite = if (topics.isEmpty) {
-      List(mainTopicModel.asInstanceOf[TopicModel])
-    } else {
-      topics
+    val topicsToWrite = topics match {
+      case Nil          => NonEmptyList.one(mainTopicModel.asInstanceOf[TopicModel])
+      case head :: tail => NonEmptyList(head, tail)
     }
 
     logger.info(s"Writing with topic models: ${topicsToWrite.map(_.name).mkString(" ")}")

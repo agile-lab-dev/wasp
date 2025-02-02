@@ -1,7 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.CompatibilityKafkaException.{unresolvedColKey, unresolvedColTopic}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.CompatibilityKafkaException.{
+  unresolvedColKey,
+  unresolvedColTopic
+}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.bigdata.wasp.models.{MultiTopicModel, SubjectStrategy, TopicCompression, TopicModel}
@@ -106,6 +109,30 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
 
   }
 
+  it should "correctly work with topic models having different schema, one of them has null topic keyfield " in {
+    val topics = Seq(
+      testTopicModelErrorPerson_avro_key.copy(name = nameTopicB, keyFieldName = None), // avro, keyField
+      testTopicModelPerson_json_keyValueHeaders.copy(name = nameTopicA)
+    ) // json, keyField, valueFields
+    val multiTopicModel: MultiTopicModel = MultiTopicModel.fromTopicModels("name", "topic", topics)
+
+    val result = KafkaWriters.convertDataframe(
+      testDfTopicModelWithDifferentSchemaWithHeaders,
+      topicFieldName,
+      topics,
+      multiTopicModel,
+      Some(darwinConf)
+    )
+    val resultRows = result.as[KafkaOutput].collect()
+    assert(resultRows.length === testDfTopicModelWithDifferentSchemaWithHeaders.collect().length)
+    val forTopicA = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicA)
+    val forTopicB = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicB)
+
+    assert(forTopicA.forall(_.key != null))
+    assert(forTopicB.forall(_.key == null))
+
+  }
+
   it should "correctly work with topic models having different schema and TopicDataType avro" in {
 
     val topics = Seq(
@@ -122,10 +149,9 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
       multiTopicModel,
       Some(darwinConf)
     )
-
     val resultRows = result.as[KafkaOutput].collect()
 
-    assert(resultRows.size === testDfTopicModelWithDifferentSchema.collect().size)
+    assert(resultRows.length === testDfTopicModelWithDifferentSchema.collect().length)
     val forTopic2A = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicA)
     val forTopic2B = resultRows.filter(kafkaOutput => kafkaOutput.topic == nameTopicB)
 
@@ -767,15 +793,17 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
     assert(collectedOutput.map(_._1).sorted == List("IT", "ES").sorted)
     val expected = List(
       JsObject(
-      "name" -> JsString("Antonio"),
-      "surname" -> JsString("Murgia"),
-      "header" -> JsString("h"),
-      "key" -> JsString("IT")),
+        "name"    -> JsString("Antonio"),
+        "surname" -> JsString("Murgia"),
+        "header"  -> JsString("h"),
+        "key"     -> JsString("IT")
+      ),
       JsObject(
-        "name" -> JsString("Mario"),
+        "name"    -> JsString("Mario"),
         "surname" -> JsString("Ferrulli"),
-        "header" -> JsString("h"),
-        "key" -> JsString("ES"))
+        "header"  -> JsString("h"),
+        "key"     -> JsString("ES")
+      )
     )
     collectedOutput.map(_._3).foreach { bytes =>
       assert(expected.contains(parseJson(bytes)))
@@ -819,12 +847,8 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
     collectedOutput.map(_._2).foreach(x => assert(x === "h"))
     assert(collectedOutput.map(_._1).sorted == List("IT", "ES").sorted)
     val expected = List(
-      JsObject(
-        "name" -> JsString("Antonio"),
-        "surname" -> JsString("Murgia")),
-      JsObject(
-        "name" -> JsString("Mario"),
-        "surname" -> JsString("Ferrulli"))
+      JsObject("name" -> JsString("Antonio"), "surname" -> JsString("Murgia")),
+      JsObject("name" -> JsString("Mario"), "surname"   -> JsString("Ferrulli"))
     )
     collectedOutput.map(_._3).foreach { bytes =>
       assert(expected.contains(parseJson(bytes)))
@@ -840,17 +864,19 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
       .requiredString("surname")
       .endRecord()
 
-    val jsonTopicModel = TopicModel.json(
-      "name",
-      0L,
-      1,
-      1,
-      None,
-      None,
-      schema,
-      TopicCompression.Disabled,
-      None
-    ).copy(valueFieldsNames = Some(List("name", "surname")))
+    val jsonTopicModel = TopicModel
+      .json(
+        "name",
+        0L,
+        1,
+        1,
+        None,
+        None,
+        schema,
+        TopicCompression.Disabled,
+        None
+      )
+      .copy(valueFieldsNames = Some(List("name", "surname")))
     val input = spark
       .createDataset(
         List(
@@ -865,12 +891,8 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
       output.as[Array[Byte]].collect().toList
 
     val expected = List(
-      JsObject(
-        "name" -> JsString("Antonio"),
-        "surname" -> JsString("Murgia")),
-      JsObject(
-        "name" -> JsString("Mario"),
-        "surname" -> JsString("Ferrulli"))
+      JsObject("name" -> JsString("Antonio"), "surname" -> JsString("Murgia")),
+      JsObject("name" -> JsString("Mario"), "surname"   -> JsString("Ferrulli"))
     )
     collectedOutput.foreach { bytes =>
       assert(expected.contains(parseJson(bytes)))
@@ -907,15 +929,17 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
     assert(collectedOutput.map(_._1).sorted == List("IT", "ES").sorted)
     val expected = List(
       JsObject(
-        "name" -> JsString("Antonio"),
+        "name"    -> JsString("Antonio"),
         "surname" -> JsString("Murgia"),
-        "header" -> JsString("h"),
-        "key" -> JsString("IT")),
+        "header"  -> JsString("h"),
+        "key"     -> JsString("IT")
+      ),
       JsObject(
-        "name" -> JsString("Mario"),
+        "name"    -> JsString("Mario"),
         "surname" -> JsString("Ferrulli"),
-        "header" -> JsString("h"),
-        "key" -> JsString("ES"))
+        "header"  -> JsString("h"),
+        "key"     -> JsString("ES")
+      )
     )
     collectedOutput.map(_._3).foreach { bytes =>
       assert(expected.contains(parseJson(bytes)))
@@ -1027,7 +1051,7 @@ trait ConvertDataframeTestData { self: SparkSuite =>
     (Some("hey"), "pippo", "franco", "TOPIC-A", Some("headerValue"), None, None),
     (None, "mickey", "mouse", "TOPIC-B", None, Some("AA23"), Some("ErrorMsg")),
     (Some("buh"), "pluto", "franco", "TOPIC-A", Some("headerValue"), None, None),
-    (None, "donald", "duck", "TOPIC-B", None, Some("AA44"), Some("ErrorMsg"))
+    (None, "donald", "duck", "TOPIC-B", None, None, Some("ErrorMsg"))
   ).toDF("id", "name", "surname", "topic", "headers", "key", "error")
 
   val schemaAddress = StructType(
