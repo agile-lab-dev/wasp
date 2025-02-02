@@ -23,7 +23,6 @@ trait Dependencies {
   val pluginPlainHbaseWriterSparkDependencies: Seq[ModuleID]
   val pluginPostgreSQLSparkDependencies: Seq[ModuleID]
   val pluginKafkaSparkDependencies: Seq[ModuleID]
-  val pluginKafkaSparkOldDependencies: Seq[ModuleID]
   val pluginSolrSparkDependencies: Seq[ModuleID]
   val pluginMongoSparkDependencies: Seq[ModuleID]
   val pluginMailerSparkDependencies: Seq[ModuleID]

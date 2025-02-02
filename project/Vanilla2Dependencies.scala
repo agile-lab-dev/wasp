@@ -176,10 +176,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
       .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
 
-  override val pluginKafkaSparkOldDependencies: Seq[ModuleID] =
-    (Seq(sparkSqlKafkaOld) ++ _pluginKafkaSparkDependencies)
-      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
-
   override val pluginSolrSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     httpClient,
     httpCore,
@@ -389,7 +385,6 @@ trait Vanilla2KafkaDependencies {
   lazy val kafkaStreaming   = "org.apache.spark" %% "spark-streaming-kafka-0-8" % versions.spark exclude (exclusions.sparkExclusions ++ exclusions.kafka08Exclude) // TODO remove jersey?
   lazy val kafkaTests       = kafka              % Test exclude (exclusions.jacksonExclude)
   lazy val sparkSqlKafka    = "it.agilelab"      %% "wasp-spark-sql-kafka" % versions.sparkSqlKafka
-  lazy val sparkSqlKafkaOld = "it.agilelab"      %% "wasp-spark-sql-kafka-old" % versions.sparkSqlKafka
 }
 
 trait Vanilla2MongoDependencies {

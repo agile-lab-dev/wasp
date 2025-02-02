@@ -198,10 +198,6 @@ class EMR613Dependencies(val versions: EMR613Versions)
     (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
       .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
 
-  override val pluginKafkaSparkOldDependencies: Seq[ModuleID] =
-    (_pluginKafkaSparkDependencies)
-      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
-
   override val pluginSolrSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     httpClient,
     httpCore,

@@ -135,17 +135,6 @@ lazy val plugin_kafka_spark = Project("wasp-plugin-kafka-spark", file("plugin-ka
   .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
   .settings(libraryDependencies ++= dependencies.pluginKafkaSparkDependencies)
 
-lazy val plugin_kafka_spark_old = Project("wasp-plugin-kafka-spark-old", file("plugin-kafka-spark-old"))
-  .settings(settings.commonSettings: _*)
-  .settings(
-    Compile / scalaSource := baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "main" / "scala",
-    Test / scalaSource := baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "test" / "scala",
-    Test / unmanagedSourceDirectories += baseDirectory.value / ".." / "plugin-kafka-spark" / "src" / "test"
-      / s"scala${if (flavor == EMR613) "-emr613" else "-legacy"}"
-  )
-  .dependsOn(consumers_spark % dependCompileOnCompileAndTestOnTest)
-  .settings(libraryDependencies ++= dependencies.pluginKafkaSparkOldDependencies)
-
 lazy val plugin_raw_spark = Project("wasp-plugin-raw-spark", file("plugin-raw-spark"))
   .settings(settings.commonSettings: _*)
   .settings(libraryDependencies ++= dependencies.sparkPluginBasicDependencies)
@@ -286,7 +275,6 @@ lazy val plugin =
         plugin_jdbc_spark,
         plugin_postgresql_spark,
         plugin_kafka_spark,
-        plugin_kafka_spark_old,
         plugin_raw_spark,
         plugin_solr_spark,
         plugin_cdc_spark,

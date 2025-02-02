@@ -5,7 +5,6 @@ import sbt.Keys.{libraryDependencies, transitiveClassifiers}
 class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
 
   lazy val spark_sql_kafka     = "it.agilelab"     %% "wasp-spark-sql-kafka"     % "0.2.0-2.4.1-2.4.8-7.1.9.0-387-SNAPSHOT"
-  lazy val spark_sql_kafka_old = "it.agilelab"     %% "wasp-spark-sql-kafka-old" % "0.2.0-2.4.1-2.4.8-7.1.9.0-387-SNAPSHOT"
   lazy val delta               = "it.agilelab"     %% "wasp-delta-lake"          % "0.6.1-2.4.8.7.1.9.0-387"
   lazy val solrj               = "org.apache.solr" % "solr-solrj"                % versions.solr
   lazy val sparkSolr = versions.scala.take(4) match {
@@ -629,7 +628,6 @@ class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
     scalaTest
   )
   override lazy val pluginKafkaSparkDependencies: Seq[sbt.ModuleID]    = Seq(spark_sql_kafka) ++ testDependencies
-  override lazy val pluginKafkaSparkOldDependencies: Seq[sbt.ModuleID] = Seq(spark_sql_kafka_old) ++ testDependencies
   override lazy val pluginSolrSparkDependencies: Seq[sbt.ModuleID]     = Seq(sparkSolr, solrj) ++ testDependencies
   override lazy val pluginMongoSparkDependencies: Seq[sbt.ModuleID] = Seq(
     ("org.mongodb.spark" %% "mongo-spark-connector" % "2.4.3").exclude("org.mongodb", "mongo-java-driver"),
