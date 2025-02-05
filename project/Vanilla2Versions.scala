@@ -59,6 +59,6 @@ class Vanilla2Versions {
   val mongodbScala              = "2.9.0"
   val jettySecurity             = "9.3.25.v20180904"
   val akkaKryo                  = "0.5.2"
-  val scala                     = "2.12.10"
+  val scala                     = "2.12.17"
   val elasticSearchSpark        = "7.15.0"
 }

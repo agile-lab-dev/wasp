@@ -72,6 +72,7 @@ class BasicSettings(
 
   /** base build settings */
   lazy val buildSettings = Seq(
+    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always, // this is very dangerous, but maybe we're lucky
     resolvers ++= resolver.resolvers,
     exportJars := true,
     scalacOptions ++= Seq(

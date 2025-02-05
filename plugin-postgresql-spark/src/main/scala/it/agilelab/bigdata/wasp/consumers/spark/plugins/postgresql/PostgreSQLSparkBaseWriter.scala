@@ -4,7 +4,6 @@ import it.agilelab.bigdata.wasp.models.SQLSinkModel
 
 import java.sql.Connection
 import java.util.Properties
-import scala.collection.JavaConverters._
 
 /**
 	* Base class for writers that write to PostgreSQL using upserts (INSERT ON CONFLICT)
@@ -26,9 +25,8 @@ trait PostgreSQLSparkBaseWriter extends JDBCPooledConnectionSupport with JDBCCon
 
     props.put("user", sqlSinkModel.jdbcConnection.user)
     props.put("password", sqlSinkModel.jdbcConnection.password)
-    // this can technically overwrite the user/password we set above, but the JDBCConnectionConfig enforces that they
-    // are not present in the properties so it should be fine unless somebody really wants to mess with us
-    sqlSinkModel.jdbcConnection.properties.foreach(propsMap => props.putAll(propsMap.asJava))
+
+    sqlSinkModel.jdbcConnection.properties.getOrElse(Map.empty).foreach(entry => props.put(entry._1, entry._2))
 
     props
   }

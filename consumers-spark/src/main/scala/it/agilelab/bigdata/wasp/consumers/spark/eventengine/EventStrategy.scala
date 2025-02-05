@@ -7,11 +7,11 @@ import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.core.eventengine.eventproducers.EventRule
 import it.agilelab.bigdata.wasp.core.eventengine.settings._
-import org.apache.commons.lang3.RandomStringUtils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import it.agilelab.bigdata.wasp.core.eventengine.EventEngineConstants._
 
+import scala.util.Random
 
 class EventStrategy extends Strategy {
 
@@ -39,7 +39,7 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
 
   private val settings: EventStrategySettings = EventStrategySettingsFactory.create(configuration)
 
-  private def randomStr(len: Int): String = RandomStringUtils.randomAlphanumeric(len) //Special char free
+  private def randomStr(len: Int): String = Random.alphanumeric.take(len).mkString
 
   @transient
   private lazy val generateId: () => String = () => idGen.generate()

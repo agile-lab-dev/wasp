@@ -7,7 +7,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 import it.agilelab.bigdata.wasp.core.eventengine.eventconsumers.MailingRule
 import it.agilelab.bigdata.wasp.core.eventengine.settings.MailingStrategySettingsFactory
-import org.apache.commons.lang3.RandomStringUtils
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
@@ -18,6 +17,7 @@ import it.agilelab.bigdata.wasp.core.eventengine.EventEngineConstants._
 import org.apache.velocity.runtime.log.NullLogChute
 
 import scala.io.Source
+import scala.util.Random
 
 // TODO: this strategy have to depend on the mail plugin
 //import it.agilelab.bigdata.wasp.consumers.spark.plugins.mailer.Mail
@@ -146,7 +146,7 @@ class InnerMailStrategy(config: Config) {
     rawMails
   }
 
-  private def randomStr(len: Int): String = RandomStringUtils.randomAlphanumeric(len)
+  private def randomStr(len: Int): String = Random.alphanumeric.take(len).mkString
 
   /**
     * Create an SQL statement which cross-join the raw mails and the mail rules, creating a line for each mail

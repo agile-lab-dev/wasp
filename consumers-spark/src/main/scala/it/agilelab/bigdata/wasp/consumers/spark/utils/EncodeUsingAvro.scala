@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import it.agilelab.bigdata.wasp.consumers.spark.utils.EncodeUsingAvro.AvroSerializer
 import it.agilelab.darwin.manager.AvroSchemaManager
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
@@ -28,7 +27,7 @@ case class EncodeUsingAvro[A](
   }
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    val serializerClass = classOf[EncodeUsingAvro.AvroSerializer[A]].getName
+    val serializerClass = classOf[AvroSerializer[A]].getCanonicalName
     // If a I add a reference to the schema instance I get a TaskNotSerializableException
     // therefore I opted for passing by the string representation, it should be done only
     // once since it is in the mutable variable initialization of the code-gen.
@@ -77,16 +76,14 @@ case class EncodeUsingAvro[A](
 
 }
 
-object EncodeUsingAvro {
-
-  /**
-    * Stateful avro serializer: NOT thread safe
-    */
-  final private class AvroSerializer[A](
-      schema: Schema,
-      avroSchemaManager: AvroSchemaManager,
-      toRecord: A => GenericRecord
-  ) {
+/**
+ * Stateful avro serializer: NOT thread safe
+ */
+final class AvroSerializer[A](
+                               schema: Schema,
+                               avroSchemaManager: AvroSchemaManager,
+                               toRecord: A => GenericRecord
+                             ) {
 
     private[this] val fingerprint                               = avroSchemaManager.getId(schema)
     private[this] val outputStream: ByteArrayOutputStream       = new ByteArrayOutputStream()
@@ -101,6 +98,5 @@ object EncodeUsingAvro {
       encoder.flush()
       outputStream.toByteArray
     }
-  }
 
 }

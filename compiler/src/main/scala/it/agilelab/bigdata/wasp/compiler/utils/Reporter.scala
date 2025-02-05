@@ -3,11 +3,12 @@ package it.agilelab.bigdata.wasp.compiler.utils
 import it.agilelab.bigdata.wasp.models.ErrorModel
 
 import scala.collection.mutable
+import scala.reflect.internal.{Reporter => InternalReporter}
 import scala.reflect.internal.util.{FakePos, NoPosition, Position}
 import scala.tools.nsc.Settings
-import scala.tools.nsc.reporters.AbstractReporter
+import scala.tools.nsc.reporters.{Reporter => NSCReporter}
 
-class Reporter(val settings: Settings) extends AbstractReporter {
+class Reporter(val settings: Settings) extends NSCReporter {
 
   private val messages : mutable.ListBuffer[ErrorModel] = mutable.ListBuffer.empty[ErrorModel]
   private val fileName = "<virtual>"
@@ -16,21 +17,18 @@ class Reporter(val settings: Settings) extends AbstractReporter {
 
   def setStartPosition(startPosition  :Int) : Unit = this.startPosition = startPosition
 
-
-
-  private def label(severity: Severity): Option[String] = severity match {
-    case ERROR   => Some("error")
-    case WARNING => Some("warning")
-    case INFO    => None
-  }
-
-  override  def display(pos: Position, msg: String, severity: Severity) {
+  override protected def info0(pos: Position, msg: String, severity: Severity, force: Boolean): Unit = {
     val errorType = label(severity)
     if(errorType.isDefined) messages += showError(pos,msg,errorType.get)
   }
 
+  private def label(severity: Severity): Option[String] = severity match {
+    case InternalReporter.INFO    => None
+    case InternalReporter.WARNING => Some("warning")
+    case InternalReporter.ERROR   => Some("error")
+  }
 
-  def clear(): Unit =messages.clear()
+  def clear(): Unit = messages.clear()
 
   def showMessages(): List[ErrorModel] = messages.toList
 
@@ -58,6 +56,4 @@ class Reporter(val settings: Settings) extends AbstractReporter {
     }
   }
 
-
-  override def displayPrompt(): Unit = ???
 }
