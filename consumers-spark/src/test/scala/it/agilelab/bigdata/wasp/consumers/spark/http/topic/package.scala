@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.http
 
-import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.wasp.consumers.spark.http.data.{FromKafka, SampleData}
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.models.TopicModel
@@ -17,7 +16,7 @@ package object topic {
     valueFieldsNames = None,
     useAvroSchemaManager = false,
     schema = JsonConverter
-      .fromString(AvroSchema[FromKafka].toString(false))
+      .fromString(FromKafka.schema.toString(false))
       .getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
@@ -32,7 +31,7 @@ package object topic {
     valueFieldsNames = None,
     useAvroSchemaManager = false,
     schema = JsonConverter
-      .fromString(AvroSchema[SampleData].toString(false))
+      .fromString(SampleData.schema.toString(false))
       .getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 }

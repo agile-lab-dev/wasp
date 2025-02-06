@@ -1,10 +1,8 @@
 package it.agilelab.bigdata.wasp.whitelabel.producers.eventengine
 
-import java.io.ByteArrayOutputStream
-
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.sksamuel.avro4s.{AvroJsonOutputStream, SchemaFor, ToRecord}
+import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.{ProducerActor, ProducerGuardian, StartMainTask}
@@ -62,23 +60,13 @@ private[producers] class FakeDataProducerActor(kafka_router: ActorRef, topic: Op
 
 
   def generateOutputJsonMessage(input: FakeData): String = {
-
-    val baos = new ByteArrayOutputStream()
-    val output =
-      AvroJsonOutputStream[FakeData](baos)(SchemaFor[FakeData], ToRecord[FakeData])
-    output.write(input)
-    output.close()
-    baos.toString("UTF-8")
+    JsonConverter.fromString(FakeData.schema.toString).toString
+//    val baos = new ByteArrayOutputStream()
+//    val output =
+//      AvroJsonOutputStream[FakeData](baos)(SchemaFor[FakeData], ToRecord[FakeData])
+//    output.write(input)
+//    output.close()
+//    baos.toString("UTF-8")
   }
 
-  def generateRawOutputJsonMessage(input: FakeData): String = {
-
-    val baos = new ByteArrayOutputStream()
-    val output =
-      AvroJsonOutputStream[FakeData](baos)(SchemaFor[FakeData], ToRecord[FakeData])
-
-    output.write(input)
-    output.close()
-    baos.toString("UTF-8")
-  }
 }

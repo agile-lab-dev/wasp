@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test
 
-import com.sksamuel.avro4s.{AvroSchema, FromRecord, ToRecord}
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroEncoders
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
@@ -24,14 +23,13 @@ class TestAvroEncoderStrategy extends Strategy {
           Iterator(key)
       }(encoder, Encoders.STRING).toDF()
   }
-
 }
 
 object TestAvroEncoderStrategy {
 
-  val schema1: Schema = AvroSchema[TestState]
-  val toRecord1: TestState => GenericRecord = ToRecord[TestState].apply(_)
-  val fromRecord1: GenericRecord => TestState = FromRecord[TestState].apply(_)
+  val schema1: Schema = TestState.schema
+  val toRecord1: TestState => GenericRecord = TestState.toRecord
+  val fromRecord1: GenericRecord => TestState = TestState.fromRecord
 
   val encoder: Encoder[TestState] = AvroEncoders.avroEncoder(
     schema1,

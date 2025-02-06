@@ -1,15 +1,16 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
-import com.sksamuel.avro4s.{AvroOutputStream, AvroSchema}
-import org.apache.spark.sql.functions.col
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.topicNameToColumnName
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.bigdata.wasp.models.configuration._
 import it.agilelab.bigdata.wasp.models.{TopicCompression, TopicDataTypes, TopicModel}
-import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.EncoderFactory
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.SparkException
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{BinaryType, StringType, StructField, StructType}
 import org.bson.BsonDocument
 import org.scalatest.WordSpec
@@ -25,7 +26,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
   "single schema mode" should {
     "parse only data in correct column" in {
-      val schema = BsonDocument.parse(AvroSchema[MockRecord].toString(true))
+      val schema = BsonDocument.parse(MockRecord.schema.toString(true))
       val topic1 = TopicModel(
         "topic1.topic",
         0L,
@@ -102,7 +103,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
     "throw an exception parsing in STRICT mode a dataset with null in json" in {
       val topic = topicTest2("json")
-      val df = spark.createDataFrame(mockedSingleNullJsonData)
+      val df    = spark.createDataFrame(mockedSingleNullJsonData)
 
       val outDf = KafkaSparkStructuredStreamingReader
         .selectForOneSchema(topic, df, Strict)
@@ -112,7 +113,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
     "throw an exception parsing in STRICT mode a dataset with errors to json" in {
       val topic = topicTest("json")
-      val df = spark.createDataFrame(mockedSingleJsonData)
+      val df    = spark.createDataFrame(mockedSingleJsonData)
 
       val outDf = KafkaSparkStructuredStreamingReader
         .selectForOneSchema(topic, df, Strict)
@@ -122,7 +123,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
     "parse correctly in IGNORE mode a dataset with errors to json" in {
       val topic = topicTest("json")
-      val df = spark.createDataFrame(mockedSingleJsonData)
+      val df    = spark.createDataFrame(mockedSingleJsonData)
 
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Ignore).cache
       assert(outDf.where(col("value").isNull).count() === 0)
@@ -132,24 +133,32 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
     "parse correctly in HANDLE mode a dataset with errors to json" in {
       val topic = topicTest("json")
-      val df = spark.createDataFrame(mockedSingleJsonData)
+      val df    = spark.createDataFrame(mockedSingleJsonData)
 
       val schemaAvro = new Schema.Parser().parse(topic.getJsonSchema)
-      val schema = AvroSchemaConverters.toSqlType(schemaAvro).dataType
+      val schema     = AvroSchemaConverters.toSqlType(schemaAvro).dataType
 
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Handle).cache
       assert(outDf.where(col("raw").isNull).count() === 2)
       assert(outDf.where(col("raw").isNotNull).count() === 1)
-      assert(outDf.where(col("value").isNull || KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col("value"))).count() === 1)
-      assert(outDf.where(col("value").isNotNull && !KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col("value"))).count() === 2)
+      assert(
+        outDf
+          .where(col("value").isNull || KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col("value")))
+          .count() === 1
+      )
+      assert(
+        outDf
+          .where(col("value").isNotNull && !KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col("value")))
+          .count() === 2
+      )
       checkResultSchema(outDf, true)
     }
 
     "parse incorrectly in STRICT mode a null dataset to avro" in {
-      val topic = topicTest2("avro")
+      val topic         = topicTest2("avro")
       val correctedData = mockedSingleNullAvroData
-      val df = spark.createDataFrame(correctedData)
-      val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Strict)
+      val df            = spark.createDataFrame(correctedData)
+      val outDf         = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Strict)
       strictExceptionCheck(outDf, "avro")
     }
 
@@ -157,16 +166,9 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       val topic = topicTest("avro")
       val correctedData = mockedSingleAvroData match {
         case start :+ last =>
-          start :+ last.copy(raw = {
-            val bos = new ByteArrayOutputStream()
-            val aos = AvroOutputStream.binary[MockRecord](bos)
-            aos.write(MockRecord("k3", "value3"))
-            aos.flush()
-            aos.close()
-            bos.toByteArray
-          })
+          start :+ last.copy(raw = writeGenericRecord(MockRecord.toRecord(MockRecord("k3", "value3"))))
       }
-      val df = spark.createDataFrame(correctedData)
+      val df    = spark.createDataFrame(correctedData)
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Strict).cache
       assert(outDf.where(col("value").isNull).count() === 0)
       checkResultSchema(outDf, false)
@@ -174,7 +176,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
     "throw an exception parsing in STRICT mode a dataset with errors to avro" in {
       val topic = topicTest("avro")
-      val df = spark.createDataFrame(mockedSingleAvroData)
+      val df    = spark.createDataFrame(mockedSingleAvroData)
 
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Strict)
 
@@ -183,7 +185,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
     "parse correctly in IGNORE mode a dataset with errors to avro" in {
       val topic = topicTest("avro")
-      val df = spark.createDataFrame(mockedSingleAvroData)
+      val df    = spark.createDataFrame(mockedSingleAvroData)
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Ignore).cache
       assert(outDf.where(col("value").isNull).count() === 0)
       assert(outDf.where(col("value").isNotNull).count() === 2)
@@ -192,7 +194,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
     "parse correctly in HANDLE mode a dataset with errors to avro" in {
       val topic = topicTest("avro")
-      val df = spark.createDataFrame(mockedSingleAvroData)
+      val df    = spark.createDataFrame(mockedSingleAvroData)
 
       val outDf = KafkaSparkStructuredStreamingReader.selectForOneSchema(topic, df, Handle).cache
       assert(outDf.where(col("raw").isNull).count() === 2)
@@ -205,7 +207,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
   }
   "multiple schemas mode" should {
     "parse only data in correct column" in {
-      val schema = BsonDocument.parse(AvroSchema[MockRecord].toString(true))
+      val schema = BsonDocument.parse(MockRecord.schema.toString(true))
       val topic1 = TopicModel(
         "topic1.topic",
         0L,
@@ -237,7 +239,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       val topic5 = topic4.copy(
         name = "topic5",
         topicDataType = "avro",
-        schema = BsonDocument.parse(AvroSchema[MockRecord2].toString(true)),
+        schema = BsonDocument.parse(MockRecord2.schema.toString(true)),
         topicCompression = TopicCompression.Snappy
       )
       val df = spark
@@ -275,14 +277,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
             ),
             KafkaFakeRecord(
               key = "1".getBytes(StandardCharsets.UTF_8),
-              raw = {
-                val bos = new ByteArrayOutputStream()
-                val aos = AvroOutputStream.binary[MockRecord](bos)
-                aos.write(MockRecord("k", "v"))
-                aos.flush()
-                aos.close()
-                bos.toByteArray
-              },
+              raw = writeGenericRecord(MockRecord.toRecord(MockRecord("k", "v"))),
               headers = Array.empty,
               topic = topic4.name,
               partition = 1,
@@ -292,14 +287,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
             ),
             KafkaFakeRecord(
               key = "1".getBytes(StandardCharsets.UTF_8),
-              raw = {
-                val bos = new ByteArrayOutputStream()
-                val aos = AvroOutputStream.binary[MockRecord2](bos)
-                aos.write(MockRecord2("z"))
-                aos.flush()
-                aos.close()
-                bos.toByteArray
-              },
+              raw = writeGenericRecord(MockRecord2.toRecord(MockRecord2("z"))),
               headers = Array.empty,
               topic = topic5.name,
               partition = 1,
@@ -407,20 +395,27 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
           val editD1 = d1.copy(raw = """{"key":"1",,malformed,,, "v1":"valore"}""".getBytes(StandardCharsets.UTF_8))
           editD1 +: tail
       }
-      val df = spark.createDataset(editedSample).toDF()
-      val rawCol = col("raw")
+      val df               = spark.createDataset(editedSample).toDF()
+      val rawCol           = col("raw")
       val topicJsonColName = s"${multiTopicSeq.head.name}"
-      val outDF = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
+      val outDF            = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
 
       // get json schema
       val schemaAvro = new Schema.Parser().parse(multiTopicSeq.head.getJsonSchema)
-      val schema = AvroSchemaConverters.toSqlType(schemaAvro).dataType
+      val schema     = AvroSchemaConverters.toSqlType(schemaAvro).dataType
 
       multiTopicSeq.tail.foreach { t =>
         val name = t.name
         assert(outDF.where(rawCol.isNull && col(name).isNotNull).count() === 1)
       }
-      assert(outDF.where(rawCol.isNotNull && ( col(topicJsonColName).isNull || KafkaSparkStructuredStreamingReader.isNull(Some(schema))(col(topicJsonColName))) ).count() === 1)
+      assert(
+        outDF
+          .where(
+            rawCol.isNotNull && (col(topicJsonColName).isNull || KafkaSparkStructuredStreamingReader
+              .isNull(Some(schema))(col(topicJsonColName)))
+          )
+          .count() === 1
+      )
     }
 
     "break when parsing error on avro and Strict mode" in {
@@ -463,9 +458,9 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       }
       val df = spark.createDataset(editedSample).toDF()
 
-      val rawCol = col("raw")
+      val rawCol           = col("raw")
       val topicAvroColName = s"${multiTopicSeq.last.name}"
-      val outDF = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
+      val outDF            = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
 
       multiTopicSeq.dropRight(1).foreach { t =>
         val name = t.name
@@ -561,7 +556,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
     None,
     Some(Nil),
     useAvroSchemaManager = false,
-    BsonDocument.parse(AvroSchema[MockRecord4].toString(true)),
+    BsonDocument.parse(MockRecord4.schema.toString(true)),
     TopicCompression.Snappy
   )
 
@@ -575,7 +570,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
     None,
     Some(Nil),
     useAvroSchemaManager = false,
-    BsonDocument.parse(AvroSchema[MockRecord].toString(true)),
+    BsonDocument.parse(MockRecord.schema.toString(true)),
     TopicCompression.Snappy
   )
 
@@ -621,14 +616,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       ),
       KafkaFakeRecord(
         key = "1".getBytes(StandardCharsets.UTF_8),
-        raw = {
-          val bos = new ByteArrayOutputStream()
-          val aos = AvroOutputStream.binary[MockRecord](bos)
-          aos.write(MockRecord("k", "v"))
-          aos.flush()
-          aos.close()
-          bos.toByteArray
-        },
+        raw = writeGenericRecord(MockRecord.toRecord(MockRecord("k", "v"))),
         headers = Array.empty,
         topic = t4.name,
         partition = 1,
@@ -696,14 +684,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
     Seq(
       KafkaFakeRecord(
         key = "1".getBytes(StandardCharsets.UTF_8),
-        raw = {
-          val bos = new ByteArrayOutputStream()
-          val aos = AvroOutputStream.binary[MockRecord3](bos)
-          aos.write(MockRecord3("k"))
-          aos.flush()
-          aos.close()
-          bos.toByteArray
-        },
+        raw = writeGenericRecord(MockRecord3.toRecord(MockRecord3("k"))),
         headers = Array.empty,
         topic = topic.name,
         partition = 1,
@@ -719,14 +700,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
     Seq(
       KafkaFakeRecord(
         key = "1".getBytes(StandardCharsets.UTF_8),
-        raw = {
-          val bos = new ByteArrayOutputStream()
-          val aos = AvroOutputStream.binary[MockRecord](bos)
-          aos.write(MockRecord("k", "value"))
-          aos.flush()
-          aos.close()
-          bos.toByteArray
-        },
+        raw = writeGenericRecord(MockRecord.toRecord(MockRecord("k", "value"))),
         headers = Array.empty,
         topic = topic.name,
         partition = 1,
@@ -736,14 +710,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       ),
       KafkaFakeRecord(
         key = "1".getBytes(StandardCharsets.UTF_8),
-        raw = {
-          val bos = new ByteArrayOutputStream()
-          val aos = AvroOutputStream.binary[MockRecord](bos)
-          aos.write(MockRecord("k2", "value2"))
-          aos.flush()
-          aos.close()
-          bos.toByteArray
-        },
+        raw = writeGenericRecord(MockRecord.toRecord(MockRecord("k2", "value2"))),
         headers = Array.empty,
         topic = topic.name,
         partition = 1,
@@ -763,13 +730,55 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       )
     )
   }
+
+  def writeGenericRecord(record: GenericRecord): Array[Byte] = {
+    val baos    = new ByteArrayOutputStream()
+    val encoder = EncoderFactory.get().binaryEncoder(baos, null)
+    val writer  = new GenericDatumWriter[GenericRecord](record.getSchema)
+    writer.write(record, encoder)
+    encoder.flush()
+    baos.toByteArray
+  }
 }
 
 case class MockRecord(key: String, v1: String)
+object MockRecord {
+  val schema = SchemaBuilder.record("MockRecord").fields().requiredString("key").requiredString("v1").endRecord()
+  def toRecord(v: MockRecord): GenericRecord = {
+    val r = new GenericData.Record(schema)
+    r.put("key", v.key)
+    r.put("v1", v.v1)
+    r
+  }
+}
 case class MockRecord3(key: String)
+object MockRecord3 {
+  val schema = SchemaBuilder.record("MockRecord3").fields().requiredString("key").endRecord()
+  def toRecord(v: MockRecord3): GenericRecord = {
+    val r = new GenericData.Record(schema)
+    r.put("key", v.key)
+    r
+  }
+}
 case class MockRecord4(key: String, v1: Int)
-
+object MockRecord4 {
+  val schema = SchemaBuilder.record("MockRecord4").fields().requiredString("key").requiredInt("v1").endRecord()
+  def toRecord(v: MockRecord4): GenericRecord = {
+    val r = new GenericData.Record(schema)
+    r.put("key", v.key)
+    r.put("v1", v.v1)
+    r
+  }
+}
 case class MockRecord2(raw: String)
+object MockRecord2 {
+  val schema = SchemaBuilder.record("MockRecord2").fields().requiredString("raw").endRecord()
+  def toRecord(v: MockRecord2): GenericRecord = {
+    val r = new GenericData.Record(schema)
+    r.put("raw", v.raw)
+    r
+  }
+}
 
 case class KafkaFakeRecord(
                             key: Array[Byte],

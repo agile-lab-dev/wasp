@@ -16,7 +16,7 @@ class ConfigUtilsSpec extends FlatSpec with Matchers with TryValues with BeforeA
         |{ "$KV_CONF_KEY" { "$KEYS_TO_DELETE_KEY" = [${keys.mkString(",")}], "$CORRELATION_ID_KEY" = "$correlationId" } }
         |""".stripMargin
 
-    println(stringConfig)
+//    println(stringConfig)
 
     val rootConfig = ConfigFactory.parseString(stringConfig)
     val config = ConfigUtils.getOptionalConfig(rootConfig, KV_CONF_KEY)

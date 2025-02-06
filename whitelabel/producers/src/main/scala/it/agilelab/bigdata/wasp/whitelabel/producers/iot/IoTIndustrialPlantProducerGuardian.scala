@@ -1,10 +1,8 @@
 package it.agilelab.bigdata.wasp.whitelabel.producers.iot
 
-import java.io.ByteArrayOutputStream
-
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.sksamuel.avro4s.{AvroJsonOutputStream, SchemaFor, ToRecord}
+import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.{ProducerActor, ProducerGuardian, StartMainTask}
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
@@ -61,23 +59,14 @@ private[producers] class IoTIndustrialPlantProducerActor(kafka_router: ActorRef,
 
 
   def generateOutputJsonMessage(input: IndustrialPlantData): String = {
+    JsonConverter.fromString(FakeIndustrialPlantData.schema.toString).toString
 
-    val baos = new ByteArrayOutputStream()
-    val output =
-      AvroJsonOutputStream[IndustrialPlantData](baos)(SchemaFor[IndustrialPlantData], ToRecord[IndustrialPlantData])
-    output.write(input)
-    output.close()
-    baos.toString("UTF-8")
+//    val baos = new ByteArrayOutputStream()
+//    val output =
+//      AvroJsonOutputStream[IndustrialPlantData](baos)(SchemaFor[IndustrialPlantData], ToRecord[IndustrialPlantData])
+//    output.write(input)
+//    output.close()
+//    baos.toString("UTF-8")
   }
 
-  def generateRawOutputJsonMessage(input: IndustrialPlantData): String = {
-
-    val baos = new ByteArrayOutputStream()
-    val output =
-      AvroJsonOutputStream[IndustrialPlantData](baos)(SchemaFor[IndustrialPlantData], ToRecord[IndustrialPlantData])
-
-    output.write(input)
-    output.close()
-    baos.toString("UTF-8")
-  }
 }

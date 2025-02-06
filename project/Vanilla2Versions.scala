@@ -3,7 +3,6 @@ class Vanilla2Versions {
   val akkaHttp                  = "10.0.9" // keep in sync with akka
   val apacheCommonsLang3Version = "3.4"
   val avro                      = "1.8.2"
-  val avro4sVersion             = "1.8.3"
   val commonsCli                = "1.2"
   val darwin                    = "1.2.1"
   val guava                     = "14.0.1"

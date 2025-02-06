@@ -1,16 +1,14 @@
 package it.agilelab.bigdata.wasp.whitelabel.producers
 
-import java.io.ByteArrayOutputStream
 import java.util.UUID
-
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.ActorMaterializer
-import com.sksamuel.avro4s.AvroJsonOutputStream
+import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.{ProducerActor, ProducerGuardian, StartMainTask}
-import it.agilelab.bigdata.wasp.whitelabel.models.test.TopicAvro_v2
+import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestSchemaAvroManager, TopicAvro_v2}
 import spray.json.DefaultJsonProtocol
 
 /**
@@ -59,11 +57,13 @@ private[wasp] class TestActorAvroSchemaManager_v2(filePath: String, kafka_router
     * Used when writing to topics with data type "json" or "avro"
     */
   override def generateOutputJsonMessage(input: TopicAvro_v2): String = {
-    val baos = new ByteArrayOutputStream()
-    val output = AvroJsonOutputStream[TopicAvro_v2](baos)
-    output.write(input)
-    output.close()
-    baos.toString("UTF-8")
+    JsonConverter.fromString(TestSchemaAvroManager.schema_v1.toString).toString
+
+    //    val baos = new ByteArrayOutputStream()
+//    val output = AvroJsonOutputStream[TopicAvro_v2](baos)
+//    output.write(input)
+//    output.close()
+//    baos.toString("UTF-8")
   }
 
   /**

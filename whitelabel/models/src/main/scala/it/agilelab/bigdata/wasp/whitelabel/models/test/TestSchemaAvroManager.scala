@@ -1,10 +1,9 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import com.sksamuel.avro4s.AvroSchema
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 import it.agilelab.bigdata.wasp.models.{KeyValueModel, KeyValueOption, PipegraphModel, ProducerModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
-import org.apache.avro.Schema
+import org.apache.avro.{Schema, SchemaBuilder}
 
 /**
   * @author andreaL
@@ -17,6 +16,68 @@ case class TopicAvro_v3( id:String, field1: Int, field2: Int, field3:Option[Stri
 case class AvroSchemaManagerHbase(id: String, test: TopicAvro_v2/*test: TopicAvro_v1*/)
 
 object TestSchemaAvroManager {
+
+
+  val schema_v1: Schema = SchemaBuilder
+    .record("TopicAvro_v1")
+    .fields()
+    .name("id")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("field1")
+    .`type`()
+    .intType()
+    .noDefault()
+    .name("field2")
+    .`type`()
+    .intType()
+    .noDefault()
+    .endRecord();
+
+
+  val schema_v2: Schema = SchemaBuilder
+    .record("TopicAvro_v2")
+    .fields()
+    .name("id")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("field1")
+    .`type`()
+    .intType()
+    .noDefault()
+    .name("field2")
+    .`type`()
+    .intType()
+    .noDefault()
+    .name("field3")
+    .`type`()
+    .optional()
+    .stringType()
+    .endRecord();
+
+  val schema_v3: Schema = SchemaBuilder
+    .record("TopicAvro_v2")
+    .fields()
+    .name("id")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("field1")
+    .`type`()
+    .intType()
+    .noDefault()
+    .name("field2")
+    .`type`()
+    .intType()
+    .noDefault()
+    .name("field3")
+    .`type`()
+    .optional()
+    .stringType()
+    .endRecord();
+
 
   private val topic_avro_v1 = "topic_avro_v1"
   private val topic_avro_v2 = "topic_avro_v2"
@@ -32,20 +93,20 @@ object TestSchemaAvroManager {
                                       valueFieldsNames = None,
                                       useAvroSchemaManager = true,
                                       schema = JsonConverter
-                                        .fromString(AvroSchema[TopicAvro_v1].toString())
+                                        .fromString(TestSchemaAvroManager.schema_v1.toString())
                                         .getOrElse(org.mongodb.scala.bson.BsonDocument())
                                     )
 
   lazy val topicAvro_v2 = topicAvro_v1.copy( name = TopicModel.name(topic_avro_v2),
                                              schema= JsonConverter
-                                               .fromString(AvroSchema[TopicAvro_v2].toString())
+                                               .fromString(TestSchemaAvroManager.schema_v2.toString())
                                                .getOrElse(org.mongodb.scala.bson.BsonDocument())
                                            )
 
   lazy val topicAvro_v3 = topicAvro_v2.copy(
     name = TopicModel.name(topic_avro_v3),
     schema= JsonConverter
-      .fromString(AvroSchema[TopicAvro_v3].toString())
+      .fromString(TestSchemaAvroManager.schema_v3.toString())
       .getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
@@ -122,7 +183,7 @@ object TestSchemaAvroManagerKeyValueModel {
     val name = "TestSchemaAvroManagerHBaseModel"
     val completeTableName = s"$namespace:$tableName"
 
-    val schema: Schema = AvroSchema[TopicAvro_v2]
+    val schema: Schema = TestSchemaAvroManager.schema_v2
 
     val dfFieldsSchema: String =
       s"""

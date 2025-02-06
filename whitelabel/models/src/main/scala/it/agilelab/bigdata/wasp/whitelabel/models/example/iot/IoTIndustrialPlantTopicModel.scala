@@ -2,16 +2,16 @@ package it.agilelab.bigdata.wasp.whitelabel.models.example.iot
 
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.time.format.DateTimeFormatter
-import com.sksamuel.avro4s.AvroSchema
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.models.{SubjectStrategy, TopicModel}
+import org.apache.avro.{Schema, SchemaBuilder}
 
 import scala.util.Random
 
 object IoTIndustrialPlantTopicModel {
 
   val iotIndustrialPlantTopicModelName = "industrial-plant"
-  lazy val industrialPlantDataSchema = AvroSchema[IndustrialPlantData].toString
+  lazy val industrialPlantDataSchema = FakeIndustrialPlantData.schema.toString
 
 
   lazy val industrialPlantTopicModel = TopicModel (
@@ -34,6 +34,45 @@ case class IndustrialPlantData(site: String, plant: String, line: String, machin
 object FakeIndustrialPlantData{
 
   private val random = new Random()
+
+
+  val schema: Schema = SchemaBuilder
+    .record("IndustrialPlantData")
+    .fields()
+    .name("site")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("plant")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("line")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("machine")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("areadId")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("timestamp")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("kpi")
+    .`type`()
+    .stringType()
+    .noDefault()
+    .name("kpiValue")
+    .`type`()
+    .intType()
+    .noDefault()
+    .endRecord();
+
 
   val sites = Array("Italy-01","Budapest-01", "Milwaukee-01", "El Paso-01", "Shenzhen-01")
   val plants = Array("AB01", "AB02","BB3","Budapest", "Milwaukee", "El Paso", "Shenzhen")

@@ -635,7 +635,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     import spark.implicits._
     val fileNames = readFileNameAndId
-    println(fileNames)
+//    println(fileNames)
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,
@@ -713,7 +713,7 @@ class HdfsDataDeletionSpec extends FlatSpec with Matchers with TryValues with Be
 
     import spark.implicits._
     val fileNames = readFileNameAndId
-    println(fileNames)
+//    println(fileNames)
 
     val rawDataStoreConf = RawDataStoreConf(
       keyColumn,

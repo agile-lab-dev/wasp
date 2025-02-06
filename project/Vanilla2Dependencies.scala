@@ -39,7 +39,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val nifiStateless       = "org.apache.nifi" % "nifi-stateless" % versions.nifi % Provided exclude exclusions.javaxRsExclude
   lazy val joptSimpleTests     = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
   lazy val jettySecurity       = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
-  lazy val avro4sTestAndDarwin = avro4sTest ++ Seq(darwinMockConnector % Test)
   lazy val mongoTest           = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
   lazy val shapeless           = "com.chuusai" %% "shapeless" % "2.3.3"
 
@@ -72,7 +71,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   )).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
 
   override val coreDependencies: Seq[ModuleID] = (akka ++
-    avro4sTest ++
     logging ++
     testDependencies ++ Seq(
     akkaHttp,
@@ -114,7 +112,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   override val consumersSparkDependencies: Seq[ModuleID] = schemaRegistry ++ (
     akka ++
       testDependencies ++
-      avro4sTestAndDarwin ++
       hbase2 ++ // maybe remove this, we need to refactor the gdpr part for hbase
       wireMock ++
       spark ++
@@ -123,7 +120,8 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
         nameOf,
         velocity, //TODO: evaluate this is legal
         scalaCompiler,
-        sparkAvro
+        sparkAvro,
+        darwinMockConnector % Test
       )
   ).map(_.exclude(exclusions.nettyExclude)).map(_.exclude(exclusions.log4jExclude)) ++
     Seq(nettySpark, nettyAll, guava) ++ logging
@@ -246,7 +244,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val sparkPluginBasicDependencies: Seq[ModuleID] = spark ++ scalaTestDependencies
 
-  override val whitelabelModelsDependencies: Seq[ModuleID] = avro4s ++ spark
+  override val whitelabelModelsDependencies: Seq[ModuleID] = spark
 
   override val whitelabelMasterDependencies: Seq[ModuleID] =
     pluginHbaseSparkDependencies ++ Seq(darwinHBaseConnector, hbaseClient2Shaded, slf4jLog4j1Binding)
@@ -436,12 +434,7 @@ trait Vanilla2ScalaCoreDependencies {
 trait Vanilla2AvroDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
-  lazy val avro       = "org.apache.avro"     % "avro"         % versions.avro % Provided
-  lazy val avro4sCore = "com.sksamuel.avro4s" %% "avro4s-core" % versions.avro4sVersion exclude exclusions.json4sExclude
-  lazy val avro4sJson = "com.sksamuel.avro4s" %% "avro4s-json" % versions.avro4sVersion exclude exclusions.json4sExclude
-
-  lazy val avro4s     = Seq(avro4sCore, avro4sJson)
-  lazy val avro4sTest = avro4s.map(_ % Test)
+  lazy val avro = "org.apache.avro" % "avro" % versions.avro % Provided
 }
 
 trait Vanilla2ApacheCommonsDependencies {

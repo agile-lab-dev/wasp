@@ -223,7 +223,7 @@ class InnerMailStrategy(config: Config) {
       sb.toString
     }
 
-    println("EXPLODE QUERY: " + sqlQuery)
+//    println("EXPLODE QUERY: " + sqlQuery)
     val explodedMails = ss.sql(sqlQuery)
 
     ss.catalog.dropTempView(mailTableName)

@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test
 import java.io.{ByteArrayInputStream, DataInputStream, InputStream}
 import java.nio.ByteOrder
 import com.google.common.io.ByteStreams
-import com.sksamuel.avro4s.{AvroSchema, FromRecord}
 import com.typesafe.config.ConfigFactory
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestNestedDocument, TestState}

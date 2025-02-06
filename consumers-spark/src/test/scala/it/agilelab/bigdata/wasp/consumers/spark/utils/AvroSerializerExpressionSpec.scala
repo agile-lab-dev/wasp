@@ -2,7 +2,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.utils
 
 import java.io.ByteArrayInputStream
 
-import com.sksamuel.avro4s._
 import com.typesafe.config.ConfigFactory
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
 import it.agilelab.darwin.manager.util.AvroSingleObjectEncodingUtils
@@ -38,7 +37,7 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
       // resultsDf.queryExecution.debug.codegen()
       val results = resultsDf.collect()
 
-      val decoded = results.map(_.get(0).asInstanceOf[Array[Byte]]).map{ data =>
+      val decoded = results.map(_.get(0).asInstanceOf[Array[Byte]]).map { data =>
         val decoder = DecoderFactory.get().binaryDecoder(new ByteArrayInputStream(data), null)
         val reader  = new GenericDatumReader[Utf8](SchemaBuilder.builder().stringBuilder().endString())
 
@@ -52,7 +51,6 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
       assert(expected == actual)
     }
-
 
     "Serialize with unboxed value schema Long" in testAllCodegen {
 
@@ -72,7 +70,7 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
       // resultsDf.queryExecution.debug.codegen()
       val results = resultsDf.collect()
 
-      val decoded = results.map(_.get(0).asInstanceOf[Array[Byte]]).map{ data =>
+      val decoded = results.map(_.get(0).asInstanceOf[Array[Byte]]).map { data =>
         val decoder = DecoderFactory.get().binaryDecoder(new ByteArrayInputStream(data), null)
         val reader  = new GenericDatumReader[java.lang.Long](SchemaBuilder.builder().longBuilder().endLong())
 
@@ -97,10 +95,12 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
       val child = struct(df.columns.map(df.col): _*).expr
 
-      val expr = AvroSerializerExpression(Some(TestSchemas.schema.toString), "pippo", "wasp")(child, df.schema)
+      val expr = AvroSerializerExpression(Some(TestClasses.uglySchema.toString), "pippo", "wasp")(child, df.schema)
 
       val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap { data =>
-        AvroInputStream.binary[UglyCaseClass](data.asInstanceOf[Array[Byte]]).iterator.toSeq
+        TestClasses
+          .deserializeFromBytes(data.asInstanceOf[Array[Byte]], TestClasses.uglySchema)
+          .map(TestClasses.decodeUglyCaseClass)
       }
 
       assertCollectionsAreEqual(elements, results)
@@ -116,11 +116,14 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
       val child = struct(df.columns.map(df.col): _*).expr
 
-      val expr = AvroSerializerExpression(Some(TestSchemas.schema.toString), "pippo", "wasp", avroSchemaId = 1234l)(child, df.schema)
+      val expr = AvroSerializerExpression(Some(TestClasses.uglySchema.toString), "pippo", "wasp", avroSchemaId = 1234L)(
+        child,
+        df.schema
+      )
 
       val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap { data =>
         val element = data.asInstanceOf[Array[Byte]].drop(5)
-        AvroInputStream.binary[UglyCaseClass](element).iterator.toSeq
+        TestClasses.deserializeFromBytes(element, TestClasses.uglySchema).map(TestClasses.decodeUglyCaseClass)
       }
 
       assertCollectionsAreEqual(elements, results)
@@ -137,18 +140,20 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
       val child = struct(df.columns.map(df.col): _*).expr
 
       val darwinConf = ConfigFactory.parseString("""
-          |type: cached_eager
-          |connector: "mock"
-          |endianness: "BIG_ENDIAN"
+                                                   |type: cached_eager
+                                                   |connector: "mock"
+                                                   |endianness: "BIG_ENDIAN"
         """.stripMargin)
 
       AvroSchemaManagerFactory.initialize(darwinConf)
 
-      val expr = AvroSerializerExpression(darwinConf, TestSchemas.schema, "pippo", "wasp")(child, df.schema)
+      val expr = AvroSerializerExpression(darwinConf, TestClasses.uglySchema, "pippo", "wasp")(child, df.schema)
 
       val results = df.select(new Column(expr)).collect().map(r => r.get(0)).flatMap { data =>
         val element = AvroSingleObjectEncodingUtils.dropHeader(data.asInstanceOf[Array[Byte]])
-        AvroInputStream.binary[UglyCaseClass](element).iterator.toSeq
+        TestClasses
+          .deserializeFromBytes(element, TestClasses.uglySchema)
+          .map(TestClasses.decodeUglyCaseClass)
       }
 
       assertCollectionsAreEqual(elements, results)
@@ -156,17 +161,29 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
 
     "correctly handle null" in testAllCodegen {
       val darwinConf = ConfigFactory.parseString("""
-          |type: cached_eager
-          |connector: "mock"
-          |endianness: "BIG_ENDIAN"
+                                                   |type: cached_eager
+                                                   |connector: "mock"
+                                                   |endianness: "BIG_ENDIAN"
         """.stripMargin)
       AvroSchemaManagerFactory.initialize(darwinConf)
-      val schema     = StructType(Seq(StructField("_1", IntegerType, nullable = true), StructField("_2", StringType)))
-      val avroSchema = AvroSchema[(Int, String)]
-      val child      = Literal(null, schema)
-      val expr1      = AvroSerializerExpression(Some(avroSchema.toString), "pippo", "wasp")(child, schema)
-      val expr2      = AvroSerializerExpression(darwinConf, avroSchema, "pippo", "wasp")(child, schema)
-      val res        = spark.range(1).select(new Column(expr1), new Column(expr2)).collect()
+      val schema = StructType(Seq(StructField("_1", IntegerType, nullable = true), StructField("_2", StringType)))
+      val avroSchema = SchemaBuilder
+        .builder()
+        .record("tuple2")
+        .fields()
+        .name("_1")
+        .`type`()
+        .intType()
+        .noDefault()
+        .name("_2")
+        .`type`()
+        .stringType()
+        .noDefault()
+        .endRecord()
+      val child = Literal(null, schema)
+      val expr1 = AvroSerializerExpression(Some(avroSchema.toString), "pippo", "wasp")(child, schema)
+      val expr2 = AvroSerializerExpression(darwinConf, avroSchema, "pippo", "wasp")(child, schema)
+      val res   = spark.range(1).select(new Column(expr1), new Column(expr2)).collect()
       assert(res sameElements Array(Row(null, null)))
     }
 
@@ -191,7 +208,7 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
     }
   }
 
-  private def myAssert(a:Boolean, hint:String ): Unit = {
+  private def myAssert(a: Boolean, hint: String): Unit = {
     if (!a) fail(hint)
   }
 }
