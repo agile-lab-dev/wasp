@@ -48,6 +48,5 @@ trait Dependencies {
   val whitelabelMasterScriptClasspath: Def.Setting[Task[Seq[String]]]
   val whitelabelProducerScriptClasspath: Def.Setting[Task[Seq[String]]]
   val whitelabelSparkConsumerScriptClasspath: Def.Setting[Task[Seq[String]]]
-  val whiteLabelConsumersRtScriptClasspath: Def.Setting[Task[Seq[String]]]
   val whiteLabelSingleNodeScriptClasspath: Def.Setting[Task[Seq[String]]]
 }

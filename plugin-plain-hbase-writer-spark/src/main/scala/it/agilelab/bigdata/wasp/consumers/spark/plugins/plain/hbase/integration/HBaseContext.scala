@@ -4,14 +4,13 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.Logging
 import org.apache.spark.{SerializableWritable, SparkContext}
 
 //scalastyle:off
 class HBaseContext(@transient val sc: SparkContext,
-  @transient val config: Configuration,
-  val tmpHdfsConfgFile: String = null) extends Serializable with Logging {
+                   @transient val config: Configuration,
+                   val tmpHdfsConfgFile: String = null) extends Serializable with Logging {
 
   @transient var tmpHdfsConfiguration: Configuration = config
   @transient var appliedCredentials = false
@@ -36,7 +35,8 @@ class HBaseContext(@transient val sc: SparkContext,
   def getConf(configBroadcast: Broadcast[SerializableWritable[Configuration]] = broadcastedConf): Configuration = {
 
     if (tmpHdfsConfiguration == null && tmpHdfsConfgFile != null) {
-      val fs = FileSystem.newInstance(SparkHadoopUtil.get.conf)
+      // take conf from sc.hadoopConfiguration instead of SparkHadoopUtil.get.conf (Not accessible in spark3)
+      val fs = FileSystem.newInstance(sc.hadoopConfiguration)
       val inputStream = fs.open(new Path(tmpHdfsConfgFile))
       tmpHdfsConfiguration = new Configuration(false)
       tmpHdfsConfiguration.readFields(inputStream)

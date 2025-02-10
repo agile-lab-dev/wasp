@@ -4,8 +4,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.strategies.{InternalStrategy, Re
 import it.agilelab.bigdata.wasp.spark.plugins.nifi.{CompatibilityNifiPlugin, ReflectiveCall}
 import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.fs.{LocatedFileStatus, Path, RemoteIterator}
-import org.apache.spark.SparkConf
-import org.apache.spark.CompatibilitySparkHadoopUtil
+import org.apache.spark.{CompatibilitySparkHadoopUtil, SparkConf}
 import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.{DataFrame, Row}

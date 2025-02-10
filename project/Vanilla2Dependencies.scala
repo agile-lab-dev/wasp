@@ -12,7 +12,6 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     with Vanilla2KafkaDependencies
     with Vanilla2MongoDependencies
     with Vanilla2Json4sDependencies
-    with Vanilla2NettyDependencies
     with Vanilla2TestFrameworkDependencies
     with Vanilla2ScalaCoreDependencies
     with Vanilla2AvroDependencies
@@ -24,23 +23,28 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     with Vanilla2SttpDependencies {
   val exclusions: VanillaExclusions.type = VanillaExclusions
 
-  lazy val delta               = "io.delta" %% "delta-core" % versions.delta exclude exclusions.log4jExclude
-  lazy val elasticSearchSpark  = "org.elasticsearch" %% "elasticsearch-spark-20" % versions.elasticSearchSpark
-  lazy val guava               = "com.google.guava" % "guava" % versions.guava
-  lazy val javaxMail           = "javax.mail" % "mail" % versions.javaxMail
-  lazy val metrics             = "com.yammer.metrics" % "metrics-core" % versions.yammerMetrics // TODO upgrade?
-  lazy val quartz              = "org.quartz-scheduler" % "quartz" % versions.quartz
-  lazy val swaggerCore         = "io.swagger.core.v3" % "swagger-core" % versions.swagger
-  lazy val velocity            = "org.apache.velocity" % "velocity" % versions.velocity
-  lazy val kryo                = "com.esotericsoftware" % "kryo-shaded" % versions.kryo
-  lazy val reflections         = "org.reflections" % "reflections" % versions.reflectionsVersion
-  lazy val mySqlJavaConnector  = "mysql" % "mysql-connector-java" % versions.mySqlConnector
-  lazy val jaxRs               = "jakarta.ws.rs" % "jakarta.ws.rs-api" % versions.jakartaRsApi
-  lazy val nifiStateless       = "org.apache.nifi" % "nifi-stateless" % versions.nifi % Provided exclude exclusions.javaxRsExclude
-  lazy val joptSimpleTests     = "net.sf.jopt-simple" % "jopt-simple" % versions.jopt % Test
-  lazy val jettySecurity       = "org.eclipse.jetty" % "jetty-security" % versions.jettySecurity
-  lazy val mongoTest           = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
-  lazy val shapeless           = "com.chuusai" %% "shapeless" % "2.3.3"
+  val removeShims: Seq[ExclusionRule] = Seq(
+    ExclusionRule("org.spark-project.hive")
+  )
+
+  lazy val delta              = "io.delta"             %% "delta-core"               % versions.delta exclude exclusions.log4jExclude
+  lazy val parquet            = "org.apache.parquet"   % "parquet-column"            % "1.12.3" exclude exclusions.log4jExclude
+  lazy val elasticSearchSpark = "org.elasticsearch"    %% "elasticsearch-spark-20"   % versions.elasticSearchSpark
+  lazy val guava              = "com.google.guava"     % "guava"                     % versions.guava
+  lazy val javaxMail          = "javax.mail"           % "mail"                      % versions.javaxMail
+  lazy val metrics            = "com.codahale.metrics" % "metrics-core"              % versions.codahaleMetrics
+  lazy val quartz             = "org.quartz-scheduler" % "quartz"                    % versions.quartz
+  lazy val swaggerCore        = "io.swagger.core.v3"   % "swagger-core"              % versions.swagger
+  lazy val velocity           = "org.apache.velocity"  % "velocity"                  % versions.velocity
+  lazy val kryo               = "com.esotericsoftware" % "kryo-shaded"               % versions.kryo
+  lazy val reflections        = "org.reflections"      % "reflections"               % versions.reflectionsVersion
+  lazy val mySqlJavaConnector = "mysql"                % "mysql-connector-java"      % versions.mySqlConnector
+  lazy val jaxRs              = "jakarta.ws.rs"        % "jakarta.ws.rs-api"         % versions.jakartaRsApi
+  lazy val nifiStateless      = "org.apache.nifi"      % "nifi-stateless"            % versions.nifi % Provided exclude exclusions.javaxRsExclude
+  lazy val joptSimpleTests    = "net.sf.jopt-simple"   % "jopt-simple"               % versions.jopt % Test
+  lazy val jettySecurity      = "org.eclipse.jetty"    % "jetty-security"            % versions.jettySecurity
+  lazy val mongoTest          = "de.flapdoodle.embed"  % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
+  lazy val shapeless          = "com.chuusai"          %% "shapeless"                % "2.3.3"
 
   val jacksonTestDependencies = Seq(
     "com.fasterxml.jackson.core"     % "jackson-annotations"             % "2.10.1" % Test force (),
@@ -68,7 +72,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     akkaHttpSpray,
     sparkSQL,
     mongoBsonScala
-  )).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
+  )).map(_.exclude(exclusions.log4jExclude)) ++ scalaTestDependencies
 
   override val coreDependencies: Seq[ModuleID] = (akka ++
     logging ++
@@ -84,14 +88,14 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     apacheCommonsLang3,
     darwinCore,
     reflections
-  ) ++ spark).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
+  ) ++ spark)
 
   override val repositoryMongoDependencies: Seq[ModuleID] = Seq(
     mongodbScala,
     nameOf,
     sparkSQL,
     shapeless
-  ).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
+  ) ++ scalaTestDependencies
 
   override val repositoryPostgresDependencies: Seq[ModuleID] = Seq(
     postgres,
@@ -100,13 +104,13 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     postgresqlEmbeddedArm64,
     postgresqlEmbeddedArm64Linux,
     sparkSQL
-  ).map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ scalaTestDependencies
+  ) ++ scalaTestDependencies
 
   override val scalaCompilerDependencies: Seq[ModuleID] = (testDependencies ++ Seq(scalaCompiler, scalaPool))
-    .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude))
+    .map(_.exclude(exclusions.log4jExclude))
 
   override val producersDependencies: Seq[ModuleID] = (
-    akka ++ testDependencies ++ Seq(commonsIO, akkaHttp, akkaStream, netty, commonsCli)
+    akka ++ testDependencies ++ Seq(commonsIO, akkaHttp, akkaStream, commonsCli)
   ).map(_.exclude(exclusions.log4jExclude))
 
   override val consumersSparkDependencies: Seq[ModuleID] = schemaRegistry ++ (
@@ -123,8 +127,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
         sparkAvro,
         darwinMockConnector % Test
       )
-  ).map(_.exclude(exclusions.nettyExclude)).map(_.exclude(exclusions.log4jExclude)) ++
-    Seq(nettySpark, nettyAll, guava) ++ logging
+  )
 
   override val masterDependencies: Seq[ModuleID] = (
     json ++
@@ -133,14 +136,14 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
         sparkSQL,
         akkaHttp,
         akkaHttpSpray,
-        netty,
+        commonsCli,
         scalaTest,
         akkaHttpTestKit,
         akkaStreamTestkit,
         solrjMasterClient,
         httpClient
       )
-  ).map(_.exclude(exclusions.log4jExclude))
+  ) //.map(_.exclude(exclusions.log4jExclude))
 
   override val pluginElasticSparkDependencies: Seq[ModuleID] = spark ++ Seq(elasticSearchSpark)
 
@@ -150,11 +153,11 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   // here we need to create 2 plugins instead
 
   override val pluginHbaseSparkDependencies: Seq[ModuleID] =
-    (spark ++ hbase2 ++ Seq(scalaTest)).map(_.exclude(exclusions.nettyExclude))
+    (spark ++ hbase2 ++ Seq(scalaTest))
 
   override val pluginPlainHbaseWriterSparkDependencies: Seq[ModuleID] =
     (spark ++
-      hbase2.map(_.exclude(exclusions.nettyExclude)) ++
+      hbase2 ++
       jacksonTestDependencies ++
       Seq(scalaTest, scalaTestMockito, hbaseTestingUtils))
 
@@ -171,20 +174,19 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   )
 
   override val pluginKafkaSparkDependencies: Seq[ModuleID] =
-    (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies)
-      .map(_.exclude(exclusions.log4jExclude ++ exclusions.nettyExclude)) ++ logging ++ Seq(nettyAll)
+    (Seq(sparkSqlKafka) ++ _pluginKafkaSparkDependencies) ++ logging
 
   override val pluginSolrSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     httpClient,
     httpCore,
     solrj,
     sparkSolr
-  ).map(_.exclude(exclusions.nettyExclude))
+  )
 
   override val pluginMongoSparkDependencies: Seq[ModuleID] = spark ++ Seq(
     mongoSparkConnector,
     mongoJavaDriver
-  ).map(_.exclude(exclusions.nettyExclude))
+  )
 
   override val pluginMailerSparkDependencies: Seq[ModuleID] = spark ++ Seq(javaxMail, scalaTest)
 
@@ -209,13 +211,12 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   override val kmsTest: Seq[Def.Setting[_]] = Seq(
     Test / transitiveClassifiers := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
     Keys.libraryDependencies ++= Seq(
-      codeHausJacksonCoreAsl    % Test,
-      codeHausJacksonJaxRS      % Test,
-      codeHausJacksonMapperAsl  % Test,
-      jettySecurity             % Test,
-      hadoopCommonNoScope       % Test,
-      kms.classifier("tests")   % Test,
-      kms.classifier("classes") % Test
+      jacksonDatabind         % Test,
+      jacksonCore             % Test,
+      jettySecurity           % Test,
+      hadoopCommonNoScope     % Test,
+      metrics                 % Test,
+      kms.classifier("tests") % Test
     )
   )
 
@@ -226,12 +227,27 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   )
 
   override val pluginParallelWriteSparkDependencies: Seq[ModuleID] =
-    Seq(scalaTest) ++ pluginHttpSparkDependencies ++ Seq(delta, hadoopAWS)
+    Seq(scalaTest) ++ pluginHttpSparkDependencies ++ Seq(
+      /*
+       Hive-exec shades a lot of things we need to take
+      care of overriding the classpath by prepending libraries
+      that are shaded by hive-exec, notable examples are guava and
+      commons lang, actual implementation of hive-exec
+      on an EMR cluster do the right thing because they are patched
+      by aws with proper support for hadoop3
+       */
+      apacheCommonsLang3,
+      guava % Provided,
+      delta,
+      "org.apache.hive" % "hive-exec"      % "2.3.9" % Provided classifier "core",
+      "org.apache.hive" % "hive-metastore" % "2.3.9" % Provided,
+      parquet
+    ).map(_ exclude exclusions.hiveExclude) ++ logging
 
   override val microserviceCatalogDependencies: Seq[ModuleID] =
     Seq(scalaTest) ++ pluginHttpSparkDependencies
 
-  override val yarnAuthHdfsDependencies: Seq[ModuleID] = Seq(scalaTest, sparkYarn, hadoopCommon)
+  override val yarnAuthHdfsDependencies: Seq[ModuleID] = Seq(scalaTest, sparkYarn, hadoopCommon, kms)
 
   override val yarnAuthHBaseDependencies: Seq[ModuleID] = Seq(sparkYarn, hbaseServer2, hbaseCommon2)
 
@@ -240,17 +256,17 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val sparkNifiPluginDependencies: Seq[ModuleID] = spark
 
-  override val repositoryCoreDependencies: Seq[ModuleID] = testDependencies ++ Seq(apacheCommonsLang3) ++ Seq(shapeless)
+  override val repositoryCoreDependencies: Seq[ModuleID] = testDependencies ++ Seq(apacheCommonsLang3, shapeless)
 
   override val sparkPluginBasicDependencies: Seq[ModuleID] = spark ++ scalaTestDependencies
 
   override val whitelabelModelsDependencies: Seq[ModuleID] = spark
 
   override val whitelabelMasterDependencies: Seq[ModuleID] =
-    pluginHbaseSparkDependencies ++ Seq(darwinHBaseConnector, hbaseClient2Shaded, slf4jLog4j1Binding)
+    pluginHbaseSparkDependencies ++ Seq(darwinHBaseConnector, hbaseClient2Shaded)
 
   override val whitelabelProducerDependencies: Seq[ModuleID] =
-    pluginHbaseSparkDependencies ++ Seq(darwinHBaseConnector, hbaseClient2Shaded, slf4jLog4j1Binding)
+    pluginHbaseSparkDependencies ++ Seq(darwinHBaseConnector, hbaseClient2Shaded)
 
   override val whitelabelSparkConsumerDependencies: Seq[ModuleID] = Seq(
     darwinHBaseConnector,
@@ -258,7 +274,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     scalaTest,
     hadoopAuth          % Test,
     darwinMockConnector % Test
-  ) ++ spark ++ Seq(hbaseClient2Shaded, slf4jLog4j1Binding)
+  ) ++ spark ++ Seq(hbaseClient2Shaded)
 
   override val whitelabelMasterScriptClasspath =
     scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
@@ -274,10 +290,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
       scriptClasspath.value ++
       Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
-  override val whiteLabelConsumersRtScriptClasspath =
-    scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
-      scriptClasspath.value ++
-      Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
+
   override val whiteLabelSingleNodeScriptClasspath =
     scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
       scriptClasspath.value ++
@@ -369,20 +382,22 @@ trait Vanilla2HadoopDependencies {
 trait Vanilla2LoggingDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
-  lazy val slf4jApi           = "org.slf4j" % "slf4j-api" % versions.slf4j
-  lazy val slf4jLog4j1Binding = "org.slf4j" % "slf4j-log4j12" % versions.slf4j
-  lazy val log4j1             = "log4j" % "log4j" % versions.log4j1
-  lazy val logging            = Seq(slf4jApi, slf4jLog4j1Binding % Test, log4j1 % Test)
+
+  lazy val slf4jApi           = "org.slf4j" % "slf4j-api" % versions.slf4j % Provided
+  lazy val slf4jLog4j2Binding = "org.apache.logging.log4j" % "log4j-slf4j2-impl" % versions.log4j % Provided
+  lazy val log4j2Api          = "org.apache.logging.log4j" % "log4j-api" % versions.log4j % Provided
+  lazy val log4jCore          = "org.apache.logging.log4j" % "log4j-core" % versions.log4j % Provided
+  lazy val log4j1Api          = "org.apache.logging.log4j" % "log4j-1.2-api" % versions.log4j % Provided
+  val logging                 = Seq(slf4jApi, slf4jLog4j2Binding, log4j2Api, log4jCore, log4j1Api)
 }
 
 trait Vanilla2KafkaDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
-  lazy val kafka            = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaClients     = "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaStreaming   = "org.apache.spark" %% "spark-streaming-kafka-0-8" % versions.spark exclude (exclusions.sparkExclusions ++ exclusions.kafka08Exclude) // TODO remove jersey?
-  lazy val kafkaTests       = kafka              % Test exclude (exclusions.jacksonExclude)
-  lazy val sparkSqlKafka    = "it.agilelab"      %% "wasp-spark-sql-kafka" % versions.sparkSqlKafka
+  lazy val kafka         = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaClients  = "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaTests    = kafka              % Test exclude (exclusions.jacksonExclude)
+  lazy val sparkSqlKafka = "org.apache.spark" %% "spark-sql-kafka-0-10" % versions.spark
 }
 
 trait Vanilla2MongoDependencies {
@@ -401,13 +416,6 @@ trait Vanilla2Json4sDependencies {
   lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % versions.json4s % Provided exclude exclusions.jacksonExclude
   lazy val json4sNative  = "org.json4s" %% "json4s-native" % versions.json4s exclude exclusions.jacksonExclude
   lazy val json          = Seq(json4sCore, json4sJackson, json4sNative)
-}
-
-trait Vanilla2NettyDependencies {
-  val versions: Vanilla2Versions
-  lazy val netty      = "io.netty" % "netty"     % versions.nettySpark    % Provided
-  lazy val nettySpark = "io.netty" % "netty"     % versions.nettySpark    % Provided
-  lazy val nettyAll   = "io.netty" % "netty-all" % versions.nettyAllSpark % Provided
 }
 
 trait Vanilla2TestFrameworkDependencies {
@@ -451,16 +459,9 @@ trait Vanilla2ApacheCommonsDependencies {
 trait Vanilla2SolrDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
-  lazy val solrj = "org.apache.solr" % "solr-solrj" % versions.solr exclude exclusions.solrExclusion
-  lazy val sparkSolr = versions.scala.take(4) match {
-    case "2.11" =>
-      ("it.agilelab.bigdata.spark" % "spark-solr" % versions.sparkSolr)
-        .exclude(exclusions.sparkSolrExclusion)
-    case "2.12" =>
-      ("it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr)
-        .exclude(exclusions.sparkSolrExclusion)
-  }
-  lazy val solrjMasterClient = "org.apache.solr" % "solr-solrj" % versions.solr exclude exclusions.solrExclusion
+  lazy val solrj             = "org.apache.solr"           % "solr-solrj"  % versions.solr exclude exclusions.solrExclusion
+  lazy val sparkSolr         = "it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr exclude exclusions.sparkSolrExclusion
+  lazy val solrjMasterClient = "org.apache.solr"           % "solr-solrj"  % versions.solr exclude exclusions.solrExclusion
 }
 
 trait Vanilla2SttpDependencies {
@@ -472,10 +473,10 @@ trait Vanilla2SttpDependencies {
 
 trait Vanilla2CodehausJacksonDependencies {
   val versions: Vanilla2Versions
-
-  lazy val codeHausJacksonCoreAsl   = "org.codehaus.jackson" % "jackson-core-asl"   % versions.codeHausJackson
-  lazy val codeHausJacksonJaxRS     = "org.codehaus.jackson" % "jackson-jaxrs"      % versions.codeHausJackson
-  lazy val codeHausJacksonMapperAsl = "org.codehaus.jackson" % "jackson-mapper-asl" % versions.codeHausJackson
+  lazy val jacksonDatabind          = "com.fasterxml.jackson.core" % "jackson-databind"   % versions.fasterxmlJackson
+  lazy val jacksonCore              = "com.fasterxml.jackson.core" % "jackson-core"       % versions.fasterxmlJackson
+  lazy val codeHausJacksonMapperAsl = "org.codehaus.jackson"       % "jackson-mapper-asl" % versions.codeHausJackson
+  lazy val codeHausJacksonCoreAsl   = "org.codehaus.jackson"       % "jackson-core-asl"   % versions.codeHausJackson
 }
 
 trait Vanilla2OkHttpDependencies {

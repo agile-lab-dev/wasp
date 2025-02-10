@@ -26,7 +26,7 @@ class HBaseSink(sparkSession: SparkSession, parameters: Map[String, String], hBa
     val queryExecution = data.queryExecution
     val convertToPut: InternalRow => Put = putConverterFactory.convertToPut
     val hBaseContextInternal = hBaseContext
-    SQLExecution.withNewExecutionId(sparkSession, queryExecution) {
+    SQLExecution.withNewExecutionId(queryExecution) {
       hBaseContextInternal
         .bulkPut(queryExecution.toRdd,
           putConverterFactory.getTableName(),

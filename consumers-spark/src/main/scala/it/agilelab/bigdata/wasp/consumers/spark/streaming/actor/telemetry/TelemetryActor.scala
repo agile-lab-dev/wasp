@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.telemetry
 import akka.actor.{Actor, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import it.agilelab.bigdata.wasp.consumer.spark.streaming.actor.telemetry.CompatibilityTelemetryActor
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutcome
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.TelemetryMessageJsonProtocol._

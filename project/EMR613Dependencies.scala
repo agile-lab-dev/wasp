@@ -313,10 +313,6 @@ class EMR613Dependencies(val versions: EMR613Versions)
     scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
       scriptClasspath.value ++
       Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
-  override val whiteLabelConsumersRtScriptClasspath =
-    scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
-      scriptClasspath.value ++
-      Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
   override val whiteLabelSingleNodeScriptClasspath =
     scriptClasspath := Seq(":$SPARK_HOME/jars/*") ++
       scriptClasspath.value ++

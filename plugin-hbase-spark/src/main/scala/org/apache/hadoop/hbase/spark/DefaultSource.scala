@@ -295,7 +295,7 @@ case class HBaseRelation(
     }
 
     val queryExecution = df.queryExecution
-    SQLExecution.withNewExecutionId(data.sparkSession, queryExecution) {
+    SQLExecution.withNewExecutionId(queryExecution) {
       queryExecution.toRdd.map(convertToPut).saveAsHadoopDataset(jobConfig)
     }
   }
@@ -1025,8 +1025,7 @@ object DefaultSourceStaticUtils {
   //This will contain the last 5 filters and required fields used in buildScan
   // These values can be used in unit testing to make sure we are converting
   // The Spark SQL input correctly
-  val lastFiveExecutionRules =
-  new ConcurrentLinkedQueue[ExecutionRuleForUnitTesting]()
+  val lastFiveExecutionRules = new ConcurrentLinkedQueue[ExecutionRuleForUnitTesting]()
 
   /**
     * This method is to populate the lastFiveExecutionRules for unit test perposes

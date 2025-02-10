@@ -669,7 +669,6 @@ class CDP719Dependencies(versions: CDP719Versions) extends Dependencies {
   override lazy val whitelabelMasterScriptClasspath                 = scriptClasspath += ""
   override lazy val whitelabelProducerScriptClasspath               = scriptClasspath += ""
   override lazy val whitelabelSparkConsumerScriptClasspath          = scriptClasspath += ":$HADOOP_CONF_DIR:$HBASE_CONF_DIR"
-  override lazy val whiteLabelConsumersRtScriptClasspath            = scriptClasspath += ""
   override lazy val whiteLabelSingleNodeScriptClasspath             = scriptClasspath += ""
   lazy val avro4sTest                                               = avro4s.map(_ % Test)
   lazy val avro4sTestAndDarwin                                      = avro4sTest ++ Seq(darwinMockConnector % Test)

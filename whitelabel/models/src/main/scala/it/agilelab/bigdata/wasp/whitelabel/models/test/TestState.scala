@@ -2,13 +2,15 @@ package it.agilelab.bigdata.wasp.whitelabel.models.test
 
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.avro.{Schema, SchemaBuilder}
+import scala.collection.JavaConverters._
 
 case class TestState(count: Int, list: List[TestNestedDocument], newValue: String)
 
-object TestState{
+object TestState {
 
   val nestedSchema: Schema = SchemaBuilder
     .record("TestNestedDocument")
+    .namespace("it.agilelab.bigdata.wasp.whitelabel.models.test")
     .fields()
     .name("field1")
     .`type`()
@@ -26,6 +28,7 @@ object TestState{
 
   val schema: Schema = SchemaBuilder
     .record("TestState")
+    .namespace("it.agilelab.bigdata.wasp.whitelabel.models.test")
     .fields()
     .name("count")
     .`type`()
@@ -42,10 +45,10 @@ object TestState{
     .noDefault()
     .endRecord();
 
-
   def toRecord(data: TestState): GenericRecord = {
 
-    val nestedRecordList: Seq[GenericData.Record] = data.list.map { el => {
+    val nestedRecordList: Seq[GenericData.Record] = data.list.map { el =>
+      {
         val nestedRecordEl = new GenericData.Record(nestedSchema)
         nestedRecordEl.put("field1", el.field1)
         nestedRecordEl.put("field2", el.field2)
@@ -63,15 +66,15 @@ object TestState{
 
   def fromRecord(record: GenericRecord): TestState = {
     val count = record.get("count").asInstanceOf[java.lang.Integer]
-    val list = record.get("list").asInstanceOf[List[GenericRecord]]
-    val listOfTestNestedDocument = list.map(x => {
+    val list  = record.get("list").asInstanceOf[GenericData.Array[GenericRecord]].iterator().asScala.toList
+    val listOfTestNestedDocument = list.map { x =>
       TestNestedDocument(
         x.get("field1").toString,
         x.get("field2").asInstanceOf[java.lang.Long],
         Option(x.get("field3")).map(_.toString)
       )
-    })
-    val newValue =  record.get("newValue").toString
+    }
+    val newValue = record.get("newValue").toString
     TestState(count, listOfTestNestedDocument, newValue)
   }
 

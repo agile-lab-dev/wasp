@@ -34,7 +34,6 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SerializableWritable, SparkContext}
 import org.apache.hadoop.hbase.security.token.{AuthenticationTokenIdentifier => HbaseTokenIdentifier}
-import org.apache.spark.deploy.SparkHadoopUtil
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -298,7 +297,15 @@ class HBaseContext(@(transient @param) sc: SparkContext,
       classOf[IdentityTableMapper], null, null, job)
 
     val jconf = new JobConf(job.getConfiguration)
-    SparkHadoopUtil.get.addCredentials(jconf)
+
+    // Ensures user credentials are trustworthy (see if this is necessary)
+    // UserGroupInformation.getCurrentUser.reloginFromKeytab()
+
+    //  SparkHadoopUtil.get.addCredentials(jconf)
+    //  SparkHadoopUtil is private, lets do what 'addCredentials' does.
+    val jobCreds = jconf.getCredentials
+    jobCreds.mergeAll(UserGroupInformation.getCurrentUser.getCredentials)
+
     new NewHBaseRDD(sc,
       classOf[TableInputFormat],
       classOf[ImmutableBytesWritable],
@@ -346,7 +353,8 @@ class HBaseContext(@(transient @param) sc: SparkContext,
   Configuration = {
 
     if (tmpHdfsConfiguration == null && tmpHdfsConfgFile != null) {
-      val fs = FileSystem.newInstance(SparkHadoopUtil.get.conf)
+      // take conf from sc.hadoopConfiguration instead of SparkHadoopUtil.get.conf because in spark 3 it is private.
+      val fs = FileSystem.newInstance(sc.hadoopConfiguration)
       val inputStream = fs.open(new Path(tmpHdfsConfgFile))
       tmpHdfsConfiguration = new Configuration(false)
       tmpHdfsConfiguration.readFields(inputStream)

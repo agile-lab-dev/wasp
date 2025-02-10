@@ -1,4 +1,5 @@
-import sbt._
+import EMR613Exclusions.MavenCoordinate
+import sbt.*
 object VanillaExclusions {
   // I'm switching from .excludeAll to exclude API because excludeAll does not reflect in pom.xml therefore
   // when the artifacts are published, they're not excluded by dependant projects
@@ -88,7 +89,16 @@ object VanillaExclusions {
 
   lazy val hiveExclude = Vector(
     MavenCoordinate("org.apache.spark", "spark-core_2.11"),
-    MavenCoordinate("org.apache.spark", "spark-core_2.12")
+    MavenCoordinate("org.apache.spark", "spark-core_2.12"),
+    MavenCoordinate("org.apache.parquet", "parquet-column"),
+    MavenCoordinate("org.apache.parquet", "parquet-hadoop-bundle"),
+    MavenCoordinate("org.apache.parquet", "parquet-common"),
+    MavenCoordinate("org.apache.parquet", "parquet-encoding"),
+    MavenCoordinate("org.apache.parquet", "parquet-jackson"),
+    MavenCoordinate("org.apache.parquet", "parquet-format"),
+    MavenCoordinate("org.apache.parquet", "parquet-hadoop"),
+    MavenCoordinate("org.pentaho", "pentaho-aggdesigner-algorithm")
+
   )
 
   // these are needed because kafka brings in jackson-core/databind 2.8.5, which are incompatible with Spark

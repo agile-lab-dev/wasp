@@ -61,7 +61,6 @@ test-plugin:
   script:
     - ./run-sbt-unprivileged.sh "clean coverage wasp-plugin/test wasp-plugin/coverageAggregate"
   after_script:
-    - ls -R ${CI_PROJECT_DIR}/sbt-cache/ivy/jars/
     - mkdir test-output
     - find . -path '*/test-reports/*.xml' -exec cp '{}' ./test-output/ \;
   coverage: '/Aggregation complete. Coverage was \[(\d+.\d+)\]/'
