@@ -11,7 +11,7 @@ class Vanilla2Versions {
   val httpcomponents            = "4.3.3"
   val httpcomponentsMime        = "4.3.1"
   val javaxMail                 = "1.4"
-  val jdk                       = "1.8"
+  val jdk                       = "8"
   val jetty                     = "9.3.20.v20170531"
   val jopt                      = "3.2"
   val json4s                    = "3.5.3"

@@ -27,7 +27,7 @@ cache:
 test-kernel:
   stage: test
   interruptible: true
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2_2_12"]
@@ -54,7 +54,7 @@ test-kernel:
 test-plugin:
   stage: test
   interruptible: true
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2_2_12"]
@@ -81,7 +81,7 @@ test-plugin:
 test-repo:
   stage: test
   interruptible: true
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2_2_12"]
@@ -108,7 +108,7 @@ test-repo:
 compile-whitelabel:
   stage: deploy
   interruptible: true
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2_2_12"]
@@ -133,7 +133,7 @@ censor:
 generate-open-api:
   stage: test
   interruptible: true
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   script:
     - ./run-sbt-unprivileged.sh "generateOpenApi"
   tags:
@@ -169,7 +169,7 @@ waspctl:
 snapshot:
   interruptible: false
   stage: deploy
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2_2_12"]
@@ -193,7 +193,7 @@ snapshot:
 release:
   interruptible: false
   stage: deploy
-  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-8u432-b06-jdk-jammy"
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
       - WASP_FLAVOR: [ "VANILLA2_2_12"]

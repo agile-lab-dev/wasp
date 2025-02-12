@@ -78,12 +78,12 @@ class BasicSettings(
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",
-      s"-target:jvm-${jdkVersionValue}",
+      s"-target:${jdkVersionValue}",
+      s"-release:${jdkVersionValue}",
       "-feature",
       "-language:_",
       "-deprecation",
       "-unchecked",
-      //"-Ylog-classpath",
       "-Xlint",
       "-Ywarn-dead-code",
       "-Xfatal-warnings",
@@ -94,16 +94,14 @@ class BasicSettings(
     javacOptions ++= Seq(
       "-encoding",
       "UTF-8",
-      "-source",
-      jdkVersionValue,
-      "-target",
-      jdkVersionValue,
+      "--release",
+      s"${jdkVersionValue}",
       "-Xlint:deprecation",
       "-Xlint:unchecked"
     ),
     doc / javacOptions --= Seq(
-      "-target",
-      jdkVersionValue,
+      "--release",
+      s"${jdkVersionValue}",
       "-Xlint:deprecation",
       "-Xlint:unchecked"
     ),

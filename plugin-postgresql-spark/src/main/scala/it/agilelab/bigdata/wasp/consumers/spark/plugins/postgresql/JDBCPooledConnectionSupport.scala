@@ -60,7 +60,7 @@ trait JDBCPooledConnectionSupport {
 
   private def registerDriver(driverClassName: String): Unit = {
     val driverClass    = this.getClass.getClassLoader.loadClass(driverClassName)
-    val driverInstance = driverClass.newInstance().asInstanceOf[Driver]
+    val driverInstance = driverClass.getConstructor().newInstance().asInstanceOf[Driver]
     DriverManager.registerDriver(driverInstance)
   }
 

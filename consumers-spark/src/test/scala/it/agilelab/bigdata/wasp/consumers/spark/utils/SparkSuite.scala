@@ -9,7 +9,6 @@ import java.nio.file.Files
 trait SparkSuite extends Suite {
 
   lazy val spark: SparkSession = {
-    System.setSecurityManager(null)
     SparkSuite.spark.newSession()
   }
 

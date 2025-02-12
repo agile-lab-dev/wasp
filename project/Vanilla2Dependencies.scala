@@ -45,6 +45,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   lazy val jettySecurity      = "org.eclipse.jetty"    % "jetty-security"            % versions.jettySecurity
   lazy val mongoTest          = "de.flapdoodle.embed"  % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
   lazy val shapeless          = "com.chuusai"          %% "shapeless"                % "2.3.3"
+  lazy val hadoopClientApi    = "org.apache.hadoop"    % "hadoop-client-api"         % versions.hadoop
 
   val jacksonTestDependencies = Seq(
     "com.fasterxml.jackson.core"     % "jackson-annotations"             % "2.10.1" % Test force (),
