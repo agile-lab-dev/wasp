@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props, Terminated}
 import akka.cluster.ClusterEvent.{InitialStateAsEvents, MemberUp}
@@ -28,6 +27,7 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 class MultiMasterSpec
     extends WordSpecLike
@@ -40,9 +40,8 @@ class MultiMasterSpec
   import Protocol._
   import SparkConsumersStreamingMasterGuardian._
 
-  import scala.concurrent.duration._
 
-  val slowTimeout: FiniteDuration = FiniteDuration(5, TimeUnit.MINUTES)
+  val slowTimeout: FiniteDuration = 5.minutes
 
   def childCreatorFactory(probe: TestProbe): ChildCreator = { (_, name, factory) =>
     {
@@ -73,7 +72,7 @@ class MultiMasterSpec
           watchdogCreator,
           "collaborator",
           1.millisecond,
-          FiniteDuration(5, TimeUnit.SECONDS)
+          5.seconds
         )
 
         val childCreator = childCreatorFactory(probe)
@@ -138,7 +137,7 @@ class MultiMasterSpec
           watchdogCreator,
           "collaborator",
           1.millisecond,
-          FiniteDuration(5, TimeUnit.SECONDS),
+          5.seconds,
           schedulingStrategy = new TestNodeLabelSchedulingStrategyFactory
         )
 
@@ -212,7 +211,7 @@ class MultiMasterSpec
           watchdogCreator,
           "collaborator",
           1.millisecond,
-          FiniteDuration(5, TimeUnit.SECONDS)
+          5.seconds
         )
 
         cluster("system-0", props, childCreator) { (cluster0, _, _, shutdown0) =>
@@ -302,7 +301,7 @@ class MultiMasterSpec
           watchdogCreator,
           "collaborator",
           1.millisecond,
-          FiniteDuration(5, TimeUnit.SECONDS),
+          5.seconds,
           Some(whoIsRunningTheSingletonProbe.ref)
         )
 
@@ -347,7 +346,7 @@ class MultiMasterSpec
           watchdogCreator,
           "collaborator",
           1.second,
-          FiniteDuration(5, TimeUnit.SECONDS)
+          5.seconds
         )
 
         cluster("system-0", props, childCreator) { (cluster0, _, _, shutdown0) =>
@@ -366,6 +365,7 @@ class MultiMasterSpec
 
                 Seq(cluster0, cluster1, cluster2).find(_.selfUniqueAddress == address).foreach { cluster =>
                   cluster.leave(cluster.selfAddress)
+                  cluster.down(cluster.selfAddress)
                 }
 
                 probe.expectMsgPF(slowTimeout) {
@@ -418,7 +418,7 @@ class MultiMasterSpec
           watchdogCreator,
           "collaborator",
           1.millisecond,
-          FiniteDuration(5, TimeUnit.SECONDS),
+          5.seconds,
           debugActor = Some(whoIsRunningTheSingletonProbe.ref)
         )
 
@@ -520,7 +520,7 @@ class MultiMasterSpec
           watchdogCreator,
           "collaborator",
           1.millisecond,
-          FiniteDuration(5, TimeUnit.SECONDS),
+          5.seconds,
           Some(whoIsRunningTheSingletonProbe.ref)
         )
 
@@ -566,6 +566,7 @@ class MultiMasterSpec
                   Seq(cluster0, cluster1, cluster2).find(_.selfUniqueAddress == firstOneRunningTheSingleton).map {
                     cluster =>
                       cluster.leave(cluster.selfAddress)
+                      cluster.down(cluster.selfAddress)
                       cluster.selfUniqueAddress
                   }
 
@@ -616,6 +617,8 @@ trait SystemUtils {
     val proxy = system.actorOf(ClusterSingletonProxy.props("singleton-manager", proxySettings))
 
     val shutdown: () => Future[Terminated] = () => {
+      cluster.leave(cluster.selfAddress)
+      cluster.down(cluster.selfAddress)
       system.terminate()
     }
 
@@ -677,6 +680,8 @@ trait SystemUtils {
     system.actorOf(CollaboratorActor.props(proxy, childCreator), "collaborator")
 
     val shutdown: () => Future[Terminated] = () => {
+      cluster.leave(cluster.selfAddress)
+      cluster.down(cluster.selfAddress)
       system.terminate()
     }
 

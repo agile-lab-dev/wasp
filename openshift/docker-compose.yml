@@ -18,7 +18,7 @@ services:
       example.com:
     environment:
       WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
-      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_AKKA_SEED_NODE: "akka://WASP@master.example.com:2892"
       WASP_KAFKA_HOSTNAME: "services.example.com"
       WASP_KAFKA_PORT: "9092"
       WASP_ZOOKEEPER_HOSTNAME: "services.example.com"
@@ -41,7 +41,7 @@ services:
       example.com:
     environment:
       WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
-      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_AKKA_SEED_NODE: "akka://WASP@master.example.com:2892"
       WASP_KAFKA_HOSTNAME: "services.example.com"
       WASP_KAFKA_PORT: "9092"
       WASP_ZOOKEEPER_HOSTNAME: "services.example.com"
@@ -61,7 +61,7 @@ services:
       example.com:
     environment:
       WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
-      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_AKKA_SEED_NODE: "akka://WASP@master.example.com:2892"
       WASP_KAFKA_HOSTNAME: "services.example.com"
       WASP_KAFKA_PORT: "9092"
       WASP_ZOOKEEPER_HOSTNAME: "services.example.com"
@@ -81,7 +81,7 @@ services:
       example.com:
     environment:
       WASP_MONGO_DB_CONNECTION: "mongodb://mongo.example.com:27017"
-      WASP_AKKA_SEED_NODE: "akka.tcp://WASP@master.example.com:2892"
+      WASP_AKKA_SEED_NODE: "akka://WASP@master.example.com:2892"
       WASP_KAFKA_HOSTNAME: "services.example.com"
       WASP_KAFKA_PORT: "9092"
       WASP_ZOOKEEPER_HOSTNAME: "services.example.com"

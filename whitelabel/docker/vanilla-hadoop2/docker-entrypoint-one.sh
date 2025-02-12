@@ -29,14 +29,14 @@ ARGS="$ARGS -Dlog4j.configuration=file:///log4j-single.properties"
 ARGS="$ARGS -Dconfig.file=/wasp.conf"
 ARGS="$ARGS -Dwasp.spark-streaming.additional-jars-path=/code/single/lib"
 ARGS="$ARGS -Dwasp.process=---one---"
-ARGS="$ARGS -Dwasp.akka.remote.netty.tcp.hostname=${HOSTNAME}"
-ARGS="$ARGS -Dwasp.akka.remote.netty.tcp.port=2892"
+ARGS="$ARGS -Dwasp.akka.remote.artery.canonical.hostname=${HOSTNAME}"
+ARGS="$ARGS -Dwasp.akka.remote.artery.canonical.port=2892"
 ARGS="$ARGS -Dwasp.akka.cluster.roles.0=consumers-spark-streaming"
 ARGS="$ARGS -Dwasp.akka.cluster.roles.1=master"
 ARGS="$ARGS -Dwasp.akka.cluster.roles.2=producers"
 ARGS="$ARGS -Dwasp.akka.cluster.roles.3=logger"
 ARGS="$ARGS -Dwasp.akka.cluster.roles.4=consumers-spark-streaming-collaborator"
-ARGS="$ARGS -Dwasp.akka.cluster.seed-nodes.0=akka.tcp://WASP@${HOSTNAME}:2892"
+ARGS="$ARGS -Dwasp.akka.cluster.seed-nodes.0=akka://WASP@${HOSTNAME}:2892"
 
 if [ "$DROP_WASPDB" = true ] ; then
   ${WASP_HOME}/bin/wasp-whitelabel-singlenode $ARGS -- -d

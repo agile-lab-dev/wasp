@@ -21,8 +21,7 @@ class KafkaThroughputSpec
         ConfigFactory
           .load()
           .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
-          .withValue("akka.remote.artery.enabled", ConfigValueFactory.fromAnyRef(false))
-          .withValue("akka.remote.classic.netty.tcp.port", ConfigValueFactory.fromAnyRef(0))
+          .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(0))
       )
     )
     with ImplicitSender
