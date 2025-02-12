@@ -969,15 +969,15 @@ class PipegraphGuardianSpec
       }
 
       val fsm = TestFSMRef(
-        new PipegraphGuardian(master.ref, "pipegraph", factory, 500.milliseconds, 500.milliseconds, strategy)
+        new PipegraphGuardian(master.ref, pipegraph.name, factory, 500.milliseconds, 500.milliseconds, strategy)
       )
 
       transitions.send(fsm, SubscribeTransitionCallBack(transitions.ref))
       transitions.expectMsgType[CurrentState[State]]
 
-      master.send(fsm, MasterProtocol.WorkAvailable(defaultPipegraph.name))
+      master.send(fsm, MasterProtocol.WorkAvailable(pipegraph.name))
 
-      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress, "pipegraph"))
+      master.expectMsg(PipegraphProtocol.GimmeWork(Cluster(system).selfUniqueAddress, pipegraph.name))
 
       master.send(fsm, MasterProtocol.WorkGiven(pipegraph, defaultInstance))
 

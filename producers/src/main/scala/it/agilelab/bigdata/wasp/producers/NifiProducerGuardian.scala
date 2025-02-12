@@ -6,11 +6,9 @@ import java.util.Base64
 import akka.actor.Actor
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.WaspSystem.actorSystem
 import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, MlModelBL, ProducerBL}
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.core.WaspSystem
 import it.agilelab.bigdata.wasp.core.messages.{ModelKey, RestRequest}
 
 import scala.concurrent.Future
@@ -29,7 +27,6 @@ class NifiProducerGuardian(env: {val producerBL: ProducerBL; val mlModelBL: MlMo
   extends Actor
     with Logging {
 
-  implicit val materializer: ActorMaterializer = ActorMaterializer()(WaspSystem.actorSystem)
   val nifiProducerConf: Option[ProducerModel] = env.producerBL.getByName(producerName)
 
   override def receive: Actor.Receive = {

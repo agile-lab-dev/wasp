@@ -4,13 +4,12 @@ import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model.ws.{Message, WebSocketRequest, WebSocketUpgradeResponse}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, RoutingLog}
-import akka.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings, ParserSettings, RoutingSettings}
+import akka.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
 import akka.http.scaladsl.{Http, HttpsConnectionContext}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 trait AkkaHttpClient {
   def singleRequest(
@@ -29,8 +28,7 @@ object AkkaHttpClient {
   def default(
                system: ActorSystem,
                connectionContext: Option[HttpsConnectionContext],
-               customLog: Option[LoggingAdapter],
-               materializer: Materializer
+               customLog: Option[LoggingAdapter]
              ): AkkaHttpClient = new AkkaHttpClient {
     private val http = Http()(system)
 
@@ -43,7 +41,7 @@ object AkkaHttpClient {
         connectionContext.getOrElse(http.defaultClientHttpsContext),
         settings,
         customLog.getOrElse(system.log)
-      )(materializer)
+      )
     }
 
     override def singleWebsocketRequest[WS_RESULT](
@@ -62,26 +60,4 @@ object AkkaHttpClient {
       wsResponse.map((_, wsResult))
     }
   }
-
-  def stubFromAsyncHandler(run: HttpRequest => Future[HttpResponse]): AkkaHttpClient = new AkkaHttpClient {
-    def singleRequest(request: HttpRequest, settings: ConnectionPoolSettings): Future[HttpResponse] =
-      run(request)
-
-    override def singleWebsocketRequest[WS_RESULT](
-                                                    request: WebSocketRequest,
-                                                    clientFlow: Flow[Message, Message, WS_RESULT],
-                                                    settings: ClientConnectionSettings
-                                                  )(implicit ec: ExecutionContext, mat: Materializer): Future[(WebSocketUpgradeResponse, WS_RESULT)] =
-      Future.failed(new RuntimeException("Websockets are not supported"))
-  }
-
-  def stubFromRoute(route: Route)(
-    implicit routingSettings: RoutingSettings,
-    parserSettings: ParserSettings,
-    materializer: Materializer,
-    routingLog: RoutingLog,
-    executionContext: ExecutionContextExecutor = null,
-    rejectionHandler: RejectionHandler = RejectionHandler.default,
-    exceptionHandler: ExceptionHandler = null
-  ): AkkaHttpClient = stubFromAsyncHandler(Route.asyncHandler(route))
 }

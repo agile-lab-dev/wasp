@@ -305,7 +305,7 @@ class PipegraphGuardian(private val master: ActorRef,
     case (Activating, Activating) => nextStateData match {
       case ActivatingData.ShouldRetry() =>
         log.info("[Activating->Activating] Scheduling Retry")
-        setTimer("retry", MyProtocol.PerformRetry, retryDuration)
+        startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
       case ActivatingData.ToBeActivated(etl) =>
         log.info("[Activating->Activating] Activating [{}]", etl.name)
         self ! MyProtocol.ActivateETL(etl)
@@ -386,7 +386,7 @@ class PipegraphGuardian(private val master: ActorRef,
     case (Materializing, Materializing) => nextStateData match {
       case MaterializingData.ShouldRetry() =>
         log.info("[Materializing->Materializing] Scheduling Retry")
-        setTimer("retry", MyProtocol.PerformRetry, retryDuration)
+        startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
       case MaterializingData.ToBeMaterialized(WorkerToEtlAssociation(worker, data)) =>
         log.info("[Materializing->Materializing] materialize [{}->{}]", worker, data.name)
         self ! MyProtocol.MaterializeETL(worker, data)
@@ -425,13 +425,13 @@ class PipegraphGuardian(private val master: ActorRef,
     case (Monitoring, Monitored) => nextStateData match {
       case MonitoredData.ShouldRetry() =>
         log.info("[Monitoring->Monitored] Scheduling Retry")
-        setTimer("retry", MyProtocol.PerformRetry, retryDuration)
+        startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
       case MonitoredData.ShouldStopAll() =>
         log.info("[Monitoring->Monitored] StopAll")
         self ! MyProtocol.CancelWork
       case MonitoredData.ShouldMonitorAgain() =>
         log.info("[Monitoring->Monitored] Scheduling Monitoring")
-        setTimer("monitoring", MyProtocol.MonitorPipegraph, monitoringInterval)
+        startTimerAtFixedRate("monitoring", MyProtocol.MonitorPipegraph, monitoringInterval)
 
       case MonitoredData.NothingToMonitor() =>
         log.info("[Monitoring->Monitored] Nothing to monitor")
@@ -453,8 +453,9 @@ class PipegraphGuardian(private val master: ActorRef,
       case ActivatingData.ToBeActivated(etl) =>
         log.info("[Monitored->Activating] Scheduling activation")
         self ! MyProtocol.ActivateETL(etl)
-
-
+      case ActivatingData.AllActive() =>
+        log.info("[Monitored->Activating] AllActive")
+        self ! MyProtocol.ActivationFinished
     }
 
     case (Monitored, Monitoring) => nextStateData match {

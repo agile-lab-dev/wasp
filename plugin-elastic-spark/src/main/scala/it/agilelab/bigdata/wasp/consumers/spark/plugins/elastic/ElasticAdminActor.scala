@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import java.net.{InetAddress, InetSocketAddress}
 
-import akka.actor.{Actor, actorRef2Scala}
+import akka.actor.{Actor}
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.ElasticConfigModel
 

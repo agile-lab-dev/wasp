@@ -168,7 +168,7 @@ class TelemetryActor private() extends Actor with CompatibilityTelemetryActor{
 
     implicit val ec: ExecutionContextExecutor = context.system.dispatcher
 
-    val _ = context.system.scheduler.schedule(
+    val _ = context.system.scheduler.scheduleAtFixedRate(
       FiniteDuration(5, TimeUnit.SECONDS),
       FiniteDuration(5, TimeUnit.SECONDS),
       mediator,

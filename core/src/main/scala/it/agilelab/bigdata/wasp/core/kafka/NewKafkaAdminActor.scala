@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.core.kafka
 
-import akka.actor.{Actor, actorRef2Scala}
+import akka.actor.Actor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.KafkaEntryConfig
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}

@@ -3,7 +3,6 @@ package it.agilelab.bigdata.wasp.whitelabel.producers
 import java.util.UUID
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.stream.ActorMaterializer
 import it.agilelab.bigdata.wasp.core.utils.JsonConverter
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.models.TopicModel
@@ -18,7 +17,6 @@ import spray.json.DefaultJsonProtocol
 final class TestProducerAvroSchemaManager_v2(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
   extends ProducerGuardian(env.asInstanceOf[AnyRef {val producerBL: ProducerBL; val topicBL: TopicBL}], producerId) with SprayJsonSupport with DefaultJsonProtocol {
 
-  implicit val materializer = ActorMaterializer()
   implicit val system = this.context.system
   override val name: String = "CrashOctoProducer"
 

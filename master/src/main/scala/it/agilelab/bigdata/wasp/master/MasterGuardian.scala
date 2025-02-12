@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.master
 
 import java.util.Calendar
 
-import akka.actor.{Actor, ActorRef, actorRef2Scala}
+import akka.actor.{Actor, ActorRef}
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.WaspSystem._
 import it.agilelab.bigdata.wasp.repository.core.bl._
@@ -26,7 +26,7 @@ object MasterGuardian
     val initialDelay = Duration(timeToFirst, MILLISECONDS)
     val interval = Duration(24, HOURS)
     logger.info(f"Index rollover is enabled: scheduling index rollover ${initialDelay.toUnit(HOURS)}%4.2f hours from now and then every $interval")
-    actorSystem.scheduler.schedule(initialDelay, interval) {
+    actorSystem.scheduler.scheduleAtFixedRate(initialDelay, interval) { () =>
 
       ??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
         case Right(s) => logger.info(s"RestartPipegraphs: $s")

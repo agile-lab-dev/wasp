@@ -18,6 +18,7 @@ class BacklogSizeAnalyzerSpec
         ConfigFactory
           .load()
           .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
+          .withValue("akka.remote.artery.enabled", ConfigValueFactory.fromAnyRef(false))
           .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(0))
       )
     )
@@ -61,7 +62,7 @@ class BacklogSizeAnalyzerSpec
     expectMsg("0:testEtl:7")
     backlogGuardian ! Stop
     expectMsg(Right(()))
-    expectNoMsg()
+    expectNoMessage()
   }
 
   it should "start, calculate backlog on multi topic model and then stop gracefully" in {
@@ -146,7 +147,7 @@ class BacklogSizeAnalyzerSpec
 
     backlogGuardian ! Stop
     expectMsg(Right(()))
-    expectNoMsg()
+    expectNoMessage()
   }
 
   def telemetryMessageSourcesSummary(topicName: String, startOffset: Long, endOffset: Long) =

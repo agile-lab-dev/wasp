@@ -1,18 +1,16 @@
 package sttp.client.akkahttp
 
 import java.io.{File, UnsupportedEncodingException}
-
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
-import akka.http.scaladsl.coding.{Deflate, Gzip, NoCoding}
+import akka.http.scaladsl.coding.{Coders}
 import akka.http.scaladsl.model.ContentTypes.`application/octet-stream`
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
-import akka.http.scaladsl.model.headers.{`Content-Length`, `Content-Type`, HttpEncodings}
+import akka.http.scaladsl.model.headers.{HttpEncodings, `Content-Length`, `Content-Type`}
 import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.http.scaladsl.model.{Multipart => AkkaMultipart, StatusCode => _, _}
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.{ClientTransport, HttpsConnectionContext}
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{FileIO, Flow, Sink, Source, StreamConverters}
 import akka.util.ByteString
 import sttp.client
@@ -21,6 +19,7 @@ import sttp.client.monad.{FutureMonad, MonadError}
 import sttp.client.testing.SttpBackendStub
 import sttp.client.ws.WebSocketResponse
 import sttp.client._
+
 import scala.collection.immutable.Seq
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -45,7 +44,6 @@ class AkkaHttpBackend private (
   private type S = Source[ByteString, Any]
 
   implicit private val as: ActorSystem                 = actorSystem
-  implicit private val materializer: ActorMaterializer = ActorMaterializer()
 
   private val connectionPoolSettings = {
 
@@ -308,9 +306,9 @@ class AkkaHttpBackend private (
   // http://doc.akka.io/docs/akka-http/10.0.7/scala/http/common/de-coding.html
   private def decodeAkkaResponse(response: HttpResponse): HttpResponse = {
     val decoder = response.encoding match {
-      case HttpEncodings.gzip     => Gzip
-      case HttpEncodings.deflate  => Deflate
-      case HttpEncodings.identity => NoCoding
+      case HttpEncodings.gzip     => Coders.Gzip
+      case HttpEncodings.deflate  => Coders.Deflate
+      case HttpEncodings.identity => Coders.NoCoding
       case ce =>
         throw new UnsupportedEncodingException(s"Unsupported encoding: $ce")
     }
@@ -384,14 +382,13 @@ object AkkaHttpBackend {
       implicit ec: ExecutionContext = ExecutionContext.global
   ): SttpBackend[Future, Source[ByteString, Any], Types.LambdaFlow] = {
     val actorSystem  = ActorSystem("sttp")
-    val materializer = ActorMaterializer()(actorSystem)
     make(
       actorSystem,
       ec,
       terminateActorSystemOnClose = true,
       options,
       customConnectionPoolSettings,
-      AkkaHttpClient.default(actorSystem, customHttpsContext, customLog, materializer),
+      AkkaHttpClient.default(actorSystem, customHttpsContext, customLog),
       customizeRequest,
       customizeWebsocketRequest
     )
@@ -419,7 +416,7 @@ object AkkaHttpBackend {
       actorSystem,
       options,
       customConnectionPoolSettings,
-      AkkaHttpClient.default(actorSystem, customHttpsContext, customLog, ActorMaterializer()(actorSystem)),
+      AkkaHttpClient.default(actorSystem, customHttpsContext, customLog),
       customizeRequest,
       customizeWebsocketRequest
     )

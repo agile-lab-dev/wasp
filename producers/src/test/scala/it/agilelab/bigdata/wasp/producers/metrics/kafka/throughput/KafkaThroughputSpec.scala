@@ -21,7 +21,8 @@ class KafkaThroughputSpec
         ConfigFactory
           .load()
           .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
-          .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(0))
+          .withValue("akka.remote.artery.enabled", ConfigValueFactory.fromAnyRef(false))
+          .withValue("akka.remote.classic.netty.tcp.port", ConfigValueFactory.fromAnyRef(0))
       )
     )
     with ImplicitSender
@@ -76,7 +77,7 @@ class KafkaThroughputSpec
     expectMsg("0:23")
     expectMsg("0:24")
     throughputGuardian ! Stop
-    expectNoMsg()
+    expectNoMessage()
   }
 
   override protected def beforeEach(): Unit = {

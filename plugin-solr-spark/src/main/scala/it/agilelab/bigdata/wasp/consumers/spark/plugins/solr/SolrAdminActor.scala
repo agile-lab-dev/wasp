@@ -5,7 +5,6 @@ import java.util.Properties
 
 import akka.actor.Actor
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.stream.ActorMaterializer
 import com.lucidworks.spark.util.SolrSupport
 import com.lucidworks.spark.util.SolrSupport.CloudClientParams
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -41,7 +40,6 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
   var solrServer: CloudSolrClient = _
   var httpClient: HttpClient      = _
 
-  implicit val materializer = ActorMaterializer()
   implicit val system       = this.context.system
 
   override def receive: Actor.Receive = {

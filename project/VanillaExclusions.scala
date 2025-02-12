@@ -36,7 +36,11 @@ object VanillaExclusions {
   )
 
   lazy val akkaKryoExclude: Vector[MavenCoordinate] =
-    Vector(MavenCoordinate("net.jpountz.lz4", "lz4"), MavenCoordinate("org.lz4", "lz4-java"))
+    Vector(
+      MavenCoordinate("com.typesafe.akka", "akka-actor_2.12"), // this is brought by akka
+      MavenCoordinate("org.lz4", "lz4-java"),                  // this is brought by Spark
+      MavenCoordinate("org.agrona", "agrona")                  // this is brought by akka
+    )
 
   lazy val hbaseExclusion: Vector[MavenCoordinate] =
     log4jExclude ++ jacksonExclude ++ Vector(
@@ -98,7 +102,6 @@ object VanillaExclusions {
     MavenCoordinate("org.apache.parquet", "parquet-format"),
     MavenCoordinate("org.apache.parquet", "parquet-hadoop"),
     MavenCoordinate("org.pentaho", "pentaho-aggdesigner-algorithm")
-
   )
 
   // these are needed because kafka brings in jackson-core/databind 2.8.5, which are incompatible with Spark

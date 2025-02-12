@@ -1,6 +1,6 @@
 class Vanilla2Versions {
-  val akka                      = "2.4.20" // do not use akka 2.5+ until spark has removed their dependency on akka 2.3, otherwise master & consumer won't be able to communicate
-  val akkaHttp                  = "10.0.9" // keep in sync with akka
+  val akka                      = "2.6.21"
+  val akkaHttp                  = "10.2.10"
   val apacheCommonsLang3Version = "3.4"
   val avro                      = "1.8.2"
   val codahaleMetrics           = "3.0.2"
@@ -41,7 +41,7 @@ class Vanilla2Versions {
   val sparkSqlKafka: String     = "0.1.0" + "-" + kafka_ + "-" + spark
   val yammerMetrics             = "2.2.0"
   val swagger                   = "2.1.2"
-  val typesafeConfig            = "1.3.0"
+  val typesafeConfig            = "1.4.2"
   val velocity                  = "1.7"
   val mySqlConnector            = "5.1.6"
   val nameOf                    = "1.0.3"
@@ -57,7 +57,7 @@ class Vanilla2Versions {
   val mongoJavaDriver           = "3.12.2"
   val mongodbScala              = "2.9.0"
   val jettySecurity             = "9.3.25.v20180904"
-  val akkaKryo                  = "0.5.2"
+  val akkaKryo                  = "1.1.5"
   val scala                     = "2.12.17"
   val elasticSearchSpark        = "7.15.0"
 }

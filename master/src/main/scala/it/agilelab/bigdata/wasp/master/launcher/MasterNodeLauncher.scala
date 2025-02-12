@@ -3,16 +3,9 @@ package it.agilelab.bigdata.wasp.master.launcher
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.Directives.{complete, extractUri, handleExceptions, _}
-import akka.http.scaladsl.server.{
-  AuthenticationFailedRejection,
-  ExceptionHandler,
-  RejectionHandler,
-  Route,
-  ValidationRejection
-}
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import it.agilelab.bigdata.nifi.client.core.SttpSerializer
@@ -22,8 +15,8 @@ import it.agilelab.bigdata.wasp.core.launcher.{ClusterSingletonLauncher, MasterC
 import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, FreeCodeCompilerUtilsDefault, WaspConfiguration}
 import it.agilelab.bigdata.wasp.core.{AroundLaunch, SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.master.MasterGuardian
-import it.agilelab.bigdata.wasp.master.security.{ApiKeyAuthenticationVerifierImpl, NoSecurity}
 import it.agilelab.bigdata.wasp.master.security.common.AuthenticationService
+import it.agilelab.bigdata.wasp.master.security.{ApiKeyAuthenticationVerifierImpl, NoSecurity}
 import it.agilelab.bigdata.wasp.master.web.controllers._
 import it.agilelab.bigdata.wasp.master.web.utils.JsonResultsHelper
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
@@ -168,8 +161,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
   def additionalRoutes(): Route = reject
 
   private def startRestServer(actorSystem: ActorSystem, route: Route): Unit = {
-    implicit val system: ActorSystem             = actorSystem
-    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val system: ActorSystem = actorSystem
 
     val rejectionHandler = RejectionHandler
       .newBuilder()
@@ -213,22 +205,24 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
     logger.info(s"start rest server and bind on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}")
 
-    val optHttpsContext = createHttpsContext
-
-    val _ = if (optHttpsContext.isDefined) {
-      logger.info(
-        s"Rest API will be available through HTTPS on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}"
-      )
-      Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort, optHttpsContext.get)
-    } else {
-      logger.info(
-        s"Rest API will be available through HTTP on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}"
-      )
-      Http().bindAndHandle(finalRoute, waspConfig.restServerHostname, waspConfig.restServerPort)
+    createHttpsContext() match {
+      case Some(httpsContext) =>
+        logger.info(
+          s"Rest API will be available through HTTPS on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}"
+        )
+        Http()
+          .newServerAt(waspConfig.restServerHostname, waspConfig.restServerPort)
+          .enableHttps(httpsContext)
+          .bindFlow(finalRoute)
+      case None =>
+        logger.info(
+          s"Rest API will be available through HTTP on ${waspConfig.restServerHostname}:${waspConfig.restServerPort}"
+        )
+        Http().newServerAt(waspConfig.restServerHostname, waspConfig.restServerPort).bindFlow(finalRoute)
     }
   }
 
-  private def createHttpsContext: Option[HttpsConnectionContext] = {
+  private def createHttpsContext(): Option[HttpsConnectionContext] = {
     if (waspConfig.restHttpsConf.isEmpty) {
       None
     } else {
@@ -256,7 +250,7 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
       val sslContext: SSLContext = SSLContext.getInstance("TLS")
       sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
-      val https: HttpsConnectionContext = ConnectionContext.https(sslContext)
+      val https: HttpsConnectionContext = ConnectionContext.httpsServer(sslContext)
       Some(https)
     }
   }

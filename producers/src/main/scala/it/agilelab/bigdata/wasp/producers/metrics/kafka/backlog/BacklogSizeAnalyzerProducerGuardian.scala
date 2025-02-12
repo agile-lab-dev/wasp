@@ -73,7 +73,7 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
 
     val interval = FiniteDuration(REQUESTS_TIMEOUT, TimeUnit.MILLISECONDS)
 
-    val cancellable = context.system.scheduler.schedule(
+    val cancellable = context.system.scheduler.scheduleAtFixedRate(
       interval,
       interval,
       self,

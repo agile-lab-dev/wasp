@@ -69,6 +69,8 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
   override val testDependencies: Seq[ModuleID] = Seq(akkaTestKit, akkaClusterTestKit, scalaTest, mongoTest)
 
   override val modelDependencies: Seq[ModuleID] = (json ++ Seq(
+    typesafeConfig,
+    akkaStream,
     akkaHttpSpray,
     sparkSQL,
     mongoBsonScala
@@ -143,7 +145,7 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
         solrjMasterClient,
         httpClient
       )
-  ) //.map(_.exclude(exclusions.log4jExclude))
+  )
 
   override val pluginElasticSparkDependencies: Seq[ModuleID] = spark ++ Seq(elasticSearchSpark)
 
@@ -300,25 +302,25 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 trait Vanilla2AkkaDependencies {
   val versions: Vanilla2Versions
   val exclusions: VanillaExclusions.type
-  lazy val akkaActor          = "com.typesafe.akka"     %% "akka-actor"              % versions.akka
-  lazy val akkaCluster        = "com.typesafe.akka"     %% "akka-cluster"            % versions.akka
-  lazy val akkaClusterTools   = "com.typesafe.akka"     %% "akka-cluster-tools"      % versions.akka
-  lazy val akkaContrib        = "com.typesafe.akka"     %% "akka-contrib"            % versions.akka
-  lazy val akkaHttp           = "com.typesafe.akka"     %% "akka-http"               % versions.akkaHttp
-  lazy val akkaHttpSpray      = "com.typesafe.akka"     %% "akka-http-spray-json"    % versions.akkaHttp
-  lazy val akkaKryo           = "com.github.romix.akka" %% "akka-kryo-serialization" % versions.akkaKryo exclude exclusions.akkaKryoExclude
-  lazy val akkaRemote         = "com.typesafe.akka"     %% "akka-remote"             % versions.akka
-  lazy val akkaSlf4j          = "com.typesafe.akka"     %% "akka-slf4j"              % versions.akka
-  lazy val akkaStream         = "com.typesafe.akka"     %% "akka-stream"             % versions.akka
-  lazy val akkaStreamTestkit  = "com.typesafe.akka"     %% "akka-stream-testkit"     % versions.akka % Test
-  lazy val akkaHttpTestKit    = "com.typesafe.akka"     %% "akka-http-testkit"       % versions.akkaHttp % Test
-  lazy val akkaClusterTestKit = "com.typesafe.akka"     %% "akka-multi-node-testkit" % versions.akka % Test
-  lazy val akkaTestKit        = "com.typesafe.akka"     %% "akka-testkit"            % versions.akka % Test
+  lazy val akkaActor          = "com.typesafe.akka" %% "akka-actor"              % versions.akka
+  lazy val akkaCluster        = "com.typesafe.akka" %% "akka-cluster"            % versions.akka
+  lazy val akkaClusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics"    % versions.akka
+  lazy val akkaClusterTools   = "com.typesafe.akka" %% "akka-cluster-tools"      % versions.akka
+  lazy val akkaHttp           = "com.typesafe.akka" %% "akka-http"               % versions.akkaHttp
+  lazy val akkaHttpSpray      = "com.typesafe.akka" %% "akka-http-spray-json"    % versions.akkaHttp
+  lazy val akkaKryo           = "io.altoo"          %% "akka-kryo-serialization" % versions.akkaKryo exclude exclusions.akkaKryoExclude
+  lazy val akkaRemote         = "com.typesafe.akka" %% "akka-remote"             % versions.akka
+  lazy val akkaSlf4j          = "com.typesafe.akka" %% "akka-slf4j"              % versions.akka
+  lazy val akkaStream         = "com.typesafe.akka" %% "akka-stream"             % versions.akka
+  lazy val akkaStreamTestkit  = "com.typesafe.akka" %% "akka-stream-testkit"     % versions.akka % Test
+  lazy val akkaHttpTestKit    = "com.typesafe.akka" %% "akka-http-testkit"       % versions.akkaHttp % Test
+  lazy val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % versions.akka % Test
+  lazy val akkaTestKit        = "com.typesafe.akka" %% "akka-testkit"            % versions.akka % Test
   lazy val akka = Seq(
     akkaActor,
     akkaCluster,
     akkaClusterTools,
-    akkaContrib,
+    akkaClusterMetrics,
     akkaRemote,
     akkaSlf4j,
     akkaKryo

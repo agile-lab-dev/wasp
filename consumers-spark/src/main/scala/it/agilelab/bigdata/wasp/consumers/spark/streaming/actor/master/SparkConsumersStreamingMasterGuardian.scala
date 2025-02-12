@@ -146,7 +146,7 @@ class SparkConsumersStreamingMasterGuardian(
       unstashAll()
       log.debug("Unstashing")
       log.info(s"Setting ${Timers.unschedulableCheck} to recover unschedulable pipegraphs")
-      setTimer(Timers.unschedulableCheck, RecoverUnschedulable, unschedulableCheckInterval, repeat = true)
+      startTimerAtFixedRate(Timers.unschedulableCheck, RecoverUnschedulable, unschedulableCheckInterval)
   }
 
   private def handleUnschedulable: StateFunction = {
@@ -351,7 +351,7 @@ class SparkConsumersStreamingMasterGuardian(
 
     case Event(_: ChildProtocol.WorkNotCancelled, _: Schedule)
     =>
-      setTimer(
+      startTimerAtFixedRate(
         Timers.workNotCancelledRetryTimer,
         RetryEnvelope(ChildProtocol.WorkNotCancelled, sender()),
         retryInterval

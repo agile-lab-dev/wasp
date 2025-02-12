@@ -14,8 +14,8 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
   import scala.concurrent.duration._
 
   implicit val ec = context.system.dispatcher
-  context.system.scheduler.schedule(0.seconds, 1.second, self, MonitorSparkContext)
-  context.system.scheduler.schedule(0.seconds, 1.second, self, MonitorHdfTokens)
+  context.system.scheduler.scheduleAtFixedRate(0.seconds, 1.second, self, MonitorSparkContext)
+  context.system.scheduler.scheduleAtFixedRate(0.seconds, 1.second, self, MonitorHdfTokens)
 
 
   def waitForSparkContextToBeAvailable : Receive  = {

@@ -11,7 +11,7 @@ import scala.concurrent.Future
 class NifiProxyController(basePath: String, target: Uri) extends Directives {
 
   def defaultIfNotExist(headers: List[HttpHeader], name: String, defaultValue: String): List[HttpHeader] = {
-    if(!headers.exists(header => header.is(name.toLowerCase))) {
+    if (!headers.exists(header => header.is(name.toLowerCase))) {
       List[HttpHeader](RawHeader(name, defaultValue))
     } else {
       List[HttpHeader]()
@@ -39,14 +39,16 @@ class NifiProxyController(basePath: String, target: Uri) extends Directives {
                     defaultIfNotExist(headerList, "X-ProxyHost", host) ++
                     defaultIfNotExist(headerList, "X-ProxyContextPath", basePath)
 
-                  val proxyRequest = request.copy(
-                    uri = request.uri.copy(
-                      scheme = target.scheme,
-                      authority = target.authority,
-                      path = rest
-                    ),
-                    headers = newHeaders
-                  )
+                  val proxyRequest = request
+                    .withUri(
+                      request.uri.copy(
+                        scheme = target.scheme,
+                        authority = target.authority,
+                        path = rest
+                      )
+                    )
+                    .withHeaders(newHeaders)
+
                   val flow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] =
                     Http(system).outgoingConnection(target.authority.host.address(), target.authority.port)
 
@@ -54,8 +56,9 @@ class NifiProxyController(basePath: String, target: Uri) extends Directives {
                     .single(proxyRequest)
                     .via(flow)
                     .map(response =>
-                      response.copy(headers = response.headers
-                        .filterNot(h => h.name() == "X-Frame-Options" || h.name() == "Content-Security-Policy")
+                      response.withHeaders(
+                        response.headers
+                          .filterNot(h => h.name() == "X-Frame-Options" || h.name() == "Content-Security-Policy")
                       )
                     )
                     .runWith(Sink.head)
