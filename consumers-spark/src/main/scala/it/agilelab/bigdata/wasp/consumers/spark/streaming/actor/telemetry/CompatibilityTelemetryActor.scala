@@ -10,7 +10,6 @@ import spray.json._
 
 trait CompatibilityTelemetryActor {
   self: TelemetryActor =>
-  @com.github.ghik.silencer.silent("deprecated")
   protected def toMessage(message: Any): String = {
     message match {
       case data: Map[_, _] =>

@@ -2,6 +2,7 @@ package it.agilelab.bigdata.wasp.models.builder
 
 import it.agilelab.bigdata.wasp.models.builder.KVSchemaBuilder.{CompleteKVSchema, KVSchema, KeyField, WithColumn, WithKey}
 
+import scala.annotation.nowarn
 import scala.language.implicitConversions
 
 object KVSchemaBuilder {
@@ -30,7 +31,7 @@ case class KVSchemaBuilder[ThisKVSchema <: KVSchema](keyField: Option[KeyField] 
     buildSeq.mkString(",\n")
   }
 
-  @com.github.ghik.silencer.silent("never used")
+  @nowarn("msg=parameter value ev in method buildSeq is never used")
   def buildSeq[S <: KVSchema](implicit ev: ThisKVSchema =:= CompleteKVSchema): Seq[String] = {
     checkDuplicateColumns(columns)
 

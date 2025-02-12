@@ -48,9 +48,7 @@ object MultiTopicModel {
     * - the topic models refer to different topics
     * - the topic models have the same compression
     */
-  @com.github.ghik.silencer.silent("Unused import")
   private[wasp] def areTopicsHealthy(models: Seq[TopicModel]): Either[String, Unit] = {
-    import it.agilelab.bigdata.wasp.utils.EitherUtils._
     for {
       _ <- Either.cond(models.nonEmpty, (), "There must be at least one topic model")
       _ <- Either.cond(models.size == models.distinct.size, (), "Each topic model can only appear once")

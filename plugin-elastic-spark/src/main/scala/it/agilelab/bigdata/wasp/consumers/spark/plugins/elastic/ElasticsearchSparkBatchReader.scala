@@ -10,6 +10,8 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.elasticsearch.hadoop.cfg.ConfigurationOptions
 import org.elasticsearch.spark.sql.EsSparkSQL
 
+import scala.annotation.nowarn
+
 /**
   * It read data from Elastic with the configuration of ElasticConfiguration.
   * It use the push down method of SparkSQL to convert SQL to elastic query
@@ -20,7 +22,7 @@ class ElasticsearchSparkBatchReader(indexModel: IndexModel) extends SparkBatchRe
   val name: String = indexModel.name
   val readerType: String = ElasticProduct.getActualProductName
 
-  @com.github.ghik.silencer.silent("deprecated")
+  @nowarn
   override def read(sc: SparkContext): DataFrame = {
 
     val address = elasticConfig.connections

@@ -19,7 +19,9 @@ import it.agilelab.bigdata.wasp.repository.mongo.providers.DataStoreConfCodecPro
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecRegistry
 
-@com.github.ghik.silencer.silent("deprecated")
+import scala.annotation.nowarn
+
+@nowarn
 object VersionedRegistry {
   val additionalCodecs: CodecRegistry = fromProviders(
     createCodecProviderIgnoreNone[RawModel](),
@@ -281,7 +283,8 @@ object VersionedRegistry {
       (KafkaConfigMapperV1.version, kafkaConfigDBModelV1Codec)
     )
 
-  val kafkaAdditionalConfigDBModelV1Codec: Codec[KafkaAdditionalConfigDBModelV1] = createCodec[KafkaAdditionalConfigDBModelV1](codecRegistry)
+  val kafkaAdditionalConfigDBModelV1Codec: Codec[KafkaAdditionalConfigDBModelV1] =
+    createCodec[KafkaAdditionalConfigDBModelV1](codecRegistry)
   val KafkaAdditionalConfigProvider: VersionedCodecProvider[KafkaAdditionalConfigDBModel] =
     VersionedCodecProvider.apply(
       KafkaAdditionalConfigMapperSelector.versionExtractor,

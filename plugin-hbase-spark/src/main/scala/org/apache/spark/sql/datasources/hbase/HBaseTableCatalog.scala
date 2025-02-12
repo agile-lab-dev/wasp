@@ -26,8 +26,9 @@ import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.types._
 import spray.json._
 import DefaultJsonProtocol._
-import scala.util.matching.Regex
 
+import scala.annotation.nowarn
+import scala.util.matching.Regex
 import scala.collection.mutable
 
 // Due the access issue defined in spark, we have to locate the file in this package.
@@ -248,7 +249,7 @@ object HBaseTableCatalog {
     * "col2":{"cf":"cf2", "col":"col2", "type":"type2"}}}
     * Note that any col in the rowKey, there has to be one corresponding col defined in columns
     */
-  @com.github.ghik.silencer.silent("deprecated")
+  @nowarn
   def apply(params: Map[String, String]): HBaseTableCatalog = {
     val parameters = convert(params)
     val jString = parameters(tableCatalog)

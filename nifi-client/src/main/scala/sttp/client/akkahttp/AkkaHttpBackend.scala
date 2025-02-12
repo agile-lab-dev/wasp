@@ -3,10 +3,10 @@ package sttp.client.akkahttp
 import java.io.{File, UnsupportedEncodingException}
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
-import akka.http.scaladsl.coding.{Coders}
+import akka.http.scaladsl.coding.Coders
 import akka.http.scaladsl.model.ContentTypes.`application/octet-stream`
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
-import akka.http.scaladsl.model.headers.{HttpEncodings, `Content-Length`, `Content-Type`}
+import akka.http.scaladsl.model.headers.{`Content-Length`, `Content-Type`, HttpEncodings}
 import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.http.scaladsl.model.{Multipart => AkkaMultipart, StatusCode => _, _}
 import akka.http.scaladsl.settings.ConnectionPoolSettings
@@ -20,6 +20,7 @@ import sttp.client.testing.SttpBackendStub
 import sttp.client.ws.WebSocketResponse
 import sttp.client._
 
+import scala.annotation.nowarn
 import scala.collection.immutable.Seq
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -43,7 +44,7 @@ class AkkaHttpBackend private (
   // the supported stream type
   private type S = Source[ByteString, Any]
 
-  implicit private val as: ActorSystem                 = actorSystem
+  implicit private val as: ActorSystem = actorSystem
 
   private val connectionPoolSettings = {
 
@@ -340,9 +341,8 @@ class AkkaHttpBackend private (
   }
 }
 
-
-@com.github.ghik.silencer.silent("never used")
 object AkkaHttpBackend {
+  @nowarn("msg=private default argument in object AkkaHttpBackend is never used")
   private def make(
       actorSystem: ActorSystem,
       ec: ExecutionContext,
@@ -381,7 +381,7 @@ object AkkaHttpBackend {
   )(
       implicit ec: ExecutionContext = ExecutionContext.global
   ): SttpBackend[Future, Source[ByteString, Any], Types.LambdaFlow] = {
-    val actorSystem  = ActorSystem("sttp")
+    val actorSystem = ActorSystem("sttp")
     make(
       actorSystem,
       ec,

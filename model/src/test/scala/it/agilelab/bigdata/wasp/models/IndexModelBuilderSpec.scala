@@ -4,7 +4,8 @@ import spray.json.JsObject
 import org.scalatest.WordSpec
 import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
-@com.github.ghik.silencer.silent("never used")
+import scala.annotation.nowarn
+
 class IndexModelBuilderSpec extends WordSpec {
 
 
@@ -29,7 +30,7 @@ class IndexModelBuilderSpec extends WordSpec {
 
       assertTypeError("withConfig.build")
 
-      //noinspection ScalaUnusedSymbol
+      @nowarn
       val withSchema = withConfig.schema(Solr.Schema())
 
       assertCompiles("withSchema.build")

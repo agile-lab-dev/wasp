@@ -377,23 +377,6 @@ class SparkConsumersStreamingMasterGuardianSpec
 
     "Do not forget unschedulables when restarting" in {
 
-
-      @com.github.ghik.silencer.silent("never used")
-      class MySchedulingStrategyForTestsFactory extends SchedulingStrategyFactory {
-
-        override def create: SchedulingStrategy = new SchedulingStrategy {
-          override def choose(members: Set[Data.Collaborator], pipegraph: PipegraphModel): SchedulingStrategyOutcome = if (schedulable.get()) {
-            Right((members.head, this))
-          } else {
-            Left(("Sorry unschedulable", this))
-          }
-
-        }
-
-        val schedulable: AtomicBoolean = new AtomicBoolean(false)
-
-      }
-
       val mockBl = new MockPipegraphBl(new MockPipegraphInstanceBl)
 
       val startingPipegraphs = Seq(

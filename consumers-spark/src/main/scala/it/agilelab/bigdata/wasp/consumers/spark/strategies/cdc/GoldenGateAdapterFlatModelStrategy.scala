@@ -198,7 +198,6 @@ class GoldenGateAdapterFlatModelStrategy extends Strategy with Logging {
 
 }
 
-
 /**
   * Implementation of the conversion to provide a compliant Dataframe for the
   * [[GoldenGateConversion#conversion]].
@@ -270,7 +269,6 @@ trait GoldenGateConversion extends CdcMapper {
         col(AFTER).as(BEFORE)
       )
 
-  @com.github.ghik.silencer.silent("dead")
   def truncateMappingFunction(df: DataFrame, keys: Seq[String]): DataFrame = {
     import org.apache.spark.sql.{Dataset, Row}
     import org.apache.spark.sql.catalyst.encoders.RowEncoder
@@ -279,7 +277,6 @@ trait GoldenGateConversion extends CdcMapper {
 
     val failIfNotEmpty: Dataset[Row] = df.map { row =>
       throw new IllegalStateException("Cannot handle truncate operation")
-      row
     }(RowEncoder(oldSchema))
 
     // the insertMappingFunction is called to use the dataframe that pass through the mapping

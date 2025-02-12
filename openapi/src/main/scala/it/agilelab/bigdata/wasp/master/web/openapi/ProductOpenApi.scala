@@ -180,9 +180,8 @@ trait ProductOpenApi extends OpenApiSchemaSupport {
 }
 
 object ProductOpenApi extends ProductOpenApi {
-  @com.github.ghik.silencer.silent("deprecated")
-  private[openapi] def extractFieldNames(classManifest: ClassManifest[_]): Array[String] = {
-    val clazz = classManifest.erasure
+  private[openapi] def extractFieldNames(classTag: ClassTag[_]): Array[String] = {
+    val clazz = classTag.runtimeClass
     try {
       val fields = clazz.getDeclaredFields.filterNot { f =>
         import Modifier._

@@ -16,7 +16,6 @@
 package it.agilelab.bigdata.wasp.producers
 
 import java.time.format.DateTimeFormatter
-
 import akka.actor._
 import akka.routing.BalancingPool
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
@@ -27,6 +26,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging.LogEvent
 import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
+import scala.annotation.nowarn
 import scala.util.parsing.json.{JSONFormat, JSONObject}
 
 // producerName is an empty string because we override initialize
@@ -130,7 +130,7 @@ private class InternalLogProducerActor(kafka_router: ActorRef,
     /* We don't have a task here because it's a system pipeline */
   }
 
-  @com.github.ghik.silencer.silent("deprecated")
+  @nowarn
   override def generateOutputJsonMessage(event: LogEvent) = {
     val all = JSONObject(
       Map(

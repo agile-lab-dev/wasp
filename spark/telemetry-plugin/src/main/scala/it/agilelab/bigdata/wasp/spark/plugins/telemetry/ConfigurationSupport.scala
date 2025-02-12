@@ -17,7 +17,7 @@ private lazy val telemetry = parseTelemetry()
 
 private lazy val kafka = parseKafka()
 
-@com.github.ghik.silencer.silent("deprecated")
+
 private def parseTelemetry() = {
         val telemetryConfigJSON = new String(Base64.getUrlDecoder.decode(System.getProperty("wasp.plugin.telemetry.topic")), StandardCharsets.UTF_8)
         val telemetryConfig = JSON.parseFull(telemetryConfigJSON)
@@ -48,7 +48,7 @@ private def parseTelemetry() = {
         jmx = jmx)
         }
 
-@com.github.ghik.silencer.silent("deprecated")
+
 private def parseKafka() = {
         val kafkaTinyConfigJSON = new String(Base64.getUrlDecoder.decode(System.getProperty("wasp.plugin.telemetry.kafka")), StandardCharsets.UTF_8)
         val kafkaTinyConfig = JSON.parseFull(kafkaTinyConfigJSON)

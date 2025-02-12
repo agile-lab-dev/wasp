@@ -5,6 +5,7 @@ import spray.json._
 import DefaultJsonProtocol._
 import it.agilelab.bigdata.wasp.models.IndexModelBuilder.Solr
 
+import scala.annotation.nowarn
 
 /**
   * A builder able to create instances of [[IndexModel]].
@@ -18,10 +19,14 @@ import it.agilelab.bigdata.wasp.models.IndexModelBuilder.Solr
   * @tparam Stage The current [[Stage]] of the builder.
   * @tparam Kind The kind of DataStore whose index is being built.
   */
-class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuilder.DataStoreKind] private
-(name: String, schema: IndexModelBuilder.UntypedSchema, config: IndexModelBuilder.UntypedConfig, isRolling: Boolean,
- id: Option[String], options: Map[String, String]) {
-
+class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuilder.DataStoreKind] private (
+    name: String,
+    schema: IndexModelBuilder.UntypedSchema,
+    config: IndexModelBuilder.UntypedConfig,
+    isRolling: Boolean,
+    id: Option[String],
+    options: Map[String, String]
+) {
 
   /**
     * Assigns a name to the index
@@ -36,7 +41,9 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     * @param schema The schema of the index
     * @return An instance of builder with Schema stage completed
     */
-  def schema(schema: IndexModelBuilder.Schema[Kind]): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Schema[Kind], Kind] =
+  def schema(
+      schema: IndexModelBuilder.Schema[Kind]
+  ): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Schema[Kind], Kind] =
     new IndexModelBuilder(name, schema, config, isRolling, id, options)
 
   /**
@@ -44,15 +51,17 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     * @param config The config of the index
     * @return An instance of builder with Config stage completed
     */
-  def config(config: IndexModelBuilder.Config[Kind]): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Config[Kind], Kind] =
+  def config(
+      config: IndexModelBuilder.Config[Kind]
+  ): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Config[Kind], Kind] =
     new IndexModelBuilder(name, schema, config, isRolling, id, options)
 
   /**
     * Mark the index as rolling
     * @return An instance of builder with Rolling stage completed
     */
-  def rolling:  IndexModelBuilder[Stage with IndexModelBuilder.Stage.Rolling, Kind] = new IndexModelBuilder(name,
-    schema, config, true, id, options)
+  def rolling: IndexModelBuilder[Stage with IndexModelBuilder.Stage.Rolling, Kind] =
+    new IndexModelBuilder(name, schema, config, true, id, options)
 
   /**
     * Assings an id field to the index
@@ -60,7 +69,7 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     */
   def id(id: String): IndexModelBuilder[Stage with IndexModelBuilder.Stage.Id, Kind] =
     new IndexModelBuilder(name, schema, config, isRolling, Some(id), options)
-  
+
   /**
     * Assings an options field to the index
     * @return An instance of builder with Options stage completed
@@ -75,7 +84,7 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
     * @param evidence The evidence that the current Stage is a subclass of [[IndexModelBuilder.Stage.Complete]]
     * @return The built [[IndexModel]]
     */
-  @com.github.ghik.silencer.silent("never used")
+  @nowarn("msg=parameter value evidence in method build is never used")
   def build(implicit evidence: Stage <:< IndexModelBuilder.Stage.Complete[Kind]): IndexModel =
     schema.augment(
       config.augment(
@@ -85,10 +94,10 @@ class IndexModelBuilder[Stage <: IndexModelBuilder.Stage, Kind <: IndexModelBuil
           rollingIndex = isRolling,
           idField = id,
           schema = None,
-          options = options)
+          options = options
+        )
       )
     )
-
 
 }
 
@@ -108,7 +117,8 @@ object SpraySolrProtocol extends DefaultJsonProtocol {
   }
 
   implicit object missingFieldSortSerializer extends JsonFormat[Solr.SolrMissingFieldSort] {
-    override def read(json: JsValue): Solr.SolrMissingFieldSort = deserializationError("deserialization not implemented")
+    override def read(json: JsValue): Solr.SolrMissingFieldSort =
+      deserializationError("deserialization not implemented")
 
     override def write(obj: Solr.SolrMissingFieldSort): JsValue = JsString("")
   }
@@ -150,7 +160,6 @@ object SpraySolrProtocol extends DefaultJsonProtocol {
   }
 }
 
-
 /**
   * Companion object of [[IndexModelBuilder]], contains the syntax.
   *
@@ -162,16 +171,15 @@ object IndexModelBuilder {
     * Creates an [[IndexModelBuilder]] setup to create Solr Indices
     * @return The builder preconfigured for Solr indices building
     */
-  def forSolr: IndexModelBuilder[Stage.DataStore[DataStoreKind.Solr], DataStoreKind.Solr] = new IndexModelBuilder("",
-    Solr.Schema(), Solr.Config(), false, None, Map.empty)
+  def forSolr: IndexModelBuilder[Stage.DataStore[DataStoreKind.Solr], DataStoreKind.Solr] =
+    new IndexModelBuilder("", Solr.Schema(), Solr.Config(), false, None, Map.empty)
 
   /**
     * creates an [[IndexModelBuilder]] setup to create Elastic Indices
     * @return The builder preconfigured for Elastic indices building
     */
-  def forElastic: IndexModelBuilder[Stage.DataStore[DataStoreKind.Elastic], DataStoreKind.Elastic] = new
-      IndexModelBuilder("", Elastic.Schema(JsObject()), Elastic.Config(), false, None, Map.empty)
-
+  def forElastic: IndexModelBuilder[Stage.DataStore[DataStoreKind.Elastic], DataStoreKind.Elastic] =
+    new IndexModelBuilder("", Elastic.Schema(JsObject()), Elastic.Config(), false, None, Map.empty)
 
   /**
     * A trait marking stages of the building.
@@ -187,6 +195,7 @@ object IndexModelBuilder {
     * A trait Definining how a schema should augment the IndexModel.
     */
   sealed trait UntypedSchema {
+
     /**
       * Implementor of Untyped schema should augment the supplied model parameter and return the augmented version.
       *
@@ -213,10 +222,7 @@ object IndexModelBuilder {
     * A trait marking configs as having a target DataStore [[Kind]]
     * @tparam Kind The target datastore Kind
     */
-  sealed trait Config[Kind <: DataStoreKind] extends UntypedConfig {
-
-  }
-
+  sealed trait Config[Kind <: DataStoreKind] extends UntypedConfig {}
 
   /**
     * Object grouping Elastic customization
@@ -247,8 +253,8 @@ object IndexModelBuilder {
       * @param replica The number of index replicas
       * @param pushdownQuery The query to use in spark query pushdown
       */
-    case class Config(shards: Int = 1, replica: Int = 1, pushdownQuery: Option[String] = None) extends
-      IndexModelBuilder.Config[DataStoreKind.Elastic] {
+    case class Config(shards: Int = 1, replica: Int = 1, pushdownQuery: Option[String] = None)
+        extends IndexModelBuilder.Config[DataStoreKind.Elastic] {
       override def augment(model: IndexModel): IndexModel = {
         model.copy(numShards = Some(shards), replicationFactor = Some(replica), query = pushdownQuery)
       }
@@ -286,9 +292,7 @@ object IndexModelBuilder {
       *                 definition. Every field must have a type.
       * @tparam T The type of the field
       */
-    abstract class Type[+T](val name: String) {
-
-    }
+    abstract class Type[+T](val name: String) {}
 
     /**
       * A Solr configuration.
@@ -359,25 +363,27 @@ object IndexModelBuilder {
       * @tparam A The type contained in this solr field
       *
       */
-    @com.github.ghik.silencer.silent("never used")
-    case class Field[+A: JsonFormat] private(name: String,
-                                 `type`: Type[A],
-                                 defaultValue: Option[A] = None,
-                                 indexed: Boolean = true,
-                                 stored: Boolean = true,
-                                 docValues: Option[Boolean] = None,
-                                 sortMissing: Option[SolrMissingFieldSort] = None,
-                                 multiValued: Option[Boolean] = None,
-                                 omitNorms: Option[Boolean] = None,
-                                 omitTermFreqAndPositions: Option[Boolean] = None,
-                                 omitPositions: Option[Boolean] = None,
-                                 termVectors: Option[Boolean] = None,
-                                 termPositions: Option[Boolean] = None,
-                                 termOffsets: Option[Boolean] = None,
-                                 termPayloads: Option[Boolean] = None,
-                                 required: Boolean = false,
-                                 useDocValuesAsStored: Option[Boolean] = None,
-                                 large: Option[Boolean] = None) {
+    @nowarn("msg=private default argument in object Field is never used")
+    case class Field[+A: JsonFormat] private (
+        name: String,
+        `type`: Type[A],
+        defaultValue: Option[A] = None,
+        indexed: Boolean = true,
+        stored: Boolean = true,
+        docValues: Option[Boolean] = None,
+        sortMissing: Option[SolrMissingFieldSort] = None,
+        multiValued: Option[Boolean] = None,
+        omitNorms: Option[Boolean] = None,
+        omitTermFreqAndPositions: Option[Boolean] = None,
+        omitPositions: Option[Boolean] = None,
+        termVectors: Option[Boolean] = None,
+        termPositions: Option[Boolean] = None,
+        termOffsets: Option[Boolean] = None,
+        termPayloads: Option[Boolean] = None,
+        required: Boolean = false,
+        useDocValuesAsStored: Option[Boolean] = None,
+        large: Option[Boolean] = None
+    ) {
       lazy val jsonFormat: JsonFormat[Solr.Field[_]] = {
         import SpraySolrProtocol._
         fieldSerializerNonImplicit[A].asInstanceOf[JsonFormat[Solr.Field[_]]]
@@ -388,13 +394,13 @@ object IndexModelBuilder {
       * objects grouping factories for [[Config]]
       */
     object Config {
+
       /**
         * A default configuration.
         * @return A default configuration.
         */
       def default: Config = Config()
     }
-
 
     /**
       * Object grouping alternatives for [[SolrMissingFieldSort]]
@@ -412,7 +418,6 @@ object IndexModelBuilder {
       case object SortMissingFirst extends SolrMissingFieldSort
 
     }
-
 
     /**
       * Object grouping Solr field types, use Custom if you want to use a custom type.
@@ -524,7 +529,6 @@ object IndexModelBuilder {
     */
   object Stage {
 
-
     /**
       * Describe the target type of [[IndexModelBuilder]] seek before build method can be called.
       * @tparam Kind The [[DataStoreKind]]
@@ -566,7 +570,7 @@ object IndexModelBuilder {
       * Index has been assigned an Id
       */
     sealed trait Id extends Stage
-  
+
     /**
       * Index has an assigned Options
       */

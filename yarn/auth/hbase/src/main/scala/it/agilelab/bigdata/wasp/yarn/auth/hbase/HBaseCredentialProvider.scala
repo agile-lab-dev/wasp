@@ -10,6 +10,7 @@ import org.apache.spark.SparkConf
 
 import java.util.Date
 import java.util.regex.Pattern
+import scala.annotation.nowarn
 
 class HBaseCredentialsProvider extends CompatibilityHBaseCredentialProvider {
 
@@ -17,7 +18,7 @@ class HBaseCredentialsProvider extends CompatibilityHBaseCredentialProvider {
 
   override def serviceName: String = "wasp-hbase"
 
-  @com.github.ghik.silencer.silent("deprecated")
+  @nowarn("msg=method obtainToken in class TokenUtil is deprecated")
   def getCredentials(hadoopConf: Configuration, sparkConf: SparkConf, creds: Credentials): Option[Long] = {
 
     val providerConfig: HbaseCredentialsProviderConfiguration = HbaseCredentialsProviderConfiguration.fromSpark(sparkConf)

@@ -107,30 +107,8 @@ class BasicSettings(
     ),
     Compile / doc / scalacOptions --= Seq(
       "-Xfatal-warnings"
-    ),
-    libraryDependencies ++= {
-      val silencerVersion = "1.4.3" // compatible with 2.11.12 and 2.12.10
-      if (scalaVersionValue
-            .isMajorMinor(2, 11) || (scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision < 13)) {
-        Seq(
-          compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-          "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
-        )
-      } else if (scalaVersionValue.isMajorMinor(2, 12) && scalaVersionValue.revision >= 13) {
-        val silencerVersion = "1.17.13" // compatible with 2.11.12 and 2.12.10
+    ))
 
-        Seq(
-          compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-          "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
-        )
-      } else {
-        Seq()
-      }
-    },
-    scalaVersion := scalaVersionValue.raw,
-    excludeDependencies += ExclusionRule("javax.ws.rs", "javax.ws.rs-api"),
-    excludeDependencies ++= this.exclusionRules
-  )
   lazy val publishSettings = Seq(
     sonatypeBundleDirectory := (ThisBuild / baseDirectory).value / target.value.getName / "sonatype-staging" / (ThisBuild / version).value,
     sonatypeSessionName := s"[sbt-sonatype] ${name.value} ${scalaVersion.value} ${version.value}",

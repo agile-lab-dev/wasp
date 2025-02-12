@@ -90,9 +90,8 @@ trait ReferencedResource {
 }
 
 @InterfaceAudience.Private
-@com.github.ghik.silencer.silent
 case class TableResource(relation: HBaseRelation) extends ReferencedResource {
-  var connection: SmartConnection = _
+  private[this]  var connection: SmartConnection = _
   var table: Table = _
 
   override def init(): Unit = {
@@ -121,9 +120,8 @@ case class TableResource(relation: HBaseRelation) extends ReferencedResource {
 }
 
 @InterfaceAudience.Private
-@com.github.ghik.silencer.silent
 case class RegionResource(relation: HBaseRelation) extends ReferencedResource {
-  var connection: SmartConnection = _
+  private var connection: SmartConnection = _
   var rl: RegionLocator = _
   val regions = releaseOnException {
     val keys = rl.getStartEndKeys

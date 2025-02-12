@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigModel
 import org.apache.kafka.clients.consumer.{ConsumerRecords, KafkaConsumer}
 
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 
 class WaspKafkaReader[K, V](consumerConfig: Properties) extends Logging {
 
@@ -24,10 +24,9 @@ class WaspKafkaReader[K, V](consumerConfig: Properties) extends Logging {
     consumer.subscribe(util.Arrays.asList(topic))
 
     val thread = new Thread {
-      @com.github.ghik.silencer.silent("deprecated")
       override def run {
         while (true) {
-          val records: ConsumerRecords[String, String] = consumer.poll(100)
+          val records: ConsumerRecords[String, String] = consumer.poll(java.time.Duration.ofMillis(100))
           for (rec <- records.asScala) {
             listener ! (topic -> rec.value())
           }
