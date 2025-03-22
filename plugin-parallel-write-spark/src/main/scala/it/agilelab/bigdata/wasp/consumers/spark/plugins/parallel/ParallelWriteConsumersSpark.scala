@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel
 
-import com.squareup.okhttp.OkHttpClient
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.model.ParallelWriteModelParser.parseParallelWriteModel
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.MetastoreCatalogService
@@ -15,7 +14,6 @@ import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
-import java.io.Serializable
 import scala.util.Try
 
 
@@ -24,7 +22,6 @@ import scala.util.Try
   */
 class ParallelWriteConsumersSparkPlugin extends WaspConsumersSparkPlugin with Logging {
   var genericBL: GenericBL = ConfigBL.genericBL
-  val okHttpClient: OkHttpClient = new OkHttpClient() with Serializable
 
   override def datastoreProduct: DatastoreProduct = GenericProduct("parallelWrite", None)
 

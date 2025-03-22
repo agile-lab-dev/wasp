@@ -33,29 +33,32 @@ case class ContinuousUpdateWriter(
     val deduplicatedDf      = enforcedDf.distinct()
     val condition           = writerDetails.keys.map(x => s"table.$x = table2.$x").mkString(" AND ")
     val deltaTable          = getDeltaTable(s3path, spark, partitioningColumns)
-    (writerDetails.compactFrequency, writerDetails.compactNumFile) match {
-      case (None, None) =>
-      case (Some(compactFrequency), Some(compactNumFile)) =>
-        if (batchId % compactFrequency == 0) {
-          logger.info(s"Compacting table at ${s3path} with partitions $compactNumFile files")
-          deltaTable.toDF
-            .repartition(compactNumFile)
-            .write
-            .option("dataChange", "false")
-            .format("delta")
-            .mode("overwrite")
-            .partitionBy(partitioningColumns: _*)
-            .save(s3path.toString)
-        }
-      case other =>
-        throw new IllegalArgumentException(
-          s"Both compactFrequency and compactNumFile must be null or have a value, but ${other} was provided"
-        )
+
+    (writerDetails.enableDeltaOptimize, writerDetails.compactFrequency, writerDetails.compactNumFile) match {
+      case (Some(true), Some(compactFrequency), _) if batchId % compactFrequency == 0 && batchId > 0 =>
+        logger.info(s"Using Delta Optimize for table at ${s3path} for batch $batchId")
+        deltaTable.optimize().executeCompaction()
+
+      case (Some(false) | None, Some(compactFrequency), Some(compactNumFile))
+          if batchId % compactFrequency == 0 && batchId > 0 =>
+        logger.info(s"Compacting table at ${s3path} with partitions $compactNumFile files")
+        deltaTable.toDF
+          .repartition(compactNumFile)
+          .write
+          .option("dataChange", "false")
+          .format("delta")
+          .mode("overwrite")
+          .partitionBy(partitioningColumns: _*)
+          .save(s3path.toString)
+
+      case _ => logger.info("No compaction required for this batch.")
     }
+
+    // Vacuuming logic
     (writerDetails.retentionHours, writerDetails.vacuumFrequency) match {
       case (None, None) =>
       case (Some(retentionHours), Some(vacuumFrequency)) =>
-        if (batchId % vacuumFrequency == 0) {
+        if (batchId % vacuumFrequency == 0 && batchId > 0) {
           logger.info(s"Vacuuming table ${s3path} with retention ${retentionHours} hours")
           deltaTable.vacuum(retentionHours.toDouble)
         }
@@ -64,6 +67,7 @@ case class ContinuousUpdateWriter(
           s"Both retentionHours and vacuumFrequency must be null or have a value, but ${other} was provided"
         )
     }
+
     deltaTable
       .as("table")
       .merge(deduplicatedDf.as("table2"), condition)

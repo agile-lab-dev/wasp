@@ -19,6 +19,7 @@ case class DeltaParallelWriter(
     enforceSchema(df).write
       .mode(parallelWriteDetails.saveMode)
       .format("delta")
+      .option("optimizeWrite", "True")  // Enable Optimized Write
       .partitionBy(partitioningColumns: _*)
       .save(path.toString)
 }

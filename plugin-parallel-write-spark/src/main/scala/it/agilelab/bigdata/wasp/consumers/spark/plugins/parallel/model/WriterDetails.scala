@@ -23,5 +23,6 @@ case class ContinuousUpdate(
                              compactFrequency: Option[Int] = None,
                              compactNumFile: Option[Int] = None,
                              retentionHours: Option[Int] = None,
-                             vacuumFrequency: Option[Int] = None
+                             vacuumFrequency: Option[Int] = None,
+                             enableDeltaOptimize: Option[Boolean] = None
 ) extends WriterDetails

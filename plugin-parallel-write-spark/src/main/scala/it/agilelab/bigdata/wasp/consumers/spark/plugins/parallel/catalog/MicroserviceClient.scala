@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog
 
-import com.squareup.okhttp.{MediaType, OkHttpClient, Request, RequestBody, Response}
+import com.squareup.okhttp.{MediaType, OkHttpClient, Request, RequestBody}
+import it.agilelab.bigdata.wasp.core.utils.Utils.using
 import okio.BufferedSink
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -11,6 +12,7 @@ import java.net.URL
   * Defines functions needed by all microservices
   */
 trait MicroserviceClient {
+
   /**
     * Each microservices has a base url. This url serves as a prefix to every endpoint
     * @return microservice base url
@@ -75,29 +77,32 @@ trait MicroserviceClient {
     * @return Response body casted to B
     */
   protected def get[A: JsonFormat](
-      url: URL,
-      headers: Map[String, String]
-  ): A = {
+                                    url: URL,
+                                    headers: Map[String, String]
+                                  ): A = {
     call[A](new Request.Builder().url(url), headers)
   }
 
-
   private def callAndForget(requestBuilder: Request.Builder, headers: Map[String, String]): Unit = {
     headers.keys.foreach(key => requestBuilder.addHeader(key, headers(key)))
-    val request = requestBuilder.build()
-    val response: Response = new OkHttpClient().newCall(request).execute()
-    if(!response.isSuccessful) {
+    val request  = requestBuilder.build()
+    val response = new OkHttpClient().newCall(request).execute()
+    if (!response.isSuccessful) {
       throw new IllegalArgumentException(
-        "request - " + request.url().toString + ", " +request.body().contentType().toString+ "\tresponse - status code: " + response.code() + ", response contentType: " + response.body().contentType() + ", status description: " + response.message()
+        "request - " + request
+          .url()
+          .toString + ", " + request.body().contentType().toString + "\tresponse - status code: " + response
+          .code() + ", response contentType: " + using(response.body())(_.contentType()) + ", status description: " + response
+          .message()
       )
     }
   }
 
-
   private def call[A: JsonFormat](request: Request.Builder, headers: Map[String, String]): A = {
     headers.keys.foreach(key => request.addHeader(key, headers(key)))
-    val responseBody = new OkHttpClient().newCall(request.build()).execute().body()
-    val response = responseBody.string().parseJson
-    response.convertTo[A]
+    using(new OkHttpClient().newCall(request.build()).execute().body()) { body =>
+      val response = body.string().parseJson
+      response.convertTo[A]
+    }
   }
 }
