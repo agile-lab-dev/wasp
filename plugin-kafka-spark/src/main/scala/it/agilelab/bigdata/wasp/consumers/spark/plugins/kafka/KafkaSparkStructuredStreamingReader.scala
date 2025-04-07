@@ -9,7 +9,7 @@ import it.agilelab.bigdata.wasp.core.kafka.CheckOrCreateTopic
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils._
 import it.agilelab.bigdata.wasp.models._
-import it.agilelab.bigdata.wasp.models.configuration.{Handle, Ignore, ParsingMode, Strict}
+import it.agilelab.bigdata.wasp.models.configuration.{Handle, Ignore, KafkaConfigModel, ParsingMode, Strict}
 import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, TopicBL}
 import it.agilelab.bigdata.wasp.spark.sql.kafka011.KafkaSparkSQLSchemas
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
@@ -153,25 +153,8 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       // rate limit as is, otherwise multiply by triggerIntervalMs/1000
       // if the rate limit is not set, do not set maxOffsetsPerTrigger
       val triggerIntervalMs = SparkUtils.getTriggerIntervalMs(ConfigManager.getSparkStreamingConfig, etl)
-      val maybeRateLimit: Option[Long] = streamingReaderModel.rateLimit.map(x =>
-        if (triggerIntervalMs == 0L) x else (triggerIntervalMs / 1000d * x).toLong
-      )
-      val maybeMaxOffsetsPerTrigger = maybeRateLimit.map(rateLimit => ("maxOffsetsPerTrigger", rateLimit.toString))
 
-      // calculate the options for the DataStreamReader
-      val options = mutable.Map.empty[String, String]
-      // start with the base options
-      options ++= Seq(
-        "subscribe"                   -> topics.map(_.name).mkString(","),
-        "kafka.bootstrap.servers"     -> kafkaConfig.connections.map(_.toString).mkString(","),
-        "kafkaConsumer.pollTimeoutMs" -> kafkaConfig.ingestRateToMills().toString
-      )
-      // apply rate limit if it exists
-      options ++= maybeMaxOffsetsPerTrigger
-      // layer on the options coming from the kafka config "others" field
-      options ++= kafkaConfig.others.map(_.toTupla).toMap
-      // layer on the options coming from the streamingReaderModel
-      options ++= streamingReaderModel.options
+      val options = calculateKafkaReaderOptions(triggerIntervalMs, topics, kafkaConfig, etl)
       logger.info(s"Final options to be pushed to DataStreamReader: $options")
 
       // create the stream
@@ -191,6 +174,48 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       logger.error(msg)
       throw new Exception(msg)
     }
+  }
+
+  private[wasp] def calculateKafkaReaderOptions(
+      triggerIntervalMs: Long,
+      topics: Seq[TopicModel],
+      kafkaConfig: KafkaConfigModel,
+      etl: StructuredStreamingETLModel
+  ): Map[String, String] = {
+    val streamingReaderModel = etl.streamingInput
+
+    val maybeRateLimit: Option[Long] =
+      streamingReaderModel.rateLimit.map(x => if (triggerIntervalMs == 0L) x else (triggerIntervalMs / 1000d * x).toLong
+      )
+    val maybeMaxOffsetsPerTrigger = maybeRateLimit.map(rateLimit => ("maxOffsetsPerTrigger", rateLimit.toString))
+
+    // calculate the options for the DataStreamReader
+    val options = mutable.Map.empty[String, String]
+
+    // start with the base options
+    options ++= Seq(
+      "subscribe"                   -> topics.map(_.name).mkString(","),
+      "kafka.bootstrap.servers"     -> kafkaConfig.connections.map(_.toString).mkString(","),
+      "kafkaConsumer.pollTimeoutMs" -> kafkaConfig.ingestRateToMills().toString
+    )
+    // apply rate limit if it exists
+    options ++= maybeMaxOffsetsPerTrigger
+    // layer on the options coming from the kafka config "others" field
+    options ++= kafkaConfig.others.map(_.toTupla).toMap
+    // layer on the options coming from the streamingReaderModel
+    options ++= streamingReaderModel.options
+
+    val INCLUDE_HEADERS_CONF = "includeheaders"
+
+    // force "includeHeaders=true" replacing user configuration
+    options += options
+      .find { case (k, v) => k.toLowerCase == INCLUDE_HEADERS_CONF && v.toLowerCase == "false" }
+      .fold(INCLUDE_HEADERS_CONF -> "true") {
+        case (k, _) =>
+          logger.warn(INCLUDE_HEADERS_CONF + "=false is not supported, forcing it to true")
+          k -> "true"
+      }
+    options.toMap
   }
 
   private def selectMetadata(keyCol: Column = col(KafkaSparkSQLSchemas.KEY_ATTRIBUTE_NAME)): Column = {

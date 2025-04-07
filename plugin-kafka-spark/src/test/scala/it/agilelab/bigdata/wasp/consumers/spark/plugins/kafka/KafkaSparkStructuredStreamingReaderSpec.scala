@@ -1,10 +1,18 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
+import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.TopicModelUtils.topicNameToColumnName
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.models.configuration._
-import it.agilelab.bigdata.wasp.models.{TopicCompression, TopicDataTypes, TopicModel}
+import it.agilelab.bigdata.wasp.models.{
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  TopicCompression,
+  TopicDataTypes,
+  TopicModel
+}
 import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.EncoderFactory
 import org.apache.avro.{Schema, SchemaBuilder}
@@ -23,6 +31,99 @@ import scala.util.{Failure, Success, Try}
 class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
   import spark.implicits._
+
+  "calculateKafkaReaderOptions" should {
+    "add includeHeaders=true by default" in {
+      val res = KafkaSparkStructuredStreamingReader
+        .calculateKafkaReaderOptions(
+          triggerIntervalMs = 1L,
+          topics = Seq.empty,
+          kafkaConfig = KafkaConfigModel(Seq.empty, "10 ms", None, "", "", "", "", "", "", 1, "all", Seq.empty, ""),
+          etl = StructuredStreamingETLModel(
+            "",
+            "",
+            StreamingReaderModel(
+              name = "test",
+              datastoreModel = DatastoreModelsForTesting.TopicModels.json,
+              datastoreProduct = DatastoreProduct.KafkaProduct,
+              rateLimit = None,
+              options = Map.empty
+            ),
+            staticInputs = Nil,
+            streamingOutput = null,
+            strategy = None,
+            triggerIntervalMs = None
+          )
+        )
+      assert(res.filter { case (k, _) => k.toLowerCase == "includeheaders" }.values sameElements List("true"))
+    }
+
+    "not let the user overwrite includeHeaders from kafka configs" in {
+      val res =
+        KafkaSparkStructuredStreamingReader
+          .calculateKafkaReaderOptions(
+            triggerIntervalMs = 1L,
+            topics = Seq.empty,
+            kafkaConfig = KafkaConfigModel(
+              connections = Seq.empty,
+              ingest_rate = "10 ms",
+              zookeeperConnections = None,
+              broker_id = "",
+              partitioner_fqcn = "",
+              default_encoder = "",
+              key_encoder_fqcn = "",
+              encoder_fqcn = "",
+              decoder_fqcn = "",
+              batch_send_size = 1,
+              acks = "all",
+              others = Seq(KafkaEntryConfig("incLudeHeaders", "false")),
+              name = ""
+            ),
+            etl = StructuredStreamingETLModel(
+              name = "",
+              group = "",
+              streamingInput = StreamingReaderModel(
+                name = "test",
+                datastoreModel = DatastoreModelsForTesting.TopicModels.json,
+                datastoreProduct = DatastoreProduct.KafkaProduct,
+                rateLimit = None,
+                options = Map.empty
+              ),
+              staticInputs = Nil,
+              streamingOutput = null,
+              strategy = None,
+              triggerIntervalMs = None
+            )
+          )
+
+      assert(res.filter { case (k, _) => k.toLowerCase == "includeheaders" }.values sameElements List("true"))
+    }
+
+    "not let the user overwrite includeHeaders from reader configs" in {
+      val res = KafkaSparkStructuredStreamingReader
+        .calculateKafkaReaderOptions(
+          triggerIntervalMs = 1L,
+          topics = Seq.empty,
+          kafkaConfig = KafkaConfigModel(Seq.empty, "10 ms", None, "", "", "", "", "", "", 1, "all", Seq(), ""),
+          etl = StructuredStreamingETLModel(
+            name = "",
+            group = "",
+            streamingInput = StreamingReaderModel(
+              name = "test",
+              datastoreModel = DatastoreModelsForTesting.TopicModels.json,
+              datastoreProduct = DatastoreProduct.KafkaProduct,
+              rateLimit = None,
+              options = Map("includeHeaderS" -> "false")
+            ),
+            staticInputs = Nil,
+            streamingOutput = null,
+            strategy = None,
+            triggerIntervalMs = None
+          )
+        )
+      assert(res.filter { case (k, _) => k.toLowerCase == "includeheaders" }.values sameElements List("true"))
+    }
+  }
 
   "single schema mode" should {
     "parse only data in correct column" in {
@@ -781,12 +882,12 @@ object MockRecord2 {
 }
 
 case class KafkaFakeRecord(
-                            key: Array[Byte],
-                            raw: Array[Byte],
-                            headers: Array[(String, Array[Byte])],
-                            topic: String,
-                            partition: Int,
-                            offset: Long,
-                            timestamp: java.sql.Timestamp,
-                            timestampType: Int
-                          )
+    key: Array[Byte],
+    raw: Array[Byte],
+    headers: Array[(String, Array[Byte])],
+    topic: String,
+    partition: Int,
+    offset: Long,
+    timestamp: java.sql.Timestamp,
+    timestampType: Int
+)
