@@ -78,13 +78,17 @@ class HttpWriterSpec extends FunSuite with SparkSuite with Retries {
       val source: MemoryStream[ByteData] = MemoryStream[ByteData](0, spark.sqlContext)
       val exception =
         createAndExecuteStreamingQuery(serverData.latch, source, httpModel, processAllAvailable = false, myDf)
-      assert(exception.isDefined)
-      assert(
-        CompatibilityHttpWriter.getMessageFromStreamingQException(exception) startsWith
-          "Error during http call: Response{protocol=http/1.1, code=404, message=OK, " +
-            s"url=http://localhost:${serverData.port}/failure-test}"
-      )
 
+      val expectedMessage = "Error during http call: Response{protocol=http/1.1, code=404, message=OK, " +
+        s"url=http://localhost:${serverData.port}/failure-test}"
+      exception match {
+        case Some(ex) =>
+          // spark 3.5 and 3.4
+          // this is first for short circuit evaluation
+          ex.cause.getCause.getMessage.startsWith(expectedMessage) ||
+            ex.cause.getCause.getCause.getMessage.startsWith(expectedMessage) // spark 3.3
+        case None => fail("No exception was thrown")
+      }
     }
   }
 

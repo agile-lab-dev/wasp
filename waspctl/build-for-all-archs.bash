@@ -9,7 +9,7 @@ cd /go/src/waspctl
 package="waspctl"
 package_name="waspctl"
 
-platforms=("windows/amd64" "darwin/amd64" "linux/amd64")
+platforms=("windows/amd64" "darwin/amd64" "linux/amd64", "darwin/arm64")
 
 env CGO111MODULE=on CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go mod init
 for platform in "${platforms[@]}"

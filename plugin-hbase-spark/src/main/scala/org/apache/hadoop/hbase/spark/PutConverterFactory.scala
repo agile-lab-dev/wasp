@@ -1,14 +1,13 @@
 package org.apache.hadoop.hbase.spark
 
-import it.agilelab.bigdata.wasp.consumers.spark.utils.AvroSerializerExpression
+import it.agilelab.bigdata.wasp.consumers.spark.utils.{AvroSerializerExpression, RowEncoderUtils}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import org.apache.avro.Schema
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.hbase.util.Bytes
-import org.apache.spark.sql.{Column, DataFrame, Row}
+import org.apache.spark.sql.{Column, DataFrame, Encoder, Row}
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.datasources.hbase.{Field, HBaseTableCatalog, Utils}
 import org.apache.spark.sql.types.StructType
@@ -33,7 +32,7 @@ case class PutConverterFactory(@transient catalog: HBaseTableCatalog,
 
   val clusteringCfColumnsMap: Map[String, Seq[String]] = catalog.clusteringMap
 
-  val enconder: ExpressionEncoder[Row] = RowEncoder.apply(schema).resolveAndBind()
+  val enconder: Encoder[Row] = RowEncoderUtils.encoderFor(schema)
 
   def getTableName(): TableName = TableName.valueOf(catalog.namespace + ":" + catalog.name)
 

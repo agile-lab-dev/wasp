@@ -1,6 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{ReaderKey, Strategy}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.RowEncoderUtils
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import org.apache.spark.sql.DataFrame
 
@@ -225,7 +226,7 @@ trait GoldenGateConversion extends CdcMapper {
   override def TIMESTAMP: String = "op_ts"
 
   // the configuration gg.handler.name.format.includePosition must be set to true,
-  // it represent the position in the trail file.
+  // it represents the position in the trail file.
   override def COMMIT_ID: String = "pos"
 
   override def PRIMARY_KEY: String = "primary_keys"
@@ -271,13 +272,12 @@ trait GoldenGateConversion extends CdcMapper {
 
   def truncateMappingFunction(df: DataFrame, keys: Seq[String]): DataFrame = {
     import org.apache.spark.sql.{Dataset, Row}
-    import org.apache.spark.sql.catalyst.encoders.RowEncoder
 
     val oldSchema = df.schema
 
-    val failIfNotEmpty: Dataset[Row] = df.map { row =>
+    val failIfNotEmpty: Dataset[Row] = df.map { _ =>
       throw new IllegalStateException("Cannot handle truncate operation")
-    }(RowEncoder(oldSchema))
+    }(RowEncoderUtils.encoderFor(oldSchema))
 
     // the insertMappingFunction is called to use the dataframe that pass through the mapping
     // function that has only the scope of fail if at least a  record is present, this is an

@@ -2,32 +2,44 @@ import com.typesafe.sbt.packager.Keys.scriptClasspath
 import sbt._
 import sbt.Keys.transitiveClassifiers
 
-class Vanilla2Dependencies(val versions: Vanilla2Versions)
-    extends Dependencies
-    with Vanilla2AkkaDependencies
-    with Vanilla2DarwinDependencies
-    with Vanilla2HBaseDependencies
-    with Vanilla2SparkDependencies
-    with Vanilla2LoggingDependencies
-    with Vanilla2KafkaDependencies
-    with Vanilla2MongoDependencies
-    with Vanilla2Json4sDependencies
-    with Vanilla2TestFrameworkDependencies
-    with Vanilla2ScalaCoreDependencies
-    with Vanilla2AvroDependencies
-    with Vanilla2ApacheCommonsDependencies
-    with Vanilla2SolrDependencies
-    with Vanilla2CodehausJacksonDependencies
-    with Vanilla2OkHttpDependencies
-    with Vanilla2PostgresDependencies
-    with Vanilla2SttpDependencies {
-  val exclusions: VanillaExclusions.type = VanillaExclusions
+object Spark33Dependencies extends Spark3Dependencies(Spark33Versions) {
+  val delta = "io.delta" %% "delta-core" % versions.delta exclude exclusions.log4jExclude
 
+}
+object Spark34Dependencies extends Spark3Dependencies(Spark34Versions) {
+  val delta = "io.delta" %% "delta-core" % versions.delta exclude exclusions.log4jExclude
+
+}
+object Spark35Dependencies extends Spark3Dependencies(Spark35Versions) {
+  val delta = "io.delta" %% "delta-spark" % versions.delta exclude exclusions.log4jExclude
+
+}
+
+abstract class Spark3Dependencies(val versions: Spark3Versions)
+    extends Dependencies
+    with Spark3AkkaDependencies
+    with Spark3DarwinDependencies
+    with Spark3HBaseDependencies
+    with Spark3SparkDependencies
+    with Spark3LoggingDependencies
+    with Spark3KafkaDependencies
+    with Spark3MongoDependencies
+    with Spark3Json4sDependencies
+    with Spark3TestFrameworkDependencies
+    with Spark3ScalaCoreDependencies
+    with Spark3AvroDependencies
+    with Spark3ApacheCommonsDependencies
+    with Spark3SolrDependencies
+    with Spark3CodehausJacksonDependencies
+    with Spark3OkHttpDependencies
+    with Spark3PostgresDependencies
+    with Spark3SttpDependencies {
+  val delta: ModuleID
+  val exclusions: Spark3Exclusions.type = Spark3Exclusions
   val removeShims: Seq[ExclusionRule] = Seq(
     ExclusionRule("org.spark-project.hive")
   )
 
-  lazy val delta              = "io.delta"             %% "delta-core"               % versions.delta exclude exclusions.log4jExclude
   lazy val parquet            = "org.apache.parquet"   % "parquet-column"            % "1.12.3" exclude exclusions.log4jExclude
   lazy val elasticSearchSpark = "org.elasticsearch"    %% "elasticsearch-spark-20"   % versions.elasticSearchSpark
   lazy val guava              = "com.google.guava"     % "guava"                     % versions.guava
@@ -209,7 +221,8 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
 
   override val nifiStatelessDependencies: Seq[ModuleID] = Seq(jaxRs, nifiStateless, commonsCli)
 
-  override val pluginCdcSparkDependencies: Seq[ModuleID] = spark ++ Seq(delta, scalaTest)
+  // it's lazy because it depends on delta which is initialized by a subclass
+  override lazy val pluginCdcSparkDependencies: Seq[ModuleID] = spark ++ Seq(delta, scalaTest)
 
   override val kmsTest: Seq[Def.Setting[_]] = Seq(
     Test / transitiveClassifiers := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
@@ -229,7 +242,8 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
     "com.amazonaws"     % "aws-java-sdk-bundle" % versions.awsBundle force ()
   )
 
-  override val pluginParallelWriteSparkDependencies: Seq[ModuleID] =
+  // it's lazy because it depends on delta which is initialized by a subclass
+  override lazy val pluginParallelWriteSparkDependencies: Seq[ModuleID] =
     Seq(scalaTest) ++ pluginHttpSparkDependencies ++ Seq(
       /*
        Hive-exec shades a lot of things we need to take
@@ -300,9 +314,9 @@ class Vanilla2Dependencies(val versions: Vanilla2Versions)
       Seq(":$HADOOP_CONF_DIR:$YARN_CONF_DIR:/$HBASE_CONF_DIR")
 }
 
-trait Vanilla2AkkaDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3AkkaDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val akkaActor          = "com.typesafe.akka" %% "akka-actor"              % versions.akka
   lazy val akkaCluster        = "com.typesafe.akka" %% "akka-cluster"            % versions.akka
   lazy val akkaClusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics"    % versions.akka
@@ -328,9 +342,9 @@ trait Vanilla2AkkaDependencies {
   )
 }
 
-trait Vanilla2DarwinDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3DarwinDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val darwinCore           = "it.agilelab" %% "darwin-core"             % versions.darwin
   lazy val darwinHBaseConnector = "it.agilelab" %% "darwin-hbase2-connector" % versions.darwin
   lazy val darwinMockConnector  = "it.agilelab" %% "darwin-mock-connector"   % versions.darwin
@@ -341,9 +355,9 @@ trait Vanilla2DarwinDependencies {
   lazy val schemaRegistry = Seq(darwinCore)
 }
 
-trait Vanilla2HBaseDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3HBaseDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val hbaseClient2NoScope    = "org.apache.hbase" % "hbase-client" % versions.hbase2 exclude exclusions.hbaseExclusion
   lazy val hbaseCommon2NoScope    = "org.apache.hbase" % "hbase-common" % versions.hbase2 exclude exclusions.hbaseExclusion
   lazy val hbaseServer2NoScope    = "org.apache.hbase" % "hbase-server" % versions.hbase2 exclude exclusions.hbaseExclusion
@@ -357,7 +371,7 @@ trait Vanilla2HBaseDependencies {
   lazy val hbase2                 = Seq(hbaseClient2, hbaseCommon2, hbaseServer2, hbaseMapreduce2)
 }
 
-trait Vanilla2SparkDependencies extends Vanilla2HadoopDependencies {
+trait Spark3SparkDependencies extends Spark3HadoopDependencies {
   lazy val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst" % versions.spark % Test classifier "tests"
   lazy val sparkCore          = "org.apache.spark" %% "spark-core" % versions.spark % Provided
   lazy val sparkTagsTests     = "org.apache.spark" %% "spark-tags" % versions.spark % Test classifier "tests"
@@ -373,18 +387,18 @@ trait Vanilla2SparkDependencies extends Vanilla2HadoopDependencies {
   lazy val hadoopAuth         = "org.apache.hadoop" % "hadoop-auth" % versions.hadoop
 }
 
-trait Vanilla2HadoopDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3HadoopDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val hadoopCommonNoScope = "org.apache.hadoop" % "hadoop-common" % versions.hadoop
   lazy val hadoopCommon        = hadoopCommonNoScope % Provided
   lazy val kms                 = "org.apache.hadoop" % "hadoop-kms" % versions.hadoop
   lazy val hadoopAWS           = "org.apache.hadoop" % "hadoop-aws" % versions.hadoop % Provided
 }
 
-trait Vanilla2LoggingDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3LoggingDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
 
   lazy val slf4jApi           = "org.slf4j" % "slf4j-api" % versions.slf4j % Provided
   lazy val slf4jLog4j2Binding = "org.apache.logging.log4j" % "log4j-slf4j2-impl" % versions.log4j % Provided
@@ -394,36 +408,36 @@ trait Vanilla2LoggingDependencies {
   val logging                 = Seq(slf4jApi, slf4jLog4j2Binding, log4j2Api, log4jCore, log4j1Api)
 }
 
-trait Vanilla2KafkaDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3KafkaDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val kafka         = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
   lazy val kafkaClients  = "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
   lazy val kafkaTests    = kafka              % Test exclude (exclusions.jacksonExclude)
   lazy val sparkSqlKafka = "org.apache.spark" %% "spark-sql-kafka-0-10" % versions.spark
 }
 
-trait Vanilla2MongoDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3MongoDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val mongodbScala        = "org.mongodb.scala" %% "mongo-scala-driver"    % versions.mongodbScala
   lazy val mongoBsonScala      = "org.mongodb.scala" %% "mongo-scala-bson"      % versions.mongodbScala
   lazy val mongoSparkConnector = "org.mongodb.spark" %% "mongo-spark-connector" % versions.mongoSparkConnector exclude (exclusions.mongoJavaDriverExclude)
   lazy val mongoJavaDriver     = "org.mongodb"       % "mongo-java-driver"      % versions.mongoJavaDriver
 }
 
-trait Vanilla2Json4sDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3Json4sDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val json4sCore    = "org.json4s" %% "json4s-core" % versions.json4s % Provided exclude exclusions.jacksonExclude
   lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % versions.json4s % Provided exclude exclusions.jacksonExclude
   lazy val json4sNative  = "org.json4s" %% "json4s-native" % versions.json4s exclude exclusions.jacksonExclude
   lazy val json          = Seq(json4sCore, json4sJackson, json4sNative)
 }
 
-trait Vanilla2TestFrameworkDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3TestFrameworkDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val scalaTest        = "org.scalatest"  %% "scalatest"     % versions.scalaTest        % Test
   lazy val scalaCheck       = "org.scalacheck" %% "scalacheck"    % versions.scalaCheck       % Test
   lazy val scalaTestMockito = "org.mockito"    %% "mockito-scala" % versions.scalaTestMockito % Test
@@ -433,8 +447,8 @@ trait Vanilla2TestFrameworkDependencies {
   ).map(_ exclude exclusions.jacksonExclude)
 }
 
-trait Vanilla2ScalaCoreDependencies {
-  val versions: Vanilla2Versions
+trait Spark3ScalaCoreDependencies {
+  val versions: Spark3Versions
   lazy val typesafeConfig            = "com.typesafe"           % "config"                    % versions.typesafeConfig
   lazy val scalaParserAndCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % versions.scalaParserAndCombinators
   lazy val nameOf                    = "com.github.dwickern"    %% "scala-nameof"             % versions.nameOf
@@ -442,14 +456,14 @@ trait Vanilla2ScalaCoreDependencies {
   lazy val scalaCompiler             = "org.scala-lang"         % "scala-compiler"            % versions.scala
 }
 
-trait Vanilla2AvroDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3AvroDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val avro = "org.apache.avro" % "avro" % versions.avro % Provided
 }
 
-trait Vanilla2ApacheCommonsDependencies {
-  val versions: Vanilla2Versions
+trait Spark3ApacheCommonsDependencies {
+  val versions: Spark3Versions
   lazy val apacheCommonsLang3 = "org.apache.commons"        % "commons-lang3" % versions.apacheCommonsLang3Version // remove?
   lazy val commonsCli         = "commons-cli"               % "commons-cli"   % versions.commonsCli % Provided
   lazy val httpClient         = "org.apache.httpcomponents" % "httpclient"    % versions.httpcomponents
@@ -459,38 +473,38 @@ trait Vanilla2ApacheCommonsDependencies {
 
 }
 
-trait Vanilla2SolrDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3SolrDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val solrj             = "org.apache.solr"           % "solr-solrj"  % versions.solr exclude exclusions.solrExclusion
   lazy val sparkSolr         = "it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr exclude exclusions.sparkSolrExclusion
   lazy val solrjMasterClient = "org.apache.solr"           % "solr-solrj"  % versions.solr exclude exclusions.solrExclusion
 }
 
-trait Vanilla2SttpDependencies {
-  val versions: Vanilla2Versions
-  val exclusions: VanillaExclusions.type
+trait Spark3SttpDependencies {
+  val versions: Spark3Versions
+  val exclusions: Spark3Exclusions.type
   lazy val sttpCore   = "com.softwaremill.sttp.client" %% "core"   % versions.sttpVersion exclude exclusions.json4sExclude
   lazy val sttpJson4s = "com.softwaremill.sttp.client" %% "json4s" % versions.sttpVersion exclude exclusions.json4sExclude
 }
 
-trait Vanilla2CodehausJacksonDependencies {
-  val versions: Vanilla2Versions
+trait Spark3CodehausJacksonDependencies {
+  val versions: Spark3Versions
   lazy val jacksonDatabind          = "com.fasterxml.jackson.core" % "jackson-databind"   % versions.fasterxmlJackson
   lazy val jacksonCore              = "com.fasterxml.jackson.core" % "jackson-core"       % versions.fasterxmlJackson
   lazy val codeHausJacksonMapperAsl = "org.codehaus.jackson"       % "jackson-mapper-asl" % versions.codeHausJackson
   lazy val codeHausJacksonCoreAsl   = "org.codehaus.jackson"       % "jackson-core-asl"   % versions.codeHausJackson
 }
 
-trait Vanilla2OkHttpDependencies {
-  val versions: Vanilla2Versions
+trait Spark3OkHttpDependencies {
+  val versions: Spark3Versions
 
   lazy val mockOkHttp2 = "com.squareup.okhttp" % "mockwebserver" % versions.okHttp % Test // in sync with cdh6
   lazy val okHttp2     = "com.squareup.okhttp" % "okhttp"        % versions.okHttp // in sync with cdh6
 }
 
-trait Vanilla2PostgresDependencies {
-  val versions: Vanilla2Versions
+trait Spark3PostgresDependencies {
+  val versions: Spark3Versions
 
   lazy val postgres                     = "org.postgresql"         % "postgresql"                                % versions.postgresqlVersion
   lazy val postgresqlEmbedded           = "io.zonky.test"          % "embedded-postgres"                         % versions.postgresqlEmbeddedVersion % Test

@@ -1,10 +1,6 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.kafka.CompatibilityKafkaException.{
-  unresolvedColKey,
-  unresolvedColTopic
-}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.bigdata.wasp.models.{MultiTopicModel, SubjectStrategy, TopicCompression, TopicModel}
@@ -24,6 +20,13 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
   import spark.implicits._
 
   val topicFieldName = Some("topic")
+
+  def assertMissingColumnException(ex: Exception, columns: List[String]): Unit = {
+    assert(
+      ex.getMessage.contains(columns.mkString("(", ", ", ")")) ||
+        ex.getMessage.contains(columns.mkString("[`", "`, `", "`]"))
+    )
+  }
 
   val darwinConf = ConfigFactory.parseString("""
       |type: cached_eager
@@ -437,7 +440,7 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
     ).toDF("id", "name", "surname")
 
     val caught =
-      intercept[IllegalArgumentException] {
+      intercept[Exception] {
         KafkaWriters.convertDataframe(
           df,
           topicFieldName,
@@ -446,10 +449,7 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
           None
         )
       }
-    assert(
-      caught.getMessage === unresolvedColTopic
-    )
-
+    assertMissingColumnException(caught, List("id", "name", "surname"))
   }
 
   it should "throw an exception when the schema does not contain the fields set as key fields" in {
@@ -479,10 +479,7 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
           None
         )
       }
-
-    assert(
-      caught.getMessage === unresolvedColKey
-    )
+    assertMissingColumnException(caught, List("id", "name", "surname", "topic"))
   }
 
   // plaintext single

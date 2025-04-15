@@ -8,12 +8,30 @@ sealed trait Flavor {
 
 object Flavor {
 
-  case object Vanilla2_2_12 extends Flavor {
-    private val versions                            = new Vanilla2Versions()
-    val postfix: Option[String]                     = None
-    override val scalaVersion: ScalaVersion         = ScalaVersion.parseScalaVersion(versions.scala)
-    override val dependencies: Vanilla2Dependencies = new Vanilla2Dependencies(versions)
-    override val settings: Settings = new BasicSettings(
+  case object Spark3_5 extends Spark_3 {
+    override val id: String                            = "SPARK3.5"
+    override lazy val dependencies: Spark3Dependencies = Spark35Dependencies
+    override val postfix: Option[String]               = Some("3_5")
+
+  }
+
+  case object Spark3_4 extends Spark_3 {
+    override val id: String                            = "SPARK3.4"
+    override lazy val dependencies: Spark3Dependencies = Spark34Dependencies
+    override val postfix: Option[String]               = None
+  }
+
+  case object Spark3_3 extends Spark_3 {
+    override val id: String                            = "SPARK3.3"
+    override lazy val dependencies: Spark3Dependencies = Spark33Dependencies
+    override val postfix: Option[String]               = Some("3_3")
+  }
+
+  trait Spark_3 extends Flavor {
+    val dependencies: Spark3Dependencies
+    lazy val versions: Spark3Versions            = dependencies.versions
+    override lazy val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
+    override lazy val settings: Settings = new BasicSettings(
       resolver = new BasicResolvers(),
       jdkVersionValue = versions.jdk,
       scalaVersionValue = scalaVersion,
@@ -25,49 +43,16 @@ object Flavor {
       //   java.lang.NoSuchMethodError: 'org.apache.hadoop.fs.FSBuilder org.apache.hadoop.fs.FutureDataInputStreamBuilder.opt(java.lang.String, long)
       overrideDep = Seq(dependencies.hadoopClientApi)
     )
-    override val id: String = "VANILLA2_2_12"
   }
 
-  case object CDP719 extends Flavor {
-    override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
-    override lazy val settings: Settings =
-      new BasicSettings(
-        new CDP719Resolvers(new BasicResolvers()),
-        versions.jdk,
-        scalaVersion,
-        dependencies.parcelDependencies,
-        dependencies.globalExclusions
-      )
-    override lazy val dependencies: CDP719Dependencies = new CDP719Dependencies(versions)
-    lazy val postfix: Option[String]                   = Some("cdp719")
-    private lazy val versions                          = new CDP719Versions()
-    override val id: String                            = "CDP719"
-  }
-
-  case object EMR613 extends Flavor {
-    override val scalaVersion: ScalaVersion = ScalaVersion.parseScalaVersion(versions.scala)
-    override lazy val settings: Settings =
-      new BasicSettings(
-        new BasicResolvers(),
-        versions.jdk,
-        scalaVersion,
-        dependencies.overrides,
-        dependencies.removeShims
-      )
-    override lazy val dependencies: EMR613Dependencies = new EMR613Dependencies(versions)
-    lazy val postfix: Option[String]                   = Some("emr613")
-    private lazy val versions                          = new EMR613Versions()
-    override val id: String                            = "EMR_6_13"
-  }
-
-  val DEFAULT: Flavor = Vanilla2_2_12
+  val DEFAULT: Flavor = Spark3_4
 
   def parse(s: String): Either[String, Flavor] = {
     s.toUpperCase match {
-      case "VANILLA2_2_12" => Right(Vanilla2_2_12)
-      case "CDP719"        => Right(CDP719)
-      case "EMR_6_13"      => Right(EMR613)
-      case _               => Left(s"Cannot parse flavor [${s}]")
+      case "SPARK3.5" => Right(Spark3_5)
+      case "SPARK3.4" => Right(Spark3_4)
+      case "SPARK3.3" => Right(Spark3_3)
+      case _          => Left(s"Cannot parse flavor [${s}]")
     }
   }
 

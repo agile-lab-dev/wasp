@@ -77,9 +77,9 @@ trait MicroserviceClient {
     * @return Response body casted to B
     */
   protected def get[A: JsonFormat](
-                                    url: URL,
-                                    headers: Map[String, String]
-                                  ): A = {
+      url: URL,
+      headers: Map[String, String]
+  ): A = {
     call[A](new Request.Builder().url(url), headers)
   }
 

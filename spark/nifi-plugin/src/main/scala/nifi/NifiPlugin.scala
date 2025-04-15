@@ -1,13 +1,13 @@
 package nifi
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.{InternalStrategy, ReaderKey}
+import it.agilelab.bigdata.wasp.consumers.spark.utils.RowEncoderUtils
 import it.agilelab.bigdata.wasp.spark.plugins.nifi.{CompatibilityNifiPlugin, ReflectiveCall}
 import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.fs.{LocatedFileStatus, Path, RemoteIterator}
 import org.apache.spark.{CompatibilitySparkHadoopUtil, SparkConf}
-import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
 import org.apache.spark.sql.types.ArrayType
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{DataFrame, Encoder, Row}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.File
@@ -16,7 +16,6 @@ import java.nio.file.Paths
 import java.util
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
-
 
 class NifiStrategy extends InternalStrategy {
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
@@ -46,7 +45,7 @@ class NifiStrategy extends InternalStrategy {
 
     val jsonDf = df.select(to_json(struct(col("*"))).as("json"))
 
-    implicit val re: ExpressionEncoder[Row] = RowEncoder(jsonDf.schema)
+    implicit val re: Encoder[Row] = RowEncoderUtils.encoderFor(jsonDf.schema)
 
     val recordSetDf = ArrayType(df.schema)
 
@@ -221,10 +220,10 @@ class NifiPlugin(sparkConf: SparkConf)
 
     val executorWorkingDir = new File(".").getAbsolutePath
 
-    val destinationPath = new Path(s"file://${executorWorkingDir}", "nifi")
-    val bootstrapDestination = new Path(destinationPath, "bootstrap")
-    val systemDestination = new Path(destinationPath, "system")
-    val statelessDestination = new Path(destinationPath, "stateless")
+    val destinationPath       = new Path(s"file://${executorWorkingDir}", "nifi")
+    val bootstrapDestination  = new Path(destinationPath, "bootstrap")
+    val systemDestination     = new Path(destinationPath, "system")
+    val statelessDestination  = new Path(destinationPath, "stateless")
     val extensionsDestination = new Path(destinationPath, "extensions")
     mkdir(hadoopConfiguration, destinationPath)
     mkdir(hadoopConfiguration, bootstrapDestination)

@@ -5,7 +5,6 @@ import java.io.File
 import scala.util.Try
 import scala.util.Failure
 
-
 object VersionBumper {
 
   def bumpMajor(v: String, log: Logger): BaseVersion = {

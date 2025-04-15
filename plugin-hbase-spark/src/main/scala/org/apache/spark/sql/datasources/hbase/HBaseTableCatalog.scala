@@ -41,11 +41,12 @@ case class Field(
     col: String,
     sType: Option[String] = None,
     avroSchema: Option[String] = None,
-    serdes: Option[SerDes]= None,
-    len: Int = -1) extends Logging {
+    serdes: Option[SerDes] = None,
+    len: Int = -1
+) extends Logging {
   override def toString = s"$colName $cf $col"
-  val isRowKey = cf == HBaseTableCatalog.rowKey
-  var start: Int = _
+  val isRowKey          = cf == HBaseTableCatalog.rowKey
+  var start: Int        = _
   def schema: Option[Schema] = avroSchema.map { x =>
     logDebug(s"avro: $x")
     val p = new Schema.Parser
@@ -60,7 +61,7 @@ case class Field(
   }
 
   // converter from catalyst to avro
-  lazy val catalystToAvro: (Any) => Any ={
+  lazy val catalystToAvro: (Any) => Any = {
     SchemaConverters.createConverterToAvro(dt, colName, "recordNamespace")
   }
 
@@ -82,9 +83,11 @@ case class Field(
   val dt: DataType = {
     //TODO Prima era così DataTypeParser.parse(_)) da testare
     sType.map(CatalystSqlParser.parseDataType).getOrElse {
-      schema.map { x =>
-        SchemaConverters.toSqlType(x).dataType
-      }.getOrElse(throw new RuntimeException(s"Cannot find dataType for $colName"))
+      schema
+        .map { x =>
+          SchemaConverters.toSqlType(x).dataType
+        }
+        .getOrElse(throw new RuntimeException(s"Cannot find dataType for $colName"))
     }
   }
 
@@ -92,14 +95,14 @@ case class Field(
     if (len == -1) {
       dt match {
         case BinaryType | StringType => -1
-        case BooleanType => Bytes.SIZEOF_BOOLEAN
-        case ByteType => 1
-        case DoubleType => Bytes.SIZEOF_DOUBLE
-        case FloatType => Bytes.SIZEOF_FLOAT
-        case IntegerType => Bytes.SIZEOF_INT
-        case LongType => Bytes.SIZEOF_LONG
-        case ShortType => Bytes.SIZEOF_SHORT
-        case _ => -1
+        case BooleanType             => Bytes.SIZEOF_BOOLEAN
+        case ByteType                => 1
+        case DoubleType              => Bytes.SIZEOF_DOUBLE
+        case FloatType               => Bytes.SIZEOF_FLOAT
+        case IntegerType             => Bytes.SIZEOF_INT
+        case LongType                => Bytes.SIZEOF_LONG
+        case ShortType               => Bytes.SIZEOF_SHORT
+        case _                       => -1
       }
     } else {
       len
@@ -118,15 +121,16 @@ case class Field(
 // key1:key2:key3
 @InterfaceAudience.Private
 case class RowKey(k: String) {
-  val keys = k.split(":")
+  val keys               = k.split(":")
   var fields: Seq[Field] = _
-  var varLength = false
+  var varLength          = false
   def length = {
     if (varLength) {
       -1
     } else {
-      fields.foldLeft(0) {case (x, y) =>
-        x + y.length
+      fields.foldLeft(0) {
+        case (x, y) =>
+          x + y.length
       }
     }
   }
@@ -134,30 +138,32 @@ case class RowKey(k: String) {
 // The map between the column presented to Spark and the HBase field
 @InterfaceAudience.Private
 case class SchemaMap(map: mutable.HashMap[String, Field]) {
-  def toFields = map.map { case (name, field) =>
-    StructField(name, field.dt)
-  }.toSeq
+  def toFields =
+    map.map {
+      case (name, field) =>
+        StructField(name, field.dt)
+    }.toSeq
 
   def fields = map.values
 
   def getField(name: String) = map(name)
-  def exists(name: String) = map.keySet.contains(name)
+  def exists(name: String)   = map.keySet.contains(name)
 }
-
 
 // The definition of HBase and Relation relation schema
 @InterfaceAudience.Private
 case class HBaseTableCatalog(
-                              namespace: String,
-                              name: String,
-                              row: RowKey,
-                              sMap: SchemaMap,
-                              clusteringMap: Map[String, Seq[String]],
-                              @transient params: Map[String, String]) extends Logging {
-  def toDataType = StructType(sMap.toFields)
+    namespace: String,
+    name: String,
+    row: RowKey,
+    sMap: SchemaMap,
+    clusteringMap: Map[String, Seq[String]],
+    @transient params: Map[String, String]
+) extends Logging {
+  def toDataType             = StructType(sMap.toFields)
   def getField(name: String) = sMap.getField(name)
-  def getRowKey: Seq[Field] = row.fields
-  def getPrimaryKey= row.keys(0)
+  def getRowKey: Seq[Field]  = row.fields
+  def getPrimaryKey          = row.keys(0)
   def getColumnFamilies = {
     sMap.fields.map(_.cf).filter(_ != HBaseTableCatalog.rowKey).toSeq.distinct
   }
@@ -213,15 +219,16 @@ case class HBaseTableCatalog(
 }
 
 @InterfaceAudience.Public
+@nowarn
 object HBaseTableCatalog {
   // If defined and larger than 3, a new table will be created with the number of region specified.
   val newTable = "newtable"
   // The json string specifying hbase catalog information
-  val regionStart = "regionStart"
+  val regionStart        = "regionStart"
   val defaultRegionStart = "aaaaaaa"
-  val regionEnd = "regionEnd"
-  val defaultRegionEnd = "zzzzzzz"
-  val tableCatalog = "catalog"
+  val regionEnd          = "regionEnd"
+  val defaultRegionEnd   = "zzzzzzz"
+  val tableCatalog       = "catalog"
   // The row key with format key1:key2 specifying table row key
   val rowKey = "rowkey"
   // The key for hbase table whose value specify namespace and table name
@@ -232,14 +239,14 @@ object HBaseTableCatalog {
   val tableName = "name"
   // The name of columns in hbase catalog
   val columns = "columns"
-  val cf = "cf"
-  val col = "col"
-  val `type` = "type"
+  val cf      = "cf"
+  val col     = "col"
+  val `type`  = "type"
   // the name of avro schema json string
-  val avro = "avro"
-  val delimiter: Byte = 0
-  val serdes = "serdes"
-  val length = "length"
+  val avro                   = "avro"
+  val delimiter: Byte        = 0
+  val serdes                 = "serdes"
+  val length                 = "length"
   val clusteringRegex: Regex = "clustering_([0-9]+)".r
 
   /**
@@ -249,22 +256,25 @@ object HBaseTableCatalog {
     * "col2":{"cf":"cf2", "col":"col2", "type":"type2"}}}
     * Note that any col in the rowKey, there has to be one corresponding col defined in columns
     */
-  @nowarn
   def apply(params: Map[String, String]): HBaseTableCatalog = {
     val parameters = convert(params)
-    val jString = parameters(tableCatalog)
+    val jString    = parameters(tableCatalog)
 
-    val map = jString
-      .parseJson
+    val map = jString.parseJson
       .convertTo[scala.collection.immutable.Map[String, JsValue]]
 
-    val tableMeta = map.get(table)
+    val tableMeta = map
+      .get(table)
       .map(_.convertTo[Map[String, JsValue]])
       .getOrElse(throw new RuntimeException(s"Cannot find $table field in $jString"))
 
-    val tName = tableMeta.get(tableName).map(_.convertTo[String])
+    val tName = tableMeta
+      .get(tableName)
+      .map(_.convertTo[String])
       .getOrElse(throw new RuntimeException(s"Cannot find field $table.$tableName in $jString"))
-    val nSpace = tableMeta.get(nameSpace).map(_.convertTo[String])
+    val nSpace = tableMeta
+      .get(nameSpace)
+      .map(_.convertTo[String])
       .getOrElse("default")
 
     val cIter = map
@@ -273,38 +283,38 @@ object HBaseTableCatalog {
       .getOrElse(throw new RuntimeException(s"Cannot find field $columns in $jString"))
       .toIterator
 
-    val schemaMap = mutable.HashMap.empty[String, Field]
+    val schemaMap           = mutable.HashMap.empty[String, Field]
     val clusteringFieldsMap = mutable.HashMap.empty[String, Seq[String]]
-    cIter.foreach { case (name, column) =>
-      clusteringRegex.findFirstIn(name) match {
-        case Some(_) =>
-          //Save clustering informations
-          if(!column.contains(cf)){
-            throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
-          }
-          val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
-          if(clusteringColumns.isEmpty){
-            throw new IllegalArgumentException(
-              """column "clustering" must have columns parameter defined with
+    cIter.foreach {
+      case (name, column) =>
+        clusteringRegex.findFirstIn(name) match {
+          case Some(_) =>
+            //Save clustering informations
+            if (!column.contains(cf)) {
+              throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
+            }
+            val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
+            if (clusteringColumns.isEmpty) {
+              throw new IllegalArgumentException(
+                """column "clustering" must have columns parameter defined with
                 |at least one element. Elements are splitted by colons (e.g. "col1:col2:col3")
-                |""".stripMargin)
-          }
-          clusteringFieldsMap.+=((column(cf), clusteringColumns))
+                |""".stripMargin
+              )
+            }
+            clusteringFieldsMap.+=((column(cf), clusteringColumns))
 
-        case None =>
-          val sd = {
-            column.get(serdes).asInstanceOf[Option[String]].map(n =>
-              Class.forName(n).newInstance().asInstanceOf[SerDes]
-            )
-          }
-          val len = column.get(length).map(_.toInt).getOrElse(-1)
-          val sAvro = column.get(avro).map(parameters(_))
-          val f = Field(name, column.getOrElse(cf, rowKey),
-            column(col),
-            column.get(`type`),
-            sAvro, sd, len)
-          schemaMap.+=((name, f))
-      }
+          case None =>
+            val sd = {
+              column
+                .get(serdes)
+                .asInstanceOf[Option[String]]
+                .map(n => Class.forName(n).newInstance().asInstanceOf[SerDes])
+            }
+            val len   = column.get(length).map(_.toInt).getOrElse(-1)
+            val sAvro = column.get(avro).map(parameters(_))
+            val f     = Field(name, column.getOrElse(cf, rowKey), column(col), column.get(`type`), sAvro, sd, len)
+            schemaMap.+=((name, f))
+        }
     }
 
     val clusteringColumns: Iterable[String] = clusteringFieldsMap.values.flatten
@@ -313,11 +323,13 @@ object HBaseTableCatalog {
     clusteringColumns.foreach(clColumn => {
       val fieldTypeOpt: Option[String] = schemaMap(clColumn).sType
 
-      if(fieldTypeOpt.isDefined) {
+      if (fieldTypeOpt.isDefined) {
         val fieldType = fieldTypeOpt.get
 
-        if(fieldType != "string")
-          throw new IllegalArgumentException(s"The clustering columns must be of type string. The column $clColumn is of type $fieldType instead.")
+        if (fieldType != "string")
+          throw new IllegalArgumentException(
+            s"The clustering columns must be of type string. The column $clColumn is of type $fieldType instead."
+          )
       }
     })
 
@@ -326,7 +338,7 @@ object HBaseTableCatalog {
     HBaseTableCatalog(nSpace, tName, rKey, SchemaMap(schemaMap), clusteringFieldsMap.toMap, parameters)
   }
 
-  val TABLE_KEY: String = "hbase.table"
+  val TABLE_KEY: String                  = "hbase.table"
   val SCHEMA_COLUMNS_MAPPING_KEY: String = "hbase.columns.mapping"
 
   /* for backward compatibility. Convert the old definition to new json based definition formated as below
@@ -346,18 +358,21 @@ object HBaseTableCatalog {
                       |}""".stripMargin
    */
   // TODO: There is no need to deprecate since this is the first release.
-  @deprecated("Please use new json format to define HBaseCatalog","2.10")
+  @deprecated("Please use new json format to define HBaseCatalog", "2.10")
   def convert(parameters: Map[String, String]): Map[String, String] = {
     val tableName = parameters.get(TABLE_KEY).orNull
     // if the hbase.table is not defined, we assume it is json format already.
     if (tableName == null) return parameters
     val schemaMappingString = parameters.getOrElse(SCHEMA_COLUMNS_MAPPING_KEY, "")
     import scala.collection.JavaConverters._
-    val schemaMap = generateSchemaMappingMap(schemaMappingString).asScala.map(_._2.asInstanceOf[SchemaQualifierDefinition])
+    val schemaMap =
+      generateSchemaMappingMap(schemaMappingString).asScala.map(_._2.asInstanceOf[SchemaQualifierDefinition])
 
-    val rowkey = schemaMap.filter {
-      _.columnFamily == "rowkey"
-    }.map(_.columnName)
+    val rowkey = schemaMap
+      .filter {
+        _.columnFamily == "rowkey"
+      }
+      .map(_.columnName)
     val cols = schemaMap.map { x =>
       s""""${x.columnName}":{"cf":"${x.columnFamily}", "col":"${x.qualifier}", "type":"${x.colType}"}""".stripMargin
     }
@@ -370,7 +385,7 @@ object HBaseTableCatalog {
          |}
          |}
        """.stripMargin
-    parameters ++ Map(HBaseTableCatalog.tableCatalog->jsonCatalog)
+    parameters ++ Map(HBaseTableCatalog.tableCatalog -> jsonCatalog)
   }
 
   /**
@@ -381,12 +396,11 @@ object HBaseTableCatalog {
     * @return                    A map of definitions keyed by the SparkSQL column name
     */
   @InterfaceAudience.Private
-  def generateSchemaMappingMap(schemaMappingString:String):
-  java.util.HashMap[String, SchemaQualifierDefinition] = {
+  def generateSchemaMappingMap(schemaMappingString: String): java.util.HashMap[String, SchemaQualifierDefinition] = {
     println(schemaMappingString)
     try {
       val columnDefinitions = schemaMappingString.split(',')
-      val resultingMap = new java.util.HashMap[String, SchemaQualifierDefinition]()
+      val resultingMap      = new java.util.HashMap[String, SchemaQualifierDefinition]()
       columnDefinitions.map(cd => {
         val parts = cd.trim.split(' ')
 
@@ -398,20 +412,27 @@ object HBaseTableCatalog {
           } else {
             parts(2).split(':')
           }
-          resultingMap.put(parts(0), new SchemaQualifierDefinition(parts(0),
-            parts(1), hbaseDefinitionParts(0), hbaseDefinitionParts(1)))
+          resultingMap.put(
+            parts(0),
+            new SchemaQualifierDefinition(parts(0), parts(1), hbaseDefinitionParts(0), hbaseDefinitionParts(1))
+          )
         } else {
-          throw new IllegalArgumentException("Invalid value for schema mapping '" + cd +
-            "' should be '<columnName> <columnType> <columnFamily>:<qualifier>' " +
-            "for columns and '<columnName> <columnType> :<qualifier>' for rowKeys")
+          throw new IllegalArgumentException(
+            "Invalid value for schema mapping '" + cd +
+              "' should be '<columnName> <columnType> <columnFamily>:<qualifier>' " +
+              "for columns and '<columnName> <columnType> :<qualifier>' for rowKeys"
+          )
         }
       })
       resultingMap
     } catch {
       case e: Exception =>
-        throw new IllegalArgumentException("Invalid value for " + SCHEMA_COLUMNS_MAPPING_KEY +
-          " '" +
-          schemaMappingString + "'", e )
+        throw new IllegalArgumentException(
+          "Invalid value for " + SCHEMA_COLUMNS_MAPPING_KEY +
+            " '" +
+            schemaMappingString + "'",
+          e
+        )
     }
   }
 }
@@ -425,7 +446,4 @@ object HBaseTableCatalog {
   * @param qualifier    HBase qualifier name
   */
 @InterfaceAudience.Private
-case class SchemaQualifierDefinition(columnName:String,
-                                     colType:String,
-                                     columnFamily:String,
-                                     qualifier:String)
+case class SchemaQualifierDefinition(columnName: String, colType: String, columnFamily: String, qualifier: String)

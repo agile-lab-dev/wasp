@@ -6,7 +6,7 @@ import sbt._
  * See project/Versions.scala for the versions definitions.
  */
 trait Dependencies {
-
+  val hadoopClientApi: ModuleID
   val scalaCompilerDependencies: Seq[ModuleID]
   val modelDependencies: Seq[ModuleID]
   val coreDependencies: Seq[ModuleID]

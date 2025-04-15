@@ -1,4 +1,6 @@
-class Vanilla2Versions {
+trait Spark3Versions {
+  val spark: String
+  val delta: String
   val akka                      = "2.6.21"
   val akkaHttp                  = "10.2.10"
   val apacheCommonsLang3Version = "3.4"
@@ -24,7 +26,6 @@ class Vanilla2Versions {
   val scalaTestMockito          = "1.17.31"
   val slf4j                     = "2.0.6"
   val solr                      = "8.4.1" // solr8 client works also with solr 7 server
-  val spark                     = "3.4.1"
   val sparkSolr                 = "3.8.1" // solr8 client works also with solr 7 server
   val hadoop                    = "3.3.4" // 2.8.5 vs 3.3.3 (emr) vs 3.1.1 (cdp)
   val awsBundle                 = "1.11.375"
@@ -35,10 +36,8 @@ class Vanilla2Versions {
   val sttpVersion               = "2.1.2"
   val reflectionsVersion        = "0.9.11"
   val postgresqlVersion         = "42.2.5"
-  val delta                     = "2.4.0"
   val kafka_                    = "2.2.1"
   val kafka: String             = kafka_
-  val sparkSqlKafka: String     = "0.1.0" + "-" + kafka_ + "-" + spark
   val yammerMetrics             = "2.2.0"
   val swagger                   = "2.1.2"
   val typesafeConfig            = "1.4.2"
@@ -60,4 +59,19 @@ class Vanilla2Versions {
   val akkaKryo                  = "1.1.5"
   val scala                     = "2.12.17"
   val elasticSearchSpark        = "7.15.0"
+}
+
+object Spark33Versions extends Spark3Versions {
+  override val spark: String = "3.3.4"
+  override val delta: String = "2.3.0"
+}
+
+object Spark34Versions extends Spark3Versions {
+  override val spark: String = "3.4.4"
+  override val delta: String = "2.4.0"
+}
+
+object Spark35Versions extends Spark3Versions {
+  override val spark: String = "3.5.5"
+  override val delta: String = "3.3.0"
 }

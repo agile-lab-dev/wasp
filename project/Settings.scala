@@ -31,10 +31,9 @@ class CDP719Resolvers(other: Resolvers) extends Resolvers {
 }
 
 class BasicResolvers extends Resolvers {
-  val mavenLocalRepo = Resolver.mavenLocal
-  val repo1Maven2    = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
-  val confluent      = "confluent" at "https://packages.confluent.io/maven/"
-  val google         = "Google Maven" at "https://maven.google.com/"
+  val repo1Maven2 = "Repo1 Maven2" at "https://repo1.maven.org/maven2/"
+  val confluent   = "confluent" at "https://packages.confluent.io/maven/"
+  val google      = "Google Maven" at "https://maven.google.com/"
 
   val sonatypeReleaseRepos   = Resolver.sonatypeOssRepos("releases")
   val sonatypeSnapshotsRepos = Resolver.sonatypeOssRepos("snapshots")
@@ -43,8 +42,7 @@ class BasicResolvers extends Resolvers {
   val resolvers = Seq(
     repo1Maven2,
     confluent,
-    google,
-    mavenLocalRepo
+    google
   ) ++ sonatypeReleaseRepos ++ sonatypeSnapshotsRepos
 
 }
@@ -107,7 +105,8 @@ class BasicSettings(
     ),
     Compile / doc / scalacOptions --= Seq(
       "-Xfatal-warnings"
-    ))
+    )
+  )
 
   lazy val publishSettings = Seq(
     sonatypeBundleDirectory := (ThisBuild / baseDirectory).value / target.value.getName / "sonatype-staging" / (ThisBuild / version).value,

@@ -1,6 +1,5 @@
-import sbt._
-
-object EMR613Exclusions {
+import sbt.*
+object Spark3Exclusions {
   // I'm switching from .excludeAll to exclude API because excludeAll does not reflect in pom.xml therefore
   // when the artifacts are published, they're not excluded by dependant projects
   implicit class ModuleIdPower(val moduleID: ModuleID) extends AnyVal {
@@ -30,8 +29,17 @@ object EMR613Exclusions {
     MavenCoordinate("org.slf4j", "slf4j-log4j12")
   )
 
+  lazy val logbackExclude: Vector[MavenCoordinate] = Vector(
+    MavenCoordinate("ch.qos.logback", "logback-classic"),
+    MavenCoordinate("ch.qos.logback", "logback-core")
+  )
+
   lazy val akkaKryoExclude: Vector[MavenCoordinate] =
-    Vector(MavenCoordinate("net.jpountz.lz4", "lz4"), MavenCoordinate("org.lz4", "lz4-java"))
+    Vector(
+      MavenCoordinate("com.typesafe.akka", "akka-actor_2.12"), // this is brought by akka
+      MavenCoordinate("org.lz4", "lz4-java"),                  // this is brought by Spark
+      MavenCoordinate("org.agrona", "agrona")                  // this is brought by akka
+    )
 
   lazy val hbaseExclusion: Vector[MavenCoordinate] =
     log4jExclude ++ jacksonExclude ++ Vector(
@@ -109,8 +117,6 @@ object EMR613Exclusions {
       MavenCoordinate("org.codehaus.jackson", "jackson-core-asl")
     )
 
-  lazy val camelKafkaExclusions: Vector[MavenCoordinate] = Vector(MavenCoordinate("org.apache.kafka", "kafka-clients"))
-
   lazy val javaxRsExclude: Vector[MavenCoordinate] = Vector(
     MavenCoordinate("javax.ws.rs", "javax.ws.rs-api")
   )
@@ -156,10 +162,6 @@ object EMR613Exclusions {
     "slf4j-skin",
     "taglib"
   ).map(MavenCoordinate("org.slf4j", _))
-
-  lazy val avroExclude = Vector(
-    MavenCoordinate("org.apache.avro", "avro")
-  )
 
   // curated list of all org.apache.spark available artifacts for scala 2.11 and 2.12
   lazy val sparkExclude = Vector(
@@ -208,8 +210,8 @@ object EMR613Exclusions {
     "spark-repl_2.12",
     "spark-sketch_2.11",
     "spark-sketch_2.12",
-   //"spark-sql-kafka-0-10_2.11",
-   //"spark-sql-kafka-0-10_2.12",
+    "spark-sql-kafka-0-10_2.11",
+    "spark-sql-kafka-0-10_2.12",
     "spark-sql_2.11",
     "spark-sql_2.12",
     "spark-streaming-flume-assembly_2.11",
