@@ -30,8 +30,6 @@ trait Dependencies {
   val pluginCdcSparkDependencies: Seq[ModuleID]
   val microserviceCatalogDependencies: Seq[ModuleID]
   val pluginParallelWriteSparkDependencies: Seq[ModuleID]
-  val yarnAuthHdfsDependencies: Seq[ModuleID]
-  val yarnAuthHBaseDependencies: Seq[ModuleID]
   val sparkTelemetryPluginDependencies: Seq[ModuleID]
   val sparkNifiPluginDependencies: Seq[ModuleID]
   val nifiStatelessDependencies: Seq[ModuleID]
@@ -42,7 +40,6 @@ trait Dependencies {
   val whitelabelSparkConsumerDependencies: Seq[ModuleID]
   val openapiDependencies: Seq[ModuleID]
   val awsAuth: Seq[ModuleID]
-  val kmsTest: Seq[Def.Setting[_]]
   val sparkPluginBasicDependencies: Seq[ModuleID]
 
   val whitelabelMasterScriptClasspath: Def.Setting[Task[Seq[String]]]

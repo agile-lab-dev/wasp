@@ -145,7 +145,7 @@ In `docker/docker-environment.conf`
 
 #### Adding Security with Kerberos
 
-**Note:** It is required that Spark is connected to a Kerberized YARN cluster following the istruction above
+**Note:** It is required that Spark is connected to a Kerberized YARN cluster following the instruction above
 
 - Create a keytab in the directory `docker` (follow the instructions contained in the file `docker/keytab-build.sh`)
 

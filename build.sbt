@@ -170,27 +170,6 @@ lazy val plugin_parallel_write_spark = Project("wasp-plugin-parallel-write-spark
   .dependsOn(microservice_catalog % dependCompileOnCompileAndTestOnTest)
   .dependsOn(aws_auth_temporary_credentials % dependCompileOnCompileAndTestOnTest)
 
-/* Yarn  */
-
-lazy val yarn_auth_hdfs =
-  Project("wasp-yarn-auth-hdfs", file("yarn/auth/hdfs"))
-    .settings(settings.commonSettings: _*)
-    .settings(dependencies.kmsTest: _*)
-    .settings(libraryDependencies ++= dependencies.yarnAuthHdfsDependencies)
-
-lazy val yarn_auth_hbase =
-  Project("wasp-yarn-auth-hbase", file("yarn/auth/hbase"))
-    .settings(settings.commonSettings: _*)
-    .settings(libraryDependencies ++= dependencies.yarnAuthHBaseDependencies)
-
-lazy val yarn_auth = Project("wasp-yarn-auth", file("yarn/auth"))
-  .settings(settings.commonSettings: _*)
-  .aggregate(yarn_auth_hbase, yarn_auth_hdfs)
-
-lazy val yarn = Project("wasp-yarn", file("yarn"))
-  .settings(settings.commonSettings: _*)
-  .aggregate(yarn_auth)
-
 lazy val spark_telemetry_plugin = Project("wasp-spark-telemetry-plugin", file("spark/telemetry-plugin"))
   .settings(settings.commonSettings: _*)
   .settings(libraryDependencies ++= dependencies.sparkTelemetryPluginDependencies)
@@ -230,7 +209,6 @@ lazy val kernel = project
     nifi_client,
     spark_nifi_plugin_bridge,
     spark_nifi_plugin,
-    yarn,
     spark,
     aws
   )

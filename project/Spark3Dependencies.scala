@@ -1,6 +1,5 @@
 import com.typesafe.sbt.packager.Keys.scriptClasspath
 import sbt._
-import sbt.Keys.transitiveClassifiers
 
 object Spark33Dependencies extends Spark3Dependencies(Spark33Versions) {
   val delta = "io.delta" %% "delta-core" % versions.delta exclude exclusions.log4jExclude
@@ -54,7 +53,6 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
   lazy val jaxRs              = "jakarta.ws.rs"        % "jakarta.ws.rs-api"         % versions.jakartaRsApi
   lazy val nifiStateless      = "org.apache.nifi"      % "nifi-stateless"            % versions.nifi % Provided exclude exclusions.javaxRsExclude
   lazy val joptSimpleTests    = "net.sf.jopt-simple"   % "jopt-simple"               % versions.jopt % Test
-  lazy val jettySecurity      = "org.eclipse.jetty"    % "jetty-security"            % versions.jettySecurity
   lazy val mongoTest          = "de.flapdoodle.embed"  % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
   lazy val shapeless          = "com.chuusai"          %% "shapeless"                % "2.3.3"
   lazy val hadoopClientApi    = "org.apache.hadoop"    % "hadoop-client-api"         % versions.hadoop
@@ -224,18 +222,6 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
   // it's lazy because it depends on delta which is initialized by a subclass
   override lazy val pluginCdcSparkDependencies: Seq[ModuleID] = spark ++ Seq(delta, scalaTest)
 
-  override val kmsTest: Seq[Def.Setting[_]] = Seq(
-    Test / transitiveClassifiers := Seq(Artifact.TestsClassifier, Artifact.SourceClassifier),
-    Keys.libraryDependencies ++= Seq(
-      jacksonDatabind         % Test,
-      jacksonCore             % Test,
-      jettySecurity           % Test,
-      hadoopCommonNoScope     % Test,
-      metrics                 % Test,
-      kms.classifier("tests") % Test
-    )
-  )
-
   override val awsAuth: Seq[ModuleID] = Seq(
     "org.apache.hadoop" % "hadoop-aws"          % versions.hadoop,
     "org.apache.hadoop" % "hadoop-common"       % versions.hadoop,
@@ -263,10 +249,6 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
 
   override val microserviceCatalogDependencies: Seq[ModuleID] =
     Seq(scalaTest) ++ pluginHttpSparkDependencies
-
-  override val yarnAuthHdfsDependencies: Seq[ModuleID] = Seq(scalaTest, sparkYarn, hadoopCommon, kms)
-
-  override val yarnAuthHBaseDependencies: Seq[ModuleID] = Seq(sparkYarn, hbaseServer2, hbaseCommon2)
 
   override val sparkTelemetryPluginDependencies: Seq[ModuleID] =
     Seq(sparkCore, kafkaClients, scalaParserAndCombinators)
@@ -392,7 +374,6 @@ trait Spark3HadoopDependencies {
   val exclusions: Spark3Exclusions.type
   lazy val hadoopCommonNoScope = "org.apache.hadoop" % "hadoop-common" % versions.hadoop
   lazy val hadoopCommon        = hadoopCommonNoScope % Provided
-  lazy val kms                 = "org.apache.hadoop" % "hadoop-kms" % versions.hadoop
   lazy val hadoopAWS           = "org.apache.hadoop" % "hadoop-aws" % versions.hadoop % Provided
 }
 
