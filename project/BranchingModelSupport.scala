@@ -35,19 +35,25 @@ object BranchingModelSupport {
     }
   }
 
-  def fromGit: () => Try[String] =
+  def fromGit: () => Try[String] = {
+    import scala.sys.process.{Process, ProcessLogger}
+    val devNull = new ProcessLogger {
+      override def out(s: => String): Unit = ()
+      override def err(s: => String): Unit = ()
+      override def buffer[T](f: => T): T   = f
+    }
+
     () =>
-      Try {
-
-        import scala.sys.process.Process
-
-        val process = Process("git rev-parse --abbrev-ref HEAD")
-
-        process.lineStream.head match {
-          case "HEAD" => Process("git rev-parse HEAD").lineStream.head
-          case s      => s
-        }
+      Try(Process("git describe --tags --exact-match").lineStream(devNull).head).recoverWith {
+        case _ =>
+          Try {
+            Process("git rev-parse --abbrev-ref HEAD").lineStream(devNull).head match {
+              case "HEAD" => Process("git rev-parse HEAD").lineStream.head
+              case s      => s
+            }
+          }
       }
+  }
 
   def versionForConstant(constant: String, flavor: Flavor)(baseVersion: BaseVersion) = {
     parseVersion(fromConstant(constant)).right.flatMap(format(baseVersion, flavor)) match {
@@ -131,7 +137,7 @@ object BranchingModelSupport {
       case Release(major, minor) if invalid(major, minor) =>
         Left(formatMessage("Release branch", major, minor))
       case Release(major, minor) if valid(major, minor) =>
-        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}-${postfix}SNAPSHOT")
+        Right(s"${baseVersion.major}.${baseVersion.minor}.${baseVersion.patch}${postfix}-SNAPSHOT")
       case Tag(major, minor, patch) if invalid(major, minor, patch) =>
         Left(formatMessage("Tag", major, minor, patch))
       case Tag(major, minor, patch) if valid(major, minor, patch) =>
