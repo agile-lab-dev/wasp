@@ -1,7 +1,6 @@
-import com.jsuereth.sbtpgp.PgpKeys._
-import xerial.sbt.Sonatype.SonatypeKeys._
-import sbt.Keys._
-import sbt.{ScalaVersion => _, _}
+import com.jsuereth.sbtpgp.PgpKeys.*
+import sbt.Keys.*
+import sbt.{ScalaVersion as _, *}
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 
@@ -108,12 +107,13 @@ class BasicSettings(
     )
   )
 
+  val gitlabHost             = "gitlab.com"
+  val gitlabRegistryEndpoint = s"https://${gitlabHost}/api/v4/projects/3748812/packages/maven"
+
   lazy val publishSettings = Seq(
-    sonatypeBundleDirectory := (ThisBuild / baseDirectory).value / target.value.getName / "sonatype-staging" / (ThisBuild / version).value,
-    sonatypeSessionName := s"[sbt-sonatype] ${name.value} ${scalaVersion.value} ${version.value}",
-    publishTo := sonatypePublishToBundle.value,
+    publishTo := Some("GitLab" at gitlabRegistryEndpoint),
     publishMavenStyle := true,
-    credentials := Seq(sonatypeOssCredentials),
+    credentials += gitlabCredentials,
     pgpPassphrase := Option(System.getenv().get("PGP_PASSPHRASE")).map(_.toCharArray),
     Global / useGpg := false
   )
@@ -146,13 +146,12 @@ class BasicSettings(
     (Test / parallelExecution) := false,
     (IntegrationTest / parallelExecution) := false
   )
-  val sonatypeSnapshots = "SonatypeSnapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-  val sonatypeStaging   = "SonatypeStaging" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-  val sonatypeOssCredentials = Credentials(
-    "Sonatype Nexus Repository Manager",
-    "oss.sonatype.org",
-    System.getenv().get("SONATYPE_USER"),
-    System.getenv().get("SONATYPE_PASSWORD")
+
+  val gitlabCredentials = Credentials(
+    "GitLab Packages Registry",
+    gitlabHost,
+    "gitlab-ci-token",
+    System.getenv().get("CI_JOB_TOKEN")
   )
 
   /** sbt-buildinfo action to get current git commit */

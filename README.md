@@ -7,6 +7,26 @@
 
 [![Join the chat at https://gitter.im/agile-lab-dev/wasp](https://badges.gitter.im/agile-lab-dev/wasp.svg)](https://gitter.im/agile-lab-dev/wasp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+## Install
+
+Wasp artifacts are temporarily published to a private GitLab package registry (we will go back to sonatype and maven central as soon as sbt-sonatype is updated to work with sonatype central).
+To download gitlab dependencies you need a personal access token or a [project access token](https://docs.gitlab.com/user/project/settings/project_access_tokens/#create-a-project-access-token) with `read_api` scope and role `Developer`, then configure it to sbt as follows:
+
+```scala
+val gitlabHost             = "gitlab.com"
+val gitlabRegistryEndpoint = s"https://${gitlabHost}/api/v4/projects/3748812/packages/maven"
+
+resolvers += "gitlab" at gitlabRegistryEndpoint 
+credentials += Credentials(
+    "GitLab Packages Registry",
+    gitlabHost,
+    "<token name>",
+    "<token>"
+  )
+```
+
+To get a token, open a [github issue](https://github.com/agile-lab-dev/wasp/issues/new).
+
 ## Table of contents
 
 - [WASP - Wide Analytics Streaming Platform](#wasp---wide-analytics-streaming-platform)

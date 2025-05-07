@@ -201,7 +201,7 @@ release:
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"
     - "echo $GPG_PRIV | base64 -d >  $HOME/.sbt/gpg/secring.asc"
     - "export PGP_PASSPHRASE=`echo $GPG_PASSPHRASE_BASE64 | base64 -d`"
-    - sbt clean publishSigned sonatypeBundleRelease
+    - sbt clean publishSigned
   only:
     - tags
   tags:
