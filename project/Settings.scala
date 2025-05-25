@@ -37,7 +37,6 @@ class BasicResolvers extends Resolvers {
   val sonatypeReleaseRepos   = Resolver.sonatypeOssRepos("releases")
   val sonatypeSnapshotsRepos = Resolver.sonatypeOssRepos("snapshots")
 
-
   /** custom resolvers for dependencies */
   val resolvers = Seq(
     repo1Maven2,
@@ -116,10 +115,19 @@ class BasicSettings(
     System.getenv("SONATYPE_PASSWORD")
   )
 
+  val gitlabHost             = "gitlab.com"
+  val gitlabRegistryEndpoint = s"https://${gitlabHost}/api/v4/projects/3748812/packages/maven"
+  val gitlabCredentials = Credentials(
+    "GitLab Packages Registry",
+    gitlabHost,
+    "gitlab-ci-token",
+    System.getenv().get("CI_JOB_TOKEN")
+  )
+
   lazy val publishSettings = Seq(
-    publishTo := { if (isSnapshot.value) Some("central-snapshots" at centralSnapshots) else localStaging.value },
+    publishTo := { if (isSnapshot.value) Some("GitLab" at gitlabRegistryEndpoint) else localStaging.value },
     publishMavenStyle := true,
-    credentials += sonatypeCentralCredentials,
+    credentials ++= Seq(sonatypeCentralCredentials, gitlabCredentials),
     pgpPassphrase := Option(System.getenv().get("PGP_PASSPHRASE")).map(_.toCharArray),
     Global / useGpg := false
   )
