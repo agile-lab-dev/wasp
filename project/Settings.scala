@@ -1,6 +1,6 @@
 import com.jsuereth.sbtpgp.PgpKeys.*
+import sbt.*
 import sbt.Keys.*
-import sbt.{ScalaVersion as _, *}
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 
@@ -106,14 +106,28 @@ class BasicSettings(
       "-Xfatal-warnings"
     )
   )
+  val centralHost      = "central.sonatype.com"
+  val centralSnapshots = s"https://${centralHost}/repository/maven-snapshots/"
+  val sonatypeCentralCredentials = Credentials(
+    "Sonatype Nexus Repository Manager",
+    centralHost,
+    System.getenv("SONATYPE_USER"),
+    System.getenv("SONATYPE_PASSWORD")
+  )
 
   val gitlabHost             = "gitlab.com"
   val gitlabRegistryEndpoint = s"https://${gitlabHost}/api/v4/projects/3748812/packages/maven"
+  val gitlabCredentials = Credentials(
+    "GitLab Packages Registry",
+    gitlabHost,
+    "gitlab-ci-token",
+    System.getenv().get("CI_JOB_TOKEN")
+  )
 
   lazy val publishSettings = Seq(
-    publishTo := Some("GitLab" at gitlabRegistryEndpoint),
+    publishTo := { if (isSnapshot.value) Some("GitLab" at gitlabRegistryEndpoint) else localStaging.value },
     publishMavenStyle := true,
-    credentials += gitlabCredentials,
+    credentials ++= Seq(sonatypeCentralCredentials, gitlabCredentials),
     pgpPassphrase := Option(System.getenv().get("PGP_PASSPHRASE")).map(_.toCharArray),
     Global / useGpg := false
   )
@@ -145,13 +159,6 @@ class BasicSettings(
   lazy val disableParallelTests: Seq[Def.Setting[Boolean]] = Seq(
     (Test / parallelExecution) := false,
     (IntegrationTest / parallelExecution) := false
-  )
-
-  val gitlabCredentials = Credentials(
-    "GitLab Packages Registry",
-    gitlabHost,
-    "gitlab-ci-token",
-    System.getenv().get("CI_JOB_TOKEN")
   )
 
   /** sbt-buildinfo action to get current git commit */

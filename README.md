@@ -9,23 +9,32 @@
 
 ## Install
 
-Wasp artifacts are temporarily published to a private GitLab package registry (we will go back to sonatype and maven central as soon as sbt-sonatype is updated to work with sonatype central).
-To download gitlab dependencies you need a personal access token or a [project access token](https://docs.gitlab.com/user/project/settings/project_access_tokens/#create-a-project-access-token) with `read_api` scope and role `Developer`, then configure it to sbt as follows:
+Wasp final releases are published to maven central through sonatype. 
+Snapshot releases are published to a private Gitlab Registry:
+
+```scala
+libraryDependencies += "it.agilelab" %% "wasp-consumers-spark" % "3.0.1"
+```
+
+or (for snapshots)
 
 ```scala
 val gitlabHost             = "gitlab.com"
 val gitlabRegistryEndpoint = s"https://${gitlabHost}/api/v4/projects/3748812/packages/maven"
 
-resolvers += "gitlab" at gitlabRegistryEndpoint 
-credentials += Credentials(
-    "GitLab Packages Registry",
-    gitlabHost,
-    "<token name>",
-    "<token>"
-  )
-```
+ThisBuild / resolvers += "gitlab" at gitlabRegistryEndpoint
+ThisBuild / credentials += Credentials(
+  "GitLab Packages Registry",
+  gitlabHost,
+  "<token name>",
+  "<token>"
+)
 
-To get a token, open a [github issue](https://github.com/agile-lab-dev/wasp/issues/new).
+libraryDependencies += "it.agilelab" %% "wasp-consumers-spark" % "3.1.0-SNAPSHOT"
+```
+To download Wasp snapshot releases you need a personal access token or a project access token with read_api scope and role Developer to GitLab Wasp project. 
+
+**To get a token, open a [github issue](https://github.com/agile-lab-dev/wasp/issues/new).**
 
 ## Table of contents
 
