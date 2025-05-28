@@ -9,8 +9,8 @@
 
 ## Install
 
-Wasp final releases are published to maven central through sonatype. 
-Snapshot releases are published to a private Gitlab Registry:
+Wasp final releases are published to maven central through sonatype, snapshot releases are published to sonatype maven-snapshots. 
+
 
 ```scala
 libraryDependencies += "it.agilelab" %% "wasp-consumers-spark" % "3.0.1"
@@ -19,17 +19,7 @@ libraryDependencies += "it.agilelab" %% "wasp-consumers-spark" % "3.0.1"
 or (for snapshots)
 
 ```scala
-val gitlabHost             = "gitlab.com"
-val gitlabRegistryEndpoint = s"https://${gitlabHost}/api/v4/projects/3748812/packages/maven"
-
-ThisBuild / resolvers += "gitlab" at gitlabRegistryEndpoint
-ThisBuild / credentials += Credentials(
-  "GitLab Packages Registry",
-  gitlabHost,
-  "<token name>",
-  "<token>"
-)
-
+ThisBuild / resolvers += "Sonatype Central Snapshots" at "https://central.sonatype.com/repository/maven-snapshots"
 libraryDependencies += "it.agilelab" %% "wasp-consumers-spark" % "3.1.0-SNAPSHOT"
 ```
 To download Wasp snapshot releases you need a personal access token or a project access token with read_api scope and role Developer to GitLab Wasp project. 
