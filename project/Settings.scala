@@ -115,19 +115,10 @@ class BasicSettings(
     System.getenv("SONATYPE_PASSWORD")
   )
 
-  val gitlabHost             = "gitlab.com"
-  val gitlabRegistryEndpoint = s"https://${gitlabHost}/api/v4/projects/3748812/packages/maven"
-  val gitlabCredentials = Credentials(
-    "GitLab Packages Registry",
-    gitlabHost,
-    "gitlab-ci-token",
-    System.getenv().get("CI_JOB_TOKEN")
-  )
-
   lazy val publishSettings = Seq(
-    publishTo := { if (isSnapshot.value) Some("GitLab" at gitlabRegistryEndpoint) else localStaging.value },
+    publishTo := { if (isSnapshot.value) Some("central-snapshots" at centralSnapshots) else localStaging.value },
     publishMavenStyle := true,
-    credentials ++= Seq(sonatypeCentralCredentials, gitlabCredentials),
+    credentials ++= Seq(sonatypeCentralCredentials),
     pgpPassphrase := Option(System.getenv().get("PGP_PASSPHRASE")).map(_.toCharArray),
     Global / useGpg := false
   )
