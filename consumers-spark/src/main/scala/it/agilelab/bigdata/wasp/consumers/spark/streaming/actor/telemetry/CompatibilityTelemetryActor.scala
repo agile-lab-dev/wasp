@@ -6,8 +6,6 @@ import org.json4s.native.JsonMethods._
 import org.json4s.{DefaultFormats, Extraction}
 import spray.json._
 
-
-
 trait CompatibilityTelemetryActor {
   self: TelemetryActor =>
   protected def toMessage(message: Any): String = {

@@ -3,8 +3,8 @@ package it.agilelab.bigdata.wasp.whitelabel.models.test
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.models.StrategyModel
 
-/**
-  * @author Nicolò Bidotti
+/** @author
+  *   Nicolò Bidotti
   */
 object TestStrategies {
   lazy val testKafkaHeaders = StrategyModel(
@@ -19,12 +19,14 @@ object TestStrategies {
 
   lazy val testKafkaMultitopicWriteJson = StrategyModel(
     className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestKafkaMultitopicWrite",
-    configuration = Some(ConfigFactory.empty().withValue("format", ConfigValueFactory.fromAnyRef("json")).root().render())
+    configuration =
+      Some(ConfigFactory.empty().withValue("format", ConfigValueFactory.fromAnyRef("json")).root().render())
   )
 
   lazy val testKafkaMultitopicWriteAvro = StrategyModel(
     className = "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestKafkaMultitopicWrite",
-    configuration = Some(ConfigFactory.empty().withValue("format", ConfigValueFactory.fromAnyRef("avro")).root().render())
+    configuration =
+      Some(ConfigFactory.empty().withValue("format", ConfigValueFactory.fromAnyRef("avro")).root().render())
   )
 
   lazy val testKafkaPlaintext = StrategyModel(

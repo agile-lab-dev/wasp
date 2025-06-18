@@ -22,14 +22,14 @@ object HttpWriter {
 }
 
 class HttpWriter(
-                  headersFieldName: Option[String],
-                  url: String,
-                  mediaType: String,
-                  method: String,
-                  compressionStr: String,
-                  logBody: Boolean,
-                  bodyColumnName: String
-                ) extends ForeachWriter[Row] {
+    headersFieldName: Option[String],
+    url: String,
+    mediaType: String,
+    method: String,
+    compressionStr: String,
+    logBody: Boolean,
+    bodyColumnName: String
+) extends ForeachWriter[Row] {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -42,14 +42,15 @@ class HttpWriter(
     true
   }
 
-  /**
-    * @param value is a Row with at minimun one column: bodyColumnName that is an Array[Byte] representing the body of
-    *              the request already compressed in the format stated by httpModel.compression.
-    *              If httpModel.headersFieldName is not None, then it is expected a column of type Map[String, String]
-    *              named as headersFieldName.
-    *              The only compression types supported are "identity" and "gzip".
-    * @throws IllegalArgumentException if set compression type is not supported
-    * @throws RuntimeException if response code is not 2xx
+  /** @param value
+    *   is a Row with at minimun one column: bodyColumnName that is an Array[Byte] representing the body of the request
+    *   already compressed in the format stated by httpModel.compression. If httpModel.headersFieldName is not None,
+    *   then it is expected a column of type Map[String, String] named as headersFieldName. The only compression types
+    *   supported are "identity" and "gzip".
+    * @throws IllegalArgumentException
+    *   if set compression type is not supported
+    * @throws RuntimeException
+    *   if response code is not 2xx
     */
   override def process(value: Row): Unit = {
 
@@ -61,7 +62,7 @@ class HttpWriter(
 
     header.foreach(requestBuilder.headers)
 
-    val byteArray = value.getAs[Array[Byte]](bodyColumnName)
+    val byteArray   = value.getAs[Array[Byte]](bodyColumnName)
     val requestBody = RequestBody.create(MediaType.parse(mediaType), byteArray)
     logB(s"requestBody: ${new String(byteArray, StandardCharsets.UTF_8)}")
 
@@ -80,7 +81,7 @@ class HttpWriter(
     logB(s"request: $request")
 
     val response: Response = okHttpClient.newCall(request).execute()
-    val responseBody       = if (logBody) {
+    val responseBody = if (logBody) {
       using(response.body()) { b =>
         Some(b.string())
       }
@@ -93,7 +94,7 @@ class HttpWriter(
       responseBody match {
         case Some(b) =>
           throw new RuntimeException(s"Error during http call: ${response.toString}, ResponseBody{${b}}")
-        case None    => throw new RuntimeException(s"Error during http call: ${response.toString}")
+        case None => throw new RuntimeException(s"Error during http call: ${response.toString}")
       }
     }
   }

@@ -15,7 +15,6 @@ import org.xerial.snappy.SnappyOutputStream
 
 import scala.util.Random
 
-
 class CompressExpressionSpec extends FunSuite with SparkSuite {
   val colName = "value"
   def testProto(codec: String, r: Random, spark: SparkSession): Assertion = {
@@ -67,14 +66,14 @@ class CompressExpressionSpec extends FunSuite with SparkSuite {
 
   def compress(codec: String, data: Array[Byte]): Array[Byte] =
     codec match {
-      case "gzip"    =>
+      case "gzip" =>
         val bos = new ByteArrayOutputStream()
         val gos = new GZIPOutputStream(bos)
         gos.write(data)
         gos.flush()
         gos.close()
         bos.toByteArray
-      case "snappy"  =>
+      case "snappy" =>
         val bos = new ByteArrayOutputStream()
         val gos = new SnappyOutputStream(bos)
         gos.write(data)
@@ -88,7 +87,7 @@ class CompressExpressionSpec extends FunSuite with SparkSuite {
         gos.flush()
         gos.close()
         bos.toByteArray
-      case "bz2"     =>
+      case "bz2" =>
         val bos = new ByteArrayOutputStream()
         val gos = new BZip2CompressorOutputStream(bos)
         gos.write(data)
@@ -98,8 +97,8 @@ class CompressExpressionSpec extends FunSuite with SparkSuite {
       case "default" =>
         val codec = new DefaultCodec()
         codec.setConf(spark.sparkContext.hadoopConfiguration)
-        val bos   = new ByteArrayOutputStream()
-        val gos   = codec.createOutputStream(bos)
+        val bos = new ByteArrayOutputStream()
+        val gos = codec.createOutputStream(bos)
         gos.write(data)
         gos.flush()
         gos.close()

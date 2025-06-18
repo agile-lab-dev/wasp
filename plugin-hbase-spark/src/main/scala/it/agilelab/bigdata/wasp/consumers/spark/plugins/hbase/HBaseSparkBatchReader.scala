@@ -20,7 +20,7 @@ class HBaseSparkBatchReader(keyValueModel: KeyValueModel) extends SparkBatchRead
     val options: Map[String, String] = keyValueModel.getOptionsMap() ++
       Seq(
         HBaseTableCatalog.tableCatalog -> keyValueModel.tableCatalog,
-        //TODO fix me
+        // TODO fix me
         KeyValueModel.metadataAvroSchemaKey -> "",
         HBaseTableCatalog.newTable          -> "4"
       )

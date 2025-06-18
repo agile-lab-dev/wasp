@@ -6,9 +6,10 @@ import scala.collection.JavaConverters._
 
 import java.util.Properties
 
-object CompatibilityTelemetryPluginProducer{
-  def getCacheBuilder(load: CacheLoader[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]])
-  : LoadingCache[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]] =
+object CompatibilityTelemetryPluginProducer {
+  def getCacheBuilder(
+      load: CacheLoader[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]]
+  ): LoadingCache[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]] =
     CacheBuilder.newBuilder().build(load)
 
   def load(): CacheLoader[TelemetryMetadataProducerConfig, KafkaProducer[Array[Byte], Array[Byte]]] =
@@ -18,9 +19,11 @@ object CompatibilityTelemetryPluginProducer{
 
         val telemetryConfig = config.telemetry
 
-        val connectionString = kafkaConfig.connections.map {
-          conn => s"${conn.host}:${conn.port}"
-        }.mkString(",")
+        val connectionString = kafkaConfig.connections
+          .map { conn =>
+            s"${conn.host}:${conn.port}"
+          }
+          .mkString(",")
 
         val props = new Properties()
         props.put("bootstrap.servers", connectionString)
@@ -33,8 +36,8 @@ object CompatibilityTelemetryPluginProducer{
 
         val resultingConf = merged.filterNot(x => notOverridableKeys.contains(x._1))
 
-        resultingConf.foreach {
-          case (key, value) => props.put(key, value)
+        resultingConf.foreach { case (key, value) =>
+          props.put(key, value)
         }
 
         new KafkaProducer[Array[Byte], Array[Byte]](props)

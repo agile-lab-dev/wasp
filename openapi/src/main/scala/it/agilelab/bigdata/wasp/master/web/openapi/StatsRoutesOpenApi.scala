@@ -47,7 +47,8 @@ trait StatsRoutesOpenApiDefinition extends StatsOpenApiComponentSupport with Ang
               .in("query")
               .required(true)
               .schema(ToOpenApiSchema[Int].schema(ctx))
-          ).responses(
+          )
+          .responses(
             new ApiResponses()
               .addApiResponse(
                 "200",

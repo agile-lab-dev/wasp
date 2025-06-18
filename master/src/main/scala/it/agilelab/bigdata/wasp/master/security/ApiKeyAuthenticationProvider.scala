@@ -16,8 +16,7 @@ import it.agilelab.bigdata.wasp.master.security.common.{AuthenticationProvider, 
 
 import scala.concurrent.Future
 
-/** API key implementation of [[AuthenticationProvider]]
-  * Extracts credential value from query parameters of request
+/** API key implementation of [[AuthenticationProvider]] Extracts credential value from query parameters of request
   */
 trait ApiKeyAuthenticationProvider extends AuthenticationProvider with SecurityUtils {
   self: CredentialsVerifier =>

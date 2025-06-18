@@ -1,8 +1,17 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl
 
 import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
-import it.agilelab.bigdata.wasp.consumers.spark.strategies.{EnrichmentStrategy, EventIndexingStrategy, FreeCodeStrategy, ReaderKey, Strategy}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
+import it.agilelab.bigdata.wasp.consumers.spark.strategies.{
+  EnrichmentStrategy,
+  EventIndexingStrategy,
+  FreeCodeStrategy,
+  ReaderKey,
+  Strategy
+}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{
+  StaticReaderFactory,
+  StreamingReaderFactory
+}
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import it.agilelab.bigdata.wasp.models.configuration.{RestEnrichmentConfigModel, RestEnrichmentSource}
 import it.agilelab.bigdata.wasp.models._
@@ -37,7 +46,7 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSuite {
     dashboard = None
   )
 
-  "this" should "not create a strategy" in { 
+  "this" should "not create a strategy" in {
     val aSM         = new ActivationStepsMock(spark)
     val etl         = StructuredStreamingETLModel("name", "dafault", null, List.empty, null, List.empty, None, None)
     val strategyTry = aSM.createStrategy(etl, defaultPipegraph)
@@ -129,34 +138,36 @@ class ActivationStepsTest extends FlatSpec with Matchers with SparkSuite {
         )
       ),
       dashboard = None,
-      enrichmentSources =
-        RestEnrichmentConfigModel(
-          Map.apply("httpExample" ->
-            RestEnrichmentSource("http",
+      enrichmentSources = RestEnrichmentConfigModel(
+        Map.apply(
+          "httpExample" ->
+            RestEnrichmentSource(
+              "http",
               Map.apply(
                 "method" -> "get",
-                "url" -> s"http://localhost:8080/$${author}-v1/{generic}/v2/$${api_test}/123?author=pippo"
+                "url"    -> s"http://localhost:8080/$${author}-v1/{generic}/v2/$${api_test}/123?author=pippo"
               )
             ),
-            "msExample" ->
-              RestEnrichmentSource("it.agilelab.bigdata.wasp.consumers.spark.http.CustomEnricher",
-                Map.apply(
-                  "msName" -> "SampleMs"
-                )
+          "msExample" ->
+            RestEnrichmentSource(
+              "it.agilelab.bigdata.wasp.consumers.spark.http.CustomEnricher",
+              Map.apply(
+                "msName" -> "SampleMs"
               )
-          )
+            )
         )
+      )
     )
 
   "this" should "create a correct CustomEnrichmentStrategy" in {
-    val aSM         = new ActivationStepsMock(spark)
+    val aSM = new ActivationStepsMock(spark)
     val strategyModel =
       StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.http.etl.CustomEnrichmentStrategy", None)
     val etl =
       StructuredStreamingETLModel("name", "dafault", null, List.empty, null, List.empty, Some(strategyModel), None)
 
     val strategyTry = aSM.createStrategy(etl, enrichmentPipegraph)
-    val config = strategyTry.get.get.asInstanceOf[EnrichmentStrategy].enricherConfig
+    val config      = strategyTry.get.get.asInstanceOf[EnrichmentStrategy].enricherConfig
     config shouldBe enrichmentPipegraph.enrichmentSources
   }
 

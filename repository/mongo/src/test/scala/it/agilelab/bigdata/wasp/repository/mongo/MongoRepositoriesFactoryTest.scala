@@ -9,4 +9,3 @@ class MongoRepositoriesFactoryTest extends FlatSpec with Matchers {
     RepositoriesFactory.service.isInstanceOf[MongoRepositoriesFactory] shouldBe true
   }
 }
-

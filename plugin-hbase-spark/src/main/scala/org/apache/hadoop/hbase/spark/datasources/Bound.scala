@@ -19,12 +19,13 @@ package org.apache.hadoop.hbase.spark.datasources
 
 import org.apache.hadoop.classification.InterfaceAudience
 
-/**
- * The Bound represent the boudary for the scan
- *
- * @param b The byte array of the bound
- * @param inc inclusive or not.
- */
+/** The Bound represent the boudary for the scan
+  *
+  * @param b
+  *   The byte array of the bound
+  * @param inc
+  *   inclusive or not.
+  */
 @InterfaceAudience.Private
 case class Bound(b: Array[Byte], inc: Boolean)
 // The non-overlapping ranges we need to scan, if lower is equal to upper, it is a get request
@@ -35,11 +36,14 @@ case class Range(lower: Option[Bound], upper: Option[Bound])
 @InterfaceAudience.Private
 object Range {
   def apply(region: HBaseRegion): Range = {
-    Range(region.start.map(Bound(_, true)), if (region.end.get.size == 0) {
-      None
-    } else {
-      region.end.map((Bound(_, false)))
-    })
+    Range(
+      region.start.map(Bound(_, true)),
+      if (region.end.get.size == 0) {
+        None
+      } else {
+        region.end.map((Bound(_, false)))
+      }
+    )
   }
 }
 
@@ -49,41 +53,53 @@ object Ranges {
   // 1. r.lower.inc is true, and r.upper.inc is false
   // 2. for each range in rs, its upper.inc is false
   def and(r: Range, rs: Seq[Range]): Seq[Range] = {
-    rs.flatMap{ s =>
-      val lower = s.lower.map { x =>
-        // the scan has lower bound
-        r.lower.map { y =>
-          // the region has lower bound
-          if (ord.compare(x.b, y.b) < 0) {
-            // scan lower bound is smaller than region server lower bound
-            Some(y)
-          } else {
-            // scan low bound is greater or equal to region server lower bound
-            Some(x)
-          }
-        }.getOrElse(Some(x))
-      }.getOrElse(r.lower)
+    rs.flatMap { s =>
+      val lower = s.lower
+        .map { x =>
+          // the scan has lower bound
+          r.lower
+            .map { y =>
+              // the region has lower bound
+              if (ord.compare(x.b, y.b) < 0) {
+                // scan lower bound is smaller than region server lower bound
+                Some(y)
+              } else {
+                // scan low bound is greater or equal to region server lower bound
+                Some(x)
+              }
+            }
+            .getOrElse(Some(x))
+        }
+        .getOrElse(r.lower)
 
-      val upper =  s.upper.map { x =>
-        // the scan has upper bound
-        r.upper.map { y =>
-          // the region has upper bound
-          if (ord.compare(x.b, y.b) >= 0) {
-            // scan upper bound is larger than server upper bound
-            // but region server scan stop is exclusive. It is OK here.
-            Some(y)
-          } else {
-            // scan upper bound is less or equal to region server upper bound
-            Some(x)
-          }
-        }.getOrElse(Some(x))
-      }.getOrElse(r.upper)
+      val upper = s.upper
+        .map { x =>
+          // the scan has upper bound
+          r.upper
+            .map { y =>
+              // the region has upper bound
+              if (ord.compare(x.b, y.b) >= 0) {
+                // scan upper bound is larger than server upper bound
+                // but region server scan stop is exclusive. It is OK here.
+                Some(y)
+              } else {
+                // scan upper bound is less or equal to region server upper bound
+                Some(x)
+              }
+            }
+            .getOrElse(Some(x))
+        }
+        .getOrElse(r.upper)
 
-      val c = lower.map { case x =>
-        upper.map { case y =>
-          ord.compare(x.b, y.b)
-        }.getOrElse(-1)
-      }.getOrElse(-1)
+      val c = lower
+        .map { case x =>
+          upper
+            .map { case y =>
+              ord.compare(x.b, y.b)
+            }
+            .getOrElse(-1)
+        }
+        .getOrElse(-1)
       if (c < 0) {
         Some(Range(lower, upper))
       } else {
@@ -117,4 +133,3 @@ object Points {
     }
   }
 }
-

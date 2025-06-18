@@ -38,7 +38,7 @@ class NifiEditorService(nifiClient: NifiClient[Future])(implicit ec: ExecutionCo
       editorUrl      <- nifiClient.processGroups.editorUrl(processGroupId)
       _              <- nifiClient.processGroups.ports.input.create(processGroupId, "wasp-input", 700, 0)
       _              <- nifiClient.processGroups.ports.output.create(processGroupId, "wasp-output", 1000, 0)
-      _              <- nifiClient.processGroups.ports.output.create(processGroupId, "wasp-error", positionX = 1000, positionY = 100)
+      _ <- nifiClient.processGroups.ports.output.create(processGroupId, "wasp-error", positionX = 1000, positionY = 100)
     } yield (NifiStatelessInstanceModel(processGroupName, editorUrl, processGroupId))
   }
 
@@ -56,10 +56,10 @@ class NifiEditorService(nifiClient: NifiClient[Future])(implicit ec: ExecutionCo
     for {
       processGroup <- nifiClient.processGroups.exportProcessGroup(processGroupId)
       (_, flowContent) <- processGroup
-                           .findField(a => a._1 == "flowContents")
-                           .normalize(
-                             "flow contents not found"
-                           )
+                            .findField(a => a._1 == "flowContents")
+                            .normalize(
+                              "flow contents not found"
+                            )
       result: JObject <- coerceToJObjectOrError(flowContent)
       _               <- getErrorPort(result).normalize("No wasp-error port found")
     } yield (ProcessGroupResponse(processGroupId, result))

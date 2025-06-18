@@ -16,21 +16,20 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
-  * Base class for a WASP producer. A ProducerGuardian represents a producer and manages the lifecycle of the child
+/** Base class for a WASP producer. A ProducerGuardian represents a producer and manages the lifecycle of the child
   * ProducerActors that actually produce the data.
   */
-abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
-  extends Actor
+abstract class ProducerGuardian(env: { val producerBL: ProducerBL; val topicBL: TopicBL }, producerName: String)
+    extends Actor
     with Logging {
 
   val name: String
 
   // initialized in initialize()
-  var producer: ProducerModel = _
+  var producer: ProducerModel             = _
   var associatedTopic: Option[TopicModel] = _
-  var router_name: String = _
-  var kafka_router: ActorRef = _ // TODO: Careful with kafka router dynamic name
+  var router_name: String                 = _
+  var kafka_router: ActorRef              = _ // TODO: Careful with kafka router dynamic name
 
   val cluster = Cluster(context.system)
 
@@ -72,12 +71,12 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
   def stopChildActors(): Unit = {
 
-    //Stop all actors bound to this guardian and the guardian itself
+    // Stop all actors bound to this guardian and the guardian itself
     logger.info(s"Producer '$producerName': stopping actors bound to $self...")
 
     import scala.concurrent.duration._
     val timeoutDuration = generalTimeout.duration - 15.seconds
-    val globalStatus = Future.traverse(context.children)(gracefulStop(_, timeoutDuration))
+    val globalStatus    = Future.traverse(context.children)(gracefulStop(_, timeoutDuration))
 
     val senderTmp = sender()
     globalStatus map { res =>
@@ -111,10 +110,18 @@ abstract class ProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: T
 
         associatedTopic = topicOption
         logger.info(s"Producer '$producerName': topic found: $associatedTopic")
-        val result = ??[Boolean](WaspSystem.kafkaAdminActor(topicOption.get.clusterAlias), CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas))
+        val result = ??[Boolean](
+          WaspSystem.kafkaAdminActor(topicOption.get.clusterAlias),
+          CheckOrCreateTopic(topicOption.get.name, topicOption.get.partitions, topicOption.get.replicas)
+        )
         if (result) {
           router_name = s"kafka-ingestion-router-$name-${System.currentTimeMillis()}"
-          kafka_router = actorSystem.actorOf(BalancingPool(5).props(Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig.resolve(topicOption.get.clusterAlias)))), router_name)
+          kafka_router = actorSystem.actorOf(
+            BalancingPool(5).props(
+              Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig.resolve(topicOption.get.clusterAlias)))
+            ),
+            router_name
+          )
           context become initialized
           startChildActors()
 

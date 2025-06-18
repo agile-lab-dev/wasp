@@ -8,20 +8,23 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.{SerializableWritable, SparkContext}
 
 //scalastyle:off
-class HBaseContext(@transient val sc: SparkContext,
-                   @transient val config: Configuration,
-                   val tmpHdfsConfgFile: String = null) extends Serializable with Logging {
+class HBaseContext(
+    @transient val sc: SparkContext,
+    @transient val config: Configuration,
+    val tmpHdfsConfgFile: String = null
+) extends Serializable
+    with Logging {
 
   @transient var tmpHdfsConfiguration: Configuration = config
-  @transient var appliedCredentials = false
-  @transient val job = Job.getInstance(config)
+  @transient var appliedCredentials                  = false
+  @transient val job                                 = Job.getInstance(config)
 
   val broadcastedConf: Broadcast[SerializableWritable[Configuration]] = sc.broadcast(new SerializableWritable(config))
 
   LatestHBaseContextCache.latest = this
 
   if (tmpHdfsConfgFile != null && config != null) {
-    val fs = FileSystem.newInstance(config)
+    val fs      = FileSystem.newInstance(config)
     val tmpPath = new Path(tmpHdfsConfgFile)
     if (!fs.exists(tmpPath)) {
       val outputStream = fs.create(tmpPath)
@@ -36,7 +39,7 @@ class HBaseContext(@transient val sc: SparkContext,
 
     if (tmpHdfsConfiguration == null && tmpHdfsConfgFile != null) {
       // take conf from sc.hadoopConfiguration instead of SparkHadoopUtil.get.conf (Not accessible in spark3)
-      val fs = FileSystem.newInstance(sc.hadoopConfiguration)
+      val fs          = FileSystem.newInstance(sc.hadoopConfiguration)
       val inputStream = fs.open(new Path(tmpHdfsConfgFile))
       tmpHdfsConfiguration = new Configuration(false)
       tmpHdfsConfiguration.readFields(inputStream)
@@ -52,7 +55,6 @@ class HBaseContext(@transient val sc: SparkContext,
     }
     tmpHdfsConfiguration
   }
-
 
 }
 

@@ -9,8 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class TestStuckQueryStrategy extends Strategy {
 
-  /**
-    * Adds static headers to the first input DataFrame and returns the result.
+  /** Adds static headers to the first input DataFrame and returns the result.
     */
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
 

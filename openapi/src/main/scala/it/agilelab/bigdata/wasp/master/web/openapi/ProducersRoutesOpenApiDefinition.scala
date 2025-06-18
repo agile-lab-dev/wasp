@@ -12,19 +12,20 @@ trait ProducersRoutesOpenApiDefinition
 
   def producersRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/producers" -> getInsertUpdate(ctx),
-      "/producers/{producername}" -> delete(ctx),
-      "/producers/{producername}/stop" -> stop(ctx),
+      "/producers"                      -> getInsertUpdate(ctx),
+      "/producers/{producername}"       -> delete(ctx),
+      "/producers/{producername}/stop"  -> stop(ctx),
       "/producers/{producername}/start" -> start(ctx)
     )
   }
 
-
   private def delete(ctx: Context): PathItem =
     new PathItem()
       .delete(
-        new Operation().addTagsItem("producers")
-          .operationId("delete-producer").description("Deletes a producer")
+        new Operation()
+          .addTagsItem("producers")
+          .operationId("delete-producer")
+          .description("Deletes a producer")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
             new Parameter()
@@ -65,7 +66,8 @@ trait ProducersRoutesOpenApiDefinition
   private def getInsertUpdate(ctx: Context) = {
     new PathItem()
       .get(
-        new Operation().addTagsItem("producers")
+        new Operation()
+          .addTagsItem("producers")
           .operationId("get-producer")
           .description("Retrieves all producers")
           .addParametersItem(pretty(ctx))
@@ -91,7 +93,8 @@ trait ProducersRoutesOpenApiDefinition
           )
       )
       .post(
-        new Operation().addTagsItem("producers")
+        new Operation()
+          .addTagsItem("producers")
           .operationId("insert-producer")
           .description("Inserts a producer")
           .addParametersItem(pretty(ctx))
@@ -125,7 +128,8 @@ trait ProducersRoutesOpenApiDefinition
           )
       )
       .put(
-        new Operation().addTagsItem("producers")
+        new Operation()
+          .addTagsItem("producers")
           .description("Updates a new producer")
           .operationId("update-producer")
           .addParametersItem(pretty(ctx))
@@ -163,7 +167,8 @@ trait ProducersRoutesOpenApiDefinition
   private def start(ctx: Context) = {
     new PathItem()
       .post(
-        new Operation().addTagsItem("producers")
+        new Operation()
+          .addTagsItem("producers")
           .operationId("start-producer")
           .description("Start a producer")
           .addParametersItem(pretty(ctx))
@@ -198,7 +203,8 @@ trait ProducersRoutesOpenApiDefinition
   private def stop(ctx: Context) = {
     new PathItem()
       .post(
-        new Operation().addTagsItem("producers")
+        new Operation()
+          .addTagsItem("producers")
           .operationId("stop-producer")
           .description("Stop a producerj")
           .addParametersItem(pretty(ctx))
@@ -229,6 +235,5 @@ trait ProducersRoutesOpenApiDefinition
           )
       )
   }
-
 
 }

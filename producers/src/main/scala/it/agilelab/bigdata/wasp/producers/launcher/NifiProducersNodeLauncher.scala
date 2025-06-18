@@ -4,10 +4,10 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.producers.NifiProducerModel
 import org.apache.commons.cli.CommandLine
 
-/**
-  * Launcher for the NifiProducer.
+/** Launcher for the NifiProducer.
   *
-  * @author Alessandro Marino
+  * @author
+  *   Alessandro Marino
   */
 
 object NifiProducersNodeLauncher extends ProducersNodeLauncherTrait {

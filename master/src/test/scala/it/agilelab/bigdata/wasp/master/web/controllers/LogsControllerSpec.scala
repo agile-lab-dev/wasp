@@ -45,11 +45,13 @@ class MockLogsService extends LogsService {
     )
   )
 
-  override def logs(search: String,
-                    startTimestamp: Instant,
-                    endTimestamp: Instant,
-                    page: Int,
-                    size: Int): Future[Logs] = {
+  override def logs(
+      search: String,
+      startTimestamp: Instant,
+      endTimestamp: Instant,
+      page: Int,
+      size: Int
+  ): Future[Logs] = {
 
     val result = data
       .filter(x => x.message.contains(search))
@@ -63,18 +65,15 @@ class MockLogsService extends LogsService {
   }
 }
 
-class LogsControllerSpec
-    extends FlatSpec
-    with ScalatestRouteTest
-    with Matchers
-    with JsonSupport {
-  implicit def angularResponse[T: JsonFormat]
-    : RootJsonFormat[AngularResponse[T]] = jsonFormat2(AngularResponse.apply[T])
+class LogsControllerSpec extends FlatSpec with ScalatestRouteTest with Matchers with JsonSupport {
+  implicit def angularResponse[T: JsonFormat]: RootJsonFormat[AngularResponse[T]] = jsonFormat2(
+    AngularResponse.apply[T]
+  )
 
   implicit val timeout: RouteTestTimeout = RouteTestTimeout(10.seconds.dilated)
 
   it should "Respond to get requests" in {
-    val service = new MockLogsService
+    val service    = new MockLogsService
     val controller = new LogsController(service)
 
     Get(

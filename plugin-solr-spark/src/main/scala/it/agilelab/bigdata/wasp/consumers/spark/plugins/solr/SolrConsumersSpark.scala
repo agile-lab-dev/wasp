@@ -26,12 +26,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
-
-/**
-  * Created by Agile Lab s.r.l. on 05/09/2017.
+/** Created by Agile Lab s.r.l. on 05/09/2017.
   */
 class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
-  var indexBL: IndexBL = _
+  var indexBL: IndexBL           = _
   var solrAdminActor_ : ActorRef = _
 
   override def datastoreProduct: DatastoreProduct = SolrProduct
@@ -50,17 +48,24 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): SolrSparkStructuredStreamingWriter = {
-    logger.info(s"Initialize the solr spark structured streaming writer with this writer model endpointName '${writerModel.datastoreModelName}'")
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): SolrSparkStructuredStreamingWriter = {
+    logger.info(
+      s"Initialize the solr spark structured streaming writer with this writer model endpointName '${writerModel.datastoreModelName}'"
+    )
     new SolrSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, solrAdminActor_)
   }
-  
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
+
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
@@ -73,18 +78,22 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     val indexOpt = indexBL.getByName(readerModel.name)
     if (indexOpt.isDefined) {
-      val index = indexOpt.get
+      val index     = indexOpt.get
       val indexName = index.eventuallyTimedName
 
       logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
-      if (??[Boolean](
+      if (
+        ??[Boolean](
           solrAdminActor_,
           CheckOrCreateCollection(
             indexName,
             index.getJsonSchema,
             index.numShards.getOrElse(1),
-            index.replicationFactor.getOrElse(1)))) {
+            index.replicationFactor.getOrElse(1)
+          )
+        )
+      ) {
 
         new SolrSparkBatchReader(index)
 
@@ -103,7 +112,7 @@ class SolrConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   private def startupSolr(servicesTimeoutMillis: Long)(implicit timeout: Timeout): Unit = {
     logger.info(s"Trying to connect with Solr...")
 
-    //TODO if solrConfig are not initialized skip the initialization
+    // TODO if solrConfig are not initialized skip the initialization
     val solrResult = solrAdminActor_ ? Initialization(ConfigManager.getSolrConfig)
 
     val solrConnectionResult = Await.ready(solrResult, Duration(servicesTimeoutMillis, TimeUnit.MILLISECONDS))

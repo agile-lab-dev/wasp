@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.models
 
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KeyValueProduct
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 
 import scala.util.Try
 
@@ -59,34 +59,42 @@ object KeyValueModel {
     import spray.json._
     for {
       jsonMap <- Try(tableCatalog.parseJson).map(_.asJsObject.fields)
-      tableMap <- Try(jsonMap.getOrElse("table", throw DeserializationException("Object 'table' not found"))).map(_.asJsObject.fields)
-      namespace <- Try(tableMap.getOrElse("namespace", throw DeserializationException("Object 'table.namespace' not found"))).map {
-        case JsString(v) => v
-        case _ => throw DeserializationException("Value 'table.namespace' is not a string")
-      }
-      tableName <- Try(tableMap.getOrElse("name", throw DeserializationException("Object 'table.name' not found"))).map {
-        case JsString(v) => v
-        case _ => throw DeserializationException("Value 'table.name' is not a string")
-      }
+      tableMap <- Try(jsonMap.getOrElse("table", throw DeserializationException("Object 'table' not found")))
+                    .map(_.asJsObject.fields)
+      namespace <-
+        Try(tableMap.getOrElse("namespace", throw DeserializationException("Object 'table.namespace' not found"))).map {
+          case JsString(v) => v
+          case _           => throw DeserializationException("Value 'table.namespace' is not a string")
+        }
+      tableName <-
+        Try(tableMap.getOrElse("name", throw DeserializationException("Object 'table.name' not found"))).map {
+          case JsString(v) => v
+          case _           => throw DeserializationException("Value 'table.name' is not a string")
+        }
     } yield s"$namespace:$tableName"
   }
 
 }
 
-case class KeyValueModel(override val name: String,
-                         tableCatalog: String,
-                         dataFrameSchema: Option[String],
-                         options: Option[Seq[KeyValueOption]],
-                         useAvroSchemaManager: Boolean,
-                         avroSchemas: Option[Map[String, String]])
-  extends DatastoreModel {
+case class KeyValueModel(
+    override val name: String,
+    tableCatalog: String,
+    dataFrameSchema: Option[String],
+    options: Option[Seq[KeyValueOption]],
+    useAvroSchemaManager: Boolean,
+    avroSchemas: Option[Map[String, String]]
+) extends DatastoreModel {
 
   def getOptionsMap(): Map[String, String] = {
-    options.map(sOpts => {
-      sOpts.map(o => {
-        (o.key, o.value)
-      }).toMap
-    }).getOrElse(Map())
+    options
+      .map(sOpts => {
+        sOpts
+          .map(o => {
+            (o.key, o.value)
+          })
+          .toMap
+      })
+      .getOrElse(Map())
   }
 
   override def datastoreProduct: DatastoreProduct = KeyValueProduct

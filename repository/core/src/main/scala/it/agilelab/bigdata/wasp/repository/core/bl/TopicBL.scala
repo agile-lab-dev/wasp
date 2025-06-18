@@ -5,20 +5,19 @@ import it.agilelab.bigdata.wasp.models.{DatastoreModel, MultiTopicModel, TopicMo
 trait TopicBL {
 
   def getByName(name: String): Option[DatastoreModel]
-	
-	/**
-		* Gets a TopicModel by name; an exception is thrown if a MultiTopicModel or anything else is found instead.
-		*/
-	@throws[Exception]
-	def getTopicModelByName(name: String): Option[TopicModel] = {
-		getByName(name) map {
-			case topicModel: TopicModel => topicModel
-			case multiTopicModel: MultiTopicModel =>
-				throw new Exception(s"Found MultiTopicModel instead of TopicModel for name $name")
-		}
-	}
 
-  def getAll : Seq[DatastoreModel]
+  /** Gets a TopicModel by name; an exception is thrown if a MultiTopicModel or anything else is found instead.
+    */
+  @throws[Exception]
+  def getTopicModelByName(name: String): Option[TopicModel] = {
+    getByName(name) map {
+      case topicModel: TopicModel => topicModel
+      case multiTopicModel: MultiTopicModel =>
+        throw new Exception(s"Found MultiTopicModel instead of TopicModel for name $name")
+    }
+  }
+
+  def getAll: Seq[DatastoreModel]
 
   def persist(topicModel: DatastoreModel): Unit
 

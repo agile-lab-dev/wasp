@@ -1,14 +1,27 @@
 package it.agilelab.bigdata.wasp.core.eventengine.eventproducers
 
 import com.typesafe.config.ConfigFactory
-import it.agilelab.bigdata.wasp.core.eventengine.settings.{EventPipegraphSettings, EventPipegraphSettingsFactory, EventProducerETLSettings}
+import it.agilelab.bigdata.wasp.core.eventengine.settings.{
+  EventPipegraphSettings,
+  EventPipegraphSettingsFactory,
+  EventProducerETLSettings
+}
 import it.agilelab.bigdata.wasp.core.eventengine.{EventReaderModelFactory, EventTopicModelFactory}
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
-import it.agilelab.bigdata.wasp.models.{IndexModel, IndexModelBuilder, MultiTopicModel, PipegraphModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, TopicModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  IndexModel,
+  IndexModelBuilder,
+  MultiTopicModel,
+  PipegraphModel,
+  StrategyModel,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  TopicModel,
+  WriterModel
+}
 import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
-/**
-  * EventPipegraph is a System pipegraph which produces Event objects.
+/** EventPipegraph is a System pipegraph which produces Event objects.
   * An Event object is the result of some sort of trigger applied on an input data streaming source.
   *
   * In order to activate the event production, the user has to properly define the event-pipegraph configuration
@@ -44,68 +57,69 @@ import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
   * Update: EventPipegraphModel read a isSystem flag from configuration which declares whether or not the Pipegraph should
   * be automatically started when starting Wasp with the startSystemPipegraph option. The default value in case the isSystem
   * keyword is not present is false
-  *
   */
 
 object EventPipegraphModel {
 
-  private lazy val eventPipegraphSettings: EventPipegraphSettings = EventPipegraphSettingsFactory.create(ConfigFactory.load())
-  private lazy val isSystem: Boolean = eventPipegraphSettings.isSystem
+  private lazy val eventPipegraphSettings: EventPipegraphSettings =
+    EventPipegraphSettingsFactory.create(ConfigFactory.load())
+  private lazy val isSystem: Boolean                                  = eventPipegraphSettings.isSystem
   private lazy val eventEngineSettings: Seq[EventProducerETLSettings] = eventPipegraphSettings.eventStrategies
 
-  lazy val outputTopicModels: Seq[TopicModel] =  eventEngineSettings.map{ s =>
-     EventTopicModelFactory.create(s.writerModel)
+  lazy val outputTopicModels: Seq[TopicModel] = eventEngineSettings.map { s =>
+    EventTopicModelFactory.create(s.writerModel)
   }
 
   private lazy val eventETLModels =
-    eventEngineSettings.map(s => {
+    eventEngineSettings
+      .map(s => {
 
-      val outputTopicModel = EventTopicModelFactory.create(s.writerModel)
+        val outputTopicModel = EventTopicModelFactory.create(s.writerModel)
 
-      val etlModel = StructuredStreamingETLModel(
-        name = s.name, // Maybe streaming source here?
-        // Defines the endpoint and the source type
-        streamingInput = EventReaderModelFactory.create(s.readerModel),
-        staticInputs = List.empty,
-        // Defines the endpoint and the sink type
-        streamingOutput = WriterModel.kafkaWriter(s.writerModel.dataStoreModelName, outputTopicModel),
-        mlModels = List.empty,
-        // Defines what to do with the data retrieved from the source
-        strategy = Some(StrategyModel.create("it.agilelab.bigdata.wasp.consumers.spark.eventengine.EventStrategy", s.trigger)),
-        triggerIntervalMs = if(s.triggerIntervalMs.isDefined) s.triggerIntervalMs else eventPipegraphSettings.defaultTriggerIntervalMs
-      )
+        val etlModel = StructuredStreamingETLModel(
+          name = s.name, // Maybe streaming source here?
+          // Defines the endpoint and the source type
+          streamingInput = EventReaderModelFactory.create(s.readerModel),
+          staticInputs = List.empty,
+          // Defines the endpoint and the sink type
+          streamingOutput = WriterModel.kafkaWriter(s.writerModel.dataStoreModelName, outputTopicModel),
+          mlModels = List.empty,
+          // Defines what to do with the data retrieved from the source
+          strategy =
+            Some(StrategyModel.create("it.agilelab.bigdata.wasp.consumers.spark.eventengine.EventStrategy", s.trigger)),
+          triggerIntervalMs =
+            if (s.triggerIntervalMs.isDefined) s.triggerIntervalMs else eventPipegraphSettings.defaultTriggerIntervalMs
+        )
 
-
-      etlModel
-    }).toList
-
+        etlModel
+      })
+      .toList
 
   lazy val allEventTopicMultiTopicModel = {
     val topicsModelsNames = outputTopicModels.map(_.name).distinct
-    MultiTopicModel("event_topics", "sourceTopic", topicsModelsNames )
+    MultiTopicModel("event_topics", "sourceTopic", topicsModelsNames)
   }
 
   private lazy val storageETLModel =
-
-
     StructuredStreamingETLModel(
-        name = "IndexEventsToSolr", // Maybe streaming source here?
-        // Defines the endpoint and the source type
-        streamingInput = StreamingReaderModel.kafkaReaderMultitopic("ReadFromEventTopics", allEventTopicMultiTopicModel, None),
-        staticInputs = List.empty,
-        // Defines the endpoint and the sink type
-        streamingOutput = WriterModel.solrWriter("in.name.to.index", SolrEventIndex.apply()),
-        mlModels = List.empty,
-        // Defines what to do with the data retrieved from the source
-        strategy =Some( StrategyModel(
+      name = "IndexEventsToSolr", // Maybe streaming source here?
+      // Defines the endpoint and the source type
+      streamingInput =
+        StreamingReaderModel.kafkaReaderMultitopic("ReadFromEventTopics", allEventTopicMultiTopicModel, None),
+      staticInputs = List.empty,
+      // Defines the endpoint and the sink type
+      streamingOutput = WriterModel.solrWriter("in.name.to.index", SolrEventIndex.apply()),
+      mlModels = List.empty,
+      // Defines what to do with the data retrieved from the source
+      strategy = Some(
+        StrategyModel(
           className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.EventIndexingStrategy"
-        )),
-        triggerIntervalMs = eventPipegraphSettings.defaultTriggerIntervalMs
-      )
+        )
+      ),
+      triggerIntervalMs = eventPipegraphSettings.defaultTriggerIntervalMs
+    )
 
-
-
-  lazy val eventPipegraph = PipegraphModel (
+  lazy val eventPipegraph = PipegraphModel(
     name = "EventPipegraph",
     description = "This Pipegraph produces Events",
     owner = "user",
@@ -113,12 +127,12 @@ object EventPipegraphModel {
     creationTime = System.currentTimeMillis,
     structuredStreamingComponents = eventETLModels :+ storageETLModel,
     dashboard = None,
-    enrichmentSources = RestEnrichmentConfigModel(Map.empty))
+    enrichmentSources = RestEnrichmentConfigModel(Map.empty)
+  )
 
 }
 
-
-private[wasp] object SolrEventIndex{
+private[wasp] object SolrEventIndex {
 
   val index_name = "event_solr"
 

@@ -9,17 +9,17 @@ import org.apache.spark.sql.DataFrame
 import java.net.URI
 
 case class DeltaParallelWriter(
-  parallelWriteDetails: ParallelWrite,
-  entityAPI: ParallelWriteEntity,
-  entityDetails: CatalogCoordinates,
-  override val catalogService: DataCatalogService
+    parallelWriteDetails: ParallelWrite,
+    entityAPI: ParallelWriteEntity,
+    entityDetails: CatalogCoordinates,
+    override val catalogService: DataCatalogService
 ) extends DeltaParallelWriterTrait {
 
   override def performDeltaWrite(df: DataFrame, path: URI, partitioningColumns: Seq[String], batchId: Long): Unit =
     enforceSchema(df).write
       .mode(parallelWriteDetails.saveMode)
       .format("delta")
-      .option("optimizeWrite", "True")  // Enable Optimized Write
+      .option("optimizeWrite", "True") // Enable Optimized Write
       .partitionBy(partitioningColumns: _*)
       .save(path.toString)
 }

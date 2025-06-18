@@ -18,13 +18,11 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
   implicit val system           = context.system
   var task: Option[Cancellable] = None
 
-  /**
-    * Used when writing to topics with data type "json" or "avro"
+  /** Used when writing to topics with data type "json" or "avro"
     */
   def generateOutputJsonMessage(input: T): String
 
-  /**
-    * Used when writing to topics with data type "plaintext"
+  /** Used when writing to topics with data type "plaintext"
     */
   def generateOutputPlaintextMessage(input: T): String = {
     // TODO sorry for this default implementation, but we needed to add support without modifying existing producers :(
@@ -34,8 +32,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
     )
   }
 
-  /**
-    * Used when writing to topics with data type "binary"
+  /** Used when writing to topics with data type "binary"
     */
   def generateOutputBinaryMessage(input: T): Array[Byte] = {
     // TODO sorry for this default implementation, but we needed to add support without modifying existing producers :(
@@ -55,10 +52,10 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
     retrievePartitionKey.apply(value).getBytes(StandardCharsets.UTF_8)
   }
 
-  /**
-    * Defines a function to extract the key to be used to identify the landing partition in kafka topic,
-    * given a message of type T
-    * @return a function that extract the partition key as String from the T instance to be sent to kafka
+  /** Defines a function to extract the key to be used to identify the landing partition in kafka topic, given a message
+    * of type T
+    * @return
+    *   a function that extract the partition key as String from the T instance to be sent to kafka
     */
   def retrievePartitionKey: T => String
 
@@ -76,8 +73,7 @@ abstract class ProducerActor[T](val kafka_router: ActorRef, val topic: Option[To
     case StartMainTask => mainTask()
   }
 
-  /**
-    * Method to send to Kafka a specific message to be added to the raw topic and eventually to a custom topic.
+  /** Method to send to Kafka a specific message to be added to the raw topic and eventually to a custom topic.
     */
   def sendMessage(input: T) = {
     topic.foreach { p =>

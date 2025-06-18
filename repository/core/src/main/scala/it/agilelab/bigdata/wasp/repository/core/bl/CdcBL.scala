@@ -10,6 +10,6 @@ trait CdcBL {
 
   def upsert(cdcModel: CdcModel): Unit
 
-  def getAll() : Seq[CdcModel]
+  def getAll(): Seq[CdcModel]
 
 }

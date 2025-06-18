@@ -23,8 +23,8 @@ import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.hbase.util.Bytes
 
 @InterfaceAudience.Public
-class ByteArrayComparable(val bytes:Array[Byte], val offset:Int = 0, var length:Int = -1)
-  extends Comparable[ByteArrayComparable] {
+class ByteArrayComparable(val bytes: Array[Byte], val offset: Int = 0, var length: Int = -1)
+    extends Comparable[ByteArrayComparable] {
 
   if (length == -1) {
     length = bytes.length
@@ -38,7 +38,7 @@ class ByteArrayComparable(val bytes:Array[Byte], val offset:Int = 0, var length:
     Bytes.hashCode(bytes, offset, length)
   }
 
-  override def equals (obj: Any): Boolean = {
+  override def equals(obj: Any): Boolean = {
     obj match {
       case b: ByteArrayComparable =>
         Bytes.equals(bytes, offset, length, b.bytes, b.offset, b.length)

@@ -5,26 +5,25 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait BatchJobBLImplTest {
 
-  self : PostgresSuite =>
+  self: PostgresSuite =>
 
-  lazy val batchJobBL =  BatchJobBLImpl(pgDB)
-
+  lazy val batchJobBL = BatchJobBLImpl(pgDB)
 
   it should "test batchJobBL" in {
 
     batchJobBL.createTable()
 
-    val etl = BatchETLModel("name",List.empty,WriterModel.consoleWriter("test"),List.empty,None,"kafka")
-    val model1 = BatchJobModel("name","description","tester",true,10L,etl)
+    val etl    = BatchETLModel("name", List.empty, WriterModel.consoleWriter("test"), List.empty, None, "kafka")
+    val model1 = BatchJobModel("name", "description", "tester", true, 10L, etl)
     batchJobBL.insert(model1)
 
-    val model2 = BatchJobModel("name2","description2","tester",true,10L,etl)
+    val model2 = BatchJobModel("name2", "description2", "tester", true, 10L, etl)
     batchJobBL.insert(model2)
 
     val list = batchJobBL.getAll
 
     list.size shouldBe 2
-    list should contain theSameElementsAs Seq(model1,model2)
+    list should contain theSameElementsAs Seq(model1, model2)
 
     batchJobBL.getByName(model1.name).get shouldBe model1
     batchJobBL.getByName(model2.name).get shouldBe model2
@@ -36,25 +35,22 @@ trait BatchJobBLImplTest {
 
   }
 
-
   it should "test batchJobBL update" in {
 
     batchJobBL.createTable()
 
-    val etl = BatchETLModel("name",List.empty,WriterModel.consoleWriter("test"),List.empty,None,"kafka")
-    val model1 = BatchJobModel("nameUpdate","description","tester",true,10L,etl)
+    val etl    = BatchETLModel("name", List.empty, WriterModel.consoleWriter("test"), List.empty, None, "kafka")
+    val model1 = BatchJobModel("nameUpdate", "description", "tester", true, 10L, etl)
     batchJobBL.insert(model1)
 
     batchJobBL.getByName(model1.name).get shouldBe model1
 
-    val model2 = BatchJobModel("nameUpdate","description2","tester",true,10L,etl)
+    val model2 = BatchJobModel("nameUpdate", "description2", "tester", true, 10L, etl)
     batchJobBL.update(model2)
 
     batchJobBL.getByName(model1.name).get shouldBe model2
 
     batchJobBL.deleteByName(model1.name)
-
-
 
   }
 
@@ -62,22 +58,19 @@ trait BatchJobBLImplTest {
 
     batchJobBL.createTable()
 
-    val etl = BatchETLModel("name",List.empty,WriterModel.consoleWriter("test"),List.empty,None,"kafka")
-    val model1 = BatchJobModel("nameUpsert","description","tester",true,10L,etl)
+    val etl    = BatchETLModel("name", List.empty, WriterModel.consoleWriter("test"), List.empty, None, "kafka")
+    val model1 = BatchJobModel("nameUpsert", "description", "tester", true, 10L, etl)
     batchJobBL.upsert(model1)
 
     batchJobBL.getByName(model1.name).get shouldBe model1
 
-    val model2 = BatchJobModel("nameUpsert","description2","tester",true,10L,etl)
+    val model2 = BatchJobModel("nameUpsert", "description2", "tester", true, 10L, etl)
     batchJobBL.upsert(model2)
 
     batchJobBL.getByName(model1.name).get shouldBe model2
 
     batchJobBL.deleteByName(model1.name)
 
-
-
   }
-
 
 }

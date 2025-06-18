@@ -18,12 +18,15 @@ class KVSchemaBuilderTest extends FlatSpec with Matchers {
           ColumnFamilyBuilder
             .withName("m")
             .withCellQualifier(KVColumn.primitive((x: BigClass) => x.aString, "cq1"))
-            .build)
+            .build
+        )
         .withFamily(
           ColumnFamilyBuilder
             .withName("m")
             .withCellQualifier(KVColumn.primitive((x: BigClass) => x.aString, "cq2"))
-            .build).build
+            .build
+        )
+        .build
     }
   }
 

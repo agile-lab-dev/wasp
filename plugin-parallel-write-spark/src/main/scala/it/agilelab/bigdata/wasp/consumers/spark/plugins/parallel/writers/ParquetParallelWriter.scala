@@ -9,13 +9,18 @@ import org.apache.spark.sql.DataFrame
 import java.net.URI
 
 case class ParquetParallelWriter(
-  parallelWriteDetails: ParallelWrite,
-  entityAPI: ParallelWriteEntity,
-  entityDetails: CatalogCoordinates,
-  catalogService: DataCatalogService
+    parallelWriteDetails: ParallelWrite,
+    entityAPI: ParallelWriteEntity,
+    entityDetails: CatalogCoordinates,
+    catalogService: DataCatalogService
 ) extends ColdParallelWriter {
 
-  override protected def performColdWrite(df: DataFrame, s3path: URI, partitioningColumns: Seq[String], batchId: Long): Unit =
+  override protected def performColdWrite(
+      df: DataFrame,
+      s3path: URI,
+      partitioningColumns: Seq[String],
+      batchId: Long
+  ): Unit =
     enforceSchema(df).write
       .mode(parallelWriteDetails.saveMode)
       .format("parquet")

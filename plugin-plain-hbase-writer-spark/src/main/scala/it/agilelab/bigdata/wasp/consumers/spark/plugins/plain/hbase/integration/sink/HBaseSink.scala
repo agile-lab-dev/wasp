@@ -6,9 +6,9 @@ import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.streaming.Sink
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-class HBaseSink(sparkSession: SparkSession,
-                parameters: Map[String, String],
-                hBaseContext: HBaseContext) extends Sink with Logging {
+class HBaseSink(sparkSession: SparkSession, parameters: Map[String, String], hBaseContext: HBaseContext)
+    extends Sink
+    with Logging {
 
   @volatile private var latestBatchId = -1L
 
@@ -17,9 +17,9 @@ class HBaseSink(sparkSession: SparkSession,
       logInfo(s"Skipping already committed batch $batchId")
     } else {
 
-      val queryExecution = data.queryExecution
+      val queryExecution       = data.queryExecution
       val hBaseContextInternal = hBaseContext
-      val schema = data.schema
+      val schema               = data.schema
 
       logDebug(s"Start writing a new micro batch for schema $schema")
 

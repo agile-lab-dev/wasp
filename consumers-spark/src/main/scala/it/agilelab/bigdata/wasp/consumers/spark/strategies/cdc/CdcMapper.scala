@@ -3,12 +3,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc
 import it.agilelab.bigdata.wasp.models.GenericCdcMutationFields
 import org.apache.spark.sql.DataFrame
 
-/**
-  * trait used to correctly translate the format
-  * from the source format to the delta writer expected format.
-  * For a more in depth understanding of the destination writer
+/** trait used to correctly translate the format from the source format to the delta writer expected format. For a more
+  * in depth understanding of the destination writer
   *
-  * @see it.agilelab.bigdata.wasp.consumers.spark.plugins.cdc.DeltaLakeWriter
+  * @see
+  *   it.agilelab.bigdata.wasp.consumers.spark.plugins.cdc.DeltaLakeWriter
   */
 private[cdc] trait CdcMapper {
 
@@ -31,35 +30,32 @@ private[cdc] trait CdcMapper {
     val df = conversionToCdcFormat(dataFrame)
 
     df.select(
-        col(BEFORE).as(GenericCdcMutationFields.BEFORE_IMAGE),
-        col(AFTER).as(GenericCdcMutationFields.AFTER_IMAGE),
-        col(OPERATION).as(GenericCdcMutationFields.TYPE),
-        col(TIMESTAMP).as(GenericCdcMutationFields.TIMESTAMP),
-        col(COMMIT_ID).as(GenericCdcMutationFields.COMMIT_ID),
-        col(PRIMARY_KEY).as(GenericCdcMutationFields.PRIMARY_KEY)
+      col(BEFORE).as(GenericCdcMutationFields.BEFORE_IMAGE),
+      col(AFTER).as(GenericCdcMutationFields.AFTER_IMAGE),
+      col(OPERATION).as(GenericCdcMutationFields.TYPE),
+      col(TIMESTAMP).as(GenericCdcMutationFields.TIMESTAMP),
+      col(COMMIT_ID).as(GenericCdcMutationFields.COMMIT_ID),
+      col(PRIMARY_KEY).as(GenericCdcMutationFields.PRIMARY_KEY)
+    ).withColumn(
+      "value",
+      struct(
+        col(GenericCdcMutationFields.BEFORE_IMAGE),
+        col(GenericCdcMutationFields.AFTER_IMAGE),
+        col(GenericCdcMutationFields.TYPE),
+        col(GenericCdcMutationFields.TIMESTAMP),
+        col(GenericCdcMutationFields.COMMIT_ID)
       )
-      .withColumn(
-        "value",
-        struct(
-          col(GenericCdcMutationFields.BEFORE_IMAGE),
-          col(GenericCdcMutationFields.AFTER_IMAGE),
-          col(GenericCdcMutationFields.TYPE),
-          col(GenericCdcMutationFields.TIMESTAMP),
-          col(GenericCdcMutationFields.COMMIT_ID)
-        )
-      )
-      .select(
-        col("key"),
-        col("value")
-      )
+    ).select(
+      col("key"),
+      col("value")
+    )
   }
 
   protected def conversionToCdcFormat(dataFrame: DataFrame): DataFrame
 }
 
-/**
-  * Object used to identify and map the type of operations and the
-  * values used to represent the types of operation in the source mutation.
+/** Object used to identify and map the type of operations and the values used to represent the types of operation in
+  * the source mutation.
   */
 private[cdc] trait Operation {
   type OperationType = String

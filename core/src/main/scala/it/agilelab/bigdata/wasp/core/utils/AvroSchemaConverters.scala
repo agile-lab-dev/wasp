@@ -22,9 +22,7 @@ import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
 
-/**
-  * This object contains method that are used to convert sparkSQL schemas to avro schemas and vice
-  * versa.
+/** This object contains method that are used to convert sparkSQL schemas to avro schemas and vice versa.
   */
 object AvroSchemaConverters extends AvroSchemaConverters
 trait AvroSchemaConverters {
@@ -33,8 +31,7 @@ trait AvroSchemaConverters {
 
   case class SchemaType(dataType: DataType, nullable: Boolean)
 
-  /**
-    * This function takes an avro schema and returns a sql schema.
+  /** This function takes an avro schema and returns a sql schema.
     */
   def toSqlType(avroSchema: Schema): SchemaType = {
     avroSchema.getType match {
@@ -84,11 +81,10 @@ trait AvroSchemaConverters {
             case _ =>
               // Convert complex unions to struct types where field names are member0, member1, etc.
               // This is consistent with the behavior when converting between Avro and Parquet.
-              val fields = avroSchema.getTypes.asScala.zipWithIndex.map {
-                case (s, i) =>
-                  val schemaType = toSqlType(s)
-                  // All fields are nullable because only one of them is set at a time
-                  StructField(s"member$i", schemaType.dataType, nullable = true)
+              val fields = avroSchema.getTypes.asScala.zipWithIndex.map { case (s, i) =>
+                val schemaType = toSqlType(s)
+                // All fields are nullable because only one of them is set at a time
+                StructField(s"member$i", schemaType.dataType, nullable = true)
               }
 
               SchemaType(StructType(fields), nullable = false)
@@ -98,9 +94,8 @@ trait AvroSchemaConverters {
     }
   }
 
-  /**
-    * This function converts sparkSQL StructType into avro schema. This method uses two other
-    * converter methods in order to do the conversion.
+  /** This function converts sparkSQL StructType into avro schema. This method uses two other converter methods in order
+    * to do the conversion.
     */
   def convertStructToAvro[T](structType: StructType, schemaBuilder: RecordBuilder[T], recordNamespace: String): T = {
     val fieldsAssembler: FieldAssembler[T] = schemaBuilder.fields()
@@ -116,9 +111,8 @@ trait AvroSchemaConverters {
     fieldsAssembler.endRecord()
   }
 
-  /**
-    * This function is used to convert some sparkSQL type to avro type. Note that this function won't
-    * be used to construct fields of avro record (convertFieldTypeToAvro is used for that).
+  /** This function is used to convert some sparkSQL type to avro type. Note that this function won't be used to
+    * construct fields of avro record (convertFieldTypeToAvro is used for that).
     */
   def convertTypeToAvro[T](
       dataType: DataType,
@@ -157,10 +151,9 @@ trait AvroSchemaConverters {
     }
   }
 
-  /**
-    * This function is used to construct fields of the avro record, where schema of the field is
-    * specified by avro representation of dataType. Since builders for record fields are different
-    * from those for everything else, we have to use a separate method.
+  /** This function is used to construct fields of the avro record, where schema of the field is specified by avro
+    * representation of dataType. Since builders for record fields are different from those for everything else, we have
+    * to use a separate method.
     */
   private def convertFieldTypeToAvro[T](
       dataType: DataType,

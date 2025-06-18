@@ -9,12 +9,12 @@ import java.util.{Collections, Properties}
 import scala.collection.Seq
 
 object NewKafkaAdminActor {
-  val name = "KafkaAdminActor"
-  val topic = "test.topic"
-  val sessionTimeout = 10000
+  val name              = "KafkaAdminActor"
+  val topic             = "test.topic"
+  val sessionTimeout    = 10000
   val connectionTimeout = 10000
-  val partitions = 2
-  val replicas = 1
+  val partitions        = 2
+  val replicas          = 1
 }
 
 class NewKafkaAdminActor extends Actor with Logging {
@@ -22,12 +22,12 @@ class NewKafkaAdminActor extends Actor with Logging {
   var adminClient: AdminClient = _
 
   override def receive: Actor.Receive = {
-    case message: AddTopic => call(message, addTopic)
-    case message: CheckTopic => call(message, checkTopic)
-    case message: RemoveTopic => call(message, removeTopic)
+    case message: AddTopic           => call(message, addTopic)
+    case message: CheckTopic         => call(message, checkTopic)
+    case message: RemoveTopic        => call(message, removeTopic)
     case message: CheckOrCreateTopic => call(message, checkOrCreateTopic)
-    case message: Initialization => call(message, initialization)
-    case message: Any => logger.error("unknown message: " + message)
+    case message: Initialization     => call(message, initialization)
+    case message: Any                => logger.error("unknown message: " + message)
   }
 
   def initialization(message: Initialization): Boolean = {
@@ -79,8 +79,7 @@ class NewKafkaAdminActor extends Actor with Logging {
       adminClient.createTopics(Collections.singleton(newTopic)).all().get()
       logger.info("Created topic " + message.topic)
       true
-    }
-    catch {
+    } catch {
       case throwable: Throwable =>
         val msg = s"Error in topic '${message.topic}' creation"
         logger.error(msg, throwable)
@@ -101,8 +100,7 @@ class NewKafkaAdminActor extends Actor with Logging {
       adminClient.deleteTopics(Collections.singleton(message.topic)).all().get()
       logger.info("Removed topic " + message.topic)
       true
-    }
-    catch {
+    } catch {
       case throwable: Throwable =>
         logger.error("Error in topic '" + message.topic + "' creation", throwable)
         false

@@ -12,8 +12,7 @@ trait WriterModelOpenApiComponentSupport
   implicit lazy val writerModelOpenApi: ToOpenApiSchema[WriterModel] = product4(
     writerModelApply
   )
-  val writerModelApply
-    : (String, String, DatastoreProduct, Map[String, String]) => WriterModel =
+  val writerModelApply: (String, String, DatastoreProduct, Map[String, String]) => WriterModel =
     (_, _, _, _) => ???
 
 }

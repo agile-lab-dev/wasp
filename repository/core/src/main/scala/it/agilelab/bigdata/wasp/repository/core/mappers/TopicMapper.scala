@@ -23,5 +23,6 @@ object TopicMapperV1 extends SimpleMapper[TopicModel, TopicDBModelV1] {
   override val version = "topicV1"
   override def fromDBModelToModel[B >: TopicDBModelV1](m: B): TopicModel = m match {
     case mm: TopicDBModelV1 => transform[TopicModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
-  }}
+    case o                  => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+  }
+}

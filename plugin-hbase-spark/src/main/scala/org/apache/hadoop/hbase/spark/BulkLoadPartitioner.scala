@@ -24,15 +24,13 @@ import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.Partitioner
 
-/**
- * A Partitioner implementation that will separate records to different
- * HBase Regions based on region splits
- *
- * @param startKeys   The start keys for the given table
- */
+/** A Partitioner implementation that will separate records to different HBase Regions based on region splits
+  *
+  * @param startKeys
+  *   The start keys for the given table
+  */
 @InterfaceAudience.Public
-class BulkLoadPartitioner(startKeys:Array[Array[Byte]])
-  extends Partitioner {
+class BulkLoadPartitioner(startKeys: Array[Array[Byte]]) extends Partitioner {
   // when table not exist, startKeys = Byte[0][]
   override def numPartitions: Int = if (startKeys.length == 0) 1 else startKeys.length
 
@@ -44,7 +42,7 @@ class BulkLoadPartitioner(startKeys:Array[Array[Byte]])
       }
     }
 
-    val rowKey:Array[Byte] =
+    val rowKey: Array[Byte] =
       key match {
         case qualifier: KeyFamilyQualifier =>
           qualifier.rowKey

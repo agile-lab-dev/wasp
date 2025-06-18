@@ -44,25 +44,25 @@ trait WaspMongoDB extends MongoDBHelper with WaspDB {
 
   def getAll[T <: Model]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[T]
 
-  def getDocumentByField[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
+  def getDocumentByField[T <: Model](field: String, value: BsonValue)(implicit
+      ct: ClassTag[T],
       typeTag: TypeTag[T]
   ): Option[T]
 
-  def getDocumentByQueryParams[T <: Model](query: Map[String, BsonValue], sort: Option[BsonDocument])(
-      implicit ct: ClassTag[T],
+  def getDocumentByQueryParams[T <: Model](query: Map[String, BsonValue], sort: Option[BsonDocument])(implicit
+      ct: ClassTag[T],
       typeTag: TypeTag[T]
   ): Option[T]
 
-  def getAllDocumentsByField[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
+  def getAllDocumentsByField[T <: Model](field: String, value: BsonValue)(implicit
+      ct: ClassTag[T],
       typeTag: TypeTag[T]
   ): Seq[T]
 
   def getAllRaw[T <: Model]()(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Seq[BsonDocument]
 
-  def getDocumentByFieldRaw[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
+  def getDocumentByFieldRaw[T <: Model](field: String, value: BsonValue)(implicit
+      ct: ClassTag[T],
       typeTag: TypeTag[T]
   ): Option[BsonDocument]
 
@@ -70,8 +70,8 @@ trait WaspMongoDB extends MongoDBHelper with WaspDB {
       query: Map[String, BsonValue]
   )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[BsonDocument]
 
-  def getAllDocumentsByFieldRaw[T <: Model](field: String, value: BsonValue)(
-      implicit ct: ClassTag[T],
+  def getAllDocumentsByFieldRaw[T <: Model](field: String, value: BsonValue)(implicit
+      ct: ClassTag[T],
       typeTag: TypeTag[T]
   ): Seq[BsonDocument]
 
@@ -87,8 +87,8 @@ trait WaspMongoDB extends MongoDBHelper with WaspDB {
 
   def updateByName[T <: Model](name: String, doc: T)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): UpdateResult
 
-  def updateByNameRaw[T <: Model](name: String, doc: BsonDocument)(
-      implicit ct: ClassTag[T],
+  def updateByNameRaw[T <: Model](name: String, doc: BsonDocument)(implicit
+      ct: ClassTag[T],
       typeTag: TypeTag[T]
   ): UpdateResult
 
@@ -108,14 +108,13 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
 
   import WaspMongoDB._
 
-  /**
-    * initializes collections.
+  /** initializes collections.
     *
-    * Collections are initialized concurrently by different nodes so each node tries to create it and backs off
-    * if another node concurrently created the collections.
+    * Collections are initialized concurrently by different nodes so each node tries to create it and backs off if
+    * another node concurrently created the collections.
     *
-    * To force name as key of models an index with unique constraint is concurrently created, if another node concurrently
-    * created the index the current node backs off.
+    * To force name as key of models an index with unique constraint is concurrently created, if another node
+    * concurrently created the index the current node backs off.
     */
   override def initializeCollections(): Unit = {
 
@@ -128,13 +127,13 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
     val results = collections
       .map(collection => (collection, Try(mongoDatabase.createCollection(collection, collectionOptions).results())))
       .map {
-        //everything is fine
+        // everything is fine
         case (collectionName: String, Success(_)) => Right(collectionName)
-        //collection already exist, nothing to do
+        // collection already exist, nothing to do
         case (collectionName: String, Failure(ex: MongoCommandException))
             if ex.getErrorCode == COLLECTION_ALREADY_EXISTS =>
           Right(collectionName)
-        //collection correctly created
+        // collection correctly created
         case (_, Failure(ex: MongoCommandException)) if ex.getErrorCode != COLLECTION_ALREADY_EXISTS => Left(ex)
       }
 
@@ -168,12 +167,12 @@ class WaspDBMongoImp(val mongoDatabase: MongoDatabase) extends WaspMongoDB {
         )
       )
       .map {
-        //everything is fine
+        // everything is fine
         case (collectionName: String, Success(_)) => Right(collectionName)
-        //collection already exist, nothing to do
+        // collection already exist, nothing to do
         case (collectionName: String, Failure(ex: MongoCommandException)) if ex.getErrorCode == INDEX_ALREADY_EXISTS =>
           Right(collectionName)
-        //collection correctly created
+        // collection correctly created
         case (_, Failure(ex: MongoCommandException)) if ex.getErrorCode != INDEX_ALREADY_EXISTS => Left(ex)
       }
 
@@ -516,7 +515,7 @@ object WaspMongoDB extends Logging {
     System.exit(0)
 
     // re-initialize mongoDB and continue (instead of exit) -> not safe due to all process could write on mongoDB
-    //waspDB = WaspDB.initializeDB()
+    // waspDB = WaspDB.initializeDB()
   }
 
   def initializeDB(): WaspMongoDB = {

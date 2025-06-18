@@ -8,12 +8,13 @@ import org.scalatest.{Matchers, WordSpec}
 
 class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
 
-  private val reader =  new InputStreamReader(getClass.getResourceAsStream("inner_mail_strategy.conf"))
-  private val fakeConfig = try {
-    ConfigFactory.parseReader(reader)
-  } finally {
-    reader.close()
-  }
+  private val reader = new InputStreamReader(getClass.getResourceAsStream("inner_mail_strategy.conf"))
+  private val fakeConfig =
+    try {
+      ConfigFactory.parseReader(reader)
+    } finally {
+      reader.close()
+    }
 
   // A sequence of different events
   val testSeq = Seq(
@@ -25,7 +26,8 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
       severity = "CRITICAL",
       sourceId = Some("sensor_0"),
       eventId = "0",
-      timestamp = 0),
+      timestamp = 0
+    ),
     Event(
       eventRuleName = "HighTemperature",
       source = "streamingSource1",
@@ -44,7 +46,8 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
       severity = "CRITICAL",
       sourceId = Some("sensor_3"),
       eventId = "2",
-      timestamp = 0),
+      timestamp = 0
+    ),
     Event(
       eventRuleName = "OddHighNumbers",
       source = "streamingSource2",
@@ -66,7 +69,7 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
       timestamp = 0
     )
   )
-  val controlSeq = Seq (
+  val controlSeq = Seq(
     Mail(
       mailTo = "tempcheck@controunit.company",
       mailCc = Some("criticalissues@controlunit.company"),
@@ -116,9 +119,9 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
     )
   )
 
-  private val highTempMailQty = 2
+  private val highTempMailQty           = 2
   private val compositeStatementMailQty = 1
-  private val totalMailQty = highTempMailQty + compositeStatementMailQty
+  private val totalMailQty              = highTempMailQty + compositeStatementMailQty
 
   // An empty Seq
   private val emptySeq: Seq[Event] = Seq.empty
@@ -133,7 +136,8 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
       severity = "NOT CRITICAL",
       sourceId = Some("sensor_0"),
       eventId = "0",
-      timestamp = 0),
+      timestamp = 0
+    ),
     Event(
       eventRuleName = "HighTemperature",
       source = "streamingSource1",
@@ -152,7 +156,8 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
       severity = "NOT CRITICAL",
       sourceId = Some("sensor_3"),
       eventId = "2",
-      timestamp = 0),
+      timestamp = 0
+    ),
     Event(
       eventRuleName = "OddHighNumbers",
       source = "streamingSource2",
@@ -179,32 +184,36 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
 
     val target: InnerMailStrategy = new InnerMailStrategy(fakeConfig.getConfig("multipleRules"))
 
-    s"retrieve exactly $totalMailQty in testSeq which match the control Seq" in { 
+    s"retrieve exactly $totalMailQty in testSeq which match the control Seq" in {
 
       import spark.implicits._
 
       val eventsDf = spark.sparkContext.parallelize(testSeq).toDF
-      val mails = target.transform(eventsDf).as[Mail].collect()
-      mails.length.equals(totalMailQty) should be (true)
+      val mails    = target.transform(eventsDf).as[Mail].collect()
+      mails.length.equals(totalMailQty) should be(true)
 
       // Check that all the control events are included in the test seq
       controlSeq
         .map(control =>
-          mails.map(test => fakeEquals(control, test))      // Check if control event is equal to test event (can be false for a single check), cannot be for every check
-            .fold(false)((b1, b2) => b1 || b2))             // Return true if the control event was found among the many test event
-        .forall(identity) should be (true)                  // Return true if every control event has been found among test events
+          mails
+            .map(test =>
+              fakeEquals(control, test)
+            ) // Check if control event is equal to test event (can be false for a single check), cannot be for every check
+            .fold(false)((b1, b2) => b1 || b2)
+        )                                 // Return true if the control event was found among the many test event
+        .forall(identity) should be(true) // Return true if every control event has been found among test events
     }
 
-    "Find no mails in fruitlessSeq" in { 
+    "Find no mails in fruitlessSeq" in {
       import spark.implicits._
       val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(fruitlessSeq).toDF).as[Mail].collect()
-      mails.length should be (0)
+      mails.length should be(0)
     }
 
-    "Find no mails in emptySeq" in { 
+    "Find no mails in emptySeq" in {
       import spark.implicits._
       val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(emptySeq).toDF).as[Mail].collect()
-      mails.length should be (0)
+      mails.length should be(0)
     }
   }
 
@@ -212,26 +221,26 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
 
     val target: InnerMailStrategy = new InnerMailStrategy(fakeConfig.getConfig("singleRule"))
 
-    s"retrieve exactly $highTempMailQty in testSeq" in { 
+    s"retrieve exactly $highTempMailQty in testSeq" in {
 
       import spark.implicits._
 
       val eventsDf = spark.sparkContext.parallelize(testSeq).toDF
-      val mails = target.transform(eventsDf).as[Mail].collect()
-      mails.length.equals(highTempMailQty) should be (true)
+      val mails    = target.transform(eventsDf).as[Mail].collect()
+      mails.length.equals(highTempMailQty) should be(true)
 
     }
 
-    "Find no mails in fruitlessSeq" in { 
+    "Find no mails in fruitlessSeq" in {
       import spark.implicits._
       val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(fruitlessSeq).toDF).as[Mail].collect()
-      mails.length should be (0)
+      mails.length should be(0)
     }
 
-    "Find no mails in emptySeq" in { 
+    "Find no mails in emptySeq" in {
       import spark.implicits._
       val mails: Array[Mail] = target.transform(spark.sparkContext.parallelize(emptySeq).toDF).as[Mail].collect()
-      mails.length should be (0)
+      mails.length should be(0)
     }
   }
 
@@ -240,8 +249,8 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
     val s1 = m1.mailContent.split("\n").filterNot(s => s.contains("eventId"))
     val s2 = m2.mailContent.split("\n").filterNot(s => s.contains("eventId"))
 
-    //println("S1: " + s1.mkString(", "))
-    //println("S2: " + s2.mkString(", "))
+    // println("S1: " + s1.mkString(", "))
+    // println("S2: " + s2.mkString(", "))
 
     m1.mailTo.equals(m2.mailTo) &&
     m1.mailCc.equals(m2.mailCc) &&
@@ -253,11 +262,11 @@ class InnerMailStrategySpec extends WordSpec with Matchers with SparkSuite {
 }
 
 //TODO
-case class Mail (
-                  mailTo: String,
-                  mailCc: Option[String],
-                  mailBcc: Option[String],
-                  mailSubject: String,
-                  mailContent: String,
-                  contentType: String = "text/html"
-                )
+case class Mail(
+    mailTo: String,
+    mailCc: Option[String],
+    mailBcc: Option[String],
+    mailSubject: String,
+    mailContent: String,
+    contentType: String = "text/html"
+)

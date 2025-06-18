@@ -6,9 +6,8 @@ import org.apache.commons.cli.{BasicParser, CommandLine, HelpFormatter, Options}
 
 import scala.util.{Failure, Success, Try}
 
-/**
-	* Command line utils leveraging Apache Commons CLI
-	*/
+/** Command line utils leveraging Apache Commons CLI
+  */
 object CliUtils {
   def parseArgsList(args: Array[String], options: Seq[cli.Option]): CommandLine = {
     val cliOptions = seqToCliOptions(options)
@@ -25,7 +24,7 @@ object CliUtils {
     val cliOptions = seqToCliOptions(options)
     val sysOut     = new PrintWriter(System.out)
     new HelpFormatter().printUsage(sysOut, 100, "WASP", cliOptions)
-    //sysOut.close() System.out must be not closed (not polite)
+    // sysOut.close() System.out must be not closed (not polite)
     sysOut.flush()
   }
 

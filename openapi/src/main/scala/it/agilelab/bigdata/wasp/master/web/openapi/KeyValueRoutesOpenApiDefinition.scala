@@ -20,7 +20,7 @@ trait KeyValueRoutesOpenApiDefinition
 
   def keyValueRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/keyvalue"                -> get(ctx),
+      "/keyvalue"             -> get(ctx),
       "/keyvalue/{modelname}" -> getInstance(ctx)
     )
   }

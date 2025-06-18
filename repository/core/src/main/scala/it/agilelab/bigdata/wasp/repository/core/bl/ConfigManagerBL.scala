@@ -7,12 +7,10 @@ import scala.reflect.ClassTag
 
 trait ConfigManagerBL {
 
-  def getByName[T <: Model](name : String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
+  def getByName[T <: Model](name: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
   def retrieveConf[T <: Model](default: T, nameConf: String)(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T]
 
   def retrieveDBConfig(): Seq[String]
 
 }
-
-

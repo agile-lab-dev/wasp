@@ -42,7 +42,7 @@ class KafkaThroughputSpec
     val outcome = super.withFixture(test)
     outcome match {
       case Failed(_) | Canceled(_) => if (count == 1) super.withFixture(test) else withFixture(test, count - 1)
-      case other => other
+      case other                   => other
     }
   }
 
@@ -81,7 +81,10 @@ class KafkaThroughputSpec
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    throughputGuardianRef.compareAndSet(null, system.actorOf(Props(new TestKafkaThroughputGuardian), "TestKafkaThroughputGuardian"))
+    throughputGuardianRef.compareAndSet(
+      null,
+      system.actorOf(Props(new TestKafkaThroughputGuardian), "TestKafkaThroughputGuardian")
+    )
   }
 
   override protected def afterEach(): Unit = {

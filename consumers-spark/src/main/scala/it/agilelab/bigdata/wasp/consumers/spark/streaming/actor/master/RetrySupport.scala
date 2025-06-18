@@ -18,8 +18,8 @@ trait RetrySupport {
 
   implicit def recoverableTry: Recoverable[Try] = new Recoverable[Try] {
     override def recoverWith[A, B >: A](self: Try[A])(e: Throwable => Try[B]): Try[B] =
-      self.recoverWith {
-        case ex => e(ex)
+      self.recoverWith { case ex =>
+        e(ex)
       }
 
     override def extractor[A](self: Try[A]): A = self.get
@@ -27,15 +27,15 @@ trait RetrySupport {
 
   implicit def recoverableFuture(implicit ec: ExecutionContext): Recoverable[Future] = new Recoverable[Future] {
     override def recoverWith[A, B >: A](self: Future[A])(e: Throwable => Future[B]): Future[B] =
-      self.recoverWith {
-        case ex => e(ex)
+      self.recoverWith { case ex =>
+        e(ex)
       }
 
     override def extractor[A](self: Future[A]): A =
       Await.result(self, Duration.Inf)
   }
 
-  def retry[F[_] : Recoverable, A](retryInterval: FiniteDuration)(retryable: () => F[A]): A = {
+  def retry[F[_]: Recoverable, A](retryInterval: FiniteDuration)(retryable: () => F[A]): A = {
 
     val Recoverable: Recoverable[F] = implicitly[Recoverable[F]]
 

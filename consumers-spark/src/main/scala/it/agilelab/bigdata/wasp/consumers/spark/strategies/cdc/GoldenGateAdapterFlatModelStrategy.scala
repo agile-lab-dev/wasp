@@ -7,12 +7,12 @@ import org.apache.spark.sql.DataFrame
 
 import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
-/**
-  * Case class representing a Oracle row mutation.
-  * You can map the mutations in that object by calling
+/** Case class representing a Oracle row mutation. You can map the mutations in that object by calling
   * [[it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc.GoldenGateMutationUtils#mapIntoCaseClass(org.apache.spark.sql.Dataset, org.apache.spark.sql.Encoder)]]
   *
-  * @tparam A the class representing the structure of the table, nb the fields name are used by the encoder, so the must correspond to the names used in the mutation
+  * @tparam A
+  *   the class representing the structure of the table, nb the fields name are used by the encoder, so the must
+  *   correspond to the names used in the mutation
   */
 final case class TableMutationFlatModel[A](
     table: String,
@@ -47,11 +47,11 @@ final case class TableMutationFlatModel[A](
     f(this)
 }
 
-/**
-  * object containing non trivial function utils in the case of cdc goldengate mutations.
-  * Avoid the call of [[it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc.GoldenGateMutationUtils#mapIntoCaseClass(org.apache.spark.sql.Dataset, org.apache.spark.sql.Encoder)]]
-  * and [[it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc.GoldenGateMutationUtils#extractTableDataset(org.apache.spark.sql.Dataset, org.apache.spark.sql.Encoder)]] if not
-  * mandatory because they add an additional cost by inserting a mapping phase in the spark pipeline.
+/** object containing non trivial function utils in the case of cdc goldengate mutations. Avoid the call of
+  * [[it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc.GoldenGateMutationUtils#mapIntoCaseClass(org.apache.spark.sql.Dataset, org.apache.spark.sql.Encoder)]]
+  * and
+  * [[it.agilelab.bigdata.wasp.consumers.spark.strategies.cdc.GoldenGateMutationUtils#extractTableDataset(org.apache.spark.sql.Dataset, org.apache.spark.sql.Encoder)]]
+  * if not mandatory because they add an additional cost by inserting a mapping phase in the spark pipeline.
   */
 object GoldenGateMutationUtils {
 
@@ -76,15 +76,13 @@ object GoldenGateMutationUtils {
     val fields = GoldenGateMutationUtils.extractTableFields(df)
 
     df.withColumn(
-        "innerTable",
-        struct(fields.head, fields.tail: _*)
-      )
-      .as[TableMutationFlatModel[A]]
+      "innerTable",
+      struct(fields.head, fields.tail: _*)
+    ).as[TableMutationFlatModel[A]]
   }
 }
 
-/**
-  * Names used by goldengate to name the various operations.
+/** Names used by goldengate to name the various operations.
   */
 private[cdc] object GoldengateOperations extends Operation {
   override def insert: OperationType = "I"
@@ -96,67 +94,54 @@ private[cdc] object GoldengateOperations extends Operation {
   override def truncate: OperationType = "T"
 }
 
-/**
-  * Strategy that enable to map a flat mutation model to be mapped to an insert/update/delete
-  * object that can be sent to the CDC plugin that writes on DeltaLake.
-  * So having has input the raw flat mutations coming from a goldengate topic
-  * it will produce in output a dataframe composed of rows
-  * that has the shape accepted in input by the cdc plugin.
+/** Strategy that enable to map a flat mutation model to be mapped to an insert/update/delete object that can be sent to
+  * the CDC plugin that writes on DeltaLake. So having has input the raw flat mutations coming from a goldengate topic
+  * it will produce in output a dataframe composed of rows that has the shape accepted in input by the cdc plugin.
   *
   * NB:
-  *    - this strategy is used to map the mutation incoming from what in the
-  *    oracle language is known as: Row Formatter, if you need to map a message
-  *    that is incoming from an Operation Formatter you need to wait the new
-  *    feature for that. More details are available under:
-  *    [[https://docs.oracle.com/goldengate/bd1221/gg-bd/GADBD/GUID-F0FA2781-0802-4530-B1F0-5E102B982EC0.htm#GADBD481 operation vs row formatter]]
-  *
-  *    - to enable the correct working of the strategy you need to ensure at
-  * runtime the configuration with path: goldengate.key.fields.
-  * This configuration is required and contains the list of primary keys fields
-  * for the mutation table. Suppose for example to have a table with the following structure:
-  *        SHOP_TABLE ===>
-  *             "PRODUCT_AMOUNT": Integer
-  *             "TRANSACTION_ID": Integer
-  *             "ORDER_DATE": Timestamp
-  *             "PRODUCT_PRICE": Char
-  *             "ORDER_ID": Integer
-  *             "CUST_CODE": Long
-  *             "PRODUCT_CODE": String
-  * and the primary key of this table is composed by the fields:
-  *  - CUST_CODE
-  *  - ORDER_DATE
-  *  - PRODUCT_CODE
-  *  - ORDER_ID
+  *   - this strategy is used to map the mutation incoming from what in the oracle language is known as: Row Formatter,
+  *     if you need to map a message that is incoming from an Operation Formatter you need to wait the new feature for
+  *     that. More details are available under:
+  *     [[https://docs.oracle.com/goldengate/bd1221/gg-bd/GADBD/GUID-F0FA2781-0802-4530-B1F0-5E102B982EC0.htm#GADBD481 operation vs row formatter]]
+  *   - to enable the correct working of the strategy you need to ensure at
+  * runtime the configuration with path: goldengate.key.fields. This configuration is required and contains the list of
+  * primary keys fields for the mutation table. Suppose for example to have a table with the following structure:
+  * SHOP_TABLE ===> "PRODUCT_AMOUNT": Integer "TRANSACTION_ID": Integer "ORDER_DATE": Timestamp "PRODUCT_PRICE": Char
+  * "ORDER_ID": Integer "CUST_CODE": Long "PRODUCT_CODE": String and the primary key of this table is composed by the
+  * fields:
+  *   - CUST_CODE
+  *   - ORDER_DATE
+  *   - PRODUCT_CODE
+  *   - ORDER_ID
   *
   * in this case you need to insert the configuration the following line:
   *
   * goldengate.key.fields=["CUST_CODE", "ORDER_DATE", "PRODUCT_CODE", "ORDER_ID"]"
-  *
   */
 class GoldenGateAdapterFlatModelStrategy extends Strategy with Logging {
 
-  /**
-    * Eventual preparation function of the initial DF
-    * an example can be the removal of fields that are not required to be mapped
-    * in the table or a mapping with a default value.
+  /** Eventual preparation function of the initial DF an example can be the removal of fields that are not required to
+    * be mapped in the table or a mapping with a default value.
     *
-    * @return final output DF
+    * @return
+    *   final output DF
     */
   def prepareInitialDf: DataFrame => DataFrame = (df: DataFrame) => df
 
-  /**
-    * Eventual enrichment function of the final DF.
+  /** Eventual enrichment function of the final DF.
     *
-    * @return final output DF
+    * @return
+    *   final output DF
     */
   def enrichFinalDf: DataFrame => DataFrame = (df: DataFrame) => df
 
-  /**
-    * Strategy that read data from Kafka, transform the format
-    * to make it compliant with the DataLake format that the writer expect.
+  /** Strategy that read data from Kafka, transform the format to make it compliant with the DataLake format that the
+    * writer expect.
     *
-    * @param dataFrames the dataframe that need to be transformed
-    * @return a dataframe transformed that can be sent to the CDCWriter
+    * @param dataFrames
+    *   the dataframe that need to be transformed
+    * @return
+    *   a dataframe transformed that can be sent to the CDCWriter
     */
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
     import scala.util.{Failure, Success, Try}
@@ -199,14 +184,13 @@ class GoldenGateAdapterFlatModelStrategy extends Strategy with Logging {
 
 }
 
-/**
-  * Implementation of the conversion to provide a compliant Dataframe for the
-  * [[GoldenGateConversion#conversion]].
-  * The implementation must be compliant with the Goldengate documentation:
+/** Implementation of the conversion to provide a compliant Dataframe for the [[GoldenGateConversion#conversion]]. The
+  * implementation must be compliant with the Goldengate documentation:
   * [[https://docs.oracle.com/goldengate/bd1221/gg-bd/GADBD/GUID-F0FA2781-0802-4530-B1F0-5E102B982EC0.htm#GADBD479" Goldengate Doc]]
   *
-  * NB: reason about the changes of the primary key. See in particular the configuration key called gg.handler.name.format.pkUpdateHandlingformat.pkUpdateHandling
-  * in the page [[https://docs.oracle.com/goldengate/bd1221/gg-bd/GADBD/GUID-F0FA2781-0802-4530-B1F0-5E102B982EC0.htm#GADBD482 gg docs]]
+  * NB: reason about the changes of the primary key. See in particular the configuration key called
+  * gg.handler.name.format.pkUpdateHandlingformat.pkUpdateHandling in the page
+  * [[https://docs.oracle.com/goldengate/bd1221/gg-bd/GADBD/GUID-F0FA2781-0802-4530-B1F0-5E102B982EC0.htm#GADBD482 gg docs]]
   *
   * the configuration gg.handler.name.format.includePrimaryKeys is required to be set to true.
   */

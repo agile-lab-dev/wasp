@@ -12,12 +12,15 @@ import java.time.Instant
 
 object ColdAreaCredentialsPersister extends CredentialsConfigurator with Logging {
 
-  def writeCredentials(writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody, configuration: Configuration): Unit = {
+  def writeCredentials(
+      writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody,
+      configuration: Configuration
+  ): Unit = {
     val awsWriteCredentials =
       writeExecutionPlanResponseBody.temporaryCredentials
-        .getOrElse(
-          throw new RuntimeException("Entity responded without a credentials field for a COLD case write"))
-        .w.toAWSSessionCredentials()
+        .getOrElse(throw new RuntimeException("Entity responded without a credentials field for a COLD case write"))
+        .w
+        .toAWSSessionCredentials()
     val bucketTokenPath = computeBucketTokenPath(writeExecutionPlanResponseBody, configuration)
     logger.info("Cleaning old credentials")
     CredentialsSerde.cleanupOldCredentials(configuration, bucketTokenPath)
@@ -29,20 +32,31 @@ object ColdAreaCredentialsPersister extends CredentialsConfigurator with Logging
 
   private def getFileName: String = {
     val maxLongAsString: String = Long.MaxValue.toString
-    val now: Long = Instant.now().toEpochMilli
-    val paddedFileName = s"%0${maxLongAsString.length}d".format(now)
+    val now: Long               = Instant.now().toEpochMilli
+    val paddedFileName          = s"%0${maxLongAsString.length}d".format(now)
     paddedFileName
   }
 
-  private def computeBucketTokenPath(writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody, configuration: Configuration) = {
-    val uri = HadoopS3Utils.useS3aScheme(new URI(writeExecutionPlanResponseBody.writeUri.getOrElse(
-      throw new RuntimeException("ColdWriter needs to have a writeUri parameter"))))
+  private def computeBucketTokenPath(
+      writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody,
+      configuration: Configuration
+  ) = {
+    val uri = HadoopS3Utils.useS3aScheme(
+      new URI(
+        writeExecutionPlanResponseBody.writeUri.getOrElse(
+          throw new RuntimeException("ColdWriter needs to have a writeUri parameter")
+        )
+      )
+    )
     val conf = ConfigurationLoader.lookupConfig(uri, configuration)
     val host = Option(conf.getBucket.getHost).getOrElse("file-bucket")
     new Path(conf.getStoragePath, host);
   }
 
-  override def configureCredentials(writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody, configuration: Configuration): Unit = {
+  override def configureCredentials(
+      writeExecutionPlanResponseBody: WriteExecutionPlanResponseBody,
+      configuration: Configuration
+  ): Unit = {
     writeCredentials(writeExecutionPlanResponseBody, configuration)
   }
 }

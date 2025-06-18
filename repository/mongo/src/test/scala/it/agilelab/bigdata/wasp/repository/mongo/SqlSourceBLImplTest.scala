@@ -6,14 +6,13 @@ import it.agilelab.bigdata.wasp.repository.mongo.bl.SqlSourceBlImpl
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
-class SqlSourceBLImplTest extends FlatSpec with Matchers{
+class SqlSourceBLImplTest extends FlatSpec with Matchers {
 
   it should "test sqlSourceBL" in {
     val db = WaspMongoDB
     db.initializeDB()
-    val waspDB = db.getDB()
+    val waspDB      = db.getDB()
     val sqlSourceBL = new SqlSourceBlImpl(waspDB)
-
 
     val info   = JdbcPartitioningInfo("pc", "lb", "ub")
     val model1 = SqlSourceModel("name", "conn name", "dbtable", Some(info), Some(1), Some(2))
@@ -34,7 +33,7 @@ class SqlSourceBLImplTest extends FlatSpec with Matchers{
   it should "test sqlSourceBL upsert" in {
     val db = WaspMongoDB
     db.initializeDB()
-    val waspDB = db.getDB()
+    val waspDB      = db.getDB()
     val sqlSourceBL = new SqlSourceBlImpl(waspDB)
 
     val info   = JdbcPartitioningInfo("pc", "lb", "ub")

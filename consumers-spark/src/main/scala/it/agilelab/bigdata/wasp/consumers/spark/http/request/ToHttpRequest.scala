@@ -7,9 +7,9 @@ import scala.reflect.ClassTag
 
 trait ToHttpRequest {
   def toRequest[A: ClassTag](
-                              conf: RestEnrichmentSource,
-                              body: A,
-                              params: Map[String, String],
-                              headers: Map[String, String]
-                            ): HttpEntityEnclosingRequestBase
+      conf: RestEnrichmentSource,
+      body: A,
+      params: Map[String, String],
+      headers: Map[String, String]
+  ): HttpEntityEnclosingRequestBase
 }

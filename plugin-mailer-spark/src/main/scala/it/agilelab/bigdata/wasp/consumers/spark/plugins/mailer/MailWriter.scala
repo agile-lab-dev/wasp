@@ -8,7 +8,7 @@ import org.apache.spark.sql.types.DataType
 
 class MailWriter(options: Map[String, String]) extends SparkStructuredStreamingWriter {
 
-  val mailAgent = MailAgentImpl(options)
+  val mailAgent       = MailAgentImpl(options)
   val innerMailWriter = new InnerMailWriter(mailAgent)
 
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
@@ -21,34 +21,33 @@ class InnerMailWriter(mailAgent: MailAgent) {
 
   def write(stream: DataFrame): DataStreamWriter[Row] = {
 
-    /**
-      * Check the input schema is compliant with the Mail schema.
-      * WARN: Check only fields name and type, since the nullable flag is inferred at runtime and may not be the same every time
+    /** Check the input schema is compliant with the Mail schema. WARN: Check only fields name and type, since the
+      * nullable flag is inferred at runtime and may not be the same every time
       */
     val expectedSchema: Array[(String, DataType)] = Encoders.product[Mail].schema.fields.map(f => f.name -> f.dataType)
-    val actualSchema: Array[(String, DataType)] = stream.schema.fields.map(f => f.name -> f.dataType)
-    if(!expectedSchema.forall(actualSchema.contains)) throw new UnsupportedOperationException(s"Received schema: ${stream.schema} doesn't match expected schema $expectedSchema")
-
+    val actualSchema: Array[(String, DataType)]   = stream.schema.fields.map(f => f.name -> f.dataType)
+    if (!expectedSchema.forall(actualSchema.contains))
+      throw new UnsupportedOperationException(
+        s"Received schema: ${stream.schema} doesn't match expected schema $expectedSchema"
+      )
 
     stream.writeStream.foreach(new MailForeachWriter(mailAgent))
   }
 
 }
 
-class MailForeachWriter(mailAgent: MailAgent)
-  extends ForeachWriter[Row] {
+class MailForeachWriter(mailAgent: MailAgent) extends ForeachWriter[Row] {
 
-  private implicit def rowToMail(row: Row): Mail = Mail(
-      //row.getAs[String]("mailFrom"),
-      mailTo = row.getAs[String](MAIL_TO),
-      mailCc = Option(row.getAs[String](MAIL_CC)),
-      mailBcc = Option(row.getAs[String](MAIL_BCC)),
-      mailSubject = row.getAs[String](MAIL_SUBJECT),
-      mailContent = row.getAs[String](MAIL_CONTENT)
+  implicit private def rowToMail(row: Row): Mail = Mail(
+    // row.getAs[String]("mailFrom"),
+    mailTo = row.getAs[String](MAIL_TO),
+    mailCc = Option(row.getAs[String](MAIL_CC)),
+    mailBcc = Option(row.getAs[String](MAIL_BCC)),
+    mailSubject = row.getAs[String](MAIL_SUBJECT),
+    mailContent = row.getAs[String](MAIL_CONTENT)
   )
 
   override def open(partitionId: Long, version: Long): Boolean = true
-
 
   override def process(value: Row): Unit = {
     mailAgent.send(value)

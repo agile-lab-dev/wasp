@@ -8,18 +8,13 @@ import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
 import it.agilelab.bigdata.wasp.models.{EventEntry, Events}
 
-trait EventsOpenApiComponentSupport
-    extends ProductOpenApi
-    with LangOpenApi
-    with CollectionsOpenApi {
+trait EventsOpenApiComponentSupport extends ProductOpenApi with LangOpenApi with CollectionsOpenApi {
   implicit lazy val eventsOpenApi: ToOpenApiSchema[Events] = product2(Events.apply)
   implicit lazy val eventEntryOpenApi: ToOpenApiSchema[EventEntry] =
     product8(EventEntry.apply)
 }
 
-trait EventsRoutesOpenApiDefinition
-    extends EventsOpenApiComponentSupport
-    with AngularResponseOpenApiComponentSupport {
+trait EventsRoutesOpenApiDefinition extends EventsOpenApiComponentSupport with AngularResponseOpenApiComponentSupport {
 
   def eventsRoutes(ctx: Context): Map[String, PathItem] = {
     Map("/events" -> get(ctx))

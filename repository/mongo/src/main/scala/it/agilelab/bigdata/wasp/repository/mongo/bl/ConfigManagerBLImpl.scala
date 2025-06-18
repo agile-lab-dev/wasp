@@ -34,7 +34,8 @@ class ConfigManagerBLImpl(waspDB: WaspMongoDB) extends ConfigManagerBL {
 
       case kafka_ if kafka_ == classOf[KafkaAdditionalConfigDBModel] =>
         val config = waspDB.getDocumentByField[KafkaAdditionalConfigDBModel]("name", new BsonString(name))
-        val mapper = KafkaAdditionalConfigMapperSelector.select(config.getOrElse(throw new Exception("NO VERSION FOR DB MODEL")))
+        val mapper =
+          KafkaAdditionalConfigMapperSelector.select(config.getOrElse(throw new Exception("NO VERSION FOR DB MODEL")))
         config.map(mapper.fromDBModelToModel).asInstanceOf[Option[T]]
 
       case sparkB if sparkB == classOf[SparkBatchConfigDBModel] =>
@@ -108,7 +109,9 @@ class ConfigManagerBLImpl(waspDB: WaspMongoDB) extends ConfigManagerBL {
 
       case kafka_ if kafka_ == classOf[AdditionalKafkaClustersConfig] =>
         waspDB.insertIfNotExists[KafkaAdditionalConfigDBModel](
-          KafkaAdditionalConfigMapperV1.transform[KafkaAdditionalConfigDBModelV1](default.asInstanceOf[AdditionalKafkaClustersConfig])
+          KafkaAdditionalConfigMapperV1.transform[KafkaAdditionalConfigDBModelV1](
+            default.asInstanceOf[AdditionalKafkaClustersConfig]
+          )
         )
         getByName[KafkaAdditionalConfigDBModel](nameConf).asInstanceOf[Option[T]]
 

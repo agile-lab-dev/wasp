@@ -5,16 +5,16 @@ import it.agilelab.bigdata.wasp.repository.postgres.tables.TableDefinition
 
 trait PostgresBL {
 
-   val waspDB: WaspPostgresDB
+  val waspDB: WaspPostgresDB
 
-   implicit val tableDefinition: TableDefinition[_,_]
+  implicit val tableDefinition: TableDefinition[_, _]
 
-   def createTable(): Unit = {
-      waspDB.createTable()
-   }
+  def createTable(): Unit = {
+    waspDB.createTable()
+  }
 
-   private[postgres] def dropTable() : Unit = {
-      waspDB.dropTable()
-   }
+  private[postgres] def dropTable(): Unit = {
+    waspDB.dropTable()
+  }
 
 }

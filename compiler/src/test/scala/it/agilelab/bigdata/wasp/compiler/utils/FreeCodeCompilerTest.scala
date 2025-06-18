@@ -34,7 +34,7 @@ class FreeCodeCompilerTest extends FlatSpec with Matchers with BeforeAndAfterAll
   }
 
   it should "test complete code 1" in {
-    val code   = """val a = "banana"
+    val code = """val a = "banana"
                  |a.""".stripMargin
     val output = compiler.complete(code, code.length)
     output.exists(m => m.toComplete.equals("toInt")) shouldBe true

@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
-class CdcBLImplTest extends FlatSpec with Matchers{
+class CdcBLImplTest extends FlatSpec with Matchers {
 
   it should "test cdcBLImpl for Mongo" in {
     val db = WaspMongoDB
@@ -20,7 +20,8 @@ class CdcBLImplTest extends FlatSpec with Matchers{
       schema = StructType(
         Seq(
           StructField("id", IntegerType)
-      )).json,
+        )
+      ).json,
       options = CdcOptions.defaultAppend
     )
 
@@ -28,9 +29,6 @@ class CdcBLImplTest extends FlatSpec with Matchers{
     cdcImp.getByName("TestDemeziumMutationModel") shouldBe Some(debeziumMutation)
 
     cdcImp.getAll should contain theSameElementsAs Seq(debeziumMutation)
-
-
-
 
   }
 }

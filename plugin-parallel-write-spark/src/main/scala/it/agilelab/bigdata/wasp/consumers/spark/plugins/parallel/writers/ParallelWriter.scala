@@ -2,7 +2,11 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.{CatalogCoordinates, EntityCatalogBuilder}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.ParallelWriteEntity.CorrelationId
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.{DataCompleteRequestBody, ParallelWriteEntity, WriteExecutionPlanResponseBody}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.{
+  DataCompleteRequestBody,
+  ParallelWriteEntity,
+  WriteExecutionPlanResponseBody
+}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.CommitStatus.{Failed, Pending}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.CommitStatus
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.{DataCatalogService, DataframeSchemaUtils}
@@ -13,19 +17,25 @@ import scala.annotation.tailrec
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Failure, Success}
 
-trait ParallelWriter extends Logging{
+trait ParallelWriter extends Logging {
   val entityDetails: CatalogCoordinates
   val catalogService: DataCatalogService
   val entityAPI: ParallelWriteEntity
-  val numRetries: Int = 5
+  val numRetries: Int                   = 5
   val retryPollInterval: FiniteDuration = FiniteDuration(5, SECONDS)
 
-  /**
-    * Writes data according to write execution plan
-    * @param writeExecutionPlan execution plan obtained from entity
-    * @param df data to write
+  /** Writes data according to write execution plan
+    * @param writeExecutionPlan
+    *   execution plan obtained from entity
+    * @param df
+    *   data to write
     */
-  def write(writeExecutionPlan: WriteExecutionPlanResponseBody, df: DataFrame, correlationId: CorrelationId, batchId: Long): Unit
+  def write(
+      writeExecutionPlan: WriteExecutionPlanResponseBody,
+      df: DataFrame,
+      correlationId: CorrelationId,
+      batchId: Long
+  ): Unit
 
   def rollback(correlationId: CorrelationId): Unit =
     entityAPI.postDataComplete(DataCompleteRequestBody(false), correlationId)
@@ -44,10 +54,10 @@ trait ParallelWriter extends Logging{
 
   @tailrec
   private def pollForCommitStatus(
-                                   retry: Int,
-                                   duration: FiniteDuration,
-                                   corrId: CorrelationId
-                                 ): Boolean = {
+      retry: Int,
+      duration: FiniteDuration,
+      corrId: CorrelationId
+  ): Boolean = {
     val commitStatus = entityAPI.getDataCommitted(corrId).commitStatus
     if (retry == 0) {
       false

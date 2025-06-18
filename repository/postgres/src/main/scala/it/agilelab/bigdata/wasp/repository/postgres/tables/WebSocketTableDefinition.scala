@@ -5,7 +5,7 @@ import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json.JsValue
 import spray.json._
 
-object WebSocketTableDefinition extends SimpleModelTableDefinition[WebsocketModel] with JsonSupport{
+object WebSocketTableDefinition extends SimpleModelTableDefinition[WebsocketModel] with JsonSupport {
 
   override protected def fromModelToJson(model: WebsocketModel): JsValue = model.toJson
 

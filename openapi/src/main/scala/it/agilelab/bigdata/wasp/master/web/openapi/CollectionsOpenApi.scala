@@ -27,7 +27,6 @@ trait CollectionsOpenApi extends OpenApiSchemaSupport with LangOpenApi {
       }
     }
 
-
   implicit def seqOpenApi[T: ToOpenApiSchema]: ToOpenApiSchema[Seq[T]] =
     new ToOpenApiSchema[Seq[T]] {
       override def schema(ctx: Context): Schema[_] = {
@@ -57,6 +56,5 @@ trait CollectionsOpenApi extends OpenApiSchemaSupport with LangOpenApi {
         new ObjectSchema().additionalProperties(shouldBecomeARef(ctx, stringOpenApi.schema(ctx)))
       }
     }
-
 
 }

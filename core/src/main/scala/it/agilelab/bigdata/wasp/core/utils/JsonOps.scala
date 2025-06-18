@@ -4,8 +4,7 @@ import spray.json.JsValue
 
 import scala.util.Try
 
-/**
-  * Created by Agile Lab s.r.l. on 23/08/2017.
+/** Created by Agile Lab s.r.l. on 23/08/2017.
   */
 //http://limansky.me/posts/2016-04-30-easy-json-analyze-with-spray-json.html
 

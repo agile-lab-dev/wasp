@@ -9,34 +9,36 @@ import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.bson.BsonBoolean
 import org.mongodb.scala.bson.BsonString
 
-
 class ProducerBLImp(waspDB: WaspMongoDB) extends ProducerBL {
-
 
   def getByName(name: String): Option[ProducerModel] = {
 
-    waspDB.getDocumentByField[ProducerDBModel]("name", new BsonString(name))
+    waspDB
+      .getDocumentByField[ProducerDBModel]("name", new BsonString(name))
       .map(factory)
   }
 
-
   def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerDBModel]("isActive", new BsonBoolean(isActive))
+    waspDB
+      .getAllDocumentsByField[ProducerDBModel]("isActive", new BsonBoolean(isActive))
       .map(factory)
   }
 
   def getSystemProducers: Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerDBModel]("isSystem", new BsonBoolean(true))
+    waspDB
+      .getAllDocumentsByField[ProducerDBModel]("isSystem", new BsonBoolean(true))
       .map(factory)
   }
 
   def getNonSystemProducers: Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerDBModel]("isSystem", new BsonBoolean(false))
+    waspDB
+      .getAllDocumentsByField[ProducerDBModel]("isSystem", new BsonBoolean(false))
       .map(factory)
   }
 
   def getByTopicName(topicName: String): Seq[ProducerModel] = {
-    waspDB.getAllDocumentsByField[ProducerDBModel]("topicName", BsonString(topicName))
+    waspDB
+      .getAllDocumentsByField[ProducerDBModel]("topicName", BsonString(topicName))
       .map(factory)
   }
 
@@ -48,15 +50,15 @@ class ProducerBLImp(waspDB: WaspMongoDB) extends ProducerBL {
   }
 
   def getAll: Seq[ProducerModel] = {
-    waspDB.getAll[ProducerDBModel]()
+    waspDB
+      .getAll[ProducerDBModel]()
       .map(factory)
 
   }
 
   // use newest mapper
   def update(producerModel: ProducerModel): Unit = {
-    waspDB.updateByName[ProducerDBModel](producerModel.name,
-      transform[ProducerDBModelV1](producerModel))
+    waspDB.updateByName[ProducerDBModel](producerModel.name, transform[ProducerDBModelV1](producerModel))
   }
 
   override def persist(producerModel: ProducerModel): Unit =

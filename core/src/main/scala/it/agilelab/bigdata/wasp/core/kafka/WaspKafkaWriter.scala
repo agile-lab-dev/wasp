@@ -10,16 +10,37 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 //TODO remove and use kafka connect or kafka camel
 class WaspKafkaWriter[K, V](producerConfig: Properties) {
 
-  def this(brokers: Set[String], batchSize: Int, acks: String , producerType: String, serializerFqcn: String, keySerializerFqcn: String) =
+  def this(
+      brokers: Set[String],
+      batchSize: Int,
+      acks: String,
+      producerType: String,
+      serializerFqcn: String,
+      keySerializerFqcn: String
+  ) =
     this(WaspKafkaWriter.createConfig(brokers, batchSize, acks, serializerFqcn, keySerializerFqcn))
 
-  def this(conf: KafkaConfigModel) = this(WaspKafkaWriter.createConfig(
-    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.acks, conf.encoder_fqcn, conf.encoder_fqcn))
+  def this(conf: KafkaConfigModel) = this(
+    WaspKafkaWriter.createConfig(
+      conf.connections.map(x => x.toString).toSet,
+      conf.batch_send_size,
+      conf.acks,
+      conf.encoder_fqcn,
+      conf.encoder_fqcn
+    )
+  )
 
-  def this(conf: TinyKafkaConfig) = this(WaspKafkaWriter.createConfig(
-    conf.connections.map(x => x.toString).toSet, conf.batch_send_size, conf.acks, conf.encoder_fqcn, conf.encoder_fqcn))
+  def this(conf: TinyKafkaConfig) = this(
+    WaspKafkaWriter.createConfig(
+      conf.connections.map(x => x.toString).toSet,
+      conf.batch_send_size,
+      conf.acks,
+      conf.encoder_fqcn,
+      conf.encoder_fqcn
+    )
+  )
 
-  //logger.info(s"Kafka Producer configuration $producerConfig")
+  // logger.info(s"Kafka Producer configuration $producerConfig")
   private val producer = new KafkaProducer[K, V](producerConfig)
 
   /** Sends the data, partitioned by key to the topic. */
@@ -39,9 +60,14 @@ class WaspKafkaWriter[K, V](producerConfig: Properties) {
 
 object WaspKafkaWriter {
 
-  def createConfig(brokers: Set[String], batchSendSize: Int, acks: String,
-                   keySerializerFqcn: String, serializerFqcn: String,
-                   others: Seq[KafkaEntryConfig] = Seq()): Properties = {
+  def createConfig(
+      brokers: Set[String],
+      batchSendSize: Int,
+      acks: String,
+      keySerializerFqcn: String,
+      serializerFqcn: String,
+      others: Seq[KafkaEntryConfig] = Seq()
+  ): Properties = {
 
     val props = new Properties()
     props.put("bootstrap.servers", brokers.mkString(","))

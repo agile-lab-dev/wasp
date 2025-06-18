@@ -45,8 +45,8 @@ private[mongo] trait MongoDBHelper extends Logging {
 
     Option(getCollection(collection).find(query).headResult()).isDefined
   }
-  protected def getDocumentByKey[T](key: String, value: BsonValue, collection: String)(
-      implicit ct: ClassTag[T]
+  protected def getDocumentByKey[T](key: String, value: BsonValue, collection: String)(implicit
+      ct: ClassTag[T]
   ): Option[T] = {
 
     logger.info(s"Locating document(s) by key $key with value $value on collection $collection")
@@ -70,8 +70,8 @@ private[mongo] trait MongoDBHelper extends Logging {
     sort.map(predicate => actionBuilder.sort(predicate)).getOrElse(actionBuilder).results().headOption
   }
 
-  protected def getAllDocumentsByKey[T](key: String, value: BsonValue, collection: String)(
-      implicit ct: ClassTag[T]
+  protected def getAllDocumentsByKey[T](key: String, value: BsonValue, collection: String)(implicit
+      ct: ClassTag[T]
   ): Seq[T] = {
 
     logger.info(s"Locating document(s) by key $key with value $value on collection $collection")
@@ -192,12 +192,12 @@ object MongoDBHelper extends Logging {
   }
   @nowarn
   def getDatabase(mongoDBConfig: MongoDBConfigModel): MongoDatabase = {
-    //return a connection pool
+    // return a connection pool
 
     val settingsBuilder = MongoClientSettings
       .builder()
       .applyConnectionString(new ConnectionString(mongoDBConfig.address))
-      //we need full consistency so we consider a write on mongo as successful when it lands on disk
+      // we need full consistency so we consider a write on mongo as successful when it lands on disk
       .writeConcern(WriteConcern.ACKNOWLEDGED.withFsync(true))
       .applyToSocketSettings(new Block[SocketSettings.Builder] {
         override def apply(t: Builder): Unit =
@@ -225,19 +225,18 @@ object MongoDBHelper extends Logging {
     mongoDatabase
   }
 
-  /**
-    * Function to recursively convert a BsonDocument to a Map[String, Any].
+  /** Function to recursively convert a BsonDocument to a Map[String, Any].
     *
     * The keys will be the field names, the values willbe converted to the correpsonding scala types whenever possible.
     *
     * The bson-scala type mappings are as follows:
-    * - BsonBoolean   -> Boolean
-    * - BsonInt32     -> Int
-    * - BsonInt64     -> Long
-    * - BsonDouble    -> Double
-    * - BsonString    -> String
-    * - BsonDocument  -> Map[String, Any]
-    * - anything else -> BsonValue
+    *   - BsonBoolean -> Boolean
+    *   - BsonInt32 -> Int
+    *   - BsonInt64 -> Long
+    *   - BsonDouble -> Double
+    *   - BsonString -> String
+    *   - BsonDocument -> Map[String, Any]
+    *   - anything else -> BsonValue
     */
   def bsonDocumentToMap(bsonDocument: BsonDocument): Map[String, Any] = {
     val entries = bsonDocument.entrySet().asScala

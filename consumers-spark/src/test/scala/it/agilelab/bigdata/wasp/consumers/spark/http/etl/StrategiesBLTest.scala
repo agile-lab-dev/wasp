@@ -21,10 +21,15 @@ class CustomEnrichmentStrategyTest extends FunSuite with SparkSuite with Strateg
   }
 }
 
-class HttpEnrichmentStrategyTest extends FunSuite with BeforeAndAfterEach with SparkSuite with StrategiesUtil with SampleEnrichmentUtil {
+class HttpEnrichmentStrategyTest
+    extends FunSuite
+    with BeforeAndAfterEach
+    with SparkSuite
+    with StrategiesUtil
+    with SampleEnrichmentUtil {
 
-  val Port = 8080
-  val Host = "localhost"
+  val Port           = 8080
+  val Host           = "localhost"
   val wireMockServer = new WireMockServer(wireMockConfig().port(Port))
 
   override def beforeEach {
@@ -37,16 +42,18 @@ class HttpEnrichmentStrategyTest extends FunSuite with BeforeAndAfterEach with S
   }
   test("HttpEnrichmentTest") {
     val path = "/test-v1/1/v2/prova/123?id=test_id"
-    stubFor(get(urlEqualTo(path)).withQueryParam("id", equalTo("test_id"))
-      .willReturn(
-        aResponse().withBody {
+    stubFor(
+      get(urlEqualTo(path))
+        .withQueryParam("id", equalTo("test_id"))
+        .willReturn(aResponse().withBody {
           s"""
              |{
              |  "id": "abc123",
              |  "text": "Text1"
              |}
             """.stripMargin
-        }))
+        })
+    )
 
     wireMockServer.stubFor {
       post(urlEqualTo("/test-v1/1/v2/prova/123?id=test_id"))

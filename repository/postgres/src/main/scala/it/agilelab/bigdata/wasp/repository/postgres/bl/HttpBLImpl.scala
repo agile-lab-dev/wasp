@@ -6,8 +6,8 @@ import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{HttpTableDefinition, TableDefinition}
 
 case class HttpBLImpl(waspDB: WaspPostgresDB) extends HttpBL with PostgresBL {
-  override implicit val tableDefinition: TableDefinition[HttpModel, String] = HttpTableDefinition
-  override def getByName(name: String): Option[HttpModel] = waspDB.getByPrimaryKey(name)
+  implicit override val tableDefinition: TableDefinition[HttpModel, String] = HttpTableDefinition
+  override def getByName(name: String): Option[HttpModel]                   = waspDB.getByPrimaryKey(name)
 
   override def persist(model: HttpModel): Unit = waspDB.insert(model)
 

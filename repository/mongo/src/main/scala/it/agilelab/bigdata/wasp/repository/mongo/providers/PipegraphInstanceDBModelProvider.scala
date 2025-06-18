@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.repository.mongo.providers
 
-
 import it.agilelab.bigdata.wasp.models.PipegraphStatus
 import it.agilelab.bigdata.wasp.repository.core.dbModels.{PipegraphInstanceDBModel, PipegraphInstanceDBModelV1}
 import it.agilelab.bigdata.wasp.repository.core.mappers.PipegraphInstanceMapperV1
@@ -9,8 +8,7 @@ import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.{BsonDocumentWriter, BsonReader, BsonWriter}
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
 
-
-object PipegraphInstanceDBModelProvider extends CodecProvider{
+object PipegraphInstanceDBModelProvider extends CodecProvider {
 
   override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
     val codecBsonDocument: Codec[BsonDocument] = registry.get(classOf[BsonDocument])
@@ -18,7 +16,7 @@ object PipegraphInstanceDBModelProvider extends CodecProvider{
       new Codec[T] {
         override def decode(reader: BsonReader, decoderContext: DecoderContext): T = {
           val bsonDocument = codecBsonDocument.decode(reader, decoderContext)
-          val version = bsonDocument.getString("version").getValue
+          val version      = bsonDocument.getString("version").getValue
           version match {
             case PipegraphInstanceMapperV1.version =>
               PipegraphInstanceDBModelV1(
@@ -28,43 +26,45 @@ object PipegraphInstanceDBModelProvider extends CodecProvider{
                 currentStatusTimestamp = bsonDocument.get("currentStatusTimestamp").asInt64().getValue,
                 status = PipegraphStatus.withName(bsonDocument.get("status").asString().getValue),
                 executedByNode =
-                  if (bsonDocument.containsKey("executedByNode")) Some(bsonDocument.get("executedByNode").asString().getValue)
+                  if (bsonDocument.containsKey("executedByNode"))
+                    Some(bsonDocument.get("executedByNode").asString().getValue)
                   else None,
                 peerActor =
                   if (bsonDocument.containsKey("peerActor")) Some(bsonDocument.get("peerActor").asString().getValue)
                   else None,
-                error = if (bsonDocument.containsKey("error")) Some(bsonDocument.get("error").asString().getValue) else None
+                error =
+                  if (bsonDocument.containsKey("error")) Some(bsonDocument.get("error").asString().getValue) else None
               ).asInstanceOf[T]
             case other => throw new Exception(s"This version: [$other] of the mapper does not exist")
           }
         }
         override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext): Unit = {
-            var version : String = null // reference holder
-            val instance = value match {
-              case x: PipegraphInstanceDBModelV1 =>
-                version = PipegraphInstanceMapperV1.version
-                value.asInstanceOf[PipegraphInstanceDBModelV1]
-              case other => throw new Exception(s"There is no version of a mapper for [$other]")
-            }
-            val document = BsonDocument()
-              .append("name", BsonString(instance.name))
-              .append("instanceOf", BsonString(instance.instanceOf))
-              .append("startTimestamp", BsonInt64(instance.startTimestamp))
-              .append("currentStatusTimestamp", BsonInt64(instance.currentStatusTimestamp))
-              .append("status", BsonString(instance.status.toString))
-              .append("version", BsonString(version))
+          var version: String = null // reference holder
+          val instance = value match {
+            case x: PipegraphInstanceDBModelV1 =>
+              version = PipegraphInstanceMapperV1.version
+              value.asInstanceOf[PipegraphInstanceDBModelV1]
+            case other => throw new Exception(s"There is no version of a mapper for [$other]")
+          }
+          val document = BsonDocument()
+            .append("name", BsonString(instance.name))
+            .append("instanceOf", BsonString(instance.instanceOf))
+            .append("startTimestamp", BsonInt64(instance.startTimestamp))
+            .append("currentStatusTimestamp", BsonInt64(instance.currentStatusTimestamp))
+            .append("status", BsonString(instance.status.toString))
+            .append("version", BsonString(version))
 
-            val withError = instance.error
-              .map(error => document.append("error", BsonString(error)))
-              .getOrElse(document)
+          val withError = instance.error
+            .map(error => document.append("error", BsonString(error)))
+            .getOrElse(document)
 
-            val withExecuted = instance.executedByNode
-              .map(node => document.append("executedByNode", BsonString(node)))
-              .getOrElse(withError)
+          val withExecuted = instance.executedByNode
+            .map(node => document.append("executedByNode", BsonString(node)))
+            .getOrElse(withError)
 
-            val withPeer = instance.peerActor
-              .map(peer => document.append("peerActor", BsonString(peer)))
-              .getOrElse(withExecuted)
+          val withPeer = instance.peerActor
+            .map(peer => document.append("peerActor", BsonString(peer)))
+            .getOrElse(withExecuted)
 
           codecBsonDocument.encode(writer, withPeer, encoderContext)
         }
@@ -78,7 +78,12 @@ object PipegraphInstanceDBModelProvider extends CodecProvider{
 
   def clazzOf: Class[PipegraphInstanceDBModel] = classOf[PipegraphInstanceDBModel]
 
-  def createBsonDocument[T](codec: Codec[T], version: String, value: T, encoderContext: EncoderContext): BsonDocument = {
+  def createBsonDocument[T](
+      codec: Codec[T],
+      version: String,
+      value: T,
+      encoderContext: EncoderContext
+  ): BsonDocument = {
     val bsonDocWriter = new BsonDocumentWriter(new BsonDocument("version", BsonString(version)))
     codec.encode(bsonDocWriter, value, encoderContext)
     bsonDocWriter.getDocument

@@ -6,23 +6,23 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{ProducerTableDefinition, TableDefinition}
 
-case class ProducerBLImpl(waspDB : WaspPostgresDB) extends ProducerBL with PostgresBL {
+case class ProducerBLImpl(waspDB: WaspPostgresDB) extends ProducerBL with PostgresBL {
 
-  implicit val tableDefinition: TableDefinition[ProducerModel,String] = ProducerTableDefinition
+  implicit val tableDefinition: TableDefinition[ProducerModel, String] = ProducerTableDefinition
 
   override def getByName(name: String): Option[ProducerModel] = waspDB.getByPrimaryKey(name)
 
   override def getActiveProducers(isActive: Boolean): Seq[ProducerModel] =
-    waspDB.getBy(Array((ProducerTableDefinition.isActive,isActive)))
+    waspDB.getBy(Array((ProducerTableDefinition.isActive, isActive)))
 
   override def getSystemProducers: Seq[ProducerModel] =
-    waspDB.getBy(Array((ProducerTableDefinition.isSystem,true)))
+    waspDB.getBy(Array((ProducerTableDefinition.isSystem, true)))
 
   override def getNonSystemProducers: Seq[ProducerModel] =
-    waspDB.getBy(Array((ProducerTableDefinition.isSystem,false)))
+    waspDB.getBy(Array((ProducerTableDefinition.isSystem, false)))
 
   override def getByTopicName(name: String): Seq[ProducerModel] =
-    waspDB.getBy(Array((ProducerTableDefinition.topicName,name)))
+    waspDB.getBy(Array((ProducerTableDefinition.topicName, name)))
 
   override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
     if (producerModel.hasOutput)

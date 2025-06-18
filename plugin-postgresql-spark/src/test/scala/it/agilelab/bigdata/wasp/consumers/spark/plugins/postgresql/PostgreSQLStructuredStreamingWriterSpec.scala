@@ -19,8 +19,7 @@ import org.scalatest.Matchers.{contain, convertToAnyShouldWrapper}
 import java.sql.{Connection, Timestamp}
 import java.util.UUID
 
-/**
-  * Tests for [[PostgreSQLSparkStructuredStreamingWriter]].
+/** Tests for [[PostgreSQLSparkStructuredStreamingWriter]].
   */
 class PostgreSQLStructuredStreamingWriterSpec
     extends FunSuite

@@ -24,12 +24,12 @@ import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-/**
- * @param col0 Column #0, Type is String
- * @param col1 Column #1, Type is Array[Byte]
- */
-case class AvroHBaseRecord(col0: String,
-                           col1: Array[Byte])
+/** @param col0
+  *   Column #0, Type is String
+  * @param col1
+  *   Column #1, Type is Array[Byte]
+  */
+case class AvroHBaseRecord(col0: String, col1: Array[Byte])
 
 object AvroHBaseRecord {
   val schemaString =
@@ -56,10 +56,10 @@ object AvroHBaseRecord {
     user.put("favorite_color", s"color${"%03d".format(i)}")
     val favoriteArray = new GenericData.Array[String](2, avroSchema.getField("favorite_array").schema())
     favoriteArray.add(s"number${i}")
-    favoriteArray.add(s"number${i+1}")
+    favoriteArray.add(s"number${i + 1}")
     user.put("favorite_array", favoriteArray)
     import collection.JavaConverters._
-    val favoriteMap = Map[String, Int](("key1" -> i), ("key2" -> (i+1))).asJava
+    val favoriteMap = Map[String, Int](("key1" -> i), ("key2" -> (i + 1))).asJava
     user.put("favorite_map", favoriteMap)
     val avroByte = AvroSerdes.serialize(user, avroSchema)
     AvroHBaseRecord(s"name${"%03d".format(i)}", avroByte)
@@ -96,12 +96,11 @@ object AvroSource {
 
   def main(args: Array[String]) {
     val sparkConf = new SparkConf().setAppName("AvroSourceExample")
-    val ss = SparkSession.builder().config(sparkConf).getOrCreate()
+    val ss        = SparkSession.builder().config(sparkConf).getOrCreate()
     import ss.implicits._
 
     def withCatalog(cat: String): DataFrame = {
-      ss
-        .read
+      ss.read
         .options(Map("avroSchema" -> AvroHBaseRecord.schemaString, HBaseTableCatalog.tableCatalog -> avroCatalog))
         .format("org.apache.hadoop.hbase.spark")
         .load()
@@ -111,8 +110,11 @@ object AvroSource {
       AvroHBaseRecord(i)
     }
 
-    ss.sparkContext.parallelize(data).toDF.write.options(
-      Map(HBaseTableCatalog.tableCatalog -> catalog, HBaseTableCatalog.newTable -> "5"))
+    ss.sparkContext
+      .parallelize(data)
+      .toDF
+      .write
+      .options(Map(HBaseTableCatalog.tableCatalog -> catalog, HBaseTableCatalog.newTable -> "5"))
       .format("org.apache.hadoop.hbase.spark")
       .save()
 
@@ -133,9 +135,14 @@ object AvroSource {
       throw new UserCustomizedSampleException("value invalid")
     }
 
-    df.write.options(
-      Map("avroSchema"->AvroHBaseRecord.schemaString, HBaseTableCatalog.tableCatalog->avroCatalogInsert,
-        HBaseTableCatalog.newTable -> "5"))
+    df.write
+      .options(
+        Map(
+          "avroSchema"                   -> AvroHBaseRecord.schemaString,
+          HBaseTableCatalog.tableCatalog -> avroCatalogInsert,
+          HBaseTableCatalog.newTable     -> "5"
+        )
+      )
       .format("org.apache.hadoop.hbase.spark")
       .save()
     val newDF = withCatalog(avroCatalogInsert)

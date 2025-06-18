@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.models.ProcessGroupModel
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-object ProcessGroupTableDefinition extends SimpleModelTableDefinition[ProcessGroupModel] with JsonSupport{
+object ProcessGroupTableDefinition extends SimpleModelTableDefinition[ProcessGroupModel] with JsonSupport {
 
   override def tableName: String = "PROCESS_GROUP"
 

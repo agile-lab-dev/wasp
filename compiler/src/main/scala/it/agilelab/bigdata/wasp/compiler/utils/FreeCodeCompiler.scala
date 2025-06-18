@@ -33,18 +33,19 @@ class FreeCodeCompiler(compilerPool: CompilerPool) extends AutoCloseable {
     val lastCharIncomplete = incompleteClass.length
     val output = if (chars.contains(incompleteClass(lastCharIncomplete - 1))) {
       compiler.typeCompletion(completeClass, lastCharIncomplete)
-    } else {
-      val lastW = incompleteClass.substring(0, lastCharIncomplete).split("\\s|\\.").last
-      val output =
-        if (incompleteClass(lastCharIncomplete - lastW.length - 1).equals('.'))
-          compiler.typeCompletion(completeClass, lastCharIncomplete - lastW.length - 1)
-        else
-          compiler.scopeCompletion(s"$completeClass", 1, lastCharIncomplete)._1 :::
-            compiler.typeCompletion(completeClass, lastCharIncomplete + 1)
+    } else
+      {
+        val lastW = incompleteClass.substring(0, lastCharIncomplete).split("\\s|\\.").last
+        val output =
+          if (incompleteClass(lastCharIncomplete - lastW.length - 1).equals('.'))
+            compiler.typeCompletion(completeClass, lastCharIncomplete - lastW.length - 1)
+          else
+            compiler.scopeCompletion(s"$completeClass", 1, lastCharIncomplete)._1 :::
+              compiler.typeCompletion(completeClass, lastCharIncomplete + 1)
 
-      output.filter(_.toComplete.startsWith(lastW)).distinct
+        output.filter(_.toComplete.startsWith(lastW)).distinct
 
-    }.sortBy(_.toComplete)
+      }.sortBy(_.toComplete)
 
     output
 

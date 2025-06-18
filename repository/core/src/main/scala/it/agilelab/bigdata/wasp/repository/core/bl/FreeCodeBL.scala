@@ -6,7 +6,7 @@ trait FreeCodeBL {
 
   def getByName(name: String): Option[FreeCodeModel]
 
-  def deleteByName(name : String) : Unit
+  def deleteByName(name: String): Unit
 
   def getAll: Seq[FreeCodeModel]
 
@@ -14,5 +14,3 @@ trait FreeCodeBL {
 
   def upsert(freeCodeModel: FreeCodeModel): Unit
 }
-
-

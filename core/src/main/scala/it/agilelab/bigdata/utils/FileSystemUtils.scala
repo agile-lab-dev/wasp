@@ -3,7 +3,7 @@ package it.agilelab.bigdata.utils
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.utils.Utils
 
-import java.nio.file.{ Files, Path }
+import java.nio.file.{Files, Path}
 import java.util.Comparator
 import scala.collection.JavaConverters._
 

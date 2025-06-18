@@ -153,11 +153,11 @@ class InnerEventStrategySpec extends WordSpec with Matchers with BeforeAndAfter 
 
     val target = new InnerEventStrategy(fakeConfig.getConfig("multipleRules"), fixedClock, FixedIdGenerator)
 
-    //TODO: this should not be a unit test but actually a bench
+    // TODO: this should not be a unit test but actually a bench
     s"Process a big random sequence" in {
       import spark.implicits._
       val events: Array[Event] = target.transform(spark.sparkContext.parallelize(randomSeq).toDF).as[Event].collect()
-      val _ = events.length
+      val _                    = events.length
     }
 
     s"Find $totalEventsQuantity test events in mixedSeq which match the control event seq" in {

@@ -25,18 +25,23 @@ class JdbcConsumerSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): SparkStructuredStreamingWriter = {
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): SparkStructuredStreamingWriter = {
     val msg = s"Invalid spark writer type: jdbc spark structured streaming writer"
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
-  
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
+
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }

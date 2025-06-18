@@ -14,7 +14,7 @@ object BatchJobMapperV1 extends SimpleMapper[BatchJobModel, BatchJobDBModelV1] {
   override val version = "batchV1"
   override def fromDBModelToModel[B >: BatchJobDBModelV1](m: B): BatchJobModel = m match {
     case mm: BatchJobDBModelV1 => transform[BatchJobModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }
 
@@ -24,6 +24,6 @@ object BatchJobInstanceMapperV1 extends SimpleMapper[BatchJobInstanceModel, Batc
   override val version = "batchInstanceV1"
   override def fromDBModelToModel[B >: BatchJobInstanceDBModelV1](m: B): BatchJobInstanceModel = m match {
     case mm: BatchJobInstanceDBModelV1 => transform[BatchJobInstanceModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

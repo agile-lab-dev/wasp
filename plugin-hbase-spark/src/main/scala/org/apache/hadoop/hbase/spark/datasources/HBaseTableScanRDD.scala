@@ -32,11 +32,13 @@ import org.apache.spark.{Partition, TaskContext}
 import scala.collection.mutable
 
 @InterfaceAudience.Private
-class HBaseTableScanRDD(relation: HBaseRelation,
-                        val hbaseContext: HBaseContext,
-                        //@transient val filter: Option[SparkSQLPushDownFilter] = None,
-                        val columns: Seq[Field] = Seq.empty
-     )extends RDD[Result](relation.sqlContext.sparkContext, Nil) with Logging  {
+class HBaseTableScanRDD(
+    relation: HBaseRelation,
+    val hbaseContext: HBaseContext,
+    // @transient val filter: Option[SparkSQLPushDownFilter] = None,
+    val columns: Seq[Field] = Seq.empty
+) extends RDD[Result](relation.sqlContext.sparkContext, Nil)
+    with Logging {
   @transient var ranges = Seq.empty[Range]
   @transient var points = Seq.empty[Array[Byte]]
   def addPoint(p: Array[Byte]) {
@@ -59,7 +61,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
         val newArray = new Array[Byte](r.upperBound.length + 1)
         System.arraycopy(r.upperBound, 0, newArray, 0, r.upperBound.length)
 
-        //New Max Bytes
+        // New Max Bytes
         newArray(r.upperBound.length) = ByteMin
         Some(Bound(newArray, false))
       }
@@ -71,7 +73,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
 
   override def getPartitions: Array[Partition] = {
     val regions = RegionResource(relation)
-    var idx = 0
+    var idx     = 0
     logDebug(s"There are ${regions.size} regions")
     val ps = regions.flatMap { x =>
       val rs = Ranges.and(Range(x), ranges)
@@ -81,34 +83,45 @@ class HBaseTableScanRDD(relation: HBaseRelation,
           rs.foreach(x => logDebug(x.toString))
         }
         idx += 1
-        Some(HBaseScanPartition(idx - 1, x, rs, ps, SerializedFilter(None))) // SerializedFilter.toSerializedTypedFilter(filter)))
+        Some(
+          HBaseScanPartition(idx - 1, x, rs, ps, SerializedFilter(None))
+        ) // SerializedFilter.toSerializedTypedFilter(filter)))
       } else {
         None
       }
     }.toArray
     regions.release()
-    ShutdownHookManager.affixShutdownHook( new Thread() {
-      override def run() {
-        HBaseConnectionCache.close()
-      }
-    }, 0)
+    ShutdownHookManager.affixShutdownHook(
+      new Thread() {
+        override def run() {
+          HBaseConnectionCache.close()
+        }
+      },
+      0
+    )
     ps.asInstanceOf[Array[Partition]]
   }
 
   override def getPreferredLocations(split: Partition): Seq[String] = {
-    split.asInstanceOf[HBaseScanPartition].regions.server.map {
-      identity
-    }.toSeq
+    split
+      .asInstanceOf[HBaseScanPartition]
+      .regions
+      .server
+      .map {
+        identity
+      }
+      .toSeq
   }
 
   private def buildGets(
       tbr: TableResource,
       g: Seq[Array[Byte]],
       columns: Seq[Field],
-      hbaseContext: HBaseContext): Iterator[Result] = {
-    g.grouped(relation.bulkGetSize).flatMap{ x =>
+      hbaseContext: HBaseContext
+  ): Iterator[Result] = {
+    g.grouped(relation.bulkGetSize).flatMap { x =>
       val gets = new ArrayList[Get](x.size)
-      x.foreach{ y =>
+      x.foreach { y =>
         val g = new Get(y)
         handleTimeSemantics(g)
         columns.foreach { d =>
@@ -116,7 +129,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
             g.addColumn(d.cfBytes, d.colBytes)
           }
         }
-        //filter.foreach(g.setFilter(_))
+        // filter.foreach(g.setFilter(_))
         gets.add(g)
       }
       hbaseContext.applyCreds()
@@ -128,10 +141,10 @@ class HBaseTableScanRDD(relation: HBaseRelation,
 
   private def toResultIterator(result: GetResource): Iterator[Result] = {
     val iterator = new Iterator[Result] {
-      var idx = 0
+      var idx                 = 0
       var cur: Option[Result] = None
       override def hasNext: Boolean = {
-        while(idx < result.length && cur.isEmpty) {
+        while (idx < result.length && cur.isEmpty) {
           val r = result(idx)
           idx += 1
           if (!r.isEmpty) {
@@ -153,14 +166,16 @@ class HBaseTableScanRDD(relation: HBaseRelation,
     iterator
   }
 
-  private def buildScan(range: Range,
-                        //filter: Option[SparkSQLPushDownFilter],
-                        columns: Seq[Field]): Scan = {
+  private def buildScan(
+      range: Range,
+      // filter: Option[SparkSQLPushDownFilter],
+      columns: Seq[Field]
+  ): Scan = {
     val scan = (range.lower, range.upper) match {
       case (Some(Bound(a, b)), Some(Bound(c, d))) => new Scan().withStartRow(a).withStopRow(c)
-      case (None, Some(Bound(c, d))) => new Scan().withStartRow(Array.emptyByteArray).withStopRow(c)
-      case (Some(Bound(a, b)), None) => new Scan().withStartRow(a)
-      case (None, None) => new Scan()
+      case (None, Some(Bound(c, d)))              => new Scan().withStartRow(Array.emptyByteArray).withStopRow(c)
+      case (Some(Bound(a, b)), None)              => new Scan().withStartRow(a)
+      case (None, None)                           => new Scan()
     }
     handleTimeSemantics(scan)
 
@@ -172,7 +187,7 @@ class HBaseTableScanRDD(relation: HBaseRelation,
     scan.setCacheBlocks(relation.blockCacheEnable)
     scan.setBatch(relation.batchNum)
     scan.setCaching(relation.cacheSize)
-    //filter.foreach(scan.setFilter(_))
+    // filter.foreach(scan.setFilter(_))
     scan
   }
   private def toResultIterator(scanner: ScanResource): Iterator[Result] = {
@@ -207,13 +222,13 @@ class HBaseTableScanRDD(relation: HBaseRelation,
 
   override def compute(split: Partition, context: TaskContext): Iterator[Result] = {
     val partition = split.asInstanceOf[HBaseScanPartition]
-    //val filter = SerializedFilter.fromSerializedFilter(partition.sf)
+    // val filter = SerializedFilter.fromSerializedFilter(partition.sf)
     val scans = partition.scanRanges
       .map(buildScan(_, columns))
     val tableResource = TableResource(relation)
     context.addTaskCompletionListener[Unit](context => close())
     val points = partition.points
-    val gIt: Iterator[Result] =  {
+    val gIt: Iterator[Result] = {
       if (points.isEmpty) {
         Iterator.empty: Iterator[Result]
       } else {
@@ -222,50 +237,55 @@ class HBaseTableScanRDD(relation: HBaseRelation,
     }
     val rIts = scans.par
       .map { scan =>
-      hbaseContext.applyCreds()
-      val scanner = tableResource.getScanner(scan)
-      rddResources.addResource(scanner)
-      scanner
-    }.map(toResultIterator(_))
-      .fold(Iterator.empty: Iterator[Result]) { case (x, y) =>
-      x ++ y
-    } ++ gIt
-    ShutdownHookManager.affixShutdownHook( new Thread() {
-      override def run() {
-        HBaseConnectionCache.close()
+        hbaseContext.applyCreds()
+        val scanner = tableResource.getScanner(scan)
+        rddResources.addResource(scanner)
+        scanner
       }
-    }, 0)
+      .map(toResultIterator(_))
+      .fold(Iterator.empty: Iterator[Result]) { case (x, y) =>
+        x ++ y
+      } ++ gIt
+    ShutdownHookManager.affixShutdownHook(
+      new Thread() {
+        override def run() {
+          HBaseConnectionCache.close()
+        }
+      },
+      0
+    )
     rIts
   }
 
   private def handleTimeSemantics(query: Query): Unit = {
     // Set timestamp related values if present
-    (query, relation.timestamp, relation.minTimestamp, relation.maxTimestamp)  match {
+    (query, relation.timestamp, relation.minTimestamp, relation.maxTimestamp) match {
       case (q: Scan, Some(ts), None, None) => q.setTimestamp(ts)
-      case (q: Get, Some(ts), None, None) => q.setTimestamp(ts)
+      case (q: Get, Some(ts), None, None)  => q.setTimestamp(ts)
 
-      case (q:Scan, None, Some(minStamp), Some(maxStamp)) => q.setTimeRange(minStamp, maxStamp)
-      case (q:Get, None, Some(minStamp), Some(maxStamp)) => q.setTimeRange(minStamp, maxStamp)
+      case (q: Scan, None, Some(minStamp), Some(maxStamp)) => q.setTimeRange(minStamp, maxStamp)
+      case (q: Get, None, Some(minStamp), Some(maxStamp))  => q.setTimeRange(minStamp, maxStamp)
 
       case (q, None, None, None) =>
 
-      case _ => throw new IllegalArgumentException(s"Invalid combination of query/timestamp/time range provided. " +
-        s"timeStamp is: ${relation.timestamp.get}, minTimeStamp is: ${relation.minTimestamp.get}, " +
-        s"maxTimeStamp is: ${relation.maxTimestamp.get}")
+      case _ =>
+        throw new IllegalArgumentException(
+          s"Invalid combination of query/timestamp/time range provided. " +
+            s"timeStamp is: ${relation.timestamp.get}, minTimeStamp is: ${relation.minTimestamp.get}, " +
+            s"maxTimeStamp is: ${relation.maxTimestamp.get}"
+        )
     }
     if (relation.maxVersions.isDefined) {
       query match {
         case q: Scan => q.readVersions(relation.maxVersions.get)
-        case q: Get => q.readVersions(relation.maxVersions.get)
-        case _ => throw new IllegalArgumentException("Invalid query provided with maxVersions")
+        case q: Get  => q.readVersions(relation.maxVersions.get)
+        case _       => throw new IllegalArgumentException("Invalid query provided with maxVersions")
       }
     }
   }
 }
 
-object HBaseTableScanRDD {
-
-}
+object HBaseTableScanRDD {}
 
 case class SerializedFilter(b: Option[Array[Byte]])
 
@@ -277,22 +297,23 @@ object SerializedFilter {
    def fromSerializedFilter(sf: SerializedFilter): Option[SparkSQLPushDownFilter] = {
      sf.b.map(SparkSQLPushDownFilter.parseFrom(_))
    }
-  */
+   */
 }
 
 private[hbase] case class HBaseRegion(
     override val index: Int,
     val start: Option[HBaseType] = None,
     val end: Option[HBaseType] = None,
-    val server: Option[String] = None) extends Partition
-
+    val server: Option[String] = None
+) extends Partition
 
 private[hbase] case class HBaseScanPartition(
     override val index: Int,
     val regions: HBaseRegion,
     val scanRanges: Seq[Range],
     val points: Seq[Array[Byte]],
-    val sf: SerializedFilter) extends Partition
+    val sf: SerializedFilter
+) extends Partition
 
 case class RDDResources(set: mutable.HashSet[Resource]) {
   def addResource(s: Resource) {

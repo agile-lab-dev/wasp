@@ -15,38 +15,40 @@ package object enrichment {
     isSystem = false,
     creationTime = System.currentTimeMillis(),
     structuredStreamingComponents = List(sampleStreamingETL),
-    enrichmentSources =
-      RestEnrichmentConfigModel(
-        Map.apply(
-          "getHttpExample" ->
-            RestEnrichmentSource("http",
-              Map.apply(
-                "method" -> "get",
-                "url" -> s"http://localhost:8080/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
-              ),
-              Map.apply(
-                "Content-type" -> "text/plain",
-                "charset" -> "ISO-8859-1"
-              )
+    enrichmentSources = RestEnrichmentConfigModel(
+      Map.apply(
+        "getHttpExample" ->
+          RestEnrichmentSource(
+            "http",
+            Map.apply(
+              "method" -> "get",
+              "url"    -> s"http://localhost:8080/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
             ),
-          "postHttpExample" ->
-            RestEnrichmentSource("http",
-              Map.apply(
-                "method" -> "post",
-                "url" -> s"http://localhost:8080/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
-              ),
-              Map.apply(
-                "Content-type" -> "text/plain",
-                "charset" -> "ISO-8859-1"
-              )
-            ),
-          "msExample" ->
-            RestEnrichmentSource("it.agilelab.bigdata.wasp.consumers.spark.http.CustomEnricher",
-              Map.apply(
-                "msName" -> "SampleMs"
-              )
+            Map.apply(
+              "Content-type" -> "text/plain",
+              "charset"      -> "ISO-8859-1"
             )
-        )
+          ),
+        "postHttpExample" ->
+          RestEnrichmentSource(
+            "http",
+            Map.apply(
+              "method" -> "post",
+              "url"    -> s"http://localhost:8080/$${author}-v1/$${version}/v2/$${local}/123?id=test_id"
+            ),
+            Map.apply(
+              "Content-type" -> "text/plain",
+              "charset"      -> "ISO-8859-1"
+            )
+          ),
+        "msExample" ->
+          RestEnrichmentSource(
+            "it.agilelab.bigdata.wasp.consumers.spark.http.CustomEnricher",
+            Map.apply(
+              "msName" -> "SampleMs"
+            )
+          )
       )
+    )
   )
 }

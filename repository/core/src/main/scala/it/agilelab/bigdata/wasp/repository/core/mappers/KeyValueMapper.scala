@@ -9,6 +9,6 @@ object KeyValueMapperV1 extends SimpleMapper[KeyValueModel, KeyValueDBModelV1] {
   override val version = "keyValueV1"
   override def fromDBModelToModel[B >: KeyValueDBModelV1](m: B): KeyValueModel = m match {
     case mm: KeyValueDBModelV1 => transform[KeyValueModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

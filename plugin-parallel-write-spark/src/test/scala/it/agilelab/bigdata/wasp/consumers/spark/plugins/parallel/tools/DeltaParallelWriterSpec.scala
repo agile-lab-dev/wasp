@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.Del
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.ParallelWriteTestUtils.withServer
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkSuite
 import org.apache.spark.sql.execution.streaming.MemoryStream
-import org.apache.spark.sql.types.{ DataType, StructField, StructType }
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.scalatest.FunSuite
 
 case class Data(column1: String, column2: String)

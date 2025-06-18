@@ -2,26 +2,31 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.ParallelWriteEntity
 
-/**
-  * Coordinates needed by entity catalog and data catalog
+/** Coordinates needed by entity catalog and data catalog
   *
-  * @param domain   entity domain
-  * @param name     entity name
-  * @param version  entity version
+  * @param domain
+  *   entity domain
+  * @param name
+  *   entity name
+  * @param version
+  *   entity version
   */
-case class CatalogCoordinates(domain: String, name: String, version: String, dbPrefix: Option[String] = None, overrideDbName: Option[String] = None)
+case class CatalogCoordinates(
+    domain: String,
+    name: String,
+    version: String,
+    dbPrefix: Option[String] = None,
+    overrideDbName: Option[String] = None
+)
 
-/**
-  * This class is used to get microservice from catalog
+/** This class is used to get microservice from catalog
   */
 abstract class EntityCatalogService {
 
-  /**
-    * Builds microservice id depending on microserviceDetails and retrieve microservice from catalog
-    * @return Microservice instance
+  /** Builds microservice id depending on microserviceDetails and retrieve microservice from catalog
+    * @return
+    *   Microservice instance
     */
   def getEntityApi(coordinates: CatalogCoordinates): ParallelWriteEntity
   def getEntityTableName(coordinates: CatalogCoordinates): String
 }
-
-

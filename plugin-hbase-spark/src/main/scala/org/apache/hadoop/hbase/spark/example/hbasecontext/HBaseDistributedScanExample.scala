@@ -18,14 +18,13 @@ package org.apache.hadoop.hbase.spark.example.hbasecontext
 
 import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.spark.SparkContext
-import org.apache.hadoop.hbase.{TableName, HBaseConfiguration}
+import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.spark.SparkConf
-/**
- * This is a simple example of scanning records from HBase
- * with the hbaseRDD function in Distributed fashion.
- */
+
+/** This is a simple example of scanning records from HBase with the hbaseRDD function in Distributed fashion.
+  */
 object HBaseDistributedScanExample {
   def main(args: Array[String]) {
     if (args.length < 1) {
@@ -35,8 +34,8 @@ object HBaseDistributedScanExample {
 
     val tableName = args(0)
 
-    val sparkConf = new SparkConf().setAppName("HBaseDistributedScanExample " + tableName )
-    val sc = new SparkContext(sparkConf)
+    val sparkConf = new SparkConf().setAppName("HBaseDistributedScanExample " + tableName)
+    val sc        = new SparkContext(sparkConf)
 
     try {
       val conf = HBaseConfiguration.create()

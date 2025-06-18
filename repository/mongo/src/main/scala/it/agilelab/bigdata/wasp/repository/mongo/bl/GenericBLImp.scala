@@ -8,7 +8,7 @@ import org.bson.BsonString
 import it.agilelab.bigdata.wasp.repository.core.mappers.GenericMapperSelector.factory
 import it.agilelab.bigdata.wasp.repository.core.mappers.GenericMapperV1.transform
 
-class GenericBLImp(waspDB: WaspMongoDB) extends GenericBL  {
+class GenericBLImp(waspDB: WaspMongoDB) extends GenericBL {
 
   def getByName(name: String) = {
     waspDB.getDocumentByField[GenericDBModel]("name", new BsonString(name)).map(factory)

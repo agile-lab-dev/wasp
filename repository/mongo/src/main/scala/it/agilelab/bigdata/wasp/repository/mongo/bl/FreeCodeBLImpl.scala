@@ -11,7 +11,8 @@ import org.mongodb.scala.bson.BsonString
 class FreeCodeBLImpl(waspDB: WaspMongoDB) extends FreeCodeBL {
 
   def getByName(name: String): Option[FreeCodeModel] = {
-    waspDB.getDocumentByField[FreeCodeDBModel]("name", new BsonString(name))
+    waspDB
+      .getDocumentByField[FreeCodeDBModel]("name", new BsonString(name))
       .map(factory)
   }
 
@@ -26,7 +27,5 @@ class FreeCodeBLImpl(waspDB: WaspMongoDB) extends FreeCodeBL {
 
   override def getAll: Seq[FreeCodeModel] =
     waspDB.getAll[FreeCodeDBModel]().map(factory)
-
-
 
 }

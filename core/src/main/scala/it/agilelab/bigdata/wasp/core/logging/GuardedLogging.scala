@@ -1,7 +1,6 @@
 package it.agilelab.bigdata.wasp.core.logging
 
-/**
-  * Trait useful to log in spark. this traits correctly handles spark serializability of closures.
+/** Trait useful to log in spark. this traits correctly handles spark serializability of closures.
   */
 trait GuardedLogging extends Serializable {
 
@@ -10,4 +9,3 @@ trait GuardedLogging extends Serializable {
   @transient protected lazy val log: WaspLogger = WaspLogger(this.getClass)
 
 }
-

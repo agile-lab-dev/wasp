@@ -5,23 +5,28 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, NifiStatelessConfigModel, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
+import it.agilelab.bigdata.wasp.models.configuration.{
+  KafkaConfigModel,
+  NifiStatelessConfigModel,
+  SparkConfigModel,
+  SparkStreamingConfigModel,
+  TelemetryConfigModel
+}
 import it.agilelab.bigdata.wasp.core.utils.{ElasticConfiguration, SparkStreamingConfiguration, WaspConfiguration}
 import it.agilelab.bigdata.wasp.models.{PipegraphModel, StructuredStreamingETLModel}
 import org.apache.spark.{SparkConf, UtilsForwarder}
 
 import scala.io.Source
 
-/**
-	* Utilities related to Spark.
-	*
-	* @author Nicolò Bidotti
-	*/
+/** Utilities related to Spark.
+  *
+  * @author
+  *   Nicolò Bidotti
+  */
 object SparkUtils extends Logging with WaspConfiguration with ElasticConfiguration with SparkStreamingConfiguration {
   val jarsListFileName = "jars.list"
 
-  /**
-    * Builds a SparkConf from the supplied SparkConfigModel
+  /** Builds a SparkConf from the supplied SparkConfigModel
     */
   def buildSparkConfFromSparkConfigModel(
       sparkConfigModel: SparkConfigModel,
@@ -39,7 +44,10 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
 
     // driver-related configs
     sparkConf
-      .set("spark.submit.deployMode", sparkConfigModel.driver.submitDeployMode) // where the driver have to be executed (client or cluster)
+      .set(
+        "spark.submit.deployMode",
+        sparkConfigModel.driver.submitDeployMode
+      ) // where the driver have to be executed (client or cluster)
       .set("spark.driver.cores", sparkConfigModel.driver.cores.toString)
       .set("spark.driver.memory", sparkConfigModel.driver.memory) // NOTE: will only work in yarn-cluster
       .set("spark.driver.host", sparkConfigModel.driver.host)
@@ -68,8 +76,8 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       // N.B. The only reason Kryo is not the default is because of the custom registration requirement
       sparkConf
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      //.set("spark.kryoserializer.buffer", "64k")  // default: 64k
-      //.set("spark.kryoserializer.buffer.max", "64m") // default: 64m
+      // .set("spark.kryoserializer.buffer", "64k")  // default: 64k
+      // .set("spark.kryoserializer.buffer.max", "64m") // default: 64m
 
       /* Registering classes: for best performance */
       // * wasp-internal class registrations
@@ -92,8 +100,8 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
       sparkConf.set("spark.kryo.registrationRequired", sparkConfigModel.kryoSerializer.strict.toString)
 
       // Only for Debug - NotSerializableException: NOT REALLY USEFUL (also adding it to WASP_OPT in start-wasp.sh)
-      //sparkConf.set("spark.executor.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
-      //sparkConf.set("spark.driver.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
+      // sparkConf.set("spark.executor.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
+      // sparkConf.set("spark.driver.extraJavaOptions","-Dsun.io.serialization.extendedDebugInfo=true")
     }
 
     // add specific Elastic configs
@@ -161,7 +169,7 @@ object SparkUtils extends Logging with WaspConfiguration with ElasticConfigurati
         val msg = s"Unable to completely generate the additional jars list - Exception: ${e.getMessage}"
         logger.error(msg, e)
         throw e
-    }finally {
+    } finally {
       source.close()
     }
   }

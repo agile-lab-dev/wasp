@@ -69,7 +69,7 @@ trait PipegraphEditorService {
       getTopicModelById(name) match {
         case Some(x: TopicModel)      => Right(WriterModel.kafkaWriter(dto.name, x, dto.options))
         case Some(x: MultiTopicModel) => Right(WriterModel.kafkaMultitopicWriter(dto.name, x, dto.options))
-        case _                     => Left(List(ErrorDTO.notFound("Topic model", name)))
+        case _                        => Left(List(ErrorDTO.notFound("Topic model", name)))
       }
     case IndexModelDTO(name) =>
       getIndexModelById(name) match {
@@ -199,7 +199,11 @@ trait PipegraphEditorService {
       case StrategyModel("it.agilelab.bigdata.wasp.spark.plugins.nifi.NifiStrategy", Some(config)) =>
         val id                                   = getStringFromConfigString(config, "nifi.process-group-id")
         val processGroupModel: ProcessGroupModel = getProcessGroup(id).getOrElse(throw new IllegalArgumentException(id))
-        FlowNifiDTO(processGroupModel.content.toString, getStringFromConfigString(config, "name"), Some(config.parseJson.asJsObject))
+        FlowNifiDTO(
+          processGroupModel.content.toString,
+          getStringFromConfigString(config, "name"),
+          Some(config.parseJson.asJsObject)
+        )
       case StrategyModel(className, config) =>
         StrategyClassDTO(className, config.map(_.parseJson.asJsObject))
     }
@@ -269,9 +273,9 @@ trait PipegraphEditorService {
   def parsePGJson(json: String): Option[(String, String, JsValue)]
 }
 
-/**
-  * Default implementation of Pipegraph editor service
-  * @param utils used to validate free code strategy
+/** Default implementation of Pipegraph editor service
+  * @param utils
+  *   used to validate free code strategy
   */
 class DefaultPipegraphEditorService(val utils: FreeCodeCompilerUtils) extends PipegraphEditorService with JsonSupport {
 
@@ -330,10 +334,10 @@ class DefaultPipegraphEditorService(val utils: FreeCodeCompilerUtils) extends Pi
   override def upsertProcessGroup(pg: ProcessGroupModel): Unit = ConfigBL.processGroupBL.upsert(pg)
   override def upsertCodeModel(cm: FreeCodeModel): Unit        = ConfigBL.freeCodeBL.upsert(cm)
 
-  override def getTopicModelById(name: String): Option[DatastoreModel] = ConfigBL.topicBL.getByName(name)
-  override def getRawModelById(name: String): Option[RawModel]                        = ConfigBL.rawBL.getByName(name)
-  override def getIndexModelById(name: String): Option[IndexModel]                    = ConfigBL.indexBL.getByName(name)
-  override def getKeyValueModelById(name: String): Option[KeyValueModel]              = ConfigBL.keyValueBL.getByName(name)
+  override def getTopicModelById(name: String): Option[DatastoreModel]   = ConfigBL.topicBL.getByName(name)
+  override def getRawModelById(name: String): Option[RawModel]           = ConfigBL.rawBL.getByName(name)
+  override def getIndexModelById(name: String): Option[IndexModel]       = ConfigBL.indexBL.getByName(name)
+  override def getKeyValueModelById(name: String): Option[KeyValueModel] = ConfigBL.keyValueBL.getByName(name)
 
   override def getProcessGroup(name: String): Option[ProcessGroupModel] = ConfigBL.processGroupBL.getById(name)
   override def getCodeModel(name: String): Option[FreeCodeModel]        = ConfigBL.freeCodeBL.getByName(name)
@@ -341,8 +345,7 @@ class DefaultPipegraphEditorService(val utils: FreeCodeCompilerUtils) extends Pi
   override def upsertRawModel(model: RawModel): Unit = ConfigBL.rawBL.upsert(model)
 }
 
-/**
-  * Empty implementation of Pipegraph editor service to speed up test development
+/** Empty implementation of Pipegraph editor service to speed up test development
   */
 class EmptyPipegraphEditorService() extends PipegraphEditorService {
   override def getAllUIPipegraphs: List[PipegraphModel]                                      = List.empty
@@ -355,7 +358,7 @@ class EmptyPipegraphEditorService() extends PipegraphEditorService {
   override def updatePipegraphModel(model: PipegraphModel): Unit                             = {}
   override def upsertProcessGroup(pg: ProcessGroupModel): Unit                               = {}
   override def upsertCodeModel(cm: FreeCodeModel): Unit                                      = {}
-  override def getTopicModelById(name: String): Option[DatastoreModel]        = None
+  override def getTopicModelById(name: String): Option[DatastoreModel]                       = None
   override def getRawModelById(name: String): Option[RawModel]                               = None
   override def getIndexModelById(name: String): Option[IndexModel]                           = None
   override def getKeyValueModelById(name: String): Option[KeyValueModel]                     = None

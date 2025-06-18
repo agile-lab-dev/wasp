@@ -5,8 +5,7 @@ import it.agilelab.bigdata.wasp.models.configuration.JdbcPartitioningInfo
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait SqlSourceBlImplTest {
-  self : PostgresSuite =>
-
+  self: PostgresSuite =>
 
   lazy val sqlSourceBL = SqlSourceBLImpl(pgDB)
 

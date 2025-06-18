@@ -20,79 +20,82 @@ trait SparkConfigModel extends Model {
 }
 
 case class NifiStatelessConfigModel(
-                                     bootstrapJars: String,
-                                     systemJars: String,
-                                     statelessJars: String,
-                                     extensions: String)
+    bootstrapJars: String,
+    systemJars: String,
+    statelessJars: String,
+    extensions: String
+)
 
-case class RetainedConfigModel(retainedStagesJobs: Int,
-                               retainedTasks: Int,
-                               retainedJobs: Int,
-                               retainedExecutions: Int,
-                               retainedBatches: Int)
+case class RetainedConfigModel(
+    retainedStagesJobs: Int,
+    retainedTasks: Int,
+    retainedJobs: Int,
+    retainedExecutions: Int,
+    retainedBatches: Int
+)
 
 case class SchedulingStrategyConfigModel(
-                                          factoryClass: String,
-                                          factoryParams: Config
-                                        )
+    factoryClass: String,
+    factoryParams: Config
+)
 
 case class SparkStreamingConfigModel(
-                                      appName: String,
-                                      master: ConnectionConfig,
-                                      driver: SparkDriverConfig,
-                                      executorCores: Int,
-                                      executorMemory: String,
-                                      coresMax: Int,
-                                      executorInstances: Int,
-                                      additionalJarsPath: String,
-                                      yarnJar: String,
-                                      blockManagerPort: Int,
-                                      retained: RetainedConfigModel,
-                                      kryoSerializer: KryoSerializerConfig,
-                                      streamingBatchIntervalMs: Int,
-                                      checkpointDir: String,
-                                      enableHiveSupport: Boolean,
-                                      triggerIntervalMs: Option[Long],
-                                      others: Seq[SparkEntryConfig],
-                                      nifiStateless: Option[NifiStatelessConfigModel],
-                                      schedulingStrategy: SchedulingStrategyConfigModel,
-                                      name: String
-                                    ) extends SparkConfigModel
+    appName: String,
+    master: ConnectionConfig,
+    driver: SparkDriverConfig,
+    executorCores: Int,
+    executorMemory: String,
+    coresMax: Int,
+    executorInstances: Int,
+    additionalJarsPath: String,
+    yarnJar: String,
+    blockManagerPort: Int,
+    retained: RetainedConfigModel,
+    kryoSerializer: KryoSerializerConfig,
+    streamingBatchIntervalMs: Int,
+    checkpointDir: String,
+    enableHiveSupport: Boolean,
+    triggerIntervalMs: Option[Long],
+    others: Seq[SparkEntryConfig],
+    nifiStateless: Option[NifiStatelessConfigModel],
+    schedulingStrategy: SchedulingStrategyConfigModel,
+    name: String
+) extends SparkConfigModel
 
 case class SparkBatchConfigModel(
-                                  appName: String,
-                                  master: ConnectionConfig,
-                                  driver: SparkDriverConfig,
-                                  executorCores: Int,
-                                  executorMemory: String,
-                                  coresMax: Int,
-                                  executorInstances: Int,
-                                  additionalJarsPath: String,
-                                  yarnJar: String,
-                                  blockManagerPort: Int,
-                                  retained: RetainedConfigModel,
-                                  kryoSerializer: KryoSerializerConfig,
-                                  others: Seq[SparkEntryConfig],
-                                  name: String
-                                ) extends SparkConfigModel
+    appName: String,
+    master: ConnectionConfig,
+    driver: SparkDriverConfig,
+    executorCores: Int,
+    executorMemory: String,
+    coresMax: Int,
+    executorInstances: Int,
+    additionalJarsPath: String,
+    yarnJar: String,
+    blockManagerPort: Int,
+    retained: RetainedConfigModel,
+    kryoSerializer: KryoSerializerConfig,
+    others: Seq[SparkEntryConfig],
+    name: String
+) extends SparkConfigModel
 
 case class SparkDriverConfig(
-                              submitDeployMode: String,
-                              cores: Int,
-                              memory: String,
-                              host: String,
-                              bindAddress: String,
-                              port: Int,
-                              killDriverProcessIfSparkContextStops: Boolean
-                            )
+    submitDeployMode: String,
+    cores: Int,
+    memory: String,
+    host: String,
+    bindAddress: String,
+    port: Int,
+    killDriverProcessIfSparkContextStops: Boolean
+)
 
 case class KryoSerializerConfig(
-                                 enabled: Boolean,
-                                 registrators: String,
-                                 strict: Boolean
-                               )
+    enabled: Boolean,
+    registrators: String,
+    strict: Boolean
+)
 
 case class SparkEntryConfig(
-                             key: String,
-                             value: String
-                           )
+    key: String,
+    value: String
+)

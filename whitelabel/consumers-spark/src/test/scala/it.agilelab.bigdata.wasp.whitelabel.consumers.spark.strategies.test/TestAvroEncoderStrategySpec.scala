@@ -23,10 +23,10 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class TestAvroEncoderStrategySpec extends FlatSpec with Matchers with SparkSuite with Logging {
 
-  /**
-    * The test checks if the state generated in it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestAvroEncoderStrategy
-    * (in flatMapGroupsWithState) is correct. The file 3.delta has been copied from hdfs to resource directory in order to deserialize it and
-    * checks its contents. The state is in Avro format and compressed using LZ4 algorithm.
+  /** The test checks if the state generated in
+    * it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestAvroEncoderStrategy (in
+    * flatMapGroupsWithState) is correct. The file 3.delta has been copied from hdfs to resource directory in order to
+    * deserialize it and checks its contents. The state is in Avro format and compressed using LZ4 algorithm.
     */
   it should "generate a valid delta state" in {
 

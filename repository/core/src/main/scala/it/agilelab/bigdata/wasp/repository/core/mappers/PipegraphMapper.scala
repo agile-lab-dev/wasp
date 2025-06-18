@@ -1,8 +1,19 @@
 package it.agilelab.bigdata.wasp.repository.core.mappers
 
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
-import it.agilelab.bigdata.wasp.models.{DashboardModel, PipegraphInstanceModel, PipegraphModel, StructuredStreamingETLModel}
-import it.agilelab.bigdata.wasp.repository.core.dbModels.{PipegraphDBModel, PipegraphDBModelV1, PipegraphDBModelV2, PipegraphInstanceDBModel, PipegraphInstanceDBModelV1}
+import it.agilelab.bigdata.wasp.models.{
+  DashboardModel,
+  PipegraphInstanceModel,
+  PipegraphModel,
+  StructuredStreamingETLModel
+}
+import it.agilelab.bigdata.wasp.repository.core.dbModels.{
+  PipegraphDBModel,
+  PipegraphDBModelV1,
+  PipegraphDBModelV2,
+  PipegraphInstanceDBModel,
+  PipegraphInstanceDBModelV1
+}
 
 object PipegraphDBModelMapperSelector extends MapperSelector[PipegraphModel, PipegraphDBModel] {
 
@@ -11,7 +22,7 @@ object PipegraphDBModelMapperSelector extends MapperSelector[PipegraphModel, Pip
     model match {
       case _: PipegraphDBModelV1 => PipegraphMapperV1
       case _: PipegraphDBModelV2 => PipegraphMapperV2
-      case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+      case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
@@ -28,7 +39,7 @@ object PipegraphInstanceDBModelMapperSelector extends MapperSelector[PipegraphIn
 
     model match {
       case _: PipegraphInstanceDBModelV1 => PipegraphInstanceMapperV1
-      case o                             => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+      case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
     }
   }
 
@@ -61,29 +72,38 @@ object PipegraphMapperV1 extends Mapper[PipegraphModel, PipegraphDBModelV1] {
 
   override def fromDBModelToModel[B >: PipegraphDBModelV1](p: B): PipegraphModel = {
 
-    val values       = PipegraphDBModelV1.unapply(p.asInstanceOf[PipegraphDBModelV1]).get
+    val values    = PipegraphDBModelV1.unapply(p.asInstanceOf[PipegraphDBModelV1]).get
     val makeModel = (PipegraphModel.apply _).tupled
     val t = values match {
       case (
-        name: String,
-        description: String,
-        owner: String,
-        isSystem: Boolean,
-        creationTime: Long,
-        _,
-        structuredStreamingComponents: List[StructuredStreamingETLModel],
-        _,
-        dashboard: Option[DashboardModel],
-        labels: Set[String],
-        enrichmentSources: RestEnrichmentConfigModel
-        ) =>
-        (name, description, owner, isSystem, creationTime,structuredStreamingComponents, dashboard, labels, enrichmentSources)
+            name: String,
+            description: String,
+            owner: String,
+            isSystem: Boolean,
+            creationTime: Long,
+            _,
+            structuredStreamingComponents: List[StructuredStreamingETLModel],
+            _,
+            dashboard: Option[DashboardModel],
+            labels: Set[String],
+            enrichmentSources: RestEnrichmentConfigModel
+          ) =>
+        (
+          name,
+          description,
+          owner,
+          isSystem,
+          creationTime,
+          structuredStreamingComponents,
+          dashboard,
+          labels,
+          enrichmentSources
+        )
     }
     val pipegraphModel = makeModel(t)
     pipegraphModel
   }
 }
-
 
 object PipegraphInstanceMapperV1 extends Mapper[PipegraphInstanceModel, PipegraphInstanceDBModelV1] {
   override val version = "pipegraphInstanceV1"

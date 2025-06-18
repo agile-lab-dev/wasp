@@ -8,16 +8,13 @@ import it.agilelab.bigdata.wasp.producers.metrics.kafka._
 
 import scala.concurrent.duration.FiniteDuration
 
-
-class TestKafkaThroughputGuardian extends KafkaThroughputProducerGuardian[String](
-  Env,
-  "TestKafkaThroughputGuardian",
-  _.actorOf(Props(
-    new KafkaCheckOffsetsGuardian((topic: String) => Props(new TestKafkaCheckKafkaOffset(topic))))
-  ),
-  FiniteDuration(5, TimeUnit.MILLISECONDS)
-) {
-
+class TestKafkaThroughputGuardian
+    extends KafkaThroughputProducerGuardian[String](
+      Env,
+      "TestKafkaThroughputGuardian",
+      _.actorOf(Props(new KafkaCheckOffsetsGuardian((topic: String) => Props(new TestKafkaCheckKafkaOffset(topic))))),
+      FiniteDuration(5, TimeUnit.MILLISECONDS)
+    ) {
 
   override def initialize(): Either[String, Unit] = {
     kafka_router = context.actorOf(Props(new TestKafkaRouter()), "TestKafkaRouter")
@@ -26,27 +23,53 @@ class TestKafkaThroughputGuardian extends KafkaThroughputProducerGuardian[String
     Right(())
   }
 
-  override protected def createActor(kafkaActor: ActorRef,
-                                     topicToCheck: String,
-                                     triggerInterval: Long,
-                                     windowSize: Long,
-                                     sendMessageEveryXsamples: Int): KafkaThroughputProducerActor[String] = {
-    new TestKafkaThroughputProducerActor(kafka_router, kafkaActor, topicToCheck, triggerInterval, windowSize, sendMessageEveryXsamples)
+  override protected def createActor(
+      kafkaActor: ActorRef,
+      topicToCheck: String,
+      triggerInterval: Long,
+      windowSize: Long,
+      sendMessageEveryXsamples: Int
+  ): KafkaThroughputProducerActor[String] = {
+    new TestKafkaThroughputProducerActor(
+      kafka_router,
+      kafkaActor,
+      topicToCheck,
+      triggerInterval,
+      windowSize,
+      sendMessageEveryXsamples
+    )
   }
 
   override protected def kafkaThroughputConfigs(): Either[String, List[KafkaThroughputConfig]] = {
-    Right(List(KafkaThroughputConfig(Constants.throughputTestTopic, Constants.TriggerInterval, Constants.TriggerInterval * 10, 1)))
+    Right(
+      List(
+        KafkaThroughputConfig(
+          Constants.throughputTestTopic,
+          Constants.TriggerInterval,
+          Constants.TriggerInterval * 10,
+          1
+        )
+      )
+    )
   }
 }
 
-class TestKafkaThroughputProducerActor(kafkaRouter: ActorRef,
-                                       kafkaActor: ActorRef,
-                                       topicToCheck: String,
-                                       triggerInterval: Long,
-                                       windowSize: Long,
-                                       sendMessageEveryXsamples: Int) extends
-  KafkaThroughputProducerActor[String](kafkaRouter,
-    kafkaActor, None, topicToCheck, windowSize, sendMessageEveryXsamples, triggerInterval) {
+class TestKafkaThroughputProducerActor(
+    kafkaRouter: ActorRef,
+    kafkaActor: ActorRef,
+    topicToCheck: String,
+    triggerInterval: Long,
+    windowSize: Long,
+    sendMessageEveryXsamples: Int
+) extends KafkaThroughputProducerActor[String](
+      kafkaRouter,
+      kafkaActor,
+      None,
+      topicToCheck,
+      windowSize,
+      sendMessageEveryXsamples,
+      triggerInterval
+    ) {
 
   var counter: Int = 0
 
@@ -63,7 +86,6 @@ class TestKafkaThroughputProducerActor(kafkaRouter: ActorRef,
     counter += 1
     Constants.testThroughputActor ! input
   }
-
 
   override def preStart(): Unit = {
     super.preStart()

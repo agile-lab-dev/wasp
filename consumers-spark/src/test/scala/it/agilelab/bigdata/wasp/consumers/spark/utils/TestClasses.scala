@@ -14,29 +14,29 @@ import scala.collection.mutable.ListBuffer
 case class NestedCaseClass(d: Double, l: Long, s: String)
 
 case class UglyCaseClass(
-                          a: Array[Byte],
-                          b: Array[Int],
-                          na: Array[NestedCaseClass],
-                          d: Date,
-                          ts: Timestamp,
-                          n: NestedCaseClass,
-                          sm: Map[String, Int],
-                          som: Map[String, Option[Double]],
-                          mm: Map[String, Map[String, Option[Double]]],
-                          m: Map[String, NestedCaseClass]
-                        ) {
+    a: Array[Byte],
+    b: Array[Int],
+    na: Array[NestedCaseClass],
+    d: Date,
+    ts: Timestamp,
+    n: NestedCaseClass,
+    sm: Map[String, Int],
+    som: Map[String, Option[Double]],
+    mm: Map[String, Map[String, Option[Double]]],
+    m: Map[String, NestedCaseClass]
+) {
   override def equals(obj: Any): Boolean = obj match {
     case other: UglyCaseClass =>
       this.a.sameElements(other.a) &&
-        this.b.sameElements(other.b) &&
-        this.na.sameElements(other.na) &&
-        this.d == other.d &&
-        this.ts == other.ts &&
-        this.n == other.n &&
-        this.sm == other.sm &&
-        this.som == other.som &&
-        this.mm == other.mm &&
-        this.m == other.m
+      this.b.sameElements(other.b) &&
+      this.na.sameElements(other.na) &&
+      this.d == other.d &&
+      this.ts == other.ts &&
+      this.n == other.n &&
+      this.sm == other.sm &&
+      this.som == other.som &&
+      this.mm == other.mm &&
+      this.m == other.m
   }
 }
 
@@ -131,9 +131,8 @@ object TestClasses {
         .get("som")
         .asInstanceOf[java.util.Map[Utf8, java.lang.Double]]
         .asScala
-        .map {
-          case (k, v) =>
-            k.toString -> Option(v).map(_.toDouble)
+        .map { case (k, v) =>
+          k.toString -> Option(v).map(_.toDouble)
         }
         .toMap,
       record
@@ -142,12 +141,10 @@ object TestClasses {
           java.util.Map[Utf8, java.util.Map[Utf8, java.lang.Double]]
         ]
         .asScala
-        .map {
-          case (k, values: java.util.Map[Utf8, java.lang.Double]) =>
-            k.toString -> values.asScala.map {
-              case (k, v) =>
-                k.toString -> Option(v).map(_.toDouble)
-            }.toMap
+        .map { case (k, values: java.util.Map[Utf8, java.lang.Double]) =>
+          k.toString -> values.asScala.map { case (k, v) =>
+            k.toString -> Option(v).map(_.toDouble)
+          }.toMap
         }
         .toMap,
       record
@@ -169,7 +166,7 @@ object TestClasses {
     d = Date.valueOf("2025-02-04"),
     ts = Timestamp.valueOf("2025-02-04 12:00:00"),
     n = nested1,
-    sm = Map("one"   -> 1, "two" -> 2),
+    sm = Map("one" -> 1, "two" -> 2),
     som = Map("key1" -> Some(1.1), "key2" -> None),
     mm = Map("outer" -> Map("inner" -> Some(2.2))),
     m = Map("nested" -> nested2)
@@ -187,9 +184,9 @@ object TestClasses {
   }
 
   def deserializeFromBytes(
-                            bytes: Array[Byte],
-                            schema: Schema
-                          ): List[GenericRecord] = {
+      bytes: Array[Byte],
+      schema: Schema
+  ): List[GenericRecord] = {
     val byteArrayInputStream = new java.io.ByteArrayInputStream(bytes)
     val datumReader: DatumReader[GenericRecord] =
       new GenericDatumReader[GenericRecord](schema)

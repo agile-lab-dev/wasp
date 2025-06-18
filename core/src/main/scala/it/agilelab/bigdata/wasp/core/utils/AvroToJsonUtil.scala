@@ -35,9 +35,9 @@ object AvroToJsonUtil extends Logging {
     new String(jsonAvroConverter.convertToJson(avro, schemaStr), "UTF-8")
   }
 
-  //Use this function all the times you need to pass a Json generic text message to the Avro encoder. This way, afterward, the decoder won't get broken.
+  // Use this function all the times you need to pass a Json generic text message to the Avro encoder. This way, afterward, the decoder won't get broken.
   def convertToUTF8(s: String): String = {
-    //s.replaceAll("""""","""\"""")
+    // s.replaceAll("""""","""\"""")
     s.replaceAll("#", "")
       .replaceAll("\\\\", "")
       .replaceAll("\"", "")

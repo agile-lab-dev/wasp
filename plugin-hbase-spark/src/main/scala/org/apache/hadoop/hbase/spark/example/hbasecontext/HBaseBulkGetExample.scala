@@ -19,16 +19,14 @@ package org.apache.hadoop.hbase.spark.example.hbasecontext
 
 import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.spark.SparkContext
-import org.apache.hadoop.hbase.{CellUtil, TableName, HBaseConfiguration}
+import org.apache.hadoop.hbase.{CellUtil, HBaseConfiguration, TableName}
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.client.Get
 import org.apache.hadoop.hbase.client.Result
 import org.apache.spark.SparkConf
 
-/**
- * This is a simple example of getting records from HBase
- * with the bulkGet function.
- */
+/** This is a simple example of getting records from HBase with the bulkGet function.
+  */
 object HBaseBulkGetExample {
   def main(args: Array[String]) {
     if (args.length < 1) {
@@ -39,19 +37,22 @@ object HBaseBulkGetExample {
     val tableName = args(0)
 
     val sparkConf = new SparkConf().setAppName("HBaseBulkGetExample " + tableName)
-    val sc = new SparkContext(sparkConf)
+    val sc        = new SparkContext(sparkConf)
 
     try {
 
-      //[(Array[Byte])]
-      val rdd = sc.parallelize(Array(
-        Bytes.toBytes("1"),
-        Bytes.toBytes("2"),
-        Bytes.toBytes("3"),
-        Bytes.toBytes("4"),
-        Bytes.toBytes("5"),
-        Bytes.toBytes("6"),
-        Bytes.toBytes("7")))
+      // [(Array[Byte])]
+      val rdd = sc.parallelize(
+        Array(
+          Bytes.toBytes("1"),
+          Bytes.toBytes("2"),
+          Bytes.toBytes("3"),
+          Bytes.toBytes("4"),
+          Bytes.toBytes("5"),
+          Bytes.toBytes("6"),
+          Bytes.toBytes("7")
+        )
+      )
 
       val conf = HBaseConfiguration.create()
 
@@ -68,13 +69,13 @@ object HBaseBulkGetExample {
         (result: Result) => {
 
           val it = result.listCells().iterator()
-          val b = new StringBuilder
+          val b  = new StringBuilder
 
           b.append(Bytes.toString(result.getRow) + ":")
 
           while (it.hasNext) {
             val cell = it.next()
-            val q = Bytes.toString(CellUtil.cloneQualifier(cell))
+            val q    = Bytes.toString(CellUtil.cloneQualifier(cell))
             if (q.equals("counter")) {
               b.append("(" + q + "," + Bytes.toLong(CellUtil.cloneValue(cell)) + ")")
             } else {
@@ -82,7 +83,8 @@ object HBaseBulkGetExample {
             }
           }
           b.toString()
-        })
+        }
+      )
 
       getRdd.collect().foreach(v => println(v))
 

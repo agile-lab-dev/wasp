@@ -8,7 +8,7 @@ import org.apache.solr.client.solrj.response.QueryResponse
 import java.time.{Duration, Instant}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
-import java.util.{Optional, function}
+import java.util.{function, Optional}
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -80,7 +80,7 @@ class SolrClient(config: SolrConfigModel)(implicit ec: ExecutionContext) {
 
     val hours   = increment.getSeconds / 3600
     val minutes = ((increment.getSeconds % 3600) / 60).toInt
-    val secs    = (increment.getSeconds % 60).toInt
+    val secs    = (increment.getSeconds  % 60).toInt
 
     val gap = s"+${hours}HOURS+${minutes}MINUTES+${secs}SECONDS"
 

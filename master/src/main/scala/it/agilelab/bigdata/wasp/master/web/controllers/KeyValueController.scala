@@ -10,25 +10,31 @@ import spray.json._
 object KeyValueController extends Directives with JsonSupport {
 
   def getRoute: Route = {
-     pathPrefix("keyvalue") {
-        parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
-          pathEnd {
+    pathPrefix("keyvalue") {
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
+          get {
+            complete {
+              // complete with serialized Future result
+              getJsonArrayOrEmpty[KeyValueModel](ConfigBL.keyValueBL.getAll(), _.toJson, pretty)
+            }
+          }
+        } ~
+          path(Segment) { name =>
             get {
               complete {
                 // complete with serialized Future result
-                getJsonArrayOrEmpty[KeyValueModel](ConfigBL.keyValueBL.getAll(), _.toJson, pretty)
+                getJsonOrNotFound[KeyValueModel](
+                  ConfigBL.keyValueBL.getByName(name),
+                  name,
+                  "Keyvalue model",
+                  _.toJson,
+                  pretty
+                )
               }
             }
-          } ~
-            path(Segment) { name =>
-              get {
-                complete {
-                  // complete with serialized Future result
-                  getJsonOrNotFound[KeyValueModel](ConfigBL.keyValueBL.getByName(name), name, "Keyvalue model", _.toJson, pretty)
-                }
-              }
-            }
-        }
+          }
       }
+    }
   }
 }

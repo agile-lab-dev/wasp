@@ -20,30 +20,28 @@ import java.util
 
 import org.apache.hadoop.classification.InterfaceAudience
 
-
-/**
- * This object is a clean way to store and sort all cells that will be bulk
- * loaded into a single row
- */
+/** This object is a clean way to store and sort all cells that will be bulk loaded into a single row
+  */
 @InterfaceAudience.Public
 class FamiliesQualifiersValues extends Serializable {
-  //Tree maps are used because we need the results to
+  // Tree maps are used because we need the results to
   // be sorted when we read them
-  val familyMap = new util.TreeMap[ByteArrayWrapper,
-    util.TreeMap[ByteArrayWrapper, Array[Byte]]]()
+  val familyMap = new util.TreeMap[ByteArrayWrapper, util.TreeMap[ByteArrayWrapper, Array[Byte]]]()
 
-  //normally in a row there are more columns then
-  //column families this wrapper is reused for column
-  //family look ups
+  // normally in a row there are more columns then
+  // column families this wrapper is reused for column
+  // family look ups
   val reusableWrapper = new ByteArrayWrapper(null)
 
-  /**
-   * Adds a new cell to an existing row
-   * @param family    HBase column family
-   * @param qualifier HBase column qualifier
-   * @param value     HBase cell value
-   */
-  def += (family: Array[Byte], qualifier: Array[Byte], value: Array[Byte]): Unit = {
+  /** Adds a new cell to an existing row
+    * @param family
+    *   HBase column family
+    * @param qualifier
+    *   HBase column qualifier
+    * @param value
+    *   HBase cell value
+    */
+  def +=(family: Array[Byte], qualifier: Array[Byte], value: Array[Byte]): Unit = {
 
     reusableWrapper.value = family
 
@@ -57,11 +55,13 @@ class FamiliesQualifiersValues extends Serializable {
     qualifierValues.put(new ByteArrayWrapper(qualifier), value)
   }
 
-  /**
-    * A wrapper for "+=" method above, can be used by Java
-    * @param family    HBase column family
-    * @param qualifier HBase column qualifier
-    * @param value     HBase cell value
+  /** A wrapper for "+=" method above, can be used by Java
+    * @param family
+    *   HBase column family
+    * @param qualifier
+    *   HBase column qualifier
+    * @param value
+    *   HBase cell value
     */
   def add(family: Array[Byte], qualifier: Array[Byte], value: Array[Byte]): Unit = {
     this += (family, qualifier, value)

@@ -14,19 +14,16 @@ trait BatchOpenApiComponentsSupport
     with StrategyModelOpenApiComponentSupport
     with MlModelOnlyInfoComponentSupport
     with OpenApiSchemaSupport
-with KeyValueModelOpenApiDefinition {
+    with KeyValueModelOpenApiDefinition {
 
   implicit lazy val typesafeConfig: ToOpenApiSchema[Config] =
     objectOpenApi[Config]
   implicit lazy val jobStatusOpenApi: ToOpenApiSchema[JobStatus.JobStatus] =
     enumOpenApi(JobStatus)
-  implicit lazy val batchJobInstanceOpenApi
-    : ToOpenApiSchema[BatchJobInstanceModel] =
+  implicit lazy val batchJobInstanceOpenApi: ToOpenApiSchema[BatchJobInstanceModel] =
     product7(BatchJobInstanceModel)
 
-
-  implicit lazy val batchExclusivityConfigOpenApi
-    : ToOpenApiSchema[BatchJobExclusionConfig] = product2(
+  implicit lazy val batchExclusivityConfigOpenApi: ToOpenApiSchema[BatchJobExclusionConfig] = product2(
     BatchJobExclusionConfig
   )
   implicit lazy val batchJobModelOpenApi: ToOpenApiSchema[BatchJobModel] =
@@ -39,7 +36,7 @@ with KeyValueModelOpenApiDefinition {
   implicit lazy val datastoreConfOpenApi: ToOpenApiSchema[DataStoreConf] =
     new ToOpenApiSchema[DataStoreConf] {
       override def schema(ctx: Context): Schema[_] = {
-        val composed = new ComposedSchema()
+        val composed      = new ComposedSchema()
         val discriminator = new Discriminator().propertyName("type")
         composed
           .addOneOfItem(
@@ -52,11 +49,10 @@ with KeyValueModelOpenApiDefinition {
       }
     }
 
-  implicit lazy val keyValueMatchingStrategy
-    : ToOpenApiSchema[KeyValueMatchingStrategy] =
+  implicit lazy val keyValueMatchingStrategy: ToOpenApiSchema[KeyValueMatchingStrategy] =
     new ToOpenApiSchema[KeyValueMatchingStrategy] {
       override def schema(ctx: Context): Schema[_] = {
-        val composed = new ComposedSchema()
+        val composed      = new ComposedSchema()
         val discriminator = new Discriminator().propertyName("type")
         composed
           .addOneOfItem(
@@ -73,19 +69,17 @@ with KeyValueModelOpenApiDefinition {
     }
 
   implicit lazy val timeBasedBetweenPartitionPruningStrategy
-    : ToOpenApiSchema[TimeBasedBetweenPartitionPruningStrategy] = product4(
+      : ToOpenApiSchema[TimeBasedBetweenPartitionPruningStrategy] = product4(
     TimeBasedBetweenPartitionPruningStrategy.apply
   )
 
-  implicit lazy val noPartitionPruningStrategy
-    : ToOpenApiSchema[NoPartitionPruningStrategy] =
+  implicit lazy val noPartitionPruningStrategy: ToOpenApiSchema[NoPartitionPruningStrategy] =
     objectOpenApi.mapSchema((ctx, s) => s.name("ExactKeyValueMatchingStrategy"))
 
-  implicit lazy val partitionPruningStrategy
-    : ToOpenApiSchema[PartitionPruningStrategy] =
+  implicit lazy val partitionPruningStrategy: ToOpenApiSchema[PartitionPruningStrategy] =
     new ToOpenApiSchema[PartitionPruningStrategy] {
       override def schema(ctx: Context): Schema[_] = {
-        val composed = new ComposedSchema()
+        val composed      = new ComposedSchema()
         val discriminator = new Discriminator().propertyName("type")
         composed
           .addOneOfItem(
@@ -111,42 +105,35 @@ with KeyValueModelOpenApiDefinition {
   implicit lazy val rawOptionOpenApi: ToOpenApiSchema[RawOptions] = product4(
     RawOptions.apply
   )
-  implicit lazy val exactKeyValueMatchingStrategy
-    : ToOpenApiSchema[ExactKeyValueMatchingStrategy] =
+  implicit lazy val exactKeyValueMatchingStrategy: ToOpenApiSchema[ExactKeyValueMatchingStrategy] =
     objectOpenApi.mapSchema((ctx, s) => s.name("ExactKeyValueMatchingStrategy"))
 
-  implicit lazy val prefixKeyValueMatchingStrategy
-    : ToOpenApiSchema[PrefixKeyValueMatchingStrategy] = objectOpenApi.mapSchema(
-    (ctx, s) => s.name("PrefixKeyValueMatchingStrategy")
-  )
-  implicit lazy val timeBoundKeyValueMatchingStrategy
-    : ToOpenApiSchema[PrefixAndTimeBoundKeyValueMatchingStrategy] = product3(
-    PrefixAndTimeBoundKeyValueMatchingStrategy.apply
-  )
+  implicit lazy val prefixKeyValueMatchingStrategy: ToOpenApiSchema[PrefixKeyValueMatchingStrategy] =
+    objectOpenApi.mapSchema((ctx, s) => s.name("PrefixKeyValueMatchingStrategy"))
+  implicit lazy val timeBoundKeyValueMatchingStrategy: ToOpenApiSchema[PrefixAndTimeBoundKeyValueMatchingStrategy] =
+    product3(
+      PrefixAndTimeBoundKeyValueMatchingStrategy.apply
+    )
 
-  implicit lazy val exactRawMatchingStrategyOpenApi
-    : ToOpenApiSchema[ExactRawMatchingStrategy] = product1(
+  implicit lazy val exactRawMatchingStrategyOpenApi: ToOpenApiSchema[ExactRawMatchingStrategy] = product1(
     ExactRawMatchingStrategy.apply
   )
-  implicit lazy val prefixRawMatchingStrategyOpenApi
-    : ToOpenApiSchema[PrefixRawMatchingStrategy] = product1(
+  implicit lazy val prefixRawMatchingStrategyOpenApi: ToOpenApiSchema[PrefixRawMatchingStrategy] = product1(
     PrefixRawMatchingStrategy.apply
   )
 
-  implicit lazy val containsRawMatchingStrategyOpenApi
-    : ToOpenApiSchema[ContainsRawMatchingStrategy] = product1(
+  implicit lazy val containsRawMatchingStrategyOpenApi: ToOpenApiSchema[ContainsRawMatchingStrategy] = product1(
     ContainsRawMatchingStrategy.apply
   )
 
-  implicit lazy val keyValueDataStoreConfOpenApi
-    : ToOpenApiSchema[KeyValueDataStoreConf] = product4(
+  implicit lazy val keyValueDataStoreConfOpenApi: ToOpenApiSchema[KeyValueDataStoreConf] = product4(
     KeyValueDataStoreConf.apply
   )
 
   implicit lazy val rawMatchingStrategy: ToOpenApiSchema[RawMatchingStrategy] =
     new ToOpenApiSchema[RawMatchingStrategy] {
       override def schema(ctx: Context): Schema[_] = {
-        val composed = new ComposedSchema()
+        val composed      = new ComposedSchema()
         val discriminator = new Discriminator().propertyName("type")
         composed
           .addOneOfItem(
@@ -165,15 +152,14 @@ with KeyValueModelOpenApiDefinition {
       }
     }
 
-  implicit lazy val gdprBatchEltModelOpenApi
-    : ToOpenApiSchema[BatchGdprETLModel] =
+  implicit lazy val gdprBatchEltModelOpenApi: ToOpenApiSchema[BatchGdprETLModel] =
     product7(BatchGdprETLModel.apply)
       .mapSchema((c, x) => x.addProperties("type", stringOpenApi.schema(c)))
 
   implicit lazy val batchEtlOpenApi: ToOpenApiSchema[BatchETL] =
     new ToOpenApiSchema[BatchETL] {
       override def schema(ctx: Context): Schema[_] = {
-        val composed = new ComposedSchema()
+        val composed      = new ComposedSchema()
         val discriminator = new Discriminator().propertyName("type")
         composed
           .addOneOfItem(shouldBecomeARef(ctx, batchEltModelOpenApi.schema(ctx)))

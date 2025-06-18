@@ -22,7 +22,12 @@ object TopicModelUtils extends Logging {
     logger.info(s"Creating topics $topics")
 
     topics.foreach(topic =>
-      if (! ??[Boolean](WaspSystem.kafkaAdminActor(topic.clusterAlias), CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas)))
+      if (
+        ! ??[Boolean](
+          WaspSystem.kafkaAdminActor(topic.clusterAlias),
+          CheckOrCreateTopic(topic.name, topic.partitions, topic.replicas)
+        )
+      )
         throw new Exception(s"""Error creating topic "${topic.name}"""")
     )
   }
@@ -87,23 +92,22 @@ object TopicModelUtils extends Logging {
 
   def topicNameToColumnName(s: String): String = s.replaceAllLiterally(".", "_").replaceAllLiterally("-", "_")
 
-  /**
-    * Checks that:
-    * - topics are healthy as per [[areTopicsHealthy]]
-    * - the topic models have the same data type
-    * - the topic models have the same schema
+  /** Checks that:
+    *   - topics are healthy as per [[areTopicsHealthy]]
+    *   - the topic models have the same data type
+    *   - the topic models have the same schema
     */
   private[wasp] def areTopicsEqualForReading(models: Seq[TopicModel]): Either[String, Unit] = {
     for {
       _ <- areTopicsHealthy(models)
       _ <- Either
-            .cond(
-              models.map(_.topicDataType).distinct.length == 1,
-              (),
-              "All topic models must have the same topic data type"
-            )
+             .cond(
+               models.map(_.topicDataType).distinct.length == 1,
+               (),
+               "All topic models must have the same topic data type"
+             )
       r <- Either
-            .cond(models.map(_.getJsonSchema).distinct.size == 1, (), "All topic models must have the same schema")
+             .cond(models.map(_.getJsonSchema).distinct.size == 1, (), "All topic models must have the same schema")
     } yield r
   }
 
@@ -117,8 +121,8 @@ object TopicModelUtils extends Logging {
         for {
           _ <- Either.cond(multiTopicModels.nonEmpty, (), "Multi topic needs inner multiTopicModels")
           _ <- traverse(
-                multiTopicModels.toList.map(t => checkTopicModelHasCoherentFields(t, df, Some(mt.topicNameField)))
-              )
+                 multiTopicModels.toList.map(t => checkTopicModelHasCoherentFields(t, df, Some(mt.topicNameField)))
+               )
           _ <- areTopicsHealthy(multiTopicModels)
         } yield ()
       case t: TopicModel =>
@@ -172,10 +176,10 @@ object TopicModelUtils extends Logging {
         for {
           step1 <- checkForStructuredDataType(topic, df, topicColumn)
           step2 <- Either.cond(
-                    !topic.schema.isEmpty,
-                    step1,
-                    s"Topic ${topic.name} datatype is avro therefore the schema should be mandatory"
-                  )
+                     !topic.schema.isEmpty,
+                     step1,
+                     s"Topic ${topic.name} datatype is avro therefore the schema should be mandatory"
+                   )
         } yield step2
       case TopicDataTypes.JSON =>
         checkForStructuredDataType(topic, df, topicColumn)
@@ -341,10 +345,7 @@ case class KafkaTopicSettings(
 ) {
   val isMultiTopic: Boolean = topicFieldName.isDefined
 
-  /**
-    * For multi topic this is identical to topics field,
-    * for simple topic model is a seq containing
-    * the mainTopicModel
+  /** For multi topic this is identical to topics field, for simple topic model is a seq containing the mainTopicModel
     */
   val topicsToWrite: Seq[TopicModel] =
     if (isMultiTopic) {

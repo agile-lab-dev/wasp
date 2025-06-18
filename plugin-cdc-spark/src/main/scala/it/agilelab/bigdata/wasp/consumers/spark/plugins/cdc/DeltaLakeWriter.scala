@@ -17,7 +17,7 @@ class DeltaLakeWriter(model: CdcModel, ss: SparkSession) extends Writer with Log
 
   def write(df: DataFrame, id: Long): Unit = {
     val keys: Array[String] = df.selectExpr("key.*").columns
-    val path = model.uri
+    val path                = model.uri
 
     val afterImageDf = df.selectExpr(s"value.${GenericCdcMutationFields.AFTER_IMAGE}.*")
 
@@ -93,8 +93,7 @@ class DeltaLakeWriter(model: CdcModel, ss: SparkSession) extends Writer with Log
         s"value.${GenericCdcMutationFields.AFTER_IMAGE}, " +
         s"value.${GenericCdcMutationFields.BEFORE_IMAGE}, " +
         s"value.${GenericCdcMutationFields.TYPE}) as otherCols": _*
-    )
-      .groupBy(keyFields.map(col): _*)
+    ).groupBy(keyFields.map(col): _*)
       .agg(max("otherCols").as("latest"))
       .withColumn("key", struct(keyCols: _*))
       .selectExpr(

@@ -38,5 +38,4 @@ class BatchJobBLImp(waspDB: WaspMongoDB) extends BatchJobBL {
 
   override def instances(): BatchJobInstanceBL = instanceBl
 
-
 }

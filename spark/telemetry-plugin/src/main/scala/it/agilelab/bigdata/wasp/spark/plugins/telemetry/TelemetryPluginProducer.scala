@@ -11,13 +11,13 @@ object TelemetryPluginProducer {
 
   def send(kafkaConfig: TelemetryMetadataProducerConfig, key: String, value: String): Future[RecordMetadata] = {
     val topicName = kafkaConfig.telemetry.topicName.toLowerCase() + ".topic"
-    val record = new ProducerRecord[Array[Byte], Array[Byte]](topicName,
+    val record = new ProducerRecord[Array[Byte], Array[Byte]](
+      topicName,
       key.getBytes(StandardCharsets.UTF_8),
-      value.getBytes(StandardCharsets.UTF_8))
+      value.getBytes(StandardCharsets.UTF_8)
+    )
 
     cache.get(kafkaConfig).send(record)
   }
 
-
 }
-

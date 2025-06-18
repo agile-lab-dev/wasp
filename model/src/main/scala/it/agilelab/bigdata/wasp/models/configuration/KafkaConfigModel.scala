@@ -3,49 +3,51 @@ package it.agilelab.bigdata.wasp.models.configuration
 import it.agilelab.bigdata.wasp.models.Model
 import it.agilelab.bigdata.wasp.models.configuration.KafkaConfigProxy.MainKafkaClusterName
 
-case class KafkaConfigModel(connections: Seq[ConnectionConfig],
-														ingest_rate: String,
-														zookeeperConnections: Option[ZookeeperConnectionsConfig],
-														broker_id: String,
-														partitioner_fqcn: String,
-														default_encoder: String,
-														key_encoder_fqcn: String,
-														encoder_fqcn: String,
-														decoder_fqcn: String,
-														batch_send_size: Int,
-														acks: String,
-														others: Seq[KafkaEntryConfig],
-														name: String
-                           ) extends Model {
+case class KafkaConfigModel(
+    connections: Seq[ConnectionConfig],
+    ingest_rate: String,
+    zookeeperConnections: Option[ZookeeperConnectionsConfig],
+    broker_id: String,
+    partitioner_fqcn: String,
+    default_encoder: String,
+    key_encoder_fqcn: String,
+    encoder_fqcn: String,
+    decoder_fqcn: String,
+    batch_send_size: Int,
+    acks: String,
+    others: Seq[KafkaEntryConfig],
+    name: String
+) extends Model {
 
-	def toTinyConfig() = TinyKafkaConfig(connections, batch_send_size, acks, default_encoder, encoder_fqcn, partitioner_fqcn, others)
+  def toTinyConfig() =
+    TinyKafkaConfig(connections, batch_send_size, acks, default_encoder, encoder_fqcn, partitioner_fqcn, others)
 
-	def ingestRateToMills() = {
-		val defaultIngestRate = 1000
-		try {
-			this.ingest_rate.replace("s", "").toInt * defaultIngestRate
-		} catch {
-			case _ : Throwable => defaultIngestRate
-		}
-	}
+  def ingestRateToMills() = {
+    val defaultIngestRate = 1000
+    try {
+      this.ingest_rate.replace("s", "").toInt * defaultIngestRate
+    } catch {
+      case _: Throwable => defaultIngestRate
+    }
+  }
 }
 
 case class TinyKafkaConfig(
-														connections: Seq[ConnectionConfig],
-														batch_send_size: Int,
-														acks: String,
-														default_encoder: String,
-														encoder_fqcn: String,
-														partitioner_fqcn: String,
-														others: Seq[KafkaEntryConfig])
+    connections: Seq[ConnectionConfig],
+    batch_send_size: Int,
+    acks: String,
+    default_encoder: String,
+    encoder_fqcn: String,
+    partitioner_fqcn: String,
+    others: Seq[KafkaEntryConfig]
+)
 
 case class KafkaEntryConfig(
-														 key: String,
-														 value: String
-													 ) {
-	def toTupla = (key, value)
+    key: String,
+    value: String
+) {
+  def toTupla = (key, value)
 }
-
 
 case class AdditionalKafkaClustersConfig(name: String, clusters: Map[String, KafkaConfigModel]) extends Model
 
@@ -60,9 +62,13 @@ class KafkaConfigProxy(kafkaConfigModel: KafkaConfigModel, additionalClusters: M
   }
 
   def resolve(clusterAlias: Option[String]): KafkaConfigModel = clusterAlias match {
-    case Some(alias) => additionalClusters.getOrElse(alias,
-      throw new Exception(s"Could not found cluster alias $alias in list of known clusters: ${additionalClusters.keys.mkString(",")}")
-    )
+    case Some(alias) =>
+      additionalClusters.getOrElse(
+        alias,
+        throw new Exception(
+          s"Could not found cluster alias $alias in list of known clusters: ${additionalClusters.keys.mkString(",")}"
+        )
+      )
     case None => getDefaultKafka
   }
 
@@ -74,5 +80,6 @@ class KafkaConfigProxy(kafkaConfigModel: KafkaConfigModel, additionalClusters: M
 object KafkaConfigProxy {
   val MainKafkaClusterName = "main_kafka_cluster"
 
-  def apply(kafkaConfigModel: KafkaConfigModel, additionalClusters: Map[String, KafkaConfigModel]) = new KafkaConfigProxy(kafkaConfigModel, additionalClusters)
+  def apply(kafkaConfigModel: KafkaConfigModel, additionalClusters: Map[String, KafkaConfigModel]) =
+    new KafkaConfigProxy(kafkaConfigModel, additionalClusters)
 }

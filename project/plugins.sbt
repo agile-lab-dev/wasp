@@ -6,4 +6,6 @@ addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.11.0")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.3.0")
 // sign artifacts
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.1")
+// scalafmt
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
 addDependencyTreePlugin

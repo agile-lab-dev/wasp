@@ -4,16 +4,13 @@ import akka.actor.{Actor, ActorRef, Stash}
 import it.agilelab.bigdata.wasp.repository.core.bl.PipegraphBL
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.RestartConsumers
-import it.agilelab.bigdata.wasp.models.{
-  PipegraphModel,
-  ProcessingComponentModel,
-  StructuredStreamingETLModel
-}
+import it.agilelab.bigdata.wasp.models.{PipegraphModel, ProcessingComponentModel, StructuredStreamingETLModel}
 
 /** Base class for consumer master guardians. Provides skeleton for behaviour and helpers.
-	*
-	* @author Nicolò Bidotti
-	*/
+  *
+  * @author
+  *   Nicolò Bidotti
+  */
 abstract class BaseConsumersMasterGuadian(env: { val pipegraphBL: PipegraphBL }) extends Actor with Stash with Logging {
 
   // type alias for pipegraph -> components map
@@ -43,12 +40,11 @@ abstract class BaseConsumersMasterGuadian(env: { val pipegraphBL: PipegraphBL })
   override def receive: Actor.Receive = uninitialized
 
   // behaviour when uninitialized
-  def uninitialized: Receive = {
-    case RestartConsumers =>
-      // update MasterGuardian ActorRef
-      masterGuardian = sender()
+  def uninitialized: Receive = { case RestartConsumers =>
+    // update MasterGuardian ActorRef
+    masterGuardian = sender()
 
-      beginStartup()
+    beginStartup()
   }
 
   // behaviour while starting

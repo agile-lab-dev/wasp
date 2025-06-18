@@ -3,19 +3,16 @@ package it.agilelab.bigdata.wasp.models.builder
 import it.agilelab.bigdata.wasp.models.builder.KVColumnFamily.ColumnFamilyBuilder
 import org.scalatest.{FlatSpec, Matchers}
 
-
 class KVColumnFamilyBuilderTest extends FlatSpec with Matchers {
 
   it should "not compile an incomplete columnFamily" in {
-    assertDoesNotCompile(
-      """ColumnFamilyBuilder
+    assertDoesNotCompile("""ColumnFamilyBuilder
       .emptyColumnFamilyBuilder
       .withCellQualifier(CellQualifier.PrimitiveCellQualifier("field", "qualifier", KVType.LONG))
       .withCellQualifier(CellQualifier.AvroCellQualifier("structField", "q2", "avroSchema"))
       .build""")
 
-    assertDoesNotCompile(
-      """ColumnFamilyBuilder
+    assertDoesNotCompile("""ColumnFamilyBuilder
       .emptyColumnFamilyBuilder
       .withName("myCf")
       .build""")
@@ -32,7 +29,7 @@ class KVColumnFamilyBuilderTest extends FlatSpec with Matchers {
     cf.cellQualifiers should contain theSameElementsAs (
       KVColumn.primitive("field", "qualifier", KVType.LONG) ::
         KVColumn.avro("structField", "q2", "avroSchema") :: Nil
-      )
+    )
     cf.toJson.mkString(",\n") should be(
       """
         |"field": {"cf": "myCf", "col": "qualifier", "type": "long"},
@@ -53,7 +50,7 @@ class KVColumnFamilyBuilderTest extends FlatSpec with Matchers {
     cf.cellQualifiers should contain theSameElementsAs (
       KVColumn.primitive("field", "qualifier", KVType.LONG) ::
         KVColumn.avro("structField", "q2", "avroSchema") :: Nil
-      )
+    )
     cf.toJson.mkString(",\n") should be(
       """
         |"clustering": {"cf": "myCf", "columns": "timestamp:timestamp2"},

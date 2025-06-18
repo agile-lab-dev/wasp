@@ -5,7 +5,4 @@ import org.mongodb.scala.bson.BsonDocument
 
 trait ProcessGroupDBModel extends Model
 
-case class ProcessGroupDBModelV1(name: String,
-                                 content: BsonDocument,
-                                 errorPort: String
-                                ) extends ProcessGroupDBModel
+case class ProcessGroupDBModelV1(name: String, content: BsonDocument, errorPort: String) extends ProcessGroupDBModel

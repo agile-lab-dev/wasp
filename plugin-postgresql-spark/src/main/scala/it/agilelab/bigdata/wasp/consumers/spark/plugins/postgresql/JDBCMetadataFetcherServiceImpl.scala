@@ -2,13 +2,13 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.postgresql
 
 import java.sql.{Connection, ResultSetMetaData}
 
-/**
-  * Service for fetching metadata for a table using JDBC.
+/** Service for fetching metadata for a table using JDBC.
   *
   * No attempt at caching metadata is made, as such frequent invocations are to be avoided and the metadata should be
   * cached/reused by the caller.
   *
-  * @author Nicolò Bidotti
+  * @author
+  *   Nicolò Bidotti
   */
 class JDBCMetadataFetcherServiceImpl extends JDBCMetadataFetcherService {
   override def fetchMetadataForTable(connection: Connection, tableName: String): TableMetadata = {

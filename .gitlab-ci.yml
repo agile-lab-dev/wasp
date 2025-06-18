@@ -130,6 +130,17 @@ censor:
   script:
     - ./censor.sh
 
+scalafmt:
+  stage: censor
+  image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
+  interruptible: true
+  script:
+    - ./run-sbt-unprivileged.sh "scalafmtCheck"
+  tags:
+    - saas-linux-medium-arm64
+  only: [merge_requests]
+  needs: []
+
 generate-open-api:
   stage: test
   interruptible: true

@@ -8,18 +8,13 @@ import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
 import it.agilelab.bigdata.wasp.models.{LogEntry, Logs}
 
-trait LogsOpenApiComponentSupport
-    extends ProducerOpenApiComponentSupport
-    with LangOpenApi
-    with CollectionsOpenApi {
+trait LogsOpenApiComponentSupport extends ProducerOpenApiComponentSupport with LangOpenApi with CollectionsOpenApi {
   implicit lazy val logsOpenApi: ToOpenApiSchema[Logs] = product2(Logs.apply)
   implicit lazy val logsEntryOpenApi: ToOpenApiSchema[LogEntry] =
     product7(LogEntry.apply)
 }
 
-trait LogsRoutesOpenApiDefinition
-    extends LogsOpenApiComponentSupport
-    with AngularResponseOpenApiComponentSupport {
+trait LogsRoutesOpenApiDefinition extends LogsOpenApiComponentSupport with AngularResponseOpenApiComponentSupport {
 
   def logsRoutes(ctx: Context): Map[String, PathItem] = {
     Map("/logs" -> get(ctx))

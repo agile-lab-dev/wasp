@@ -10,7 +10,6 @@ import org.mongodb.scala.bson.BsonString
 
 case class HttpBlImpl(waspDB: WaspMongoDB) extends HttpBL {
 
-
   def getByName(name: String): Option[HttpModel] = {
     waspDB
       .getDocumentByField[HttpDBModel]("name", new BsonString(name))

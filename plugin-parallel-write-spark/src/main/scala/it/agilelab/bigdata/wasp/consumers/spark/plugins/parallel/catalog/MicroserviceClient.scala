@@ -8,25 +8,28 @@ import spray.json._
 
 import java.net.URL
 
-/**
-  * Defines functions needed by all microservices
+/** Defines functions needed by all microservices
   */
 trait MicroserviceClient {
 
-  /**
-    * Each microservices has a base url. This url serves as a prefix to every endpoint
-    * @return microservice base url
+  /** Each microservices has a base url. This url serves as a prefix to every endpoint
+    * @return
+    *   microservice base url
     */
   val baseUrl: URL
 
-  /**
-    *
-    * @param url Url
-    * @param body Request body
-    * @param headers Header map
-    * @tparam A Request body type
-    * @tparam B Response body type
-    * @return Response body casted to B
+  /** @param url
+    *   Url
+    * @param body
+    *   Request body
+    * @param headers
+    *   Header map
+    * @tparam A
+    *   Request body type
+    * @tparam B
+    *   Response body type
+    * @return
+    *   Response body casted to B
     */
   protected def post[A: JsonFormat, B: JsonFormat](url: URL, body: Option[A], headers: Map[String, String]): B = {
     val bodyJson = body match {
@@ -69,12 +72,14 @@ trait MicroserviceClient {
     )
   }
 
-  /**
-    *
-    * @param url Url
-    * @param headers Header map
-    * @tparam A Response body type
-    * @return Response body casted to B
+  /** @param url
+    *   Url
+    * @param headers
+    *   Header map
+    * @tparam A
+    *   Response body type
+    * @return
+    *   Response body casted to B
     */
   protected def get[A: JsonFormat](
       url: URL,
@@ -92,7 +97,9 @@ trait MicroserviceClient {
         "request - " + request
           .url()
           .toString + ", " + request.body().contentType().toString + "\tresponse - status code: " + response
-          .code() + ", response contentType: " + using(response.body())(_.contentType()) + ", status description: " + response
+          .code() + ", response contentType: " + using(response.body())(
+          _.contentType()
+        ) + ", status description: " + response
           .message()
       )
     }

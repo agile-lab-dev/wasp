@@ -30,9 +30,8 @@ class NifiStrategy extends InternalStrategy {
       .asScala
       .map(e => (e.getKey, e.getValue.render()))
       .toMap
-      .foreach {
-        case (k, v) =>
-          variables.put(k, v)
+      .foreach { case (k, v) =>
+        variables.put(k, v)
       }
 
     val flowContent = configuration.getString("nifi.flow")

@@ -5,5 +5,5 @@ trait ConnectionInfoProvider {
   protected def getUser: String
   protected def getPassword: String
   protected def getDriver: String
-  protected def getPoolSize : Int
+  protected def getPoolSize: Int
 }

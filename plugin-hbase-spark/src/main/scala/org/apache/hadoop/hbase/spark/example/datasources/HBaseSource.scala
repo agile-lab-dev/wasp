@@ -22,28 +22,21 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 
 case class HBaseRecord(
-  col0: String,
-  col1: Boolean,
-  col2: Double,
-  col3: Float,
-  col4: Int,
-  col5: Long,
-  col6: Short,
-  col7: String,
-  col8: Byte)
+    col0: String,
+    col1: Boolean,
+    col2: Double,
+    col3: Float,
+    col4: Int,
+    col5: Long,
+    col6: Short,
+    col7: String,
+    col8: Byte
+)
 
 object HBaseRecord {
   def apply(i: Int): HBaseRecord = {
     val s = s"""row${"%03d".format(i)}"""
-    HBaseRecord(s,
-      i % 2 == 0,
-      i.toDouble,
-      i.toFloat,
-      i,
-      i.toLong,
-      i.toShort,
-      s"String$i extra",
-      i.toByte)
+    HBaseRecord(s, i % 2 == 0, i.toDouble, i.toFloat, i, i.toLong, i.toShort, s"String$i extra", i.toByte)
   }
 }
 
@@ -66,13 +59,12 @@ object HBaseSource {
 
   def main(args: Array[String]) {
     val sparkConf = new SparkConf().setAppName("HBaseSourceExample")
-    val ss = SparkSession.builder().config(sparkConf).getOrCreate()
+    val ss        = SparkSession.builder().config(sparkConf).getOrCreate()
     import ss.implicits._
 
     def withCatalog(cat: String): DataFrame = {
-      ss
-        .read
-        .options(Map(HBaseTableCatalog.tableCatalog->cat))
+      ss.read
+        .options(Map(HBaseTableCatalog.tableCatalog -> cat))
         .format("org.apache.hadoop.hbase.spark")
         .load()
     }
@@ -81,19 +73,25 @@ object HBaseSource {
       HBaseRecord(i)
     }
 
-    ss.sparkContext.parallelize(data).toDF.write.options(
-      Map(HBaseTableCatalog.tableCatalog -> cat, HBaseTableCatalog.newTable -> "5"))
+    ss.sparkContext
+      .parallelize(data)
+      .toDF
+      .write
+      .options(Map(HBaseTableCatalog.tableCatalog -> cat, HBaseTableCatalog.newTable -> "5"))
       .format("org.apache.hadoop.hbase.spark")
       .save()
 
     val df = withCatalog(cat)
     df.show()
     df.filter($"col0" <= "row005")
-      .select($"col0", $"col1").show
+      .select($"col0", $"col1")
+      .show
     df.filter($"col0" === "row005" || $"col0" <= "row005")
-      .select($"col0", $"col1").show
+      .select($"col0", $"col1")
+      .show
     df.filter($"col0" > "row250")
-      .select($"col0", $"col1").show
+      .select($"col0", $"col1")
+      .show
     df.createOrReplaceTempView("table1")
     val c = ss.sqlContext.sql("select count(col1) from table1 where col0 < 'row050'")
     c.show()

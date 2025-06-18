@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.repository.core.mappers.WebsocketMapperV1.transf
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.bson.BsonString
 
-class WebsocketBLImp(waspDB: WaspMongoDB) extends WebsocketBL  {
+class WebsocketBLImp(waspDB: WaspMongoDB) extends WebsocketBL {
 
   def getByName(name: String): Option[WebsocketModel] = {
     waspDB.getDocumentByField[WebsocketDBModel]("name", new BsonString(name)).map(factory)

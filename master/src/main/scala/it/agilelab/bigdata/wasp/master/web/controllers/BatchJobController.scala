@@ -9,12 +9,9 @@ import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel}
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-/**
-  * Created by Agile Lab s.r.l. on 09/08/2017.
+/** Created by Agile Lab s.r.l. on 09/08/2017.
   */
-class BatchJobController(batchJobService: BatchJobService)
-  extends Directives
-    with JsonSupport {
+class BatchJobController(batchJobService: BatchJobService) extends Directives with JsonSupport {
 
   def pretty(subroute: Boolean => Route): Route =
     parameters('pretty.as[Boolean].?(false)) { pretty =>
@@ -78,7 +75,7 @@ class BatchJobController(batchJobService: BatchJobService)
 
   def instancesRoute(pretty: Boolean): Route = {
     get {
-      path("batchjobs" / Segment / "instances" ) { name =>
+      path("batchjobs" / Segment / "instances") { name =>
         complete {
           getJsonArrayOrEmpty[BatchJobInstanceModel](
             batchJobService.instanceOf(name),
@@ -92,36 +89,35 @@ class BatchJobController(batchJobService: BatchJobService)
 
   def instanceRoute(pretty: Boolean): Route = {
     get {
-      path("batchjobs" / Segment / "instances" / Segment) {
-        (name, instanceName) =>
-          complete {
-            val instance: Option[BatchJobInstanceModel] =
-              batchJobService.instance(instanceName)
-            if ((instance.isDefined) && (instance.get.instanceOf != name))
-              httpResponseJson(
-                entity = JsonResultsHelper
-                  .angularErrorBuilder(
-                    s"Batch job instance '$instanceName' not related to batch job '$name'"
-                  )
-                  .toString(),
-                status = StatusCodes.BadRequest
-              )
-            else
-              getJsonOrNotFound[BatchJobInstanceModel](
-                instance,
-                name,
-                "Batch job instance",
-                _.toJson,
-                pretty
-              )
-          }
+      path("batchjobs" / Segment / "instances" / Segment) { (name, instanceName) =>
+        complete {
+          val instance: Option[BatchJobInstanceModel] =
+            batchJobService.instance(instanceName)
+          if ((instance.isDefined) && (instance.get.instanceOf != name))
+            httpResponseJson(
+              entity = JsonResultsHelper
+                .angularErrorBuilder(
+                  s"Batch job instance '$instanceName' not related to batch job '$name'"
+                )
+                .toString(),
+              status = StatusCodes.BadRequest
+            )
+          else
+            getJsonOrNotFound[BatchJobInstanceModel](
+              instance,
+              name,
+              "Batch job instance",
+              _.toJson,
+              pretty
+            )
+        }
       }
     }
   }
 
   def deleteRoute(pretty: Boolean): Route = {
     delete {
-      path("batchjobs" / Segment ) { name =>
+      path("batchjobs" / Segment) { name =>
         complete {
           val batchJob = batchJobService.get(name)
           if (batchJob.isDefined) {
@@ -143,9 +139,8 @@ class BatchJobController(batchJobService: BatchJobService)
     }
   }
 
-
-  def newStyleRoute : Route = pretty{ isPretty =>
-    List(listRoute _, insertRoute _, updateRoute _ , startRoute _, instancesRoute _, instanceRoute _ , deleteRoute _)
+  def newStyleRoute: Route = pretty { isPretty =>
+    List(listRoute _, insertRoute _, updateRoute _, startRoute _, instancesRoute _, instanceRoute _, deleteRoute _)
       .map(route => route(isPretty))
       .reduce(_ ~ _)
   }

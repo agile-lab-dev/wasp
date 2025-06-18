@@ -9,6 +9,6 @@ object RawMapperV1 extends SimpleMapper[RawModel, RawDBModelV1] {
   override val version = "rawV1"
   override def fromDBModelToModel[B >: RawDBModelV1](m: B): RawModel = m match {
     case mm: RawDBModelV1 => transform[RawModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o                => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

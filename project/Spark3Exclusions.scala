@@ -4,9 +4,8 @@ object Spark3Exclusions {
   // when the artifacts are published, they're not excluded by dependant projects
   implicit class ModuleIdPower(val moduleID: ModuleID) extends AnyVal {
     def exclude(orgAndModule: Iterable[MavenCoordinate]): ModuleID = {
-      orgAndModule.foldLeft(moduleID) {
-        case (m, MavenCoordinate(org, mod)) =>
-          m.exclude(org, mod)
+      orgAndModule.foldLeft(moduleID) { case (m, MavenCoordinate(org, mod)) =>
+        m.exclude(org, mod)
       }
     }
   }
@@ -88,7 +87,10 @@ object Spark3Exclusions {
       )
 
   lazy val kafka08Exclude: Vector[MavenCoordinate] =
-    Vector(MavenCoordinate("org.apache.kafka", "kafka_2.11"), MavenCoordinate("org.apache.kafka", "kafka_2.12")) // todo chec
+    Vector(
+      MavenCoordinate("org.apache.kafka", "kafka_2.11"),
+      MavenCoordinate("org.apache.kafka", "kafka_2.12")
+    ) // todo chec
 
   lazy val hiveExclude = Vector(
     MavenCoordinate("org.apache.spark", "spark-core_2.11"),

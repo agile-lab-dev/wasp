@@ -14,10 +14,10 @@ class TestIdentityStrategyPostHook extends Strategy with HasPostMaterializationH
     dataFrames.head._2
   }
 
-  /**
-    * Hook called by the wasp framework after the write phase finishes
+  /** Hook called by the wasp framework after the write phase finishes
     *
-    * @param maybeError Some(error) if an error happened during materialization; None otherwise
+    * @param maybeError
+    *   Some(error) if an error happened during materialization; None otherwise
     */
   override def postMaterialization(maybeDataframe: Option[DataFrame], maybeError: Option[Throwable]): Try[Unit] = {
     Seq.range(0, 100).foreach(_ => println("---------------------HOOKCALLED-----------------------"))

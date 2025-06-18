@@ -56,19 +56,19 @@ class HBaseTableCatalogTest extends FunSuite {
           RowKey("key"),
           SchemaMap(
             mutable.HashMap(
-              "rowkey"      -> Field("rowkey", "rowkey", "key",Some("string")),
+              "rowkey"      -> Field("rowkey", "rowkey", "key", Some("string")),
               "otherField"  -> Field("otherField", "otherCf", "q3", Some("boolean")),
               "field"       -> Field("field", "myCf", "qualifier", Some("long")),
               "timestamp"   -> Field("timestamp", "myCf", "timestamp", Some("string")),
-              "structField" -> Field("structField", "myCf", "q2",None, Some(avroSchema)),
-              "ts2"         -> Field("ts2", "myCf", "timestamp2",Some("string")),
-              "ts"          -> Field("ts", "myCf", "timestamp",Some("string")),
-              "timestamp2"  -> Field("timestamp2", "myCf", "timestamp2",Some("string"))
+              "structField" -> Field("structField", "myCf", "q2", None, Some(avroSchema)),
+              "ts2"         -> Field("ts2", "myCf", "timestamp2", Some("string")),
+              "ts"          -> Field("ts", "myCf", "timestamp", Some("string")),
+              "timestamp2"  -> Field("timestamp2", "myCf", "timestamp2", Some("string"))
             )
           ),
           Map("myCf" -> Seq("timestamp", "timestamp2")),
           Map(
-            "catalog"  -> testCatalog,
+            "catalog"    -> testCatalog,
             "avroSchema" -> avroSchema
           )
         )

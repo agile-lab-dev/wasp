@@ -30,13 +30,28 @@ abstract class SealedTraitCodecProvider[Trait] extends CodecProvider {
     }
   }
 
-  def decodeWithType(classType: String, bsonReader: BsonReader, decoderContext: DecoderContext, registry: CodecRegistry): Trait
+  def decodeWithType(
+      classType: String,
+      bsonReader: BsonReader,
+      decoderContext: DecoderContext,
+      registry: CodecRegistry
+  ): Trait
 
-  def encodeWithType(bsonWriter: BsonWriter, value: Trait, encoderContext: EncoderContext, registry: CodecRegistry): BsonDocument
+  def encodeWithType(
+      bsonWriter: BsonWriter,
+      value: Trait,
+      encoderContext: EncoderContext,
+      registry: CodecRegistry
+  ): BsonDocument
 
   def clazzOf: Class[Trait]
 
-  def createBsonDocument[T](codec: Codec[T], typeKey: String, value: T, encoderContext: EncoderContext): BsonDocument = {
+  def createBsonDocument[T](
+      codec: Codec[T],
+      typeKey: String,
+      value: T,
+      encoderContext: EncoderContext
+  ): BsonDocument = {
     val bsonDocWriter = new BsonDocumentWriter(new BsonDocument(TYPE_FIELD, new BsonString(typeKey)))
     codec.encode(bsonDocWriter, value, encoderContext)
     bsonDocWriter.getDocument

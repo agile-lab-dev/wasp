@@ -57,20 +57,30 @@ class BatchETLCodecProviderTest extends FunSuite {
     lazy val dataRawModel: RawModel = RawModel(
       name = "GdprDataRawModel",
       uri = s"hdfs://$hostname:9000/user/root/gdpr/data",
-      schema = StructType(Seq(
-        StructField("id", StringType),
-        StructField("number", LongType),
-        StructField("name", StringType)
-      )).json)
+      schema = StructType(
+        Seq(
+          StructField("id", StringType),
+          StructField("number", LongType),
+          StructField("name", StringType)
+        )
+      ).json
+    )
 
     val dataStores: List[DataStoreConf] = List(
-      RawDataStoreConf("id", "correlationId", dataRawModel, ExactRawMatchingStrategy("key"), NoPartitionPruningStrategy())
+      RawDataStoreConf(
+        "id",
+        "correlationId",
+        dataRawModel,
+        ExactRawMatchingStrategy("key"),
+        NoPartitionPruningStrategy()
+      )
     )
 
     lazy val inputRawModel: RawModel = RawModel(
       name = "GdprInputRawModel",
       uri = s"hdfs://$hostname:9000/user/root/gdpr/input",
-      schema = StructType(Seq(StructField("key", StringType))).json)
+      schema = StructType(Seq(StructField("key", StringType))).json
+    )
 
     lazy val inputs = List(
       ReaderModel.rawReader(
@@ -82,10 +92,13 @@ class BatchETLCodecProviderTest extends FunSuite {
     lazy val outputRawModel: RawModel = RawModel(
       name = "GdprOutputRawModel",
       uri = s"hdfs://$hostname:9000/user/root/gdpr/result/",
-      schema = StructType(Seq(
-        StructField("key", StringType),
-        StructField("result", BooleanType)
-      )).json)
+      schema = StructType(
+        Seq(
+          StructField("key", StringType),
+          StructField("result", BooleanType)
+        )
+      ).json
+    )
 
     lazy val output: WriterModel = WriterModel.rawWriter(
       name = "GdprOutputRawModel",
@@ -110,9 +123,11 @@ class BatchETLCodecProviderTest extends FunSuite {
     )
 
     val writer = new BsonDocumentWriter(new BsonDocument("_id", new BsonObjectId))
-    registry.get(classOf[BatchJobModel]).encode(writer, model, EncoderContext.builder().isEncodingCollectibleDocument(true).build())
+    registry
+      .get(classOf[BatchJobModel])
+      .encode(writer, model, EncoderContext.builder().isEncodingCollectibleDocument(true).build())
 
-    val reader = writer.getDocument.asBsonReader()
+    val reader       = writer.getDocument.asBsonReader()
     val modelDecoded = registry.get(classOf[BatchJobModel]).decode(reader, DecoderContext.builder.build())
 
     assert(model === modelDecoded)

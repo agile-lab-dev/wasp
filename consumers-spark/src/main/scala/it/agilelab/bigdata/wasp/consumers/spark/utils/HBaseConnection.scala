@@ -22,28 +22,26 @@ import org.apache.hadoop.yarn.security.client.ClientToAMTokenIdentifier
 
 import scala.collection.JavaConverters._
 
-
 class HBaseConnection(hbaseConfig: Option[HBaseConfigModel]) extends GuardedLogging {
 
   // region members
 
   private val config: Configuration = {
-    val conf = HBaseConfiguration.create()
+    val conf                               = HBaseConfiguration.create()
     val document: Option[HBaseConfigModel] = hbaseConfig
 
     if (document.isDefined) {
-      val hbaseConf = document.get
-      val coreSiteXml = hbaseConf.coreSiteXmlPath
+      val hbaseConf    = document.get
+      val coreSiteXml  = hbaseConf.coreSiteXmlPath
       val hbaseSiteXml = hbaseConf.hbaseSiteXmlPath
-      val otherOpts = hbaseConf.others
+      val otherOpts    = hbaseConf.others
 
       conf.addResource(new Path(coreSiteXml))
       conf.addResource(new Path(hbaseSiteXml))
 
-      otherOpts.foreach {
-        opt =>
-          log.info(s"HBase additional custom option added: ${opt.key} -> ${opt.value}")
-          conf.set(opt.key, opt.value)
+      otherOpts.foreach { opt =>
+        log.info(s"HBase additional custom option added: ${opt.key} -> ${opt.value}")
+        conf.set(opt.key, opt.value)
       }
 
       log.info("HBaseConnection instance with explicit config")
@@ -60,7 +58,7 @@ class HBaseConnection(hbaseConfig: Option[HBaseConfigModel]) extends GuardedLogg
 
   private lazy val isWSenabled: Boolean = env.containsKey("WASP_SECURITY")
 
-  //private lazy val choreService = new ChoreService("hbase_chores_")
+  // private lazy val choreService = new ChoreService("hbase_chores_")
   private lazy val executor = Executors.newSingleThreadScheduledExecutor()
 
   private val specialChars: String = "+++++-----"
@@ -150,37 +148,42 @@ class HBaseConnection(hbaseConfig: Option[HBaseConfigModel]) extends GuardedLogg
       val result = if (isWSenabled) {
         val maybeToken = UserGroupInformation.getCurrentUser.getTokens.asScala
           .find(_.decodeIdentifier().isInstanceOf[AuthenticationTokenIdentifier])
-        val user = maybeToken.map { token =>
-          log.info(s"Found HBase token: ${tokenToString(token.decodeIdentifier())}")
-          User.create(UserGroupInformation.getCurrentUser)
-        }.getOrElse {
-          val principal: String = System.getenv("PRINCIPAL_NAME")
-          val keytabLocation: String = System.getenv("KEYTAB_FILE_NAME")
-          log.info(s"Creating user in UGI with PRINCIPAL_NAME $principal, KEYTAB_FILE_NAME $keytabLocation")
-          if (!keytabFileExists(keytabLocation)) {
-            log.warn(s"Cannot check keytab file existence at $keytabLocation! Continuing...")
+        val user = maybeToken
+          .map { token =>
+            log.info(s"Found HBase token: ${tokenToString(token.decodeIdentifier())}")
+            User.create(UserGroupInformation.getCurrentUser)
           }
-          val confWithAuthKeys = newConfWithAuthKeys(config, principal, keytabLocation)
+          .getOrElse {
+            val principal: String      = System.getenv("PRINCIPAL_NAME")
+            val keytabLocation: String = System.getenv("KEYTAB_FILE_NAME")
+            log.info(s"Creating user in UGI with PRINCIPAL_NAME $principal, KEYTAB_FILE_NAME $keytabLocation")
+            if (!keytabFileExists(keytabLocation)) {
+              log.warn(s"Cannot check keytab file existence at $keytabLocation! Continuing...")
+            }
+            val confWithAuthKeys = newConfWithAuthKeys(config, principal, keytabLocation)
 
-          UserGroupInformation.setConfiguration(confWithAuthKeys)
-          val ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal, keytabLocation)
-          log.info(s"Logged user: $ugi")
-          UserGroupInformation.setLoginUser(ugi)
-          log.info(s"Setting UGI login user to $ugi")
-          executor.scheduleAtFixedRate(
-            new Runnable {
-              override def run(): Unit = {
-                try
-                  ugi.checkTGTAndReloginFromKeytab()
-                catch {
-                  case e: IOException =>
-                    log.error("Got exception while trying to refresh credentials: " + e.getMessage, e)
+            UserGroupInformation.setConfiguration(confWithAuthKeys)
+            val ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal, keytabLocation)
+            log.info(s"Logged user: $ugi")
+            UserGroupInformation.setLoginUser(ugi)
+            log.info(s"Setting UGI login user to $ugi")
+            executor.scheduleAtFixedRate(
+              new Runnable {
+                override def run(): Unit = {
+                  try
+                    ugi.checkTGTAndReloginFromKeytab()
+                  catch {
+                    case e: IOException =>
+                      log.error("Got exception while trying to refresh credentials: " + e.getMessage, e)
+                  }
                 }
-              }
-            }, 0, 30, TimeUnit.SECONDS
-          )
-          User.create(ugi)
-        }
+              },
+              0,
+              30,
+              TimeUnit.SECONDS
+            )
+            User.create(ugi)
+          }
         ConnectionFactory.createConnection(config, user)
       } else {
         ConnectionFactory.createConnection(config)
@@ -188,8 +191,7 @@ class HBaseConnection(hbaseConfig: Option[HBaseConfigModel]) extends GuardedLogg
       executor.scheduleAtFixedRate(tokenLogRunnable, 0L, 10, TimeUnit.MINUTES)
       log.info(s"HBase connection created.")
       result
-    }
-    catch {
+    } catch {
       case e: IOException =>
         log.error(s"Unable to connect to Hbase ${e.getMessage}")
         throw new RuntimeException(e)
@@ -251,45 +253,76 @@ class HBaseConnection(hbaseConfig: Option[HBaseConfigModel]) extends GuardedLogg
       case o: AbstractDelegationTokenIdentifier =>
         o.toString
       case o: AuthenticationTokenIdentifier =>
-        (new StringBuilder).append(o.getKind)
-          .append(", keyId=").append(o.getKeyId)
-          .append(", user=").append(o.getUser)
-          .append(", issueDate=").append(o.getIssueDate)
-          .append(", expirationDate=").append(o.getExpirationDate)
-          .append(", sequenceNumber=").append(o.getSequenceNumber)
-          .append(", username=").append(o.getUsername).toString()
+        (new StringBuilder)
+          .append(o.getKind)
+          .append(", keyId=")
+          .append(o.getKeyId)
+          .append(", user=")
+          .append(o.getUser)
+          .append(", issueDate=")
+          .append(o.getIssueDate)
+          .append(", expirationDate=")
+          .append(o.getExpirationDate)
+          .append(", sequenceNumber=")
+          .append(o.getSequenceNumber)
+          .append(", username=")
+          .append(o.getUsername)
+          .toString()
       case o: AMRMTokenIdentifier =>
-        (new StringBuilder).append(o.getKind)
-          .append(", keyId=").append(o.getKeyId)
-          .append(", user=").append(o.getUser).toString()
+        (new StringBuilder)
+          .append(o.getKind)
+          .append(", keyId=")
+          .append(o.getKeyId)
+          .append(", user=")
+          .append(o.getUser)
+          .toString()
       case o: BlockTokenIdentifier =>
         o.toString
       case o: ContainerTokenIdentifier =>
-        (new StringBuilder).append(o.getKind)
-          .append(", keyId=").append(o.getMasterKeyId)
-          .append(", user=").append(o.getUser)
-          .append(", applicationSubmitter=").append(o.getApplicationSubmitter)
-          .append(", expiryTimeStamp=").append(o.getExpiryTimeStamp)
-          .append(", containerID=").append(o.getContainerID)
-          .append(", creationTime=").append(o.getCreationTime).toString()
+        (new StringBuilder)
+          .append(o.getKind)
+          .append(", keyId=")
+          .append(o.getMasterKeyId)
+          .append(", user=")
+          .append(o.getUser)
+          .append(", applicationSubmitter=")
+          .append(o.getApplicationSubmitter)
+          .append(", expiryTimeStamp=")
+          .append(o.getExpiryTimeStamp)
+          .append(", containerID=")
+          .append(o.getContainerID)
+          .append(", creationTime=")
+          .append(o.getCreationTime)
+          .toString()
       case o: ClientToAMTokenIdentifier =>
-        (new StringBuilder).append(o.getKind)
-          .append(", user=").append(o.getUser)
-          .append(", clientName=").append(o.getClientName).toString()
+        (new StringBuilder)
+          .append(o.getKind)
+          .append(", user=")
+          .append(o.getUser)
+          .append(", clientName=")
+          .append(o.getClientName)
+          .toString()
       case o: JobTokenIdentifier =>
-        (new StringBuilder).append(o.getKind)
-          .append(", jobId=").append(o.getJobId)
-          .append(", user=").append(o.getUser).toString()
+        (new StringBuilder)
+          .append(o.getKind)
+          .append(", jobId=")
+          .append(o.getJobId)
+          .append(", user=")
+          .append(o.getUser)
+          .toString()
       case o: NMTokenIdentifier =>
-        (new StringBuilder).append(o.getKind)
-          .append(", keyId=").append(o.getKeyId)
-          .append(", user=").append(o.getUser)
-          .append(", applicationSubmitter=").append(o.getApplicationSubmitter).toString()
+        (new StringBuilder)
+          .append(o.getKind)
+          .append(", keyId=")
+          .append(o.getKeyId)
+          .append(", user=")
+          .append(o.getUser)
+          .append(", applicationSubmitter=")
+          .append(o.getApplicationSubmitter)
+          .toString()
     }
   }
 
   // endregion
 
 }
-
-

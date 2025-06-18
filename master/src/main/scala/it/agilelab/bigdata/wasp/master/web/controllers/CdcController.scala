@@ -10,25 +10,25 @@ import spray.json._
 object CdcController extends Directives with JsonSupport {
 
   def getRoute: Route = {
-     pathPrefix("cdc") {
-        parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
-          pathEnd {
+    pathPrefix("cdc") {
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
+          get {
+            complete {
+              // complete with serialized Future result
+              getJsonArrayOrEmpty[CdcModel](ConfigBL.cdcBL.getAll(), _.toJson, pretty)
+            }
+          }
+        } ~
+          path(Segment) { name =>
             get {
               complete {
                 // complete with serialized Future result
-                getJsonArrayOrEmpty[CdcModel](ConfigBL.cdcBL.getAll(), _.toJson, pretty)
+                getJsonOrNotFound[CdcModel](ConfigBL.cdcBL.getByName(name), name, "Cdc model", _.toJson, pretty)
               }
             }
-          } ~
-            path(Segment) { name =>
-              get {
-                complete {
-                  // complete with serialized Future result
-                  getJsonOrNotFound[CdcModel](ConfigBL.cdcBL.getByName(name), name, "Cdc model", _.toJson, pretty)
-                }
-              }
-            }
-        }
+          }
       }
+    }
   }
 }

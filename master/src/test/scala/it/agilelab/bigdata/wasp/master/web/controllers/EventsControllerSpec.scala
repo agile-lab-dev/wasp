@@ -47,11 +47,13 @@ class MockEventsService extends EventsService with JsonSupport {
     "timestamp": "2020-05-04T18:18:57.450Z"
   }]"""
 
-  override def events(search: String,
-                      startTimestamp: Instant,
-                      endTimestamp: Instant,
-                      page: Int,
-                      size: Int): Future[Events] = {
+  override def events(
+      search: String,
+      startTimestamp: Instant,
+      endTimestamp: Instant,
+      page: Int,
+      size: Int
+  ): Future[Events] = {
 
     val result = data
       .filter(x => x.payload.contains(search))
@@ -65,19 +67,16 @@ class MockEventsService extends EventsService with JsonSupport {
   }
 }
 
-class EventsControllerSpec
-    extends FlatSpec
-    with ScalatestRouteTest
-    with Matchers
-    with JsonSupport {
-  implicit def angularResponse[T: JsonFormat]
-    : RootJsonFormat[AngularResponse[T]] = jsonFormat2(AngularResponse.apply[T])
+class EventsControllerSpec extends FlatSpec with ScalatestRouteTest with Matchers with JsonSupport {
+  implicit def angularResponse[T: JsonFormat]: RootJsonFormat[AngularResponse[T]] = jsonFormat2(
+    AngularResponse.apply[T]
+  )
 
   implicit val timeout: RouteTestTimeout = RouteTestTimeout(10.seconds.dilated)
 
   it should "Respond to get requests" in {
     val service: EventsService = new MockEventsService
-    val controller = new EventController(service)
+    val controller             = new EventController(service)
 
     Get(
       s"/events?search=headers&startTimestamp=2020-05-04T18:18:57.000Z&endTimestamp=${Instant.now().toString}&page=0&size=100"
@@ -86,7 +85,7 @@ class EventsControllerSpec
 
       response.data.found should be(1)
       response.data.entries.length should be(1)
-      response.data.entries.head.eventId should be ("01c0e3e8-919e-4171-b528-cb606e41896b")
+      response.data.entries.head.eventId should be("01c0e3e8-919e-4171-b528-cb606e41896b")
     }
 
   }

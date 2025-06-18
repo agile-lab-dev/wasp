@@ -4,7 +4,26 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.models.configuration.{AdditionalKafkaClustersConfig, ConnectionConfig, ElasticConfigModel, JMXTelemetryConfigModel, KafkaConfigModel, KafkaEntryConfig, KryoSerializerConfig, NifiStatelessConfigModel, RetainedConfigModel, SchedulingStrategyConfigModel, SolrConfigModel, SparkBatchConfigModel, SparkDriverConfig, SparkEntryConfig, SparkStreamingConfigModel, TelemetryConfigModel, TelemetryTopicConfigModel, ZookeeperConnectionsConfig}
+import it.agilelab.bigdata.wasp.models.configuration.{
+  AdditionalKafkaClustersConfig,
+  ConnectionConfig,
+  ElasticConfigModel,
+  JMXTelemetryConfigModel,
+  KafkaConfigModel,
+  KafkaEntryConfig,
+  KryoSerializerConfig,
+  NifiStatelessConfigModel,
+  RetainedConfigModel,
+  SchedulingStrategyConfigModel,
+  SolrConfigModel,
+  SparkBatchConfigModel,
+  SparkDriverConfig,
+  SparkEntryConfig,
+  SparkStreamingConfigModel,
+  TelemetryConfigModel,
+  TelemetryTopicConfigModel,
+  ZookeeperConnectionsConfig
+}
 
 trait ConfigModelOpenApiComponentSupport
     extends ProductOpenApi
@@ -17,24 +36,19 @@ trait ConfigModelOpenApiComponentSupport
 
   implicit lazy val solrConfigOpenApi: ToOpenApiSchema[SolrConfigModel] =
     product2(SolrConfigModel)
-  implicit lazy val zookeeperConnectionConfigOpenApi
-    : ToOpenApiSchema[ZookeeperConnectionsConfig] = product2(
+  implicit lazy val zookeeperConnectionConfigOpenApi: ToOpenApiSchema[ZookeeperConnectionsConfig] = product2(
     ZookeeperConnectionsConfig
   )
   implicit lazy val connectionConfigOpenApi: ToOpenApiSchema[ConnectionConfig] =
     product5(ConnectionConfig)
-  implicit lazy val sparkDriverConfigOpenApi
-    : ToOpenApiSchema[SparkDriverConfig] =
+  implicit lazy val sparkDriverConfigOpenApi: ToOpenApiSchema[SparkDriverConfig] =
     product7(SparkDriverConfig)
   implicit lazy val sparkEntryConfigOpenApi: ToOpenApiSchema[SparkEntryConfig] =
     product2(SparkEntryConfig)
-  implicit lazy val kryoSerializerConfigOpenApi
-    : ToOpenApiSchema[KryoSerializerConfig] = product3(KryoSerializerConfig)
-  implicit lazy val sparkBatchConfigOpenApi
-    : ToOpenApiSchema[SparkBatchConfigModel] =
+  implicit lazy val kryoSerializerConfigOpenApi: ToOpenApiSchema[KryoSerializerConfig] = product3(KryoSerializerConfig)
+  implicit lazy val sparkBatchConfigOpenApi: ToOpenApiSchema[SparkBatchConfigModel] =
     product14(SparkBatchConfigModel)
-  implicit lazy val sparkStreamingConfigOpenApi
-    : ToOpenApiSchema[SparkStreamingConfigModel] = product20(
+  implicit lazy val sparkStreamingConfigOpenApi: ToOpenApiSchema[SparkStreamingConfigModel] = product20(
     SparkStreamingConfigModel
   )
 
@@ -43,17 +57,14 @@ trait ConfigModelOpenApiComponentSupport
   implicit lazy val nifiConfigModelOpenApi: ToOpenApiSchema[NifiStatelessConfigModel] =
     product4(NifiStatelessConfigModel.apply)
 
-  implicit lazy val telemetryConfigOpenApi
-    : ToOpenApiSchema[TelemetryConfigModel] =
+  implicit lazy val telemetryConfigOpenApi: ToOpenApiSchema[TelemetryConfigModel] =
     product4(TelemetryConfigModel)
-  implicit lazy val telemetryTopicConfigOpenApi
-    : ToOpenApiSchema[TelemetryTopicConfigModel] = product5(
+  implicit lazy val telemetryTopicConfigOpenApi: ToOpenApiSchema[TelemetryTopicConfigModel] = product5(
     TelemetryTopicConfigModel
   )
   implicit lazy val kafkaEntryConfigOpenApi: ToOpenApiSchema[KafkaEntryConfig] =
     product2(KafkaEntryConfig)
-  implicit lazy val JMXTelemetryConfigOpenApi
-    : ToOpenApiSchema[JMXTelemetryConfigModel] = product5(
+  implicit lazy val JMXTelemetryConfigOpenApi: ToOpenApiSchema[JMXTelemetryConfigModel] = product5(
     JMXTelemetryConfigModel
   )
   implicit lazy val kafkaConfigOpenApi: ToOpenApiSchema[KafkaConfigModel] =
@@ -73,14 +84,13 @@ trait ConfigRoutesOpenApiDefinition
 
   def configRoute(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/config/sorl" -> solr(ctx),
-      "/config/es" -> elastic(ctx),
-      "/config/kafka" -> kafka(ctx),
-      "/config/telemetry" -> telemetry(ctx),
-      "/config/sparkbatch" -> sparkBatch(ctx),
+      "/config/sorl"           -> solr(ctx),
+      "/config/es"             -> elastic(ctx),
+      "/config/kafka"          -> kafka(ctx),
+      "/config/telemetry"      -> telemetry(ctx),
+      "/config/sparkbatch"     -> sparkBatch(ctx),
       "/config/sparkstreaming" -> sparkStreaming(ctx),
       "/configs/kafkaclusters" -> allKafkaClusters(ctx)
-
     )
   }
 

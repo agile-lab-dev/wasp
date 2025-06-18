@@ -28,19 +28,17 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
   private val RAW_VALUE_ATTRIBUTE_NAME = "raw"
   private val DATA_TYPE_ATTRIBUTE_NAME = "dataType"
 
-  /**
-    * Creates a streaming DataFrame from a Kafka streaming source.
+  /** Creates a streaming DataFrame from a Kafka streaming source.
     *
     * If all the input topics share the same schema the returned DataFrame will contain a column named "kafkaMetadata"
     * with message metadata and the message contents either as a single column named "value" or as multiple columns
     * named after the value fields depending on the topic datatype.
     *
     * If the input topics do not share the same schema the returned Dataframe will contain a column named
-    * "kafkaMetadata" with message metadata and each topic content on a column named after the topic name,
-    * previously escaped calling the function [[MultiTopicModel.topicModelNames()]].
-    * This means that if 5 topic models with different schema are read, the output dataframe will contain 6 columns,
-    * and of these 6 columns only the kafkaMetadata and the topic related to current message, will have a value
-    * different from null, like the following:
+    * "kafkaMetadata" with message metadata and each topic content on a column named after the topic name, previously
+    * escaped calling the function [[MultiTopicModel.topicModelNames()]]. This means that if 5 topic models with
+    * different schema are read, the output dataframe will contain 6 columns, and of these 6 columns only the
+    * kafkaMetadata and the topic related to current message, will have a value different from null, like the following:
     * {{{
     * +--------------------+--------------------+-------------------------+
     * |       kafkaMetadata|     test_json_topic|testcheckpoint_avro_topic|
@@ -50,40 +48,24 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     * +--------------------+--------------------+-------------------------+
     * }}}
     *
-    * The `kafkaMetadata` column is record with the following fields:
-    * <ul>
-    * <li>key: bytes</li>
-    * <li>headers: array of {headerKey: string, headerValue: bytes}</li>
-    * <li>topic: string</li>
-    * <li>partition: int</li>
-    * <li>offset: long</li>
-    * <li>timestamp: timestamp</li>
-    * <li>timestampType: int</li>
-    * </ul>
-    * <br>
-    * The behaviour for message contents column(s) is the following:
-    * <ul>
-    * <li>the `avro` and `json` topic data types will output the columns specified by their schemas</li>
-    * <li>the `plaintext` and `bytes` topic data types output a `value` column with the contents as string or bytes respectively</li>
-    * </ul>
+    * The `kafkaMetadata` column is record with the following fields: <ul> <li>key: bytes</li> <li>headers: array of
+    * {headerKey: string, headerValue: bytes}</li> <li>topic: string</li> <li>partition: int</li> <li>offset: long</li>
+    * <li>timestamp: timestamp</li> <li>timestampType: int</li> </ul> <br> The behaviour for message contents column(s)
+    * is the following: <ul> <li>the `avro` and `json` topic data types will output the columns specified by their
+    * schemas</li> <li>the `plaintext` and `bytes` topic data types output a `value` column with the contents as string
+    * or bytes respectively</li> </ul>
     *
-    * There is also the possibility to manage a Parsing mode for Avro/json deserialization, this param can be:
-    * <ul>
-    * <li>Strict: job will crash when a record can't be parsed</li>
-    * <li>Ignore: records that are impossible to parse will be filtered out from the resulting dataframe</li>
-    * <li>Handle: produce two columns instead of exploding the schema of parsed record, the first column named `raw`
-    *     will contain the raw value (bytes) if the parsing failed, while the other(s) will contain the parsed value
-    *     (i.e. a struct or a primitive) which will be null if parsing failed</li>
-    * </ul>
-    * <u>In Strict and Ignore mode result dataframe will have the same schema described early</u><br>
-    * In Handle mode, for single topic when topic type is Avro/Json the structure will have:
-    * <ul>
-    *  <li>kafkaMetadata -> same as other mode</li>
-    *  <li>raw           -> raw byte array, it will be null if parsing has worked fine, else it will contain raw byte array</li>
-    *  <li>value         -> struct column that contains parsed record or null if parsing encountered any problem</li>
-    *  </ul>
-    * Follows an example:
-    *  {{{
+    * There is also the possibility to manage a Parsing mode for Avro/json deserialization, this param can be: <ul>
+    * <li>Strict: job will crash when a record can't be parsed</li> <li>Ignore: records that are impossible to parse
+    * will be filtered out from the resulting dataframe</li> <li>Handle: produce two columns instead of exploding the
+    * schema of parsed record, the first column named `raw` will contain the raw value (bytes) if the parsing failed,
+    * while the other(s) will contain the parsed value (i.e. a struct or a primitive) which will be null if parsing
+    * failed</li> </ul> <u>In Strict and Ignore mode result dataframe will have the same schema described early</u><br>
+    * In Handle mode, for single topic when topic type is Avro/Json the structure will have: <ul> <li>kafkaMetadata ->
+    * same as other mode</li> <li>raw -> raw byte array, it will be null if parsing has worked fine, else it will
+    * contain raw byte array</li> <li>value -> struct column that contains parsed record or null if parsing encountered
+    * any problem</li> </ul> Follows an example:
+    * {{{
     * +--------------------+--------------------+-------------------------+
     * |       kafkaMetadata|                 raw|                    value|
     * +--------------------+--------------------+-------------------------+
@@ -92,35 +74,30 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     * +--------------------+--------------------+-------------------------+
     * }}}
     *
-    * <u>Handle mode is meant to divide the good data from bad data through a simple `where(col("raw").isNull)`,
-    * then good data can be exploded through select(col("value.*"))</u>
-    * <p><b>N.B in Single reading mode Parsing Mode on binary/plaintext topic type will be ignored</b></p>
+    * <u>Handle mode is meant to divide the good data from bad data through a simple `where(col("raw").isNull)`, then
+    * good data can be exploded through select(col("value.*"))</u> <p><b>N.B in Single reading mode Parsing Mode on
+    * binary/plaintext topic type will be ignored</b></p>
     *
     * `Handle`` parsing mode in multi mode scenario will be managed as standard multi mode plus the column `raw`, which
-    * has the same usage as single mode.
-    * An example result is like:
+    * has the same usage as single mode. An example result is like:
     * {{{
-    * +--------------------------------+----+------------+--------------+-----------------+-------------+
-    *|                   kafkaMetadata| raw|  topic_json|  topic_binary|      topic_plain|    topic_avro|
-    *+--------------------------------+----+------------+--------------+-----------------+--------------+
-    *|[1, [], topic_json,.............|null| [1, valore]|          null|             null|          null|
-    *|[1, [], topic_binary,...........|null|        null|   binary_test|             null|          null|
-    *|[1, [], topic_plain,............|null|        null|          null|   plaintext_test|          null|
-    *|[1, [], topic_avro,.............|[05]|        null|          null|             null|          null|
-    *|[1, [], topic_avro,.............|null|        null|          null|             null|   [1, valore]|
-    *+--------------------------------+----+------------+--------------+-----------------+--------------+
+    *  +--------------------------------+----+------------+--------------+-----------------+-------------+
+    * |                   kafkaMetadata| raw|  topic_json|  topic_binary|      topic_plain|    topic_avro|
+    * +--------------------------------+----+------------+--------------+-----------------+--------------+
+    * |[1, [], topic_json,.............|null| [1, valore]|          null|             null|          null|
+    * |[1, [], topic_binary,...........|null|        null|   binary_test|             null|          null|
+    * |[1, [], topic_plain,............|null|        null|          null|   plaintext_test|          null|
+    * |[1, [], topic_avro,.............|[05]|        null|          null|             null|          null|
+    * |[1, [], topic_avro,.............|null|        null|          null|             null|   [1, valore]|
+    * +--------------------------------+----+------------+--------------+-----------------+--------------+
     * }}}
     * <u>In case of error, `raw` column will be populated otherwise it will be null. To access parsed value it is
     * possible to select column ${topic_name} this field will be null if parsing didn't work</u>
     *
-    * <b>
-    * N.B. when a parsing error occurs, every topic_name column will have null as value, you can know one which one
-    * parsing error has occurred by looking at `kafkaMetadata.topic` field.
-    * </br>
-    * </br>
-    * N.B. for plaintext and binary type, since is possible to have `${topic_name}.value` = null, raw column will be null
-    * as well (since is populated only for parsing errors which cannot happen on these types).
-    * </b>
+    * <b> N.B. when a parsing error occurs, every topic_name column will have null as value, you can know one which one
+    * parsing error has occurred by looking at `kafkaMetadata.topic` field. </br> </br> N.B. for plaintext and binary
+    * type, since is possible to have `${topic_name}.value` = null, raw column will be null as well (since is populated
+    * only for parsing errors which cannot happen on these types). </b>
     */
   override def createStructuredStream(etl: StructuredStreamingETLModel, streamingReaderModel: StreamingReaderModel)(
       implicit ss: SparkSession
@@ -185,7 +162,8 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     val streamingReaderModel = etl.streamingInput
 
     val maybeRateLimit: Option[Long] =
-      streamingReaderModel.rateLimit.map(x => if (triggerIntervalMs == 0L) x else (triggerIntervalMs / 1000d * x).toLong
+      streamingReaderModel.rateLimit.map(x =>
+        if (triggerIntervalMs == 0L) x else (triggerIntervalMs / 1000d * x).toLong
       )
     val maybeMaxOffsetsPerTrigger = maybeRateLimit.map(rateLimit => ("maxOffsetsPerTrigger", rateLimit.toString))
 
@@ -210,10 +188,9 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     // force "includeHeaders=true" replacing user configuration
     options += options
       .find { case (k, v) => k.toLowerCase == INCLUDE_HEADERS_CONF && v.toLowerCase == "false" }
-      .fold(INCLUDE_HEADERS_CONF -> "true") {
-        case (k, _) =>
-          logger.warn(INCLUDE_HEADERS_CONF + "=false is not supported, forcing it to true")
-          k -> "true"
+      .fold(INCLUDE_HEADERS_CONF -> "true") { case (k, _) =>
+        logger.warn(INCLUDE_HEADERS_CONF + "=false is not supported, forcing it to true")
+        k -> "true"
       }
     options.toMap
   }
@@ -236,15 +213,14 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     metadataSelectExpr
   }
 
-  /**
-    * Throws IllegalArgumentException if the topics are malformed, otherwise checks if all the topics have the same
-    * schema, if they do, it parses the messages according to the only schema and returns a dataframe
-    * with a kafkaMetadata column and all the columns that the schema defines. If the topic is well defined but
-    * multiple schemas are encountered it will return a dataframe with a kafkaMetadata columns plus a column for each
-    * different topic name which will contain the parsed data from that topic. This means that if there are 10 different
-    * topics to fetch with 10 different schemas the dataframe will have 11 columns and every row will contain 9 null
-    * values, one column with the parsed message and one with the kafka metadata. The column names will reflect the
-    * topic names but will be sanitized by the function [[MultiTopicModel.topicModelNames]].
+  /** Throws IllegalArgumentException if the topics are malformed, otherwise checks if all the topics have the same
+    * schema, if they do, it parses the messages according to the only schema and returns a dataframe with a
+    * kafkaMetadata column and all the columns that the schema defines. If the topic is well defined but multiple
+    * schemas are encountered it will return a dataframe with a kafkaMetadata columns plus a column for each different
+    * topic name which will contain the parsed data from that topic. This means that if there are 10 different topics to
+    * fetch with 10 different schemas the dataframe will have 11 columns and every row will contain 9 null values, one
+    * column with the parsed message and one with the kafka metadata. The column names will reflect the topic names but
+    * will be sanitized by the function [[MultiTopicModel.topicModelNames]].
     */
   private def parseDF(topics: Seq[TopicModel], df: DataFrame, parsingMode: ParsingMode) = {
     MultiTopicModel.areTopicsHealthy(topics) match {
@@ -299,14 +275,11 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     ret
   }
 
-  /**
-    * Checks if parsing has happened correctly and behave differently based on input parsing mode,
-    * to check if a record has been parsed it checks that value column is not null :
-    * <ul>
-    * <li>Strict, throws an exception when unable to parse </li>
-    * <li>Ignore, filters out record that have not been parsed correctly</li>
-    * <li>Handle, when parsing succeeds, raw column will be null and value column will be not null,
-    * if parsing fails, it will be the opposite</li>
+  /** Checks if parsing has happened correctly and behave differently based on input parsing mode, to check if a record
+    * has been parsed it checks that value column is not null : <ul> <li>Strict, throws an exception when unable to
+    * parse </li> <li>Ignore, filters out record that have not been parsed correctly</li> <li>Handle, when parsing
+    * succeeds, raw column will be null and value column will be not null, if parsing fails, it will be the
+    * opposite</li>
     *
     * </ul>
     *
@@ -315,9 +288,11 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     * @param topicDataType
     * @param metadataKey
     * @param actualSchema
-    * @return metadata + exploded parsed fields for Strict and Ignore, metadata+ raw + value column when Handle mode,
-    *         parsed values are in value column and can be exploded through value.*
-    *  @throws SparkException when unable to parse a record in Strict mode
+    * @return
+    *   metadata + exploded parsed fields for Strict and Ignore, metadata+ raw + value column when Handle mode, parsed
+    *   values are in value column and can be exploded through value.*
+    * @throws SparkException
+    *   when unable to parse a record in Strict mode
     */
   private[wasp] def checkParsingMode(
       df: DataFrame,
@@ -330,15 +305,14 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
       case Strict =>
         val computedValue = "computedValue"
         df.withColumn(
-            computedValue,
-            when(
-              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(actualSchema)(
-                col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)
-              ),
-              strictExceptionLauncherUdf(col(RAW_VALUE_ATTRIBUTE_NAME), lit(topicDataType))
-            ).otherwise(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME))
-          )
-          .select(selectMetadata(metadataKey), col(s"$computedValue.*"))
+          computedValue,
+          when(
+            col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME).isNull || isNull(actualSchema)(
+              col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME)
+            ),
+            strictExceptionLauncherUdf(col(RAW_VALUE_ATTRIBUTE_NAME), lit(topicDataType))
+          ).otherwise(col(KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME))
+        ).select(selectMetadata(metadataKey), col(s"$computedValue.*"))
       case Ignore =>
         df.select(selectMetadata(metadataKey), col(s"${KafkaSparkSQLSchemas.VALUE_ATTRIBUTE_NAME}.*"))
           .where(
@@ -383,11 +357,11 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     }
   }
 
-  /**
-    * function that prints the content of the serialized value which is not deserializable,
-    * it's useful to know which record caused the error
+  /** function that prints the content of the serialized value which is not deserializable, it's useful to know which
+    * record caused the error
     *
-    * @throws SparkException exception containing the record which has caused the parsing error
+    * @throws SparkException
+    *   exception containing the record which has caused the parsing error
     */
   private[wasp] def strictExceptionLauncherUdf: UserDefinedFunction =
     udf((raw: Array[Byte], topicDataType: String) => {
@@ -442,17 +416,14 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     retChecked
   }
 
-  /**
-    * Checks if parsing has happened correctly and behave differently based on input parsing mode,
-    * to check if a record has been parsed it checks that `topicName.value` column is not null :
-    * <ul>
-    *   <li>Strict, throws an exception when unable to parse </li>
-    *   <li>Ignore, filters out record that have not been parsed</li>
-    *   <li>Handle, return `raw` column as null when parsing succeeds, else it will be populated with the original byte array</li>
-    * </ul>
+  /** Checks if parsing has happened correctly and behave differently based on input parsing mode, to check if a record
+    * has been parsed it checks that `topicName.value` column is not null : <ul> <li>Strict, throws an exception when
+    * unable to parse </li> <li>Ignore, filters out record that have not been parsed</li> <li>Handle, return `raw`
+    * column as null when parsing succeeds, else it will be populated with the original byte array</li> </ul>
     * @param df
     * @param parsingMode
-    * @return df parsed according to input parsing mode
+    * @return
+    *   df parsed according to input parsing mode
     * @throws SparkException
     */
   private[wasp] def checkParsingModeMultipleTopics(
@@ -466,14 +437,16 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
 
     def parsedDataTypeCol(colName: String) = col(s"$colName.$DATA_TYPE_ATTRIBUTE_NAME")
 
-    //check for extra safety, binary and plaintext type should not be null
+    // check for extra safety, binary and plaintext type should not be null
     def dataTypeToCheckCondition(colName: String) =
       col(colName).isNull || lower(parsedDataTypeCol(colName)).isin(TopicDataTypes.JSON, TopicDataTypes.AVRO)
 
     val goodCaseSelect = parsedCols.map(c => when(col(c).isNotNull, parsedValueCol(c)).otherwise(null).as(c))
     val parsingErrorFilteredCondition = parsedCols
       .map(c =>
-        col(c).isNull || !dataTypeToCheckCondition(c) || (dataTypeToCheckCondition(c) && (parsedValueCol(c).isNotNull && !isNull(
+        col(c).isNull || !dataTypeToCheckCondition(c) || (dataTypeToCheckCondition(c) && (parsedValueCol(
+          c
+        ).isNotNull && !isNull(
           schemas.get(c)
         )(parsedValueCol(c))))
       )
@@ -624,12 +597,15 @@ object KafkaSparkStructuredStreamingReader extends SparkStructuredStreamingReade
     AvroSchemaConverters.toSqlType(schemaAvro).dataType
   }
 
-  /**
-    * @param topicName topic name which value should match topic column value
-    * @param parseCol  column which contains parsed value
-    * @param dataType  input schema for data in the topic
-    * @return null if the current row doesn't match requested topic, else a struct of parsed value as 'value'
-    *         and topic encoding data type
+  /** @param topicName
+    *   topic name which value should match topic column value
+    * @param parseCol
+    *   column which contains parsed value
+    * @param dataType
+    *   input schema for data in the topic
+    * @return
+    *   null if the current row doesn't match requested topic, else a struct of parsed value as 'value' and topic
+    *   encoding data type
     */
   private def parseIfMyTopicOrNull(topicName: String, parseCol: Column, dataType: String): Column = {
     def when(condition: Column, value: Column): Column = new Column(CaseWhen(Seq((condition.expr, value.expr))))

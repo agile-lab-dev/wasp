@@ -9,4 +9,3 @@ trait DocumentBL {
   def persist(rawModel: DocumentModel): Unit
   def upsert(rawModel: DocumentModel): Unit
 }
-

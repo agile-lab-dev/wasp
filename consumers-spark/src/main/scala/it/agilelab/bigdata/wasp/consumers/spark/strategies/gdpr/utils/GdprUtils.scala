@@ -12,7 +12,7 @@ object GdprUtils {
     seq.foldLeft(Success(Seq.empty[B]): Try[Seq[B]]) { (acc: Try[Seq[B]], a: A) =>
       for {
         bs <- acc
-        b <- Try(f(a))
+        b  <- Try(f(a))
       } yield bs :+ b
     }
   }
@@ -23,16 +23,18 @@ object GdprUtils {
     seq.foldLeft(Success(Seq.empty[B]): Try[Seq[B]]) { (acc: Try[Seq[B]], a: A) =>
       for {
         bs <- acc
-        b <- f(a)
+        b  <- f(a)
       } yield bs :+ b
     }
   }
 
-  /**
-    * Wrap the boolean result of a FileSystem operation inside a Try
-    * @param result Result of the FileSystem operation
-    * @param errorMessage Error message of the Exception in case `result` is false
-    * @return Success(Unit) if `result` is true, Failure(Exception(errorString)) if false
+  /** Wrap the boolean result of a FileSystem operation inside a Try
+    * @param result
+    *   Result of the FileSystem operation
+    * @param errorMessage
+    *   Error message of the Exception in case `result` is false
+    * @return
+    *   Success(Unit) if `result` is true, Failure(Exception(errorString)) if false
     */
   def recoverFsOperation(result: Boolean, errorMessage: String): Try[Unit] = {
     if (result) {

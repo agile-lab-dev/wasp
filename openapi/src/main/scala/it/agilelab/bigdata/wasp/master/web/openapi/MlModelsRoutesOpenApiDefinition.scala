@@ -12,7 +12,7 @@ trait MlModelsRoutesOpenApiDefinition
 
   def mlmodelsRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/mlmodels" -> getInsertUpdate(ctx),
+      "/mlmodels"                                -> getInsertUpdate(ctx),
       "/mlmodels/{mlmodelname}/{mlmodelversion}" -> listInstance(ctx)
     )
   }
@@ -23,7 +23,7 @@ trait MlModelsRoutesOpenApiDefinition
         new Operation()
           .addTagsItem("mlmodels")
           .operationId("get-mlmodel")
-              .description("Retrieves data on a specific Machine Learning model")
+          .description("Retrieves data on a specific Machine Learning model")
           .addParametersItem(pretty(ctx))
           .addParametersItem(
             new Parameter()
@@ -62,7 +62,7 @@ trait MlModelsRoutesOpenApiDefinition
       .delete(
         new Operation()
           .addTagsItem("mlmodels")
-        .operationId("delete-mlmodel")
+          .operationId("delete-mlmodel")
           .description("Delete a Machine learning model")
           .addParametersItem(pretty(ctx))
           .addParametersItem(

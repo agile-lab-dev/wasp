@@ -6,15 +6,15 @@ import org.apache.spark.sql.Encoder
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions.{BoundReference, Cast}
 import org.apache.spark.sql.types.{BinaryType, ObjectType, StructType}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
-object AvroEncoders extends CompatibilityEncoders{
+object AvroEncoders extends CompatibilityEncoders {
   def avroEncoder[A: ClassTag](
-                                readerSchema: org.apache.avro.Schema,
-                                avroSchemaManagerConfig: Config,
-                                toGenericRecord: A => org.apache.avro.generic.GenericRecord,
-                                fromGenericRecord: org.apache.avro.generic.GenericRecord => A
-                              ): Encoder[A] = {
+      readerSchema: org.apache.avro.Schema,
+      avroSchemaManagerConfig: Config,
+      toGenericRecord: A => org.apache.avro.generic.GenericRecord,
+      fromGenericRecord: org.apache.avro.generic.GenericRecord => A
+  ): Encoder[A] = {
     avroEncoder(
       readerSchema,
       () => AvroSchemaManagerFactory.initialize(avroSchemaManagerConfig),
@@ -23,18 +23,21 @@ object AvroEncoders extends CompatibilityEncoders{
     )
   }
 
-  def avroEncoder[A: ClassTag](readerSchema: org.apache.avro.Schema,
-                               avroSchemaManager: () => AvroSchemaManager,
-                               toGenericRecord: A => org.apache.avro.generic.GenericRecord,
-                               fromGenericRecord: org.apache.avro.generic.GenericRecord => A
-                              ): Encoder[A] = {
+  def avroEncoder[A: ClassTag](
+      readerSchema: org.apache.avro.Schema,
+      avroSchemaManager: () => AvroSchemaManager,
+      toGenericRecord: A => org.apache.avro.generic.GenericRecord,
+      fromGenericRecord: org.apache.avro.generic.GenericRecord => A
+  ): Encoder[A] = {
 
-    val serializer = Seq(EncodeUsingAvro[A](
-      BoundReference(0, ObjectType(classOf[AnyRef]), nullable = true),
-      readerSchema.toString(),
-      avroSchemaManager,
-      toGenericRecord
-    ))
+    val serializer = Seq(
+      EncodeUsingAvro[A](
+        BoundReference(0, ObjectType(classOf[AnyRef]), nullable = true),
+        readerSchema.toString(),
+        avroSchemaManager,
+        toGenericRecord
+      )
+    )
 
     val deserializer = DecodeUsingAvro[A](
       Cast(GetColumnByOrdinal(0, BinaryType), BinaryType),
@@ -46,7 +49,7 @@ object AvroEncoders extends CompatibilityEncoders{
 
     val clsTag = classTag[A]
     val schema = new StructType().add("value", BinaryType)
-    val flat = true
+    val flat   = true
 
     expressionEncoder[A](serializer, deserializer, clsTag, schema, flat)
   }

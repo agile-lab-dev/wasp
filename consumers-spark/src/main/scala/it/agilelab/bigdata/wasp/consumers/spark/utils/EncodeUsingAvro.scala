@@ -17,7 +17,8 @@ case class EncodeUsingAvro[A](
     avroSchemaManager: () => AvroSchemaManager,
     toGenericRecord: A => org.apache.avro.generic.GenericRecord
 ) extends UnaryExpression
-    with NonSQLExpression with CompatibilityEncodeUsingAvro[A] {
+    with NonSQLExpression
+    with CompatibilityEncodeUsingAvro[A] {
 
   private lazy val serializer =
     new AvroSerializer[A](new Schema.Parser().parse(schema), avroSchemaManager(), toGenericRecord)
@@ -76,27 +77,26 @@ case class EncodeUsingAvro[A](
 
 }
 
-/**
- * Stateful avro serializer: NOT thread safe
- */
+/** Stateful avro serializer: NOT thread safe
+  */
 final class AvroSerializer[A](
-                               schema: Schema,
-                               avroSchemaManager: AvroSchemaManager,
-                               toRecord: A => GenericRecord
-                             ) {
+    schema: Schema,
+    avroSchemaManager: AvroSchemaManager,
+    toRecord: A => GenericRecord
+) {
 
-    private[this] val fingerprint                               = avroSchemaManager.getId(schema)
-    private[this] val outputStream: ByteArrayOutputStream       = new ByteArrayOutputStream()
-    private[this] var encoder: BinaryEncoder                    = _ // scalastyle:ignore
-    private[this] val writer: GenericDatumWriter[GenericRecord] = new GenericDatumWriter[GenericRecord](schema)
+  private[this] val fingerprint                               = avroSchemaManager.getId(schema)
+  private[this] val outputStream: ByteArrayOutputStream       = new ByteArrayOutputStream()
+  private[this] var encoder: BinaryEncoder                    = _ // scalastyle:ignore
+  private[this] val writer: GenericDatumWriter[GenericRecord] = new GenericDatumWriter[GenericRecord](schema)
 
-    def toSingleObjectEncoded(obj: A): Array[Byte] = {
-      outputStream.reset()
-      encoder = EncoderFactory.get().binaryEncoder(outputStream, encoder)
-      avroSchemaManager.writeHeaderToStream(outputStream, fingerprint)
-      writer.write(toRecord(obj), encoder)
-      encoder.flush()
-      outputStream.toByteArray
-    }
+  def toSingleObjectEncoded(obj: A): Array[Byte] = {
+    outputStream.reset()
+    encoder = EncoderFactory.get().binaryEncoder(outputStream, encoder)
+    avroSchemaManager.writeHeaderToStream(outputStream, fingerprint)
+    writer.write(toRecord(obj), encoder)
+    encoder.flush()
+    outputStream.toByteArray
+  }
 
 }

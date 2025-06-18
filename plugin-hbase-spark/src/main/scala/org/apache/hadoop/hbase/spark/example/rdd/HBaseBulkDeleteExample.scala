@@ -17,17 +17,15 @@
 package org.apache.hadoop.hbase.spark.example.rdd
 
 import org.apache.hadoop.hbase.client.Delete
-import org.apache.hadoop.hbase.{TableName, HBaseConfiguration}
+import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.hadoop.hbase.spark.HBaseRDDFunctions._
 import org.apache.hadoop.hbase.util.Bytes
 
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 
-/**
- * This is a simple example of deleting records in HBase
- * with the bulkDelete function.
- */
+/** This is a simple example of deleting records in HBase with the bulkDelete function.
+  */
 object HBaseBulkDeleteExample {
   def main(args: Array[String]) {
     if (args.length < 1) {
@@ -38,24 +36,24 @@ object HBaseBulkDeleteExample {
     val tableName = args(0)
 
     val sparkConf = new SparkConf().setAppName("HBaseBulkDeleteExample " + tableName)
-    val sc = new SparkContext(sparkConf)
+    val sc        = new SparkContext(sparkConf)
     try {
-      //[Array[Byte]]
-      val rdd = sc.parallelize(Array(
-        Bytes.toBytes("1"),
-        Bytes.toBytes("2"),
-        Bytes.toBytes("3"),
-        Bytes.toBytes("4"),
-        Bytes.toBytes("5")
-      ))
+      // [Array[Byte]]
+      val rdd = sc.parallelize(
+        Array(
+          Bytes.toBytes("1"),
+          Bytes.toBytes("2"),
+          Bytes.toBytes("3"),
+          Bytes.toBytes("4"),
+          Bytes.toBytes("5")
+        )
+      )
 
       val conf = HBaseConfiguration.create()
 
       val hbaseContext = new HBaseContext(sc, conf)
 
-      rdd.hbaseBulkDelete(hbaseContext, TableName.valueOf(tableName),
-        putRecord => new Delete(putRecord),
-        4)
+      rdd.hbaseBulkDelete(hbaseContext, TableName.valueOf(tableName), putRecord => new Delete(putRecord), 4)
 
     } finally {
       sc.stop()

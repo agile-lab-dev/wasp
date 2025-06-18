@@ -28,7 +28,8 @@ class HttpWriterSpec extends FunSuite with SparkSuite with Retries {
 
     import scala.concurrent.duration._
     if (isRetryable(test))
-      withRetry(1.seconds) { super.withFixture(test) } else
+      withRetry(1.seconds) { super.withFixture(test) }
+    else
       super.withFixture(test)
   }
 
@@ -86,7 +87,7 @@ class HttpWriterSpec extends FunSuite with SparkSuite with Retries {
           // spark 3.5 and 3.4
           // this is first for short circuit evaluation
           ex.cause.getCause.getMessage.startsWith(expectedMessage) ||
-            ex.cause.getCause.getCause.getMessage.startsWith(expectedMessage) // spark 3.3
+          ex.cause.getCause.getCause.getMessage.startsWith(expectedMessage) // spark 3.3
         case None => fail("No exception was thrown")
       }
     }

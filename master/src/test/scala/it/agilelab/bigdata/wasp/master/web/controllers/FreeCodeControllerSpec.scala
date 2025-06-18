@@ -7,44 +7,43 @@ import it.agilelab.bigdata.wasp.utils.JsonSupport
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsonFormat, RootJsonFormat}
 
-
-
 class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Matchers with JsonSupport {
 
   case class AngularResponse[T](Result: String, data: T)
-  case class AngularKoReponse[T](Result : String, ErrorMsg : T)
-  implicit def angularResponse[T: JsonFormat]: RootJsonFormat[AngularResponse[T]] = jsonFormat2(AngularResponse.apply[T])
+  case class AngularKoReponse[T](Result: String, ErrorMsg: T)
+  implicit def angularResponse[T: JsonFormat]: RootJsonFormat[AngularResponse[T]] = jsonFormat2(
+    AngularResponse.apply[T]
+  )
 
-  implicit def angularKoResponseKo[T: JsonFormat]: RootJsonFormat[AngularKoReponse[T]] = jsonFormat2(AngularKoReponse.apply[T])
-
+  implicit def angularKoResponseKo[T: JsonFormat]: RootJsonFormat[AngularKoReponse[T]] = jsonFormat2(
+    AngularKoReponse.apply[T]
+  )
 
   it should "test insert correct model" in {
 
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,false)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
 
-   Post("/freeCode", freeCodeModelCorrect) ~> controller.getRoute ~> check {
-     serviceDB.storage.size shouldBe 2
-     val output  = serviceDB.storage.find(_.name.equals(freeCodeModelCorrect.name))
-       output.isDefined shouldBe true
-     output.get shouldBe freeCodeModelCorrect
-     responseAs[AngularResponse[String]] shouldEqual AngularResponse("OK", "OK")
-   }
- }
-
-
+    Post("/freeCode", freeCodeModelCorrect) ~> controller.getRoute ~> check {
+      serviceDB.storage.size shouldBe 2
+      val output = serviceDB.storage.find(_.name.equals(freeCodeModelCorrect.name))
+      output.isDefined shouldBe true
+      output.get shouldBe freeCodeModelCorrect
+      responseAs[AngularResponse[String]] shouldEqual AngularResponse("OK", "OK")
+    }
+  }
 
   it should "test insert warning model" in {
 
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,true)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, true)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
     serviceDB.storage.size shouldBe 1
     serviceDB.storage.exists(_.name.equals(freeCodeModelWarning.name)) shouldBe false
     Post("/freeCode", freeCodeModelWarning) ~> controller.getRoute ~> check {
       serviceDB.storage.size shouldBe 2
-      val output  = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
+      val output = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
       output.isDefined shouldBe true
       output.get shouldBe freeCodeModelWarning
       val models = responseAs[AngularResponse[List[ErrorModel]]]
@@ -54,19 +53,16 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
     }
   }
 
-
-
-
   it should "test insert wrong model" in {
 
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(true,true)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(true, true)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
     serviceDB.storage.size shouldBe 1
     serviceDB.storage.exists(_.name.equals(freeCodeModelError.name)) shouldBe false
     Post("/freeCode", freeCodeModelError) ~> controller.getRoute ~> check {
       serviceDB.storage.size shouldBe 1
-      val output  = serviceDB.storage.find(_.name.equals(freeCodeModelError.name))
+      val output = serviceDB.storage.find(_.name.equals(freeCodeModelError.name))
       output.isDefined shouldBe false
       val models = responseAs[AngularResponse[List[ErrorModel]]]
       models.data.size shouldBe 1
@@ -76,9 +72,9 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
   }
 
   it should "test get all" in {
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,false)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
     serviceDB.storage.size shouldBe 1
     serviceDB.storage.exists(_.name.equals(freeCodeModelDefault.name)) shouldBe true
 
@@ -89,14 +85,13 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
       models.Result shouldBe "OK"
     }
 
-    serviceDB.storage = List(freeCodeModelDefault,freeCodeModelError,freeCodeModelWarning,freeCodeModelCorrect)
+    serviceDB.storage = List(freeCodeModelDefault, freeCodeModelError, freeCodeModelWarning, freeCodeModelCorrect)
     Get("/freeCode") ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[List[FreeCodeModel]]]
       models.data.size shouldBe 4
-      models.data should contain theSameElementsAs  serviceDB.storage
+      models.data should contain theSameElementsAs serviceDB.storage
       models.Result shouldBe "OK"
     }
-
 
     serviceDB.storage = List.empty
     Get("/freeCode") ~> controller.getRoute ~> check {
@@ -107,11 +102,10 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
 
   }
 
-
   it should "test get" in {
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,false)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
     serviceDB.storage.size shouldBe 1
     serviceDB.storage.exists(_.name.equals(freeCodeModelDefault.name)) shouldBe true
 
@@ -120,15 +114,13 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
       models.data shouldBe freeCodeModelDefault
     }
 
-    //get a model thant doesn't exist
+    // get a model thant doesn't exist
     Get(s"/freeCode/instance/${freeCodeModelError.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularKoReponse[String]]
       models.Result shouldBe "KO"
     }
 
-
-
-    serviceDB.storage = List(freeCodeModelDefault,freeCodeModelError,freeCodeModelWarning,freeCodeModelCorrect)
+    serviceDB.storage = List(freeCodeModelDefault, freeCodeModelError, freeCodeModelWarning, freeCodeModelCorrect)
     Get(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[FreeCodeModel]]
       models.data shouldBe freeCodeModelDefault
@@ -151,12 +143,10 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
 
   }
 
-
-
   it should "test delete" in {
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,false)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
     serviceDB.storage.size shouldBe 1
     serviceDB.storage.exists(_.name.equals(freeCodeModelDefault.name)) shouldBe true
 
@@ -166,15 +156,13 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
       serviceDB.storage.size shouldBe 0
     }
 
-    //delete again
+    // delete again
     Delete(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
       responseAs[AngularKoReponse[String]].Result shouldBe "KO"
       serviceDB.storage.size shouldBe 0
     }
 
-
-
-    serviceDB.storage = List(freeCodeModelDefault,freeCodeModelError,freeCodeModelWarning,freeCodeModelCorrect)
+    serviceDB.storage = List(freeCodeModelDefault, freeCodeModelError, freeCodeModelWarning, freeCodeModelCorrect)
     serviceDB.storage.size shouldBe 4
 
     Delete(s"/freeCode/instance/${freeCodeModelDefault.name}") ~> controller.getRoute ~> check {
@@ -200,13 +188,13 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
   }
 
   it should "test complete api" in {
-    val serviceDB = new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false,true)
-    val controller = new FreeCodeController(serviceDB, freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false, true)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
 
     Post("/freeCode/complete/1", freeCodeModelWarning) ~> controller.getRoute ~> check {
       serviceDB.storage.size shouldBe 1
-      val output  = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
+      val output = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
       output.isDefined shouldBe false
       val models = responseAs[AngularResponse[List[CompletionModel]]]
       models.data.size shouldBe 1
@@ -217,13 +205,13 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
   }
 
   it should "test complete api without complete" in {
-    val serviceDB = new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false,false)
-    val controller = new FreeCodeController(serviceDB, freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false, false)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
 
     Post("/freeCode/complete/1", freeCodeModelWarning) ~> controller.getRoute ~> check {
       serviceDB.storage.size shouldBe 1
-      val output  = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
+      val output = serviceDB.storage.find(_.name.equals(freeCodeModelWarning.name))
       output.isDefined shouldBe false
       val models = responseAs[AngularResponse[List[CompletionModel]]]
       models.data.size shouldBe 0
@@ -234,22 +222,20 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
 
   it should "test validate correct model" in {
 
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,false)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, false)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
 
     Post("/freeCode/validate", freeCodeModelCorrect) ~> controller.getRoute ~> check {
       responseAs[AngularResponse[String]] shouldEqual AngularResponse("OK", "OK")
     }
   }
 
-
-
   it should "test validate warning model" in {
 
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false,true)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(false, true)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
     Post("/freeCode/validate", freeCodeModelWarning) ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[List[ErrorModel]]]
       models.data.size shouldBe 1
@@ -258,14 +244,11 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
     }
   }
 
-
-
-
   it should "test validate wrong model" in {
 
-    val serviceDB =  new FreeCodeDBServiceMock
-    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(true,true)
-    val controller = new FreeCodeController(serviceDB,freeCodeCompiler)
+    val serviceDB        = new FreeCodeDBServiceMock
+    val freeCodeCompiler = new FreeCodeCompilerUtilsMock(true, true)
+    val controller       = new FreeCodeController(serviceDB, freeCodeCompiler)
     Post("/freeCode/validate", freeCodeModelError) ~> controller.getRoute ~> check {
       val models = responseAs[AngularResponse[List[ErrorModel]]]
       models.data.size shouldBe 1
@@ -274,26 +257,25 @@ class FreeCodeControllerSpec extends FlatSpec with ScalatestRouteTest with Match
     }
   }
 
-
 }
 
-private class FreeCodeCompilerUtilsMock(errors : Boolean, warnings: Boolean,codeToComplete : Boolean=true) extends FreeCodeCompilerUtils{
-  private val error = ErrorModel("virtual","1","error","error","","")
-  private val warning = ErrorModel("virtual","1","warning","warning","","")
-  val complete = CompletionModel("toString","()=>String")
+private class FreeCodeCompilerUtilsMock(errors: Boolean, warnings: Boolean, codeToComplete: Boolean = true)
+    extends FreeCodeCompilerUtils {
+  private val error   = ErrorModel("virtual", "1", "error", "error", "", "")
+  private val warning = ErrorModel("virtual", "1", "warning", "warning", "", "")
+  val complete        = CompletionModel("toString", "()=>String")
 
   override def validate(code: String): List[ErrorModel] = {
-    if(errors) List(error)
-    else if(warnings) List(warning)
+    if (errors) List(error)
+    else if (warnings) List(warning)
     else List.empty
   }
 
-  override def complete(code: String,int : Int): List[CompletionModel] = {
-    if(codeToComplete) List(complete)
+  override def complete(code: String, int: Int): List[CompletionModel] = {
+    if (codeToComplete) List(complete)
     else List.empty
   }
 }
-
 
 private class FreeCodeDBServiceMock extends FreeCodeDBService {
 
@@ -314,23 +296,31 @@ private class FreeCodeDBServiceMock extends FreeCodeDBService {
 }
 
 private object FreeCodeDataSupport {
-  val freeCodeModelDefault : FreeCodeModel = FreeCodeModel("test-default",
+  val freeCodeModelDefault: FreeCodeModel = FreeCodeModel(
+    "test-default",
     """val a = "test"
-      | a.toString """.stripMargin)
+      | a.toString """.stripMargin
+  )
 
-  val freeCodeModelCorrect: FreeCodeModel = FreeCodeModel("test-correct",
+  val freeCodeModelCorrect: FreeCodeModel = FreeCodeModel(
+    "test-correct",
     """val a = "test"
-      | a.toString """.stripMargin)
+      | a.toString """.stripMargin
+  )
 
-  val freeCodeModelWarning: FreeCodeModel = FreeCodeModel("test-warn",
+  val freeCodeModelWarning: FreeCodeModel = FreeCodeModel(
+    "test-warn",
     """val a = "test"
       | a
       | a
-      | """.stripMargin)
+      | """.stripMargin
+  )
 
-  val freeCodeModelError: FreeCodeModel = FreeCodeModel("test-error",
+  val freeCodeModelError: FreeCodeModel = FreeCodeModel(
+    "test-error",
     """val a = "test"
       | c
-      | """.stripMargin)
+      | """.stripMargin
+  )
 
 }

@@ -10,14 +10,18 @@ import it.agilelab.bigdata.wasp.producers.{ProducerActor, ProducerGuardian, Star
 import it.agilelab.bigdata.wasp.whitelabel.models.test.{TestSchemaAvroManager, TopicAvro_v1}
 import spray.json.DefaultJsonProtocol
 
-/**
-  * @author andreaL
+/** @author
+  *   andreaL
   */
 
-final class TestProducerAvroSchemaManager_v1(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerId: String)
-  extends ProducerGuardian(env.asInstanceOf[AnyRef {val producerBL: ProducerBL; val topicBL: TopicBL}], producerId) with SprayJsonSupport with DefaultJsonProtocol {
+final class TestProducerAvroSchemaManager_v1(
+    env: { val producerBL: ProducerBL; val topicBL: TopicBL },
+    producerId: String
+) extends ProducerGuardian(env.asInstanceOf[AnyRef { val producerBL: ProducerBL; val topicBL: TopicBL }], producerId)
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
-  implicit val system = this.context.system
+  implicit val system       = this.context.system
   override val name: String = "CrashOctoProducer"
 
   def startChildActors() = {
@@ -34,9 +38,9 @@ final class TestProducerAvroSchemaManager_v1(env: {val producerBL: ProducerBL; v
 /** For simplicity, these just go through Akka. */
 
 private[wasp] class TestActorAvroSchemaManager_v1(filePath: String, kafka_router: ActorRef, topic: Option[TopicModel])
-  extends ProducerActor[TopicAvro_v1](kafka_router, topic)
-    with SprayJsonSupport with DefaultJsonProtocol {
-
+    extends ProducerActor[TopicAvro_v1](kafka_router, topic)
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
   override def preStart(): Unit = {
     logger.info(s"Starting producing TestActorAvroSchemaManager")
@@ -44,15 +48,14 @@ private[wasp] class TestActorAvroSchemaManager_v1(filePath: String, kafka_router
   }
 
   def mainTask(): Unit = {
-    (0 to 10).foreach( x => {
+    (0 to 10).foreach(x => {
       println(s"TopicAvro_v1: ${x}")
       Thread.sleep(2000)
       sendMessage(TopicAvro_v1(UUID.randomUUID().toString, Math.random().toInt, Math.random().toInt))
     })
   }
 
-  /**
-    * Used when writing to topics with data type "json" or "avro"
+  /** Used when writing to topics with data type "json" or "avro"
     */
   override def generateOutputJsonMessage(input: TopicAvro_v1): String = {
     JsonConverter.fromString(TestSchemaAvroManager.schema_v1.toString).toString
@@ -64,11 +67,11 @@ private[wasp] class TestActorAvroSchemaManager_v1(filePath: String, kafka_router
 //    baos.toString("UTF-8")
   }
 
-  /**
-    * Defines a function to extract the key to be used to identify the landing partition in kafka topic,
-    * given a message of type T
+  /** Defines a function to extract the key to be used to identify the landing partition in kafka topic, given a message
+    * of type T
     *
-    * @return a function that extract the partition key as String from the T instance to be sent to kafka
+    * @return
+    *   a function that extract the partition key as String from the T instance to be sent to kafka
     */
   override def retrievePartitionKey: TopicAvro_v1 => String = t => t.id
 }

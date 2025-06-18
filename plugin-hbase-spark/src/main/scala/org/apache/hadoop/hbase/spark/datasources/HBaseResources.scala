@@ -91,8 +91,8 @@ trait ReferencedResource {
 
 @InterfaceAudience.Private
 case class TableResource(relation: HBaseRelation) extends ReferencedResource {
-  private[this]  var connection: SmartConnection = _
-  var table: Table = _
+  private[this] var connection: SmartConnection = _
+  var table: Table                              = _
 
   override def init(): Unit = {
     connection = HBaseConnectionCache.getConnection(relation.hbaseConf)
@@ -122,16 +122,13 @@ case class TableResource(relation: HBaseRelation) extends ReferencedResource {
 @InterfaceAudience.Private
 case class RegionResource(relation: HBaseRelation) extends ReferencedResource {
   private var connection: SmartConnection = _
-  var rl: RegionLocator = _
+  var rl: RegionLocator                   = _
   val regions = releaseOnException {
     val keys = rl.getStartEndKeys
-    keys.getFirst.zip(keys.getSecond)
+    keys.getFirst
+      .zip(keys.getSecond)
       .zipWithIndex
-      .map(x =>
-      HBaseRegion(x._2,
-        Some(x._1._1),
-        Some(x._1._2),
-        Some(rl.getRegionLocation(x._1._1).getHostname)))
+      .map(x => HBaseRegion(x._2, Some(x._1._1), Some(x._1._2), Some(rl.getRegionLocation(x._1._1).getHostname)))
   }
 
   override def init(): Unit = {
@@ -152,7 +149,7 @@ case class RegionResource(relation: HBaseRelation) extends ReferencedResource {
 }
 
 @InterfaceAudience.Private
-object HBaseResources{
+object HBaseResources {
   implicit def ScanResToScan(sr: ScanResource): ResultScanner = {
     sr.rs
   }

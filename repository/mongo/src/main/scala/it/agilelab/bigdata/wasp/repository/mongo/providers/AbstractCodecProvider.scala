@@ -11,7 +11,7 @@ abstract class AbstractCodecProvider[C] extends CodecProvider {
     if (clazz == clazzOf) {
       new Codec[T] {
         override def decode(reader: BsonReader, decoderContext: DecoderContext): T = {
-          implicit val r: BsonReader = reader
+          implicit val r: BsonReader       = reader
           implicit val ctx: DecoderContext = decoderContext
           reader.readStartDocument()
           val result = decodeClass(registry)
@@ -20,9 +20,9 @@ abstract class AbstractCodecProvider[C] extends CodecProvider {
         }
 
         override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext): Unit = {
-          implicit val w: BsonWriter = writer
+          implicit val w: BsonWriter       = writer
           implicit val ctx: EncoderContext = encoderContext
-          val instanceValue = value.asInstanceOf[C]
+          val instanceValue                = value.asInstanceOf[C]
           writer.writeStartDocument()
           encodeClass(registry, instanceValue)
           writer.writeEndDocument()
@@ -35,22 +35,24 @@ abstract class AbstractCodecProvider[C] extends CodecProvider {
     }
   }
 
-  def decodeClass(registry: CodecRegistry)
-                 (implicit reader: BsonReader, decoderContext: DecoderContext): C
+  def decodeClass(registry: CodecRegistry)(implicit reader: BsonReader, decoderContext: DecoderContext): C
 
-  def encodeClass(registry: CodecRegistry, value: C)
-                 (implicit writer: BsonWriter, encoderContext: EncoderContext): Unit
+  def encodeClass(registry: CodecRegistry, value: C)(implicit writer: BsonWriter, encoderContext: EncoderContext): Unit
 
   def clazzOf: Class[C]
 
-  protected def readObject[T](name: String, codec: Codec[T])
-                             (implicit reader: BsonReader, decoderContext: DecoderContext): T = {
+  protected def readObject[T](name: String, codec: Codec[T])(implicit
+      reader: BsonReader,
+      decoderContext: DecoderContext
+  ): T = {
     reader.readName(name)
     codec.decode(reader, decoderContext)
   }
 
-  protected def readList[T](name: String, codec: Codec[T])
-                           (implicit reader: BsonReader, decoderContext: DecoderContext): List[T] = {
+  protected def readList[T](name: String, codec: Codec[T])(implicit
+      reader: BsonReader,
+      decoderContext: DecoderContext
+  ): List[T] = {
     reader.readName(name)
     val buffer = mutable.ListBuffer.empty[T]
     reader.readStartArray()
@@ -62,8 +64,10 @@ abstract class AbstractCodecProvider[C] extends CodecProvider {
     buffer.toList
   }
 
-  protected def writeList[T](name: String, values: List[T], codec: Codec[T])
-                            (implicit writer: BsonWriter, encoderContext: EncoderContext): Unit = {
+  protected def writeList[T](name: String, values: List[T], codec: Codec[T])(implicit
+      writer: BsonWriter,
+      encoderContext: EncoderContext
+  ): Unit = {
     writer.writeStartArray(name)
     values.foreach { x =>
       codec.encode(writer, x, encoderContext)
@@ -71,8 +75,10 @@ abstract class AbstractCodecProvider[C] extends CodecProvider {
     writer.writeEndArray()
   }
 
-  protected def writeObject[T](name: String, value: T, codec: Codec[T])
-                              (implicit writer: BsonWriter, encoderContext: EncoderContext): Unit = {
+  protected def writeObject[T](name: String, value: T, codec: Codec[T])(implicit
+      writer: BsonWriter,
+      encoderContext: EncoderContext
+  ): Unit = {
     writer.writeName(name)
     codec.encode(writer, value, encoderContext)
   }

@@ -9,10 +9,11 @@ import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
 import spray.json._
 
 object StrategyController extends Directives with JsonSupport {
-  lazy val reflections = new Reflections(new ConfigurationBuilder()
+  lazy val reflections = new Reflections(
+    new ConfigurationBuilder()
       .setUrls(ClasspathHelper.forClassLoader)
-    .setScanners(new SubTypesScanner(false)))
-
+      .setScanners(new SubTypesScanner(false))
+  )
 
   def getRoute: Route = {
     pathPrefix("strategy") {
@@ -21,8 +22,12 @@ object StrategyController extends Directives with JsonSupport {
           get {
             complete {
               val clazzFilter = Class.forName("it.agilelab.bigdata.wasp.consumers.spark.strategies.InternalStrategy")
-              val output = reflections.getSubTypesOf(Class.forName("it.agilelab.bigdata.wasp.consumers.spark.strategies.Strategy"))
-                .toArray().map{c=>c.asInstanceOf[Class[_]] }.filterNot(o=> clazzFilter.isAssignableFrom(o)).map(_.getName)
+              val output = reflections
+                .getSubTypesOf(Class.forName("it.agilelab.bigdata.wasp.consumers.spark.strategies.Strategy"))
+                .toArray()
+                .map { c => c.asInstanceOf[Class[_]] }
+                .filterNot(o => clazzFilter.isAssignableFrom(o))
+                .map(_.getName)
               getJsonArrayOrEmpty[String](output, _.toJson, pretty)
             }
           }

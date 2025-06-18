@@ -7,9 +7,12 @@ import scala.collection.immutable.Queue
 
 case class FifoSchedulingStrategy(queue: Queue[Collaborator]) extends SchedulingStrategy {
 
-  override def choose(members: Set[Collaborator], pipegraph: PipegraphModel): SchedulingStrategy.SchedulingStrategyOutcome = {
+  override def choose(
+      members: Set[Collaborator],
+      pipegraph: PipegraphModel
+  ): SchedulingStrategy.SchedulingStrategyOutcome = {
 
-    val newMembers = members.filterNot(queue.contains(_))
+    val newMembers                             = members.filterNot(queue.contains(_))
     val onlyExistingNodes: Queue[Collaborator] = queue.filter(c => members.contains((c)))
 
     val all = onlyExistingNodes ++ newMembers
@@ -20,5 +23,3 @@ case class FifoSchedulingStrategy(queue: Queue[Collaborator]) extends Scheduling
 
   }
 }
-
-

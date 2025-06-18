@@ -8,11 +8,10 @@ class CompilerPool(capacity: Int) extends AutoCloseable {
   val pool: Pool[Compiler] = Pool(
     capacity = this.capacity,
     factory = () => new Compiler(),
-    healthCheck = _ => true, //always dispose compilers
+    healthCheck = _ => true, // always dispose compilers
     dispose = _.close(),
     reset = _.reset()
   )
 
   def use[A](action: Compiler => A): A = pool.acquire().apply(action)
 }
-

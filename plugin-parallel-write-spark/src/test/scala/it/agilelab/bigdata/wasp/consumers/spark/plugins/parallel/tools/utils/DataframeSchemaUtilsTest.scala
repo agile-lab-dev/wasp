@@ -11,10 +11,11 @@ class DataframeSchemaUtilsTest extends FunSuite with SparkSuite {
 
   test("convertToSchema should return a dataframe compliant with the schema") {
     val sc = spark.sparkContext
-    val dfSchema = StructType(StructField("b", StringType) :: StructField("c", StringType) :: StructField("a", StringType) :: Nil)
-    val df = spark.createDataFrame(sc.emptyRDD[Row], dfSchema)
+    val dfSchema =
+      StructType(StructField("b", StringType) :: StructField("c", StringType) :: StructField("a", StringType) :: Nil)
+    val df           = spark.createDataFrame(sc.emptyRDD[Row], dfSchema)
     val targetSchema = StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
-    val enforcedDf = DataframeSchemaUtils.convertToSchema(df, targetSchema)
+    val enforcedDf   = DataframeSchemaUtils.convertToSchema(df, targetSchema)
     assert(enforcedDf.isSuccess)
     assert(enforcedDf.get.columns sameElements targetSchema.names)
   }

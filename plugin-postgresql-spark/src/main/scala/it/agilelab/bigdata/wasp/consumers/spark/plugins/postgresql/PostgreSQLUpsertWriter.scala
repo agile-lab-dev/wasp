@@ -40,30 +40,29 @@ class PostgreSQLUpsertWriter(sqlSinkModel: SQLSinkModel, schema: StructType, met
     val numRows = rows
       .grouped(sqlSinkModel.batchSize)
       .zipWithIndex
-      .map {
-        case (rowGroup, rowGroupIndex) =>
-          val rowGroupSize = rowGroup.size
-          logger.debug(s"Write operation for $writeId row group $rowGroupIndex of $rowGroupSize rows starting")
+      .map { case (rowGroup, rowGroupIndex) =>
+        val rowGroupSize = rowGroup.size
+        logger.debug(s"Write operation for $writeId row group $rowGroupIndex of $rowGroupSize rows starting")
 
-          logger.debug(s"Write operation for $writeId row group $rowGroupIndex adding rows to statement batch")
+        logger.debug(s"Write operation for $writeId row group $rowGroupIndex adding rows to statement batch")
+        upsertStatement.clearBatch()
+        rowGroup.foreach(row => addRowToStatementBatch(row, metadata, upsertStatement))
+
+        logger.debug(s"Write operation for $writeId row group $rowGroupIndex executing statement")
+        val tryUpdateCounts = Try(upsertStatement.executeBatch())
+        if (tryUpdateCounts.isFailure) {
+          connection.rollback()
+          rowGroupSize
+        } else {
+          checkUpdateCounts(rowGroup, writeId, rowGroupIndex, tryUpdateCounts)
+
+          logger.debug(s"Write operation for $writeId row group $rowGroupIndex committing")
+          connection.commit()
           upsertStatement.clearBatch()
-          rowGroup.foreach(row => addRowToStatementBatch(row, metadata, upsertStatement))
 
-          logger.debug(s"Write operation for $writeId row group $rowGroupIndex executing statement")
-          val tryUpdateCounts = Try(upsertStatement.executeBatch())
-          if (tryUpdateCounts.isFailure) {
-            connection.rollback()
-            rowGroupSize
-          } else {
-            checkUpdateCounts(rowGroup, writeId, rowGroupIndex, tryUpdateCounts)
-
-            logger.debug(s"Write operation for $writeId row group $rowGroupIndex committing")
-            connection.commit()
-            upsertStatement.clearBatch()
-
-            logger.debug(s"Write operation for $writeId row group $rowGroupIndex of $rowGroupSize rows finished")
-            rowGroupSize
-          }
+          logger.debug(s"Write operation for $writeId row group $rowGroupIndex of $rowGroupSize rows finished")
+          rowGroupSize
+        }
       }
       .sum
     logger.info(s"Write operation for $writeId finished writing $numRows rows total")
@@ -72,14 +71,13 @@ class PostgreSQLUpsertWriter(sqlSinkModel: SQLSinkModel, schema: StructType, met
 
   private def addRowToStatementBatch(row: Row, metadata: TableMetadata, preparedStatement: PreparedStatement): Unit = {
     row.toSeq.zipWithIndex
-      .foreach {
-        case (value, index) =>
-          setParameter(
-            preparedStatement,
-            metadata,
-            index + 1, // PreparedStatement's indices are 1-based, so add 1
-            value
-          )
+      .foreach { case (value, index) =>
+        setParameter(
+          preparedStatement,
+          metadata,
+          index + 1, // PreparedStatement's indices are 1-based, so add 1
+          value
+        )
       }
     preparedStatement.addBatch()
   }
@@ -139,12 +137,11 @@ class PostgreSQLUpsertWriter(sqlSinkModel: SQLSinkModel, schema: StructType, met
             .map { case ((updateCount, index), row) => (updateCount, index, row) }
             .filter(_._1 < 0)
           failedUpdates
-            .foreach {
-              case (updateCount, index, row) =>
-                val exception = new SQLException(
-                  s"Write operation for $writeId row group $rowGroupIndex encountered an issue: row $row at position $index returned negative update value $updateCount"
-                )
-                logger.error(exception.getMessage, exception)
+            .foreach { case (updateCount, index, row) =>
+              val exception = new SQLException(
+                s"Write operation for $writeId row group $rowGroupIndex encountered an issue: row $row at position $index returned negative update value $updateCount"
+              )
+              logger.error(exception.getMessage, exception)
             }
 
           throw new SQLException(
@@ -154,11 +151,10 @@ class PostgreSQLUpsertWriter(sqlSinkModel: SQLSinkModel, schema: StructType, met
       case Failure(throwable) =>
         // the batch failed, grab the chained SQLExceptions and nest them into a single one for ease of handling
         val sqlException = throwable.asInstanceOf[SQLException]
-        val nestedExceptions = sqlException.iterator().asScala.reduce[Throwable] {
-          case (ex, cause) =>
-            val t = new Exception(ex.getMessage, cause)
-            t.setStackTrace(ex.getStackTrace)
-            t
+        val nestedExceptions = sqlException.iterator().asScala.reduce[Throwable] { case (ex, cause) =>
+          val t = new Exception(ex.getMessage, cause)
+          t.setStackTrace(ex.getStackTrace)
+          t
         }
         val wrappedException = new SQLException(
           s"Write operation for $writeId row group $rowGroupIndex encountered an issue",

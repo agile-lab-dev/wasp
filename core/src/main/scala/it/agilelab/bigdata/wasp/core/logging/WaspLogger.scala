@@ -8,12 +8,11 @@ import it.agilelab.bigdata.wasp.core.logging.Logging.LogEvent
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.{Logger, LoggerFactory}
 
-/**
-  * SLF4J logger wrapper that also logs to the logger actor at `WaspSystem.loggerActor`
+/** SLF4J logger wrapper that also logs to the logger actor at `WaspSystem.loggerActor`
   */
-private[logging] final class WaspLogger(protected val slf4jLogger: Logger) extends Serializable {
+final private[logging] class WaspLogger(protected val slf4jLogger: Logger) extends Serializable {
   val loggerName: String = slf4jLogger.getName
-  
+
   def error(msg: => String) {
     if (slf4jLogger.isErrorEnabled) {
       slf4jLogger.error(msg)
@@ -84,39 +83,42 @@ private[logging] final class WaspLogger(protected val slf4jLogger: Logger) exten
     }
   }
 
-  def remoteLog(logLevel: LogLevel, msg:String, maybeThrowable: Option[Throwable] = None): Unit = {
-    val maybeCause = maybeThrowable.map(_.getMessage)
+  def remoteLog(logLevel: LogLevel, msg: String, maybeThrowable: Option[Throwable] = None): Unit = {
+    val maybeCause      = maybeThrowable.map(_.getMessage)
     val maybeStackTrace = maybeThrowable.map(ExceptionUtils.getStackTrace)
-    remoteLog(logLevel,msg,maybeCause,maybeStackTrace)
+    remoteLog(logLevel, msg, maybeCause, maybeStackTrace)
   }
 
-  def remoteLog(logLevel: LogLevel, msg:String, maybeCause: Option[String], maybeStackTrace: Option[String]): Unit =
-    remoteLog(LogEvent(logLevel, Instant.now(), Thread.currentThread().getName, loggerName, msg, maybeCause, maybeStackTrace))
+  def remoteLog(logLevel: LogLevel, msg: String, maybeCause: Option[String], maybeStackTrace: Option[String]): Unit =
+    remoteLog(
+      LogEvent(logLevel, Instant.now(), Thread.currentThread().getName, loggerName, msg, maybeCause, maybeStackTrace)
+    )
 
-  def remoteLog(event: LogEvent): Unit = if(WaspSystem.loggerActor != null) {
+  def remoteLog(event: LogEvent): Unit = if (WaspSystem.loggerActor != null) {
     WaspSystem.loggerActor ! event
   }
 }
 
 private[logging] object WaspLogger {
-  /**
-    * Creates a Logger named corresponding to the given class.
-    * @param clazz Class used for the Logger's name. Must not be null!
+
+  /** Creates a Logger named corresponding to the given class.
+    * @param clazz
+    *   Class used for the Logger's name. Must not be null!
     */
   def apply(clazz: Class[_]): WaspLogger = {
     require(clazz != null, "clazz must not be null!")
     logger(LoggerFactory getLogger clazz)
   }
-  
-  /**
-    * Creates a Logger with the given name.
-    * @param name The Logger's name. Must not be null!
+
+  /** Creates a Logger with the given name.
+    * @param name
+    *   The Logger's name. Must not be null!
     */
   def apply(name: String): WaspLogger = {
     require(name != null, "loggerName must not be null!")
     logger(LoggerFactory getLogger name)
   }
-  
+
   private def logger(slf4jLogger: Logger): WaspLogger = slf4jLogger match {
     case _ => new WaspLogger(slf4jLogger)
   }

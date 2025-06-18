@@ -8,7 +8,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.tables.{BatchJobInstanceTabl
 
 case class BatchJobInstanceBLImpl(waspDB: WaspPostgresDB) extends BatchJobInstanceBL with PostgresBL {
 
-  implicit val tableDefinition: TableDefinition[BatchJobInstanceModel,String] = BatchJobInstanceTableDefinition
+  implicit val tableDefinition: TableDefinition[BatchJobInstanceModel, String] = BatchJobInstanceTableDefinition
 
   override def getByName(name: String): Option[BatchJobInstanceModel] = waspDB.getByPrimaryKey(name)
 
@@ -25,7 +25,7 @@ case class BatchJobInstanceBLImpl(waspDB: WaspPostgresDB) extends BatchJobInstan
   override def all(): Seq[BatchJobInstanceModel] = waspDB.getAll()
 
   override def instancesOf(name: String): Seq[BatchJobInstanceModel] =
-    waspDB.getBy(Array((BatchJobInstanceTableDefinition.instanceOf,name)))
+    waspDB.getBy(Array((BatchJobInstanceTableDefinition.instanceOf, name)))
 
   override def createTable(): Unit = waspDB.createTable()
 }

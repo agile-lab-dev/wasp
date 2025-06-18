@@ -3,24 +3,23 @@ package it.agilelab.bigdata.wasp.models
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.KafkaProduct
 
-/**
-	* A model for grouping of topics.
-	*
-	* The `name` field specifies the name of the model, which is used as the unique identifier for the model in the
-	* models database.
-	*
-	* The `topicNameField` field specifies the field whose contents will be used as the name of the topic to which the
-	* message will be sent when writing to Kafka. The field must be of type string. The original field will be left as-is,
-	* so your schema must handle it (or you can use `valueFieldsNames`).
-	*
-	* The `topicModelNames` contains the names of the topic model that constitute this grouping of topics.
-	*
-	* The topic models that constitute this grouping of topics must:
-	* - consist of at least one topic model
-	* - be all different models
-	* - refer to different topics
-	* - use the same settings for everything but partitions and replicas
-	*/
+/** A model for grouping of topics.
+  *
+  * The `name` field specifies the name of the model, which is used as the unique identifier for the model in the models
+  * database.
+  *
+  * The `topicNameField` field specifies the field whose contents will be used as the name of the topic to which the
+  * message will be sent when writing to Kafka. The field must be of type string. The original field will be left as-is,
+  * so your schema must handle it (or you can use `valueFieldsNames`).
+  *
+  * The `topicModelNames` contains the names of the topic model that constitute this grouping of topics.
+  *
+  * The topic models that constitute this grouping of topics must:
+  *   - consist of at least one topic model
+  *   - be all different models
+  *   - refer to different topics
+  *   - use the same settings for everything but partitions and replicas
+  */
 case class MultiTopicModel private[wasp] (
     override val name: String,
     topicNameField: String,
@@ -41,12 +40,11 @@ object MultiTopicModel {
     new MultiTopicModel(name, topicNameField, topicModels.map(_.name))
   }
 
-  /**
-    * Checks that:
-    * - there is at least one topic model
-    * - the topic models are all different models
-    * - the topic models refer to different topics
-    * - the topic models have the same compression
+  /** Checks that:
+    *   - there is at least one topic model
+    *   - the topic models are all different models
+    *   - the topic models refer to different topics
+    *   - the topic models have the same compression
     */
   private[wasp] def areTopicsHealthy(models: Seq[TopicModel]): Either[String, Unit] = {
     for {
@@ -68,10 +66,9 @@ object MultiTopicModel {
 
   private[wasp] def formatTopicCompressionValidationError(error: TopicCompressionValidationError): String = {
     error
-      .map {
-        case (compression, topics) =>
-          val t = TopicCompression.asString(compression)
-          topics.map(_.name).mkString(s"[", ",", s"] use $t")
+      .map { case (compression, topics) =>
+        val t = TopicCompression.asString(compression)
+        topics.map(_.name).mkString(s"[", ",", s"] use $t")
       }
       .mkString("All topic models must have the same compression setting, found settings: ", ",", "")
   }

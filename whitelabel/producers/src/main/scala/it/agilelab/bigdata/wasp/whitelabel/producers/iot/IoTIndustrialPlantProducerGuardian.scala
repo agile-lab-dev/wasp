@@ -12,8 +12,13 @@ import spray.json.DefaultJsonProtocol
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
-class IoTIndustrialPlantProducerGuardian (env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
-  extends ProducerGuardian(env.asInstanceOf[AnyRef {val producerBL: ProducerBL; val topicBL: TopicBL}], producerName) {
+class IoTIndustrialPlantProducerGuardian(
+    env: { val producerBL: ProducerBL; val topicBL: TopicBL },
+    producerName: String
+) extends ProducerGuardian(
+      env.asInstanceOf[AnyRef { val producerBL: ProducerBL; val topicBL: TopicBL }],
+      producerName
+    ) {
   override val name: String = ""
 
   override def startChildActors(): Unit = {
@@ -25,17 +30,14 @@ class IoTIndustrialPlantProducerGuardian (env: {val producerBL: ProducerBL; val 
 }
 
 private[producers] class IoTIndustrialPlantProducerActor(kafka_router: ActorRef, topic: Option[TopicModel])
-  extends ProducerActor[IndustrialPlantData](kafka_router, topic)
-    with SprayJsonSupport with DefaultJsonProtocol {
+    extends ProducerActor[IndustrialPlantData](kafka_router, topic)
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
   val rand = new Random()
 
   override def retrievePartitionKey: IndustrialPlantData => String =
     (data: IndustrialPlantData) => data.plant
-
-
-
-
 
   def sendMsg(): Unit = {
     val data = generateRandomData()
@@ -43,7 +45,7 @@ private[producers] class IoTIndustrialPlantProducerActor(kafka_router: ActorRef,
   }
 
   override def mainTask(): Unit = {
-    //logger.info(s"Starting main task for actor: ${this.getClass.getName}")
+    // logger.info(s"Starting main task for actor: ${this.getClass.getName}")
     import scala.concurrent.duration._
     implicit val executor: ExecutionContext = context.dispatcher
 
@@ -55,8 +57,6 @@ private[producers] class IoTIndustrialPlantProducerActor(kafka_router: ActorRef,
   }
 
   private def generateRandomData(): IndustrialPlantData = FakeIndustrialPlantData.fromRandom()
-
-
 
   def generateOutputJsonMessage(input: IndustrialPlantData): String = {
     JsonConverter.fromString(FakeIndustrialPlantData.schema.toString).toString

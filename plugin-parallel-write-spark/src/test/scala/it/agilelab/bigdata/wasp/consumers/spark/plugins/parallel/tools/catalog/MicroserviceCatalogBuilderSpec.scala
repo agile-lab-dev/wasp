@@ -19,12 +19,18 @@ class MicroserviceCatalogBuilderSpec extends FunSuite {
       val correlationId                     = ParallelWriteEntity.randomCorrelationId()
       val executionPlan: WriteExecutionPlanResponseBody =
         microservice.getWriteExecutionPlan(WriteExecutionPlanRequestBody(), correlationId)
-      assert(ParallelWriteFormat.withName(executionPlan.format.getOrElse(
-        throw new RuntimeException("Entity responded without a format field for a COLD case write")
-      )) == ParallelWriteFormat.delta)
-      assert(executionPlan.writeUri.getOrElse(
-        throw new RuntimeException("Entity responded without a writeUri field for a COLD case write")
-      ) == "s3://bucket/")
+      assert(
+        ParallelWriteFormat.withName(
+          executionPlan.format.getOrElse(
+            throw new RuntimeException("Entity responded without a format field for a COLD case write")
+          )
+        ) == ParallelWriteFormat.delta
+      )
+      assert(
+        executionPlan.writeUri.getOrElse(
+          throw new RuntimeException("Entity responded without a writeUri field for a COLD case write")
+        ) == "s3://bucket/"
+      )
       assert(microservice.baseUrl.toString == "http://localhost:9999")
     }
   }

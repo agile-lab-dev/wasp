@@ -14,12 +14,12 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
 
-/**
-	* A WASP Consumers Spark plugin to write to PostgreSQL via batch and streaming, with support for `INSERT ON CONFLICT`
-	* operations, connection pooling, batching and transactions.
-	*
-	* @author Nicolò Bidotti
-	*/
+/** A WASP Consumers Spark plugin to write to PostgreSQL via batch and streaming, with support for `INSERT ON CONFLICT`
+  * operations, connection pooling, batching and transactions.
+  *
+  * @author
+  *   Nicolò Bidotti
+  */
 class PostgreSQLConsumerSparkPlugin extends WaspConsumersSparkPlugin with Logging {
   import PostgreSQLConsumerSparkPlugin._
 
@@ -44,7 +44,7 @@ class PostgreSQLConsumerSparkPlugin extends WaspConsumersSparkPlugin with Loggin
     val maybeSqlSinkModel = sqlSinkBL.getByName(sqlSinkModelName)
     maybeSqlSinkModel match {
       case Some(sqlSinkModel: SQLSinkModel) => new PostgreSQLSparkStructuredStreamingWriter(sqlSinkModel)
-      case None                             => throw new Exception(s"Unable to find SQLSinkModel with name $sqlSinkModelName")
+      case None => throw new Exception(s"Unable to find SQLSinkModel with name $sqlSinkModelName")
     }
   }
 
@@ -65,7 +65,7 @@ class PostgreSQLConsumerSparkPlugin extends WaspConsumersSparkPlugin with Loggin
     val maybeSqlSinkModel = sqlSinkBL.getByName(sqlSinkModelName)
     maybeSqlSinkModel match {
       case Some(sqlSinkModel: SQLSinkModel) => new PostgreSQLSparkBatchWriter(sqlSinkModel)
-      case None                             => throw new Exception(s"Unable to find SQLSinkModel with name $sqlSinkModelName")
+      case None => throw new Exception(s"Unable to find SQLSinkModel with name $sqlSinkModelName")
     }
   }
 

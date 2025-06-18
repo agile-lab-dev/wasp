@@ -1,7 +1,11 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.writers
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.ParallelWriteEntity.CorrelationId
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.{DataStreamRequestBody, ParallelWriteEntity, WriteExecutionPlanResponseBody}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.entity.{
+  DataStreamRequestBody,
+  ParallelWriteEntity,
+  WriteExecutionPlanResponseBody
+}
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatalogService
 import it.agilelab.bigdata.wasp.core.logging.Logging
@@ -12,13 +16,15 @@ case class HotParallelWriter(
     entityDetails: CatalogCoordinates,
     catalogService: DataCatalogService,
     entityAPI: ParallelWriteEntity
-) extends ParallelWriter with Logging {
+) extends ParallelWriter
+    with Logging {
 
-  /**
-    * Writes data according to write execution plan
+  /** Writes data according to write execution plan
     *
-    * @param writeExecutionPlan execution plan obtained from entity
-    * @param df                 data to write
+    * @param writeExecutionPlan
+    *   execution plan obtained from entity
+    * @param df
+    *   data to write
     */
   override def write(
       writeExecutionPlan: WriteExecutionPlanResponseBody,

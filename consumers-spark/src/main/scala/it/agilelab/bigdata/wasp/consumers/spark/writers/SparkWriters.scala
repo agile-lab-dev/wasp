@@ -8,5 +8,5 @@ trait SparkStructuredStreamingWriter {
 }
 
 trait SparkBatchWriter {
-	def write(data: DataFrame) : Unit
+  def write(data: DataFrame): Unit
 }

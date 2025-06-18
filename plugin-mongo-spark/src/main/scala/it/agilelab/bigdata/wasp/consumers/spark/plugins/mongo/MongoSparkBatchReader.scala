@@ -12,19 +12,18 @@ import org.apache.spark.sql.types.{DataType, StructType}
 
 class MongoSparkBatchReader(reader: ReaderModel, model: DocumentModel) extends SparkBatchReader {
 
-  override val name: String = model.name
+  override val name: String       = model.name
   override val readerType: String = MongoDbProduct.getActualProductName
 
   override def read(sc: SparkContext): DataFrame = {
 
     val conf = sc.getConf.clone()
 
-    reader.options.foreach{
-      case (key, value) => conf.set(key, value)
+    reader.options.foreach { case (key, value) =>
+      conf.set(key, value)
     }
 
     conf.set("spark.mongodb.input.uri", model.connectionString)
-
 
     val schema = DataType.fromJson(model.schema).asInstanceOf[StructType]
 

@@ -7,7 +7,7 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import org.mongodb.scala.bson.BsonDocument
 
 trait GenericBLImplTest {
-  self : PostgresSuite =>
+  self: PostgresSuite =>
 
   private lazy val bl = GenericBLImpl(pgDB)
 
@@ -22,8 +22,8 @@ trait GenericBLImplTest {
     )
 
     val model1Bis = model1.copy(product = GenericProduct("generic-kind1", None))
-    val model2 = model1Bis.copy(name = "model2")
-    val model3 = model1.copy(name = "model3", value = BsonDocument("""{"value":"generic-value3"}"""))
+    val model2    = model1Bis.copy(name = "model2")
+    val model3    = model1.copy(name = "model3", value = BsonDocument("""{"value":"generic-value3"}"""))
 
     bl.persist(model1)
     bl.getByName(model1.name).get shouldBe model1

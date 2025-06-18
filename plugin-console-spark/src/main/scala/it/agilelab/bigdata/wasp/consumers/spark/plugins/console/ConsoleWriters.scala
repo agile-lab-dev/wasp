@@ -1,11 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.console
 
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkStructuredStreamingWriter, SparkBatchWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter, SparkStructuredStreamingWriter}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.streaming.DataStreamWriter
 
-class ConsoleSparkStructuredStreamingWriter()
-  extends SparkStructuredStreamingWriter {
+class ConsoleSparkStructuredStreamingWriter() extends SparkStructuredStreamingWriter {
 
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
     // configure and start streaming

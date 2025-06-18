@@ -8,17 +8,16 @@ import spray.json.{JsObject, JsString, JsValue, _}
 
 import scala.collection.immutable
 
-/**
-  * Created by Agile Lab s.r.l. on 10/08/2017.
+/** Created by Agile Lab s.r.l. on 10/08/2017.
   */
 object JsonResultsHelper extends JsonSupport with Logging {
 
   implicit class AngularOkResponse(js: JsValue) {
 
-    def toAngularOkResponse(pretty: Boolean = false): HttpResponse  = {
+    def toAngularOkResponse(pretty: Boolean = false): HttpResponse = {
       val jsonResult = JsObject(
         "Result" -> JsString("OK"),
-        "data" -> js
+        "data"   -> js
       )
       if (pretty) {
         httpResponseJson(entity = jsonResult.prettyPrint)
@@ -27,11 +26,11 @@ object JsonResultsHelper extends JsonSupport with Logging {
       }
     }
 
-    def toAngularKoResponse(message : String,pretty: Boolean = false): HttpResponse  = {
+    def toAngularKoResponse(message: String, pretty: Boolean = false): HttpResponse = {
       val jsonResult = JsObject(
-        "Result" -> JsString("KO"),
+        "Result"   -> JsString("KO"),
         "ErrorMsg" -> JsString(message),
-        "data" -> js
+        "data"     -> js
       )
       if (pretty) {
         httpResponseJson(entity = jsonResult.prettyPrint)
@@ -40,14 +39,19 @@ object JsonResultsHelper extends JsonSupport with Logging {
       }
     }
 
-    def toAngularOkResponseWithPagination(page: Integer, rows : Integer, numFound : Long, pretty: Boolean = false): HttpResponse  = {
+    def toAngularOkResponseWithPagination(
+        page: Integer,
+        rows: Integer,
+        numFound: Long,
+        pretty: Boolean = false
+    ): HttpResponse = {
       val jsonResult = JsObject(
-        "Result" -> JsString("OK"),
+        "Result"   -> JsString("OK"),
         "numFound" -> JsNumber(numFound),
-        "page" -> JsNumber(page),
-        "rows" -> JsNumber(rows),
+        "page"     -> JsNumber(page),
+        "rows"     -> JsNumber(rows),
         "numPages" -> JsNumber(math.ceil(numFound.toDouble / rows.toDouble).toInt),
-        "data" -> js
+        "data"     -> js
       )
       if (pretty) {
         httpResponseJson(entity = jsonResult.prettyPrint)
@@ -59,12 +63,18 @@ object JsonResultsHelper extends JsonSupport with Logging {
 
   def angularErrorBuilder(message: String) = {
     JsObject(
-      "Result" -> JsString("KO"),
+      "Result"   -> JsString("KO"),
       "ErrorMsg" -> JsString(message)
     )
   }
 
-  def getJsonOrNotFound[T](result: Option[T], id: String, resource: String, converter: (T) => JsValue, pretty: Boolean = false): HttpResponse = {
+  def getJsonOrNotFound[T](
+      result: Option[T],
+      id: String,
+      resource: String,
+      converter: (T) => JsValue,
+      pretty: Boolean = false
+  ): HttpResponse = {
     if (result.isDefined) {
       converter(result.get).toAngularOkResponse(pretty)
     } else {
@@ -85,15 +95,37 @@ object JsonResultsHelper extends JsonSupport with Logging {
     }
   }
 
-  def getJsonArrayWithPaginationOrEmpty[T](result: Seq[T], paginationInfo: PaginationInfo, converter: (Seq[T]) => JsValue, pretty: Boolean = false): HttpResponse = {
+  def getJsonArrayWithPaginationOrEmpty[T](
+      result: Seq[T],
+      paginationInfo: PaginationInfo,
+      converter: (Seq[T]) => JsValue,
+      pretty: Boolean = false
+  ): HttpResponse = {
     if (result.isEmpty) {
-      JsArray().toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, pretty)
+      JsArray().toAngularOkResponseWithPagination(
+        paginationInfo.page,
+        paginationInfo.rows,
+        paginationInfo.numFound,
+        pretty
+      )
     } else {
-      converter(result).toAngularOkResponseWithPagination(paginationInfo.page, paginationInfo.rows, paginationInfo.numFound, pretty)
+      converter(result).toAngularOkResponseWithPagination(
+        paginationInfo.page,
+        paginationInfo.rows,
+        paginationInfo.numFound,
+        pretty
+      )
     }
   }
 
-  def runIfExists(result: Option[_], func: () => Unit, id: String, resource: String, action: String, pretty: Boolean = false): HttpResponse = {
+  def runIfExists(
+      result: Option[_],
+      func: () => Unit,
+      id: String,
+      resource: String,
+      action: String,
+      pretty: Boolean = false
+  ): HttpResponse = {
     if (result.isDefined) {
       func()
       "OK".toJson.toAngularOkResponse(pretty)
@@ -107,10 +139,12 @@ object JsonResultsHelper extends JsonSupport with Logging {
     }
   }
 
-  def httpResponseJson(status:   StatusCode                = StatusCodes.OK,
-                       headers:  immutable.Seq[HttpHeader] = Nil,
-                       entity:   ResponseEntity            = HttpEntity.Empty,
-                       protocol: HttpProtocol              = HttpProtocols.`HTTP/1.1`) = {
+  def httpResponseJson(
+      status: StatusCode = StatusCodes.OK,
+      headers: immutable.Seq[HttpHeader] = Nil,
+      entity: ResponseEntity = HttpEntity.Empty,
+      protocol: HttpProtocol = HttpProtocols.`HTTP/1.1`
+  ) = {
     val entityWithJson = entity.withContentType(ContentTypes.`application/json`)
     HttpResponse(status = status, headers = headers, entity = entityWithJson, protocol = protocol)
   }

@@ -1,23 +1,33 @@
 package it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr
 
 import it.agilelab.bigdata.wasp.consumers.spark.strategies.gdpr.GdprStrategy.CorrelationId
-import it.agilelab.bigdata.wasp.models.{ContainsRawMatchingStrategy, ExactRawMatchingStrategy, PrefixRawMatchingStrategy, RawMatchingStrategy}
+import it.agilelab.bigdata.wasp.models.{
+  ContainsRawMatchingStrategy,
+  ExactRawMatchingStrategy,
+  PrefixRawMatchingStrategy,
+  RawMatchingStrategy
+}
 
-/**
-  * Represents the output result of the deletion process for a single key
- *
-  * @param key Key that was requested to be handled
-  * @param keyMatchType Type of match used to delete data about this key
-  * @param source Source of data deleted
-  * @param result Result of the deletion process
-  * @param correlationId String that correlates multiple keys
+/** Represents the output result of the deletion process for a single key
   *
+  * @param key
+  *   Key that was requested to be handled
+  * @param keyMatchType
+  *   Type of match used to delete data about this key
+  * @param source
+  *   Source of data deleted
+  * @param result
+  *   Result of the deletion process
+  * @param correlationId
+  *   String that correlates multiple keys
   */
-case class DeletionOutput(key: String,
-                          keyMatchType: KeyMatchType,
-                          source: DeletionSource,
-                          result: DeletionResult,
-                          correlationId: CorrelationId) {
+case class DeletionOutput(
+    key: String,
+    keyMatchType: KeyMatchType,
+    source: DeletionSource,
+    result: DeletionResult,
+    correlationId: CorrelationId
+) {
   def toOutputDF: DeletionOutputDataFrame = {
     DeletionOutputDataFrame(
       key,
@@ -30,11 +40,22 @@ case class DeletionOutput(key: String,
 }
 
 object DeletionOutput {
-  def apply(keyWithCorrelation: KeyWithCorrelation, keyMatchType: KeyMatchType, source: DeletionSource, result: DeletionResult): DeletionOutput = {
+  def apply(
+      keyWithCorrelation: KeyWithCorrelation,
+      keyMatchType: KeyMatchType,
+      source: DeletionSource,
+      result: DeletionResult
+  ): DeletionOutput = {
     new DeletionOutput(keyWithCorrelation.key, keyMatchType, source, result, keyWithCorrelation.correlationId)
   }
 }
-case class DeletionOutputDataFrame(key: String, keyMatchType: String, source: String, result: String, correlationId: CorrelationId)
+case class DeletionOutputDataFrame(
+    key: String,
+    keyMatchType: String,
+    source: String,
+    result: String,
+    correlationId: CorrelationId
+)
 
 sealed trait DeletionResult { def print: String }
 
@@ -62,9 +83,12 @@ case class HdfsContainsColumnMatch(columnName: String) extends HdfsMatchType {
 }
 object HdfsMatchType {
   def fromRawMatchingStrategy(rawMatchingStrategy: RawMatchingStrategy): HdfsMatchType = rawMatchingStrategy match {
-    case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsExactColumnMatch(dataframeKeyMatchingExpression)
-    case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsPrefixColumnMatch(dataframeKeyMatchingExpression)
-    case ContainsRawMatchingStrategy(dataframeKeyMatchingExpression) => HdfsContainsColumnMatch(dataframeKeyMatchingExpression)
+    case ExactRawMatchingStrategy(dataframeKeyMatchingExpression) =>
+      HdfsExactColumnMatch(dataframeKeyMatchingExpression)
+    case PrefixRawMatchingStrategy(dataframeKeyMatchingExpression) =>
+      HdfsPrefixColumnMatch(dataframeKeyMatchingExpression)
+    case ContainsRawMatchingStrategy(dataframeKeyMatchingExpression) =>
+      HdfsContainsColumnMatch(dataframeKeyMatchingExpression)
   }
 }
 

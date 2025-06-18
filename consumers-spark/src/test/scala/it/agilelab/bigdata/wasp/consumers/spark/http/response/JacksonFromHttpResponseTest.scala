@@ -11,16 +11,16 @@ class JacksonFromHttpResponseTest extends FlatSpec with Matchers {
   it should "test JacksonFromHttpResponse" in {
 
     val response = new BasicHttpResponse(new StatusLine {
-      override def getProtocolVersion: ProtocolVersion = new ProtocolVersion("HTTP",1 ,1)
-      override def getStatusCode: Int = 200
-      override def getReasonPhrase: String = "SampleData"
+      override def getProtocolVersion: ProtocolVersion = new ProtocolVersion("HTTP", 1, 1)
+      override def getStatusCode: Int                  = 200
+      override def getReasonPhrase: String             = "SampleData"
     })
 
     val responseBody = """{ "id": "abc123", "text": "Text1" }""".stripMargin
 
     response.setEntity(EntityBuilder.create().setText(responseBody).build())
     val jacksonFromHttpResponse = new JacksonFromHttpResponse
-    val sampleData: SampleData = jacksonFromHttpResponse.fromResponse[SampleData](response)
+    val sampleData: SampleData  = jacksonFromHttpResponse.fromResponse[SampleData](response)
 
     sampleData shouldBe SampleData("abc123", "Text1")
   }

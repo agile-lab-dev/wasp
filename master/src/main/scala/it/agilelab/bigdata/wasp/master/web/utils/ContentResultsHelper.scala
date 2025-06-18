@@ -6,12 +6,11 @@ import it.agilelab.bigdata.wasp.core.logging.Logging
 
 import scala.collection.immutable
 
-
 object ContentResultsHelper extends Logging {
 
   def getBinaryContentOrNotFound(result: Option[Array[Byte]], id: String, resource: String): HttpResponse = {
     if (result.isDefined) {
-      val body = ByteString(result.get)
+      val body            = ByteString(result.get)
       val byteArrayEntity = HttpEntity.Strict(MediaTypes.`application/octet-stream`, body)
       httpResponseBinaryContent(status = StatusCodes.OK, entity = byteArrayEntity)
     } else {
@@ -24,11 +23,11 @@ object ContentResultsHelper extends Logging {
   }
 
   def httpResponseBinaryContent(
-                                 status:   StatusCode                = StatusCodes.OK,
-                                 headers:  immutable.Seq[HttpHeader] = Nil,
-                                 entity:   ResponseEntity            = HttpEntity.Empty,
-                                 protocol: HttpProtocol              = HttpProtocols.`HTTP/1.1`
-                               ): HttpResponse = {
+      status: StatusCode = StatusCodes.OK,
+      headers: immutable.Seq[HttpHeader] = Nil,
+      entity: ResponseEntity = HttpEntity.Empty,
+      protocol: HttpProtocol = HttpProtocols.`HTTP/1.1`
+  ): HttpResponse = {
     val entityWithApplicationType = entity.withContentType(ContentTypes.`application/octet-stream`)
     HttpResponse(status = status, headers = headers, entity = entityWithApplicationType, protocol = protocol)
   }

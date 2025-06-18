@@ -5,9 +5,9 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ProcessGroupBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.ProcessGroupTableDefinition
 
-case class ProcessGroupBLImpl(waspDB: WaspPostgresDB ) extends ProcessGroupBL with PostgresBL {
+case class ProcessGroupBLImpl(waspDB: WaspPostgresDB) extends ProcessGroupBL with PostgresBL {
 
-  override implicit val tableDefinition = ProcessGroupTableDefinition
+  implicit override val tableDefinition = ProcessGroupTableDefinition
 
   override def getById(pgId: String): Option[ProcessGroupModel] = waspDB.getByPrimaryKey(pgId)
 

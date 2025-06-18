@@ -5,14 +5,14 @@ import it.agilelab.bigdata.wasp.repository.mongo.bl.RawBLImp
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
-class RawBLImplTest extends FlatSpec with Matchers{
+class RawBLImplTest extends FlatSpec with Matchers {
 
   it should "test RawBLImpl for Mongo" in {
 
     val db = WaspMongoDB
     db.initializeDB()
     val waspDB = db.getDB()
-    val rawBL = new RawBLImp(waspDB)
+    val rawBL  = new RawBLImp(waspDB)
 
     val opt    = RawOptions("savemode", "format", Some(Map("extraoptions" -> "extravalue")), Some(List.empty))
     val model1 = RawModel("name", "uri", true, "schema", opt)
@@ -37,7 +37,7 @@ class RawBLImplTest extends FlatSpec with Matchers{
     val db = WaspMongoDB
     db.initializeDB()
     val waspDB = db.getDB()
-    val rawBL = new RawBLImp(waspDB)
+    val rawBL  = new RawBLImp(waspDB)
 
     val opt    = RawOptions("savemode", "format", Some(Map("extraoptions" -> "extravalue")), Some(List.empty))
     val model1 = RawModel("name", "uri", true, "schema", opt)

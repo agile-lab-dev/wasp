@@ -8,7 +8,7 @@ import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifie
 
 import scala.collection.JavaConverters._
 
-class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) extends Actor with Logging {
+class SparkContextWatchDog private (sc: SparkContext, failureAction: () => Unit) extends Actor with Logging {
 
   import SparkContextWatchDog._
   import scala.concurrent.duration._
@@ -17,15 +17,13 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
   context.system.scheduler.scheduleAtFixedRate(0.seconds, 1.second, self, MonitorSparkContext)
   context.system.scheduler.scheduleAtFixedRate(0.seconds, 1.second, self, MonitorHdfTokens)
 
-
-  def waitForSparkContextToBeAvailable : Receive  = {
+  def waitForSparkContextToBeAvailable: Receive = {
     case MonitorSparkContext if !sc.isStopped =>
       logger.info("Spark context came up, beginning watchdog")
       context.become(superviseSparkContext.orElse(superviseDelegationTokens))
     case MonitorSparkContext if sc.isStopped =>
       logger.trace("spark context has not started yet, giving it some slack")
   }
-
 
   def superviseSparkContext: Receive = {
     case MonitorSparkContext if sc.isStopped =>
@@ -36,34 +34,29 @@ class SparkContextWatchDog private(sc: SparkContext, failureAction: () => Unit) 
       logger.trace("Everything is fine, spark context is alive")
   }
 
-  def superviseDelegationTokens : Receive = {
-    case MonitorHdfTokens =>
-      val identifiers = UserGroupInformation.getCurrentUser
-        .getCredentials
-        .getAllTokens
-        .asScala
-        .map(_.decodeIdentifier())
+  def superviseDelegationTokens: Receive = { case MonitorHdfTokens =>
+    val identifiers = UserGroupInformation.getCurrentUser.getCredentials.getAllTokens.asScala
+      .map(_.decodeIdentifier())
 
-      logger.trace(s"all token identifiers : $identifiers")
+    logger.trace(s"all token identifiers : $identifiers")
 
-      val filtered =  identifiers.filter(_.isInstanceOf[DelegationTokenIdentifier])
-        .map(_.asInstanceOf[DelegationTokenIdentifier])
+    val filtered = identifiers
+      .filter(_.isInstanceOf[DelegationTokenIdentifier])
+      .map(_.asInstanceOf[DelegationTokenIdentifier])
 
-      logger.trace(s"filtered token identifiers : $filtered")
+    logger.trace(s"filtered token identifiers : $filtered")
 
-      val maybeExpiredToken = filtered.filter(_.getMaxDate < System.currentTimeMillis()).toVector
+    val maybeExpiredToken = filtered.filter(_.getMaxDate < System.currentTimeMillis()).toVector
 
+    maybeExpiredToken.foreach { expired =>
+      logger.error(s"Delegation token is expired $expired")
+    }
 
-
-      maybeExpiredToken.foreach { expired =>
-          logger.error(s"Delegation token is expired $expired")
-      }
-
-      if(maybeExpiredToken.nonEmpty){
-        failureAction()
-      }else {
-        logger.trace("Everything is fine, delegation tokens are ok")
-      }
+    if (maybeExpiredToken.nonEmpty) {
+      failureAction()
+    } else {
+      logger.trace("Everything is fine, delegation tokens are ok")
+    }
 
   }
 
@@ -98,6 +91,4 @@ object SparkContextWatchDog extends Logging {
     Props(new SparkContextWatchDog(sc, () => ()))
   }
 
-
 }
-

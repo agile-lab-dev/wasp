@@ -26,35 +26,36 @@ class PlainHBaseWriterConsumer extends WaspConsumersSparkPlugin with Logging {
     keyValueBL = ConfigBL.keyValueBL
   }
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): SparkStructuredStreamingWriter = {
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): SparkStructuredStreamingWriter = {
     new HBaseStructuredStreamingWriter(getKeyValueModel(writerModel))
   }
 
   override def getValidationRules: Seq[ValidationRule] = Seq.empty
 
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel)
-  : SparkStructuredStreamingReader = {
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
     throw new NotImplementedError("This plugin does not support read operation of any kind!")
   }
 
-  override def getSparkBatchWriter(sc: SparkContext,
-                                   writerModel: WriterModel): SparkBatchWriter = {
+  override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
     throw new NotImplementedError("This plugin does not support spark batch")
   }
 
-  override def getSparkBatchReader(sc: SparkContext,
-                                   readerModel: ReaderModel): SparkBatchReader = {
+  override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     throw new NotImplementedError("This plugin does not support read operation of any kind!")
   }
 
   @throws(classOf[ModelNotFound])
   private def getKeyValueModel(writerModel: WriterModel): KeyValueModel = {
 
-    val endpointName = writerModel.datastoreModelName
+    val endpointName  = writerModel.datastoreModelName
     val hbaseModelOpt = keyValueBL.getByName(endpointName)
     if (hbaseModelOpt.isDefined) {
       hbaseModelOpt.get
@@ -70,8 +71,7 @@ class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel) extends SparkStr
 
     logger.info(s"HBase writer options: ${options.mkString(";")}")
 
-    stream
-      .writeStream
+    stream.writeStream
       .options(options)
       .format("it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration")
   }

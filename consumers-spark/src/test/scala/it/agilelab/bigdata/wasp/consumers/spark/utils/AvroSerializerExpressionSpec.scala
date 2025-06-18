@@ -192,9 +192,9 @@ class AvroSerializerExpressionSpec extends WordSpec with Matchers with CodegenTe
   private def assertCollectionsAreEqual(elements: Seq[UglyCaseClass], results: Array[UglyCaseClass]): Unit = {
     elements.zip(results).foreach {
       case (
-        UglyCaseClass(a1, z1, y1, b1, c1, d1, sm1, som1, mm1, m1),
-        UglyCaseClass(a2, z2, y2, b2, c2, d2, sm2, som2, mm2, m2)
-        ) =>
+            UglyCaseClass(a1, z1, y1, b1, c1, d1, sm1, som1, mm1, m1),
+            UglyCaseClass(a2, z2, y2, b2, c2, d2, sm2, som2, mm2, m2)
+          ) =>
         myAssert(a1 sameElements a2, s"$a1!=$a2")
         myAssert(b1 == b2, s"$b1!= $b2")
         myAssert(c1 == c2, s"$c1!= $c2")

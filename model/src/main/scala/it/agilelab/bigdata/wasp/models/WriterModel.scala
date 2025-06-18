@@ -1,17 +1,20 @@
 package it.agilelab.bigdata.wasp.models
 
-import it.agilelab.bigdata.wasp.datastores.{DatastoreProduct}
+import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 
-/**
-	* A model for a writer, composed by a name, a datastoreModelName defining the datastore, a datastoreProduct
-	* defining the datastore software product to use, and any additional options needed to configure the writer.
-	*
-	* @param name the name of this writer model
-	* @param datastoreModelName the name of the endpoint to write to; ignored when using a `ConsoleCategory` datastore
-	* @param datastoreProduct the datastore software product to be used when writing
-  * @param options additional options for the writer
-	*/
-case class WriterModel private[wasp](
+/** A model for a writer, composed by a name, a datastoreModelName defining the datastore, a datastoreProduct defining
+  * the datastore software product to use, and any additional options needed to configure the writer.
+  *
+  * @param name
+  *   the name of this writer model
+  * @param datastoreModelName
+  *   the name of the endpoint to write to; ignored when using a `ConsoleCategory` datastore
+  * @param datastoreProduct
+  *   the datastore software product to be used when writing
+  * @param options
+  *   additional options for the writer
+  */
+case class WriterModel private[wasp] (
     name: String,
     datastoreModelName: String,
     datastoreProduct: DatastoreProduct,

@@ -9,5 +9,6 @@ object HBaseConfigMapperV1 extends SimpleMapper[HBaseConfigModel, HBaseConfigDBM
   override val version = "hbaseConfigV1"
   override def fromDBModelToModel[B >: HBaseConfigDBModelV1](m: B): HBaseConfigModel = m match {
     case mm: HBaseConfigDBModelV1 => transform[HBaseConfigModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
-  }}
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+  }
+}

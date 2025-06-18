@@ -25,8 +25,8 @@ private[wasp] object TestTopicModel {
     useAvroSchemaManager = true,
     schema = org.mongodb.scala.bson.BsonDocument(),
     subjectStrategy = SubjectStrategy.Topic,
-    keySchema = Some(""))
-
+    keySchema = Some("")
+  )
 
   lazy val monitoring = TopicModel(
     name = TopicModel.name("monitoring"),
@@ -150,10 +150,11 @@ private[wasp] object TestTopicModel {
     valueFieldsNames = Some(Seq("id", "number", "error")),
     useAvroSchemaManager = false,
     schema = JsonConverter
-      .fromString(TopicModel.generateField(
-        "test",
-        "test",
-        Some("""
+      .fromString(
+        TopicModel.generateField(
+          "test",
+          "test",
+          Some("""
                |        {
                |            "name": "id",
                |            "type": "string",
@@ -170,7 +171,8 @@ private[wasp] object TestTopicModel {
                |            "doc": ""
                |        }
       """.stripMargin)
-      ))
+        )
+      )
       .getOrElse(org.mongodb.scala.bson.BsonDocument())
   )
 
@@ -181,7 +183,8 @@ private[wasp] object TestTopicModel {
     schema = org.mongodb.scala.bson.BsonDocument()
   )
 
-  lazy val multitopicWriteMixed = MultiTopicModel.fromTopicModels("multitopic_write_mixed", "topic", Seq(avro_forMixed, json_forMixed))
+  lazy val multitopicWriteMixed =
+    MultiTopicModel.fromTopicModels("multitopic_write_mixed", "topic", Seq(avro_forMixed, json_forMixed))
 
   lazy val json2ForKafkaHeaders = TopicModel(
     name = TopicModel.name(topic2_name + "_json"),

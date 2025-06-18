@@ -8,17 +8,19 @@ import it.agilelab.bigdata.wasp.producers.{ProducerActor, StartMainTask, StopMai
 
 import scala.concurrent.duration._
 
-abstract class KafkaThroughputProducerActor[A](kafka_router: ActorRef,
-                                               kafkaOffsetChecker: ActorRef,
-                                               topic: Option[TopicModel],
-                                               topicToCheck: String,
-                                               windowSize: Long,
-                                               sendMessageEveryXsamples: Int,
-                                               triggerIntervalMs: Long) extends ProducerActor[A](kafka_router, topic) {
-  //Perfectly fine to have mutable variables because each actor is a single thread
-  private var ringBuffer: RingBuffer[Long] = _
+abstract class KafkaThroughputProducerActor[A](
+    kafka_router: ActorRef,
+    kafkaOffsetChecker: ActorRef,
+    topic: Option[TopicModel],
+    topicToCheck: String,
+    windowSize: Long,
+    sendMessageEveryXsamples: Int,
+    triggerIntervalMs: Long
+) extends ProducerActor[A](kafka_router, topic) {
+  // Perfectly fine to have mutable variables because each actor is a single thread
+  private var ringBuffer: RingBuffer[Long]          = _
   private var currentNumberOfMessages: Option[Long] = _
-  private var remainingSamplesBeforeMessage: Int = _
+  private var remainingSamplesBeforeMessage: Int    = _
   private var cancellable: Cancellable = new Cancellable {
     override def cancel(): Boolean = true
 
@@ -59,7 +61,7 @@ abstract class KafkaThroughputProducerActor[A](kafka_router: ActorRef,
   protected def toFinalMessage(messageSumInWindow: Long, timestamp: Long): A
 
   private def prepareAndSendMessage(): Unit = {
-    //Devo mandare il messaggio
+    // Devo mandare il messaggio
     if (remainingSamplesBeforeMessage == 0) {
       val timestamp = System.currentTimeMillis()
 

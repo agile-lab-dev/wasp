@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.utils
 
 import scala.annotation.tailrec
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 object EitherUtils {
 

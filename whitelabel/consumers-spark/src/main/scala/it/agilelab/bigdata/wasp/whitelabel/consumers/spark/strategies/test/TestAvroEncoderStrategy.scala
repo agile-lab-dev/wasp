@@ -15,20 +15,22 @@ class TestAvroEncoderStrategy extends Strategy {
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
     val df = dataFrames.head._2
     import df.sparkSession.implicits._
-    df.as[TestDocumentEncoder].groupByKey(_.id)
+    df.as[TestDocumentEncoder]
+      .groupByKey(_.id)
       .flatMapGroupsWithState[TestState, String](OutputMode.Append(), GroupStateTimeout.NoTimeout()) {
         case (key, values, state) =>
           lazy val list = values.toList
           state.update(TestState(list.size, list.map(_.nested), list.size.toString))
           Iterator(key)
-      }(encoder, Encoders.STRING).toDF()
+      }(encoder, Encoders.STRING)
+      .toDF()
   }
 }
 
 object TestAvroEncoderStrategy {
 
-  val schema1: Schema = TestState.schema
-  val toRecord1: TestState => GenericRecord = TestState.toRecord
+  val schema1: Schema                         = TestState.schema
+  val toRecord1: TestState => GenericRecord   = TestState.toRecord
   val fromRecord1: GenericRecord => TestState = TestState.fromRecord
 
   val encoder: Encoder[TestState] = AvroEncoders.avroEncoder(

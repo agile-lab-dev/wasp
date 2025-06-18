@@ -70,12 +70,15 @@ object RawWriters {
   /** Prepares a DataFrame with duplicated columns; useful for when wiriting with partitionBy and then reading a single
     * subdirectory without losing data from the partitionBY columns.
     *
-    * Returns a new DataFrame with duplicates of the columns in `columns` and the list of new column names. The new names
-    * are created by prepending "_".
+    * Returns a new DataFrame with duplicates of the columns in `columns` and the list of new column names. The new
+    * names are created by prepending "_".
     *
-    * @param df start datafame
-    * @param columns columns to duplicate
-    * @return a tuple (newDataFrame, newColumnNames)
+    * @param df
+    *   start datafame
+    * @param columns
+    *   columns to duplicate
+    * @return
+    *   a tuple (newDataFrame, newColumnNames)
     */
   def duplicateColumns(df: DataFrame, columns: String*): (DataFrame, Seq[String]) = {
     // generate new column names and add duplicate columns to df

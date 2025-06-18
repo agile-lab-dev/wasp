@@ -12,7 +12,7 @@ Example usage:
   docker exec -it agile-wasp-2-whitelabel /bin/bash
   hdfs dfs -put gdpr /user/root
   curl -X POST 'localhost:2891/batchjobs/gdprBatchJob/start' -H "Content-Type: application/json" --data '{ "runId": "1", "hbase":{"start": 1570733160000, "end": 1571349600000, "timeZone": "UTC"},"hdfs":{"start": 1570733160000, "end": 1571349600000, "timeZone": "UTC"}}'
-*/
+ */
 object TestGdprBatchJobModels {
 
   val hostname: String = InetAddress.getLocalHost.getCanonicalHostName
@@ -21,22 +21,27 @@ object TestGdprBatchJobModels {
     name = "GdprDataRawModel",
     uri = s"hdfs://$hostname:9000/user/root/gdpr/data",
     timed = false,
-    schema = StructType(Seq(
-      StructField("id", StringType),
-      StructField("number", LongType),
-      StructField("name", StringType)
-    )).json)
+    schema = StructType(
+      Seq(
+        StructField("id", StringType),
+        StructField("number", LongType),
+        StructField("name", StringType)
+      )
+    ).json
+  )
 
   lazy val dataWithDateRawModel: RawModel = RawModel(
     name = "GdprDataWithDateRawModel",
     uri = s"hdfs://$hostname:9000/user/root/gdpr/datawithdate",
     timed = false,
-    schema = StructType(Seq(
-      StructField("id", StringType),
-      StructField("category", StringType),
-      StructField("date", StringType),
-      StructField("name", StringType)
-    )).json,
+    schema = StructType(
+      Seq(
+        StructField("id", StringType),
+        StructField("category", StringType),
+        StructField("date", StringType),
+        StructField("name", StringType)
+      )
+    ).json,
     RawOptions("append", "parquet", None, Some(List("category")))
   )
 
@@ -76,10 +81,13 @@ object TestGdprBatchJobModels {
     name = "GdprInputRawModel",
     uri = s"hdfs://$hostname:9000/user/root/gdpr/input",
     timed = false,
-    schema = StructType(Seq(
-      StructField("key", StringType),
-      StructField("correlationId", StringType)
-    )).json)
+    schema = StructType(
+      Seq(
+        StructField("key", StringType),
+        StructField("correlationId", StringType)
+      )
+    ).json
+  )
 
   lazy val inputs = List(
     ReaderModel.rawReader(
@@ -92,10 +100,12 @@ object TestGdprBatchJobModels {
     name = "GdprOutputRawModel",
     uri = s"hdfs://$hostname:9000/user/root/gdpr/result/",
     timed = false,
-    schema = StructType(Seq(
-      StructField("key", StringType),
-      StructField("result", BooleanType)
-    )).json,
+    schema = StructType(
+      Seq(
+        StructField("key", StringType),
+        StructField("result", BooleanType)
+      )
+    ).json,
     options = RawOptions("append", "parquet", None, Some(List("runId")))
   )
 

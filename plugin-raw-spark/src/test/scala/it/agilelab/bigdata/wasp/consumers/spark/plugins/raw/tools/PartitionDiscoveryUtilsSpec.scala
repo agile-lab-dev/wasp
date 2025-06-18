@@ -7,10 +7,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.raw.tools.PartitionDisco
 
 class PartitionDiscoveryUtilsSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   private lazy val fs: FileSystem = FileSystem.getLocal(new Configuration())
-  private lazy val test1Folder = fs.makeQualified(new Path("./partitionedTable"))
-  private lazy val test2Folder = fs.makeQualified(new Path("./notPartitionedTable"))
-  private lazy val test3Folder = fs.makeQualified(new Path("./strangeLayout"))
-  private lazy val test4Folder = fs.makeQualified(new Path("./wrongColumnNames"))
+  private lazy val test1Folder    = fs.makeQualified(new Path("./partitionedTable"))
+  private lazy val test2Folder    = fs.makeQualified(new Path("./notPartitionedTable"))
+  private lazy val test3Folder    = fs.makeQualified(new Path("./strangeLayout"))
+  private lazy val test4Folder    = fs.makeQualified(new Path("./wrongColumnNames"))
 
   val test1FilesToCreate = List(
     (p: Path) => p / "a=b" / "b=c" / "c=d" / "xyz.parquet",
@@ -37,11 +37,12 @@ class PartitionDiscoveryUtilsSpec extends FlatSpec with Matchers with BeforeAndA
     (p: Path) => p / "b=a" / "b=c" / "xyz.parquet"
   )
 
-
   it should "list all the files in a given directory" in {
     //    createFiles(fs, test1FilesToCreate.map(_ (test1Folder)))
     fs.mkdirs(test1Folder / "a=b" / "b=c" / "c=p")
-    PartitionDiscoveryUtils.listFiles(fs)(test1Folder) should contain theSameElementsAs test1FilesToCreate.map(_ (test1Folder))
+    PartitionDiscoveryUtils.listFiles(fs)(test1Folder) should contain theSameElementsAs test1FilesToCreate.map(
+      _(test1Folder)
+    )
   }
 
   it should "calculate depth 0 when passing the same folder twice" in {
@@ -88,13 +89,12 @@ class PartitionDiscoveryUtilsSpec extends FlatSpec with Matchers with BeforeAndA
     }
   }
 
-
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    createFiles(fs, test1FilesToCreate.map(_ (test1Folder)))
-    createFiles(fs, test2FilesToCreate.map(_ (test2Folder)))
-    createFiles(fs, test3FilesToCreate.map(_ (test3Folder)))
-    createFiles(fs, test4FilesToCreate.map(_ (test4Folder)))
+    createFiles(fs, test1FilesToCreate.map(_(test1Folder)))
+    createFiles(fs, test2FilesToCreate.map(_(test2Folder)))
+    createFiles(fs, test3FilesToCreate.map(_(test3Folder)))
+    createFiles(fs, test4FilesToCreate.map(_(test4Folder)))
   }
 
   override protected def afterAll(): Unit = {

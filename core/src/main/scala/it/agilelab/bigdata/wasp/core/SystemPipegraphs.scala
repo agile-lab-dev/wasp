@@ -8,19 +8,18 @@ import it.agilelab.bigdata.wasp.core.utils.{ConfigManager, JsonConverter}
 import it.agilelab.bigdata.wasp.models.configuration.RestEnrichmentConfigModel
 import it.agilelab.bigdata.wasp.models.SpraySolrProtocol._
 
-/**
-	* Default system pipegraphs.
-	*/
+/** Default system pipegraphs.
+  */
 object SystemPipegraphs {
 
-  /** Logger  */
+  /** Logger */
   lazy val loggerTopic: TopicModel         = LoggerTopicModel()
   lazy val solrLoggerIndex: IndexModel     = SolrLoggerIndex()
   lazy val elasticLoggerIndex: IndexModel  = ElasticLoggerIndexModel()
   lazy val loggerProducer: ProducerModel   = LoggerProducer()
   lazy val loggerPipegraph: PipegraphModel = LoggerPipegraph()
 
-  /** Telemetry  */
+  /** Telemetry */
   lazy val telemetryTopic: TopicModel         = TelemetryTopicModel()
   lazy val solrTelemetryIndex: IndexModel     = SolrTelemetryIndexModel()
   lazy val elasticTelemetryIndex: IndexModel  = ElasticLatencyIndexModel()
@@ -35,7 +34,7 @@ object SystemPipegraphs {
     MailingPipegraphModel.mailingPipegraph
   lazy val eventTopicModels: Seq[TopicModel] =
     EventPipegraphModel.outputTopicModels
-  //lazy val mailerInputTopics = null ==> nothing to do because it's a subset of eventOutputTopics
+  // lazy val mailerInputTopics = null ==> nothing to do because it's a subset of eventOutputTopics
 
 }
 
@@ -191,7 +190,7 @@ private[wasp] object SolrTelemetryIndexModel {
 private[wasp] object ElasticLatencyIndexModel {
   import spray.json._
 
-  //noinspection ScalaUnnecessaryParentheses
+  // noinspection ScalaUnnecessaryParentheses
   private lazy val indexElasticSchema =
     """
         {
@@ -268,7 +267,7 @@ private[wasp] object SolrLoggerIndex {
 private[wasp] object ElasticLoggerIndexModel {
   import spray.json._
 
-  //noinspection ScalaUnnecessaryParentheses
+  // noinspection ScalaUnnecessaryParentheses
   private lazy val indexElasticSchema =
     """
         {

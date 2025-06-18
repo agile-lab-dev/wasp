@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -27,54 +26,50 @@ import org.apache.spark.unsafe.types.UTF8String
 @InterfaceAudience.Private
 object Utils {
 
-
-  /**
-    * Parses the hbase field to it's corresponding
-    * scala type which can then be put into a Spark GenericRow
-    * which is then automatically converted by Spark.
+  /** Parses the hbase field to it's corresponding scala type which can then be put into a Spark GenericRow which is
+    * then automatically converted by Spark.
     */
-  def hbaseFieldToScalaType(
-      f: Field,
-      src: Array[Byte],
-      offset: Int,
-      length: Int): Any = {
+  def hbaseFieldToScalaType(f: Field, src: Array[Byte], offset: Int, length: Int): Any = {
     if (f.exeSchema.isDefined) {
       // If we have avro schema defined, use it to get record, and then convert them to catalyst data type
       val m = AvroSerdes.deserialize(src, f.exeSchema.get)
       val n = f.avroToCatalyst.map(_(m))
       n.get
-    } else  {
+    } else {
       // Fall back to atomic type
       f.dt match {
-        case BooleanType => toBoolean(src, offset)
-        case ByteType => src(offset)
-        case DoubleType => Bytes.toDouble(src, offset)
-        case FloatType => Bytes.toFloat(src, offset)
-        case IntegerType => Bytes.toInt(src, offset)
-        case LongType|TimestampType => Bytes.toLong(src, offset)
-        case ShortType => Bytes.toShort(src, offset)
-        case StringType => toUTF8String(src, offset, length)
+        case BooleanType              => toBoolean(src, offset)
+        case ByteType                 => src(offset)
+        case DoubleType               => Bytes.toDouble(src, offset)
+        case FloatType                => Bytes.toFloat(src, offset)
+        case IntegerType              => Bytes.toInt(src, offset)
+        case LongType | TimestampType => Bytes.toLong(src, offset)
+        case ShortType                => Bytes.toShort(src, offset)
+        case StringType               => toUTF8String(src, offset, length)
         case BinaryType =>
           val newArray = new Array[Byte](length)
           System.arraycopy(src, offset, newArray, 0, length)
           newArray
         // TODO: add more data type support
-        case _ => throw new Exception(s"unsupported data type ${f.dt}, field: $f") //Before SparkSqlSerializer.deserialize[Any](src)
+        case _ =>
+          throw new Exception(
+            s"unsupported data type ${f.dt}, field: $f"
+          ) // Before SparkSqlSerializer.deserialize[Any](src)
       }
     }
   }
 
   def toBytesPrimitiveType(input: Any, dt: DataType): Array[Byte] = input match {
-    case data: Boolean => Bytes.toBytes(data)
-    case data: Byte => Array(data)
+    case data: Boolean     => Bytes.toBytes(data)
+    case data: Byte        => Array(data)
     case data: Array[Byte] => data
-    case data: Double => Bytes.toBytes(data)
-    case data: Float => Bytes.toBytes(data)
-    case data: Int => Bytes.toBytes(data)
-    case data: Long => Bytes.toBytes(data)
-    case data: Short => Bytes.toBytes(data)
-    case data: UTF8String => data.getBytes
-    case data: String => Bytes.toBytes(data)
+    case data: Double      => Bytes.toBytes(data)
+    case data: Float       => Bytes.toBytes(data)
+    case data: Int         => Bytes.toBytes(data)
+    case data: Long        => Bytes.toBytes(data)
+    case data: Short       => Bytes.toBytes(data)
+    case data: UTF8String  => data.getBytes
+    case data: String      => Bytes.toBytes(data)
     // TODO: add more data type support
     case _ => throw new Exception(s"unsupported data type $dt, $input, ${input.getClass.toString}")
   }

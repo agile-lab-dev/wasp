@@ -12,20 +12,18 @@ class MlModelBLImplTest extends FlatSpec with Matchers {
     val db = WaspMongoDB
     db.initializeDB()
     val waspDB = db.getDB()
-    val bl = new MlModelBLImp(waspDB)
+    val bl     = new MlModelBLImp(waspDB)
 
     val file1 = FreeCodeModel("name", "code")
     val file2 = FreeCodeModel("name2", "code2")
-
 
     val id1 = bl.saveTransformer(file1, "name1", "mlModelV1", 18)
     val id2 = bl.saveTransformer(file2, "name1", "mlModelV1", 18)
     val id3 = bl.saveTransformer(file2, "name3", "mlModelV1", 18)
 
-
-    val model1 = MlModelOnlyInfo("name","mlModelV1" , Some("class"), Some(3), Some(id1), true, "description")
-    val model2 = MlModelOnlyInfo("name","mlModelV1" , Some("class"), Some(5), Some(id2), true, "description")
-    val model3 = MlModelOnlyInfo("name","mlModelV1" , Some("class"), Some(7), Some(id3), true, "description")
+    val model1 = MlModelOnlyInfo("name", "mlModelV1", Some("class"), Some(3), Some(id1), true, "description")
+    val model2 = MlModelOnlyInfo("name", "mlModelV1", Some("class"), Some(5), Some(id2), true, "description")
+    val model3 = MlModelOnlyInfo("name", "mlModelV1", Some("class"), Some(7), Some(id3), true, "description")
 
     bl.saveMlModelOnlyInfo(model1)
     bl.saveMlModelOnlyInfo(model2)

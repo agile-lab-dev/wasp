@@ -40,14 +40,14 @@ object TopicModel {
   }
 
   def json(
-            name: String,
-            creationTime: Long,
-            partitions: Int,
-            replicas: Int,
-            keyFieldName: Option[String],
-            headersFieldName: Option[String],
-            topicCompression: TopicCompression
-          ): TopicModel = {
+      name: String,
+      creationTime: Long,
+      partitions: Int,
+      replicas: Int,
+      keyFieldName: Option[String],
+      headersFieldName: Option[String],
+      topicCompression: TopicCompression
+  ): TopicModel = {
     TopicModel(
       name = name,
       creationTime = creationTime,
@@ -141,8 +141,7 @@ object TopicModel {
 
   def name(basename: String) = s"${basename.toLowerCase}.topic"
 
-  /**
-    * Generate final schema for TopicModel. Use this method if you schema have a field metadata.
+  /** Generate final schema for TopicModel. Use this method if you schema have a field metadata.
     *
     * @param ownSchema
     * @return
@@ -240,43 +239,47 @@ object SubjectStrategy {
 
 }
 
-/**
-  * A model for a topic, that is, a message queue of some sort. Right now this means just Kafka topics.
+/** A model for a topic, that is, a message queue of some sort. Right now this means just Kafka topics.
   *
-  * @param name the name of the topic, and doubles as the unique identifier for the model in the models database
-  * @param creationTime marks the time at which the model was generated.
-  * @param partitions the number of partitions used for the topic when wasp creates it
-  * @param replicas the number of replicas used for the topic when wasp creates it
-  * @param topicDataType field specifies the format to use when encoding/decoding data to/from messages,
-  *                      allowed values are: avro, plaintext, json, binary
-  * @param keyFieldName optionally specify a field whose contents will be used as a message key when
-  *                     writing to Kafka. The field must be of type string or binary. The original
-  *                     field will be left as-is, so you schema must handle it
-  *                     (or you can use `valueFieldsNames`).
-  * @param headersFieldName allows you to optionally specify a field whose contents will be used
-  *                         as message headers when writing to Kafka. The field must contain
-  *                         an array of non-null objects which  must have a non-null field
-  *                         `headerKey` of type string and a field `headerValue` of type binary.
-  *                         The original field will be left as-is, so your
-  *                         schema must handle it (or you can use `valueFieldsNames`).
-  * @param valueFieldsNames allows you to specify a list of field names to be used to filter
-  *                         the fields that get passed to the value encoding; with this you can
-  *                         filter out fields that you don't need in the value, obviating the need
-  *                         to handle them in the schema. This is especially useful when specifying
-  *                         the `keyFieldName` or `headersFieldName`. For the avro and json topic
-  *                         data type this is optional; for the plaintext and binary topic data types
-  *                         this field is mandatory and the list must contain a single value field
-  *                         name that has the proper type (string for plaintext and binary for binary).
-  * @param useAvroSchemaManager if a schema registry should be used or not to handle the schema
-  *                             evolution (it makes sense only for avro message datatype)
-  * @param schema the Avro schema to use when encoding the value, for plaintext and binary this
-  *               field is ignored. For json and avro the field names need to match 1:1 with the
-  *               valueFieldsNames or the schema output of the strategy
-  * @param topicCompression to use to compress messages
-  * @param subjectStrategy subject strategy to use when registering the schema to the schema registry
-  *                        for the schema registry implementations that support it. This property makes
-  *                        sense only for avro and only if useAvroSchemaManager is set to true
-  * @param keySchema the schema to be used to encode the key as avro
+  * @param name
+  *   the name of the topic, and doubles as the unique identifier for the model in the models database
+  * @param creationTime
+  *   marks the time at which the model was generated.
+  * @param partitions
+  *   the number of partitions used for the topic when wasp creates it
+  * @param replicas
+  *   the number of replicas used for the topic when wasp creates it
+  * @param topicDataType
+  *   field specifies the format to use when encoding/decoding data to/from messages, allowed values are: avro,
+  *   plaintext, json, binary
+  * @param keyFieldName
+  *   optionally specify a field whose contents will be used as a message key when writing to Kafka. The field must be
+  *   of type string or binary. The original field will be left as-is, so you schema must handle it (or you can use
+  *   `valueFieldsNames`).
+  * @param headersFieldName
+  *   allows you to optionally specify a field whose contents will be used as message headers when writing to Kafka. The
+  *   field must contain an array of non-null objects which must have a non-null field `headerKey` of type string and a
+  *   field `headerValue` of type binary. The original field will be left as-is, so your schema must handle it (or you
+  *   can use `valueFieldsNames`).
+  * @param valueFieldsNames
+  *   allows you to specify a list of field names to be used to filter the fields that get passed to the value encoding;
+  *   with this you can filter out fields that you don't need in the value, obviating the need to handle them in the
+  *   schema. This is especially useful when specifying the `keyFieldName` or `headersFieldName`. For the avro and json
+  *   topic data type this is optional; for the plaintext and binary topic data types this field is mandatory and the
+  *   list must contain a single value field name that has the proper type (string for plaintext and binary for binary).
+  * @param useAvroSchemaManager
+  *   if a schema registry should be used or not to handle the schema evolution (it makes sense only for avro message
+  *   datatype)
+  * @param schema
+  *   the Avro schema to use when encoding the value, for plaintext and binary this field is ignored. For json and avro
+  *   the field names need to match 1:1 with the valueFieldsNames or the schema output of the strategy
+  * @param topicCompression
+  *   to use to compress messages
+  * @param subjectStrategy
+  *   subject strategy to use when registering the schema to the schema registry for the schema registry implementations
+  *   that support it. This property makes sense only for avro and only if useAvroSchemaManager is set to true
+  * @param keySchema
+  *   the schema to be used to encode the key as avro
   */
 case class TopicModel(
     override val name: String,
@@ -294,7 +297,7 @@ case class TopicModel(
     keySchema: Option[String] = None,
     clusterAlias: Option[String] = None,
     schemaId: Option[Long] = None
-                     ) extends DatastoreModel {
+) extends DatastoreModel {
 
   def getJsonSchema: String = schema.toJson
 

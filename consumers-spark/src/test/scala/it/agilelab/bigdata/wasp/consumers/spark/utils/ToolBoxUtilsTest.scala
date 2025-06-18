@@ -4,8 +4,6 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random
 
-
-
 class ToolBoxUtilsTest extends FlatSpec with Matchers {
 
   it should "test compileCode for a value" in {
@@ -15,12 +13,12 @@ class ToolBoxUtilsTest extends FlatSpec with Matchers {
     int shouldBe 1
 
     val valueString = "Hello"
-    val string = ToolBoxUtils.compileCode[String](s""""$valueString"""")
+    val string      = ToolBoxUtils.compileCode[String](s""""$valueString"""")
     string.isInstanceOf[String] shouldBe true
     string shouldBe valueString
 
     val valueBoolean = true
-    val boolean = ToolBoxUtils.compileCode[Boolean](valueBoolean.toString)
+    val boolean      = ToolBoxUtils.compileCode[Boolean](valueBoolean.toString)
     boolean.isInstanceOf[Boolean] shouldBe true
     boolean shouldBe valueBoolean
 
@@ -57,15 +55,10 @@ class ToolBoxUtilsTest extends FlatSpec with Matchers {
         |scala.reflect.classTag[Test].runtimeClass
     """.stripMargin
 
-    val clazz = ToolBoxUtils.compileCode[Class[Tuple1[_]]](clazzValue)
+    val clazz    = ToolBoxUtils.compileCode[Class[Tuple1[_]]](clazzValue)
     val instance = clazz.getConstructor().newInstance()
     instance.toString shouldBe "TEST"
 
   }
-
-
-
-
-
 
 }

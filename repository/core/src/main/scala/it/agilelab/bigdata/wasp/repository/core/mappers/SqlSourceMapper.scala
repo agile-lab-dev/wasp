@@ -9,5 +9,6 @@ object SqlSourceMapperV1 extends SimpleMapper[SqlSourceModel, SqlSourceDBModelV1
   override val version = "sqlV1"
   override def fromDBModelToModel[B >: SqlSourceDBModelV1](m: B): SqlSourceModel = m match {
     case mm: SqlSourceDBModelV1 => transform[SqlSourceModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
-  }}
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+  }
+}

@@ -6,7 +6,10 @@ import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
 import it.agilelab.bigdata.wasp.models.IndexModel
 
-trait IndicesModelOpenApiComponentSupport extends ProducerOpenApiComponentSupport with LangOpenApi with CollectionsOpenApi {
+trait IndicesModelOpenApiComponentSupport
+    extends ProducerOpenApiComponentSupport
+    with LangOpenApi
+    with CollectionsOpenApi {
 
   implicit val indexModelOpenApi: ToOpenApiSchema[IndexModel] = product9(IndexModel)
 }
@@ -16,7 +19,7 @@ trait IndicesRoutesOpenApiDefinition
 
   def indicesRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/indexes" -> get(ctx),
+      "/indexes"             -> get(ctx),
       "/indexes/{indexname}" -> getInstance(ctx)
     )
   }

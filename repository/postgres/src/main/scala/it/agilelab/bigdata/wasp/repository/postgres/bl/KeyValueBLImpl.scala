@@ -6,7 +6,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.KeyValueBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{KeyValueTableDefinition, TableDefinition}
 
-case class KeyValueBLImpl(waspDB: WaspPostgresDB ) extends KeyValueBL with PostgresBL {
+case class KeyValueBLImpl(waspDB: WaspPostgresDB) extends KeyValueBL with PostgresBL {
 
   implicit val tableDefinition: TableDefinition[KeyValueModel, String] = KeyValueTableDefinition
 

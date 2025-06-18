@@ -7,9 +7,7 @@ import org.apache.spark.sql.functions._
 
 class DebeziumMutationStrategy extends Strategy with Logging {
 
-  /**
-    *
-    * @param dataFrames
+  /** @param dataFrames
     * @return
     */
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {

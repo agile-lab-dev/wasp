@@ -9,23 +9,23 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.util.{Failure, Success, Try}
 
-/**
-  * Trait holding the Database operations needed by [[SparkConsumersStreamingMasterGuardian]]
+/** Trait holding the Database operations needed by [[SparkConsumersStreamingMasterGuardian]]
   */
 private[streaming] trait DatabaseOperations {
   this: SparkConsumersStreamingMasterGuardian =>
 
   def createInstanceOf(modelName: String): Try[PipegraphInstanceModel] =
     for {
-      model <- retrievePipegraph(modelName) // .flatMap(checkThatModelDoesNotContainLegacyOrRTComponents)
+      model    <- retrievePipegraph(modelName) // .flatMap(checkThatModelDoesNotContainLegacyOrRTComponents)
       instance <- createInstanceOf(model)
     } yield instance
 
-  /**
-    * Creates an instance of the specified model.
+  /** Creates an instance of the specified model.
     *
-    * @param model The model to instantiate
-    * @return A Try containing the instance model or an exception
+    * @param model
+    *   The model to instantiate
+    * @return
+    *   A Try containing the instance model or an exception
     */
   def createInstanceOf(model: PipegraphModel): Try[PipegraphInstanceModel] = Try {
 
@@ -42,40 +42,39 @@ private[streaming] trait DatabaseOperations {
     pipegraphBL.instances().insert(instance)
   }
 
-  def resetStatesWhileRecoveringAndReturnPending(knownMembers: Set[Collaborator]): Try[(Seq[(PipegraphModel, PipegraphInstanceModel)], Seq[(PipegraphModel, PipegraphInstanceModel)])] = {
+  def resetStatesWhileRecoveringAndReturnPending(
+      knownMembers: Set[Collaborator]
+  ): Try[(Seq[(PipegraphModel, PipegraphInstanceModel)], Seq[(PipegraphModel, PipegraphInstanceModel)])] = {
     for {
 
-      pendingOnAllNodes <- retrievePipegraphInstancesAndPipegraphs(PipegraphStatus.PENDING)
+      pendingOnAllNodes    <- retrievePipegraphInstancesAndPipegraphs(PipegraphStatus.PENDING)
       processingOnAllNodes <- retrievePipegraphInstancesAndPipegraphs(PipegraphStatus.PROCESSING)
-      stoppingOnAllNodes <- retrievePipegraphInstancesAndPipegraphs(PipegraphStatus.STOPPING)
-      unschedulable <- retrievePipegraphInstancesAndPipegraphs(PipegraphStatus.UNSCHEDULABLE)
+      stoppingOnAllNodes   <- retrievePipegraphInstancesAndPipegraphs(PipegraphStatus.STOPPING)
+      unschedulable        <- retrievePipegraphInstancesAndPipegraphs(PipegraphStatus.UNSCHEDULABLE)
 
+      needsRecovering = (pendingOnAllNodes.toList ::: processingOnAllNodes.toList).filterNot { case (_, instance) =>
+                          knownMembers
+                            .map(m => SparkConsumersStreamingMasterGuardian.formatUniqueAddress(m.address))
+                            .contains(instance.executedByNode.getOrElse(""))
+                        }
 
-      needsRecovering = (pendingOnAllNodes.toList ::: processingOnAllNodes.toList).filterNot {
-        case (_, instance) =>
-          knownMembers
-            .map(m => SparkConsumersStreamingMasterGuardian.formatUniqueAddress(m.address))
-            .contains(instance.executedByNode.getOrElse(""))
-      }
+      processingOnThisNode = processingOnAllNodes.filter { case (_, instance) =>
+                               instance.executedByNode.getOrElse("") == SparkConsumersStreamingMasterGuardian
+                                 .formatUniqueAddress(cluster.selfUniqueAddress)
+                             }
 
-
-      processingOnThisNode = processingOnAllNodes.filter {
-        case (_, instance) =>
-          instance.executedByNode.getOrElse("") == SparkConsumersStreamingMasterGuardian.formatUniqueAddress(cluster.selfUniqueAddress)
-      }
-
-      _ <- updateToStatus(stoppingOnAllNodes, PipegraphStatus.STOPPED)
+      _       <- updateToStatus(stoppingOnAllNodes, PipegraphStatus.STOPPED)
       updated <- updateToStatus(needsRecovering ++ unschedulable, PipegraphStatus.PENDING)
-
 
     } yield (processingOnThisNode, updated)
   }
 
-  /**
-    * Retrieves [[PipegraphInstanceModel]]s with specified statuses
+  /** Retrieves [[PipegraphInstanceModel]]s with specified statuses
     *
-    * @param status the status of the [[PipegraphInstanceModel]] that should be retrieved
-    * @return A Try containing the [[PipegraphInstanceModel]]s or an exception
+    * @param status
+    *   the status of the [[PipegraphInstanceModel]] that should be retrieved
+    * @return
+    *   A Try containing the [[PipegraphInstanceModel]]s or an exception
     */
   def retrievePipegraphInstances(status: PipegraphStatus*): Try[Seq[PipegraphInstanceModel]] = Try {
     pipegraphBL.instances().all().filter { model =>
@@ -83,7 +82,9 @@ private[streaming] trait DatabaseOperations {
     }
   }
 
-  def retrievePipegraphInstancesAndPipegraphs(status: PipegraphStatus*): Try[Seq[(PipegraphModel, PipegraphInstanceModel)]] = Try {
+  def retrievePipegraphInstancesAndPipegraphs(
+      status: PipegraphStatus*
+  ): Try[Seq[(PipegraphModel, PipegraphInstanceModel)]] = Try {
     val instances = pipegraphBL.instances().all().filter { model =>
       status.toSet.contains(model.status)
     }
@@ -94,44 +95,46 @@ private[streaming] trait DatabaseOperations {
     }
   }
 
-
-  /**
-    * Updates the status of the supplied instances to the target status.
+  /** Updates the status of the supplied instances to the target status.
     *
-    * @param pipegraphInstances The instances to update
-    * @param targetStatus       The target status
-    * @return A try containing the updated [[PipegraphInstanceModel]] or an exception.
+    * @param pipegraphInstances
+    *   The instances to update
+    * @param targetStatus
+    *   The target status
+    * @return
+    *   A try containing the updated [[PipegraphInstanceModel]] or an exception.
     */
   def updateToStatus(
-                      pipegraphInstances: Seq[(PipegraphModel, PipegraphInstanceModel)],
-                      targetStatus: PipegraphStatus
-                    ): Try[Seq[(PipegraphModel, PipegraphInstanceModel)]] = {
+      pipegraphInstances: Seq[(PipegraphModel, PipegraphInstanceModel)],
+      targetStatus: PipegraphStatus
+  ): Try[Seq[(PipegraphModel, PipegraphInstanceModel)]] = {
     val preprocess = if (targetStatus == PipegraphStatus.PENDING) { (model: PipegraphInstanceModel) =>
       model.copy(executedByNode = None, peerActor = None)
     } else { (model: PipegraphInstanceModel) =>
       model
     }
 
-    val result = pipegraphInstances.map {
-      case (pipegraph, instance) => (pipegraph, preprocess(instance))
-    }.map {
-      case (pipegraph, instance) =>
+    val result = pipegraphInstances
+      .map { case (pipegraph, instance) =>
+        (pipegraph, preprocess(instance))
+      }
+      .map { case (pipegraph, instance) =>
         updateToStatus(instance, targetStatus).map { updatedInstance =>
           (pipegraph, updatedInstance)
         }
-    }
+      }
 
     val exceptions = result
       .map {
         case Failure(ex) => Some(ex)
-        case Success(_) => None
+        case Success(_)  => None
       }
       .filter(_.isDefined)
       .map(_.get)
 
     val models = result
       .map {
-        case Failure(_) => None
+        case Failure(_)     => None
         case Success(model) => Some(model)
       }
       .filter(_.isDefined)
@@ -146,50 +149,53 @@ private[streaming] trait DatabaseOperations {
   }
 
   def retrievePipegraphAndUpdateInstanceToProcessing(
-                                                      pipegraphInstanceModel: PipegraphInstanceModel
-                                                    ): Try[(PipegraphModel, PipegraphInstanceModel)] =
+      pipegraphInstanceModel: PipegraphInstanceModel
+  ): Try[(PipegraphModel, PipegraphInstanceModel)] =
     for {
-      model <- retrievePipegraph(pipegraphInstanceModel.instanceOf)
+      model    <- retrievePipegraph(pipegraphInstanceModel.instanceOf)
       instance <- updateToStatus(pipegraphInstanceModel, PipegraphStatus.PROCESSING)
     } yield (model, instance)
 
-  /**
-    * Retrieves [[PipegraphModel]]s with specified name from the db.
+  /** Retrieves [[PipegraphModel]]s with specified name from the db.
     *
     * if no [[PipegraphModel]] exist with name failure is returned
     *
-    * @return A Try containing the [[PipegraphModel]]s or an exception
+    * @return
+    *   A Try containing the [[PipegraphModel]]s or an exception
     */
   def retrievePipegraph(name: String): Try[PipegraphModel] =
     Try {
       pipegraphBL.getByName(name)
     }.flatMap {
       case Some(result) => Success(result)
-      case None => Failure(new Exception("Could not retrieve batchJob"))
+      case None         => Failure(new Exception("Could not retrieve batchJob"))
     }
 
-  /**
-    * Retrieves [[PipegraphModel]]s that are marked as system
+  /** Retrieves [[PipegraphModel]]s that are marked as system
     *
-    * @return A Try containing the [[PipegraphModel]]s or an exception
+    * @return
+    *   A Try containing the [[PipegraphModel]]s or an exception
     */
   def retrieveSystemPipegraphs(): Try[Seq[PipegraphModel]] = Try {
     pipegraphBL.getSystemPipegraphs
   }
 
-  /**
-    * Updates the status of the supplied instance to the target status.
+  /** Updates the status of the supplied instance to the target status.
     *
-    * @param jobInstance  The instance to update
-    * @param targetStatus The target status
-    * @param maybeError   Maybe an error to persist on the database
-    * @return A try containing the updated [[PipegraphInstanceModel]] or an exception.
+    * @param jobInstance
+    *   The instance to update
+    * @param targetStatus
+    *   The target status
+    * @param maybeError
+    *   Maybe an error to persist on the database
+    * @return
+    *   A try containing the updated [[PipegraphInstanceModel]] or an exception.
     */
   def updateToStatus(
-                      jobInstance: PipegraphInstanceModel,
-                      targetStatus: PipegraphStatus,
-                      maybeError: Option[Throwable] = None
-                    ) = Try {
+      jobInstance: PipegraphInstanceModel,
+      targetStatus: PipegraphStatus,
+      maybeError: Option[Throwable] = None
+  ) = Try {
 
     val updated = maybeError
       .map { error =>

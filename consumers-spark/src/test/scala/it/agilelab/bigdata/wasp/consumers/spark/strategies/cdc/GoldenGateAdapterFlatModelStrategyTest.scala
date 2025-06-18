@@ -169,7 +169,7 @@ class GoldenGateAdapterFlatModelStrategyTest
   }
   import OrderTableGoldernGateJsonProtocol._
 
-  val ggStrategy                                       = new GoldenGateAdapterFlatModelStrategy()
+  val ggStrategy = new GoldenGateAdapterFlatModelStrategy()
   ggStrategy.configuration = GoldenGateAvroProvider.strategyConfig
 
   behavior of "The GoldenGateStrategy"
@@ -242,7 +242,9 @@ class GoldenGateAdapterFlatModelStrategyTest
     val df = Seq(insertObject).toDF()
 
     the[IllegalStateException] thrownBy (new GoldenGateAdapterFlatModelStrategy()
-      .transform(Map((ReaderKey("input", "input"), df)))) should have message "the configuration goldengate.key.fields is not present, " +
+      .transform(
+        Map((ReaderKey("input", "input"), df))
+      )) should have message "the configuration goldengate.key.fields is not present, " +
       "cannot start the Strategy due unability to extract the primary key for the mutation"
   }
 

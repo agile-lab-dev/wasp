@@ -9,6 +9,6 @@ object MultiTopicModelMapperV1 extends SimpleMapper[MultiTopicModel, MultiTopicD
   override val version = "multiTopicV1"
   override def fromDBModelToModel[B >: MultiTopicDBModelV1](m: B): MultiTopicModel = m match {
     case mm: MultiTopicDBModelV1 => transform[MultiTopicModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

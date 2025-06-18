@@ -17,13 +17,11 @@ class JacksonFromHttpResponse extends FromHttpResponse {
       mapper
         .readValue(
           entity,
-          implicitly[ClassTag[A]]
-            .runtimeClass
+          implicitly[ClassTag[A]].runtimeClass
             .asInstanceOf[Class[A]]
         )
     } else {
-      implicitly[ClassTag[A]]
-        .runtimeClass
+      implicitly[ClassTag[A]].runtimeClass
         .asInstanceOf[A]
     }
   }

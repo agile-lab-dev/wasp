@@ -98,7 +98,7 @@ class PackageTest extends FlatSpec with Matchers with SparkSuite {
   }
 
   it should "test getByReaderKey" in {
-    val map             = (1 to 2).map(i => ReaderKey(s"key_$i", s"$i") -> createDataframe(spark, s"test_$i", 1 to 10)).toMap
+    val map = (1 to 2).map(i => ReaderKey(s"key_$i", s"$i") -> createDataframe(spark, s"test_$i", 1 to 10)).toMap
     val dataFrameOption = map.getByReaderKey("key_2", "2")
     dataFrameOption.isDefined shouldBe true
     val dataFrame = dataFrameOption.get

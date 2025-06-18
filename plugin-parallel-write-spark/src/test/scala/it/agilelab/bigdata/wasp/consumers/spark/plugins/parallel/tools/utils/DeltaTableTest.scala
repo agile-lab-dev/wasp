@@ -14,8 +14,15 @@ trait DeltaTableTest extends SparkSuite with ParallelWriteTest {
 
     val sparkDelta = configureSparkSession(spark)
 
-    val emptyDF = sparkDelta.createDataFrame(sparkDelta.sparkContext.emptyRDD[Row],
-      StructType(List(StructField("column1", CatalystSqlParser.parseDataType("STRING")), StructField("column2", CatalystSqlParser.parseDataType("STRING")))))
+    val emptyDF = sparkDelta.createDataFrame(
+      sparkDelta.sparkContext.emptyRDD[Row],
+      StructType(
+        List(
+          StructField("column1", CatalystSqlParser.parseDataType("STRING")),
+          StructField("column2", CatalystSqlParser.parseDataType("STRING"))
+        )
+      )
+    )
     emptyDF.write.format("delta").save(tempDir)
   }
 

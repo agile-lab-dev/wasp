@@ -5,14 +5,14 @@ import it.agilelab.bigdata.wasp.models.ProducerModel
 private[wasp] object TestProducerModel {
 
   lazy val json = ProducerModel(
-      name = "TestJSONProducer",
-      className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
-      topicName = Some(TestTopicModel.json.name),
-      isActive = false,
-      configuration = None,
-      isRemote = false,
-      isSystem = false
-    )
+    name = "TestJSONProducer",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
+    topicName = Some(TestTopicModel.json.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
 
   lazy val jsonOnFirstBroker = ProducerModel(
     name = "TestJSONProducerFirstBroker",
@@ -43,7 +43,6 @@ private[wasp] object TestProducerModel {
     isRemote = false,
     isSystem = false
   )
-
 
   lazy val throughput = ProducerModel(
     name = "throughput",
@@ -85,17 +84,17 @@ private[wasp] object TestProducerModel {
     isSystem = false
   )
 
-  lazy val avro  = ProducerModel(
-      name = "TestAVROProducer",
-      className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
-      topicName = Some(TestTopicModel.avro.name),
-      isActive = false,
-      configuration = None,
-      isRemote = false,
-      isSystem = false
-    )
+  lazy val avro = ProducerModel(
+    name = "TestAVROProducer",
+    className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
+    topicName = Some(TestTopicModel.avro.name),
+    isActive = false,
+    configuration = None,
+    isRemote = false,
+    isSystem = false
+  )
 
-  lazy val avro_key_schema  = ProducerModel(
+  lazy val avro_key_schema = ProducerModel(
     name = "TestAVROKeySchemaProducer",
     className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestProducerGuardian",
     topicName = Some(TestTopicModel.avro_key_schema.name),
@@ -105,7 +104,7 @@ private[wasp] object TestProducerModel {
     isSystem = false
   )
 
-  lazy val avroCheckpoint  = ProducerModel(
+  lazy val avroCheckpoint = ProducerModel(
     name = "TestAVROCheckpointProducer",
     className = "it.agilelab.bigdata.wasp.whitelabel.producers.test.TestCheckpointProducerGuardian",
     topicName = Some(TestTopicModel.avroCheckpoint.name),

@@ -18,18 +18,19 @@ import scala.reflect.runtime.universe._
 
 object ConfigManager extends ConfigManager
 class ConfigManager extends Logging with CanOverrideNameInstances {
-  val conf: Config = ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
+  val conf: Config =
+    ConfigFactory.load.getConfig("wasp") // grab the "wasp" subtree, as everything we need is in that namespace
 
-  val kafkaConfigName = "Kafka"
-  val sparkBatchConfigName = "SparkBatch"
-  val sparkStreamingConfigName = "SparkStreaming"
-  val elasticConfigName = "Elastic"
-  val solrConfigName = "Solr"
-  val hbaseConfigName = "HBase"
-  val jdbcConfigName = "Jdbc"
-  val telemetryConfigName = "Telemetry"
-  val nifiConfigName = "Nifi"
-  val compilerConfigName = "Compiler"
+  val kafkaConfigName             = "Kafka"
+  val sparkBatchConfigName        = "SparkBatch"
+  val sparkStreamingConfigName    = "SparkStreaming"
+  val elasticConfigName           = "Elastic"
+  val solrConfigName              = "Solr"
+  val hbaseConfigName             = "HBase"
+  val jdbcConfigName              = "Jdbc"
+  val telemetryConfigName         = "Telemetry"
+  val nifiConfigName              = "Nifi"
+  val compilerConfigName          = "Compiler"
   val additionalKafkaClustersName = "AdditionalKafkaClusters"
 
   private val globalValidationRules: Seq[ValidationRule] = Seq(
@@ -85,22 +86,22 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
     }
   )
 
-  private var waspConfig: WaspConfigModel = _
-  private var telemetryConfig: TelemetryConfigModel = _
-  private var mongoDBConfig: MongoDBConfigModel = _
-  private var pgDBConfig: PostgresDBConfigModel = _
-  private var kafkaConfig: KafkaConfigModel = _
-  private var sparkBatchConfig: SparkBatchConfigModel = _
-  private var sparkStreamingConfig: SparkStreamingConfigModel = _
-  private var elasticConfig: ElasticConfigModel = _
-  private var solrConfig: SolrConfigModel = _
-  private var hbaseConfig: HBaseConfigModel = _
-  private var jdbcConfig: JdbcConfigModel = _
-  private var avroSchemaManagerConfig: Config = _
-  private var nifiConfig: NifiConfigModel = _
-  private var compilerConfig: CompilerConfigModel = _
+  private var waspConfig: WaspConfigModel                            = _
+  private var telemetryConfig: TelemetryConfigModel                  = _
+  private var mongoDBConfig: MongoDBConfigModel                      = _
+  private var pgDBConfig: PostgresDBConfigModel                      = _
+  private var kafkaConfig: KafkaConfigModel                          = _
+  private var sparkBatchConfig: SparkBatchConfigModel                = _
+  private var sparkStreamingConfig: SparkStreamingConfigModel        = _
+  private var elasticConfig: ElasticConfigModel                      = _
+  private var solrConfig: SolrConfigModel                            = _
+  private var hbaseConfig: HBaseConfigModel                          = _
+  private var jdbcConfig: JdbcConfigModel                            = _
+  private var avroSchemaManagerConfig: Config                        = _
+  private var nifiConfig: NifiConfigModel                            = _
+  private var compilerConfig: CompilerConfigModel                    = _
   private var additionalKafkaClusters: AdditionalKafkaClustersConfig = _
-  private var kafkaConfigProxy: KafkaConfigProxy = _
+  private var kafkaConfigProxy: KafkaConfigProxy                     = _
 
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Map[String, Either[String, Unit]] = {
     (globalValidationRules ++ pluginsValidationRules)
@@ -139,7 +140,7 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
 
     val tmp = waspConfig.darwinConnector match {
       case "hbase" => ConfigFactory.parseMap(getAvroSchemaManagerConfigHbaseConnector.asJava)
-      case _ => conf.getConfig("avroSchemaManager.darwin")
+      case _       => conf.getConfig("avroSchemaManager.darwin")
     }
     avroSchemaManagerConfig = if (!tmp.hasPath(ConfigurationKeys.ENDIANNESS)) {
       logger.warn(
@@ -157,8 +158,8 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
   private def getAvroSchemaManagerConfigHbaseConnector: Map[String, AnyRef] = {
 
     val avroSchemaManagerSubConfig = conf.getConfig("avroSchemaManager")
-    val darwinConfig = avroSchemaManagerSubConfig.getConfig("darwin")
-    val defaultConf = darwinConfig.root().unwrapped().asScala.toMap
+    val darwinConfig               = avroSchemaManagerSubConfig.getConfig("darwin")
+    val defaultConf                = darwinConfig.root().unwrapped().asScala.toMap
 
     if (avroSchemaManagerSubConfig.getBoolean("wasp-manages-darwin-connectors-conf")) {
       val env = System.getenv()
@@ -170,16 +171,16 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
           java.lang.Boolean.getBoolean(env.get("WASP_SECURITY"))
         else
           java.lang.Boolean.FALSE
-      val principal = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
+      val principal  = if (env.containsKey("PRINCIPAL_NAME")) env.get("PRINCIPAL_NAME") else ""
       val keytabPath = if (env.containsKey("KEYTAB_FILE_NAME")) env.get("KEYTAB_FILE_NAME") else ""
 
       defaultConf ++ Map(
-        "namespace" -> darwinConfig.getString("namespace"),
-        "table" -> darwinConfig.getString("table"),
-        "hbaseSite" -> hbaseSubConfig.getString("hbase-site-xml-path"),
-        "coreSite" -> hbaseSubConfig.getString("core-site-xml-path"),
-        "isSecure" -> isSecure,
-        "principal" -> principal,
+        "namespace"  -> darwinConfig.getString("namespace"),
+        "table"      -> darwinConfig.getString("table"),
+        "hbaseSite"  -> hbaseSubConfig.getString("hbase-site-xml-path"),
+        "coreSite"   -> hbaseSubConfig.getString("core-site-xml-path"),
+        "isSecure"   -> isSecure,
+        "principal"  -> principal,
         "keytabPath" -> keytabPath
       )
     } else {
@@ -268,15 +269,16 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
   }
 
   private def initializeAdditionalKafkaConfig(): Unit = {
-    additionalKafkaClusters = retrieveConf[AdditionalKafkaClustersConfig](getDefaultAdditionalKafkaConfig, additionalKafkaClustersName).get
+    additionalKafkaClusters =
+      retrieveConf[AdditionalKafkaClustersConfig](getDefaultAdditionalKafkaConfig, additionalKafkaClustersName).get
     require(!additionalKafkaClusters.clusters.keySet.contains(KafkaConfigProxy.MainKafkaClusterName))
     kafkaConfigProxy = KafkaConfigProxy(kafkaConfig, additionalKafkaClusters.clusters)
   }
 
   private def getDefaultAdditionalKafkaConfig: AdditionalKafkaClustersConfig = {
     val additionalKafkaSubConf = conf.getConfig("additional-kafka-clusters")
-    val kafkaMap = additionalKafkaSubConf.root.keySet.asScala.map {
-      key ⇒ key → getKafkaFromConfig(additionalKafkaSubConf.getConfig(key))
+    val kafkaMap = additionalKafkaSubConf.root.keySet.asScala.map { key ⇒
+      key → getKafkaFromConfig(additionalKafkaSubConf.getConfig(key))
     }.toMap
     AdditionalKafkaClustersConfig(additionalKafkaClustersName, kafkaMap)
   }
@@ -361,7 +363,8 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
       kryoSerializer = readKryoSerializerConfig(sparkSubConfig.getConfig("kryo-serializer")),
       streamingBatchIntervalMs = sparkSubConfig.getInt("streaming-batch-interval-ms"),
       checkpointDir = sparkSubConfig.getString("checkpoint-dir"),
-      enableHiveSupport = sparkSubConfig.hasPath("enable-hive-support") && sparkSubConfig.getBoolean("enable-hive-support"),
+      enableHiveSupport =
+        sparkSubConfig.hasPath("enable-hive-support") && sparkSubConfig.getBoolean("enable-hive-support"),
       triggerIntervalMs = triggerInterval,
       others = readOthersConfig(sparkSubConfig).map(e => SparkEntryConfig(e._1, e._2)),
       nifiStateless = stateless,
@@ -499,8 +502,7 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
     nifiConfig
   }
 
-  /**
-    * Initialize the configurations managed by this ConfigManager.
+  /** Initialize the configurations managed by this ConfigManager.
     *
     * Not initialize WaspDB due to already initialized
     */
@@ -655,7 +657,7 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
 
   private def readZookeeperConnectionsConfig(config: Config): ZookeeperConnectionsConfig = {
     val connectionsArray = readConnectionsConfig(config, "zookeeperConnections")
-    val chRoot = config.getString("zkChRoot")
+    val chRoot           = config.getString("zkChRoot")
     ZookeeperConnectionsConfig(connectionsArray, chRoot)
   }
 
@@ -670,9 +672,9 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
       val list: Iterable[ConfigObject] =
         config.getObjectList("metadata").asScala
       val md = (for {
-        item: ConfigObject <- list
+        item: ConfigObject                <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key = entry.getKey
+        key   = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toMap
       Some(md)
@@ -711,14 +713,13 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
     )
   }
 
-  /**
-    * Read the configuration with the specified name from MongoDB or,
-    * if it is not present, initialize it with the provided defaults.
+  /** Read the configuration with the specified name from MongoDB or, if it is not present, initialize it with the
+    * provided defaults.
     */
-  private def retrieveConf[T <: Model : CanOverrideName](
-                                                          default: T,
-                                                          nameConf: String
-                                                        )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
+  private def retrieveConf[T <: Model: CanOverrideName](
+      default: T,
+      nameConf: String
+  )(implicit ct: ClassTag[T], typeTag: TypeTag[T]): Option[T] = {
 
     namespaced(default, nameConf) match {
       case (entity, Some(name)) =>
@@ -735,9 +736,9 @@ class ConfigManager extends Logging with CanOverrideNameInstances {
     if (config.hasPath(key)) {
       val list: Iterable[ConfigObject] = config.getObjectList(key).asScala
       (for {
-        item: ConfigObject <- list
+        item: ConfigObject                <- list
         entry: Entry[String, ConfigValue] <- item.entrySet().asScala
-        key = entry.getKey
+        key   = entry.getKey
         value = entry.getValue.unwrapped().toString
       } yield (key, value)).toSeq
     } else {

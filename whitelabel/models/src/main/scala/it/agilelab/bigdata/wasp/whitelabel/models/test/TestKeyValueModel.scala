@@ -12,11 +12,13 @@ object TestKeyValueModel {
       Some(dfFieldsSchema)
     ),
     dataFrameSchema = None,
-    options = Some(Seq(
-      //KeyValueOption("hbase.spark.config.location", "/etc/hbase/conf/hbase-site.xml"), //org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf.HBASE_CONFIG_LOCATION
-      KeyValueOption("newtable", "5"), //org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.newTable
-      KeyValueOption("nestedSchema", nestedAvroSchema)
-    )),
+    options = Some(
+      Seq(
+        // KeyValueOption("hbase.spark.config.location", "/etc/hbase/conf/hbase-site.xml"), //org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf.HBASE_CONFIG_LOCATION
+        KeyValueOption("newtable", "5"), // org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.newTable
+        KeyValueOption("nestedSchema", nestedAvroSchema)
+      )
+    ),
     useAvroSchemaManager = false,
     avroSchemas = None
   )
@@ -29,11 +31,13 @@ object TestKeyValueModel {
       Some(dfFieldsSchemaMultiClustering)
     ),
     dataFrameSchema = None,
-    options = Some(Seq(
-      //KeyValueOption("hbase.spark.config.location", "/etc/hbase/conf/hbase-site.xml"), //org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf.HBASE_CONFIG_LOCATION
-      KeyValueOption("newtable", "5"), //org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.newTable
-      KeyValueOption("nestedSchema", nestedAvroSchema)
-    )),
+    options = Some(
+      Seq(
+        // KeyValueOption("hbase.spark.config.location", "/etc/hbase/conf/hbase-site.xml"), //org.apache.hadoop.hbase.spark.datasources.HBaseSparkConf.HBASE_CONFIG_LOCATION
+        KeyValueOption("newtable", "5"), // org.apache.spark.sql.datasources.hbase.HBaseTableCatalog.newTable
+        KeyValueOption("nestedSchema", nestedAvroSchema)
+      )
+    ),
     useAvroSchemaManager = false,
     avroSchemas = None
   )

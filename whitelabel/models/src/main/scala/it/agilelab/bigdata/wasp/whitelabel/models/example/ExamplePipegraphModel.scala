@@ -12,19 +12,20 @@ private[wasp] object ExamplePipegraphModel {
     creationTime = System.currentTimeMillis,
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
-	      name = "Write on console",
-	      streamingInput = StreamingReaderModel.kafkaReader(
-			      name = "Read from example topic",
-			      topicModel = ExampleTopicModel.topic,
-			      rateLimit = None
-		      ),
-	      staticInputs = List.empty,
-	      streamingOutput = WriterModel.consoleWriter("console-writer"),
-	      mlModels = List.empty,
-	      strategy = None,
-	      triggerIntervalMs = None,
-	      options = Map()
+        name = "Write on console",
+        streamingInput = StreamingReaderModel.kafkaReader(
+          name = "Read from example topic",
+          topicModel = ExampleTopicModel.topic,
+          rateLimit = None
+        ),
+        staticInputs = List.empty,
+        streamingOutput = WriterModel.consoleWriter("console-writer"),
+        mlModels = List.empty,
+        strategy = None,
+        triggerIntervalMs = None,
+        options = Map()
       )
     ),
-    dashboard = None)
+    dashboard = None
+  )
 }

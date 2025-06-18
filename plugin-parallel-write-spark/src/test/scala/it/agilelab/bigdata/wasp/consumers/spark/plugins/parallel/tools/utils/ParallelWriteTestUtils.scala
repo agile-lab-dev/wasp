@@ -9,7 +9,7 @@ object ParallelWriteTestUtils {
   case class ServerData(port: Int, latch: CountDownLatch, mockedServer: MockWebServer)
 
   def withServer[A](dispatcherFactory: CountDownLatch => Dispatcher, latchCount: Int = 1)(
-    f: ServerData => A
+      f: ServerData => A
   ): A = {
     this.synchronized {
       val s = createAndStartServer(dispatcherFactory, latchCount)
@@ -19,8 +19,8 @@ object ParallelWriteTestUtils {
   }
 
   def createAndStartServer(dispatcherFactory: CountDownLatch => Dispatcher, latchCount: Int): ServerData = {
-    val port = 9999
-    val latch = new CountDownLatch(latchCount)
+    val port         = 9999
+    val latch        = new CountDownLatch(latchCount)
     val mockedServer = new MockWebServer()
     mockedServer.setDispatcher(dispatcherFactory(latch))
     mockedServer.start(port)
@@ -29,11 +29,11 @@ object ParallelWriteTestUtils {
 
   def tapPrint[A](o: A, silent: Boolean = true): A = {
     if (!silent) {
-      val s = o.toString
-      val l = s.length
+      val s       = o.toString
+      val l       = s.length
       val padding = 4
       println(">" * (l / 2 + padding / 2) + "<" * (l / 2 + padding / 2)) // scalastyle:ignore
-      println("> " + s + " <") // scalastyle:ignore
+      println("> " + s + " <")                                           // scalastyle:ignore
       println(">" * (l / 2 + padding / 2) + "<" * (l / 2 + padding / 2)) // scalastyle:ignore
     }
     o

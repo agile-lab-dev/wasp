@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.models.KeyValueModel
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-object KeyValueTableDefinition extends SimpleModelTableDefinition[KeyValueModel] with JsonSupport{
+object KeyValueTableDefinition extends SimpleModelTableDefinition[KeyValueModel] with JsonSupport {
 
   val tableName = "KEY_VALUE"
 

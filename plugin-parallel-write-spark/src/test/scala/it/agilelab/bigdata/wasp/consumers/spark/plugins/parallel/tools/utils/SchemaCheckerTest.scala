@@ -1,7 +1,7 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.SchemaChecker
-import org.apache.spark.sql.types.{ LongType, StringType, StructField, StructType }
+import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import it.agilelab.bigdata.wasp.utils.EitherUtils._
 
@@ -132,17 +132,16 @@ class SchemaCheckerTest extends FunSuite {
     val duplicate =
       StructType(StructField("a", StringType) :: StructField("a", StringType) :: StructField("c", StringType) :: Nil)
     val correct = StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
-    val res      = SchemaChecker.isSelectable(duplicate, correct)
+    val res     = SchemaChecker.isSelectable(duplicate, correct)
     assert(res.isFailure)
     assert(res.left.get.getMessage.contains("Duplicate columns in target schema"))
   }
-
 
   test("isSelectable should fail when it encounters duplicate columns in actual position") {
     val duplicate =
       StructType(StructField("a", StringType) :: StructField("a", StringType) :: StructField("c", StringType) :: Nil)
     val correct = StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
-    val res      = SchemaChecker.isSelectable(correct, duplicate)
+    val res     = SchemaChecker.isSelectable(correct, duplicate)
     assert(res.isFailure)
     assert(res.left.get.getMessage.contains("Duplicate columns in source schema"))
   }
@@ -151,7 +150,7 @@ class SchemaCheckerTest extends FunSuite {
     val source =
       StructType(StructField("A", StringType) :: StructField("b", StringType) :: Nil)
     val target = StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
-    val res      = SchemaChecker.isSelectable(target, source)
+    val res    = SchemaChecker.isSelectable(target, source)
     assert(res.isSuccess)
   }
 
@@ -159,15 +158,16 @@ class SchemaCheckerTest extends FunSuite {
     val source =
       StructType(StructField("A", StringType) :: StructField("a", StringType) :: StructField("b", StringType) :: Nil)
     val target = StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
-    val res      = SchemaChecker.isSelectable(target, source)
+    val res    = SchemaChecker.isSelectable(target, source)
     assert(res.isFailure)
     assert(res.left.get.getMessage.contains("More columns with same name in different case found in source schema"))
   }
   test("isSelectable should fail when it encounters columns with same name with different case in target schema") {
     val source =
       StructType(StructField("a", StringType) :: StructField("b", StringType) :: Nil)
-    val target = StructType(StructField("A", StringType) :: StructField("a", StringType) :: StructField("b", StringType) :: Nil)
-    val res      = SchemaChecker.isSelectable(target, source)
+    val target =
+      StructType(StructField("A", StringType) :: StructField("a", StringType) :: StructField("b", StringType) :: Nil)
+    val res = SchemaChecker.isSelectable(target, source)
     assert(res.isFailure)
     assert(res.left.get.getMessage.contains("More columns with same name in different case found in target schema"))
   }

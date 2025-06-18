@@ -10,8 +10,8 @@ object ConfUtils {
   def sequence[A, B](toSequence: List[Either[A, B]]): Either[A, List[B]] = {
     toSequence.foldRight(Right(List.empty[B]): Either[A, List[B]]) {
       case (Right(a), Right(z)) => Right(a :: z)
-      case (Left(a), Right(_)) => Left(a)
-      case (_, l@Left(_)) => l
+      case (Left(a), Right(_))  => Left(a)
+      case (_, l @ Left(_))     => l
     }
   }
 

@@ -11,17 +11,17 @@ import scala.concurrent.Future
   */
 trait ApiKeyAuthenticationVerifier
     extends ApiKeyAuthenticationProvider
-        with AuthenticationService
-        with CredentialsVerifier
-        with SecurityUtils {
+    with AuthenticationService
+    with CredentialsVerifier
+    with SecurityUtils {
 
-    protected val allowedKeys: Iterable[String]
+  protected val allowedKeys: Iterable[String]
 
-    private def isAllowedKey(credentials: Credentials.Provided): Boolean =
-        allowedKeys.exists(key => credentials.verify(key, hash))
+  private def isAllowedKey(credentials: Credentials.Provided): Boolean =
+    allowedKeys.exists(key => credentials.verify(key, hash))
 
-    override def verifyCredentials: AsyncAuthenticatorPF[Identity] = {
-        case credentials @ Credentials.Provided(apiKey) if isAllowedKey(credentials) =>
-            Future.successful(Identity(apiKey))
-    }
+  override def verifyCredentials: AsyncAuthenticatorPF[Identity] = {
+    case credentials @ Credentials.Provided(apiKey) if isAllowedKey(credentials) =>
+      Future.successful(Identity(apiKey))
+  }
 }

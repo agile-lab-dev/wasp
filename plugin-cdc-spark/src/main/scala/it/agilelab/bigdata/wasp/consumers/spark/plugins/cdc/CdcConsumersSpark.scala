@@ -57,12 +57,16 @@ class CdcConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
-    throw new UnsupportedOperationException("Batch Delta Writer not implemented. Please consider using a basic RawModel setting 'delta' as format.")
+    throw new UnsupportedOperationException(
+      "Batch Delta Writer not implemented. Please consider using a basic RawModel setting 'delta' as format."
+    )
   }
 
   override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     logger.info(s"Initialize Delta reader with model $readerModel")
-    throw new UnsupportedOperationException("Batch Delta Reader not implemented. Please consider using a basic RawModel setting 'delta' as format.")
+    throw new UnsupportedOperationException(
+      "Batch Delta Reader not implemented. Please consider using a basic RawModel setting 'delta' as format."
+    )
   }
 
 }

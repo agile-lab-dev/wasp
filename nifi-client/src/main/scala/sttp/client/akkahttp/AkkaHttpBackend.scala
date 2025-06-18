@@ -78,15 +78,14 @@ class AkkaHttpBackend private (
     Future
       .fromTry(akkaWebsocketRequest)
       .flatMap(request => http.singleWebsocketRequest(request, handler, connectionSettings(r).connectionSettings))
-      .flatMap {
-        case (wsResponse, wsResult) =>
-          responseFromAkka(r, wsResponse.response).map { r =>
-            if (r.code != StatusCode.SwitchingProtocols) {
-              throw new NotAWebsocketException(r)
-            } else {
-              client.ws.WebSocketResponse(Headers(r.headers), wsResult)
-            }
+      .flatMap { case (wsResponse, wsResult) =>
+        responseFromAkka(r, wsResponse.response).map { r =>
+          if (r.code != StatusCode.SwitchingProtocols) {
+            throw new NotAWebsocketException(r)
+          } else {
+            client.ws.WebSocketResponse(Headers(r.headers), wsResult)
           }
+        }
       }
   }
 
@@ -169,8 +168,8 @@ class AkkaHttpBackend private (
     )
   }
 
-  private def responseFromAkka[T](r: Request[T, S], hr: HttpResponse)(
-      implicit ec: ExecutionContext
+  private def responseFromAkka[T](r: Request[T, S], hr: HttpResponse)(implicit
+      ec: ExecutionContext
   ): Future[Response[T]] = {
     val code       = StatusCode(hr.status.intValue())
     val statusText = hr.status.reason()
@@ -204,12 +203,12 @@ class AkkaHttpBackend private (
         .filterNot(isContentType)
         .filterNot(isContentLength)
         .map(h => HttpHeader.parse(h.name, h.value))
-    val errors = parsed.collect {
-      case ParsingResult.Error(e) => e
+    val errors = parsed.collect { case ParsingResult.Error(e) =>
+      e
     }
     if (errors.isEmpty) {
-      val headers = parsed.collect {
-        case ParsingResult.Ok(h, _) => h
+      val headers = parsed.collect { case ParsingResult.Ok(h, _) =>
+        h
       }
 
       Success(headers.toList)
@@ -366,10 +365,9 @@ object AkkaHttpBackend {
       )
     )
 
-  /**
-    * @param ec The execution context for running non-network related operations,
-    *           e.g. mapping responses. Defaults to the global execution
-    *           context.
+  /** @param ec
+    *   The execution context for running non-network related operations, e.g. mapping responses. Defaults to the global
+    *   execution context.
     */
   def apply(
       options: SttpBackendOptions = SttpBackendOptions.Default,
@@ -378,8 +376,8 @@ object AkkaHttpBackend {
       customLog: Option[LoggingAdapter] = None,
       customizeRequest: HttpRequest => HttpRequest = identity,
       customizeWebsocketRequest: WebSocketRequest => WebSocketRequest = identity
-  )(
-      implicit ec: ExecutionContext = ExecutionContext.global
+  )(implicit
+      ec: ExecutionContext = ExecutionContext.global
   ): SttpBackend[Future, Source[ByteString, Any], Types.LambdaFlow] = {
     val actorSystem = ActorSystem("sttp")
     make(
@@ -394,12 +392,11 @@ object AkkaHttpBackend {
     )
   }
 
-  /**
-    * @param actorSystem The actor system which will be used for the http-client
-    *                    actors.
-    * @param ec The execution context for running non-network related operations,
-    *           e.g. mapping responses. Defaults to the global execution
-    *           context.
+  /** @param actorSystem
+    *   The actor system which will be used for the http-client actors.
+    * @param ec
+    *   The execution context for running non-network related operations, e.g. mapping responses. Defaults to the global
+    *   execution context.
     */
   def usingActorSystem(
       actorSystem: ActorSystem,
@@ -409,8 +406,8 @@ object AkkaHttpBackend {
       customLog: Option[LoggingAdapter] = None,
       customizeRequest: HttpRequest => HttpRequest = identity,
       customizeWebsocketRequest: WebSocketRequest => WebSocketRequest = identity
-  )(
-      implicit ec: ExecutionContext = ExecutionContext.global
+  )(implicit
+      ec: ExecutionContext = ExecutionContext.global
   ): SttpBackend[Future, Source[ByteString, Any], Types.LambdaFlow] = {
     usingClient(
       actorSystem,
@@ -422,12 +419,11 @@ object AkkaHttpBackend {
     )
   }
 
-  /**
-    * @param actorSystem The actor system which will be used for the http-client
-    *                    actors.
-    * @param ec The execution context for running non-network related operations,
-    *           e.g. mapping responses. Defaults to the global execution
-    *           context.
+  /** @param actorSystem
+    *   The actor system which will be used for the http-client actors.
+    * @param ec
+    *   The execution context for running non-network related operations, e.g. mapping responses. Defaults to the global
+    *   execution context.
     */
   def usingClient(
       actorSystem: ActorSystem,
@@ -436,8 +432,8 @@ object AkkaHttpBackend {
       http: AkkaHttpClient,
       customizeRequest: HttpRequest => HttpRequest = identity,
       customizeWebsocketRequest: WebSocketRequest => WebSocketRequest = identity
-  )(
-      implicit ec: ExecutionContext = ExecutionContext.global
+  )(implicit
+      ec: ExecutionContext = ExecutionContext.global
   ): SttpBackend[Future, Source[ByteString, Any], Types.LambdaFlow] = {
     make(
       actorSystem,
@@ -451,13 +447,12 @@ object AkkaHttpBackend {
     )
   }
 
-  /**
-    * Create a stub backend for testing, which uses the [[Future]] response wrapper, and doesn't support streaming.
+  /** Create a stub backend for testing, which uses the [[Future]] response wrapper, and doesn't support streaming.
     *
     * See [[SttpBackendStub]] for details on how to configure stub responses.
     */
-  def stub(
-      implicit ec: ExecutionContext = ExecutionContext.global
+  def stub(implicit
+      ec: ExecutionContext = ExecutionContext.global
   ): SttpBackendStub[Future, Nothing] =
     SttpBackendStub(new FutureMonad())
 }

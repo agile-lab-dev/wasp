@@ -8,7 +8,7 @@ import org.bson.BsonString
 import it.agilelab.bigdata.wasp.repository.core.mappers.RawMapperSelector.factory
 import it.agilelab.bigdata.wasp.repository.core.mappers.RawMapperV1.transform
 
-class RawBLImp(waspDB: WaspMongoDB) extends RawBL  {
+class RawBLImp(waspDB: WaspMongoDB) extends RawBL {
 
   def getByName(name: String) = {
     waspDB.getDocumentByField[RawDBModel]("name", new BsonString(name)).map(factory)

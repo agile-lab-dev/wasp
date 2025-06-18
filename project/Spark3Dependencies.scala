@@ -39,23 +39,24 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
     ExclusionRule("org.spark-project.hive")
   )
 
-  lazy val parquet            = "org.apache.parquet"   % "parquet-column"            % "1.12.3" exclude exclusions.log4jExclude
-  lazy val elasticSearchSpark = "org.elasticsearch"    %% "elasticsearch-spark-20"   % versions.elasticSearchSpark
-  lazy val guava              = "com.google.guava"     % "guava"                     % versions.guava
-  lazy val javaxMail          = "javax.mail"           % "mail"                      % versions.javaxMail
-  lazy val metrics            = "com.codahale.metrics" % "metrics-core"              % versions.codahaleMetrics
-  lazy val quartz             = "org.quartz-scheduler" % "quartz"                    % versions.quartz
-  lazy val swaggerCore        = "io.swagger.core.v3"   % "swagger-core"              % versions.swagger
-  lazy val velocity           = "org.apache.velocity"  % "velocity"                  % versions.velocity
-  lazy val kryo               = "com.esotericsoftware" % "kryo-shaded"               % versions.kryo
-  lazy val reflections        = "org.reflections"      % "reflections"               % versions.reflectionsVersion
-  lazy val mySqlJavaConnector = "mysql"                % "mysql-connector-java"      % versions.mySqlConnector
-  lazy val jaxRs              = "jakarta.ws.rs"        % "jakarta.ws.rs-api"         % versions.jakartaRsApi
-  lazy val nifiStateless      = "org.apache.nifi"      % "nifi-stateless"            % versions.nifi % Provided exclude exclusions.javaxRsExclude
-  lazy val joptSimpleTests    = "net.sf.jopt-simple"   % "jopt-simple"               % versions.jopt % Test
-  lazy val mongoTest          = "de.flapdoodle.embed"  % "de.flapdoodle.embed.mongo" % "3.5.4" % Test
-  lazy val shapeless          = "com.chuusai"          %% "shapeless"                % "2.3.3"
-  lazy val hadoopClientApi    = "org.apache.hadoop"    % "hadoop-client-api"         % versions.hadoop
+  lazy val parquet = "org.apache.parquet" % "parquet-column" % "1.12.3" exclude exclusions.log4jExclude
+  lazy val elasticSearchSpark = "org.elasticsearch"   %% "elasticsearch-spark-20" % versions.elasticSearchSpark
+  lazy val guava              = "com.google.guava"     % "guava"                  % versions.guava
+  lazy val javaxMail          = "javax.mail"           % "mail"                   % versions.javaxMail
+  lazy val metrics            = "com.codahale.metrics" % "metrics-core"           % versions.codahaleMetrics
+  lazy val quartz             = "org.quartz-scheduler" % "quartz"                 % versions.quartz
+  lazy val swaggerCore        = "io.swagger.core.v3"   % "swagger-core"           % versions.swagger
+  lazy val velocity           = "org.apache.velocity"  % "velocity"               % versions.velocity
+  lazy val kryo               = "com.esotericsoftware" % "kryo-shaded"            % versions.kryo
+  lazy val reflections        = "org.reflections"      % "reflections"            % versions.reflectionsVersion
+  lazy val mySqlJavaConnector = "mysql"                % "mysql-connector-java"   % versions.mySqlConnector
+  lazy val jaxRs              = "jakarta.ws.rs"        % "jakarta.ws.rs-api"      % versions.jakartaRsApi
+  lazy val nifiStateless =
+    "org.apache.nifi" % "nifi-stateless" % versions.nifi % Provided exclude exclusions.javaxRsExclude
+  lazy val joptSimpleTests = "net.sf.jopt-simple"  % "jopt-simple"               % versions.jopt % Test
+  lazy val mongoTest       = "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "3.5.4"       % Test
+  lazy val shapeless       = "com.chuusai"        %% "shapeless"                 % "2.3.3"
+  lazy val hadoopClientApi = "org.apache.hadoop"   % "hadoop-client-api"         % versions.hadoop
 
   val jacksonTestDependencies = Seq(
     "com.fasterxml.jackson.core"     % "jackson-annotations"             % "2.10.1" % Test force (),
@@ -66,7 +67,7 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
     "com.fasterxml.jackson.jaxrs"    % "jackson-jaxrs-json-provider"     % "2.10.1" % Test force (),
     "com.fasterxml.jackson.module"   % "jackson-module-jaxb-annotations" % "2.10.1" % Test force (),
     "com.fasterxml.jackson.module"   % "jackson-module-paranamer"        % "2.10.1" % Test force (),
-    "com.fasterxml.jackson.module"   %% "jackson-module-scala"           % "2.10.1" % Test force ()
+    "com.fasterxml.jackson.module"  %% "jackson-module-scala"            % "2.10.1" % Test force ()
   )
 
   lazy val _pluginKafkaSparkDependencies: Seq[ModuleID] = spark ++ Seq(
@@ -90,18 +91,18 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
   override val coreDependencies: Seq[ModuleID] = (akka ++
     logging ++
     testDependencies ++ Seq(
-    akkaHttp,
-    akkaHttpSpray,
-    avro,
-    commonsCli,
-    kafka, // TODO remove when switching to plugins
-    sparkSQL,
-    typesafeConfig,
-    scalaCompiler,
-    apacheCommonsLang3,
-    darwinCore,
-    reflections
-  ) ++ spark)
+      akkaHttp,
+      akkaHttpSpray,
+      avro,
+      commonsCli,
+      kafka, // TODO remove when switching to plugins
+      sparkSQL,
+      typesafeConfig,
+      scalaCompiler,
+      apacheCommonsLang3,
+      darwinCore,
+      reflections
+    ) ++ spark)
 
   override val repositoryMongoDependencies: Seq[ModuleID] = Seq(
     mongodbScala,
@@ -135,7 +136,7 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
       Seq(
         quartz,
         nameOf,
-        velocity, //TODO: evaluate this is legal
+        velocity, // TODO: evaluate this is legal
         scalaCompiler,
         sparkAvro,
         darwinMockConnector % Test
@@ -299,20 +300,20 @@ abstract class Spark3Dependencies(val versions: Spark3Versions)
 trait Spark3AkkaDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
-  lazy val akkaActor          = "com.typesafe.akka" %% "akka-actor"              % versions.akka
-  lazy val akkaCluster        = "com.typesafe.akka" %% "akka-cluster"            % versions.akka
-  lazy val akkaClusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics"    % versions.akka
-  lazy val akkaClusterTools   = "com.typesafe.akka" %% "akka-cluster-tools"      % versions.akka
-  lazy val akkaHttp           = "com.typesafe.akka" %% "akka-http"               % versions.akkaHttp
-  lazy val akkaHttpSpray      = "com.typesafe.akka" %% "akka-http-spray-json"    % versions.akkaHttp
-  lazy val akkaKryo           = "io.altoo"          %% "akka-kryo-serialization" % versions.akkaKryo exclude exclusions.akkaKryoExclude
+  lazy val akkaActor          = "com.typesafe.akka" %% "akka-actor"           % versions.akka
+  lazy val akkaCluster        = "com.typesafe.akka" %% "akka-cluster"         % versions.akka
+  lazy val akkaClusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics" % versions.akka
+  lazy val akkaClusterTools   = "com.typesafe.akka" %% "akka-cluster-tools"   % versions.akka
+  lazy val akkaHttp           = "com.typesafe.akka" %% "akka-http"            % versions.akkaHttp
+  lazy val akkaHttpSpray      = "com.typesafe.akka" %% "akka-http-spray-json" % versions.akkaHttp
+  lazy val akkaKryo = "io.altoo" %% "akka-kryo-serialization" % versions.akkaKryo exclude exclusions.akkaKryoExclude
   lazy val akkaRemote         = "com.typesafe.akka" %% "akka-remote"             % versions.akka
   lazy val akkaSlf4j          = "com.typesafe.akka" %% "akka-slf4j"              % versions.akka
   lazy val akkaStream         = "com.typesafe.akka" %% "akka-stream"             % versions.akka
-  lazy val akkaStreamTestkit  = "com.typesafe.akka" %% "akka-stream-testkit"     % versions.akka % Test
+  lazy val akkaStreamTestkit  = "com.typesafe.akka" %% "akka-stream-testkit"     % versions.akka     % Test
   lazy val akkaHttpTestKit    = "com.typesafe.akka" %% "akka-http-testkit"       % versions.akkaHttp % Test
-  lazy val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % versions.akka % Test
-  lazy val akkaTestKit        = "com.typesafe.akka" %% "akka-testkit"            % versions.akka % Test
+  lazy val akkaClusterTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % versions.akka     % Test
+  lazy val akkaTestKit        = "com.typesafe.akka" %% "akka-testkit"            % versions.akka     % Test
   lazy val akka = Seq(
     akkaActor,
     akkaCluster,
@@ -340,33 +341,35 @@ trait Spark3DarwinDependencies {
 trait Spark3HBaseDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
-  lazy val hbaseClient2NoScope    = "org.apache.hbase" % "hbase-client" % versions.hbase2 exclude exclusions.hbaseExclusion
-  lazy val hbaseCommon2NoScope    = "org.apache.hbase" % "hbase-common" % versions.hbase2 exclude exclusions.hbaseExclusion
-  lazy val hbaseServer2NoScope    = "org.apache.hbase" % "hbase-server" % versions.hbase2 exclude exclusions.hbaseExclusion
-  lazy val hbaseMapreduce2NoScope = "org.apache.hbase" % "hbase-mapreduce" % versions.hbase2 exclude exclusions.hbaseExclusion
-  lazy val hbaseClient2Shaded     = "org.apache.hbase" % "hbase-shaded-client" % versions.hbase2 exclude exclusions.hbaseExclusion
-  lazy val hbaseTestingUtils      = "org.apache.hbase" % "hbase-testing-util" % versions.hbase2
-  lazy val hbaseClient2           = hbaseClient2NoScope % Provided
-  lazy val hbaseCommon2           = hbaseCommon2NoScope % Provided
-  lazy val hbaseServer2           = hbaseServer2NoScope % Provided
-  lazy val hbaseMapreduce2        = hbaseMapreduce2NoScope % Provided
-  lazy val hbase2                 = Seq(hbaseClient2, hbaseCommon2, hbaseServer2, hbaseMapreduce2)
+  lazy val hbaseClient2NoScope = "org.apache.hbase" % "hbase-client" % versions.hbase2 exclude exclusions.hbaseExclusion
+  lazy val hbaseCommon2NoScope = "org.apache.hbase" % "hbase-common" % versions.hbase2 exclude exclusions.hbaseExclusion
+  lazy val hbaseServer2NoScope = "org.apache.hbase" % "hbase-server" % versions.hbase2 exclude exclusions.hbaseExclusion
+  lazy val hbaseMapreduce2NoScope =
+    "org.apache.hbase" % "hbase-mapreduce" % versions.hbase2 exclude exclusions.hbaseExclusion
+  lazy val hbaseClient2Shaded =
+    "org.apache.hbase" % "hbase-shaded-client" % versions.hbase2 exclude exclusions.hbaseExclusion
+  lazy val hbaseTestingUtils = "org.apache.hbase"     % "hbase-testing-util" % versions.hbase2
+  lazy val hbaseClient2      = hbaseClient2NoScope    % Provided
+  lazy val hbaseCommon2      = hbaseCommon2NoScope    % Provided
+  lazy val hbaseServer2      = hbaseServer2NoScope    % Provided
+  lazy val hbaseMapreduce2   = hbaseMapreduce2NoScope % Provided
+  lazy val hbase2            = Seq(hbaseClient2, hbaseCommon2, hbaseServer2, hbaseMapreduce2)
 }
 
 trait Spark3SparkDependencies extends Spark3HadoopDependencies {
-  lazy val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst" % versions.spark % Test classifier "tests"
-  lazy val sparkCore          = "org.apache.spark" %% "spark-core" % versions.spark % Provided
-  lazy val sparkTagsTests     = "org.apache.spark" %% "spark-tags" % versions.spark % Test classifier "tests"
-  lazy val sparkMLlib         = "org.apache.spark" %% "spark-mllib" % versions.spark % Provided
-  lazy val sparkSQL           = "org.apache.spark" %% "spark-sql" % versions.spark % Provided
-  lazy val sparkYarn          = "org.apache.spark" %% "spark-yarn" % versions.spark % Provided
+  lazy val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst"  % versions.spark % Test classifier "tests"
+  lazy val sparkCore          = "org.apache.spark" %% "spark-core"      % versions.spark % Provided
+  lazy val sparkTagsTests     = "org.apache.spark" %% "spark-tags"      % versions.spark % Test classifier "tests"
+  lazy val sparkMLlib         = "org.apache.spark" %% "spark-mllib"     % versions.spark % Provided
+  lazy val sparkSQL           = "org.apache.spark" %% "spark-sql"       % versions.spark % Provided
+  lazy val sparkYarn          = "org.apache.spark" %% "spark-yarn"      % versions.spark % Provided
   lazy val sparkStreaming     = "org.apache.spark" %% "spark-streaming" % versions.spark % Provided
-  lazy val sparkHive          = "org.apache.spark" %% "spark-hive" % versions.spark % Provided
+  lazy val sparkHive          = "org.apache.spark" %% "spark-hive"      % versions.spark % Provided
   lazy val sparkCoreTests     = sparkCore classifier "tests"
-  lazy val sparkSQLTests      = "org.apache.spark" %% "spark-sql" % versions.spark % "provided,test" classifier "tests"
-  lazy val sparkAvro          = "org.apache.spark" %% "spark-avro" % versions.spark
-  lazy val spark              = Seq(sparkMLlib, sparkYarn, hadoopCommon, sparkHive)
-  lazy val hadoopAuth         = "org.apache.hadoop" % "hadoop-auth" % versions.hadoop
+  lazy val sparkSQLTests = "org.apache.spark" %% "spark-sql"   % versions.spark % "provided,test" classifier "tests"
+  lazy val sparkAvro     = "org.apache.spark" %% "spark-avro"  % versions.spark
+  lazy val spark         = Seq(sparkMLlib, sparkYarn, hadoopCommon, sparkHive)
+  lazy val hadoopAuth    = "org.apache.hadoop" % "hadoop-auth" % versions.hadoop
 }
 
 trait Spark3HadoopDependencies {
@@ -374,46 +377,50 @@ trait Spark3HadoopDependencies {
   val exclusions: Spark3Exclusions.type
   lazy val hadoopCommonNoScope = "org.apache.hadoop" % "hadoop-common" % versions.hadoop
   lazy val hadoopCommon        = hadoopCommonNoScope % Provided
-  lazy val hadoopAWS           = "org.apache.hadoop" % "hadoop-aws" % versions.hadoop % Provided
+  lazy val hadoopAWS           = "org.apache.hadoop" % "hadoop-aws"    % versions.hadoop % Provided
 }
 
 trait Spark3LoggingDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
 
-  lazy val slf4jApi           = "org.slf4j" % "slf4j-api" % versions.slf4j % Provided
+  lazy val slf4jApi           = "org.slf4j"                % "slf4j-api"         % versions.slf4j % Provided
   lazy val slf4jLog4j2Binding = "org.apache.logging.log4j" % "log4j-slf4j2-impl" % versions.log4j % Provided
-  lazy val log4j2Api          = "org.apache.logging.log4j" % "log4j-api" % versions.log4j % Provided
-  lazy val log4jCore          = "org.apache.logging.log4j" % "log4j-core" % versions.log4j % Provided
-  lazy val log4j1Api          = "org.apache.logging.log4j" % "log4j-1.2-api" % versions.log4j % Provided
+  lazy val log4j2Api          = "org.apache.logging.log4j" % "log4j-api"         % versions.log4j % Provided
+  lazy val log4jCore          = "org.apache.logging.log4j" % "log4j-core"        % versions.log4j % Provided
+  lazy val log4j1Api          = "org.apache.logging.log4j" % "log4j-1.2-api"     % versions.log4j % Provided
   val logging                 = Seq(slf4jApi, slf4jLog4j2Binding, log4j2Api, log4jCore, log4j1Api)
 }
 
 trait Spark3KafkaDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
-  lazy val kafka         = "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaClients  = "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
-  lazy val kafkaTests    = kafka              % Test exclude (exclusions.jacksonExclude)
+  lazy val kafka =
+    "org.apache.kafka" %% "kafka" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaClients =
+    "org.apache.kafka" % "kafka-clients" % versions.kafka exclude (exclusions.kafkaExclusions ++ exclusions.jacksonExclude) // TODO remove jersey?
+  lazy val kafkaTests    = kafka               % Test exclude (exclusions.jacksonExclude)
   lazy val sparkSqlKafka = "org.apache.spark" %% "spark-sql-kafka-0-10" % versions.spark
 }
 
 trait Spark3MongoDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
-  lazy val mongodbScala        = "org.mongodb.scala" %% "mongo-scala-driver"    % versions.mongodbScala
-  lazy val mongoBsonScala      = "org.mongodb.scala" %% "mongo-scala-bson"      % versions.mongodbScala
-  lazy val mongoSparkConnector = "org.mongodb.spark" %% "mongo-spark-connector" % versions.mongoSparkConnector exclude (exclusions.mongoJavaDriverExclude)
-  lazy val mongoJavaDriver     = "org.mongodb"       % "mongo-java-driver"      % versions.mongoJavaDriver
+  lazy val mongodbScala   = "org.mongodb.scala" %% "mongo-scala-driver" % versions.mongodbScala
+  lazy val mongoBsonScala = "org.mongodb.scala" %% "mongo-scala-bson"   % versions.mongodbScala
+  lazy val mongoSparkConnector =
+    "org.mongodb.spark" %% "mongo-spark-connector" % versions.mongoSparkConnector exclude (exclusions.mongoJavaDriverExclude)
+  lazy val mongoJavaDriver = "org.mongodb" % "mongo-java-driver" % versions.mongoJavaDriver
 }
 
 trait Spark3Json4sDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
-  lazy val json4sCore    = "org.json4s" %% "json4s-core" % versions.json4s % Provided exclude exclusions.jacksonExclude
-  lazy val json4sJackson = "org.json4s" %% "json4s-jackson" % versions.json4s % Provided exclude exclusions.jacksonExclude
-  lazy val json4sNative  = "org.json4s" %% "json4s-native" % versions.json4s exclude exclusions.jacksonExclude
-  lazy val json          = Seq(json4sCore, json4sJackson, json4sNative)
+  lazy val json4sCore = "org.json4s" %% "json4s-core" % versions.json4s % Provided exclude exclusions.jacksonExclude
+  lazy val json4sJackson =
+    "org.json4s" %% "json4s-jackson" % versions.json4s % Provided exclude exclusions.jacksonExclude
+  lazy val json4sNative = "org.json4s" %% "json4s-native" % versions.json4s exclude exclusions.jacksonExclude
+  lazy val json         = Seq(json4sCore, json4sJackson, json4sNative)
 }
 
 trait Spark3TestFrameworkDependencies {
@@ -430,11 +437,12 @@ trait Spark3TestFrameworkDependencies {
 
 trait Spark3ScalaCoreDependencies {
   val versions: Spark3Versions
-  lazy val typesafeConfig            = "com.typesafe"           % "config"                    % versions.typesafeConfig
-  lazy val scalaParserAndCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % versions.scalaParserAndCombinators
-  lazy val nameOf                    = "com.github.dwickern"    %% "scala-nameof"             % versions.nameOf
-  lazy val scalaPool                 = "io.github.andrebeat"    %% "scala-pool"               % versions.scalaPool
-  lazy val scalaCompiler             = "org.scala-lang"         % "scala-compiler"            % versions.scala
+  lazy val typesafeConfig = "com.typesafe" % "config" % versions.typesafeConfig
+  lazy val scalaParserAndCombinators =
+    "org.scala-lang.modules" %% "scala-parser-combinators" % versions.scalaParserAndCombinators
+  lazy val nameOf        = "com.github.dwickern" %% "scala-nameof"   % versions.nameOf
+  lazy val scalaPool     = "io.github.andrebeat" %% "scala-pool"     % versions.scalaPool
+  lazy val scalaCompiler = "org.scala-lang"       % "scala-compiler" % versions.scala
 }
 
 trait Spark3AvroDependencies {
@@ -445,28 +453,30 @@ trait Spark3AvroDependencies {
 
 trait Spark3ApacheCommonsDependencies {
   val versions: Spark3Versions
-  lazy val apacheCommonsLang3 = "org.apache.commons"        % "commons-lang3" % versions.apacheCommonsLang3Version // remove?
-  lazy val commonsCli         = "commons-cli"               % "commons-cli"   % versions.commonsCli % Provided
-  lazy val httpClient         = "org.apache.httpcomponents" % "httpclient"    % versions.httpcomponents
-  lazy val httpCore           = "org.apache.httpcomponents" % "httpcore"      % versions.httpcomponents
-  lazy val commonsIO          = "commons-io"                % "commons-io"    % versions.commonsIO
-  lazy val dpcp2              = "org.apache.commons"        % "commons-dbcp2" % versions.dbcp2Version
+  lazy val apacheCommonsLang3 = "org.apache.commons" % "commons-lang3" % versions.apacheCommonsLang3Version // remove?
+  lazy val commonsCli         = "commons-cli"        % "commons-cli"   % versions.commonsCli % Provided
+  lazy val httpClient = "org.apache.httpcomponents" % "httpclient"    % versions.httpcomponents
+  lazy val httpCore   = "org.apache.httpcomponents" % "httpcore"      % versions.httpcomponents
+  lazy val commonsIO  = "commons-io"                % "commons-io"    % versions.commonsIO
+  lazy val dpcp2      = "org.apache.commons"        % "commons-dbcp2" % versions.dbcp2Version
 
 }
 
 trait Spark3SolrDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
-  lazy val solrj             = "org.apache.solr"           % "solr-solrj"  % versions.solr exclude exclusions.solrExclusion
-  lazy val sparkSolr         = "it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr exclude exclusions.sparkSolrExclusion
-  lazy val solrjMasterClient = "org.apache.solr"           % "solr-solrj"  % versions.solr exclude exclusions.solrExclusion
+  lazy val solrj = "org.apache.solr" % "solr-solrj" % versions.solr exclude exclusions.solrExclusion
+  lazy val sparkSolr =
+    "it.agilelab.bigdata.spark" %% "spark-solr" % versions.sparkSolr exclude exclusions.sparkSolrExclusion
+  lazy val solrjMasterClient = "org.apache.solr" % "solr-solrj" % versions.solr exclude exclusions.solrExclusion
 }
 
 trait Spark3SttpDependencies {
   val versions: Spark3Versions
   val exclusions: Spark3Exclusions.type
-  lazy val sttpCore   = "com.softwaremill.sttp.client" %% "core"   % versions.sttpVersion exclude exclusions.json4sExclude
-  lazy val sttpJson4s = "com.softwaremill.sttp.client" %% "json4s" % versions.sttpVersion exclude exclusions.json4sExclude
+  lazy val sttpCore = "com.softwaremill.sttp.client" %% "core" % versions.sttpVersion exclude exclusions.json4sExclude
+  lazy val sttpJson4s =
+    "com.softwaremill.sttp.client" %% "json4s" % versions.sttpVersion exclude exclusions.json4sExclude
 }
 
 trait Spark3CodehausJacksonDependencies {
@@ -487,9 +497,11 @@ trait Spark3OkHttpDependencies {
 trait Spark3PostgresDependencies {
   val versions: Spark3Versions
 
-  lazy val postgres                     = "org.postgresql"         % "postgresql"                                % versions.postgresqlVersion
-  lazy val postgresqlEmbedded           = "io.zonky.test"          % "embedded-postgres"                         % versions.postgresqlEmbeddedVersion % Test
-  lazy val postgresqlEmbeddedArm64      = "io.zonky.test.postgres" % "embedded-postgres-binaries-darwin-arm64v8" % "17.2.0" % Test
-  lazy val postgresqlEmbeddedArm64Linux = "io.zonky.test.postgres" % "embedded-postgres-binaries-linux-arm64v8"  % "17.2.0" % Test
+  lazy val postgres           = "org.postgresql" % "postgresql"        % versions.postgresqlVersion
+  lazy val postgresqlEmbedded = "io.zonky.test"  % "embedded-postgres" % versions.postgresqlEmbeddedVersion % Test
+  lazy val postgresqlEmbeddedArm64 =
+    "io.zonky.test.postgres" % "embedded-postgres-binaries-darwin-arm64v8" % "17.2.0" % Test
+  lazy val postgresqlEmbeddedArm64Linux =
+    "io.zonky.test.postgres" % "embedded-postgres-binaries-linux-arm64v8" % "17.2.0" % Test
 
 }

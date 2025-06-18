@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.test
 
-import it.agilelab.bigdata.wasp.models.{HttpModel, HttpCompression}
+import it.agilelab.bigdata.wasp.models.{HttpCompression, HttpModel}
 
 object TestHttpModel {
 
@@ -35,6 +35,5 @@ object TestHttpModel {
     mediaType = "text/plain",
     logBody = false
   )
-
 
 }

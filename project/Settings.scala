@@ -56,9 +56,9 @@ class BasicSettings(
 
   /** settings related to project information */
   lazy val projectSettings = Seq(
-    organization := "it.agilelab",
+    organization         := "it.agilelab",
     organizationHomepage := Some(url("http://www.agilelab.it")),
-    homepage := Some(url("https://www.agilelab.it/wasp-wide-analytics-streaming-platform/")),
+    homepage             := Some(url("https://www.agilelab.it/wasp-wide-analytics-streaming-platform/")),
     scmInfo := Some(ScmInfo(url("https://github.com/agile-lab-dev/wasp"), "https://github.com/agile-lab-dev/wasp.git")),
     developers := List(
       Developer("AgileLabDev", "AgileLabDev", "wasp@agilelab.it", url("https://github.com/agile-lab-dev/wasp"))
@@ -119,7 +119,7 @@ class BasicSettings(
     publishTo := { if (isSnapshot.value) Some("central-snapshots" at centralSnapshots) else localStaging.value },
     publishMavenStyle := true,
     credentials ++= Seq(sonatypeCentralCredentials),
-    pgpPassphrase := Option(System.getenv().get("PGP_PASSPHRASE")).map(_.toCharArray),
+    pgpPassphrase   := Option(System.getenv().get("PGP_PASSPHRASE")).map(_.toCharArray),
     Global / useGpg := false
   )
 
@@ -148,7 +148,7 @@ class BasicSettings(
 
   /** settings to disable parallel execution of tests, for Spark & co */
   lazy val disableParallelTests: Seq[Def.Setting[Boolean]] = Seq(
-    (Test / parallelExecution) := false,
+    (Test / parallelExecution)            := false,
     (IntegrationTest / parallelExecution) := false
   )
 

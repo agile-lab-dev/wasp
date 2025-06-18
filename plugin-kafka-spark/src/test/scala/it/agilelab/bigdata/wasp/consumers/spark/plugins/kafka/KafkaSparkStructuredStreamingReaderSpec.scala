@@ -499,7 +499,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
       val df               = spark.createDataset(editedSample).toDF()
       val rawCol           = col("raw")
       val topicJsonColName = s"${multiTopicSeq.head.name}"
-      val outDF            = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
+      val outDF = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
 
       // get json schema
       val schemaAvro = new Schema.Parser().parse(multiTopicSeq.head.getJsonSchema)
@@ -561,7 +561,7 @@ class KafkaSparkStructuredStreamingReaderSpec extends WordSpec with SparkSuite {
 
       val rawCol           = col("raw")
       val topicAvroColName = s"${multiTopicSeq.last.name}"
-      val outDF            = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
+      val outDF = KafkaSparkStructuredStreamingReader.selectForMultipleSchema(multiTopicSeq, df, Handle).cache()
 
       multiTopicSeq.dropRight(1).foreach { t =>
         val name = t.name

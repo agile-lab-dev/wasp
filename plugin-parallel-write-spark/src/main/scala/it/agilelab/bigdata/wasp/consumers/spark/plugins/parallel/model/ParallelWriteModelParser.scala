@@ -5,13 +5,13 @@ import it.agilelab.bigdata.wasp.models.GenericModel
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-/**
-  * Parallel write flavours encoders/decoders for spray
+/** Parallel write flavours encoders/decoders for spray
   */
 object ParallelWriteModelParser {
-  implicit lazy val parallelWriteFormat: RootJsonFormat[ParallelWrite] = jsonFormat1((saveMode: String) => ParallelWrite.apply(saveMode))
+  implicit lazy val parallelWriteFormat: RootJsonFormat[ParallelWrite] =
+    jsonFormat1((saveMode: String) => ParallelWrite.apply(saveMode))
   implicit lazy val catalogCoordinatesFormat: RootJsonFormat[CatalogCoordinates] = jsonFormat5(CatalogCoordinates.apply)
-  implicit lazy val continuousUpdateFormat: RootJsonFormat[ContinuousUpdate] = jsonFormat7(ContinuousUpdate)
+  implicit lazy val continuousUpdateFormat: RootJsonFormat[ContinuousUpdate]     = jsonFormat7(ContinuousUpdate)
 
   implicit lazy val writerDetailsFormat: RootJsonFormat[WriterDetails] = new RootJsonFormat[WriterDetails] {
     override def read(json: JsValue): WriterDetails =
@@ -19,11 +19,11 @@ object ParallelWriteModelParser {
         .asJsObject("Type must be a JSON object")
         .getFields("writerType")
         .headOption match {
-        case Some(JsString(WriterDetails.parallelWrite)) => parallelWriteFormat.read(json)
+        case Some(JsString(WriterDetails.parallelWrite))    => parallelWriteFormat.read(json)
         case Some(JsString(WriterDetails.continuousUpdate)) => continuousUpdateFormat.read(json)
         case Some(_) => deserializationError(s"$json is not a WriterDetails subclass")
-        case None => deserializationError(s"$json it's missing a writerType field")
-        case _ => deserializationError(s"$json It's not a valid WriterDetails")
+        case None    => deserializationError(s"$json it's missing a writerType field")
+        case _       => deserializationError(s"$json It's not a valid WriterDetails")
       }
 
     override def write(obj: WriterDetails): JsValue = obj match {
@@ -40,42 +40,48 @@ object ParallelWriteModelParser {
     }
   }
 
+  implicit lazy val parallelWriteModeFormat: RootJsonFormat[ParallelWriteModel] =
+    new RootJsonFormat[ParallelWriteModel] {
+      override def write(obj: ParallelWriteModel): JsValue = {
+        JsObject(
+          "writerDetails" -> writerDetailsFormat.write(obj.writerDetails),
+          "entityDetails" -> obj.entityDetails.toJson
+        )
+      }
 
-  implicit lazy val parallelWriteModeFormat: RootJsonFormat[ParallelWriteModel] = new RootJsonFormat[ParallelWriteModel] {
-    override def write(obj: ParallelWriteModel): JsValue = {
-      JsObject(
-        "writerDetails" -> writerDetailsFormat.write(obj.writerDetails),
-        "entityDetails" -> obj.entityDetails.toJson
-      )
-    }
+      private def parseEntityDetails(entityDetails: Map[String, String]): CatalogCoordinates = {
+        CatalogCoordinates(
+          entityDetails.getOrElse("domain", ""),
+          entityDetails.getOrElse("name", ""),
+          entityDetails.getOrElse("version", ""),
+          entityDetails.get("dbPrefix"),
+          entityDetails.get("overrideDbName")
+        )
+      }
 
-    private def parseEntityDetails(entityDetails: Map[String, String]): CatalogCoordinates = {
-      CatalogCoordinates(
-        entityDetails.getOrElse("domain", ""),
-        entityDetails.getOrElse("name", ""),
-        entityDetails.getOrElse("version", ""),
-        entityDetails.get("dbPrefix"),
-        entityDetails.get("overrideDbName")
-      )
-    }
-
-    override def read(json: JsValue): ParallelWriteModel = {
+      override def read(json: JsValue): ParallelWriteModel = {
         val fields = json.asJsObject("Values must be a JSON Object").fields
         val parallelWriteModel = for {
           writerDetailType <- fields.get("writerDetails")
-          entityDetails <- fields.get("entityDetails")
-        } yield ParallelWriteModel(writerDetailsFormat.read(writerDetailType), parseEntityDetails(entityDetails.convertTo[Map[String, String]]))
-      parallelWriteModel match {
-        case Some(parallelWriteModel) => parallelWriteModel
-        case None => throw new Exception(s"$json is not a valid ParallelWriteModel" )
+          entityDetails    <- fields.get("entityDetails")
+        } yield ParallelWriteModel(
+          writerDetailsFormat.read(writerDetailType),
+          parseEntityDetails(entityDetails.convertTo[Map[String, String]])
+        )
+        parallelWriteModel match {
+          case Some(parallelWriteModel) => parallelWriteModel
+          case None                     => throw new Exception(s"$json is not a valid ParallelWriteModel")
+        }
       }
     }
-  }
 
   def parseParallelWriteModel(genericModel: GenericModel): ParallelWriteModel = {
     if (genericModel.product.categoryName == "parallelWrite") {
       val json = genericModel.value.toJson.parseJson
-        parallelWriteModeFormat.read(json)
-    } else throw new IllegalArgumentException(s"""Expected value of GenericModel.kind is "parallelWrite", found ${genericModel.value}""")
+      parallelWriteModeFormat.read(json)
+    } else
+      throw new IllegalArgumentException(
+        s"""Expected value of GenericModel.kind is "parallelWrite", found ${genericModel.value}"""
+      )
   }
 }

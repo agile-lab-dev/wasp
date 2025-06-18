@@ -18,9 +18,13 @@ trait ColdParallelWriter extends ParallelWriter {
       batchId: Long
   ): Unit = {
     val s3path: URI = HadoopS3Utils.useS3aScheme(
-      new URI(writeExecutionPlan.writeUri.getOrElse(
-        throw new RuntimeException("Entity responded without a writeUri field for a COLD case write"))))
-    val spark       = df.sparkSession
+      new URI(
+        writeExecutionPlan.writeUri.getOrElse(
+          throw new RuntimeException("Entity responded without a writeUri field for a COLD case write")
+        )
+      )
+    )
+    val spark = df.sparkSession
     credentialsConfigurator.configureCredentials(writeExecutionPlan, spark.sparkContext.hadoopConfiguration)
     val partitioningColumns: Seq[String] = catalogService.getPartitioningColumns(spark, entityDetails)
     performColdWrite(df, s3path, partitioningColumns, batchId)

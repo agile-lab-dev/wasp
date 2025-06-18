@@ -12,5 +12,5 @@ trait HttpBL {
   def upsert(HttpModel: HttpModel): Unit
 
   def insertIfNotExists(HttpModel: HttpModel): Unit
-  
+
 }

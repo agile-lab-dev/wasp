@@ -19,36 +19,41 @@ import java.io.{File, IOException, ObjectInputStream, ObjectOutputStream}
 import scala.util.control.NonFatal
 
 @InterfaceAudience.Private
-class DefaultSource extends RelationProvider
-  with DataSourceRegister
-  with CreatableRelationProvider
-  with StreamSinkProvider
-  with Logging {
+class DefaultSource
+    extends RelationProvider
+    with DataSourceRegister
+    with CreatableRelationProvider
+    with StreamSinkProvider
+    with Logging {
 
-
-  override def createRelation(sqlContext: SQLContext,
-                              parameters: Map[String, String]): BaseRelation = {
+  override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
     HBaseRelation(parameters)(sqlContext)
   }
 
   override def shortName(): String = "hbase"
 
-  override def createRelation(sqlContext: SQLContext,
-                              mode: SaveMode,
-                              parameters: Map[String, String],
-                              data: DataFrame): BaseRelation = {
+  override def createRelation(
+      sqlContext: SQLContext,
+      mode: SaveMode,
+      parameters: Map[String, String],
+      data: DataFrame
+  ): BaseRelation = {
     throw new NotImplementedError("This plugin does not support spark batch")
   }
 
-  override def createSink(sqlContext: SQLContext,
-                          parameters: Map[String, String],
-                          partitionColumns: Seq[String],
-                          outputMode: OutputMode): Sink = {
+  override def createSink(
+      sqlContext: SQLContext,
+      parameters: Map[String, String],
+      partitionColumns: Seq[String],
+      outputMode: OutputMode
+  ): Sink = {
 
     if (outputMode != OutputMode.Append()) {
       log.error("Append is the only supported OutputMode for HBase.")
-      throw new IllegalArgumentException("Append is only supported OutputMode for HBase. " +
-        s"Cannot continue with [$outputMode].")
+      throw new IllegalArgumentException(
+        "Append is only supported OutputMode for HBase. " +
+          s"Cannot continue with [$outputMode]."
+      )
     }
 
     HBaseRelation(parameters)(sqlContext).createTable()
@@ -57,10 +62,11 @@ class DefaultSource extends RelationProvider
 
     this.synchronized {
       if (LatestHBaseContextCache.latest == null) {
-        val config = HBaseConfiguration.create()
+        val config          = HBaseConfiguration.create()
         val configResources = parameters.getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
         configResources.split(",").foreach(r => config.addResource(r))
-        configResources.split(",")
+        configResources
+          .split(",")
           .filter(r => (r != "") && new File(r).exists())
           .foreach(r => config.addResource(new Path(r)))
         new HBaseContext(sparkSession.sparkContext, config)
@@ -73,28 +79,35 @@ class DefaultSource extends RelationProvider
 
 @InterfaceAudience.Private
 case class HBaseRelation(
-  @transient parameters: Map[String, String]
+    @transient parameters: Map[String, String]
 )(@transient val sqlContext: SQLContext)
-  extends BaseRelation with PrunedFilteredScan with InsertableRelation with Logging {
+    extends BaseRelation
+    with PrunedFilteredScan
+    with InsertableRelation
+    with Logging {
 
   val catalog: HBaseTableCatalog = HBaseTableCatalog(parameters)
 
   def tableName: String = catalog.namespace + ":" + catalog.tableName
 
   private val configResources: String = parameters.getOrElse(HBaseSparkConf.HBASE_CONFIG_LOCATION, "")
-  private val useHBaseContext: Boolean = parameters.get(HBaseSparkConf.USE_HBASECONTEXT)
+  private val useHBaseContext: Boolean = parameters
+    .get(HBaseSparkConf.USE_HBASECONTEXT)
     .map(_.toBoolean)
     .getOrElse(HBaseSparkConf.DEFAULT_USE_HBASECONTEXT)
 
-  //create or get latest HBaseContext
+  // create or get latest HBaseContext
   private val hbaseContext: HBaseContext = if (useHBaseContext) {
     LatestHBaseContextCache.latest
   } else {
     val config = HBaseConfiguration.create()
-    configResources.split(",").filter(r => (r != "") && new File(r).exists()).foreach(r => {
-      log.info(s"HBase configuration file: $r")
-      config.addResource(new Path(r))
-    })
+    configResources
+      .split(",")
+      .filter(r => (r != "") && new File(r).exists())
+      .foreach(r => {
+        log.info(s"HBase configuration file: $r")
+        config.addResource(new Path(r))
+      })
     log.info(s"HBase configurations $config")
     new HBaseContext(sqlContext.sparkContext, config)
   }
@@ -103,29 +116,27 @@ case class HBaseRelation(
 
   def hbaseConf: Configuration = wrappedConf.value
 
-  /**
-   * Generates a Spark SQL schema objeparametersct so Spark SQL knows what is being
-   * provided by this BaseRelation
-   *
-   * @return schema generated from the SCHEMA_COLUMNS_MAPPING_KEY value
-   */
+  /** Generates a Spark SQL schema objeparametersct so Spark SQL knows what is being provided by this BaseRelation
+    *
+    * @return
+    *   schema generated from the SCHEMA_COLUMNS_MAPPING_KEY value
+    */
   override val schema: StructType = HBaseTableCatalog.schema
-
 
   def createTable(): Unit = {
     val numReg = parameters.get(HBaseTableCatalog.newTable).map(x => x.toInt).getOrElse(0)
-    val startKey = Bytes.toBytes(parameters.getOrElse(HBaseTableCatalog.regionStart,
-      HBaseTableCatalog.defaultRegionStart))
+    val startKey =
+      Bytes.toBytes(parameters.getOrElse(HBaseTableCatalog.regionStart, HBaseTableCatalog.defaultRegionStart))
     val endKey = Bytes.toBytes(parameters.getOrElse(HBaseTableCatalog.regionEnd, HBaseTableCatalog.defaultRegionEnd))
 
     if (numReg > 3) {
       val tName = catalog.namespace match {
         case Some(namespace) => TableName.valueOf(namespace, catalog.tableName)
-        case None => TableName.valueOf(catalog.tableName)
+        case None            => TableName.valueOf(catalog.tableName)
       }
 
       val connection = HBaseConnectionCache.getConnection(hbaseConf)
-      val admin = connection.getAdmin
+      val admin      = connection.getAdmin
 
       try {
         if (!admin.isTableAvailable(tName)) {
@@ -175,13 +186,12 @@ case class HBaseRelation(
         block
       } catch {
         case e: IOException => throw e
-        case NonFatal(t) => throw new IOException(t)
+        case NonFatal(t)    => throw new IOException(t)
       }
     }
   }
 
-  override def buildScan(requiredColumns: Array[String],
-                         filters: Array[Filter]): RDD[Row] = {
+  override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
     throw new NotImplementedError("This plugin does not support read operation of any kind!")
   }
 

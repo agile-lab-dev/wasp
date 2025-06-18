@@ -32,31 +32,30 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-
 class SparkConsumersStreamingMasterGuardian(
-                                             protected val pipegraphBL: PipegraphBL,
-                                             protected val watchdogCreator: ChildCreator,
-                                             collaboratorName: String,
-                                             retryInterval: FiniteDuration,
-                                             unschedulableCheckInterval: FiniteDuration,
-                                             debugActor: Option[ActorRef],
-                                             initialSchedulingStrategy: SchedulingStrategy
-                                           ) extends FSM[State, Data]
-  with LoggingFSM[State, Data]
-  with DatabaseOperations
-  with Stash
-  with Logging
-  with PipeToSupport
-  with RetrySupport {
+    protected val pipegraphBL: PipegraphBL,
+    protected val watchdogCreator: ChildCreator,
+    collaboratorName: String,
+    retryInterval: FiniteDuration,
+    unschedulableCheckInterval: FiniteDuration,
+    debugActor: Option[ActorRef],
+    initialSchedulingStrategy: SchedulingStrategy
+) extends FSM[State, Data]
+    with LoggingFSM[State, Data]
+    with DatabaseOperations
+    with Stash
+    with Logging
+    with PipeToSupport
+    with RetrySupport {
 
   var schedulingStrategy: SchedulingStrategy = initialSchedulingStrategy
 
-  val cluster: Cluster = Cluster(context.system)
+  val cluster: Cluster              = Cluster(context.system)
   implicit val ec: ExecutionContext = context.dispatcher
 
   watchdogCreator(self, "spark-context-watchdog", context)
 
-  def retry[F[_] : Recoverable, A](retryable: () => F[A]): A = retry(retryInterval)(retryable)
+  def retry[F[_]: Recoverable, A](retryable: () => F[A]): A = retry(retryInterval)(retryable)
 
   def identifyCollaboratorOnMember(m: Member): Future[ActorRef] = {
     context.actorSelection(RootActorPath(m.address) / "user" / collaboratorName).resolveOne(retryInterval)
@@ -111,7 +110,9 @@ class SparkConsumersStreamingMasterGuardian(
               case Left((error, nextSchedulingStrategy)) =>
                 logger.error(s"Error while trying to schedule ${pipegraph.name}: ${error}")
                 schedulingStrategy = nextSchedulingStrategy
-                val updatedInstance = retry(() => updateToStatus(instance.copy(executedByNode = None, peerActor = None), PipegraphStatus.UNSCHEDULABLE))
+                val updatedInstance = retry(() =>
+                  updateToStatus(instance.copy(executedByNode = None, peerActor = None), PipegraphStatus.UNSCHEDULABLE)
+                )
                 acc.toUnschedulable(self, updatedInstance)
             }
 
@@ -137,7 +138,9 @@ class SparkConsumersStreamingMasterGuardian(
       stay
   }
 
-  when(Initialized)(compose(handleStart, handleStop, handleWorkerRequest, handleRestart, handleMembership, handleUnschedulable))
+  when(Initialized)(
+    compose(handleStart, handleStop, handleWorkerRequest, handleRestart, handleMembership, handleUnschedulable)
+  )
 
   onTransition {
     case (_, Idle) =>
@@ -149,34 +152,35 @@ class SparkConsumersStreamingMasterGuardian(
       startTimerAtFixedRate(Timers.unschedulableCheck, RecoverUnschedulable, unschedulableCheckInterval)
   }
 
-  private def handleUnschedulable: StateFunction = {
-    case Event(RecoverUnschedulable, startingSchedule: Schedule) =>
-      val finalSchedule = startingSchedule.unschedulable.foldLeft(startingSchedule) {
-        case (schedule, ScheduleInstance(worker, pipegraphInstance)) =>
+  private def handleUnschedulable: StateFunction = { case Event(RecoverUnschedulable, startingSchedule: Schedule) =>
+    val finalSchedule = startingSchedule.unschedulable.foldLeft(startingSchedule) {
+      case (schedule, ScheduleInstance(worker, pipegraphInstance)) =>
 
-          retrievePipegraph(pipegraphInstance.instanceOf).flatMap(pipegraph => updateToStatus(pipegraphInstance, PipegraphStatus.PENDING).map(instance => (pipegraph, instance))) match {
-            case Success((pipegraph, instance)) =>
-              schedulingStrategy.choose(schedule.workers, pipegraph) match {
-                case Right((chosen, nextSchedulingStrategy)) =>
-                  chosen.collaboratorActor ! WorkAvailable(instance.instanceOf)
-                  schedulingStrategy = nextSchedulingStrategy
-                  logger.info(s"scheduling ${pipegraph.name} to ${chosen.address}")
-                  schedule.toPending(self, instance)
-                case Left((error, nextSchedulingStrategy)) =>
-                  logger.error(s"Error while trying to schedule ${pipegraph.name}: ${error}")
-                  schedulingStrategy = nextSchedulingStrategy
-                  val updatedInstance = retry(() => updateToStatus(pipegraphInstance, PipegraphStatus.UNSCHEDULABLE))
-                  schedule.toUnschedulable(self, updatedInstance)
-              }
-            case Failure(exception) =>
-              logger.error("Cannot retrieve pipegraph, leaving instance as unschedulable", exception)
-              schedule.toUnschedulable(self, pipegraphInstance)
+        retrievePipegraph(pipegraphInstance.instanceOf).flatMap(pipegraph =>
+          updateToStatus(pipegraphInstance, PipegraphStatus.PENDING).map(instance => (pipegraph, instance))
+        ) match {
+          case Success((pipegraph, instance)) =>
+            schedulingStrategy.choose(schedule.workers, pipegraph) match {
+              case Right((chosen, nextSchedulingStrategy)) =>
+                chosen.collaboratorActor ! WorkAvailable(instance.instanceOf)
+                schedulingStrategy = nextSchedulingStrategy
+                logger.info(s"scheduling ${pipegraph.name} to ${chosen.address}")
+                schedule.toPending(self, instance)
+              case Left((error, nextSchedulingStrategy)) =>
+                logger.error(s"Error while trying to schedule ${pipegraph.name}: ${error}")
+                schedulingStrategy = nextSchedulingStrategy
+                val updatedInstance = retry(() => updateToStatus(pipegraphInstance, PipegraphStatus.UNSCHEDULABLE))
+                schedule.toUnschedulable(self, updatedInstance)
+            }
+          case Failure(exception) =>
+            logger.error("Cannot retrieve pipegraph, leaving instance as unschedulable", exception)
+            schedule.toUnschedulable(self, pipegraphInstance)
 
-          }
+        }
 
-      }
+    }
 
-      stay using (finalSchedule)
+    stay using (finalSchedule)
   }
 
   private def handleStart: StateFunction = {
@@ -196,7 +200,9 @@ class SparkConsumersStreamingMasterGuardian(
       stay
 
     case Event(StartPipegraph(name), schedule: Schedule) if schedule.doesNotKnow(name) =>
-      retrievePipegraph(name).flatMap(pipegraph => createInstanceOf(name).map(instance => (pipegraph, instance))) match {
+      retrievePipegraph(name).flatMap(pipegraph =>
+        createInstanceOf(name).map(instance => (pipegraph, instance))
+      ) match {
         case Success((pipegraph, instance)) =>
           val nextSchedule = schedule.toPending(self, instance)
           log.debug(nextSchedule.toString)
@@ -205,7 +211,7 @@ class SparkConsumersStreamingMasterGuardian(
             case Left((error, nextSchedulingStrategy)) =>
               logger.error(s"Error while trying to schedule ${pipegraph.name}: ${error}")
               val unschedulableInstance = retry(() => updateToStatus(instance, PipegraphStatus.UNSCHEDULABLE))
-              val updatedSchedule = nextSchedule.toUnschedulable(self, unschedulableInstance)
+              val updatedSchedule       = nextSchedule.toUnschedulable(self, unschedulableInstance)
               schedulingStrategy = nextSchedulingStrategy
               stay using updatedSchedule replying Protocol.PipegraphStarted(name, instance.name)
             case Right((member, nextSchedulingStrategy)) =>
@@ -215,7 +221,6 @@ class SparkConsumersStreamingMasterGuardian(
               stay using nextSchedule replying Protocol.PipegraphStarted(name, instance.name)
 
           }
-
 
         case Failure(error) =>
           stay replying Protocol.PipegraphNotStarted(name, ExceptionUtils.getStackTrace(error))
@@ -321,7 +326,10 @@ class SparkConsumersStreamingMasterGuardian(
     case Event(ChildProtocol.GimmeWork(member, pipegraphName), schedule: Schedule) =>
       schedule.pending.find(_.instanceOf == pipegraphName) match {
         case Some(ScheduleInstance(worker, pipegraphInstance)) =>
-          val inst = pipegraphInstance.copy(executedByNode = Some(formatUniqueAddress(member)), peerActor = Some(sender.path.toString))
+          val inst = pipegraphInstance.copy(
+            executedByNode = Some(formatUniqueAddress(member)),
+            peerActor = Some(sender.path.toString)
+          )
           retrievePipegraphAndUpdateInstanceToProcessing(inst) match {
             case Success((model, instance)) =>
               val nextSchedule = schedule.toProcessing(sender(), instance)
@@ -332,7 +340,6 @@ class SparkConsumersStreamingMasterGuardian(
         case None =>
           stay replying Protocol.WorkNotGiven(new Exception(s"Cannot find ${pipegraphName} instance"))
       }
-
 
     case Event(ChildProtocol.WorkCancelled, schedule: Schedule) =>
       val whatWasCancelled = schedule.stopping(sender())
@@ -349,8 +356,7 @@ class SparkConsumersStreamingMasterGuardian(
 
       }
 
-    case Event(_: ChildProtocol.WorkNotCancelled, _: Schedule)
-    =>
+    case Event(_: ChildProtocol.WorkNotCancelled, _: Schedule) =>
       startTimerAtFixedRate(
         Timers.workNotCancelledRetryTimer,
         RetryEnvelope(ChildProtocol.WorkNotCancelled, sender()),
@@ -358,13 +364,11 @@ class SparkConsumersStreamingMasterGuardian(
       )
       stay
 
-    case Event(RetryEnvelope(ChildProtocol.WorkNotCancelled, originalSender), _: Schedule)
-    =>
+    case Event(RetryEnvelope(ChildProtocol.WorkNotCancelled, originalSender), _: Schedule) =>
       originalSender ! ChildProtocol.CancelWork
       stay
 
-    case Event(WorkCompleted, schedule: Schedule)
-    =>
+    case Event(WorkCompleted, schedule: Schedule) =>
       val whatCompleted = schedule.stoppingOrProcessing(sender())
 
       retry(() =>
@@ -378,8 +382,7 @@ class SparkConsumersStreamingMasterGuardian(
           stay using nextSchedule
       }
 
-    case Event(WorkFailed(reason), schedule: Schedule)
-    =>
+    case Event(WorkFailed(reason), schedule: Schedule) =>
       val whatFailed = schedule.processing(sender())
       retry(() =>
         updateToStatus(
@@ -401,8 +404,7 @@ object SparkConsumersStreamingMasterGuardian {
 
   import scala.concurrent.duration._
 
-  /**
-    * A child factory is a function of (pipegraph,actorName, context | Actorsystem)
+  /** A child factory is a function of (pipegraph,actorName, context | Actorsystem)
     */
   type ChildCreator = (ActorRef, String, ActorRefFactory) => ActorRef
 
@@ -413,23 +415,23 @@ object SparkConsumersStreamingMasterGuardian {
     (_, name, context) => context.actorOf(SparkContextWatchDog.logAndDoNothingWatchdogProps(sc), name)
 
   def defaultChildCreator(
-                           sparkSession: SparkSession,
-                           sparkReaderFactory: SparkReaderFactory,
-                           sparkWriterFactory: SparkWriterFactory,
-                           retryDuration: FiniteDuration,
-                           monitoringInterval: FiniteDuration,
-                           componentFailedStrategy: ComponentFailedStrategy,
-                           env: {
-                             val pipegraphBL: PipegraphBL
-                             val mlModelBL: MlModelBL
-                             val indexBL: IndexBL
-                             val topicBL: TopicBL
-                             val freeCodeBL: FreeCodeBL
-                             val processGroupBL: ProcessGroupBL
-                             val rawBL: RawBL
-                             val keyValueBL: KeyValueBL
-                           }
-                         ): ChildCreator = { (master, pipegraphName, context) =>
+      sparkSession: SparkSession,
+      sparkReaderFactory: SparkReaderFactory,
+      sparkWriterFactory: SparkWriterFactory,
+      retryDuration: FiniteDuration,
+      monitoringInterval: FiniteDuration,
+      componentFailedStrategy: ComponentFailedStrategy,
+      env: {
+        val pipegraphBL: PipegraphBL
+        val mlModelBL: MlModelBL
+        val indexBL: IndexBL
+        val topicBL: TopicBL
+        val freeCodeBL: FreeCodeBL
+        val processGroupBL: ProcessGroupBL
+        val rawBL: RawBL
+        val keyValueBL: KeyValueBL
+      }
+  ): ChildCreator = { (master, pipegraphName, context) =>
     val name = s"$pipegraphName-${UUID.randomUUID()}"
 
     val streamingReaderFactory: ActivationSteps.StreamingReaderFactory = {
@@ -462,19 +464,44 @@ object SparkConsumersStreamingMasterGuardian {
       writerFactory
     )
 
-    //actor names should be urlsafe
+    // actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
 
     context.actorOf(
       PipegraphGuardian
-        .props(master, pipegraphName, defaultGrandChildrenCreator, retryDuration, monitoringInterval, componentFailedStrategy),
+        .props(
+          master,
+          pipegraphName,
+          defaultGrandChildrenCreator,
+          retryDuration,
+          monitoringInterval,
+          componentFailedStrategy
+        ),
       saneName
     )
 
   }
 
-  def props(pipegraphBl: PipegraphBL, watchDogCreator: ChildCreator, collaboratorName: String, retryInterval: FiniteDuration, unschedulableCheckInterval: FiniteDuration, debugActor: Option[ActorRef] = None, schedulingStrategy: SchedulingStrategyFactory = new FifoSchedulingStrategyFactory): Props =
-    Props(new SparkConsumersStreamingMasterGuardian(pipegraphBl, watchDogCreator, collaboratorName, retryInterval,unschedulableCheckInterval, debugActor, schedulingStrategy.create))
+  def props(
+      pipegraphBl: PipegraphBL,
+      watchDogCreator: ChildCreator,
+      collaboratorName: String,
+      retryInterval: FiniteDuration,
+      unschedulableCheckInterval: FiniteDuration,
+      debugActor: Option[ActorRef] = None,
+      schedulingStrategy: SchedulingStrategyFactory = new FifoSchedulingStrategyFactory
+  ): Props =
+    Props(
+      new SparkConsumersStreamingMasterGuardian(
+        pipegraphBl,
+        watchDogCreator,
+        collaboratorName,
+        retryInterval,
+        unschedulableCheckInterval,
+        debugActor,
+        schedulingStrategy.create
+      )
+    )
 
   private def compose[A, B](functions: PartialFunction[A, B]*) = functions.foldLeft(PartialFunction.empty[A, B]) {
     (acc, elem) =>
@@ -482,47 +509,46 @@ object SparkConsumersStreamingMasterGuardian {
   }
 
   private def sequenceFutures[T, U](
-                                     xs: TraversableOnce[T]
-                                   )(f: T => Future[U])(implicit context: ExecutionContext): Future[List[U]] = {
+      xs: TraversableOnce[T]
+  )(f: T => Future[U])(implicit context: ExecutionContext): Future[List[U]] = {
     val resBase = Future.successful(mutable.ListBuffer.empty[U])
     xs.foldLeft(resBase) { (futureRes, x) =>
       futureRes.flatMap { res =>
         f(x).map(res += _)
       }
-    }
-      .map(_.toList)
+    }.map(_.toList)
   }
 
-  private def askToStop(ref: ActorRef, pipegraph: String, timeout: FiniteDuration)(
-    implicit context: ExecutionContext
+  private def askToStop(ref: ActorRef, pipegraph: String, timeout: FiniteDuration)(implicit
+      context: ExecutionContext
   ): Future[String] =
     ask(ref, StopPipegraph(pipegraph), timeout).flatMap {
-      case PipegraphStopped(`pipegraph`) => Future.successful(pipegraph)
+      case PipegraphStopped(`pipegraph`)       => Future.successful(pipegraph)
       case PipegraphNotStopped(`pipegraph`, _) => askToStop(ref, pipegraph, timeout)
-      case _ => throw new Exception("unexpected result")
+      case _                                   => throw new Exception("unexpected result")
     }
 
-  private def askToStart(ref: ActorRef, pipegraph: String, timeout: FiniteDuration)(
-    implicit context: ExecutionContext
+  private def askToStart(ref: ActorRef, pipegraph: String, timeout: FiniteDuration)(implicit
+      context: ExecutionContext
   ): Future[String] =
     ask(ref, StartPipegraph(pipegraph), timeout).flatMap {
-      case PipegraphStarted(`pipegraph`, _) => Future.successful(pipegraph)
+      case PipegraphStarted(`pipegraph`, _)    => Future.successful(pipegraph)
       case PipegraphNotStarted(`pipegraph`, _) => askToStart(ref, pipegraph, timeout)
-      case _ => throw new Exception("unexpected result")
+      case _                                   => throw new Exception("unexpected result")
     }
 
-  private def askToStopSeq(ref: ActorRef, pipegraphs: Seq[String], timeout: FiniteDuration)(
-    implicit context: ExecutionContext
+  private def askToStopSeq(ref: ActorRef, pipegraphs: Seq[String], timeout: FiniteDuration)(implicit
+      context: ExecutionContext
   ): Future[Seq[String]] =
     sequenceFutures(pipegraphs)(askToStop(ref, _, timeout))
 
-  private def askToStartSeq(ref: ActorRef, pipegraphs: Seq[String], timeout: FiniteDuration)(
-    implicit context: ExecutionContext
+  private def askToStartSeq(ref: ActorRef, pipegraphs: Seq[String], timeout: FiniteDuration)(implicit
+      context: ExecutionContext
   ): Future[Seq[String]] =
     sequenceFutures(pipegraphs)(askToStart(ref, _, timeout))
 
   private def orderlyRestart(guardian: ActorRef, pipegraphs: Seq[PipegraphInstanceModel], timeout: FiniteDuration)(
-    implicit context: ExecutionContext
+      implicit context: ExecutionContext
   ): Future[Unit] = {
 
     askToStopSeq(guardian, pipegraphs.map(_.instanceOf), timeout)
@@ -537,11 +563,11 @@ object SparkConsumersStreamingMasterGuardian {
   object RecoverUnschedulable
 
   object Timers {
-    val workFailedRetryTimer = "work-failed-retry-timer"
+    val workFailedRetryTimer       = "work-failed-retry-timer"
     val workNotCancelledRetryTimer = "work-not-cancelled-retry-timer"
-    val cancelWorkRetryTimer = "cancel-work-retry-timer"
-    val workCompleted = "completed-retry-timer"
-    val unschedulableCheck = "unschedulable-check"
+    val cancelWorkRetryTimer       = "cancel-work-retry-timer"
+    val workCompleted              = "completed-retry-timer"
+    val unschedulableCheck         = "unschedulable-check"
   }
 
   def formatUniqueAddress(address: UniqueAddress) =

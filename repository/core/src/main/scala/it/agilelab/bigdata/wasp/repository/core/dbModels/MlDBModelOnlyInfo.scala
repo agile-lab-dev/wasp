@@ -6,11 +6,12 @@ import org.mongodb.scala.bson.BsonObjectId
 
 trait MlDBModelOnlyInfo extends Model
 
-case class MlDBModelOnlyInfoV1(name: String,
-                              version: String = MlDBModelMapperV1.version,
-                              className: Option[String] = None,
-                              timestamp: Option[Long] = None,
-                              modelFileId: Option[BsonObjectId] = None,
-                              favorite: Boolean = false,
-                              description: String = ""
-                              ) extends MlDBModelOnlyInfo
+case class MlDBModelOnlyInfoV1(
+    name: String,
+    version: String = MlDBModelMapperV1.version,
+    className: Option[String] = None,
+    timestamp: Option[Long] = None,
+    modelFileId: Option[BsonObjectId] = None,
+    favorite: Boolean = false,
+    description: String = ""
+) extends MlDBModelOnlyInfo

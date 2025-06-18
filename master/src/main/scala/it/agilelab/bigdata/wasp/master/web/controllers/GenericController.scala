@@ -10,25 +10,31 @@ import spray.json._
 object GenericController extends Directives with JsonSupport {
 
   def getRoute: Route = {
-     pathPrefix("generic") {
-        parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
-          pathEnd {
+    pathPrefix("generic") {
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
+          get {
+            complete {
+              // complete with serialized Future result
+              getJsonArrayOrEmpty[GenericModel](ConfigBL.genericBL.getAll(), _.toJson, pretty)
+            }
+          }
+        } ~
+          path(Segment) { name =>
             get {
               complete {
                 // complete with serialized Future result
-                getJsonArrayOrEmpty[GenericModel](ConfigBL.genericBL.getAll(), _.toJson, pretty)
+                getJsonOrNotFound[GenericModel](
+                  ConfigBL.genericBL.getByName(name),
+                  name,
+                  "Generic model",
+                  _.toJson,
+                  pretty
+                )
               }
             }
-          } ~
-            path(Segment) { name =>
-              get {
-                complete {
-                  // complete with serialized Future result
-                  getJsonOrNotFound[GenericModel](ConfigBL.genericBL.getByName(name), name, "Generic model", _.toJson, pretty)
-                }
-              }
-            }
-        }
+          }
       }
+    }
   }
 }

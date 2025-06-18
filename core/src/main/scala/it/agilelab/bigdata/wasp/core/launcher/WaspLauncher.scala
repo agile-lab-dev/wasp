@@ -101,7 +101,7 @@ trait WaspLauncher {
 		class PrivateMethodExposer(x: AnyRef) {
 			def apply(method: scala.Symbol): PrivateMethodCaller = new PrivateMethodCaller(x, method.name)
 		}
-		*/
+     */
   }
 
   private def printErrorAndExit(message: String): Unit = {
@@ -137,24 +137,23 @@ trait WaspLauncher {
 
   def getOptions: Seq[cli.Option] = WaspCommandLineOptions.allOptions
 
-  /**
-		* Initialize the WASP plugins, this method is called after the WASP initialization.
-		*
-		* Default: no nothing.
-		* Overrided by spark consumers nodes (streaming and batch): plugin initialization
-		*
-		* @param args command line arguments
-		*/
+  /** Initialize the WASP plugins, this method is called after the WASP initialization.
+    *
+    * Default: no nothing. Overrided by spark consumers nodes (streaming and batch): plugin initialization
+    *
+    * @param args
+    *   command line arguments
+    */
   def initializePlugins(args: Array[String]): Unit = Unit
 
-  /**
-		* Validate the configs, this methos is called after the WASP plugin initializations
-		*
-		* Default: use global-level validationRules in [[ConfigManager]].
-		* Overrided by spark consumers nodes (streaming and batch): use global-level and plugin-level validationRules defined only for spark consumers nodes (streaming and batch)
-		*
-		* @param pluginsValidationRules
-		*/
+  /** Validate the configs, this methos is called after the WASP plugin initializations
+    *
+    * Default: use global-level validationRules in [[ConfigManager]]. Overrided by spark consumers nodes (streaming and
+    * batch): use global-level and plugin-level validationRules defined only for spark consumers nodes (streaming and
+    * batch)
+    *
+    * @param pluginsValidationRules
+    */
   def validateConfigs(pluginsValidationRules: Seq[ValidationRule] = Seq()): Unit = {
     println("Configs validation")
 
@@ -162,8 +161,8 @@ trait WaspLauncher {
     val validationResults = ConfigManager.validateConfigs(pluginsValidationRules)
 
     println(s"VALIDATION-RESULT:\n\t${validationResults
-      .map(pair => pair._1 -> (if (pair._2.isLeft) "NOT PASSED" else "PASSED"))
-      .mkString("\n\t")}")
+        .map(pair => pair._1 -> (if (pair._2.isLeft) "NOT PASSED" else "PASSED"))
+        .mkString("\n\t")}")
 
     if (validationResults.exists(_._2.isLeft)) {
       // there is at least a validation failure

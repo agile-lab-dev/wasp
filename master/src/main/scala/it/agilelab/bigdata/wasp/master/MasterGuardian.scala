@@ -16,21 +16,20 @@ import spray.json.{JsObject, JsString}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, HOURS, MILLISECONDS}
 
-object MasterGuardian
-  extends WaspConfiguration
-    with Logging {
+object MasterGuardian extends WaspConfiguration with Logging {
 
   // at midnight, restart all active pipelines (this causes new timed indices creation and consumers redirection on new indices)
   if (ConfigManager.getWaspConfig.indexRollover) {
-    val timeToFirst = ceilDayTime(System.currentTimeMillis) - System.currentTimeMillis
+    val timeToFirst  = ceilDayTime(System.currentTimeMillis) - System.currentTimeMillis
     val initialDelay = Duration(timeToFirst, MILLISECONDS)
-    val interval = Duration(24, HOURS)
-    logger.info(f"Index rollover is enabled: scheduling index rollover ${initialDelay.toUnit(HOURS)}%4.2f hours from now and then every $interval")
+    val interval     = Duration(24, HOURS)
+    logger.info(
+      f"Index rollover is enabled: scheduling index rollover ${initialDelay.toUnit(HOURS)}%4.2f hours from now and then every $interval"
+    )
     actorSystem.scheduler.scheduleAtFixedRate(initialDelay, interval) { () =>
-
       ??[Either[String, String]](masterGuardian, RestartPipegraphs) match {
         case Right(s) => logger.info(s"RestartPipegraphs: $s")
-        case Left(s) => logger.error(s"Failure during the pipegraphs restarting: $s")
+        case Left(s)  => logger.error(s"Failure during the pipegraphs restarting: $s")
       }
     }
   } else {
@@ -50,18 +49,18 @@ object MasterGuardian
   }
 }
 
-class MasterGuardian(env: {
-                      val producerBL: ProducerBL
-                      val pipegraphBL: PipegraphBL
-                      val batchJobBL: BatchJobBL
-                      val batchSchedulerBL: BatchSchedulersBL
-                     },
-                     classLoader: Option[ClassLoader] = None)
-  extends Actor
+class MasterGuardian(
+    env: {
+      val producerBL: ProducerBL
+      val pipegraphBL: PipegraphBL
+      val batchJobBL: BatchJobBL
+      val batchSchedulerBL: BatchSchedulersBL
+    },
+    classLoader: Option[ClassLoader] = None
+) extends Actor
     with Logging {
 
   import MasterGuardian._
-
 
   override def preStart(): Unit = {
     if (waspConfig.systemPipegraphsStart) {
@@ -71,20 +70,30 @@ class MasterGuardian(env: {
     }
   }
 
-
   override def receive: Actor.Receive = {
     case RestartPipegraphs => call(sender(), RestartPipegraphs, restartPipegraphs())
-    case message: AddRemoteProducer => call(message.remoteProducer, message, onProducer(message.name, addRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
-    case message: RemoveRemoteProducer => call(message.remoteProducer, message, onProducer(message.name, removeRemoteProducer(message.remoteProducer, _))) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
+    case message: AddRemoteProducer =>
+      call(
+        message.remoteProducer,
+        message,
+        onProducer(message.name, addRemoteProducer(message.remoteProducer, _))
+      ) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
+    case message: RemoveRemoteProducer =>
+      call(
+        message.remoteProducer,
+        message,
+        onProducer(message.name, removeRemoteProducer(message.remoteProducer, _))
+      ) // do not use sender() for actor ref: https://github.com/akka/akka/issues/17977
     case message: StartProducer => call(sender(), message, onProducer(message.name, startProducer))
-    case message: StopProducer => call(sender(), message, onProducer(message.name, stopProducer))
-    case message: RestProducerRequest => call(sender(), message, onProducer(message.name, restProducerRequest(message, _)))
-    case message: StartETL => call(sender(), message, onEtl(message.name, message.etlName, startEtl))
-    case message: StopETL => call(sender(), message, onEtl(message.name, message.etlName, stopEtl))
-    case message: StartBatchJob => call(sender(), message, onBatchJob(message.name, message.restConfig, startBatchJob))
+    case message: StopProducer  => call(sender(), message, onProducer(message.name, stopProducer))
+    case message: RestProducerRequest =>
+      call(sender(), message, onProducer(message.name, restProducerRequest(message, _)))
+    case message: StartETL       => call(sender(), message, onEtl(message.name, message.etlName, startEtl))
+    case message: StopETL        => call(sender(), message, onEtl(message.name, message.etlName, stopEtl))
+    case message: StartBatchJob  => call(sender(), message, onBatchJob(message.name, message.restConfig, startBatchJob))
     case message: StartPipegraph => call(sender(), message, onPipegraph(message.name, startPipegraph))
-    case message: StopPipegraph => call(sender(), message, onPipegraph(message.name, stopPipegraph))
-    //case message: Any => logger.error("unknown message: " + message)
+    case message: StopPipegraph  => call(sender(), message, onPipegraph(message.name, stopPipegraph))
+    // case message: Any => logger.error("unknown message: " + message)
   }
 
   private def call[T <: MasterGuardianMessage](sender: ActorRef, message: T, result: Either[String, String]): Unit = {
@@ -92,32 +101,38 @@ class MasterGuardian(env: {
     sender ! result
   }
 
-
-
   private def onProducer(name: String, f: ProducerModel => Either[String, String]): Either[String, String] = {
     env.producerBL.getByName(name) match {
-      case None => Left("Producer not retrieved")
+      case None           => Left("Producer not retrieved")
       case Some(producer) => f(producer)
     }
   }
 
-  private def onEtl(pipegraphName: String, etlName: String, f: (PipegraphModel, String) => Either[String, String]): Either[String, String] = {
+  private def onEtl(
+      pipegraphName: String,
+      etlName: String,
+      f: (PipegraphModel, String) => Either[String, String]
+  ): Either[String, String] = {
     env.pipegraphBL.getByName(pipegraphName) match {
-      case None => Left("ETL not retrieved")
+      case None            => Left("ETL not retrieved")
       case Some(pipegraph) => f(pipegraph, etlName)
     }
   }
 
   private def onPipegraph(name: String, f: PipegraphModel => Either[String, String]): Either[String, String] = {
     env.pipegraphBL.getByName(name) match {
-      case None => Left("Pipegraph not retrieved")
+      case None            => Left("Pipegraph not retrieved")
       case Some(pipegraph) => f(pipegraph)
     }
   }
 
-  private def onBatchJob(name: String, restConfig: Config, f: (BatchJobModel, Config) => Either[String, String]): Either[String, String] = {
+  private def onBatchJob(
+      name: String,
+      restConfig: Config,
+      f: (BatchJobModel, Config) => Either[String, String]
+  ): Either[String, String] = {
     env.batchJobBL.getByName(name) match {
-      case None => Left("BatchJob not retrieved")
+      case None           => Left("BatchJob not retrieved")
       case Some(batchJob) => f(batchJob, restConfig)
     }
   }
@@ -127,7 +142,6 @@ class MasterGuardian(env: {
     sparkConsumersStreamingMasterGuardian ! RestartConsumers
     Right("Pipegraphs restart started.")
   }
-
 
   // TODO implement
   private def startEtl(pipegraph: PipegraphModel, etlName: String): Either[String, String] = {
@@ -161,38 +175,49 @@ class MasterGuardian(env: {
 
   private def startBatchJob(batchJob: BatchJobModel, restConfig: Config): Either[String, String] = {
     logger.info(s"Starting batch job '${batchJob.name}'")
-    ??[BatchMessages.StartBatchJobResult](sparkConsumersBatchMasterGuardian, BatchMessages.StartBatchJob(batchJob.name, restConfig)) match {
+    ??[BatchMessages.StartBatchJobResult](
+      sparkConsumersBatchMasterGuardian,
+      BatchMessages.StartBatchJob(batchJob.name, restConfig)
+    ) match {
       case BatchMessages.StartBatchJobResultSuccess(name, instanceName) =>
         Right(
           JsObject(
             "startResult" -> JsString(s"Batch job '$name' start accepted'"),
-            "instance" -> JsString(s"$instanceName")
+            "instance"    -> JsString(s"$instanceName")
           ).toString
         )
-      case BatchMessages.StartBatchJobResultFailure(name, error) => Left(s"Batch job '$name' start not accepted due to [$error]")
+      case BatchMessages.StartBatchJobResultFailure(name, error) =>
+        Left(s"Batch job '$name' start not accepted due to [$error]")
     }
   }
 
   private def startPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
     logger.info(s"Starting pipegraph '${pipegraph.name}'")
-    ??[PipegraphMessages.StartPipegraphResult](sparkConsumersStreamingMasterGuardian, PipegraphMessages.StartPipegraph(pipegraph.name)) match {
+    ??[PipegraphMessages.StartPipegraphResult](
+      sparkConsumersStreamingMasterGuardian,
+      PipegraphMessages.StartPipegraph(pipegraph.name)
+    ) match {
       case PipegraphMessages.PipegraphStarted(name, instanceName) =>
         Right(
           JsObject(
             "startResult" -> JsString(s"Pipegraph '$name' start accepted'"),
-            "instance" -> JsString(s"$instanceName")
+            "instance"    -> JsString(s"$instanceName")
           ).toString
         )
-      case PipegraphMessages.PipegraphNotStarted(name, error) => Left(s"Pipegraph '$name' start not accepted due to [$error]")
+      case PipegraphMessages.PipegraphNotStarted(name, error) =>
+        Left(s"Pipegraph '$name' start not accepted due to [$error]")
     }
   }
 
   private def stopPipegraph(pipegraph: PipegraphModel): Either[String, String] = {
     logger.info(s"Stopping pipegraph '${pipegraph.name}'")
-    ??[PipegraphMessages.StopPipegraphResult](sparkConsumersStreamingMasterGuardian, PipegraphMessages.StopPipegraph
-    (pipegraph.name)) match {
+    ??[PipegraphMessages.StopPipegraphResult](
+      sparkConsumersStreamingMasterGuardian,
+      PipegraphMessages.StopPipegraph(pipegraph.name)
+    ) match {
       case PipegraphMessages.PipegraphStopped(name) => Right(s"Pipegraph '$name' stop accepted")
-      case PipegraphMessages.PipegraphNotStopped(name, error) => Left(s"Pipegraph '$name' stop not accepted due to [$error]")
+      case PipegraphMessages.PipegraphNotStopped(name, error) =>
+        Left(s"Pipegraph '$name' stop not accepted due to [$error]")
     }
   }
 }

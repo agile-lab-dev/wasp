@@ -6,7 +6,11 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MonitorOutcome
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.messages.TelemetryMessageJsonProtocol._
-import it.agilelab.bigdata.wasp.core.messages.{TelemetryActorRedirection, TelemetryMessageSource, TelemetryMessageSourcesSummary}
+import it.agilelab.bigdata.wasp.core.messages.{
+  TelemetryActorRedirection,
+  TelemetryMessageSource,
+  TelemetryMessageSourcesSummary
+}
 import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 import it.agilelab.bigdata.wasp.core.{SystemPipegraphs, WaspSystem}
 import it.agilelab.bigdata.wasp.models.configuration.KafkaEntryConfig
@@ -22,23 +26,20 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Success, Try}
 
-
-
 object TelemetryActorKafkaProducer extends Logging {
 
-
-  /**
-    * We want one telemetry producer per jvm
+  /** We want one telemetry producer per jvm
     */
   private lazy val producer = {
     val kafkaConfig = ConfigManager.getKafkaConfig.getDefaultKafka
 
     val telemetryConfig = ConfigManager.getTelemetryConfig
 
-    val connectionString = kafkaConfig.connections.map {
-      conn => s"${conn.host}:${conn.port}"
-    }.mkString(",")
-
+    val connectionString = kafkaConfig.connections
+      .map { conn =>
+        s"${conn.host}:${conn.port}"
+      }
+      .mkString(",")
 
     val props = new Properties()
     props.put("bootstrap.servers", connectionString)
@@ -51,17 +52,16 @@ object TelemetryActorKafkaProducer extends Logging {
 
     val resultingConf = merged.filterNot(x => notOverridableKeys.contains(x.key))
 
-    logger.info(s"Telemetry configuration\n${resultingConf.mkString("\n")}" )
+    logger.info(s"Telemetry configuration\n${resultingConf.mkString("\n")}")
 
-    resultingConf.foreach {
-      case KafkaEntryConfig(key, value) => props.put(key, value)
+    resultingConf.foreach { case KafkaEntryConfig(key, value) =>
+      props.put(key, value)
     }
 
     new KafkaProducer[Array[Byte], Array[Byte]](props)
   }
 
-
-  def send(key: String, message: String) : Unit = {
+  def send(key: String, message: String): Unit = {
 
     val topic = SystemPipegraphs.telemetryTopic.name
 
@@ -75,73 +75,70 @@ object TelemetryActorKafkaProducer extends Logging {
   }
 }
 
+class TelemetryActor private () extends Actor with CompatibilityTelemetryActor {
 
-class TelemetryActor private() extends Actor with CompatibilityTelemetryActor{
-
-
-  private val mediator = DistributedPubSub(context.system).mediator
+  private val mediator                 = DistributedPubSub(context.system).mediator
   private var actorRefMessagesRedirect = Actor.noSender
 
   override def preStart(): Unit = {
     scheduleMessageToRedirectionActor()
   }
 
-
   override def receive: Receive = {
     case MonitorOutcome(_, _, Some(progress), _) => send(progress)
 
-    //Saves the actorRef of the actor that will receive the telemetry messages
+    // Saves the actorRef of the actor that will receive the telemetry messages
     case TelemetryActorRedirection(aRef) =>
       actorRefMessagesRedirect = aRef
     case _ =>
 
   }
 
-  private def metric(header: Map[String, Any], metric: String, value:Double) =
+  private def metric(header: Map[String, Any], metric: String, value: Double) =
     header + ("metric" -> metric) + ("value" -> value)
 
-
-  private def isValidMetric(metric: Map[String,Any]) = {
+  private def isValidMetric(metric: Map[String, Any]) = {
     val value = metric("value").asInstanceOf[Double]
 
     !value.isNaN && !value.isInfinity
   }
 
-  private def send(progress: StreamingQueryProgress) : Unit = {
+  private def send(progress: StreamingQueryProgress): Unit = {
 
     val messageId = progress.id.toString
-    val sourceId = progress.name
+    val sourceId  = progress.name
     val timestamp = progress.timestamp
 
-    val header = Map("messageId" -> messageId,
-      "sourceId" -> sourceId,
-      "timestamp" -> timestamp)
+    val header = Map("messageId" -> messageId, "sourceId" -> sourceId, "timestamp" -> timestamp)
 
-    val durationMs = progress.durationMs.asScala.map {
-                      case (key, value) => metric(header, s"$key-durationMs", value.toDouble)
-                     }.toSeq
+    val durationMs = progress.durationMs.asScala.map { case (key, value) =>
+      metric(header, s"$key-durationMs", value.toDouble)
+    }.toSeq
 
     val metrics = durationMs :+
-                  metric(header, "numberOfInputRows", progress.numInputRows) :+
-                  metric(header, "inputRowsPerSecond", progress.inputRowsPerSecond) :+
-                  metric(header, "processedRowsPerSecond", progress.processedRowsPerSecond)
+      metric(header, "numberOfInputRows", progress.numInputRows) :+
+      metric(header, "inputRowsPerSecond", progress.inputRowsPerSecond) :+
+      metric(header, "processedRowsPerSecond", progress.processedRowsPerSecond)
 
-    metrics.filter(isValidMetric)
-           .map(toMessage)
-           .foreach(x => TelemetryActorKafkaProducer.send(UUID.randomUUID().toString, x))
+    metrics
+      .filter(isValidMetric)
+      .map(toMessage)
+      .foreach(x => TelemetryActorKafkaProducer.send(UUID.randomUUID().toString, x))
 
-    //Try needed because sometimes spark sends not correctly formatted JSONs
+    // Try needed because sometimes spark sends not correctly formatted JSONs
     Try {
-      val sources: Seq[TelemetryMessageSource] = progress.sources.map(sourceProgress => {
-        TelemetryMessageSource(
-          messageId = messageId,
-          sourceId = sourceId,
-          timestamp = timestamp,
-          description = sourceProgress.description,
-          startOffset = sourceProgress.startOffset.parseJson.convertTo[Map[String, Map[String, Long]]],
-          endOffset = sourceProgress.endOffset.parseJson.convertTo[Map[String, Map[String, Long]]]
-        )
-      }).toSeq
+      val sources: Seq[TelemetryMessageSource] = progress.sources
+        .map(sourceProgress => {
+          TelemetryMessageSource(
+            messageId = messageId,
+            sourceId = sourceId,
+            timestamp = timestamp,
+            description = sourceProgress.description,
+            startOffset = sourceProgress.startOffset.parseJson.convertTo[Map[String, Map[String, Long]]],
+            endOffset = sourceProgress.endOffset.parseJson.convertTo[Map[String, Map[String, Long]]]
+          )
+        })
+        .toSeq
 
       sources
 
@@ -152,17 +149,15 @@ class TelemetryActor private() extends Actor with CompatibilityTelemetryActor{
 
         val streamingQueryProgressMessage: String = toMessage(overallSources)
 
-        //Message sent to the Kafka telemetry topic
+        // Message sent to the Kafka telemetry topic
         TelemetryActorKafkaProducer.send(UUID.randomUUID().toString, streamingQueryProgressMessage)
 
-        if(actorRefMessagesRedirect != Actor.noSender) actorRefMessagesRedirect ! overallSources
+        if (actorRefMessagesRedirect != Actor.noSender) actorRefMessagesRedirect ! overallSources
 
       case _ =>
     }
 
   }
-
-
 
   private def scheduleMessageToRedirectionActor(): Unit = {
 

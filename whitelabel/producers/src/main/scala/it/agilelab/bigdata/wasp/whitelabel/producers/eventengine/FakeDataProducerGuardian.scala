@@ -12,8 +12,11 @@ import spray.json.DefaultJsonProtocol
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
-class FakeDataProducerGuardian (env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
-  extends ProducerGuardian(env.asInstanceOf[AnyRef {val producerBL: ProducerBL; val topicBL: TopicBL}], producerName) {
+class FakeDataProducerGuardian(env: { val producerBL: ProducerBL; val topicBL: TopicBL }, producerName: String)
+    extends ProducerGuardian(
+      env.asInstanceOf[AnyRef { val producerBL: ProducerBL; val topicBL: TopicBL }],
+      producerName
+    ) {
   override val name: String = ""
 
   override def startChildActors(): Unit = {
@@ -25,17 +28,14 @@ class FakeDataProducerGuardian (env: {val producerBL: ProducerBL; val topicBL: T
 }
 
 private[producers] class FakeDataProducerActor(kafka_router: ActorRef, topic: Option[TopicModel])
-  extends ProducerActor[FakeData](kafka_router, topic)
-    with SprayJsonSupport with DefaultJsonProtocol {
+    extends ProducerActor[FakeData](kafka_router, topic)
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
   val rand = new Random()
 
   override def retrievePartitionKey: FakeData => String =
     (data: FakeData) => data.hashCode.toString
-
-
-
-
 
   def sendMsg(): Unit = {
     val data = generateRandomData()
@@ -43,7 +43,7 @@ private[producers] class FakeDataProducerActor(kafka_router: ActorRef, topic: Op
   }
 
   override def mainTask(): Unit = {
-    //logger.info(s"Starting main task for actor: ${this.getClass.getName}")
+    // logger.info(s"Starting main task for actor: ${this.getClass.getName}")
     import scala.concurrent.duration._
     implicit val executor: ExecutionContext = context.dispatcher
 
@@ -55,9 +55,13 @@ private[producers] class FakeDataProducerActor(kafka_router: ActorRef, topic: Op
   }
 
   private def generateRandomData(): FakeData =
-    FakeData(s"sensor_${rand.nextInt(101)}", rand.nextFloat() * 200, System.currentTimeMillis(), if (rand.nextInt(2) % 2 == 0) "even" else "odd", rand.nextInt(101))
-
-
+    FakeData(
+      s"sensor_${rand.nextInt(101)}",
+      rand.nextFloat() * 200,
+      System.currentTimeMillis(),
+      if (rand.nextInt(2) % 2 == 0) "even" else "odd",
+      rand.nextInt(101)
+    )
 
   def generateOutputJsonMessage(input: FakeData): String = {
     JsonConverter.fromString(FakeData.schema.toString).toString

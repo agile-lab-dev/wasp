@@ -32,7 +32,7 @@ object SampleData {
   def fromRecord(record: GenericRecord): SampleData = {
     SampleData(
       record.get("id").toString,
-      record.get("text").toString,
+      record.get("text").toString
     )
   }
 
@@ -48,9 +48,9 @@ object SampleData {
   }
 
   def deserializeFromBytes(
-                            bytes: Array[Byte],
-                            schema: Schema
-                          ): SampleData = {
+      bytes: Array[Byte],
+      schema: Schema
+  ): SampleData = {
     val byteArrayInputStream = new java.io.ByteArrayInputStream(bytes)
     val datumReader: DatumReader[GenericRecord] =
       new GenericDatumReader[GenericRecord](schema)

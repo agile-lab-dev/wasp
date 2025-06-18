@@ -53,8 +53,8 @@ trait WaspPostgresDB extends WaspDB with PostgresDBHelper {
 
   def insertIfNotExists[T, K](obj: T)(implicit table: TableDefinition[T, K]): Unit
 
-  def insertReturning[T, K, R](obj: T, columnResult: Array[String], mapperResultSet: ResultSet => R)(
-      implicit table: TableDefinition[T, K]
+  def insertReturning[T, K, R](obj: T, columnResult: Array[String], mapperResultSet: ResultSet => R)(implicit
+      table: TableDefinition[T, K]
   ): Seq[R]
 
 }

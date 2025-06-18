@@ -80,7 +80,7 @@ class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach wi
     """{"key": {"A":"a","B":"b"}, "value": {"timestamp":"10050", "commitId":"3", "beforeImage":null, "afterImage": {"A":"a", "A2":"yy", "B":"b", "B2":"xx"}, "type":"insert"}}"""
   val mutation5 =
     """{"key": {"A":"a","B":"b"}, "value": {"timestamp":"10060", "commitId":"4", "beforeImage":null, "afterImage": {"A":"a", "A2":"qq", "B":"b", "B2":"qq"}, "type":"insert"}}"""
-  //---------------------
+  // ---------------------
   val mutation6 =
     """{"key": {"A":"x","B":"z"}, "value": {"timestamp":"10070", "commitId":"1", "beforeImage": {"A":"x", "A2":"yy", "B":"z", "B2":"xx"}, "afterImage":null, "type":"delete"}}"""
   val mutation7 =
@@ -91,14 +91,14 @@ class CdcSparkStructuredStreamingTest extends WordSpec with TempDirectoryEach wi
     """{"key": {"A":"a","B":"b"}, "value": {"timestamp":"10100", "commitId":"4", "beforeImage": {"A":"a", "A2":"qq", "B":"b", "B2":"qq"}, "afterImage":null, "type":"delete"}}"""
   val mutation10 =
     """{"key": {"A":"x","B":"z"}, "value": {"timestamp":"10110", "commitId":"1", "beforeImage": {"A":"x", "A2":"yy", "B":"z", "B2":"xx"}, "afterImage":null, "type":"delete"}}"""
-  //---------------------
+  // ---------------------
   val mutation11 =
     """{"key": {"A":"x","B":"z"}, "value": {"timestamp":"10010", "commitId":"1", "beforeImage":{"A":"x", "A2":"aa", "B":"z", "B2":"bb"}, "afterImage": {"A":"x", "A2":"yy", "B":"z", "B2":"xx"}, "type":"update"}}"""
   val mutation12 =
     """{"key": {"A":"x","B":"z"}, "value": {"timestamp":"10011", "commitId":"1", "beforeImage":{"A":"x", "A2":"hh", "B":"z", "B2":"hh"}, "afterImage": {"A":"x", "A2":"aa", "B":"z", "B2":"bb"}, "type":"update"}}"""
   val mutation13 =
     """{"key": {"A":"a","B":"b"}, "value": {"timestamp":"10012", "commitId":"1", "beforeImage":null, "afterImage": {"A":"a", "A2":"ww", "B":"b", "B2":"qq"}, "type":"update"}}"""
-  //---------------------
+  // ---------------------
   val mutation15 =
     """{"key": {"A":"a","B":"b"}, "value": {"timestamp":"10010", "commitId":"1", "beforeImage":null, "afterImage": {"A":"a", "A2":"aa", "B":"b", "B2":"bb"}, "type":"insert"}}"""
   val mutation16 =

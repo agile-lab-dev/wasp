@@ -2,32 +2,32 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.elastic
 
 import java.net.{InetAddress, InetSocketAddress}
 
-import akka.actor.{Actor}
+import akka.actor.Actor
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.models.configuration.ElasticConfigModel
 
 import scala.util.{Failure, Success, Try}
 
 object ElasticAdminActor {
-  val name = "ElasticAdminActor"
+  val name     = "ElasticAdminActor"
   val dataType = "doc"
 }
 
 class ElasticAdminActor extends Actor with Logging {
 
   var elasticConfig: ElasticConfigModel = _
-  var restClient: ElasticRestClient = _
+  var restClient: ElasticRestClient     = _
 
   override def receive: Actor.Receive = {
-    case message: AddAlias => call(message, addAlias)
-    case message: AddIndex => call(message, addIndex)
-    case message: AddMapping => call(message, addMapping)
-    case message: CheckIndex => call(message, checkIndex)
-    case message: RemoveAlias => call(message, removeAlias)
-    case message: RemoveIndex => call(message, removeIndex)
+    case message: AddAlias           => call(message, addAlias)
+    case message: AddIndex           => call(message, addIndex)
+    case message: AddMapping         => call(message, addMapping)
+    case message: CheckIndex         => call(message, checkIndex)
+    case message: RemoveAlias        => call(message, removeAlias)
+    case message: RemoveIndex        => call(message, removeIndex)
     case message: CheckOrCreateIndex => call(message, checkOrCreateIndex)
-    case message: Initialization => call(message, initialization)
-    case message: Any => logger.error("unknown message: " + message)
+    case message: Initialization     => call(message, initialization)
+    case message: Any                => logger.error("unknown message: " + message)
   }
 
   def initialization(message: Initialization): Boolean = {
@@ -36,14 +36,13 @@ class ElasticAdminActor extends Actor with Logging {
       restClient.close()
     }
 
-    val connections = message.elasticConfigModel
-      .connections
+    val connections = message.elasticConfigModel.connections
       .filter(_.metadata.getOrElse(Map()).getOrElse("connectiontype", "") == "rest")
 
     val nodesAddress = connections.map(c => new InetSocketAddress(InetAddress.getByName(c.host), c.port))
 
     val unresolvedNodesAddress = nodesAddress.filter(_.isUnresolved)
-    val resolvedNodesAddress = nodesAddress.filterNot(_.isUnresolved)
+    val resolvedNodesAddress   = nodesAddress.filterNot(_.isUnresolved)
 
     logger.info(s"Resolved nodes: $resolvedNodesAddress")
     logger.info(s"Unresolved nodes: $unresolvedNodesAddress")
@@ -78,8 +77,7 @@ class ElasticAdminActor extends Actor with Logging {
     var check = checkIndex(CheckIndex(message.index))
 
     if (!check)
-      check =
-        addIndex(AddIndex(message.index)) &&
+      check = addIndex(AddIndex(message.index)) &&
         addAlias(AddAlias(message.index, message.alias)) &&
         addMapping(AddMapping(message.index, message.datatype, message.schema))
 

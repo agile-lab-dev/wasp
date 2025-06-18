@@ -39,12 +39,13 @@ object CompressExpression {
 
 case class CompressExpression(codecName: String, conf: HadoopConfiguration, override val child: Expression)
     extends UnaryExpression
-    with ExpectsInputTypes with CompatibilityCompressExpression{
+    with ExpectsInputTypes
+    with CompatibilityCompressExpression {
 
   @transient
   private lazy val factory = new CompressionCodecFactory(conf.value)
   @transient
-  private lazy val codec   = factory.getCodecByName(codecName)
+  private lazy val codec = factory.getCodecByName(codecName)
 
   override lazy val deterministic: Boolean = child.deterministic
 
@@ -62,7 +63,7 @@ case class CompressExpression(codecName: String, conf: HadoopConfiguration, over
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     val hConfVarName =
       ctx.addReferenceObj("hadoopConf", conf, classOf[HadoopConfiguration].getCanonicalName)
-    val bufferName   = ctx.addMutableState(bufferClassName, "buffer", name => s"$name = new $bufferClassName();")
+    val bufferName = ctx.addMutableState(bufferClassName, "buffer", name => s"$name = new $bufferClassName();")
 
     ctx.addImmutableStateIfNotExists(
       javaType = factoryType,
@@ -76,7 +77,7 @@ case class CompressExpression(codecName: String, conf: HadoopConfiguration, over
     )
 
     val input = child.genCode(ctx)
-    val code  =
+    val code =
       code"""${input.code}
             |$byteArrayType ${ev.value} = null;
             |if (${input.isNull}) {

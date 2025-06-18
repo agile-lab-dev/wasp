@@ -10,11 +10,10 @@ import it.agilelab.bigdata.wasp.core.utils.ConfigManager
 
 import scala.concurrent.duration._
 
-/**
-  * Cluster lifecycle handling
-  * - log events
-  * - set "down" the unreachable members
-  * Custom logic: the key is if network partition happens, only cluster nodes which have majority will take down UnreachableMember after downingTimeout.
+/** Cluster lifecycle handling
+  *   - log events
+  *   - set "down" the unreachable members Custom logic: the key is if network partition happens, only cluster nodes
+  *     which have majority will take down UnreachableMember after downingTimeout.
   */
 object ClusterListenerActor {
   val name           = "ClusterListenerAdminActor"
@@ -26,9 +25,9 @@ class ClusterListenerActor extends Actor with Logging {
   val cluster                          = Cluster(context.system)
   var unreachableMembers: Set[Address] = Set.empty
 
-  /** Subscribe to cluster changes, re-subscribe when restart.
-    * N.B.  ClusterDomainEvent includes all events (e.g.  MemberEvent, ReachabilityEvent)
-    * Implementation using InitialStateAsSnapshot and matching CurrentClusterState already tested but not suitable!
+  /** Subscribe to cluster changes, re-subscribe when restart. N.B. ClusterDomainEvent includes all events (e.g.
+    * MemberEvent, ReachabilityEvent) Implementation using InitialStateAsSnapshot and matching CurrentClusterState
+    * already tested but not suitable!
     */
   override def preStart(): Unit =
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[ClusterDomainEvent])
@@ -55,7 +54,6 @@ class ClusterListenerActor extends Actor with Logging {
     /* other ClusterDomainEvent */
     case ClusterMetricsChanged(nodeMetrics) => onClusterMetricsChanged(nodeMetrics)
     case _: ClusterDomainEvent              => // ignore
-
     case DownUnreachableMembers =>
       unreachableMembers.foreach { member =>
         {

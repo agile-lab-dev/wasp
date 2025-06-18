@@ -8,39 +8,45 @@ import it.agilelab.bigdata.wasp.models.{ReaderModel, StreamingReaderModel, Struc
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
-
 trait SparkReaderFactory {
-  def createSparkStructuredStreamingReader(env: DatastoreModelBLs,
-                                           ss: SparkSession,
-                                           structuredStreamingETLModel: StructuredStreamingETLModel,
-                                           streamingReaderModel: StreamingReaderModel): Option[SparkStructuredStreamingReader]
-  def createSparkBatchReader(env: DatastoreModelBLs,
-                             sc: SparkContext,
-                             readerModel: ReaderModel): Option[SparkBatchReader]
+  def createSparkStructuredStreamingReader(
+      env: DatastoreModelBLs,
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): Option[SparkStructuredStreamingReader]
+  def createSparkBatchReader(
+      env: DatastoreModelBLs,
+      sc: SparkContext,
+      readerModel: ReaderModel
+  ): Option[SparkBatchReader]
 }
 
 class PluginBasedSparkReaderFactory(plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin])
     extends SparkReaderFactory
     with Logging {
 
-  override def createSparkStructuredStreamingReader(env: DatastoreModelBLs,
-                                                    ss: SparkSession,
-                                                    structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                    streamingReaderModel: StreamingReaderModel)
-                                                   : Option[SparkStructuredStreamingReader] = {
+  override def createSparkStructuredStreamingReader(
+      env: DatastoreModelBLs,
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): Option[SparkStructuredStreamingReader] = {
     lookupPluginForStreamingReaderModel(streamingReaderModel)
       .map(_.getSparkStructuredStreamingReader(ss, structuredStreamingETLModel, streamingReaderModel))
   }
-  
-  override def createSparkBatchReader(env: DatastoreModelBLs,
-                                      sc: SparkContext,
-                                      readerModel: ReaderModel): Option[SparkBatchReader] = {
+
+  override def createSparkBatchReader(
+      env: DatastoreModelBLs,
+      sc: SparkContext,
+      readerModel: ReaderModel
+  ): Option[SparkBatchReader] = {
     lookupPluginForReaderModel(readerModel).map(_.getSparkBatchReader(sc, readerModel))
   }
-  
+
   private def lookupPluginForReaderModel(readerModel: ReaderModel): Option[WaspConsumersSparkPlugin] = {
     val datastoreProduct = readerModel.datastoreProduct
-    val plugin = plugins.get(datastoreProduct)
+    val plugin           = plugins.get(datastoreProduct)
     if (plugin.isDefined) {
       plugin
     } else {
@@ -48,15 +54,18 @@ class PluginBasedSparkReaderFactory(plugins: Map[DatastoreProduct, WaspConsumers
       None
     }
   }
-  
-  private def lookupPluginForStreamingReaderModel(streamingReaderModel: StreamingReaderModel)
-                                                 : Option[WaspConsumersSparkPlugin] = {
+
+  private def lookupPluginForStreamingReaderModel(
+      streamingReaderModel: StreamingReaderModel
+  ): Option[WaspConsumersSparkPlugin] = {
     val datastoreProduct = streamingReaderModel.datastoreProduct
-    val plugin = plugins.get(datastoreProduct)
+    val plugin           = plugins.get(datastoreProduct)
     if (plugin.isDefined) {
       plugin
     } else {
-      logger.error(s"No plugin found for datastore: $datastoreProduct used by streaming reader model: $streamingReaderModel")
+      logger.error(
+        s"No plugin found for datastore: $datastoreProduct used by streaming reader model: $streamingReaderModel"
+      )
       None
     }
   }

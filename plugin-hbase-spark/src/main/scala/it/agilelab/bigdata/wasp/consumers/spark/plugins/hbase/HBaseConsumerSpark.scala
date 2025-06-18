@@ -15,16 +15,20 @@ import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import it.agilelab.bigdata.wasp.core.exceptions.ModelNotFound
 import it.agilelab.bigdata.wasp.core.logging.Logging
 import it.agilelab.bigdata.wasp.core.models.configuration.ValidationRule
-import it.agilelab.bigdata.wasp.models.{KeyValueModel, ReaderModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  KeyValueModel,
+  ReaderModel,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  WriterModel
+}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
-
-/**
-  * Created by Agile Lab s.r.l. on 05/09/2017.
+/** Created by Agile Lab s.r.l. on 05/09/2017.
   */
 class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
-  var keyValueBL: KeyValueBL = _
+  var keyValueBL: KeyValueBL      = _
   var hbaseAdminActor_ : ActorRef = _
 
   override def datastoreProduct: DatastoreProduct = HBaseProduct
@@ -33,7 +37,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     logger.info("Initialize the keyValue BL")
     keyValueBL = ConfigBL.keyValueBL
     logger.info(s"Initialize the hbase admin actor with this name ${HBaseAdminActor.name}")
-    //hbaseAdminActor_ = WaspSystem.actorSystem
+    // hbaseAdminActor_ = WaspSystem.actorSystem
     //  .actorOf(Props(new HBaseAdminActor), HBaseAdminActor.name)
     // services timeout, used below
     val servicesTimeoutMillis = waspConfig.servicesTimeoutMillis
@@ -48,16 +52,21 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
     val _ = timeout
   }
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): SparkStructuredStreamingWriter = {
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): SparkStructuredStreamingWriter = {
     HBaseBatchWriter.createSparkStructuredStreamingWriter(keyValueBL, ss, getKeyValueModel(writerModel))
   }
-  
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
+
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
@@ -85,7 +94,7 @@ class HBaseConsumerSpark extends WaspConsumersSparkPlugin with Logging {
   @throws(classOf[ModelNotFound])
   private def getKeyValueModel(writerModel: WriterModel): KeyValueModel = {
 
-    val endpointName = writerModel.datastoreModelName
+    val endpointName  = writerModel.datastoreModelName
     val hbaseModelOpt = keyValueBL.getByName(endpointName)
     if (hbaseModelOpt.isDefined) {
       hbaseModelOpt.get

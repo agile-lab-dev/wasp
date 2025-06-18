@@ -10,7 +10,6 @@ import org.scalatest.FunSuite
 
 class TopicCompressionCodecProviderTest extends FunSuite {
 
-
   test("Topic Compression codec provider should be able to handle case objects encoding") {
 
     val provider = TopicCompressionCodecProvider
@@ -28,7 +27,7 @@ class TopicCompressionCodecProviderTest extends FunSuite {
   }
 
   private def write(codec: Codec[TopicCompression], compression: TopicCompression) = {
-    val stringW = new StringWriter()
+    val stringW            = new StringWriter()
     val writer: BsonWriter = new JsonWriter(stringW)
     writer.writeStartDocument()
     writer.writeName("compression")
@@ -50,7 +49,6 @@ class TopicCompressionCodecProviderTest extends FunSuite {
     assert(read(codec, """{"compression": "snappy"}""") === TopicCompression.Snappy)
     assert(read(codec, """{"compression": "gzip"}""") === TopicCompression.Gzip)
     assert(read(codec, """{"compression": "disabled"}""") === TopicCompression.Disabled)
-
 
     assertThrows[IllegalArgumentException](read(codec, """{ "compression" : "pippo" }"""))
   }

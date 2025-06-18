@@ -9,9 +9,9 @@ import ConnectionSupport.poolingDriver
 trait ConnectionSupport {
   this: ConnectionInfoProvider =>
 
-  private val poolName= s"$getUrl:$getUser"
+  private val poolName = s"$getUrl:$getUser"
 
-  protected def getConnection() : Connection = {
+  protected def getConnection(): Connection = {
 
     if (!poolingDriver.getPoolNames.toSet.contains(poolName)) {
       ConnectionSupport synchronized {
@@ -23,16 +23,18 @@ trait ConnectionSupport {
     DriverManager.getConnection("jdbc:apache:commons:dbcp:" + poolName)
   }
 
-  private def createAndRegisterPool(url: String,
-                                    user: String,
-                                    password: String,
-                                    driver: String,
-                                    poolName: String,
-                                    poolingDriver: PoolingDriver): Unit = {
+  private def createAndRegisterPool(
+      url: String,
+      user: String,
+      password: String,
+      driver: String,
+      poolName: String,
+      poolingDriver: PoolingDriver
+  ): Unit = {
     registerDriver(driver)
     val driverManagerConnectionFactory = new DriverManagerConnectionFactory(url, user, password)
-    val poolableConnectionFactory = new PoolableConnectionFactory(driverManagerConnectionFactory, null)
-    val connectionPool = new GenericObjectPool(poolableConnectionFactory)
+    val poolableConnectionFactory      = new PoolableConnectionFactory(driverManagerConnectionFactory, null)
+    val connectionPool                 = new GenericObjectPool(poolableConnectionFactory)
     connectionPool.setMaxIdle(getPoolSize)
     connectionPool.setMaxTotal(getPoolSize)
 
@@ -40,15 +42,11 @@ trait ConnectionSupport {
     poolingDriver.registerPool(poolName, connectionPool)
   }
 
-
-
   private def registerDriver(driverClassName: String): Unit = {
-    val driverClass = this.getClass.getClassLoader.loadClass(driverClassName)
+    val driverClass    = this.getClass.getClassLoader.loadClass(driverClassName)
     val driverInstance = driverClass.getDeclaredConstructor().newInstance().asInstanceOf[Driver]
     DriverManager.registerDriver(driverInstance)
   }
-
-
 
   protected def closePool(): Unit = poolingDriver.closePool(poolName)
 

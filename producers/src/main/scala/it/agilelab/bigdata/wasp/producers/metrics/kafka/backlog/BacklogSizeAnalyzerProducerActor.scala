@@ -6,11 +6,13 @@ import it.agilelab.bigdata.wasp.models.TopicModel
 import it.agilelab.bigdata.wasp.producers.ProducerActor
 import it.agilelab.bigdata.wasp.producers.metrics.kafka.{KafkaOffsets, KafkaOffsetsRequest}
 
-abstract class BacklogSizeAnalyzerProducerActor[A](kafka_router: ActorRef,
-                                                   kafkaOffsetChecker: ActorRef,
-                                                   topic: Option[TopicModel],
-                                                   topicToCheck: String,
-                                                   etlName: String) extends ProducerActor[A](kafka_router, topic) {
+abstract class BacklogSizeAnalyzerProducerActor[A](
+    kafka_router: ActorRef,
+    kafkaOffsetChecker: ActorRef,
+    topic: Option[TopicModel],
+    topicToCheck: String,
+    etlName: String
+) extends ProducerActor[A](kafka_router, topic) {
 
   override def preStart(): Unit = {
     context.become(waitingForMessage())
@@ -54,7 +56,10 @@ abstract class BacklogSizeAnalyzerProducerActor[A](kafka_router: ActorRef,
       logger.warn(s"Unexpected message received ${unkMessage.toString} from $sender()")
   }
 
-  private def calculateBacklogSize(offsetsOnKafka: Map[Int, Long], data: TelemetryMessageSourcesSummary): Either[String, Long] = {
+  private def calculateBacklogSize(
+      offsetsOnKafka: Map[Int, Long],
+      data: TelemetryMessageSourcesSummary
+  ): Either[String, Long] = {
 
     val streamingSources: Seq[TelemetryMessageSource] = data.streamingQueriesProgress
 
@@ -67,8 +72,10 @@ abstract class BacklogSizeAnalyzerProducerActor[A](kafka_router: ActorRef,
       }
     }.headOption match {
       case Some(endOffset) =>
-        logger.debug(s"Current end offsets of Spark Streaming query:\n" +
-          endOffset.map { case (k, v) => k + "->" + v }.mkString("\n\t"))
+        logger.debug(
+          s"Current end offsets of Spark Streaming query:\n" +
+            endOffset.map { case (k, v) => k + "->" + v }.mkString("\n\t")
+        )
         Right(offsetsOnKafka.map { case (i, o) => o - endOffset(i) }.sum)
       case None =>
         Left(s"Streaming sources did not contain info about topic ${topicToCheck}")
@@ -82,4 +89,3 @@ abstract class BacklogSizeAnalyzerProducerActor[A](kafka_router: ActorRef,
   def toFinalMessage(i: BacklogInfo): A
 
 }
-

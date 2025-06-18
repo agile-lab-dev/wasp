@@ -4,7 +4,7 @@ import it.agilelab.bigdata.wasp.models.DatastoreModel
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-object TopicTableDefinition extends SimpleModelTableDefinition[DatastoreModel] with JsonSupport{
+object TopicTableDefinition extends SimpleModelTableDefinition[DatastoreModel] with JsonSupport {
 
   override protected def fromModelToJson(model: DatastoreModel): JsValue = model.toJson
 

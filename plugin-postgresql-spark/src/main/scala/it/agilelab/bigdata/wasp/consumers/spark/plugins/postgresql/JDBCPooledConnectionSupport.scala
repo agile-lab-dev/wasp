@@ -6,10 +6,10 @@ import org.apache.commons.pool2.impl.GenericObjectPool
 
 import java.util.Properties
 
-/**
-  * Provides support for pooled JDBC connections using DBCP.
+/** Provides support for pooled JDBC connections using DBCP.
   *
-  * @author Nicolò Bidotti
+  * @author
+  *   Nicolò Bidotti
   */
 trait JDBCPooledConnectionSupport {
   this: JDBCConnectionInfoProvider =>
@@ -71,5 +71,6 @@ trait JDBCPooledConnectionSupport {
 }
 
 object JDBCPooledConnectionSupport {
-  val poolingDriver = new PoolingDriver() // PoolingDriver does not have static accessor for pool names, so we need an instance
+  val poolingDriver =
+    new PoolingDriver() // PoolingDriver does not have static accessor for pool names, so we need an instance
 }

@@ -10,8 +10,10 @@ import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext
 
-final class TestHbaseMultiClusteringProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
-  extends ProducerGuardian(env, producerName) {
+final class TestHbaseMultiClusteringProducerGuardian(
+    env: { val producerBL: ProducerBL; val topicBL: TopicBL },
+    producerName: String
+) extends ProducerGuardian(env, producerName) {
 
   override val name: String = "testHbaseMultiClusteringProducerGuardian"
 
@@ -24,16 +26,17 @@ final class TestHbaseMultiClusteringProducerGuardian(env: {val producerBL: Produ
 }
 
 private[producers] class TestHbaseMultiClusteringActor(kafka_router: ActorRef, topic: Option[TopicModel])
-  extends ProducerActor[TestDocumentHbaseMultiClustering](kafka_router, topic)
-    with SprayJsonSupport with DefaultJsonProtocol {
+    extends ProducerActor[TestDocumentHbaseMultiClustering](kafka_router, topic)
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
-
-  override def retrievePartitionKey: TestDocumentHbaseMultiClustering => String = (td: TestDocumentHbaseMultiClustering) => td.id
+  override def retrievePartitionKey: TestDocumentHbaseMultiClustering => String =
+    (td: TestDocumentHbaseMultiClustering) => td.id
 
   def createTestDocument(documentId: Int) = {
 
-    val nestedDocument = TestNestedDocument("field1_"+ documentId, documentId, Some("field3_"+ documentId))
-    TestDocumentHbaseMultiClustering(""+documentId, documentId, nestedDocument, documentId)
+    val nestedDocument = TestNestedDocument("field1_" + documentId, documentId, Some("field3_" + documentId))
+    TestDocumentHbaseMultiClustering("" + documentId, documentId, nestedDocument, documentId)
   }
 
   var documentId = 0
@@ -55,8 +58,8 @@ private[producers] class TestHbaseMultiClusteringActor(kafka_router: ActorRef, t
 
   override def generateOutputJsonMessage(input: TestDocumentHbaseMultiClustering): String = {
     implicit val testNestedDocumentToJson = jsonFormat3(TestNestedDocument.apply)
-    val testDocumentToJson = jsonFormat4(TestDocumentHbaseMultiClustering.apply)
-    val jsonObj = testDocumentToJson.write(input)
+    val testDocumentToJson                = jsonFormat4(TestDocumentHbaseMultiClustering.apply)
+    val jsonObj                           = testDocumentToJson.write(input)
     jsonObj.compactPrint
   }
 }

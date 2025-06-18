@@ -5,30 +5,27 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  private val helper =  new FreeCodeCompilerUtilsDefault(new FreeCodeCompiler(new CompilerPool(4)))
+  private val helper = new FreeCodeCompilerUtilsDefault(new FreeCodeCompiler(new CompilerPool(4)))
 
   override def afterAll(): Unit = {
     super.afterAll()
     helper.close()
   }
   ignore should "test wrong code" in {
-    val output = helper.validate(
-      """val a = "banana"
+    val output = helper.validate("""val a = "banana"
         | a.test """.stripMargin)
     output.size shouldBe 1
     output.head.toString() should startWith("<virtual>:2")
   }
   ignore should "test validate code with type wrong" in {
-    val output = helper.validate(
-      """val a = "banana"
+    val output = helper.validate("""val a = "banana"
         |a.toString()
         |val c = "bar"""".stripMargin)
     output.size shouldBe 1
   }
 
   ignore should "test validate code" in {
-    val output = helper.validate(
-      """val a = "banana"
+    val output = helper.validate("""val a = "banana"
         |a.toString()
         |val c = "bar"
         |dataFrames.getFirstDataFrame""".stripMargin)
@@ -36,8 +33,7 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
   }
 
   ignore should "test validate code with warning" in {
-    val output = helper.validate(
-      """val a = "banana"
+    val output = helper.validate("""val a = "banana"
         |a
         |dataFrames.getFirstDataFrame
         |""".stripMargin)
@@ -54,7 +50,6 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
     output.size shouldBe 0
   }
 
-
   ignore should "test a strategy wrong" in {
     val output = helper.validate("""val df = dataFrames.getFirstDataFrame.select("name","someNumber","someLong")
                                    |dfWrong.withColumn("someNumber",df("someNumber")*df("someNumber"))
@@ -62,22 +57,19 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
                                    |df
       """.stripMargin)
     output.size shouldBe 1
-    output.head.toString() should startWith ("<virtual>:2")
+    output.head.toString() should startWith("<virtual>:2")
   }
-
 
   ignore should "test complete code 1 for a strategy" in {
 
     val code =
       """val a = "banana"
         |a.""".stripMargin
-    val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("toInt")) shouldBe true
-    output.exists(m=> m.toComplete.equals("zip")) shouldBe true
+    val output = helper.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("toInt")) shouldBe true
+    output.exists(m => m.toComplete.equals("zip")) shouldBe true
 
   }
-
-
 
   it should "test complete code 2  for a strategy" in {
     val code =
@@ -85,13 +77,12 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
         |val testi = "ciao"
         |val home = "home"
         |test.to""".stripMargin
-    val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("toInt")) shouldBe true
-    output.exists(m=> m.toComplete.equals("toString")) shouldBe true
-    output.exists(m=> m.toComplete.equals("zip")) shouldBe false
+    val output = helper.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("toInt")) shouldBe true
+    output.exists(m => m.toComplete.equals("toString")) shouldBe true
+    output.exists(m => m.toComplete.equals("zip")) shouldBe false
 
   }
-
 
   ignore should "test complete code 3 for a strategy" in {
     val code =
@@ -99,11 +90,10 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
         |val test1 = "ciao"
         |val home = "home"
         |te""".stripMargin
-    val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("test")) shouldBe true
-    output.exists(m=> m.toComplete.equals("test1")) shouldBe true
+    val output = helper.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("test")) shouldBe true
+    output.exists(m => m.toComplete.equals("test1")) shouldBe true
     output.size shouldBe 2
-
 
   }
 
@@ -114,23 +104,20 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
         |val home = "home"
         |if(test=="banana"){
         |tes""".stripMargin
-    val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("test")) shouldBe true
-    output.exists(m=> m.toComplete.equals("test1")) shouldBe true
+    val output = helper.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("test")) shouldBe true
+    output.exists(m => m.toComplete.equals("test1")) shouldBe true
     output.size shouldBe 2
 
-
-
   }
-
 
   ignore should "complete a strategy 1" in {
     val code =
       """data""".stripMargin
-    val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("test")) shouldBe false
-    output.exists(m=> m.toComplete.equals("test1")) shouldBe false
-    output.exists(m=> m.toComplete.equals("dataFrames")) shouldBe true
+    val output = helper.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("test")) shouldBe false
+    output.exists(m => m.toComplete.equals("test1")) shouldBe false
+    output.exists(m => m.toComplete.equals("dataFrames")) shouldBe true
     output.size shouldBe 1
 
   }
@@ -138,19 +125,18 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
   it should "complete a strategy 2" in {
     val code =
       """dataFrames.he""".stripMargin
-    val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("head")) shouldBe true
-    output.exists(m=> m.toComplete.equals("headOption")) shouldBe true
+    val output = helper.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("head")) shouldBe true
+    output.exists(m => m.toComplete.equals("headOption")) shouldBe true
     output.size shouldBe 2
 
   }
 
-
   it should "complete a strategy 3" in {
     val code =
       """val df = dataFrames.getFirstDat""".stripMargin
-    val output =  helper.complete(code,code.length)
-    output.exists(m=> m.toComplete.equals("getFirstDataFrame")) shouldBe true
+    val output = helper.complete(code, code.length)
+    output.exists(m => m.toComplete.equals("getFirstDataFrame")) shouldBe true
     output.size shouldBe 1
 
   }
@@ -159,9 +145,9 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
     val code =
       """val df = dataFrames.getFirstDataFrame.select("name","someNumber","someLong")
         |df.""".stripMargin
-    val output =  helper.complete(code,code.length)
+    val output = helper.complete(code, code.length)
     println(output.mkString("\n"))
-    output.exists(m=> m.toComplete.equals("select")) shouldBe true
+    output.exists(m => m.toComplete.equals("select")) shouldBe true
 
   }
 
@@ -170,8 +156,8 @@ class FreeCodeCompilerUtilsTest extends FlatSpec with Matchers with BeforeAndAft
       """val df = dataFrames.getFirstDataFrame.select("name","someNumber","someLong")
         |df.
         |spark""".stripMargin
-    val output =  helper.complete(code,80)
-    output.exists(m=> m.toComplete.equals("select")) shouldBe true
+    val output = helper.complete(code, 80)
+    output.exists(m => m.toComplete.equals("select")) shouldBe true
 
   }
 

@@ -7,8 +7,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-/**
-  * Created by Agile Lab s.r.l. on 09/08/2017.
+/** Created by Agile Lab s.r.l. on 09/08/2017.
   */
 object MlModels_C extends Directives with JsonSupport {
 
@@ -48,7 +47,7 @@ object MlModels_C extends Directives with JsonSupport {
     }
   }
 
-  def insert(pretty: Boolean) = path("mlmodels" ) {
+  def insert(pretty: Boolean) = path("mlmodels") {
     post { // unmarshal with in-scope unmarshaller
       entity(as[MlModelOnlyInfo]) { mlModel =>
         complete {

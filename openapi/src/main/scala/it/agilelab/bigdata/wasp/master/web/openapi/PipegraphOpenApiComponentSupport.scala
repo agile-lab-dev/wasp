@@ -13,31 +13,27 @@ trait PipegraphOpenApiComponentSupport
     with StrategyModelOpenApiComponentSupport
     with MlModelOnlyInfoComponentSupport {
 
-   implicit lazy val pipegraphStatusOpenApi: ToOpenApiSchema[PipegraphStatus.Value] =
+  implicit lazy val pipegraphStatusOpenApi: ToOpenApiSchema[PipegraphStatus.Value] =
     enumOpenApi(PipegraphStatus)
-   implicit lazy val pipegraphInstanceOpenApi
-    : ToOpenApiSchema[PipegraphInstanceModel] = product8(PipegraphInstanceModel)
+  implicit lazy val pipegraphInstanceOpenApi: ToOpenApiSchema[PipegraphInstanceModel] = product8(PipegraphInstanceModel)
 
-   implicit lazy val pipegraphOpenApi: ToOpenApiSchema[PipegraphModel] = product9(
+  implicit lazy val pipegraphOpenApi: ToOpenApiSchema[PipegraphModel] = product9(
     PipegraphModel
   )
 
-   implicit lazy val rtModelOpenApi : ToOpenApiSchema[RTModel] = product5(RTModel)
+  implicit lazy val rtModelOpenApi: ToOpenApiSchema[RTModel] = product5(RTModel)
 
-   implicit lazy val dashboardOpenApi : ToOpenApiSchema[DashboardModel] = product2(DashboardModel)
+  implicit lazy val dashboardOpenApi: ToOpenApiSchema[DashboardModel] = product2(DashboardModel)
 
-   implicit lazy val structuredStreamingOpenApiModel
-    : ToOpenApiSchema[StructuredStreamingETLModel] = product9(
+  implicit lazy val structuredStreamingOpenApiModel: ToOpenApiSchema[StructuredStreamingETLModel] = product9(
     StructuredStreamingETLModel.apply
   )
 
-  implicit lazy val enrichmentSourcesOpenApiModel
-    : ToOpenApiSchema[RestEnrichmentSource] = product3(
+  implicit lazy val enrichmentSourcesOpenApiModel: ToOpenApiSchema[RestEnrichmentSource] = product3(
     RestEnrichmentSource
   )
 
-  implicit lazy val restEnrichmentConfigModelOpenApiModel
-    : ToOpenApiSchema[RestEnrichmentConfigModel] = product1(
+  implicit lazy val restEnrichmentConfigModelOpenApiModel: ToOpenApiSchema[RestEnrichmentConfigModel] = product1(
     RestEnrichmentConfigModel
   )
 }

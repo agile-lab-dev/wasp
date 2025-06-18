@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-
 import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.core.utils.AvroSchemaConverters
 import it.agilelab.darwin.manager.AvroSchemaManagerFactory
@@ -12,7 +11,12 @@ import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
-import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, TimeZoneAwareExpression, UnaryExpression}
+import org.apache.spark.sql.catalyst.expressions.{
+  ExpectsInputTypes,
+  Expression,
+  TimeZoneAwareExpression,
+  UnaryExpression
+}
 import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
@@ -24,41 +28,57 @@ import scala.collection.JavaConverters._
 
 object AvroSerializerExpression {
 
-  def apply(avroSchemaAsJson: Option[String],
-            avroRecordName: String,
-            avroNamespace: String)
-           (child: Expression,
-            sparkSchema: DataType): AvroSerializerExpression = {
+  def apply(avroSchemaAsJson: Option[String], avroRecordName: String, avroNamespace: String)(
+      child: Expression,
+      sparkSchema: DataType
+  ): AvroSerializerExpression = {
 
     avroSchemaAsJson.foreach(s => checkSchemas(sparkSchema, new Schema.Parser().parse(s)))
 
     val maybeAvroSchemaAsJsonWrapped: Option[Either[String, Long]] =
       avroSchemaAsJson.map(x => Left(x))
 
-    new AvroSerializerExpression(child, maybeAvroSchemaAsJsonWrapped, None, false, sparkSchema, avroRecordName, avroNamespace, None, None)
+    new AvroSerializerExpression(
+      child,
+      maybeAvroSchemaAsJsonWrapped,
+      None,
+      false,
+      sparkSchema,
+      avroRecordName,
+      avroNamespace,
+      None,
+      None
+    )
   }
 
-  def apply(avroSchemaAsJson: Option[String],
-            avroRecordName: String,
-            avroNamespace: String,
-            avroSchemaId: Long)
-           (child: Expression,
-            sparkSchema: DataType): AvroSerializerExpression = {
+  def apply(avroSchemaAsJson: Option[String], avroRecordName: String, avroNamespace: String, avroSchemaId: Long)(
+      child: Expression,
+      sparkSchema: DataType
+  ): AvroSerializerExpression = {
 
     avroSchemaAsJson.foreach(s => checkSchemas(sparkSchema, new Schema.Parser().parse(s)))
 
     val maybeAvroSchemaAsJsonWrapped: Option[Either[String, Long]] =
       avroSchemaAsJson.map(x => Left(x))
 
-    new AvroSerializerExpression(child, maybeAvroSchemaAsJsonWrapped, None, false, sparkSchema, avroRecordName, avroNamespace, None, None, avroSchemaId = Some(avroSchemaId))
+    new AvroSerializerExpression(
+      child,
+      maybeAvroSchemaAsJsonWrapped,
+      None,
+      false,
+      sparkSchema,
+      avroRecordName,
+      avroNamespace,
+      None,
+      None,
+      avroSchemaId = Some(avroSchemaId)
+    )
   }
 
-  def apply(schemaManagerConfig: Config,
-            avroSchema: Schema,
-            avroRecordName: String,
-            avroNamespace: String)
-           (child: Expression,
-            sparkSchema: DataType): AvroSerializerExpression = {
+  def apply(schemaManagerConfig: Config, avroSchema: Schema, avroRecordName: String, avroNamespace: String)(
+      child: Expression,
+      sparkSchema: DataType
+  ): AvroSerializerExpression = {
 
     val fingerprint = AvroSchemaManagerFactory.initialize(schemaManagerConfig).registerAll(Seq(avroSchema)).head._1
 
@@ -66,7 +86,8 @@ object AvroSerializerExpression {
 
     val avroSchemaId: Option[Either[String, Long]] = Some(Right(fingerprint))
 
-    new AvroSerializerExpression(child,
+    new AvroSerializerExpression(
+      child,
       avroSchemaId,
       Some(schemaManagerConfig),
       true,
@@ -74,7 +95,8 @@ object AvroSerializerExpression {
       avroRecordName,
       avroNamespace,
       None,
-      None)
+      None
+    )
   }
 
   private def checkSchemas(schemaSpark: DataType, schemaAvro: Schema): Unit = {
@@ -84,33 +106,37 @@ object AvroSerializerExpression {
     val avroFields: List[(String, String)] = SchemaFlatteners.Avro.flattenSchema(schemaAvro, "")
 
     // iterate over the Avro field list. If any is missing from the Spark schema, or has a different type, throw an exception.
-    avroFields foreach {
-      case (fieldName, fieldAvroType) =>
-        val maybeFieldSparkType = sparkFields.get(fieldName)
-        if (maybeFieldSparkType.isEmpty) {
-          // field is missing from the Spark schema
-          throw new IllegalArgumentException(s"Field $fieldName in the Avro schema does not exist in the Spark schema.")
-        } else if (maybeFieldSparkType.get != fieldAvroType) {
-          // field has different types in the schemas
-          throw new IllegalArgumentException(s"Field $fieldName has a different type in the schemas. " +
-            s"Type in Avro: $fieldAvroType, type in Spark: ${maybeFieldSparkType.get}")
-        }
+    avroFields foreach { case (fieldName, fieldAvroType) =>
+      val maybeFieldSparkType = sparkFields.get(fieldName)
+      if (maybeFieldSparkType.isEmpty) {
+        // field is missing from the Spark schema
+        throw new IllegalArgumentException(s"Field $fieldName in the Avro schema does not exist in the Spark schema.")
+      } else if (maybeFieldSparkType.get != fieldAvroType) {
+        // field has different types in the schemas
+        throw new IllegalArgumentException(
+          s"Field $fieldName has a different type in the schemas. " +
+            s"Type in Avro: $fieldAvroType, type in Spark: ${maybeFieldSparkType.get}"
+        )
+      }
     }
   }
 }
 
-
-case class AvroSerializerExpression private(child: Expression,
-                                            maybeSchemaAvroJsonOrFingerprint: Option[Either[String, Long]],
-                                            avroSchemaManagerConfig: Option[Config],
-                                            useAvroSchemaManager: Boolean,
-                                            inputSchema: DataType,
-                                            structName: String,
-                                            namespace: String,
-                                            fieldsToWrite: Option[Set[String]],
-                                            timeZoneId: Option[String],
-                                            avroSchemaId: Option[Long] = None)
-  extends UnaryExpression with ExpectsInputTypes with TimeZoneAwareExpression with CompatibilityAvroSerializerExpression {
+case class AvroSerializerExpression private (
+    child: Expression,
+    maybeSchemaAvroJsonOrFingerprint: Option[Either[String, Long]],
+    avroSchemaManagerConfig: Option[Config],
+    useAvroSchemaManager: Boolean,
+    inputSchema: DataType,
+    structName: String,
+    namespace: String,
+    fieldsToWrite: Option[Set[String]],
+    timeZoneId: Option[String],
+    avroSchemaId: Option[Long] = None
+) extends UnaryExpression
+    with ExpectsInputTypes
+    with TimeZoneAwareExpression
+    with CompatibilityAvroSerializerExpression {
 
   @transient private lazy val schemaManager = avroSchemaManagerConfig.map(AvroSchemaManagerFactory.initialize)
 
@@ -118,7 +144,8 @@ case class AvroSerializerExpression private(child: Expression,
     case Left(json) => new Schema.Parser().parse(json)
     case Right(fingerprint) =>
       schemaManager.get.getSchema(fingerprint) match {
-        case None => throw new IllegalStateException(s"Schema with fingerprint [$fingerprint] was not found in schema registry")
+        case None =>
+          throw new IllegalStateException(s"Schema with fingerprint [$fingerprint] was not found in schema registry")
         case Some(schema) => schema
       }
   }
@@ -143,9 +170,10 @@ case class AvroSerializerExpression private(child: Expression,
   private val schemaId: Long = {
     (maybeSchemaAvroJsonOrFingerprint, avroSchemaId) match {
       case (Some(Right(fingerprint)), _) if useAvroSchemaManager => fingerprint
-      case (_, _) if useAvroSchemaManager => throw new IllegalStateException("We should have a fingerprint because we are using the schema registry")
+      case (_, _) if useAvroSchemaManager =>
+        throw new IllegalStateException("We should have a fingerprint because we are using the schema registry")
       case (_, Some(schemaId)) => schemaId // we will not access schema id in this case, take care.
-      case _ => -1L // we will not access schema id in this case, take care.
+      case _                   => -1L      // we will not access schema id in this case, take care.
     }
   }
 
@@ -162,10 +190,12 @@ case class AvroSerializerExpression private(child: Expression,
 
   override def nullable: Boolean = child.nullable
 
-  def serializeInternalRow(row: AnyRef,
-                           output: ByteArrayOutputStream,
-                           encoder: BinaryEncoder,
-                           writer: GenericDatumWriter[AnyRef]): Array[Byte] = {
+  def serializeInternalRow(
+      row: AnyRef,
+      output: ByteArrayOutputStream,
+      encoder: BinaryEncoder,
+      writer: GenericDatumWriter[AnyRef]
+  ): Array[Byte] = {
     if (useAvroSchemaManager) {
       schemaManager.get.writeHeaderToStream(output, schemaId)
     } else if (avroSchemaId.isDefined) {
@@ -185,22 +215,16 @@ case class AvroSerializerExpression private(child: Expression,
   override protected def nullSafeEval(input: Any): Any = {
     val output = new ByteArrayOutputStream()
     val writer = new GenericDatumWriter[AnyRef](actualSchema)
-    serializeInternalRow(input.asInstanceOf[AnyRef], output,
-      EncoderFactory.get().binaryEncoder(output, null),
-      writer)
-
+    serializeInternalRow(input.asInstanceOf[AnyRef], output, EncoderFactory.get().binaryEncoder(output, null), writer)
 
   }
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     // come se venisse fatto all'inizio di una mapPartitions
     val bufferClassName = classOf[ByteArrayOutputStream].getName
-    val bufferName = ctx.addMutableState(
-      bufferClassName,
-      "buffer",
-      name => s"$name = new $bufferClassName();")
+    val bufferName      = ctx.addMutableState(bufferClassName, "buffer", name => s"$name = new $bufferClassName();")
 
-    val encoderClassName = classOf[BinaryEncoder].getName
+    val encoderClassName        = classOf[BinaryEncoder].getName
     val encoderFactoryClassName = classOf[EncoderFactory].getName
     val encoderName = ctx.addMutableState(
       encoderClassName,
@@ -216,12 +240,14 @@ case class AvroSerializerExpression private(child: Expression,
     val genericWriterName = ctx.addMutableState(
       genericWriterClassName,
       "genericWriter",
-      name => s"""$name = new $genericWriterClassName<$genericRecordClassName>($avroConverterExpression.getActualSchema());""")
+      name =>
+        s"""$name = new $genericWriterClassName<$genericRecordClassName>($avroConverterExpression.getActualSchema());"""
+    )
 
-    val childCode = child.genCode(ctx)
+    val childCode      = child.genCode(ctx)
     val newEncoderName = ctx.freshName("newEncoder")
-    ev.copy(code =
-      code"""
+    ev.copy(
+      code = code"""
             |${childCode.code}
             |byte[] ${ev.value} = null;
             |if (!${childCode.isNull}) {
@@ -230,31 +256,34 @@ case class AvroSerializerExpression private(child: Expression,
             |  ${ev.value} = $avroConverterExpression.serializeInternalRow(
             |    ${childCode.value}, $bufferName, $newEncoderName, $genericWriterName);
             |}
-       """.stripMargin, isNull = childCode.isNull)
+       """.stripMargin,
+      isNull = childCode.isNull
+    )
   }
 
   override def dataType: DataType = BinaryType
 
   private def createConverterToAvro(
-                                     sparkSchema: DataType,
-                                     structName: String,
-                                     recordNamespace: String,
-                                     fieldsToWrite: Option[Set[String]],
-                                     externalSchema: Option[Schema]): Any => Any = {
+      sparkSchema: DataType,
+      structName: String,
+      recordNamespace: String,
+      fieldsToWrite: Option[Set[String]],
+      externalSchema: Option[Schema]
+  ): Any => Any = {
     sparkSchema match {
-      case BinaryType => (item: Any) =>
-        item match {
-          case null => null
-          case bytes: Array[Byte] => ByteBuffer.wrap(bytes)
-        }
+      case BinaryType =>
+        (item: Any) =>
+          item match {
+            case null               => null
+            case bytes: Array[Byte] => ByteBuffer.wrap(bytes)
+          }
       case StringType => {
-        case null => null
+        case null          => null
         case u: UTF8String => u.toString
-        case item => item // never here, I hope
+        case item          => item // never here, I hope
       }
-      case ByteType | ShortType | IntegerType | LongType |
-           FloatType | DoubleType | BooleanType => identity
-      case TimestampType => (item: Any) => serializeTimestamp(item)
+      case ByteType | ShortType | IntegerType | LongType | FloatType | DoubleType | BooleanType => identity
+      case TimestampType  => (item: Any) => serializeTimestamp(item)
       case _: DecimalType => (item: Any) => if (item == null) null else item.toString
       // identity because we return the long as is
       // case TimestampType => (item: Any) =>
@@ -262,15 +291,21 @@ case class AvroSerializerExpression private(child: Expression,
       case DateType => (item: Any) => serializeDateType(item)
       case ArrayType(elementType, _) =>
         val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
-        val elementConverter = createConverterToAvro(elementType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getElementType))
+        val elementConverter = createConverterToAvro(
+          elementType,
+          structName,
+          recordNamespace,
+          None,
+          extractElemTypeFromUnion.map(s => s.getElementType)
+        )
         (item: Any) => {
           if (item == null) {
             null
           } else {
-            val sourceArray = item.asInstanceOf[ArrayData]
+            val sourceArray     = item.asInstanceOf[ArrayData]
             val sourceArraySize = sourceArray.numElements()
-            val targetArray = new util.ArrayList[Any](sourceArraySize)
-            var idx = 0
+            val targetArray     = new util.ArrayList[Any](sourceArraySize)
+            var idx             = 0
             while (idx < sourceArraySize) {
               targetArray.add(idx, elementConverter(sourceArray.get(idx, elementType)))
               idx += 1
@@ -280,15 +315,21 @@ case class AvroSerializerExpression private(child: Expression,
         }
       case MapType(StringType, valueType, _) =>
         val extractElemTypeFromUnion = externalSchema.map(s => eventualSubSchemaFromUnionWithNull(s))
-        val valueConverter = createConverterToAvro(valueType, structName, recordNamespace, None, extractElemTypeFromUnion.map(s => s.getValueType))
+        val valueConverter = createConverterToAvro(
+          valueType,
+          structName,
+          recordNamespace,
+          None,
+          extractElemTypeFromUnion.map(s => s.getValueType)
+        )
         (item: Any) => {
           if (item == null) {
             null
           } else {
             val javaMap = new util.HashMap[String, Any]()
-            val keys = item.asInstanceOf[MapData].keyArray()
-            val values = item.asInstanceOf[MapData].valueArray()
-            var i = 0
+            val keys    = item.asInstanceOf[MapData].keyArray()
+            val values  = item.asInstanceOf[MapData].valueArray()
+            var i       = 0
             while (i < keys.numElements()) {
               javaMap.put(keys.getUTF8String(i).toString, valueConverter(values.get(i, valueType)))
               i += 1
@@ -298,40 +339,44 @@ case class AvroSerializerExpression private(child: Expression,
         }
       case structType: StructType =>
         val builder = SchemaBuilder.record(structName).namespace(recordNamespace)
-        val schema: Schema = externalSchema.map(eventualSubSchemaFromUnionWithNull).getOrElse(
-          AvroSchemaConverters.convertStructToAvro(structType, builder, recordNamespace)
-        )
+        val schema: Schema = externalSchema
+          .map(eventualSubSchemaFromUnionWithNull)
+          .getOrElse(
+            AvroSchemaConverters.convertStructToAvro(structType, builder, recordNamespace)
+          )
 
-        val fieldConverters = structType.fields.filter(f => {
-          if (fieldsToWrite.isDefined) {
-            fieldsToWrite.get.contains(f.name)
-          } else {
-            true
-          }
-        }).map { field =>
-          val maybeSubfieldSchema = Option(schema.getField(field.name)).map(_.schema())
+        val fieldConverters = structType.fields
+          .filter(f => {
+            if (fieldsToWrite.isDefined) {
+              fieldsToWrite.get.contains(f.name)
+            } else {
+              true
+            }
+          })
+          .map { field =>
+            val maybeSubfieldSchema = Option(schema.getField(field.name)).map(_.schema())
 
-          if (maybeSubfieldSchema.isEmpty) {
-            val message =
-              s"""spark schema contains a field [${field.name}] of type [${field.dataType}]
+            if (maybeSubfieldSchema.isEmpty) {
+              val message =
+                s"""spark schema contains a field [${field.name}] of type [${field.dataType}]
                  |no corresponding field is present in the avro schema, maybe you forgot to
                  |drop kafkaMetadata column or to configure 'valueFieldsNames' in TopicModel
                  |to specify which columns should be treated as the value
                  |""".stripMargin
 
-            throw new IllegalArgumentException(message)
-          }
+              throw new IllegalArgumentException(message)
+            }
 
-          createConverterToAvro(field.dataType, field.name, recordNamespace, None, maybeSubfieldSchema)
-        }
+            createConverterToAvro(field.dataType, field.name, recordNamespace, None, maybeSubfieldSchema)
+          }
         (item: Any) => {
           if (item == null) {
             null
           } else {
-            val record = new Record(schema)
+            val record             = new Record(schema)
             val convertersIterator = fieldConverters.iterator
-            val fields = structType.fields
-            var i = 0
+            val fields             = structType.fields
+            var i                  = 0
 
             while (convertersIterator.hasNext) {
               val converter = convertersIterator.next()
@@ -349,7 +394,8 @@ case class AvroSerializerExpression private(child: Expression,
       val otherType = s.getTypes.asScala.filter(subS => subS.getType != Type.NULL)
       if (otherType.size != 1) {
         throw new IllegalArgumentException(
-          s"Avro sub-schema ${s.getName} has UnionSchema which is not a simple NullSchema + primitive schema.")
+          s"Avro sub-schema ${s.getName} has UnionSchema which is not a simple NullSchema + primitive schema."
+        )
       }
       otherType.head
     } else {
@@ -357,4 +403,3 @@ case class AvroSerializerExpression private(child: Expression,
     }
   }
 }
-

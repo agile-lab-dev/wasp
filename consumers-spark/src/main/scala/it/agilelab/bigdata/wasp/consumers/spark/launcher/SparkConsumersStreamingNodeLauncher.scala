@@ -24,11 +24,10 @@ import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 
-/**
-  * Launcher for the SparkConsumersStreamingMasterGuardian.
-  * This trait is useful for who want extend the launcher
+/** Launcher for the SparkConsumersStreamingMasterGuardian. This trait is useful for who want extend the launcher
   *
-  * @author Nicolò Bidotti
+  * @author
+  *   Nicolò Bidotti
   */
 trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletonsLauncher with AroundLaunch {
 
@@ -112,10 +111,10 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
     Seq(sparkConsumersStreamingMasterGuardianSingletonInfo)
   }
 
-  /**
-    * Initialize the WASP plugins, this method is called after the wasp initialization and before getSingletonInfos
+  /** Initialize the WASP plugins, this method is called after the wasp initialization and before getSingletonInfos
     *
-    * @param args command line arguments
+    * @param args
+    *   command line arguments
     */
   override def initializePlugins(args: Array[String]): Unit = {
     logger.info("Finding Spark consumers plugins")
@@ -147,8 +146,6 @@ trait SparkConsumersStreamingNodeLauncherTrait extends MultipleClusterSingletons
   override protected def shouldDropDb(commandLine: CommandLine): Boolean = false
 }
 
-/**
-  * Create the main static method to run
-  *
+/** Create the main static method to run
   */
 object SparkConsumersStreamingNodeLauncher extends SparkConsumersStreamingNodeLauncherTrait

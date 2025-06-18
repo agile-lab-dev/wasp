@@ -10,8 +10,10 @@ import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext
 
-final class TestCheckpointProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
-  extends ProducerGuardian(env, producerName) {
+final class TestCheckpointProducerGuardian(
+    env: { val producerBL: ProducerBL; val topicBL: TopicBL },
+    producerName: String
+) extends ProducerGuardian(env, producerName) {
 
   override val name: String = "testCheckpointProducerGuardian"
 
@@ -24,15 +26,15 @@ final class TestCheckpointProducerGuardian(env: {val producerBL: ProducerBL; val
 }
 
 private[producers] class TestCheckpointActor(kafka_router: ActorRef, topic: Option[TopicModel])
-  extends ProducerActor[TestCheckpointDocument](kafka_router, topic)
-    with SprayJsonSupport with DefaultJsonProtocol {
-
+    extends ProducerActor[TestCheckpointDocument](kafka_router, topic)
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
   override def retrievePartitionKey: TestCheckpointDocument => String = (td: TestCheckpointDocument) => td.id
 
   def createTestCheckpointDocument(documentId: Int) = {
 
-    TestCheckpointDocument("v1", ""+documentId, 1)
+    TestCheckpointDocument("v1", "" + documentId, 1)
   }
 
   var documentId = 0
@@ -54,7 +56,7 @@ private[producers] class TestCheckpointActor(kafka_router: ActorRef, topic: Opti
 
   override def generateOutputJsonMessage(input: TestCheckpointDocument): String = {
     val testCheckpointDocumentToJson = jsonFormat6(TestCheckpointDocument.apply)
-    val jsonObj = testCheckpointDocumentToJson.write(input)
+    val jsonObj                      = testCheckpointDocumentToJson.write(input)
     jsonObj.compactPrint
   }
 }

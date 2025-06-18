@@ -26,12 +26,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
-
-/**
-  * Created by Agile Lab s.r.l. on 05/09/2017.
+/** Created by Agile Lab s.r.l. on 05/09/2017.
   */
 class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
-  var indexBL: IndexBL = _
+  var indexBL: IndexBL              = _
   var elasticAdminActor_ : ActorRef = _
 
   override def datastoreProduct: DatastoreProduct = ElasticProduct
@@ -51,17 +49,24 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): ElasticsearchSparkStructuredStreamingWriter = {
-    logger.info(s"Initialize the elastic spark structured streaming writer with this writer model name '${writerModel.name}'")
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): ElasticsearchSparkStructuredStreamingWriter = {
+    logger.info(
+      s"Initialize the elastic spark structured streaming writer with this writer model name '${writerModel.name}'"
+    )
     new ElasticsearchSparkStructuredStreamingWriter(indexBL, ss, writerModel.datastoreModelName, elasticAdminActor_)
   }
-  
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
+
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
@@ -74,27 +79,21 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     val indexOpt = indexBL.getByName(readerModel.name)
     if (indexOpt.isDefined) {
-      val index = indexOpt.get
+      val index     = indexOpt.get
       val indexName = index.eventuallyTimedName
 
-      logger.info(
-        s"Check or create the index model: '${index.toString} with this index name: $indexName")
+      logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
       if (index.schema.isEmpty) {
-        throw new Exception(
-          s"There no define schema in the index configuration: $index")
+        throw new Exception(s"There no define schema in the index configuration: $index")
       }
       if (index.name.toLowerCase != index.name) {
         throw new Exception(s"The index name must be all lowercase: $index")
       }
 
-      if (??[Boolean](
-        elasticAdminActor_,
-        CheckOrCreateIndex(
-          indexName,
-          index.name,
-          index.dataType,
-          index.getJsonSchema))) {
+      if (
+        ??[Boolean](elasticAdminActor_, CheckOrCreateIndex(indexName, index.name, index.dataType, index.getJsonSchema))
+      ) {
 
         new ElasticsearchSparkBatchReader(index)
 
@@ -113,7 +112,7 @@ class ElasticConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   private def startupElastic(servicesTimeoutMillis: Long)(implicit timeout: Timeout): Unit = {
     logger.info(s"Trying to connect with Elastic...")
 
-    //TODO if elasticConfig are not initialized skip the initialization
+    // TODO if elasticConfig are not initialized skip the initialization
     val elasticResult = elasticAdminActor_ ? Initialization(ConfigManager.getElasticConfig)
 
     val elasticConnectionResult = Await.ready(elasticResult, Duration(servicesTimeoutMillis, TimeUnit.MILLISECONDS))

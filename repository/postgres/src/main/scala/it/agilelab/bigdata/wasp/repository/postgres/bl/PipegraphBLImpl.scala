@@ -7,9 +7,9 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{PipegraphBL, PipegraphInstan
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{PipegraphTableDefinition, TableDefinition}
 
-case class PipegraphBLImpl(waspDB : WaspPostgresDB) extends PipegraphBL with PostgresBL {
+case class PipegraphBLImpl(waspDB: WaspPostgresDB) extends PipegraphBL with PostgresBL {
 
-  implicit val tableDefinition: TableDefinition[PipegraphModel,String] = PipegraphTableDefinition
+  implicit val tableDefinition: TableDefinition[PipegraphModel, String] = PipegraphTableDefinition
 
   private lazy val _instances = PipegraphInstanceBlImpl(waspDB)
 
@@ -19,9 +19,11 @@ case class PipegraphBLImpl(waspDB : WaspPostgresDB) extends PipegraphBL with Pos
 
   override def getSystemPipegraphs: Seq[PipegraphModel] = waspDB.getBy(Array(PipegraphTableDefinition.isSystem -> true))
 
-  override def getNonSystemPipegraphs: Seq[PipegraphModel] = waspDB.getBy(Array(PipegraphTableDefinition.isSystem -> false))
+  override def getNonSystemPipegraphs: Seq[PipegraphModel] =
+    waspDB.getBy(Array(PipegraphTableDefinition.isSystem -> false))
 
-  override def getByOwner(owner: String): Seq[PipegraphModel] = waspDB.getBy(Array(PipegraphTableDefinition.owner -> owner))
+  override def getByOwner(owner: String): Seq[PipegraphModel] =
+    waspDB.getBy(Array(PipegraphTableDefinition.owner -> owner))
 
   override def getActivePipegraphs(): Seq[PipegraphModel] = {
     val allowedStates: Set[PipegraphStatus] = Set(PipegraphStatus.PENDING, PipegraphStatus.PROCESSING)

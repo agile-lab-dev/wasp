@@ -17,23 +17,21 @@ class EventStrategy extends Strategy {
 
   // Configuration is injected from the Pipegraph. WARN: this has to be lazy because configuration will be populated
   // only at the first transform call
-  lazy val clock: Clock = Clock.systemUTC()
+  lazy val clock: Clock       = Clock.systemUTC()
   lazy val idGen: IDGenerator = UUIDGenerator
   lazy val innerEventStrategy = InnerEventStrategy(configuration, clock, idGen)
 
-  /**
-    * @param dataFrames
+  /** @param dataFrames
     * @return
     */
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
 
-    //Supposing I support only 1 single streaming source. At least for now
+    // Supposing I support only 1 single streaming source. At least for now
     val df: DataFrame = dataFrames.values.head
     innerEventStrategy.transform(df)
   }
 
 }
-
 
 case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGenerator) {
 
@@ -43,30 +41,35 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
 
   @transient
   private lazy val generateId: () => String = () => idGen.generate()
-  private val generateId_UFD = udf(generateId)
+  private val generateId_UFD                = udf(generateId)
 
-  private val currentTimeMillis: () => Long = () =>  clock.millis()
-  private val currentTimeMillisUDF = udf(currentTimeMillis)
+  private val currentTimeMillis: () => Long = () => clock.millis()
+  private val currentTimeMillisUDF          = udf(currentTimeMillis)
 
-
-  /**
-    * Retrieve events from input data + a seq of rules
-    * @param df is the input DataFrame with operational data
-    * @return a DataFrame of Events
+  /** Retrieve events from input data + a seq of rules
+    * @param df
+    *   is the input DataFrame with operational data
+    * @return
+    *   a DataFrame of Events
     */
   def transform(df: DataFrame): DataFrame = {
 
     val rules = settings.rules // TODO: here should be placed additional filters
 
-    val rawEvents = fetchRawEvents(df, rules)               // Merge N rules and applies them together to obtain a raw events df. 1 row = 1-N events
-    val explodedDf = explodeByRule(rawEvents, rules)        // Cross-join raw events with rules and filter out meaningless rows. 1 row = 1 events
-    val refinedEvents = enrichAndRefine(explodedDf, rules)  // Transform the DataModel from the one of the operational data to the one of the events.
+    val rawEvents =
+      fetchRawEvents(df, rules) // Merge N rules and applies them together to obtain a raw events df. 1 row = 1-N events
+    val explodedDf = explodeByRule(
+      rawEvents,
+      rules
+    ) // Cross-join raw events with rules and filter out meaningless rows. 1 row = 1 events
+    val refinedEvents = enrichAndRefine(
+      explodedDf,
+      rules
+    ) // Transform the DataModel from the one of the operational data to the one of the events.
     refinedEvents
   }
 
-
-  /**
-    * Create an SQL statement from an input DataFrame of M columns and N event rules. The resulting df contains M + N columns,
+  /** Create an SQL statement from an input DataFrame of M columns and N event rules. The resulting df contains M + N columns,
     * where each additional column contains a flag which indicates if that row triggered the corresponding event.
     * Each row of the output DF is a row of the input DF which triggered at least one event, the same line can therefore
     * correspond to more than one event
@@ -85,11 +88,9 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     * | sensor_4|  145.99556|1553246909414|      odd|        95|
     * +--------+-----------+-------------+---------+-----------+
     *
-    *
     * Rules statements:
     * HighTemperature :   (temperature > 100)
     * OddHighNumbers :    (someNumber > 75 AND someStuff == "odd")
-    *
     *
     * Output DataFrame with
     * +---------+-----------+-------------+---------+----------+-----------------------+----------------------+
@@ -118,8 +119,8 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
       val requests: Seq[String] = {
         val originalFields: Seq[String] = dataDf.schema.fields.map(f => f.name)
 
-        val ruleFields: Seq[String] = rules.map(rule =>
-          s" (${rule.ruleStatement}) AS ${rule.eventRuleName}_$MATCHES_FLAG")
+        val ruleFields: Seq[String] =
+          rules.map(rule => s" (${rule.ruleStatement}) AS ${rule.eventRuleName}_$MATCHES_FLAG")
 
         originalFields ++ ruleFields
       }
@@ -139,46 +140,37 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     rawEvents
   }
 
-
-  /**
-    * Create an SQL statement which cross-join the raw events and the rules, creating a line for each event
+  /** Create an SQL statement which cross-join the raw events and the rules, creating a line for each event
     *
     * Example
     *
     * The input DF is the result of [[fetchRawEvents]] example, and the rules are the same previously applied
     *
     * Input DF:
-    * +---------+-----------+-------------+---------+----------+-----------------------+----------------------+
-    * |     data|temperature|     someLong|someStuff|someNumber|HighTemperature_matches|OddHighNumbers_matches|
-    * +---------+-----------+-------------+---------+----------+-----------------------+----------------------+
-    * | sensor_0|   111.6358|1553246909414|     even|        79|                   true|                 false|
-    * | sensor_3|  109.99341|1553246909414|      odd|        41|                   true|                 false|
-    * | sensor_4|  155.99556|1553246909414|      odd|        95|                   true|                  true|
-    * +---------+-----------+-------------+---------+----------+-----------------------+----------------------+
-    *
+    * |     data | temperature |      someLong | someStuff | someNumber | HighTemperature_matches | OddHighNumbers_matches |
+    * |---------:|:------------|--------------:|:----------|:-----------|:------------------------|:-----------------------|
+    * | sensor_0 | 111.6358    | 1553246909414 | even      | 79         | true                    | false                  |
+    * | sensor_3 | 109.99341   | 1553246909414 | odd       | 41         | true                    | false                  |
+    * | sensor_4 | 155.99556   | 1553246909414 | odd       | 95         | true                    | true                   |
     *
     * Rule DF is created from rule seq:
-    * +---------------+-------------------+--------------------+----------------+--------------------+----------------+
-    * |       ruleName|ruleStreamingSource|       ruleStatement|    ruleTypeExpr|    ruleSeverityExpr|ruleSourceIdExpr|
-    * +---------------+-------------------+--------------------+----------------+--------------------+----------------+
-    * |HighTemperature|   streamingSource1|   temperature > 100|   'TempControl'|IF( temperature <...|            name|
-    * | OddHighNumbers|   streamingSource2|someNumber > 75 A...|'OddHighNumbers'|IF( temperature <...|            name|
-    * +---------------+-------------------+--------------------+----------------+--------------------+----------------+
-    *
+    * |        ruleName | ruleStreamingSource |        ruleStatement |     ruleTypeExpr |     ruleSeverityExpr | ruleSourceIdExpr |
+    * |----------------:|:--------------------|---------------------:|-----------------:|---------------------:|:-----------------|
+    * | HighTemperature | streamingSource1    |    temperature > 100 |    'TempControl' | IF( temperature <... | name             |
+    * |  OddHighNumbers | streamingSource2    | someNumber > 75 A... | 'OddHighNumbers' | IF( temperature <... | name             |
     *
     * Join result:
-    * +---------+-----------+-------------+---------+----------+---------------+-------------------+
-    * |     data|temperature|     someLong|someStuff|someNumber|       ruleName|ruleStreamingSource|
-    * +---------+-----------+-------------+---------+----------+---------------+-------------------+
-    * | sensor_0|   111.6358|1553246909414|     even|        79|HighTemperature|   streamingSource1|
-    * | sensor_3|  109.99341|1553246909414|      odd|        41|HighTemperature|   streamingSource1|
-    * | sensor_4|  155.99556|1553246909414|      odd|        95|HighTemperature|   streamingSource1|
-    * | sensor_4|  155.99556|1553246909414|      odd|        95| OddHighNumbers|   streamingSource2|
-    * +---------+-----------+-------------+---------+----------+---------------+-------------------+
+    * |     data | temperature |      someLong | someStuff | someNumber |        ruleName | ruleStreamingSource |
+    * |---------:|:------------|--------------:|:----------|:-----------|----------------:|:--------------------|
+    * | sensor_0 | 111.6358    | 1553246909414 | even      | 79         | HighTemperature | streamingSource1    |
+    * | sensor_3 | 109.99341   | 1553246909414 | odd       | 41         | HighTemperature | streamingSource1    |
+    * | sensor_4 | 155.99556   | 1553246909414 | odd       | 95         | HighTemperature | streamingSource1    |
+    * | sensor_4 | 155.99556   | 1553246909414 | odd       | 95         |  OddHighNumbers | streamingSource2    |
     *
-    *
-    * @param rawEventsDf is the input DataFrame containing raw lines
-    * @param rules is the sequence of event rule
+    * @param rawEventsDf
+    *   is the input DataFrame containing raw lines
+    * @param rules
+    *   is the sequence of event rule
     * @return
     */
   private def explodeByRule(rawEventsDf: DataFrame, rules: Seq[EventRule]): DataFrame = {
@@ -186,9 +178,9 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     val ss = rawEventsDf.sparkSession
     import ss.implicits._
 
-    val rulesDF = ss.sparkContext.parallelize(rules).toDF
-    val eventsTableName: String = s"TEMP_EXPLODE_TABLE_${randomStr(RANDOM_STRING_LENGTH)}" //TODO: this is a mockup
-    val rulesTableName: String = s"TEMP_RULES_TABLE_${randomStr(RANDOM_STRING_LENGTH)}" //TODO: this is a mockup
+    val rulesDF                 = ss.sparkContext.parallelize(rules).toDF
+    val eventsTableName: String = s"TEMP_EXPLODE_TABLE_${randomStr(RANDOM_STRING_LENGTH)}" // TODO: this is a mockup
+    val rulesTableName: String  = s"TEMP_RULES_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"   // TODO: this is a mockup
 
     rawEventsDf.createOrReplaceTempView(eventsTableName)
     rulesDF.createOrReplaceTempView(rulesTableName)
@@ -199,13 +191,15 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
 
       val matches = rules.map(r => s"${r.eventRuleName}_$MATCHES_FLAG").toSet
       rawEventsDf.schema.filterNot(f => matches(f.name)).foreach(f => sb.append(s"${f.name}, "))
-      //sb.append(s"$EVENT_RULE_NAME, $STREAMING_SOURCE, $TIMESTAMP ")
+      // sb.append(s"$EVENT_RULE_NAME, $STREAMING_SOURCE, $TIMESTAMP ")
       sb.append(s"$EVENT_RULE_NAME, $STREAMING_SOURCE ") // TIMESTAMP IS NOT YET AVAILABLE!!!
 
       sb.append(s"FROM $eventsTableName cross join $rulesTableName ")
       sb.append("ON ")
 
-      rules.init.foreach(r => sb.append(s"(${r.eventRuleName}_$MATCHES_FLAG and $EVENT_RULE_NAME = '${r.eventRuleName}') OR "))
+      rules.init.foreach(r =>
+        sb.append(s"(${r.eventRuleName}_$MATCHES_FLAG and $EVENT_RULE_NAME = '${r.eventRuleName}') OR ")
+      )
       sb.append(s"(${rules.last.eventRuleName}_$MATCHES_FLAG and $EVENT_RULE_NAME = '${rules.last.eventRuleName}') ")
 
       sb.toString
@@ -213,16 +207,13 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
 
     val explodedEvents = ss.sql(sqlQuery)
 
-
     ss.catalog.dropTempView(eventsTableName)
     ss.catalog.dropTempView(rulesTableName)
 
     explodedEvents
   }
 
-
-  /**
-    * Transform the data model from the one of the operational data to the one of the events.
+  /** Transform the data model from the one of the operational data to the one of the events.
     *
     * Example
     *
@@ -264,7 +255,6 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     * HighTemperature :   (name)
     * OddHighNumbers :    (name)
     *
-    *
     * Result of the query:
     *
     * +------------+---------------+----------------+--------------------+---------------+----------+---------+--------------------+
@@ -284,12 +274,14 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     */
   private def enrichAndRefine(explodedEventsDf: DataFrame, rules: Seq[EventRule]): DataFrame = {
 
-    val ss = explodedEventsDf.sparkSession
+    val ss                = explodedEventsDf.sparkSession
     val tableName: String = s"TEMP_ENRICH_TABLE_${randomStr(RANDOM_STRING_LENGTH)}"
 
     // All the operational data model columns are turned into a single column "payload", which present them as a json
-    val payloadColumns = explodedEventsDf.columns.filterNot(c => c.equals(EVENT_RULE_NAME) || c.equals(STREAMING_SOURCE))
-    val eventsWithPayload = explodedEventsDf.withColumn(PAYLOAD, to_json(struct(payloadColumns.head, payloadColumns.tail: _*)))
+    val payloadColumns =
+      explodedEventsDf.columns.filterNot(c => c.equals(EVENT_RULE_NAME) || c.equals(STREAMING_SOURCE))
+    val eventsWithPayload =
+      explodedEventsDf.withColumn(PAYLOAD, to_json(struct(payloadColumns.head, payloadColumns.tail: _*)))
 
     eventsWithPayload.createOrReplaceTempView(tableName)
 
@@ -322,11 +314,10 @@ case class InnerEventStrategy(configuration: Config, clock: Clock, idGen: IDGene
     val enrichedEvents = ss.sql(sqlQuery)
     ss.catalog.dropTempView(tableName)
 
-
     enrichedEvents
-      //.withColumn(EVENT_ID, monotonically_increasing_id()) //Unsafe in streaming ETL, likely to generate duplicates
+      // .withColumn(EVENT_ID, monotonically_increasing_id()) //Unsafe in streaming ETL, likely to generate duplicates
       .withColumn(EVENT_ID, generateId_UFD())
-      //.withColumn(TIMESTAMP, current_timestamp())  //This implementation keeps a TimestampType on the column which is illegal with Avro4s
+      // .withColumn(TIMESTAMP, current_timestamp())  //This implementation keeps a TimestampType on the column which is illegal with Avro4s
       .withColumn(TIMESTAMP, currentTimeMillisUDF())
   }
 
@@ -336,6 +327,6 @@ trait IDGenerator {
   def generate(): String
 }
 
-case object UUIDGenerator extends IDGenerator{
+case object UUIDGenerator extends IDGenerator {
   override def generate(): String = UUID.randomUUID().toString
 }

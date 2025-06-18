@@ -9,21 +9,26 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers, TryValues}
 class ConfigUtilsSpec extends FlatSpec with Matchers with TryValues with BeforeAndAfterEach with Logging {
 
   it should "parse the keys correctly" in {
-    val keys = Seq("k1", "k2")
+    val keys          = Seq("k1", "k2")
     val correlationId = "corrId1"
     val stringConfig =
       s"""
-        |{ "$KV_CONF_KEY" { "$KEYS_TO_DELETE_KEY" = [${keys.mkString(",")}], "$CORRELATION_ID_KEY" = "$correlationId" } }
+        |{ "$KV_CONF_KEY" { "$KEYS_TO_DELETE_KEY" = [${keys.mkString(
+          ","
+        )}], "$CORRELATION_ID_KEY" = "$correlationId" } }
         |""".stripMargin
 
 //    println(stringConfig)
 
     val rootConfig = ConfigFactory.parseString(stringConfig)
-    val config = ConfigUtils.getOptionalConfig(rootConfig, KV_CONF_KEY)
+    val config     = ConfigUtils.getOptionalConfig(rootConfig, KV_CONF_KEY)
 
     val keysFound = ConfigUtils.keysToDelete(Seq.empty, config, KEYS_TO_DELETE_KEY, CORRELATION_ID_KEY)
 
-    keysFound should contain theSameElementsAs Seq(KeyWithCorrelation("k1", correlationId), KeyWithCorrelation("k2", correlationId))
+    keysFound should contain theSameElementsAs Seq(
+      KeyWithCorrelation("k1", correlationId),
+      KeyWithCorrelation("k2", correlationId)
+    )
   }
 
 }

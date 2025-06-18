@@ -6,7 +6,11 @@ import spray.json.JsObject
 
 case class ProcessGroupResponseTmp(name: String, processGroupData: String)
 
-trait EditorOpenApiComponentSupport extends LangOpenApi with ProductOpenApi with CollectionsOpenApi with RawModelOpenApiDefinition {
+trait EditorOpenApiComponentSupport
+    extends LangOpenApi
+    with ProductOpenApi
+    with CollectionsOpenApi
+    with RawModelOpenApiDefinition {
 
   implicit val jobjectOpenApi: ToOpenApiSchema[JObject] = new ToOpenApiSchema[JObject] {
     override def schema(ctx: Context): Schema[_] = {

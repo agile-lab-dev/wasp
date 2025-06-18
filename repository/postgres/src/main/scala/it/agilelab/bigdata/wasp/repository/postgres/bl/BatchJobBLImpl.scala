@@ -6,10 +6,9 @@ import it.agilelab.bigdata.wasp.repository.core.bl.{BatchJobBL, BatchJobInstance
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{BatchJobTableDefinition, TableDefinition}
 
+case class BatchJobBLImpl(waspDB: WaspPostgresDB) extends BatchJobBL with PostgresBL {
 
-case class BatchJobBLImpl(waspDB: WaspPostgresDB ) extends BatchJobBL with PostgresBL {
-
-  implicit val tableDefinition: TableDefinition[BatchJobModel,String] = BatchJobTableDefinition
+  implicit val tableDefinition: TableDefinition[BatchJobModel, String] = BatchJobTableDefinition
 
   override def getByName(name: String): Option[BatchJobModel] = waspDB.getByPrimaryKey(name)
 
@@ -21,7 +20,7 @@ case class BatchJobBLImpl(waspDB: WaspPostgresDB ) extends BatchJobBL with Postg
 
   override def upsert(batchJobModel: BatchJobModel): Unit = waspDB.upsert(batchJobModel)
 
-  override def deleteByName(name: String): Unit =  waspDB.deleteByPrimaryKey(name)
+  override def deleteByName(name: String): Unit = waspDB.deleteByPrimaryKey(name)
 
   override def instances(): BatchJobInstanceBL = BatchJobInstanceBLImpl(waspDB)
 

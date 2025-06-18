@@ -6,22 +6,22 @@ import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.BsonString
 import org.mongodb.scala.bson.BsonObjectId
 
-/**
-  * This class allow to read and persist the machine learning models
+/** This class allow to read and persist the machine learning models
   */
 trait MlModelBL {
 
-  /**
-    * Find the most recent model with this name and version
+  /** Find the most recent model with this name and version
     *
-    * @param name model name
-    * @param version model version
-    * @return info of the model
+    * @param name
+    *   model name
+    * @param version
+    *   model version
+    * @return
+    *   info of the model
     */
   def getMlModelOnlyInfo(name: String, version: String): Option[MlModelOnlyInfo]
 
-  /**
-    * Find a precise model that is identify by name, version and timestamp
+  /** Find a precise model that is identify by name, version and timestamp
     *
     * @param name
     * @param version
@@ -30,18 +30,16 @@ trait MlModelBL {
     */
   def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Option[MlModelOnlyInfo]
 
-  /**
-    * Get all model saved
+  /** Get all model saved
     *
     * @return
     */
   def getAll: Seq[MlModelOnlyInfo]
 
-  /**
-    * Get an Enumerator with the model already deserialized
-    * the mlModelOnlyInfo must have initialized
+  /** Get an Enumerator with the model already deserialized the mlModelOnlyInfo must have initialized
     *
-    * @param mlModelOnlyInfo All the metadata about the model with the modelFileId initialized
+    * @param mlModelOnlyInfo
+    *   All the metadata about the model with the modelFileId initialized
     * @return
     */
   def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any] = {
@@ -50,23 +48,21 @@ trait MlModelBL {
 
   def getFileByID(mlModelOnlyInfo: MlModelOnlyInfo): Option[Array[Byte]]
 
-
-  /**
-    * Persist only the metadata about the model
+  /** Persist only the metadata about the model
     *
     * @param mlModelOnlyInfo
     * @return
     */
   def saveMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit
 
-  /**
-    * Persist the transformer model
+  /** Persist the transformer model
     *
     * @param transformerModel
     * @param name
     * @param version
     * @param timestamp
-    * @return the id of the model
+    * @return
+    *   the id of the model
     */
   def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId = {
     val serialized  = SerializationUtils.serialize(transformerModel)
@@ -75,10 +71,9 @@ trait MlModelBL {
     saveFile(serialized, s"$name-$version-$timestamp", metadata)
   }
 
-  protected def saveFile(file : Array[Byte],fileName : String, metadata : BsonDocument): BsonObjectId
+  protected def saveFile(file: Array[Byte], fileName: String, metadata: BsonDocument): BsonObjectId
 
-  /**
-    * Delete the metadata and the transformer model in base to name, version, timestamp
+  /** Delete the metadata and the transformer model in base to name, version, timestamp
     *
     * @param name
     * @param version
@@ -87,8 +82,7 @@ trait MlModelBL {
     */
   def delete(name: String, version: String, timestamp: Long): Unit
 
-  /**
-    * Update only the metadata about the model
+  /** Update only the metadata about the model
     *
     * @param mlModelOnlyInfo
     * @return

@@ -4,7 +4,6 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.
 import org.apache.spark.sql.types._
 import org.slf4j.LoggerFactory
 
-
 case class HBaseTableCatalog(namespace: Option[String], tableName: String, columnFamilies: List[String]) {
 
   val fullTableName: String = namespace.map(n => s"$n:$tableName").getOrElse(tableName)
@@ -18,14 +17,14 @@ object HBaseTableCatalog {
   // If defined and larger than 3, a new table will be created with the number of region specified.
   val newTable = "newtable"
   // The json string specifying hbase catalog information
-  val regionStart = "regionStart"
+  val regionStart        = "regionStart"
   val defaultRegionStart = "aaaaaaa"
-  val regionEnd = "regionEnd"
-  val defaultRegionEnd = "zzzzzzz"
+  val regionEnd          = "regionEnd"
+  val defaultRegionEnd   = "zzzzzzz"
   // The namespace of hbase table
   val namespace = "namespace"
   // The name of hbase table
-  val tableName = "tableName"
+  val tableName      = "tableName"
   val columnFamilies = "columnFamilies"
 
   val schema: StructType = StructType(
@@ -39,7 +38,8 @@ object HBaseTableCatalog {
 
   def apply(params: Map[String, String]): HBaseTableCatalog = {
     val namespace = params.get(HBaseTableCatalog.namespace)
-    val tableName = params.get(HBaseTableCatalog.tableName)
+    val tableName = params
+      .get(HBaseTableCatalog.tableName)
       .filter(_.nonEmpty)
       .getOrElse {
         logger.error("Unable to create Hbase Table Catalog, hbase table name option is mandatory!")

@@ -6,10 +6,9 @@ import it.agilelab.bigdata.wasp.repository.core.bl.DocumentBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{DocumentTableDefinition, TableDefinition}
 
-case class DocumentBLImpl(waspDB: WaspPostgresDB ) extends DocumentBL with PostgresBL {
+case class DocumentBLImpl(waspDB: WaspPostgresDB) extends DocumentBL with PostgresBL {
 
-  implicit val tableDefinition: TableDefinition[DocumentModel,String] = DocumentTableDefinition
-
+  implicit val tableDefinition: TableDefinition[DocumentModel, String] = DocumentTableDefinition
 
   override def getByName(name: String): Option[DocumentModel] = waspDB.getByPrimaryKey(name)
 

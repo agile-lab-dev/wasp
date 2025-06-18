@@ -18,8 +18,7 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 
 import scala.collection.mutable.ListBuffer
 
-/**
-  * Created by matbovet on 02/09/2016.
+/** Created by matbovet on 02/09/2016.
   */
 object SolrSparkBatchWriter {
 
@@ -43,7 +42,6 @@ object SolrSparkBatchWriter {
     }
     doc.setField("id", id)
 
-
     def convert(doc: SolrInputDocument, fieldType: StructType, row: Row, parentPath: Option[String] = None): Unit = {
       fieldType.foreach { structField =>
         if (!row.isNullAt(row.fieldIndex(structField.name))) {
@@ -51,12 +49,12 @@ object SolrSparkBatchWriter {
             case f: MapType =>
               val path = parentPath.map(p => p + "." + structField.name).getOrElse(structField.name)
               doc.setField(path, row.getJavaMap(row.fieldIndex(structField.name)))
-            
-            case f: StructType => 
+
+            case f: StructType =>
               val path = parentPath.map(p => p + "." + structField.name).orElse(Some(structField.name))
               convert(doc, f, row.getStruct(row.fieldIndex(structField.name)), path)
-            
-            case f => 
+
+            case f =>
               val path = parentPath.map(p => p + "." + structField.name).getOrElse(structField.name)
               doc.setField(path, row.getAs[Object](structField.name))
           }
@@ -70,11 +68,8 @@ object SolrSparkBatchWriter {
   }
 }
 
-class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
-                                         ss: SparkSession,
-                                         name: String,
-                                         solrAdminActor: ActorRef)
-  extends SparkStructuredStreamingWriter
+class SolrSparkStructuredStreamingWriter(indexBL: IndexBL, ss: SparkSession, name: String, solrAdminActor: ActorRef)
+    extends SparkStructuredStreamingWriter
     with SolrConfiguration
     with Logging {
 
@@ -83,25 +78,25 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
     // get index model from BL
     val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
-      val index = indexOpt.get
+      val index     = indexOpt.get
       val indexName = index.eventuallyTimedName
 
       logger.info(s"Check or create the index model: '${index.toString} with this index name: ${index.name}")
 
-      if (??[Boolean](
-            solrAdminActor,
-            CheckOrCreateCollection(
-              indexName,
-              index.getJsonSchema,
-              index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1))
-          )) {
+      if (
+        ??[Boolean](
+          solrAdminActor,
+          CheckOrCreateCollection(
+            indexName,
+            index.getJsonSchema,
+            index.numShards.getOrElse(1),
+            index.replicationFactor.getOrElse(1)
+          )
+        )
+      ) {
 
-        val solrWriter = new SolrForeachWriter(
-          ss,
-          solrConfig.zookeeperConnections.toString,
-          index.collection,
-          index.idField)
+        val solrWriter =
+          new SolrForeachWriter(ss, solrConfig.zookeeperConnections.toString, index.collection, index.idField)
 
         stream.writeStream
           .foreach(solrWriter)
@@ -118,15 +113,12 @@ class SolrSparkStructuredStreamingWriter(indexBL: IndexBL,
   }
 }
 
-class SolrForeachWriter(ss: SparkSession,
-                        connection: String,
-                        collection: String,
-                        idFieldOption: Option[String])
-  extends ForeachWriter[Row] {
+class SolrForeachWriter(ss: SparkSession, connection: String, collection: String, idFieldOption: Option[String])
+    extends ForeachWriter[Row] {
 
-  var solrServer: SolrClient = _
+  var solrServer: SolrClient               = _
   var batch: ListBuffer[SolrInputDocument] = _
-  val batchSize = 100
+  val batchSize                            = 100
 
   override def open(partitionId: Long, version: Long): Boolean = {
 
@@ -147,7 +139,7 @@ class SolrForeachWriter(ss: SparkSession,
     } catch {
       case e: Exception =>
         val msg = s"Unable to create Solr document. Error message: ${e.getMessage}"
-        //logger.error(msg) // Logging cannot be extended by SolrForeachWriter due to creates Serialization issue
+        // logger.error(msg) // Logging cannot be extended by SolrForeachWriter due to creates Serialization issue
         throw new Exception(msg, e)
     }
   }
@@ -159,11 +151,8 @@ class SolrForeachWriter(ss: SparkSession,
   }
 }
 
-class SolrSparkBatchWriter(indexBL: IndexBL,
-                           sc: SparkContext,
-                           name: String,
-                           solrAdminActor: ActorRef)
-  extends SparkBatchWriter
+class SolrSparkBatchWriter(indexBL: IndexBL, sc: SparkContext, name: String, solrAdminActor: ActorRef)
+    extends SparkBatchWriter
     with SolrConfiguration
     with Logging {
 
@@ -171,36 +160,40 @@ class SolrSparkBatchWriter(indexBL: IndexBL,
 
     val indexOpt: Option[IndexModel] = indexBL.getByName(name)
     if (indexOpt.isDefined) {
-      val index = indexOpt.get
+      val index     = indexOpt.get
       val indexName = index.eventuallyTimedName
 
       logger.info(s"Check or create the index model: '${index.toString} with this index name: $indexName")
 
-      if (??[Boolean](
-            solrAdminActor,
-            CheckOrCreateCollection(
-              indexName,
-              index.getJsonSchema,
-              index.numShards.getOrElse(1),
-              index.replicationFactor.getOrElse(1))
-          )) {
+      if (
+        ??[Boolean](
+          solrAdminActor,
+          CheckOrCreateCollection(
+            indexName,
+            index.getJsonSchema,
+            index.numShards.getOrElse(1),
+            index.replicationFactor.getOrElse(1)
+          )
+        )
+      ) {
 
         val docs = data.rdd.map { r =>
-
           try {
             SolrSparkBatchWriter.createSolrDocument(r, index.idField)
           } catch {
             case e: Exception =>
               val msg = s"Unable to create Solr document. Error message: ${e.getMessage}"
-              //logger.error(msg) executed in Spark workers-> the closure have to be serializable
+              // logger.error(msg) executed in Spark workers-> the closure have to be serializable
               throw new Exception(msg, e)
           }
         }
 
-        SolrSupport.indexDocs(solrConfig.zookeeperConnections.toString,
-                              indexName,
-                              100,
-                              new JavaRDD[SolrInputDocument](docs))
+        SolrSupport.indexDocs(
+          solrConfig.zookeeperConnections.toString,
+          indexName,
+          100,
+          new JavaRDD[SolrInputDocument](docs)
+        )
 
       } else {
         val msg = s"Error creating solr index: $index with this index name $indexName"

@@ -12,9 +12,9 @@ import java.net.URI
 
 class SchemaException(message: String) extends Exception(message)
 
-/**
-  * Writer for continuous update.
-  * @param writerDetails  Informations about unique keys, ordering expression and fields to drop
+/** Writer for continuous update.
+  * @param writerDetails
+  *   Informations about unique keys, ordering expression and fields to drop
   * @param entityDetails
   */
 case class ContinuousUpdateWriter(

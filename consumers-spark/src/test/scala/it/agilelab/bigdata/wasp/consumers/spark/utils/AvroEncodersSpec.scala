@@ -89,10 +89,10 @@ object CompatibleClass {
   }
 
   def fromRecord(record: GenericRecord): CompatibleClass = {
-    val a = record.get("a").toString
-    val b = Option(record.get("b")).map(_.asInstanceOf[java.lang.Double].toDouble)
+    val a           = record.get("a").toString
+    val b           = Option(record.get("b")).map(_.asInstanceOf[java.lang.Double].toDouble)
     val tupleRecord = record.get("c").asInstanceOf[GenericRecord]
-    val c = (tupleRecord.get("_1").asInstanceOf[Long], tupleRecord.get("_2").toString)
+    val c           = (tupleRecord.get("_1").asInstanceOf[Long], tupleRecord.get("_2").toString)
 
     CompatibleClass(a, b, c)
   }

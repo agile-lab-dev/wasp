@@ -27,5 +27,6 @@ object NifiProducerModel {
     isActive = false,
     configuration = Some(nifiRequest),
     isRemote = false,
-    isSystem = false)
+    isSystem = false
+  )
 }

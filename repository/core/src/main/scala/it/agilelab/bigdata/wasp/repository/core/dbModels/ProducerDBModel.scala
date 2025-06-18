@@ -6,18 +6,20 @@ sealed trait ProducerDBModel extends Model {
   //  val version: String
 }
 
-case class ProducerDBModelV1(name: String,
-                             className: String,
-                             topicName: Option[String],
-                             var isActive: Boolean = false,
-                             configuration: Option[String] = None,
-                             isRemote: Boolean,
-                             isSystem: Boolean
-                            ) extends ProducerDBModel
+case class ProducerDBModelV1(
+    name: String,
+    className: String,
+    topicName: Option[String],
+    var isActive: Boolean = false,
+    configuration: Option[String] = None,
+    isRemote: Boolean,
+    isSystem: Boolean
+) extends ProducerDBModel
 
-case class ProducerDBModelV2(name: String,
-                             className: String,
-                             topicName: Option[String],
-                             var isActive: Boolean = false,
-                             configuration: Option[String] = None
-                            ) extends ProducerDBModel
+case class ProducerDBModelV2(
+    name: String,
+    className: String,
+    topicName: Option[String],
+    var isActive: Boolean = false,
+    configuration: Option[String] = None
+) extends ProducerDBModel

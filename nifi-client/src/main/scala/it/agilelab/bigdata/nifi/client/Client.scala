@@ -10,8 +10,8 @@ import org.json4s.JObject
 import sttp.client.SttpBackend
 import sttp.client.monad.MonadError
 
-class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID, uiUrl: String)(
-    implicit sttpBackend: SttpBackend[F, Nothing, Nothing]
+class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID, uiUrl: String)(implicit
+    sttpBackend: SttpBackend[F, Nothing, Nothing]
 ) {
 
   object id {
@@ -128,7 +128,10 @@ class NifiClient[F[_]: MonadError](nifiRawClient: NifiRawClient, clientId: UUID,
     def getVersionInformation(processGroupId: String): F[VersionControlInformationEntity] =
       nifiRawClient.versions.getVersionInformation(processGroupId).result
 
-    def updateFlowVersion(processGroupId: String, versionedFlowSnapshotEntity: VersionedFlowSnapshotEntity): F[VersionControlInformationEntity] =
+    def updateFlowVersion(
+        processGroupId: String,
+        versionedFlowSnapshotEntity: VersionedFlowSnapshotEntity
+    ): F[VersionControlInformationEntity] =
       nifiRawClient.versions.updateFlowVersion(processGroupId, versionedFlowSnapshotEntity).result
 
     def initiateVersionControlUpdate(

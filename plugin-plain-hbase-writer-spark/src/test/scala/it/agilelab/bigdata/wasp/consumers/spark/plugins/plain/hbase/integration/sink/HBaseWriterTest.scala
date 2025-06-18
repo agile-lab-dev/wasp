@@ -152,7 +152,7 @@ class HBaseWriterTest extends TestFixture with SparkSuite with BeforeAndAfterAll
       )
 
       val rdd = spark.sparkContext.parallelize(simpleData)
-      val df = spark.createDataFrame(rdd, expectedSchema)
+      val df  = spark.createDataFrame(rdd, expectedSchema)
 
       HBaseWriter
         .validateQuery(df.schema.fields.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()))
@@ -161,35 +161,34 @@ class HBaseWriterTest extends TestFixture with SparkSuite with BeforeAndAfterAll
   }
 
   "launch exception if mutate fails" in {
-    //scalastyle:off
+    // scalastyle:off
 
     val mockSmartConnection = mock[SmartConnection]
 
     val mockIterator = mock[Iterator[InternalRow]]
-    val tableName = TableName.valueOf("table")
+    val tableName    = TableName.valueOf("table")
 
     val caught = intercept[Throwable] {
-      withObjectMocked[HBaseWriterTask.type]{
-        when(HBaseWriterTask.mutate(any[Iterator[InternalRow]],
-          any[TableName],
-          any[Connection],
-          any[Map[String, Int]],
-          anyInt())).thenThrow(new RuntimeException("mock exception"))
+      withObjectMocked[HBaseWriterTask.type] {
+        when(
+          HBaseWriterTask.mutate(
+            any[Iterator[InternalRow]],
+            any[TableName],
+            any[Connection],
+            any[Map[String, Int]],
+            anyInt()
+          )
+        ).thenThrow(new RuntimeException("mock exception"))
 
         HBaseWriter
-          .mutate(1,
-            Map.empty[String, Int],
-            mockIterator,
-            mockSmartConnection,
-            tableName)
+          .mutate(1, Map.empty[String, Int], mockIterator, mockSmartConnection, tableName)
       }
 
     }
 
-    caught
-      .getMessage shouldEqual "mock exception"
+    caught.getMessage shouldEqual "mock exception"
 
-    //scalastyle:on
+    // scalastyle:on
   }
 
 }

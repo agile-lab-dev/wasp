@@ -13,14 +13,14 @@ import java.io.ByteArrayInputStream
 import scala.reflect.ClassTag
 
 case class DecodeUsingAvro[A](
-                               child: Expression,
-                               tag: ClassTag[A],
-                               schema: String,
-                               avroSchemaManager: () => AvroSchemaManager,
-                               fromGenericRecord: GenericRecord => A
-                             ) extends UnaryExpression
-  with NonSQLExpression
-  with CompatibilityDecodeUsingAvro[A] {
+    child: Expression,
+    tag: ClassTag[A],
+    schema: String,
+    avroSchemaManager: () => AvroSchemaManager,
+    fromGenericRecord: GenericRecord => A
+) extends UnaryExpression
+    with NonSQLExpression
+    with CompatibilityDecodeUsingAvro[A] {
 
   private lazy val deserializer =
     new AvroDeserializer[A](new Schema.Parser().parse(schema), avroSchemaManager(), fromGenericRecord)
@@ -70,7 +70,6 @@ case class DecodeUsingAvro[A](
     val deserialize =
       s"($javaType) $serializer.toObj(${input.value})"
 
-
     val code = input.code +
       code"""
       final $javaType ${ev.value} =
@@ -83,9 +82,8 @@ case class DecodeUsingAvro[A](
 
 }
 
-/**
- * Stateful avro deserializer: NOT thread safe
- */
+/** Stateful avro deserializer: NOT thread safe
+  */
 final class AvroDeserializer[A](schema: Schema, avroSchemaManager: AvroSchemaManager, fromRecord: GenericRecord => A) {
   private[this] val genericRecord          = new GenericData.Record(schema)
   private[this] var decoder: BinaryDecoder = _ // scalastyle:ignore

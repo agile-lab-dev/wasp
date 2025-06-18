@@ -5,9 +5,9 @@ import it.agilelab.bigdata.wasp.repository.core.bl.CdcBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{CdcTableDefinition, TableDefinition}
 
-case class CdcBLImpl(waspDB: WaspPostgresDB )  extends CdcBL with PostgresBL {
+case class CdcBLImpl(waspDB: WaspPostgresDB) extends CdcBL with PostgresBL {
 
-  implicit val tableDefinition: TableDefinition[CdcModel,String] = CdcTableDefinition
+  implicit val tableDefinition: TableDefinition[CdcModel, String] = CdcTableDefinition
 
   override def getByName(name: String): Option[CdcModel] = waspDB.getByPrimaryKey(name)
 

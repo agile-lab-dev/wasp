@@ -4,8 +4,7 @@ import it.agilelab.bigdata.wasp.models.IndexModel
 import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait IndexBLImplTest {
-  self : PostgresSuite =>
-
+  self: PostgresSuite =>
 
   private lazy val bl = IndexBLImpl(pgDB)
 
@@ -13,21 +12,20 @@ trait IndexBLImplTest {
 
     bl.createTable()
 
-    val model1 = IndexModel("name_1",10L,None,None,Some(3),None,true,Some("test"))
+    val model1 = IndexModel("name_1", 10L, None, None, Some(3), None, true, Some("test"))
     bl.persist(model1)
 
-    val model2 = IndexModel("name_2",10L,None,None,Some(3),None,true,Some("test"))
+    val model2 = IndexModel("name_2", 10L, None, None, Some(3), None, true, Some("test"))
     bl.persist(model2)
 
     val list = bl.getAll()
 
     list.size shouldBe 2
-    list should contain theSameElementsAs Seq(model1,model2)
+    list should contain theSameElementsAs Seq(model1, model2)
 
     bl.getByName(model1.name).get shouldBe model1
     bl.getByName(model2.name).get shouldBe model2
     bl.getByName("XXXX").isEmpty shouldBe true
-
 
   }
 
@@ -35,11 +33,11 @@ trait IndexBLImplTest {
 
     bl.createTable()
 
-    val model1 = IndexModel("test_1",10L,None,None,Some(3),None,true,Some("test"))
-    val model1Bis = IndexModel("test_1",100L,None,None,Some(3),None,true,Some("test"))
+    val model1    = IndexModel("test_1", 10L, None, None, Some(3), None, true, Some("test"))
+    val model1Bis = IndexModel("test_1", 100L, None, None, Some(3), None, true, Some("test"))
 
-    val model2 = IndexModel("test_2",10L,None,None,Some(3),None,true,Some("test"))
-    val model3 = IndexModel("test_3",10L,None,None,Some(3),None,true,Some("test"))
+    val model2 = IndexModel("test_2", 10L, None, None, Some(3), None, true, Some("test"))
+    val model3 = IndexModel("test_3", 10L, None, None, Some(3), None, true, Some("test"))
 
     bl.persist(model1)
     bl.getByName(model1.name).get shouldBe model1
@@ -54,7 +52,6 @@ trait IndexBLImplTest {
 
     bl.upsert(model3)
     bl.getByName(model3.name).get shouldBe model3
-
 
   }
 

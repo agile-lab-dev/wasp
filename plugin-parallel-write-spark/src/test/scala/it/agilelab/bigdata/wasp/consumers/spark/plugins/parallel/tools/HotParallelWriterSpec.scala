@@ -10,7 +10,7 @@ import org.scalatest.FunSuite
 
 import java.util.concurrent.CountDownLatch
 
-class HotParallelWriterSpec extends FunSuite with SparkSuite with ParallelWriteTest{
+class HotParallelWriterSpec extends FunSuite with SparkSuite with ParallelWriteTest {
   override protected def writeType: String = "Hot"
 
   private val tableSchema = StructType(

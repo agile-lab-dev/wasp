@@ -2,16 +2,17 @@ package it.agilelab.bigdata.wasp.data
 
 import scala.collection.immutable.Queue
 
-/**
-  * @author Eugenio Liso
+/** @author
+  *   Eugenio Liso
   */
 case class RingBufferQueue[A](capacity: Int, size: Int, queue: Queue[A]) extends RingBuffer[A] {
 
   override def push(elem: A): RingBufferQueue[A] = {
     if (size < capacity) RingBufferQueue[A](capacity, size + 1, queue.enqueue(elem))
-    else queue.dequeue match {
-      case (_, queueWithoutOldestItem) => RingBufferQueue[A](capacity, size, queueWithoutOldestItem.enqueue(elem))
-    }
+    else
+      queue.dequeue match {
+        case (_, queueWithoutOldestItem) => RingBufferQueue[A](capacity, size, queueWithoutOldestItem.enqueue(elem))
+      }
   }
 
   override def sumElements(implicit num: Numeric[A]): A = queue.sum

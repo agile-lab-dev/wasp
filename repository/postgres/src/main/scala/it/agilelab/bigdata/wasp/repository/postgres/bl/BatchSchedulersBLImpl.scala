@@ -8,9 +8,10 @@ import it.agilelab.bigdata.wasp.repository.postgres.tables.{BatchSchedulersTable
 
 case class BatchSchedulersBLImpl(waspDB: WaspPostgresDB) extends BatchSchedulersBL with PostgresBL {
 
-  override implicit val tableDefinition: TableDefinition[BatchSchedulerModel,String] = BatchSchedulersTableDefinition
+  implicit override val tableDefinition: TableDefinition[BatchSchedulerModel, String] = BatchSchedulersTableDefinition
 
-  override def getActiveSchedulers(isActive: Boolean): Seq[BatchSchedulerModel] = waspDB.getBy(Array((BatchSchedulersTableDefinition.isActive,isActive)))
+  override def getActiveSchedulers(isActive: Boolean): Seq[BatchSchedulerModel] =
+    waspDB.getBy(Array((BatchSchedulersTableDefinition.isActive, isActive)))
 
   override def persist(schedulerModel: BatchSchedulerModel): Unit = waspDB.insert(schedulerModel)
 

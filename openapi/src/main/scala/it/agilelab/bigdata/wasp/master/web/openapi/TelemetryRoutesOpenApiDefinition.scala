@@ -6,7 +6,15 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
-import it.agilelab.bigdata.wasp.models.{Aggregate, MetricEntry, Metrics, SourceEntry, Sources, TelemetryPoint, TelemetrySeries}
+import it.agilelab.bigdata.wasp.models.{
+  Aggregate,
+  MetricEntry,
+  Metrics,
+  SourceEntry,
+  Sources,
+  TelemetryPoint,
+  TelemetrySeries
+}
 
 trait TelemetryOpenApiComponentSupport
     extends ProductOpenApi

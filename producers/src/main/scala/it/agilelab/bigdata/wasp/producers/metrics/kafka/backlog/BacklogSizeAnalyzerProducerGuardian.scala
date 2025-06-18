@@ -21,11 +21,15 @@ object BacklogSizeAnalyzerProducerGuardian {
   val REQUESTS_TIMEOUT: FiniteDuration = FiniteDuration(5, TimeUnit.SECONDS)
 }
 
-/**
-  * @author Eugenio Liso, Antonio Murgia
+/** @author
+  *   Eugenio Liso, Antonio Murgia
   */
-abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: ProducerBL; val topicBL: TopicBL }, producerName: String, kafkaOffsetCheckerGuardianFactory: ActorRefFactory => ActorRef, requestsTimeout: FiniteDuration)
-    extends ProducerGuardian(env, producerName) {
+abstract class BacklogSizeAnalyzerProducerGuardian[A](
+    env: { val producerBL: ProducerBL; val topicBL: TopicBL },
+    producerName: String,
+    kafkaOffsetCheckerGuardianFactory: ActorRefFactory => ActorRef,
+    requestsTimeout: FiniteDuration
+) extends ProducerGuardian(env, producerName) {
 
   def this(env: { val producerBL: ProducerBL; val topicBL: TopicBL }, producerName: String) = {
     this(
@@ -87,8 +91,8 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
   private def sendMessageKafkaOffsetActor(): Unit = kafkaOffsetCheckerActor ! KafkaOffsetActorAlive
 
   override def startChildActors(): Unit = {
-    //This is the first method called by the WASP framework
-    //The first step is to ensure that we can communicate with the KafkaOffsetChecker Actor
+    // This is the first method called by the WASP framework
+    // The first step is to ensure that we can communicate with the KafkaOffsetChecker Actor
     val cancellableKafka = sendPeriodicTimeoutMessage()
     logger.debug("Send first message to kafka offsetActor")
     sendMessageKafkaOffsetActor()
@@ -97,15 +101,14 @@ abstract class BacklogSizeAnalyzerProducerGuardian[A](env: { val producerBL: Pro
     logger.debug("Waiting for alive response")
   }
 
-  /**
-    * Method to pick the pipegraphs you want to monitor.
-    * Default implementation looks for the configuration: wasp.backlogSizeAnalyzerConfig.pipegraphs
-    * which is expected to be a list of conf which should contain a field named {{{pipegraphName}}} which contains the
-    * pipegraph name
+  /** Method to pick the pipegraphs you want to monitor. Default implementation looks for the configuration:
+    * wasp.backlogSizeAnalyzerConfig.pipegraphs which is expected to be a list of conf which should contain a field
+    * named {{{pipegraphName}}} which contains the pipegraph name
     *
-    * @param allPipegraphs map containing all pipegraphs currently available in Wasp
-    * @return Right list of pipegraphs to monitor, Left error message
-    *
+    * @param allPipegraphs
+    *   map containing all pipegraphs currently available in Wasp
+    * @return
+    *   Right list of pipegraphs to monitor, Left error message
     */
   protected def backlogAnalyzerConfigs(
       allPipegraphs: Map[String, PipegraphModel]

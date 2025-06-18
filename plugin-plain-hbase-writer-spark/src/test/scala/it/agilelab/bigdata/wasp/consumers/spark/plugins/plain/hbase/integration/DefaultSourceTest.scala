@@ -10,9 +10,8 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
-/***
-  * Test suit that runs integration test using an embedded hbase, it is very useful to test if the plugin works
-  * but unluckily it is not stable in the ci environment, also, hbase-testing-utility has runtime library conflict using
+/** * Test suit that runs integration test using an embedded hbase, it is very useful to test if the plugin works but
+  * unluckily it is not stable in the ci environment, also, hbase-testing-utility has runtime library conflict using
   * vanilla flavours, so it can be run only with CDP or CDH flavours
   */
 @Ignore
@@ -22,10 +21,12 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
 
   private val logger = LoggerFactory.getLogger(classOf[DefaultSourceTest])
 
-  case class Test(operation: String,
-                  rowKey: Array[Byte],
-                  columnFamily: Array[Byte],
-                  values: Map[Array[Byte], Array[Byte]])
+  case class Test(
+      operation: String,
+      rowKey: Array[Byte],
+      columnFamily: Array[Byte],
+      values: Map[Array[Byte], Array[Byte]]
+  )
 
   override def beforeAll(): Unit = {
     try {
@@ -49,20 +50,24 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
     "write data to hbase" in {
       val connection = ConnectionFactory.createConnection(hbaseTestUtils.getConfiguration)
 
-      val tableName = "table"
+      val tableName    = "table"
       val columnFamily = "test".getBytes()
       createTable(connection, tableName, columnFamily)
 
-      val data = List(Test(HBaseWriterProperties.UpsertOperation,
-        "1".getBytes(),
-        columnFamily,
-        Map("value".getBytes() -> "v1".getBytes(), "newValue".getBytes() -> "newValue1".getBytes())),
-        Test(HBaseWriterProperties.UpsertOperation,
+      val data = List(
+        Test(
+          HBaseWriterProperties.UpsertOperation,
+          "1".getBytes(),
+          columnFamily,
+          Map("value".getBytes() -> "v1".getBytes(), "newValue".getBytes() -> "newValue1".getBytes())
+        ),
+        Test(
+          HBaseWriterProperties.UpsertOperation,
           "2".getBytes(),
           columnFamily,
-          Map("value".getBytes() -> "v2".getBytes()))
+          Map("value".getBytes() -> "v2".getBytes())
+        )
       )
-
 
       val stream: MemoryStream[Test] = MemoryStream[Test]
 
@@ -89,10 +94,12 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
       result1.isEmpty shouldEqual false
       result2.isEmpty shouldEqual false
 
-      val qualifiers1 = result1.getFamilyMap(columnFamily)
+      val qualifiers1 = result1
+        .getFamilyMap(columnFamily)
         .asScala
         .map { case (k, v) => new String(k) -> new String(v) }
-      val qualifiers2 = result2.getFamilyMap(columnFamily)
+      val qualifiers2 = result2
+        .getFamilyMap(columnFamily)
         .asScala
         .map { case (k, v) => new String(k) -> new String(v) }
 
@@ -108,18 +115,13 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
     "do not insert data without qualifier" in {
       val connection = ConnectionFactory.createConnection(hbaseTestUtils.getConfiguration)
 
-      val tableName = "table"
+      val tableName    = "table"
       val columnFamily = "test".getBytes()
-      val rowKey = "10".getBytes()
+      val rowKey       = "10".getBytes()
 
       createTable(connection, tableName, columnFamily)
 
-      val data = List(Test(HBaseWriterProperties.UpsertOperation,
-        rowKey,
-        columnFamily,
-        Map.empty)
-      )
-
+      val data = List(Test(HBaseWriterProperties.UpsertOperation, rowKey, columnFamily, Map.empty))
 
       val stream: MemoryStream[Test] = MemoryStream[Test]
 
@@ -148,20 +150,25 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
     "delete cell" in {
       val connection = ConnectionFactory.createConnection(hbaseTestUtils.getConfiguration)
 
-      val tableName = "table"
+      val tableName    = "table"
       val columnFamily = "test".getBytes()
-      val rowKey = "20".getBytes()
+      val rowKey       = "20".getBytes()
 
       createTable(connection, tableName, columnFamily)
 
-      val data = List(Test(HBaseWriterProperties.UpsertOperation,
-        rowKey,
-        columnFamily,
-        Map("value".getBytes() -> "v1".getBytes(), "newValue".getBytes() -> "newValue1".getBytes())),
-        Test(HBaseWriterProperties.DeleteCellOperation,
+      val data = List(
+        Test(
+          HBaseWriterProperties.UpsertOperation,
           rowKey,
           columnFamily,
-          Map("newValue".getBytes() -> "newValue1".getBytes()))
+          Map("value".getBytes() -> "v1".getBytes(), "newValue".getBytes() -> "newValue1".getBytes())
+        ),
+        Test(
+          HBaseWriterProperties.DeleteCellOperation,
+          rowKey,
+          columnFamily,
+          Map("newValue".getBytes() -> "newValue1".getBytes())
+        )
       )
 
       val stream: MemoryStream[Test] = MemoryStream[Test]
@@ -197,16 +204,14 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
     "delete row" in {
       val connection = ConnectionFactory.createConnection(hbaseTestUtils.getConfiguration)
 
-      val tableName = "table"
+      val tableName    = "table"
       val columnFamily = "test".getBytes()
-      val rowKey = "30".getBytes()
+      val rowKey       = "30".getBytes()
 
       createTable(connection, tableName, columnFamily)
 
-      val data = List(Test(HBaseWriterProperties.UpsertOperation,
-        rowKey,
-        columnFamily,
-        Map("value".getBytes() -> "v".getBytes())),
+      val data = List(
+        Test(HBaseWriterProperties.UpsertOperation, rowKey, columnFamily, Map("value".getBytes() -> "v".getBytes())),
         Test(HBaseWriterProperties.DeleteRowOperation, rowKey, "".getBytes(), Map.empty)
       )
 
@@ -234,20 +239,24 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
     }
 
     "write to hbase and create hbase table if not exists" in {
-      val tableName = "testTable"
-      val columnFamily = "testFamily"
+      val tableName     = "testTable"
+      val columnFamily  = "testFamily"
       val columnFamily2 = "testFamily2"
 
-      val data = List(Test(HBaseWriterProperties.UpsertOperation,
-        "1".getBytes(),
-        columnFamily.getBytes(),
-        Map("value".getBytes() -> "v1".getBytes())),
-        Test(HBaseWriterProperties.UpsertOperation,
+      val data = List(
+        Test(
+          HBaseWriterProperties.UpsertOperation,
+          "1".getBytes(),
+          columnFamily.getBytes(),
+          Map("value".getBytes() -> "v1".getBytes())
+        ),
+        Test(
+          HBaseWriterProperties.UpsertOperation,
           "2".getBytes(),
           columnFamily2.getBytes(),
-          Map("value".getBytes() -> "v2".getBytes()))
+          Map("value".getBytes() -> "v2".getBytes())
+        )
       )
-
 
       val stream: MemoryStream[Test] = MemoryStream[Test]
 
@@ -269,7 +278,7 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
       stream.commit(offset.asInstanceOf[LongOffset])
 
       val connection = ConnectionFactory.createConnection(hbaseTestUtils.getConfiguration)
-      val hTable = connection.getTable(TableName.valueOf(tableName))
+      val hTable     = connection.getTable(TableName.valueOf(tableName))
 
       val result1 = hTable.get(new Get("1".getBytes()))
       val result2 = hTable.get(new Get("2".getBytes()))
@@ -277,10 +286,12 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
       result1.isEmpty shouldEqual false
       result2.isEmpty shouldEqual false
 
-      val qualifiers1 = result1.getFamilyMap(columnFamily.getBytes())
+      val qualifiers1 = result1
+        .getFamilyMap(columnFamily.getBytes())
         .asScala
         .map { case (k, v) => new String(k) -> new String(v) }
-      val qualifiers2 = result2.getFamilyMap(columnFamily2.getBytes())
+      val qualifiers2 = result2
+        .getFamilyMap(columnFamily2.getBytes())
         .asScala
         .map { case (k, v) => new String(k) -> new String(v) }
 
@@ -293,9 +304,7 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
 
   }
 
-  private def createTable(connection: Connection,
-                          tableName: String,
-                          columnFamily: Array[Byte]): Unit = {
+  private def createTable(connection: Connection, tableName: String, columnFamily: Array[Byte]): Unit = {
     val tableToCreate = TableName.valueOf(tableName)
 
     if (!connection.getAdmin.isTableAvailable(tableToCreate)) {
@@ -310,6 +319,4 @@ class DefaultSourceTest extends TestFixture with SparkSuite with BeforeAndAfterA
 
   }
 
-
 }
-

@@ -7,23 +7,24 @@ import org.quartz.{Job, JobExecutionContext, JobExecutionException}
 
 import scala.beans.BeanProperty
 
-/**
-	* A simple Quartz 2 job that sends a StartBatchJobMessage to the configured SparkConsumersBatchMasterGuardian with the configured
-	* job id.
-	*
-	* @author Nicolò Bidotti
-	*/
+/** A simple Quartz 2 job that sends a StartBatchJobMessage to the configured SparkConsumersBatchMasterGuardian with the
+  * configured job id.
+  *
+  * @author
+  *   Nicolò Bidotti
+  */
 class StartBatchJobSender() extends Job {
 
-	@BeanProperty
-	var jobId: String = _ // automatically populated by quartz with the corresponding JobDataMap key-value
+  @BeanProperty
+  var jobId: String = _ // automatically populated by quartz with the corresponding JobDataMap key-value
 
-	@BeanProperty
-	var sparkConsumersBatchMasterGuardianActorPath: String = _ // automatically populated by quartz with the corresponding JobDataMap key-value
-	
-	@throws[JobExecutionException]
-	def execute(context: JobExecutionContext): Unit = {
-		val batchJobActorRef = WaspSystem.actorSystem.actorSelection(getSparkConsumersBatchMasterGuardianActorPath)
-		batchJobActorRef ! StartBatchJob(getJobId, ConfigFactory.empty)
-	}
+  @BeanProperty
+  var sparkConsumersBatchMasterGuardianActorPath: String =
+    _ // automatically populated by quartz with the corresponding JobDataMap key-value
+
+  @throws[JobExecutionException]
+  def execute(context: JobExecutionContext): Unit = {
+    val batchJobActorRef = WaspSystem.actorSystem.actorSelection(getSparkConsumersBatchMasterGuardianActorPath)
+    batchJobActorRef ! StartBatchJob(getJobId, ConfigFactory.empty)
+  }
 }

@@ -8,8 +8,7 @@ object MetadataUtils {
 
   /** Retrieve an array of column with struct type expanse.
     */
-  def flatMetadataSchema(schema: StructType,
-                         prefix: Option[String]): Array[Column] = {
+  def flatMetadataSchema(schema: StructType, prefix: Option[String]): Array[Column] = {
     schema.fields.flatMap(f => {
       if (f.name == "metadata" || prefix.getOrElse("") == "metadata") {
         val colName =
@@ -17,7 +16,7 @@ object MetadataUtils {
 
         f.dataType match {
           case st: StructType => flatMetadataSchema(st, Some(colName))
-          case _ => Array(col(colName).alias(colName))
+          case _              => Array(col(colName).alias(colName))
         }
       } else {
         Array(col(f.name))

@@ -4,7 +4,7 @@ import io.swagger.v3.oas.models.media.{ComposedSchema, Schema, StringSchema}
 import it.agilelab.bigdata.wasp.models.{MultiTopicModel, SubjectStrategy, TopicCompression, TopicModel}
 
 trait TopicModelOpenApiComponentSupport
-  extends ProducerOpenApiComponentSupport
+    extends ProducerOpenApiComponentSupport
     with LangOpenApi
     with CollectionsOpenApi
     with BsonDocumentOpenApiDefinition {

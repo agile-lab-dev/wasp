@@ -26,16 +26,15 @@ class MockPipegraphBl(instanceBl: PipegraphInstanceBl) extends PipegraphBL {
 
     val allowedStates: Set[PipegraphStatus] = Set(PipegraphStatus.PENDING, PipegraphStatus.PROCESSING)
 
-
-    instances().all()
+    instances()
+      .all()
       .filter(instance => allowedStates.contains(instance.status))
       .flatMap(instance => getByName(instance.name))
 
   }
 
-
   override def insertIfNotExists(pipegraph: PipegraphModel): Unit = {
-    if(getByName(pipegraph.name).isEmpty) insert(pipegraph)
+    if (getByName(pipegraph.name).isEmpty) insert(pipegraph)
   }
 
   override def getByName(name: String): Option[PipegraphModel] =
@@ -56,6 +55,6 @@ class MockPipegraphBl(instanceBl: PipegraphInstanceBl) extends PipegraphBL {
   }
 
   override def upsert(pipegraph: PipegraphModel): Unit =
-    if(getByName(pipegraph.name).isDefined) update(pipegraph)
+    if (getByName(pipegraph.name).isDefined) update(pipegraph)
     else insert(pipegraph)
 }

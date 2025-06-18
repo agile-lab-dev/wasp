@@ -12,8 +12,8 @@ import scala.collection.JavaConverters._
 
 class WaspKafkaReader[K, V](consumerConfig: Properties) extends Logging {
 
-  def this(conf: KafkaConfigModel, group: String, zookeeper: String) = this(WaspKafkaReader.createConfig(
-    conf.connections.map(x => x.toString).toSet, group, zookeeper))
+  def this(conf: KafkaConfigModel, group: String, zookeeper: String) =
+    this(WaspKafkaReader.createConfig(conf.connections.map(x => x.toString).toSet, group, zookeeper))
 
   logger.info(s"consumerConfig $consumerConfig")
 
@@ -41,7 +41,6 @@ class WaspKafkaReader[K, V](consumerConfig: Properties) extends Logging {
   def close(): Unit = consumer.close()
 
 }
-
 
 object WaspKafkaReader {
 

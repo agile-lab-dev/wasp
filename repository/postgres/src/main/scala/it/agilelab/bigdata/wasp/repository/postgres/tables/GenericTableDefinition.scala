@@ -1,6 +1,6 @@
 package it.agilelab.bigdata.wasp.repository.postgres.tables
 
-import it.agilelab.bigdata.wasp.models.{GenericModel}
+import it.agilelab.bigdata.wasp.models.GenericModel
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 

@@ -13,8 +13,8 @@ val bumpPatch       = taskKey[String]("Bump patch version of the project")
 val majorMinor      = settingKey[String]("Print {major}.{minor} version").withRank(KeyRanks.Invisible)
 val majorMinorPatch = settingKey[String]("Print {major}.{minor}.{patch} version").withRank(KeyRanks.Invisible)
 
-bumpMajor := VersionBumper.bumpMajor(version.value, sLog.value).toString()
-bumpMinor := VersionBumper.bumpMinor(version.value, sLog.value).toString()
-bumpPatch := VersionBumper.bumpPatch(version.value, sLog.value).toString()
-majorMinor := BranchingModelSupport.BaseVersion.parse(version.value).map(_.majorMinor).right.get
+bumpMajor       := VersionBumper.bumpMajor(version.value, sLog.value).toString()
+bumpMinor       := VersionBumper.bumpMinor(version.value, sLog.value).toString()
+bumpPatch       := VersionBumper.bumpPatch(version.value, sLog.value).toString()
+majorMinor      := BranchingModelSupport.BaseVersion.parse(version.value).map(_.majorMinor).right.get
 majorMinorPatch := BranchingModelSupport.BaseVersion.parse(version.value).map(_.majorMinorPatch).right.get

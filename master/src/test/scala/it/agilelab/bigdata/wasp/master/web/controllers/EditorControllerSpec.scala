@@ -31,9 +31,9 @@ class EditorControllerSpec extends FlatSpec with ScalatestRouteTest with Matcher
 
   val editroService          = new MockEditorService
   val pipegraphEditorService = new MockPipegraphEditorService
-  val controller       = new EditorController(editroService, pipegraphEditorService)
-  val processGroupName = "testName"
-  val processGroupId   = "id"
+  val controller             = new EditorController(editroService, pipegraphEditorService)
+  val processGroupName       = "testName"
+  val processGroupId         = "id"
 
   it should "Respond a post newEditorRequest" in {
     val newEditorRequest = Post(

@@ -6,7 +6,7 @@ import org.apache.spark.TaskContext
 
 trait EnrichmentStrategy extends Strategy {
 
-  private[consumers] var enricherConfig : RestEnrichmentConfigModel = null
+  private[consumers] var enricherConfig: RestEnrichmentConfigModel = null
 
   def enricher(sourceKey: String): Enricher = {
 
@@ -14,12 +14,14 @@ trait EnrichmentStrategy extends Strategy {
 
     val enricher = sourceInfo.kind.toLowerCase match {
       case "http" => new HttpEnricher(sourceInfo)
-      case _ => Class.forName(sourceInfo.kind).getDeclaredConstructor().newInstance().asInstanceOf[Enricher]
+      case _      => Class.forName(sourceInfo.kind).getDeclaredConstructor().newInstance().asInstanceOf[Enricher]
     }
 
-    TaskContext.get().addTaskCompletionListener[Unit](task => {
-      enricher.close()
-    })
+    TaskContext
+      .get()
+      .addTaskCompletionListener[Unit](task => {
+        enricher.close()
+      })
 
     enricher
   }

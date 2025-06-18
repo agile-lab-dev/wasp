@@ -13,15 +13,13 @@ import org.bson.BsonDocument
 
 import scala.collection.JavaConverters._
 
-class MongoForeachRddWriter (writeConfig: WriteConfig, schema: StructType) extends ForeachWriter[Row] {
+class MongoForeachRddWriter(writeConfig: WriteConfig, schema: StructType) extends ForeachWriter[Row] {
 
-  var mongoConnector: MongoConnector = _
-  var mapper: Row => BsonDocument = _
-  var fieldNames: Seq[String] = _
-  var queryKeyList: Seq[String] = _
+  var mongoConnector: MongoConnector      = _
+  var mapper: Row => BsonDocument         = _
+  var fieldNames: Seq[String]             = _
+  var queryKeyList: Seq[String]           = _
   var batch: util.ArrayList[BsonDocument] = _
-
-
 
   override def open(partitionId: Long, version: Long): Boolean = {
     mongoConnector = MongoConnector(writeConfig.asOptions)
@@ -36,37 +34,42 @@ class MongoForeachRddWriter (writeConfig: WriteConfig, schema: StructType) exten
 
     batch.add(mapper(value))
 
-    if(batch.size()>=writeConfig.maxBatchSize) {
+    if (batch.size() >= writeConfig.maxBatchSize) {
       writeBatch
     }
   }
 
   private def writeBatch() = {
-    mongoConnector.withCollectionDo(writeConfig, { collection: MongoCollection[BsonDocument] =>
+    mongoConnector.withCollectionDo(
+      writeConfig,
+      { collection: MongoCollection[BsonDocument] =>
+        val updateOptions = new UpdateOptions().upsert(true)
+        val requests: util.List[_ <: WriteModel[BsonDocument]] = batch.asScala
+          .map(doc =>
+            if (queryKeyList.forall(doc.containsKey(_))) {
+              val queryDocument = new BsonDocument()
+              queryKeyList.foreach(key => queryDocument.append(key, doc.get(key)))
+              if (writeConfig.replaceDocument) {
+                new ReplaceOneModel[BsonDocument](queryDocument, doc, new ReplaceOptions().upsert(true))
+              } else {
+                queryDocument.keySet().asScala.foreach(doc.remove(_))
+                new UpdateOneModel[BsonDocument](queryDocument, new BsonDocument("$set", doc), updateOptions)
+              }
+            } else {
+              new InsertOneModel[BsonDocument](doc)
+            }
+          )
+          .asJava
 
-      val updateOptions = new UpdateOptions().upsert(true)
-      val requests: util.List[_ <: WriteModel[BsonDocument]] = batch.asScala.map(doc =>
-        if (queryKeyList.forall(doc.containsKey(_)) ) {
-          val queryDocument = new BsonDocument()
-          queryKeyList.foreach(key => queryDocument.append(key, doc.get(key)))
-          if (writeConfig.replaceDocument) {
-            new ReplaceOneModel[BsonDocument](queryDocument, doc, new ReplaceOptions().upsert(true))
-          } else {
-            queryDocument.keySet().asScala.foreach(doc.remove(_))
-            new UpdateOneModel[BsonDocument](queryDocument, new BsonDocument("$set", doc), updateOptions)
-          }
-        } else {
-          new InsertOneModel[BsonDocument](doc)
-        }).asJava
-
-      collection.bulkWrite(requests, new BulkWriteOptions().ordered(writeConfig.ordered))
-      batch.clear()
-    })
+        collection.bulkWrite(requests, new BulkWriteOptions().ordered(writeConfig.ordered))
+        batch.clear()
+      }
+    )
   }
 
   override def close(errorOrNull: Throwable): Unit = {
 
-    if(batch.size()>0){
+    if (batch.size() > 0) {
       writeBatch
     }
     batch.clear()
@@ -74,7 +77,7 @@ class MongoForeachRddWriter (writeConfig: WriteConfig, schema: StructType) exten
   }
 }
 
-
-object MongoForeachRddWriter{
-  def apply(sparkConf: SparkConf, schema: StructType): MongoForeachRddWriter = new MongoForeachRddWriter(WriteConfig(sparkConf), schema)
+object MongoForeachRddWriter {
+  def apply(sparkConf: SparkConf, schema: StructType): MongoForeachRddWriter =
+    new MongoForeachRddWriter(WriteConfig(sparkConf), schema)
 }

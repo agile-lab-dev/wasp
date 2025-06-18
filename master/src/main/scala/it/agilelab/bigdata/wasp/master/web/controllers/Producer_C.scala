@@ -13,8 +13,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-/**
-  * Created by Agile Lab s.r.l. on 09/08/2017.
+/** Created by Agile Lab s.r.l. on 09/08/2017.
   */
 object Producer_C extends Directives with JsonSupport {
 
@@ -105,9 +104,9 @@ object Producer_C extends Directives with JsonSupport {
               decodeRequest {
                 entity(as[JsValue]) { json: JsValue =>
                   complete {
-                    val request = json.convertTo[RestProducerModel]
+                    val request    = json.convertTo[RestProducerModel]
                     val httpMethod = HttpMethod.custom(request.httpMethod)
-                    val data = request.data
+                    val data       = request.data
 
                     ModelKey
                     WaspSystem.??[Either[String, String]](

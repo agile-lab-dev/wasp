@@ -8,7 +8,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.{BeforeAndAfterAll, EitherValues, Matchers, WordSpecLike}
 
 class FifoSchedulingStrategySpec
-  extends WordSpecLike
+    extends WordSpecLike
     with BeforeAndAfterAll
     with Matchers
     with Eventually
@@ -29,15 +29,17 @@ class FifoSchedulingStrategySpec
 
       val initialSchedulingStrategy = new FifoSchedulingStrategyFactory().create
 
-
-      val collaborators: Set[Collaborator] = Seq.range(0L, 3L).map { i =>
-        Collaborator(UniqueAddress(Address("tcp", "wasp"), i), null, Set("consumer"))
-      }.toSet
-
+      val collaborators: Set[Collaborator] = Seq
+        .range(0L, 3L)
+        .map { i =>
+          Collaborator(UniqueAddress(Address("tcp", "wasp"), i), null, Set("consumer"))
+        }
+        .toSet
 
       Seq.range(0L, 6L).map(_ % collaborators.size).foldLeft(initialSchedulingStrategy) {
         case (currentSchedulingStrategy, currentCollaboratorIndex) =>
-          val (chosenCollaborator, updatedSchedulingStrategy) = currentSchedulingStrategy.choose(collaborators, pipegraph).right.value
+          val (chosenCollaborator, updatedSchedulingStrategy) =
+            currentSchedulingStrategy.choose(collaborators, pipegraph).right.value
           chosenCollaborator.address.longUid should be(currentCollaboratorIndex)
           updatedSchedulingStrategy
       }
@@ -47,31 +49,35 @@ class FifoSchedulingStrategySpec
 
       val initialSchedulingStrategy = new FifoSchedulingStrategyFactory().create
 
-
-      val collaborators: Set[Collaborator] = Seq.range(0L, 3L).map { i =>
-        Collaborator(UniqueAddress(Address("tcp", "wasp"), i), null, Set("consumer"))
-      }.toSet
-
+      val collaborators: Set[Collaborator] = Seq
+        .range(0L, 3L)
+        .map { i =>
+          Collaborator(UniqueAddress(Address("tcp", "wasp"), i), null, Set("consumer"))
+        }
+        .toSet
 
       val primedStrategy = Seq.range(0L, 6L).map(_ % collaborators.size).foldLeft(initialSchedulingStrategy) {
         case (currentSchedulingStrategy, currentCollaboratorIndex) =>
-          val (chosenCollaborator, updatedSchedulingStrategy) = currentSchedulingStrategy.choose(collaborators, pipegraph).right.value
+          val (chosenCollaborator, updatedSchedulingStrategy) =
+            currentSchedulingStrategy.choose(collaborators, pipegraph).right.value
           chosenCollaborator.address.longUid should be(currentCollaboratorIndex)
           updatedSchedulingStrategy
       }
 
       val withoutCollaborator0 = collaborators.filterNot(_.address.longUid == 0)
 
-      val (shouldBeCollaborator1, strategyThatWillSelectCollaborator2) = primedStrategy.choose(withoutCollaborator0, pipegraph).right.value
+      val (shouldBeCollaborator1, strategyThatWillSelectCollaborator2) =
+        primedStrategy.choose(withoutCollaborator0, pipegraph).right.value
 
       shouldBeCollaborator1.address.longUid should be(1)
 
-
-      val (shouldBeCollaborator2, strategyThatWillSelectCollaborator1Again) = strategyThatWillSelectCollaborator2.choose(withoutCollaborator0, pipegraph).right.value
+      val (shouldBeCollaborator2, strategyThatWillSelectCollaborator1Again) =
+        strategyThatWillSelectCollaborator2.choose(withoutCollaborator0, pipegraph).right.value
 
       shouldBeCollaborator2.address.longUid should be(2)
 
-      val (shouldBeCollaborator1Again, _) = strategyThatWillSelectCollaborator1Again.choose(withoutCollaborator0, pipegraph).right.value
+      val (shouldBeCollaborator1Again, _) =
+        strategyThatWillSelectCollaborator1Again.choose(withoutCollaborator0, pipegraph).right.value
 
       shouldBeCollaborator1Again.address.longUid should be(1)
 
@@ -79,4 +85,3 @@ class FifoSchedulingStrategySpec
   }
 
 }
-

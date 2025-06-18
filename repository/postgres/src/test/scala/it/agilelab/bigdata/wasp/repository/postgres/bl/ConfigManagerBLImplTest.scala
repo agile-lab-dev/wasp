@@ -6,28 +6,30 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-trait ConfigManagerBLImplTest extends JsonSupport{
-  self : PostgresSuite =>
+trait ConfigManagerBLImplTest extends JsonSupport {
+  self: PostgresSuite =>
 
   private lazy val bl = ConfigManagerBLImpl(pgDB)
 
   it should "test Config manager for postgres" in {
     bl.createTable()
-    val jdbcConfigModel =JdbcConfigModel(Map.empty,ConfigManager.jdbcConfigName)
-    bl.retrieveConf[JdbcConfigModel](jdbcConfigModel,jdbcConfigModel.name).get shouldBe jdbcConfigModel
+    val jdbcConfigModel = JdbcConfigModel(Map.empty, ConfigManager.jdbcConfigName)
+    bl.retrieveConf[JdbcConfigModel](jdbcConfigModel, jdbcConfigModel.name).get shouldBe jdbcConfigModel
     bl.getByName[JdbcConfigModel](jdbcConfigModel.name).get shouldBe jdbcConfigModel
 
     bl.getByName[JdbcConfigModel]("name_2").isEmpty shouldBe true
 
-    val compilerConfigModel = CompilerConfigModel(4,ConfigManager.compilerConfigName)
-    val compilerConfigModelBis = CompilerConfigModel(8,ConfigManager.compilerConfigName)
+    val compilerConfigModel    = CompilerConfigModel(4, ConfigManager.compilerConfigName)
+    val compilerConfigModelBis = CompilerConfigModel(8, ConfigManager.compilerConfigName)
 
-    bl.retrieveConf[CompilerConfigModel](compilerConfigModel,compilerConfigModel.name).get shouldBe compilerConfigModel
-    bl.retrieveConf[CompilerConfigModel](compilerConfigModelBis,compilerConfigModelBis.name).get shouldBe compilerConfigModel
+    bl.retrieveConf[CompilerConfigModel](compilerConfigModel, compilerConfigModel.name).get shouldBe compilerConfigModel
+    bl.retrieveConf[CompilerConfigModel](compilerConfigModelBis, compilerConfigModelBis.name)
+      .get shouldBe compilerConfigModel
 
-
-
-    bl.retrieveDBConfig() should contain theSameElementsAs Seq(jdbcConfigModel.toJson.toString(),compilerConfigModel.toJson.toString())
+    bl.retrieveDBConfig() should contain theSameElementsAs Seq(
+      jdbcConfigModel.toJson.toString(),
+      compilerConfigModel.toJson.toString()
+    )
 
   }
 

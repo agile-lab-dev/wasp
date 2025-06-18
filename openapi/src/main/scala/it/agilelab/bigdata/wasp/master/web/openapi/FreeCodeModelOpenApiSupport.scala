@@ -10,7 +10,6 @@ trait FreeCodeModelOpenApiSupport extends ProductOpenApi with LangOpenApi with C
   implicit lazy val freeCodeOpenApi: ToOpenApiSchema[FreeCode] =
     product1(FreeCode.apply)
 
-
   implicit lazy val completionModelOpenApi: ToOpenApiSchema[CompletionModel] =
     product2(CompletionModel.apply)
 
@@ -30,6 +29,5 @@ trait FreeCodeModelOpenApiSupport extends ProductOpenApi with LangOpenApi with C
         )
     }
   }
-
 
 }

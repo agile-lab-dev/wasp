@@ -1,6 +1,12 @@
 package it.agilelab.bigdata.wasp.whitelabel.models.example.iot
 
-import it.agilelab.bigdata.wasp.models.{PipegraphModel, StrategyModel, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  PipegraphModel,
+  StrategyModel,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  WriterModel
+}
 
 private[wasp] object IoTIndustrialPlantPipegraphModel {
 
@@ -10,30 +16,29 @@ private[wasp] object IoTIndustrialPlantPipegraphModel {
     owner = "user",
     isSystem = false,
     creationTime = System.currentTimeMillis,
-
     structuredStreamingComponents = List(
       StructuredStreamingETLModel(
-	      name = "Write on console",
-	      streamingInput = StreamingReaderModel.kafkaReader(
-			      name = "Read from plant topic",
-			      topicModel = IoTIndustrialPlantTopicModel.industrialPlantTopicModel,
-			      rateLimit = None
-		      ),
-	      staticInputs = List.empty,
-	      streamingOutput =  writer, //WriterModel.consoleWriter("console-writer"),
-	      mlModels = List.empty,
+        name = "Write on console",
+        streamingInput = StreamingReaderModel.kafkaReader(
+          name = "Read from plant topic",
+          topicModel = IoTIndustrialPlantTopicModel.industrialPlantTopicModel,
+          rateLimit = None
+        ),
+        staticInputs = List.empty,
+        streamingOutput = writer, // WriterModel.consoleWriter("console-writer"),
+        mlModels = List.empty,
         strategy = Some(
           StrategyModel(
             className = "it.agilelab.bigdata.wasp.consumers.spark.strategies.DropKafkaMetadata"
           )
         ),
-	      triggerIntervalMs = None,
-	      options = Map()
+        triggerIntervalMs = None,
+        options = Map()
       )
     ),
+    dashboard = None
+  )
 
-    dashboard = None)
-
-
-  private def writer: WriterModel = WriterModel.solrWriter("Write IoT Industrial Plant data to Solr", IoTIndustrialPlantIndexModel())
+  private def writer: WriterModel =
+    WriterModel.solrWriter("Write IoT Industrial Plant data to Solr", IoTIndustrialPlantIndexModel())
 }

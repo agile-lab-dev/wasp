@@ -9,26 +9,27 @@ import it.agilelab.bigdata.wasp.models.{ReaderModel, StreamingReaderModel, Struc
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
-
-/**
-	* A WASP consumers Spark plugin provides streaming/batch read/write functionality for a particular `DatastoreProduct`
+/** A WASP consumers Spark plugin provides streaming/batch read/write functionality for a particular `DatastoreProduct`
   * for Spark based consumers.
-	*
-	* @author Nicolò Bidotti
-	*/
+  *
+  * @author
+  *   Nicolò Bidotti
+  */
 trait WaspConsumersSparkPlugin {
-	def datastoreProduct: DatastoreProduct
-	def initialize(waspDB: WaspDB)
-	def getValidationRules: Seq[ValidationRule]
+  def datastoreProduct: DatastoreProduct
+  def initialize(waspDB: WaspDB)
+  def getValidationRules: Seq[ValidationRule]
 
-	def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                        structuredStreamingModel: StructuredStreamingETLModel,
-                                        writerModel: WriterModel): SparkStructuredStreamingWriter
-	def getSparkStructuredStreamingReader(ss: SparkSession,
-	                                      structuredStreamingETLModel: StructuredStreamingETLModel,
-	                                      streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader
-	def getSparkBatchWriter(sc: SparkContext,
-                          writerModel: WriterModel): SparkBatchWriter
-	def getSparkBatchReader(sc: SparkContext,
-                          readerModel: ReaderModel): SparkBatchReader
+  def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): SparkStructuredStreamingWriter
+  def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader
+  def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter
+  def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader
 }

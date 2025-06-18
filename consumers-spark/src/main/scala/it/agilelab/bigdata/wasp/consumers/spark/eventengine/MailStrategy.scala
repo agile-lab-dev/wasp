@@ -27,9 +27,7 @@ class MailStrategy extends Strategy {
   // Has to be lazy because it will be evaluated only when transform is called
   lazy val innerMailStrategy = new InnerMailStrategy(configuration)
 
-  /**
-    *
-    * @param dataFrames
+  /** @param dataFrames
     * @return
     */
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
@@ -49,9 +47,19 @@ class InnerMailStrategy(config: Config) {
     val broadcastTemplateMap: Broadcast[Map[String, String]] =
       dataFrame.sparkSession.sparkContext.broadcast(templateStrings)
 
-    val rawMails     = fetchRawMails(dataFrame, settings.rules)                            // Merge N rules and applies them together to obtain a raw mail df. 1 row = 1-N events
-    val explodedMail = explodeByRule(rawMails, settings.rules)                             // Cross-join raw mails with rules and filter out meaningless rows. 1 row = 1 mail
-    val refinedMails = enrichAndRefine(explodedMail, settings.rules, broadcastTemplateMap) // Transform the DataModel from the one of the events to the one of the mails.
+    val rawMails = fetchRawMails(
+      dataFrame,
+      settings.rules
+    ) // Merge N rules and applies them together to obtain a raw mail df. 1 row = 1-N events
+    val explodedMail = explodeByRule(
+      rawMails,
+      settings.rules
+    ) // Cross-join raw mails with rules and filter out meaningless rows. 1 row = 1 mail
+    val refinedMails = enrichAndRefine(
+      explodedMail,
+      settings.rules,
+      broadcastTemplateMap
+    ) // Transform the DataModel from the one of the events to the one of the mails.
 
     settings.enableMailAggregation match {
       case true  => aggregateMails(refinedMails)
@@ -59,57 +67,54 @@ class InnerMailStrategy(config: Config) {
     }
   }
 
-  /**
-    * Create an SQL statement from an input DataFrame of Event objects and N mailing rules. The resulting df contains M + N columns,
-    * where M is the number of columns of Event case class, and each additional column contains a flag which indicates
-    * if that row has to be turned into an e-mail.
-    * Each row of the output DF is a row of the input DF which triggered at least one mail statement, the same line can therefore
-    * correspond to more than one e-mail to send
+  /** Create an SQL statement from an input DataFrame of Event objects and N mailing rules. The resulting df contains M
+    * + N columns, where M is the number of columns of Event case class, and each additional column contains a flag
+    * which indicates if that row has to be turned into an e-mail. Each row of the output DF is a row of the input DF
+    * which triggered at least one mail statement, the same line can therefore correspond to more than one e-mail to
+    * send
     *
     * Example
     *
     * Input DF of events:
     *
-    * +---------------+----------------+--------------------+--------------+---------+---------+-----------+--------------------+
-    * |  eventRuleName|          source|             payload|     eventType| severity| sourceId|    eventId|           timestamp|
-    * +---------------+----------------+--------------------+--------------+---------+---------+-----------+--------------------+
-    * |HighTemperature|streamingSource1|{"name":"sensor_2...|   TempControl|     WARN| sensor_2| 8589934592|2019-04-01 16:55:...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_5...|   TempControl| CRITICAL| sensor_5| 8589934593|2019-04-01 16:55:...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_8...|   TempControl| CRITICAL| sensor_8| 8589934594|2019-04-01 16:55:...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|     WARN|sensor_12| 8589934595|2019-04-01 16:55:...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl| CRITICAL|sensor_13| 8589934596|2019-04-01 16:55:...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|     WARN|sensor_16| 8589934597|2019-04-01 16:55:...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|     WARN|sensor_17| 8589934598|2019-04-01 16:55:...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|     WARN|sensor_19| 8589934599|2019-04-01 16:55:...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers| LOW_TEMP| sensor_1|25769803776|2019-04-01 16:55:...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_5...|OddHighNumbers|HIGH_TEMP| sensor_5|25769803777|2019-04-01 16:55:...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers| LOW_TEMP|sensor_11|25769803778|2019-04-01 16:55:...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers| LOW_TEMP|sensor_17|25769803779|2019-04-01 16:55:...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers| LOW_TEMP|sensor_19|25769803780|2019-04-01 16:55:...|
-    * +---------------+----------------+--------------------+--------------+---------+---------+-----------+--------------------+
+    * |   eventRuleName |           source |              payload |      eventType | severity  | sourceId  |     eventId |            timestamp |
+    * |----------------:|-----------------:|---------------------:|---------------:|:----------|:----------|------------:|---------------------:|
+    * | HighTemperature | streamingSource1 | {"name":"sensor_2... |    TempControl | WARN      | sensor_2  |  8589934592 | 2019-04-01 16:55:... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_5... |    TempControl | CRITICAL  | sensor_5  |  8589934593 | 2019-04-01 16:55:... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_8... |    TempControl | CRITICAL  | sensor_8  |  8589934594 | 2019-04-01 16:55:... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | WARN      | sensor_12 |  8589934595 | 2019-04-01 16:55:... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | CRITICAL  | sensor_13 |  8589934596 | 2019-04-01 16:55:... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | WARN      | sensor_16 |  8589934597 | 2019-04-01 16:55:... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | WARN      | sensor_17 |  8589934598 | 2019-04-01 16:55:... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | WARN      | sensor_19 |  8589934599 | 2019-04-01 16:55:... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP  | sensor_1  | 25769803776 | 2019-04-01 16:55:... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_5... | OddHighNumbers | HIGH_TEMP | sensor_5  | 25769803777 | 2019-04-01 16:55:... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP  | sensor_11 | 25769803778 | 2019-04-01 16:55:... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP  | sensor_17 | 25769803779 | 2019-04-01 16:55:... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP  | sensor_19 | 25769803780 | 2019-04-01 16:55:... |
     *
     * Mailing rules:
     *
-    * mailingRule1: (severity = 'CRITICAL')
-    * mailingRule2: (severity = 'LOW_TEMP' AND eventType = 'OddHighNumbers')
+    * mailingRule1: (severity = 'CRITICAL') mailingRule2: (severity = 'LOW_TEMP' AND eventType = 'OddHighNumbers')
     *
     * Output DF:
     *
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+-------------+-------------+
-    * |  eventRuleName|          source|             payload|     eventType|severity| sourceId|    eventId|           timestamp|rule1_matches|rule2_matches|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+-------------+-------------+
-    * |HighTemperature|streamingSource1|{"name":"sensor_5...|   TempControl|CRITICAL| sensor_5| 8589934593|2019-04-01 16:55:...|         true|        false|
-    * |HighTemperature|streamingSource1|{"name":"sensor_8...|   TempControl|CRITICAL| sensor_8| 8589934594|2019-04-01 16:55:...|         true|        false|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|CRITICAL|sensor_13| 8589934596|2019-04-01 16:55:...|         true|        false|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP| sensor_1|25769803776|2019-04-01 16:55:...|        false|         true|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_11|25769803778|2019-04-01 16:55:...|        false|         true|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_17|25769803779|2019-04-01 16:55:...|        false|         true|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_19|25769803780|2019-04-01 16:55:...|        false|         true|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+-------------+-------------+
+    * |   eventRuleName |           source |              payload |      eventType | severity | sourceId  |     eventId |            timestamp | rule1_matches | rule2_matches |
+    * |----------------:|-----------------:|---------------------:|---------------:|:---------|:----------|------------:|---------------------:|:--------------|:--------------|
+    * | HighTemperature | streamingSource1 | {"name":"sensor_5... |    TempControl | CRITICAL | sensor_5  |  8589934593 | 2019-04-01 16:55:... | true          | false         |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_8... |    TempControl | CRITICAL | sensor_8  |  8589934594 | 2019-04-01 16:55:... | true          | false         |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | CRITICAL | sensor_13 |  8589934596 | 2019-04-01 16:55:... | true          | false         |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_1  | 25769803776 | 2019-04-01 16:55:... | false         | true          |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_11 | 25769803778 | 2019-04-01 16:55:... | false         | true          |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_17 | 25769803779 | 2019-04-01 16:55:... | false         | true          |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_19 | 25769803780 | 2019-04-01 16:55:... | false         | true          |
     *
-    * @param eventDf is the input DataFrame containing events
-    * @param rules   is the sequence of mailing rule
-    * @return a DataFrame containing the rows which triggered at least one e-mail to be sent
+    * @param eventDf
+    *   is the input DataFrame containing events
+    * @param rules
+    *   is the sequence of mailing rule
+    * @return
+    *   a DataFrame containing the rows which triggered at least one e-mail to be sent
     */
   private def fetchRawMails(eventDf: DataFrame, rules: Seq[MailingRule]): DataFrame = {
     val ss = eventDf.sparkSession
@@ -148,42 +153,39 @@ class InnerMailStrategy(config: Config) {
 
   private def randomStr(len: Int): String = Random.alphanumeric.take(len).mkString
 
-  /**
-    * Create an SQL statement which cross-join the raw mails and the mail rules, creating a line for each mail
+  /** Create an SQL statement which cross-join the raw mails and the mail rules, creating a line for each mail
     *
     * Example
     *
     * The input DF is the result of [[fetchRawMails]] example, and the rules are the same previously applied
     *
     * Input DF:
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+-------------+-------------+
-    * |  eventRuleName|          source|             payload|     eventType|severity| sourceId|    eventId|           timestamp|rule1_matches|rule2_matches|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+-------------+-------------+
-    * |HighTemperature|streamingSource1|{"name":"sensor_5...|   TempControl|CRITICAL| sensor_5| 8589934593|2019-04-01 16:55:...|         true|        false|
-    * |HighTemperature|streamingSource1|{"name":"sensor_8...|   TempControl|CRITICAL| sensor_8| 8589934594|2019-04-01 16:55:...|         true|        false|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|CRITICAL|sensor_13| 8589934596|2019-04-01 16:55:...|         true|        false|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP| sensor_1|25769803776|2019-04-01 16:55:...|        false|         true|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_11|25769803778|2019-04-01 16:55:...|        false|         true|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_17|25769803779|2019-04-01 16:55:...|        false|         true|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_19|25769803780|2019-04-01 16:55:...|        false|         true|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+-------------+-------------+
+    * |   eventRuleName |           source |              payload |      eventType | severity | sourceId  |     eventId |            timestamp | rule1_matches | rule2_matches |
+    * |----------------:|-----------------:|---------------------:|---------------:|:---------|:----------|------------:|---------------------:|:--------------|:--------------|
+    * | HighTemperature | streamingSource1 | {"name":"sensor_5... |    TempControl | CRITICAL | sensor_5  |  8589934593 | 2019-04-01 16:55:... | true          | false         |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_8... |    TempControl | CRITICAL | sensor_8  |  8589934594 | 2019-04-01 16:55:... | true          | false         |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | CRITICAL | sensor_13 |  8589934596 | 2019-04-01 16:55:... | true          | false         |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_1  | 25769803776 | 2019-04-01 16:55:... | false         | true          |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_11 | 25769803778 | 2019-04-01 16:55:... | false         | true          |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_17 | 25769803779 | 2019-04-01 16:55:... | false         | true          |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_19 | 25769803780 | 2019-04-01 16:55:... | false         | true          |
     *
     * Output DF:
     *
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+---------------+-----------------+-----------------+------------------+--------------------+
-    * |       ruleName|          source|             payload|     eventType|severity| sourceId|    eventId|           timestamp|mailingRuleName|           mailTo|           mailCc|           mailBcc|        templatePath|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+---------------+-----------------+-----------------+------------------+--------------------+
-    * |HighTemperature|streamingSource1|{"name":"sensor_5...|   TempControl|CRITICAL| sensor_5| 8589934593|2019-04-01 16:55:...|          rule1|rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|./src/resources/t...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_8...|   TempControl|CRITICAL| sensor_8| 8589934594|2019-04-01 16:55:...|          rule1|rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|./src/resources/t...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|CRITICAL|sensor_13| 8589934596|2019-04-01 16:55:...|          rule1|rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP| sensor_1|25769803776|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_11|25769803778|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_17|25769803779|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_19|25769803780|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+---------------+-----------------+-----------------+------------------+--------------------+
+    * |        ruleName |           source |              payload |      eventType | severity | sourceId  |     eventId |            timestamp | mailingRuleName |            mailTo |            mailCc |            mailBcc |         templatePath |
+    * |----------------:|-----------------:|---------------------:|---------------:|:---------|:----------|------------:|---------------------:|:----------------|------------------:|------------------:|-------------------:|---------------------:|
+    * | HighTemperature | streamingSource1 | {"name":"sensor_5... |    TempControl | CRITICAL | sensor_5  |  8589934593 | 2019-04-01 16:55:... | rule1           | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | ./src/resources/t... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_8... |    TempControl | CRITICAL | sensor_8  |  8589934594 | 2019-04-01 16:55:... | rule1           | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | ./src/resources/t... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | CRITICAL | sensor_13 |  8589934596 | 2019-04-01 16:55:... | rule1           | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_1  | 25769803776 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_11 | 25769803778 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_17 | 25769803779 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_19 | 25769803780 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
     *
-    * @param rawMailsDf is the input DataFrame containing raw lines
-    * @param rules      is the sequence of mail rule
+    * @param rawMailsDf
+    *   is the input DataFrame containing raw lines
+    * @param rules
+    *   is the sequence of mail rule
     * @return
     */
   private def explodeByRule(rawMailsDf: DataFrame, rules: Seq[MailingRule]): DataFrame = {
@@ -208,7 +210,7 @@ class InnerMailStrategy(config: Config) {
 
       sb.append(s"$MAILING_RULE_NAME, $MAIL_TO, $MAIL_CC, $MAIL_BCC, $TEMPLATE_KEY ")
 
-      //sb.append(s"$MAILING_RULE_NAME ")
+      // sb.append(s"$MAILING_RULE_NAME ")
 
       sb.append(s"FROM $mailTableName cross join $rulesTableName ")
       sb.append("ON ")
@@ -232,12 +234,11 @@ class InnerMailStrategy(config: Config) {
     explodedMails
   }
 
-  /**
+  /** Transform the data model from the one of the Event to the one of the Mail.
     *
-    * Transform the data model from the one of the Event to the one of the Mail.
-    *
-    * Mail Subject is created applying the subject-expr, and the Mail Content is generated by an UDF which encapsulates the Apache Velocity behaviour
-    * In order to avoid to re-fetch from disk the template file for each entry, template strings are read once in driver string and broadcast to executors
+    * Mail Subject is created applying the subject-expr, and the Mail Content is generated by an UDF which encapsulates
+    * the Apache Velocity behaviour In order to avoid to re-fetch from disk the template file for each entry, template
+    * strings are read once in driver string and broadcast to executors
     *
     * Example
     *
@@ -245,36 +246,37 @@ class InnerMailStrategy(config: Config) {
     *
     * Input DF:
     *
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+---------------+-----------------+-----------------+------------------+--------------------+
-    * |       ruleName|          source|             payload|     eventType|severity| sourceId|    eventId|           timestamp|mailingRuleName|           mailTo|           mailCc|           mailBcc|        templatePath|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+---------------+-----------------+-----------------+------------------+--------------------+
-    * |HighTemperature|streamingSource1|{"name":"sensor_5...|   TempControl|CRITICAL| sensor_5| 8589934593|2019-04-01 16:55:...|          rule1|rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|./src/resources/t...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_8...|   TempControl|CRITICAL| sensor_8| 8589934594|2019-04-01 16:55:...|          rule1|rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|./src/resources/t...|
-    * |HighTemperature|streamingSource1|{"name":"sensor_1...|   TempControl|CRITICAL|sensor_13| 8589934596|2019-04-01 16:55:...|          rule1|rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP| sensor_1|25769803776|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_11|25769803778|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_17|25769803779|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * | OddHighNumbers|streamingSource2|{"name":"sensor_1...|OddHighNumbers|LOW_TEMP|sensor_19|25769803780|2019-04-01 16:55:...|          rule2|rule2@mailTo.test|             null|              null|./src/resources/t...|
-    * +---------------+----------------+--------------------+--------------+--------+---------+-----------+--------------------+---------------+-----------------+-----------------+------------------+--------------------+
+    * |        ruleName |           source |              payload |      eventType | severity | sourceId  |     eventId |            timestamp | mailingRuleName |            mailTo |            mailCc |            mailBcc |         templatePath |
+    * |----------------:|-----------------:|---------------------:|---------------:|:---------|:----------|------------:|---------------------:|:----------------|------------------:|------------------:|-------------------:|---------------------:|
+    * | HighTemperature | streamingSource1 | {"name":"sensor_5... |    TempControl | CRITICAL | sensor_5  |  8589934593 | 2019-04-01 16:55:... | rule1           | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | ./src/resources/t... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_8... |    TempControl | CRITICAL | sensor_8  |  8589934594 | 2019-04-01 16:55:... | rule1           | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | ./src/resources/t... |
+    * | HighTemperature | streamingSource1 | {"name":"sensor_1... |    TempControl | CRITICAL | sensor_13 |  8589934596 | 2019-04-01 16:55:... | rule1           | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_1  | 25769803776 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_11 | 25769803778 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_17 | 25769803779 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
+    * |  OddHighNumbers | streamingSource2 | {"name":"sensor_1... | OddHighNumbers | LOW_TEMP | sensor_19 | 25769803780 | 2019-04-01 16:55:... | rule2           | rule2@mailTo.test |              null |               null | ./src/resources/t... |
     *
     * Output DF:
     *
-    * +-----------------+-----------------+------------------+--------------------+-----------+--------------------+
-    * |           mailTo|           mailCc|           mailBcc|         mailContent|contentType|         mailSubject|
-    * +-----------------+-----------------+------------------+--------------------+-----------+--------------------+
-    * |rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|TEMPLATE 1 event...|  text/html|CRITICAL TEMPERAT...|
-    * |rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|TEMPLATE 1 event...|  text/html|CRITICAL TEMPERAT...|
-    * |rule1@mailTo.test|rule1@mailCc.test|rule1@mailBcc.test|TEMPLATE 1 event...|  text/html|CRITICAL TEMPERAT...|
-    * |rule2@mailTo.test|             null|              null|TEMPLATE 2 event...|  text/html|ODD HIGH TEMPERATURE|
-    * |rule2@mailTo.test|             null|              null|TEMPLATE 2 event...|  text/html|ODD HIGH TEMPERATURE|
-    * |rule2@mailTo.test|             null|              null|TEMPLATE 2 event...|  text/html|ODD HIGH TEMPERATURE|
-    * |rule2@mailTo.test|             null|              null|TEMPLATE 2 event...|  text/html|ODD HIGH TEMPERATURE|
-    * +-----------------+-----------------+------------------+--------------------+-----------+--------------------+
+    * |            mailTo |            mailCc |            mailBcc |         mailContent | contentType |          mailSubject |
+    * |------------------:|------------------:|-------------------:|--------------------:|:------------|---------------------:|
+    * | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | TEMPLATE 1 event... | text/html   | CRITICAL TEMPERAT... |
+    * | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | TEMPLATE 1 event... | text/html   | CRITICAL TEMPERAT... |
+    * | rule1@mailTo.test | rule1@mailCc.test | rule1@mailBcc.test | TEMPLATE 1 event... | text/html   | CRITICAL TEMPERAT... |
+    * | rule2@mailTo.test |              null |               null | TEMPLATE 2 event... | text/html   | ODD HIGH TEMPERATURE |
+    * | rule2@mailTo.test |              null |               null | TEMPLATE 2 event... | text/html   | ODD HIGH TEMPERATURE |
+    * | rule2@mailTo.test |              null |               null | TEMPLATE 2 event... | text/html   | ODD HIGH TEMPERATURE |
+    * | rule2@mailTo.test |              null |               null | TEMPLATE 2 event... | text/html   | ODD HIGH TEMPERATURE |
     *
-    * @param explodedMails        is the dataframe of mails and event data to be parsed
-    * @param rules                it ehe list of mailing rules
-    * @param broadcastTemplateMap is the broadcast variable containing (TemplateKey -> TemplateString) entries. The path of the template from config files is used as TemplateKey
-    * @return A DataFrame of Mail object ready to be sent
+    * @param explodedMails
+    *   is the dataframe of mails and event data to be parsed
+    * @param rules
+    *   it ehe list of mailing rules
+    * @param broadcastTemplateMap
+    *   is the broadcast variable containing (TemplateKey -> TemplateString) entries. The path of the template from
+    *   config files is used as TemplateKey
+    * @return
+    *   A DataFrame of Mail object ready to be sent
     */
   private def enrichAndRefine(
       explodedMails: DataFrame,
@@ -349,12 +351,10 @@ class InnerMailStrategy(config: Config) {
       )
     }
 
-  /**
-    * Merge mails with same recipient concatenating their content.
-    * TODO: Provide finer-grained aggregation at configuration level (based on event properties)
-    * TODO: Provide configurable aggregated mail subject
-    * TODO: Evaluate mail content truncation or evaluate mail content as attachment in case of multi mb mail size
-    * TODO: reduce shuffling amount
+  /** Merge mails with same recipient concatenating their content. TODO: Provide finer-grained aggregation at
+    * configuration level (based on event properties) TODO: Provide configurable aggregated mail subject TODO: Evaluate
+    * mail content truncation or evaluate mail content as attachment in case of multi mb mail size TODO: reduce
+    * shuffling amount
     */
   private def aggregateMails(refinedMails: DataFrame): DataFrame = {
     refinedMails
@@ -368,7 +368,7 @@ class InnerMailStrategy(config: Config) {
 
 object VelocityTemplateComposer {
 
-  //TODO: evaluate a mapPartition to initialize this only once per partition
+  // TODO: evaluate a mapPartition to initialize this only once per partition
   @transient lazy val engine: VelocityEngine = {
     val prop = {
       // TODO: instead of null logging, redirect velocity log to wasp logging

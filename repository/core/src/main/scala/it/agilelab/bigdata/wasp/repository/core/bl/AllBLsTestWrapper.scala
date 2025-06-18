@@ -1,6 +1,16 @@
 package it.agilelab.bigdata.wasp.repository.core.bl
 
-import it.agilelab.bigdata.wasp.models.{BatchJobInstanceModel, BatchJobModel, DatastoreModel, IndexModel, KeyValueModel, MlModelOnlyInfo, ProducerModel, RawModel, TopicModel}
+import it.agilelab.bigdata.wasp.models.{
+  BatchJobInstanceModel,
+  BatchJobModel,
+  DatastoreModel,
+  IndexModel,
+  KeyValueModel,
+  MlModelOnlyInfo,
+  ProducerModel,
+  RawModel,
+  TopicModel
+}
 import org.apache.commons.lang3.SerializationUtils
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
 
@@ -22,12 +32,9 @@ class AllBLsTestWrapper {
       database.find(p => p.name == name)
     }
 
-
-
     override def getAll: Seq[BatchJobModel] = {
       database.toList
     }
-
 
     override def deleteByName(name: String): Unit = {
       val index = database.indexWhere(b => b.name == name)
@@ -35,7 +42,6 @@ class AllBLsTestWrapper {
     }
 
     override def insert(batchJobModel: BatchJobModel): Unit = database :+ batchJobModel
-
 
     override def upsert(batchJobModel: BatchJobModel): Unit = ???
 
@@ -71,12 +77,10 @@ class AllBLsTestWrapper {
 
   val mlModelBL: MlModelBL = new MlModelBL {
 
-
     override protected def saveFile(file: Array[Byte], fileName: String, metadata: BsonDocument): BsonObjectId = ???
 
     val database = new ListBuffer[MlModelOnlyInfo]
-    val fs = new mutable.HashMap[String, Array[Byte]]()
-
+    val fs       = new mutable.HashMap[String, Array[Byte]]()
 
     override def getFileByID(mlModelOnlyInfo: MlModelOnlyInfo): Option[Array[Byte]] = {
       fs.get(mlModelOnlyInfo.modelFileId.get.toString())
@@ -88,21 +92,26 @@ class AllBLsTestWrapper {
 
     override def getSerializedTransformer(mlModelOnlyInfo: MlModelOnlyInfo): Option[Any] = {
       val arrayByte = fs.get(mlModelOnlyInfo.modelFileId.get.toString()).get
-      val obj: Any = SerializationUtils.deserialize[Any](arrayByte)
+      val obj: Any  = SerializationUtils.deserialize[Any](arrayByte)
       Some(obj)
     }
 
-    override def saveTransformer(transformerModel: Serializable, name: String, version: String, timestamp: Long): BsonObjectId = {
+    override def saveTransformer(
+        transformerModel: Serializable,
+        name: String,
+        version: String,
+        timestamp: Long
+    ): BsonObjectId = {
       val arrayByte = SerializationUtils.serialize(transformerModel)
-      val key = BsonObjectId()
+      val key       = BsonObjectId()
       fs.put(key.toString(), arrayByte)
       key
     }
 
     override def getMlModelOnlyInfo(name: String, version: String): Option[MlModelOnlyInfo] = {
-      val model = database.filter(p => p.name == name && p.version == version).maxBy(_.timestamp.getOrElse(0l))
+      val model = database.filter(p => p.name == name && p.version == version).maxBy(_.timestamp.getOrElse(0L))
 
-     Some(model)
+      Some(model)
     }
 
     override def getMlModelOnlyInfo(name: String, version: String, timestamp: Long): Option[MlModelOnlyInfo] = {
@@ -112,27 +121,25 @@ class AllBLsTestWrapper {
 
     override def getAll: Seq[MlModelOnlyInfo] = database
 
-    /**
-     * Delete the metadata and the transformer model in base to name, version, timestamp
-     * @param name
-     * @param version
-     * @param timestamp
-     * @return
-     */
+    /** Delete the metadata and the transformer model in base to name, version, timestamp
+      * @param name
+      * @param version
+      * @param timestamp
+      * @return
+      */
     override def delete(name: String, version: String, timestamp: Long): Unit = ???
 
-    /**
-     * Update only the metadata about the model
-     * @param mlModelOnlyInfo
-     * @return
-     */
+    /** Update only the metadata about the model
+      * @param mlModelOnlyInfo
+      * @return
+      */
     override def updateMlModelOnlyInfo(mlModelOnlyInfo: MlModelOnlyInfo): Unit = ???
   }
 
   val topicBL = new TopicBL {
-    val database = new ListBuffer[DatastoreModel]
+    val database                                                 = new ListBuffer[DatastoreModel]
     override def getByName(name: String): Option[DatastoreModel] = database.find(_.name == name)
-    
+
     override def persist(topicModel: DatastoreModel): Unit = {
       database.+=(topicModel)
     }
@@ -141,12 +148,12 @@ class AllBLsTestWrapper {
 
     override def upsert(topicModel: DatastoreModel): Unit = {
       val exist = getByName(topicModel.name)
-      if(exist.isDefined) database.drop(database.indexOf(exist.get))
-        else persist(topicModel)
+      if (exist.isDefined) database.drop(database.indexOf(exist.get))
+      else persist(topicModel)
     }
 
     override def insertIfNotExists(topicDatastoreModel: DatastoreModel): Unit =
-      if(getByName(topicDatastoreModel.name).isEmpty) persist(topicDatastoreModel)
+      if (getByName(topicDatastoreModel.name).isEmpty) persist(topicDatastoreModel)
   }
 
   val producerBL = new ProducerBL {
@@ -158,16 +165,14 @@ class AllBLsTestWrapper {
       database += producerModel
     }
 
-
-
     override def getByName(name: String): Option[ProducerModel] = database.find(_.name == name)
 
     override def getActiveProducers(isActive: Boolean): Seq[ProducerModel] = database.filter(_.isActive == isActive)
-  
+
     override def getSystemProducers: Seq[ProducerModel] = database.filter(_.isSystem == true)
-  
+
     override def getNonSystemProducers: Seq[ProducerModel] = database.filter(_.isSystem == false)
-  
+
     override def getAll: Seq[ProducerModel] = database.toList
 
     override def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel] = {
@@ -177,25 +182,24 @@ class AllBLsTestWrapper {
         None
     }
 
-    override def persist(producerModel: ProducerModel):  Unit = {
+    override def persist(producerModel: ProducerModel): Unit = {
       database.+=(producerModel)
     }
 
-
     override def upsert(producerModel: ProducerModel): Unit = {
-      if(getByName(producerModel.name).isDefined) update(producerModel)
+      if (getByName(producerModel.name).isDefined) update(producerModel)
       else persist(producerModel)
     }
 
     override def insertIfNotExists(producerModel: ProducerModel): Unit = {
-      if(getByName(producerModel.name).isEmpty) persist(producerModel)
+      if (getByName(producerModel.name).isEmpty) persist(producerModel)
     }
 
     override def getByTopicName(name: String): Seq[ProducerModel] = {
       database.filter(_.topicName.contains(name))
     }
   }
-  
+
   // TODO implement this
   val rawBL = new RawBL {
     override def getByName(name: String): Option[RawModel] = ???
@@ -207,7 +211,8 @@ class AllBLsTestWrapper {
     override def upsert(rawModel: RawModel): Unit = ???
   }
 
-  val keyValueBL = new KeyValueBL {override def getByName(name: String) = ???
+  val keyValueBL = new KeyValueBL {
+    override def getByName(name: String) = ???
 
     override def persist(rawModel: KeyValueModel) = ???
 
@@ -216,4 +221,3 @@ class AllBLsTestWrapper {
     override def upsert(rawModel: KeyValueModel): Unit = ???
   }
 }
-

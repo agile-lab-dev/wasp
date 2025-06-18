@@ -40,7 +40,6 @@ class MultiMasterSpec
   import Protocol._
   import SparkConsumersStreamingMasterGuardian._
 
-
   val slowTimeout: FiniteDuration = 5.minutes
 
   def childCreatorFactory(probe: TestProbe): ChildCreator = { (_, name, factory) =>
@@ -81,9 +80,8 @@ class MultiMasterSpec
             cluster("system-2", props, childCreator) { (cluster2, _, _, shutdown2) =>
               converge(clusterC, cluster0, cluster1, cluster2) {
 
-                probe.expectMsgPF() {
-                  case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
+                probe.expectMsgPF() { case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
+                  probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
                 probe.expectMsgType[HelperEnvelope]
@@ -156,14 +154,12 @@ class MultiMasterSpec
 
               probe.send(proxy0, StartPipegraph(pipegraph.name))
 
-              probe.expectMsgPF(100.seconds) {
-                case PipegraphStarted(pipegraph.name, _) =>
+              probe.expectMsgPF(100.seconds) { case PipegraphStarted(pipegraph.name, _) =>
               }
 
               cluster("system-2", props, childCreator, Set("strange-label")) { (cluster2, _, _, shutdown2) =>
-                probe.expectMsgPF(120.seconds) {
-                  case HelperEnvelope(address, sender, WorkAvailable(pipegraph.name)) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, pipegraph.name))
+                probe.expectMsgPF(120.seconds) { case HelperEnvelope(address, sender, WorkAvailable(pipegraph.name)) =>
+                  probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, pipegraph.name))
                 }
 
                 probe.expectMsgType[HelperEnvelope]
@@ -219,9 +215,8 @@ class MultiMasterSpec
             cluster("system-2", props, childCreator) { (cluster2, _, _, shutdown2) =>
               converge(clusterC, cluster0, cluster1, cluster2) {
 
-                probe.expectMsgPF() {
-                  case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
+                probe.expectMsgPF() { case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
+                  probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
                 probe.expectMsgType[HelperEnvelope]
@@ -353,14 +348,12 @@ class MultiMasterSpec
           cluster("system-1", props, childCreator) { (cluster1, _, _, shutdown1) =>
             cluster("system-2", props, childCreator) { (cluster2, _, _, shutdown2) =>
               converge(clusterC, cluster0, cluster1, cluster2) {
-                probe.expectMsgPF() {
-                  case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
+                probe.expectMsgPF() { case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
+                  probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
-                val address = probe.expectMsgPF() {
-                  case HelperEnvelope(address, _, WorkGiven(_, _)) =>
-                    address
+                val address = probe.expectMsgPF() { case HelperEnvelope(address, _, WorkGiven(_, _)) =>
+                  address
                 }
 
                 Seq(cluster0, cluster1, cluster2).find(_.selfUniqueAddress == address).foreach { cluster =>
@@ -368,13 +361,11 @@ class MultiMasterSpec
                   cluster.down(cluster.selfAddress)
                 }
 
-                probe.expectMsgPF(slowTimeout) {
-                  case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
-                    probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
+                probe.expectMsgPF(slowTimeout) { case HelperEnvelope(address, sender, WorkAvailable("pipegraph-a")) =>
+                  probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, "pipegraph-a"))
                 }
 
-                probe.expectMsgPF(slowTimeout) {
-                  case HelperEnvelope(address, sender, WorkGiven(_, _)) =>
+                probe.expectMsgPF(slowTimeout) { case HelperEnvelope(address, sender, WorkGiven(_, _)) =>
                 }
 
                 mockBL.instances().all().foreach { i =>
@@ -436,25 +427,25 @@ class MultiMasterSpec
                 multiple(6) {
                   probe.expectMsgPF() {
                     case HelperEnvelope(
-                        address,
-                        sender,
-                        msg @ (WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c"))
+                          address,
+                          sender,
+                          msg @ (WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c"))
                         ) =>
                       probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, msg.name))
                       None
                     case HelperEnvelope(
-                        _,
-                        _,
-                        GimmeWork(
-                          cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress,
-                          _
-                        )
+                          _,
+                          _,
+                          GimmeWork(
+                            cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress,
+                            _
+                          )
                         ) =>
                       None
                     case HelperEnvelope(
-                        address,
-                        _,
-                        WorkGiven(pipegraph, _)
+                          address,
+                          _,
+                          WorkGiven(pipegraph, _)
                         ) =>
                       Some((address, pipegraph.name))
                   }
@@ -469,14 +460,13 @@ class MultiMasterSpec
 
                 probe.expectMsgPF(slowTimeout) {
                   case HelperEnvelope(
-                      address,
-                      sender,
-                      msg @ WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c")
+                        address,
+                        sender,
+                        msg @ WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c")
                       ) =>
                     probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, msg.name))
                 }
-                probe.expectMsgPF(slowTimeout) {
-                  case HelperEnvelope(_, _, WorkGiven(_, _)) =>
+                probe.expectMsgPF(slowTimeout) { case HelperEnvelope(_, _, WorkGiven(_, _)) =>
                 }
 
                 mockBL.instances().all().foreach { i =>
@@ -538,25 +528,25 @@ class MultiMasterSpec
                 val nodeToPipegraph = multiple(6) {
                   probe.expectMsgPF() {
                     case HelperEnvelope(
-                        address,
-                        sender,
-                        msg @ WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c")
+                          address,
+                          sender,
+                          msg @ WorkAvailable("pipegraph-a" | "pipegraph-b" | "pipegraph-c")
                         ) =>
                       probe.sender() ! HelperEnvelope(address, sender, GimmeWork(address, msg.name))
                       None
                     case HelperEnvelope(
-                        _,
-                        _,
-                        GimmeWork(
-                          cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress,
-                          _
-                        )
+                          _,
+                          _,
+                          GimmeWork(
+                            cluster0.selfUniqueAddress | cluster1.selfUniqueAddress | cluster2.selfUniqueAddress,
+                            _
+                          )
                         ) =>
                       None
                     case HelperEnvelope(
-                        address,
-                        _,
-                        WorkGiven(pipegraph, _)
+                          address,
+                          _,
+                          WorkGiven(pipegraph, _)
                         ) =>
                       Some((address, pipegraph.name))
                   }
@@ -578,9 +568,9 @@ class MultiMasterSpec
 
                 probe.expectMsgPF() {
                   case HelperEnvelope(
-                      _,
-                      _,
-                      WorkGiven(_, _)
+                        _,
+                        _,
+                        WorkGiven(_, _)
                       ) =>
                 }
 

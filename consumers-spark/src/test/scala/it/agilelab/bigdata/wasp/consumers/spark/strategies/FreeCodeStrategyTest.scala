@@ -10,7 +10,6 @@ import java.util.Properties
 
 class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSuite {
 
-
   def createDataframe(spark: SparkSession, prefix: String, range: Seq[Int]): DataFrame = {
     import spark.implicits._
     spark.sparkContext.parallelize(range).map(i => FakeData(prefix, i.toFloat, i.toLong, i.toString, i)).toDF
@@ -19,8 +18,7 @@ class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSuite {
   it should "test create a reflection strategy" in {
 
     val map = (1 to 2).map(i => ReaderKey(s"key_$i", "2") -> createDataframe(spark, s"test_$i", 1 to 10)).toMap
-    val strategy = new FreeCodeStrategy(
-      """
+    val strategy = new FreeCodeStrategy("""
         |import it.agilelab.bigdata.wasp.consumers.spark.strategies.TestObj._
         |val df = dataFrames.getFirstDataFrame.select("name","someNumber","someLong")
         |val udfEven = spark.udf.register("udfEven",even )
@@ -37,17 +35,16 @@ class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSuite {
     df.select("someNumber").take(10).map(_.getInt(0)) should contain theSameElementsAs (1 to 10).map(i => i * i)
     df.select("extra").take(10).map(_.getString(0)).foreach(p => p shouldBe "TEST")
     df.select("extra_bis").take(10).map(_.getString(0)).foreach(p => p shouldBe TestObj.value_1)
-    df.take(10).map(e => (e.getAs[Boolean]("even"), e.getAs[Int]("someNumber")))
+    df.take(10)
+      .map(e => (e.getAs[Boolean]("even"), e.getAs[Int]("someNumber")))
       .foreach(p => p._2 % 2 == 0 shouldBe p._1)
 
   }
 
-
   it should "test using the config on reflation" in {
 
     val map = (1 to 2).map(i => ReaderKey(s"key_$i", "2") -> createDataframe(spark, s"test_$i", 1 to 10)).toMap
-    val strategy = new FreeCodeStrategy(
-      """
+    val strategy = new FreeCodeStrategy("""
         |
         |val df = dataFrames.getFirstDataFrame.select("name","someNumber","someLong")
         |val s = if(configuration.isEmpty) "null" else configuration.getString("city")
@@ -62,11 +59,9 @@ class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSuite {
     df.select("someNumber").take(10).map(_.getInt(0)) should contain theSameElementsAs (1 to 10).map(i => i * i)
     df.select("city").take(10).map(_.getString(0)).foreach(p => p shouldBe "null")
 
-
     val p = new Properties()
     p.setProperty("city", "Rome")
     strategy.configuration = ConfigFactory.parseProperties(p)
-
 
     val df2 = strategy.transform(map).cache()
     df2.count() shouldBe 10
@@ -76,10 +71,9 @@ class FreeCodeStrategyTest extends FlatSpec with Matchers with SparkSuite {
 
   }
 
-
 }
 object TestObj {
-  val value_1 = "Hello"
-  val  even: Int => Boolean = (int : Int) => int%2==0
+  val value_1              = "Hello"
+  val even: Int => Boolean = (int: Int) => int % 2 == 0
 
 }

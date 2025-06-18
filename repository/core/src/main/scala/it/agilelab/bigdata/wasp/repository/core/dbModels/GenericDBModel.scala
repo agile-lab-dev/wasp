@@ -6,8 +6,9 @@ import org.mongodb.scala.bson.BsonDocument
 
 trait GenericDBModel extends Model
 
-case class GenericDBModelV1(override val name: String,
-                            value: BsonDocument,
-                            product: GenericProduct,
-                            options: GenericOptions = GenericOptions.default
-                           ) extends GenericDBModel
+case class GenericDBModelV1(
+    override val name: String,
+    value: BsonDocument,
+    product: GenericProduct,
+    options: GenericOptions = GenericOptions.default
+) extends GenericDBModel

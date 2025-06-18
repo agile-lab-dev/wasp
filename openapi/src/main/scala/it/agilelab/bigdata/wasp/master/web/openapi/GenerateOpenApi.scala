@@ -8,7 +8,7 @@ import io.swagger.v3.oas.models.tags.Tag
 import it.agilelab.bigdata.wasp.core.build.BuildInfo
 
 trait WaspOpenApi
-  extends BatchJobRoutesOpenApiDefinition
+    extends BatchJobRoutesOpenApiDefinition
     with PipegraphRoutesOpenApiDefinition
     with ProducersRoutesOpenApiDefinition
     with DocumentRoutesOpenApiDefinition
@@ -122,11 +122,12 @@ trait WaspOpenApi
       new Tag()
         .name("editor")
         .description("operation related to stateless nifi, used as editor and pipegraphs creation")
-    ).addTagsItem(
-    new Tag()
-      .name("freeCode")
-      .description("operation related to free code strategy management")
-  )
+    )
+    .addTagsItem(
+      new Tag()
+        .name("freeCode")
+        .description("operation related to free code strategy management")
+    )
     .addTagsItem(
       new Tag()
         .name("generic")
@@ -135,15 +136,15 @@ trait WaspOpenApi
 
 }
 
-object GenerateOpenApi extends WaspOpenApi{
+object GenerateOpenApi extends WaspOpenApi {
 
   def main(args: Array[String]): Unit = {
 
     val generate = (ctx: Context) => {
-      val routes = getRoutes(ctx)
+      val routes  = getRoutes(ctx)
       val openApi = getOpenApi
 
-      routes.foreach {case (key, value) => openApi.path(key, value)}
+      routes.foreach { case (key, value) => openApi.path(key, value) }
       openApi
     }
 
@@ -154,6 +155,6 @@ object GenerateOpenApi extends WaspOpenApi{
       StandardOpenOption.TRUNCATE_EXISTING
     )
 
-    //println(OpenApiRenderer.render(generate))
+    // println(OpenApiRenderer.render(generate))
   }
 }

@@ -6,19 +6,19 @@ import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
-class ProcessGroupBLImplTest extends FlatSpec with Matchers{
+class ProcessGroupBLImplTest extends FlatSpec with Matchers {
 
   it should "test processGroupBL for Mongo" in {
     val db = WaspMongoDB
     db.initializeDB()
     val waspDB = db.getDB()
-    val bl = new ProcessGroupBLImpl(waspDB)
+    val bl     = new ProcessGroupBLImpl(waspDB)
 
     val bson   = BsonDocument(("testVal", "ciao"))
     val model1 = ProcessGroupModel("name", bson, "errport")
     bl.insert(model1)
 
-    val bson2   = BsonDocument(("testVal", "ciao2"))
+    val bson2  = BsonDocument(("testVal", "ciao2"))
     val model2 = ProcessGroupModel("name2", bson2, "errport")
     bl.insert(model2)
 

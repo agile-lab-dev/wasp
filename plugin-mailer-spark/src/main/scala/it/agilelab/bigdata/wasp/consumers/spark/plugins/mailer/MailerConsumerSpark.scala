@@ -22,18 +22,21 @@ class MailerConsumerSpark extends WaspConsumersSparkPlugin {
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): MailWriter = {
-    //logger.info(s"Initialize the mail spark structured streaming writer with this writer model endpointName '${writerModel.datastoreModelName}'")
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): MailWriter = {
+    // logger.info(s"Initialize the mail spark structured streaming writer with this writer model endpointName '${writerModel.datastoreModelName}'")
     new MailWriter(writerModel.options)
   }
 
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader =
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader =
     throw new UnsupportedOperationException("Unsupported: spark structured streaming reader")
-
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter =
     throw new UnsupportedOperationException("Unsupported: spark batch writer")

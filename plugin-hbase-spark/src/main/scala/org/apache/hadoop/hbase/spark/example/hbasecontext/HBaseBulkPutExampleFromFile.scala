@@ -19,7 +19,7 @@ package org.apache.hadoop.hbase.spark.example.hbasecontext
 
 import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.spark.SparkContext
-import org.apache.hadoop.hbase.{TableName, HBaseConfiguration}
+import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.client.Put
 import org.apache.hadoop.mapred.TextInputFormat
@@ -27,11 +27,9 @@ import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkConf
 
-/**
- * This is a simple example of putting records in HBase
- * with the bulkPut function.  In this example we are
- * getting the put information from a file
- */
+/** This is a simple example of putting records in HBase with the bulkPut function. In this example we are getting the
+  * put information from a file
+  */
 object HBaseBulkPutExampleFromFile {
   def main(args: Array[String]) {
     if (args.length < 3) {
@@ -39,36 +37,37 @@ object HBaseBulkPutExampleFromFile {
       return
     }
 
-    val tableName = args(0)
+    val tableName    = args(0)
     val columnFamily = args(1)
-    val inputFile = args(2)
+    val inputFile    = args(2)
 
-    val sparkConf = new SparkConf().setAppName("HBaseBulkPutExampleFromFile " +
-      tableName + " " + columnFamily + " " + inputFile)
+    val sparkConf = new SparkConf().setAppName(
+      "HBaseBulkPutExampleFromFile " +
+        tableName + " " + columnFamily + " " + inputFile
+    )
     val sc = new SparkContext(sparkConf)
 
     try {
-      val rdd = sc.hadoopFile(
-        inputFile,
-        classOf[TextInputFormat],
-        classOf[LongWritable],
-        classOf[Text]).map(v => {
-        System.out.println("reading-" + v._2.toString)
-        v._2.toString
-      })
+      val rdd = sc
+        .hadoopFile(inputFile, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
+        .map(v => {
+          System.out.println("reading-" + v._2.toString)
+          v._2.toString
+        })
 
       val conf = HBaseConfiguration.create()
 
       val hbaseContext = new HBaseContext(sc, conf)
-      hbaseContext.bulkPut[String](rdd,
+      hbaseContext.bulkPut[String](
+        rdd,
         TableName.valueOf(tableName),
         (putRecord) => {
           System.out.println("hbase-" + putRecord)
           val put = new Put(Bytes.toBytes("Value- " + putRecord))
-          put.addColumn(Bytes.toBytes("c"), Bytes.toBytes("1"),
-            Bytes.toBytes(putRecord.length()))
+          put.addColumn(Bytes.toBytes("c"), Bytes.toBytes("1"), Bytes.toBytes(putRecord.length()))
           put
-        });
+        }
+      );
     } finally {
       sc.stop()
     }

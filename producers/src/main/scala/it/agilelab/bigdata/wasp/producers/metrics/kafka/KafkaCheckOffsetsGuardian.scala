@@ -23,7 +23,7 @@ object KafkaCheckOffsetsGuardian {
     )
     kafkaProps.setProperty("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
     kafkaProps.setProperty("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
-    if (kafkaProps.getProperty("group.id") == null){
+    if (kafkaProps.getProperty("group.id") == null) {
       kafkaProps.put("group.id", UUID.randomUUID().toString)
     }
 
@@ -40,7 +40,7 @@ class KafkaCheckOffsetsGuardian(childActorFactory: String => Props) extends Acto
   private val childActors = mutable.Map[String, ActorRef]()
 
   override def receive: Receive = {
-    case r@KafkaOffsetsRequest(_, topic, ts) =>
+    case r @ KafkaOffsetsRequest(_, topic, ts) =>
       logger.debug(s"Received a request for the offsets of topic $topic at ${new Date(ts)}")
       childActors.getOrElseUpdate(topic, spawnKafkaCheckOffsetsActor(topic)) ! r
     case KafkaOffsetActorAlive =>

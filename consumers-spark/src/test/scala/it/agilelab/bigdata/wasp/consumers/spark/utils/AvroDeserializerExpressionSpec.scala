@@ -129,8 +129,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       dfResult.where(col("deserialized").isNull).count should be(1)
       val goodParsing = dfResult.where(col("deserialized").isNotNull)
       goodParsing.count should be(10)
-      elements.zip(goodParsing.collect().map(_.getStruct(0))).foreach {
-        case (truth, res) => compareRowWithUglyClass(truth, res)
+      elements.zip(goodParsing.collect().map(_.getStruct(0))).foreach { case (truth, res) =>
+        compareRowWithUglyClass(truth, res)
       }
     }
 
@@ -147,9 +147,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       // resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0))
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth === result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth === result)
       }
     }
 
@@ -166,9 +165,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0))
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth === result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth === result)
       }
     }
 
@@ -185,9 +183,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0))
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth === result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth === result)
       }
     }
 
@@ -204,9 +201,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0))
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth === result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth === result)
       }
     }
 
@@ -223,9 +219,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0)).map(_.asInstanceOf[Array[Byte]])
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(util.Arrays.equals(truth, result))
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(util.Arrays.equals(truth, result))
       }
     }
 
@@ -242,9 +237,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0)).map(_.asInstanceOf[Seq[Int]])
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth.toSeq == result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth.toSeq == result)
       }
     }
 
@@ -261,9 +255,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0)).map(_.asInstanceOf[Seq[String]])
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth.toSeq == result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth.toSeq == result)
       }
     }
 
@@ -280,9 +273,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0))
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth === result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth === result)
       }
     }
 
@@ -299,9 +291,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0))
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth === result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth === result)
       }
     }
 
@@ -318,9 +309,8 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
       //       resultDf.queryExecution.debug.codegen()
       val data = resultDf.collect().map(_.get(0))
 
-      elements.zip(data).foreach {
-        case (truth, result) =>
-          assert(truth === result)
+      elements.zip(data).foreach { case (truth, result) =>
+        assert(truth === result)
       }
     }
 
@@ -349,10 +339,10 @@ class AvroDeserializerExpressionSpec extends WordSpec with Matchers with Codegen
                                                    |connector: "mock"
                                                    |endianness: "LITTLE_ENDIAN"
         """.stripMargin)
-      val child      = Literal(null, BinaryType)
-      val expr1      = AvroDeserializerExpression(child, TestClasses.uglySchema.toString, Some(darwinConf))
-      val expr2      = AvroDeserializerExpression(child, TestClasses.uglySchema.toString, None)
-      val res        = spark.range(1).select(new Column(expr1), new Column(expr2)).collect()
+      val child = Literal(null, BinaryType)
+      val expr1 = AvroDeserializerExpression(child, TestClasses.uglySchema.toString, Some(darwinConf))
+      val expr2 = AvroDeserializerExpression(child, TestClasses.uglySchema.toString, None)
+      val res   = spark.range(1).select(new Column(expr1), new Column(expr2)).collect()
       assert(res sameElements Array(Row(null, null)))
     }
   }

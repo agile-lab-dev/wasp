@@ -7,11 +7,11 @@ trait ProducerBL {
   def getByName(name: String): Option[ProducerModel]
 
   def getActiveProducers(isActive: Boolean = true): Seq[ProducerModel]
-  
+
   def getSystemProducers: Seq[ProducerModel]
-  
+
   def getNonSystemProducers: Seq[ProducerModel]
-  
+
   def getByTopicName(name: String): Seq[ProducerModel]
 
   def getTopic(topicBL: TopicBL, producerModel: ProducerModel): Option[TopicModel]

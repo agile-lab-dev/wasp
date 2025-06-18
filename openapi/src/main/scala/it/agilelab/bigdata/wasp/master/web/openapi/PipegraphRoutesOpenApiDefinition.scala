@@ -12,11 +12,11 @@ trait PipegraphRoutesOpenApiDefinition
 
   def pipegraphRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/pipegraphs" -> getInsertUpdate(ctx),
-      "/pipegraphs/{pipegraphname}" -> delete(ctx),
-      "/pipegraphs/{pipegraphname}/instances" -> listInstances(ctx),
-      "/pipegraphs/{pipegraphname}/stop" -> stop(ctx),
-      "/pipegraphs/{pipegraphname}/start" -> start(ctx),
+      "/pipegraphs"                                      -> getInsertUpdate(ctx),
+      "/pipegraphs/{pipegraphname}"                      -> delete(ctx),
+      "/pipegraphs/{pipegraphname}/instances"            -> listInstances(ctx),
+      "/pipegraphs/{pipegraphname}/stop"                 -> stop(ctx),
+      "/pipegraphs/{pipegraphname}/start"                -> start(ctx),
       "/pipegraphs/{pipegraphname}/instances/{instance}" -> listInstance(ctx)
     )
   }

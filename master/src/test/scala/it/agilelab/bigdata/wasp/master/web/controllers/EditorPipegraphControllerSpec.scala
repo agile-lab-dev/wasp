@@ -12,8 +12,7 @@ import spray.json._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-/**
-  * Tests for Pipegraph Editor API (/editor/pipegraph)
+/** Tests for Pipegraph Editor API (/editor/pipegraph)
   */
 class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest with Matchers with JsonSupport {
 
@@ -99,9 +98,12 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
 
       this
         .toPipegraphModel(data)
-        .fold(x => {
-          None
-        }, Some(_))
+        .fold(
+          x => {
+            None
+          },
+          Some(_)
+        )
     }
 
     override def parsePGJson(json: String): Option[(String, String, JsValue)] = {
@@ -260,8 +262,8 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
 
     lazy val pipegraph: Either[List[ErrorDTO], PipegraphModel] = pipegraphEditorService.toPipegraphModel(data)
 
-    pipegraph shouldBe a [Left[_, _]]
-    data shouldBe a [PipegraphDTO]
+    pipegraph shouldBe a[Left[_, _]]
+    data shouldBe a[PipegraphDTO]
   }
 
   it should "merge configs" in {
@@ -354,8 +356,7 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
     result._2 shouldBe "f4332488-ae60-3d14-a5bf-8a5065090aea"
   }
 
-  /**
-    * GET
+  /** GET
     */
   it should "Respond a OK on get request" in {
     val commitEditorRequest = Get(s"/editor/pipegraph")
@@ -375,8 +376,7 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
     }
   }
 
-  /**
-    * POST
+  /** POST
     */
   it should "Respond a OK on post empty Pipegraph request" in {
     val testDTO             = PipegraphDTO("empty", "description", Some("owner"), List.empty)
@@ -400,8 +400,7 @@ class EditorPipegraphControllerSpec extends FlatSpec with ScalatestRouteTest wit
     }
   }
 
-  /**
-    * PUT
+  /** PUT
     */
   it should "Respond a OK on already existing Pipegraph request" in {
     val testDTO             = PipegraphDTO("pipegraph_1", "description", Some("owner"), List.empty)

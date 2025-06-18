@@ -158,7 +158,7 @@ class BacklogSizeAnalyzerSpec
           timestamp = new java.util.Date().toString,
           description = "description",
           startOffset = Map(topicName -> Map("0" -> startOffset)),
-          endOffset = Map(topicName   -> Map("0" -> endOffset))
+          endOffset = Map(topicName -> Map("0" -> endOffset))
         )
       )
     )

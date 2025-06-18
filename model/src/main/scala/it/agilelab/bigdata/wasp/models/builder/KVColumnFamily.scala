@@ -1,26 +1,30 @@
 package it.agilelab.bigdata.wasp.models.builder
 
-import it.agilelab.bigdata.wasp.models.builder.KVColumnFamily.ColumnFamilyBuilder.{ColumnFamilyBuilderState, CompleteColumnFamilyBuilderState, WithCellQualifierColumnFamilyBuilderState, WithNameColumnFamilyBuilderState}
+import it.agilelab.bigdata.wasp.models.builder.KVColumnFamily.ColumnFamilyBuilder.{
+  ColumnFamilyBuilderState,
+  CompleteColumnFamilyBuilderState,
+  WithCellQualifierColumnFamilyBuilderState,
+  WithNameColumnFamilyBuilderState
+}
 
-sealed abstract class KVColumnFamily(val name: String,
-                                     val cellQualifiers: Seq[KVColumn]) {
+sealed abstract class KVColumnFamily(val name: String, val cellQualifiers: Seq[KVColumn]) {
   def toJson: Seq[String]
 }
 
 object KVColumnFamily {
 
-  private final case class SimpleKVColumnFamily(override val name: String,
-                                                override val cellQualifiers: Seq[KVColumn])
-    extends KVColumnFamily(name, cellQualifiers) {
+  final private case class SimpleKVColumnFamily(override val name: String, override val cellQualifiers: Seq[KVColumn])
+      extends KVColumnFamily(name, cellQualifiers) {
     override def toJson: Seq[String] = {
       cellQualifiers.map(_.toJson(name))
     }
   }
 
-  private final case class ClusteredKVColumnFamily(override val name: String,
-                                                   clusteringColumns: Seq[PrimitiveKVColumn],
-                                                   override val cellQualifiers: Seq[KVColumn])
-    extends KVColumnFamily(name, cellQualifiers) {
+  final private case class ClusteredKVColumnFamily(
+      override val name: String,
+      clusteringColumns: Seq[PrimitiveKVColumn],
+      override val cellQualifiers: Seq[KVColumn]
+  ) extends KVColumnFamily(name, cellQualifiers) {
     override def toJson: Seq[String] = {
       val columns = clusteringColumns.map(_.qualifier).mkString(":")
       s""""clustering": {"cf": "$name", "columns": "$columns"}""" +:
@@ -54,21 +58,26 @@ object KVColumnFamily {
 
     def withName(name: String): ColumnFamilyBuilder[CurrentState with WithNameColumnFamilyBuilderState]
 
-    def withCellQualifier(cq: KVColumn): ColumnFamilyBuilder[CurrentState with WithCellQualifierColumnFamilyBuilderState]
+    def withCellQualifier(
+        cq: KVColumn
+    ): ColumnFamilyBuilder[CurrentState with WithCellQualifierColumnFamilyBuilderState]
 
     def withClusteringColumn(cq: PrimitiveKVColumn): ColumnFamilyBuilder[CurrentState]
 
     def build(implicit ev: CurrentState =:= CompleteColumnFamilyBuilderState): KVColumnFamily
   }
 
-
-  private case class ColumnFamilyBuilderImpl[CurrentState <: ColumnFamilyBuilderState](name: Option[String] = None,
-                                                                                       cellQualifiers: Seq[KVColumn] = Seq.empty,
-                                                                                       clusteringColumns: Seq[PrimitiveKVColumn] = Seq.empty) extends ColumnFamilyBuilder[CurrentState] {
+  private case class ColumnFamilyBuilderImpl[CurrentState <: ColumnFamilyBuilderState](
+      name: Option[String] = None,
+      cellQualifiers: Seq[KVColumn] = Seq.empty,
+      clusteringColumns: Seq[PrimitiveKVColumn] = Seq.empty
+  ) extends ColumnFamilyBuilder[CurrentState] {
     override def withName(name: String): ColumnFamilyBuilder[CurrentState with WithNameColumnFamilyBuilderState] =
       this.copy(name = Some(name))
 
-    override def withCellQualifier(cq: KVColumn): ColumnFamilyBuilder[CurrentState with WithCellQualifierColumnFamilyBuilderState] =
+    override def withCellQualifier(
+        cq: KVColumn
+    ): ColumnFamilyBuilder[CurrentState with WithCellQualifierColumnFamilyBuilderState] =
       this.copy(cellQualifiers = cellQualifiers :+ cq)
 
     override def withClusteringColumn(cq: PrimitiveKVColumn): ColumnFamilyBuilder[CurrentState] =
@@ -87,8 +96,10 @@ object KVColumnFamily {
     private def checkDuplicateColumns(cellQualifiers: Seq[KVColumn]): Unit = {
       cellQualifiers.groupBy(_.qualifier).foreach { case (q, elements) =>
         if (elements.length > 1) {
-          throw new IllegalStateException(s"Cannot build Column Family ${name.get} because multiple fields mapped " +
-            s"to the same qualifier [$q]")
+          throw new IllegalStateException(
+            s"Cannot build Column Family ${name.get} because multiple fields mapped " +
+              s"to the same qualifier [$q]"
+          )
         }
       }
     }

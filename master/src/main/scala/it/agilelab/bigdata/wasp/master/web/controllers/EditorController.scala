@@ -52,9 +52,9 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
     }
   }
 
-  /**
-    * Gets all pipegraphs created by editor
-    * @return Array of pipegraphs created by editor
+  /** Gets all pipegraphs created by editor
+    * @return
+    *   Array of pipegraphs created by editor
     */
   def getEditorPipegraphs: Route =
     pathPrefix("editor") {
@@ -72,9 +72,9 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
       }
     }
 
-  /**
-    * Gets specific pipegraph created by editor
-    * @return Pipegraph created by editor
+  /** Gets specific pipegraph created by editor
+    * @return
+    *   Pipegraph created by editor
     */
   def getEditorPipegraph: Route =
     pathPrefix("editor") {
@@ -97,9 +97,9 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
       }
     }
 
-  /**
-    * Validates and inserts new pipegraphs done in FE editor
-    * @return Empty OK response or KO response with array of errors (as strings)
+  /** Validates and inserts new pipegraphs done in FE editor
+    * @return
+    *   Empty OK response or KO response with array of errors (as strings)
     */
   def postEditorPipegraph: Route =
     pathPrefix("editor") {
@@ -123,9 +123,9 @@ class EditorController(editorService: EditorService, pipegraphService: Pipegraph
       }
     }
 
-  /**
-    * Validates and updates existing pipegraphs done in FE editor
-    * @return Empty OK response or KO response with array of errors (as strings)
+  /** Validates and updates existing pipegraphs done in FE editor
+    * @return
+    *   Empty OK response or KO response with array of errors (as strings)
     */
   def putEditorPipegraph: Route =
     pathPrefix("editor") {

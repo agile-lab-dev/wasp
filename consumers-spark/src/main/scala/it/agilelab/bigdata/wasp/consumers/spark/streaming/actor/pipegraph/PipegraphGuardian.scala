@@ -8,11 +8,17 @@ import akka.actor.{ActorRef, ActorRefFactory, FSM, LoggingFSM, Props}
 import State._
 import Data._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol => MasterProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{StructuredStreamingETLActor, Protocol => ChildrenProtocol}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{
+  Protocol => ChildrenProtocol,
+  StructuredStreamingETLActor
+}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => MyProtocol}
 import PipegraphGuardian._
 import akka.cluster.Cluster
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{StaticReaderFactory, StreamingReaderFactory}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.ActivationSteps.{
+  StaticReaderFactory,
+  StreamingReaderFactory
+}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.MaterializationSteps.WriterFactory
 import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, ProcessGroupBL, TopicBL}
 import it.agilelab.bigdata.wasp.repository.core.bl.{FreeCodeBL, MlModelBL, TopicBL}
@@ -22,21 +28,23 @@ import org.apache.spark.sql.SparkSession
 
 import scala.concurrent.duration.FiniteDuration
 
-class PipegraphGuardian(private val master: ActorRef,
-                        private val pipegraphName: String,
-                        private val childFactory: ChildFactory,
-                        private val retryDuration: FiniteDuration,
-                        private val monitoringInterval: FiniteDuration,
-                        private val componentFailedStrategy: ComponentFailedStrategy) extends FSM[State, Data] with LoggingFSM[State, Data] {
+class PipegraphGuardian(
+    private val master: ActorRef,
+    private val pipegraphName: String,
+    private val childFactory: ChildFactory,
+    private val retryDuration: FiniteDuration,
+    private val monitoringInterval: FiniteDuration,
+    private val componentFailedStrategy: ComponentFailedStrategy
+) extends FSM[State, Data]
+    with LoggingFSM[State, Data] {
 
   val cluster = Cluster(context.system)
 
   startWith(WaitingForWork, Empty)
 
-  when(WaitingForWork) {
-    case Event(MasterProtocol.WorkAvailable(_), Empty) =>
-      log.info("Work is available")
-      goto(RequestingWork)
+  when(WaitingForWork) { case Event(MasterProtocol.WorkAvailable(_), Empty) =>
+    log.info("Work is available")
+    goto(RequestingWork)
   }
 
   when(RequestingWork) {
@@ -45,7 +53,12 @@ class PipegraphGuardian(private val master: ActorRef,
       goto(RequestingWork)
     case Event(MasterProtocol.WorkGiven(pipegraph, instance), Empty) =>
       log.info("Received work, [{}] [{}]", pipegraph.name, instance.name)
-      goto(Activating) using ActivatingData(pipegraph, instance, Set.empty, pipegraph.structuredStreamingComponents.toSet)
+      goto(Activating) using ActivatingData(
+        pipegraph,
+        instance,
+        Set.empty,
+        pipegraph.structuredStreamingComponents.toSet
+      )
   }
 
   when(Activating) {
@@ -60,8 +73,7 @@ class PipegraphGuardian(private val master: ActorRef,
 
       newAssociation.worker ! ChildrenProtocol.ActivateETL(etl)
 
-      val newData = data.copy(toBeActivated = data.toBeActivated - etl,
-        activating = data.activating + newAssociation)
+      val newData = data.copy(toBeActivated = data.toBeActivated - etl, activating = data.activating + newAssociation)
 
       goto(Activating) using newData
 
@@ -71,11 +83,9 @@ class PipegraphGuardian(private val master: ActorRef,
 
       val association = WorkerToEtlAssociation(sender(), etl)
 
-      val newData = data.copy(activating = data.activating - association,
-        active = data.active + association)
+      val newData = data.copy(activating = data.activating - association, active = data.active + association)
 
       goto(Activating) using newData
-
 
     case Event(ChildrenProtocol.ETLNotActivated(etl, reason), data: ActivatingData) =>
       log.error(reason, "Could not activate etl [{}]", etl.name)
@@ -88,19 +98,22 @@ class PipegraphGuardian(private val master: ActorRef,
           goto(Activating) using data.copy(activating = data.activating - association)
         case Retry =>
           log.info("[{}] Retry", etl.name)
-          goto(Activating) using data.copy(activating = data.activating - association,
-            toBeRetried = data.toBeRetried + etl)
+          goto(Activating) using data.copy(
+            activating = data.activating - association,
+            toBeRetried = data.toBeRetried + etl
+          )
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
-          goto(Activating) using data.copy(activating = data.activating - association,
+          goto(Activating) using data.copy(
+            activating = data.activating - association,
             shouldStopAll = true,
-            reason = Some(reason))
+            reason = Some(reason)
+          )
       }
 
     case Event(MyProtocol.PerformRetry, data: ActivatingData) =>
       log.info("Activation round finished, performing retry")
-      goto(Activating) using data.copy(toBeActivated = data.toBeRetried,
-        toBeRetried = Set.empty)
+      goto(Activating) using data.copy(toBeActivated = data.toBeRetried, toBeRetried = Set.empty)
 
     case Event(MyProtocol.ActivationFinished, data: ActivatingData) if !data.shouldStopAll =>
       log.info("Activation finished")
@@ -110,9 +123,7 @@ class PipegraphGuardian(private val master: ActorRef,
       log.info("Activation finished, outcome is stop all")
       goto(Activated) using data.createActivatedData()
 
-
   }
-
 
   when(Activated) {
     case Event(MyProtocol.CancelWork, data: ActivatedData) =>
@@ -121,7 +132,6 @@ class PipegraphGuardian(private val master: ActorRef,
       goto(Materializing) using data.createMaterializingData()
 
   }
-
 
   when(Materializing) {
     case Event(MyProtocol.CancelWork, data: MaterializingData) =>
@@ -133,20 +143,28 @@ class PipegraphGuardian(private val master: ActorRef,
 
       val association = WorkerToEtlAssociation(worker, etl)
 
-
-      goto(Materializing) using data.copy(toBeMaterialized = data.toBeMaterialized - association,
-        materializing = data.materializing + association)
+      goto(Materializing) using data.copy(
+        toBeMaterialized = data.toBeMaterialized - association,
+        materializing = data.materializing + association
+      )
 
     case Event(ChildrenProtocol.ETLMaterialized(etl), data: MaterializingData) =>
       log.info("Materialized etl [{}] on worker [{}]", etl.name, sender())
 
       val association = WorkerToEtlAssociation(sender(), etl)
 
-      goto(Materializing) using data.copy(materializing = data.materializing - association,
-        materialized = data.materialized + association)
+      goto(Materializing) using data.copy(
+        materializing = data.materializing - association,
+        materialized = data.materialized + association
+      )
 
     case Event(ChildrenProtocol.ETLNotMaterialized(etl, reason), data: MaterializingData) =>
-      log.error("Could not materialize etl [{}] on worker [{}] reason: [{}]", etl.name, sender(), ExceptionUtils.getStackTrace(reason))
+      log.error(
+        "Could not materialize etl [{}] on worker [{}] reason: [{}]",
+        etl.name,
+        sender(),
+        ExceptionUtils.getStackTrace(reason)
+      )
 
       val association = WorkerToEtlAssociation(sender(), etl)
 
@@ -156,20 +174,22 @@ class PipegraphGuardian(private val master: ActorRef,
           goto(Materializing) using data.copy(materializing = data.materializing - association)
         case Retry =>
           log.info("[{}] Retry", etl.name)
-          goto(Materializing) using data.copy(materializing = data.materializing - association,
-            toBeRetried = data.toBeRetried + association)
+          goto(Materializing) using data.copy(
+            materializing = data.materializing - association,
+            toBeRetried = data.toBeRetried + association
+          )
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
-          goto(Materializing) using data.copy(materializing = data.materializing - association,
+          goto(Materializing) using data.copy(
+            materializing = data.materializing - association,
             shouldStopAll = true,
-            reason = Some(reason))
+            reason = Some(reason)
+          )
       }
 
     case Event(MyProtocol.PerformRetry, data: MaterializingData) =>
       log.warning("Materialization round finished, performing retry")
-      goto(Materializing) using data.copy(toBeMaterialized = data.toBeRetried,
-        toBeRetried = Set.empty)
-
+      goto(Materializing) using data.copy(toBeMaterialized = data.toBeRetried, toBeRetried = Set.empty)
 
     case Event(MyProtocol.MaterializationFinished, data: MaterializingData) if !data.shouldStopAll =>
       log.info("Materialization finished")
@@ -187,7 +207,6 @@ class PipegraphGuardian(private val master: ActorRef,
       goto(Monitoring) using data.createMonitoringData()
   }
 
-
   when(Monitoring) {
     case Event(MyProtocol.CancelWork, data: MonitoringData) =>
       log.info("Received request to perform shutdown while Monitoring")
@@ -199,16 +218,20 @@ class PipegraphGuardian(private val master: ActorRef,
 
       val association = WorkerToEtlAssociation(worker, etl)
 
-      goto(Monitoring) using data.copy(toBeMonitored = data.toBeMonitored - association,
-        monitoring = data.monitoring + association)
+      goto(Monitoring) using data.copy(
+        toBeMonitored = data.toBeMonitored - association,
+        monitoring = data.monitoring + association
+      )
 
     case Event(ChildrenProtocol.ETLCheckSucceeded(etl), data: MonitoringData) =>
       log.info("Monitoring Succeeded on etl [{}] on worker [{}]", etl.name, sender())
 
       val association = WorkerToEtlAssociation(sender(), etl)
 
-      goto(Monitoring) using data.copy(monitoring = data.monitoring - association,
-        monitored = data.monitored + association)
+      goto(Monitoring) using data.copy(
+        monitoring = data.monitoring - association,
+        monitored = data.monitored + association
+      )
 
     case Event(ChildrenProtocol.ETLCheckFailed(etl, reason), data: MonitoringData) =>
       log.error(reason, "Monitoring Failed on etl [{}] on worker [{}]", etl.name, sender())
@@ -221,13 +244,17 @@ class PipegraphGuardian(private val master: ActorRef,
           goto(Monitoring) using data.copy(monitoring = data.monitoring - association)
         case Retry =>
           log.info("[{}] Retry", etl.name)
-          goto(Monitoring) using data.copy(monitoring = data.monitoring - association,
-            toBeRetried = data.toBeRetried + association)
+          goto(Monitoring) using data.copy(
+            monitoring = data.monitoring - association,
+            toBeRetried = data.toBeRetried + association
+          )
         case StopAll =>
           log.info("[{}] StopAll", etl.name)
-          goto(Monitoring) using data.copy(monitoring = data.monitoring - association,
+          goto(Monitoring) using data.copy(
+            monitoring = data.monitoring - association,
             shouldStopAll = true,
-            reason = Some(reason))
+            reason = Some(reason)
+          )
       }
 
     case Event(MyProtocol.MonitoringFinished, data: MonitoringData) if !data.shouldStopAll =>
@@ -259,18 +286,17 @@ class PipegraphGuardian(private val master: ActorRef,
 
       val association = WorkerToEtlAssociation(worker, etl)
 
-
-      goto(Stopping) using data.copy(toBeStopped = data.toBeStopped - association,
-        stopping = data.stopping + association)
-
+      goto(Stopping) using data.copy(
+        toBeStopped = data.toBeStopped - association,
+        stopping = data.stopping + association
+      )
 
     case Event(ChildrenProtocol.ETLStopped(etl), data: StoppingData) =>
       log.info("Stopped etl [{}] on worker [{}]", etl.name, sender())
 
       val association = WorkerToEtlAssociation(sender(), etl)
 
-      goto(Stopping) using data.copy(stopping = data.stopping - association,
-        stopped = data.stopped + association)
+      goto(Stopping) using data.copy(stopping = data.stopping - association, stopped = data.stopped + association)
 
     case Event(MyProtocol.StopFinished, data: StoppingData) =>
       log.info("Stopping finished")
@@ -287,7 +313,6 @@ class PipegraphGuardian(private val master: ActorRef,
       stop()
   }
 
-
   onTransition {
     case (WaitingForWork, RequestingWork) =>
       log.info("Requesting work from master [{}]", sender())
@@ -297,175 +322,190 @@ class PipegraphGuardian(private val master: ActorRef,
       log.info("Requesting work from master [{}] retry", sender())
       sender() ! MyProtocol.GimmeWork(cluster.selfUniqueAddress, pipegraphName)
 
-    case (RequestingWork, Activating) => nextStateData match {
-      case ActivatingData.ToBeActivated(etl) =>
-        self ! MyProtocol.ActivateETL(etl)
-    }
+    case (RequestingWork, Activating) =>
+      nextStateData match {
+        case ActivatingData.ToBeActivated(etl) =>
+          self ! MyProtocol.ActivateETL(etl)
+      }
 
-    case (Activating, Activating) => nextStateData match {
-      case ActivatingData.ShouldRetry() =>
-        log.info("[Activating->Activating] Scheduling Retry")
-        startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
-      case ActivatingData.ToBeActivated(etl) =>
-        log.info("[Activating->Activating] Activating [{}]", etl.name)
-        self ! MyProtocol.ActivateETL(etl)
-      case ActivatingData.ShouldStopAll() =>
-        log.info("[Activating->Activating] StopAll")
-        self ! MyProtocol.ActivationFinished
-      case ActivatingData.AllActive() =>
-        log.info("[Activating->Activating] AllActive")
-        self ! MyProtocol.ActivationFinished
-      case _ => log.info("[Activating->Activating] Empty transition effect")
+    case (Activating, Activating) =>
+      nextStateData match {
+        case ActivatingData.ShouldRetry() =>
+          log.info("[Activating->Activating] Scheduling Retry")
+          startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
+        case ActivatingData.ToBeActivated(etl) =>
+          log.info("[Activating->Activating] Activating [{}]", etl.name)
+          self ! MyProtocol.ActivateETL(etl)
+        case ActivatingData.ShouldStopAll() =>
+          log.info("[Activating->Activating] StopAll")
+          self ! MyProtocol.ActivationFinished
+        case ActivatingData.AllActive() =>
+          log.info("[Activating->Activating] AllActive")
+          self ! MyProtocol.ActivationFinished
+        case _ => log.info("[Activating->Activating] Empty transition effect")
 
-    }
+      }
 
+    case (Activating, Activated) =>
+      nextStateData match {
+        case data: ActivatedData if data.shouldStopAll =>
+          self ! MyProtocol.CancelWork
+        case data: ActivatedData if !data.shouldStopAll =>
+          self ! MyProtocol.MaterializePipegraph
 
-    case (Activating, Activated) => nextStateData match {
-      case data: ActivatedData if data.shouldStopAll =>
-        self ! MyProtocol.CancelWork
-      case data: ActivatedData if !data.shouldStopAll =>
-        self ! MyProtocol.MaterializePipegraph
+      }
 
-    }
+    case (Activated, Materializing) =>
+      nextStateData match {
+        case MaterializingData.ToBeMaterialized(WorkerToEtlAssociation(worker, data)) =>
+          self ! MyProtocol.MaterializeETL(worker, data)
+        case _ => log.info("[Activating->Materializing] Empty transition effect")
+      }
 
-    case (Activated, Materializing) => nextStateData match {
-      case MaterializingData.ToBeMaterialized(WorkerToEtlAssociation(worker, data)) =>
-        self ! MyProtocol.MaterializeETL(worker, data)
-      case _ => log.info("[Activating->Materializing] Empty transition effect")
-    }
+    case (Activated, Stopping) =>
+      nextStateData match {
+        case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
+          log.info("[Activated->Stopping] Stopping [{}-{}]", worker, etl.name)
+          self ! MyProtocol.StopETL(worker, etl)
+        case StoppingData.AllStopped() =>
+          log.info("[Activated->Stopping] All Stopped")
+          self ! MyProtocol.StopFinished
+        case _ => log.info("[Activated->Stopping] Empty transition effect")
 
-    case (Activated, Stopping) => nextStateData match {
-      case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
-        log.info("[Activated->Stopping] Stopping [{}-{}]", worker, etl.name)
-        self ! MyProtocol.StopETL(worker, etl)
-      case StoppingData.AllStopped() =>
-        log.info("[Activated->Stopping] All Stopped")
-        self ! MyProtocol.StopFinished
-      case _ => log.info("[Activated->Stopping] Empty transition effect")
+      }
 
-    }
+    case (Monitoring, Stopping) =>
+      nextStateData match {
+        case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
+          self ! MyProtocol.StopETL(worker, etl)
+      }
 
-    case (Monitoring, Stopping) => nextStateData match {
-      case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
-        self ! MyProtocol.StopETL(worker, etl)
-    }
+    case (Materialized, Stopping) =>
+      nextStateData match {
+        case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
+          log.info("[Materialized->Stopping] Stopping [{}->{}]", worker, etl)
+          self ! MyProtocol.StopETL(worker, etl)
+        case StoppingData.AllStopped() =>
+          log.info("[Materialized->Stopping] All stopped")
+          self ! MyProtocol.StopFinished
 
-    case (Materialized, Stopping) => nextStateData match {
-      case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
-        log.info("[Materialized->Stopping] Stopping [{}->{}]", worker, etl)
-        self ! MyProtocol.StopETL(worker, etl)
-      case StoppingData.AllStopped() =>
-        log.info("[Materialized->Stopping] All stopped")
-        self ! MyProtocol.StopFinished
+      }
 
-    }
+    case (Materialized, Monitoring) =>
+      nextStateData match {
+        case MonitoringData.ToBeMonitored(WorkerToEtlAssociation(worker, etl)) =>
+          log.info("[Materialized->Monitoring] Monitoring [{}-{}]", worker, etl.name)
+          self ! MyProtocol.MonitorETL(worker, etl)
+        case MonitoringData.AllMonitored() =>
+          log.info("[Materialized->Monitoring] All monitored")
+          self ! MyProtocol.MonitoringFinished
+      }
 
-    case (Materialized, Monitoring) => nextStateData match {
-      case MonitoringData.ToBeMonitored(WorkerToEtlAssociation(worker, etl)) =>
-        log.info("[Materialized->Monitoring] Monitoring [{}-{}]", worker, etl.name)
-        self ! MyProtocol.MonitorETL(worker, etl)
-      case MonitoringData.AllMonitored() =>
-        log.info("[Materialized->Monitoring] All monitored")
-        self ! MyProtocol.MonitoringFinished
-    }
+    case (Stopping, Stopping) =>
+      nextStateData match {
+        case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
+          self ! MyProtocol.StopETL(worker, etl)
+        case StoppingData.AllStopped() =>
+          self ! MyProtocol.StopFinished
+        case _ => log.info("[Stopping->Stopping] Empty transition effect")
+      }
 
-    case (Stopping, Stopping) => nextStateData match {
-      case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
-        self ! MyProtocol.StopETL(worker, etl)
-      case StoppingData.AllStopped() =>
-        self ! MyProtocol.StopFinished
-      case _ => log.info("[Stopping->Stopping] Empty transition effect")
-    }
+    case (Stopping, Stopped) =>
+      nextStateData match {
+        case _ =>
+          log.info("[Stopping->Stopped] Shutting down")
+          self ! MyProtocol.Shutdown
+      }
 
-    case (Stopping, Stopped) => nextStateData match {
-      case _ =>
-        log.info("[Stopping->Stopped] Shutting down")
-        self ! MyProtocol.Shutdown
-    }
+    case (Materializing, Materializing) =>
+      nextStateData match {
+        case MaterializingData.ShouldRetry() =>
+          log.info("[Materializing->Materializing] Scheduling Retry")
+          startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
+        case MaterializingData.ToBeMaterialized(WorkerToEtlAssociation(worker, data)) =>
+          log.info("[Materializing->Materializing] materialize [{}->{}]", worker, data.name)
+          self ! MyProtocol.MaterializeETL(worker, data)
+        case MaterializingData.AllMaterialized() =>
+          log.info("[Materializing->Materializing] AllMaterialized")
+          self ! MyProtocol.MaterializationFinished
+        case MaterializingData.ShouldStopAll() =>
+          log.info("[Materializing->Materializing] StopAll")
+          self ! MyProtocol.MaterializationFinished
+        case _ => log.info("[Materializing->Materializing] Empty transition effect")
+      }
 
-    case (Materializing, Materializing) => nextStateData match {
-      case MaterializingData.ShouldRetry() =>
-        log.info("[Materializing->Materializing] Scheduling Retry")
-        startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
-      case MaterializingData.ToBeMaterialized(WorkerToEtlAssociation(worker, data)) =>
-        log.info("[Materializing->Materializing] materialize [{}->{}]", worker, data.name)
-        self ! MyProtocol.MaterializeETL(worker, data)
-      case MaterializingData.AllMaterialized() =>
-        log.info("[Materializing->Materializing] AllMaterialized")
-        self ! MyProtocol.MaterializationFinished
-      case MaterializingData.ShouldStopAll() =>
-        log.info("[Materializing->Materializing] StopAll")
-        self ! MyProtocol.MaterializationFinished
-      case _ => log.info("[Materializing->Materializing] Empty transition effect")
-    }
+    case (Materializing, Materialized) =>
+      nextStateData match {
+        case data: MaterializedData if data.shouldStopAll =>
+          log.info("[Materializing->Materialized] Scheduling StopAll")
+          self ! MyProtocol.CancelWork
+        case data: MaterializedData if !data.shouldStopAll =>
+          log.info("[Materializing->Materialized] Scheduling Monitoring")
+          self ! MyProtocol.MonitorPipegraph
+      }
 
-    case (Materializing, Materialized) => nextStateData match {
-      case data: MaterializedData if data.shouldStopAll =>
-        log.info("[Materializing->Materialized] Scheduling StopAll")
-        self ! MyProtocol.CancelWork
-      case data: MaterializedData if !data.shouldStopAll =>
-        log.info("[Materializing->Materialized] Scheduling Monitoring")
-        self ! MyProtocol.MonitorPipegraph
-    }
+    case (Monitoring, Monitoring) =>
+      nextStateData match {
+        case MonitoringData.ToBeMonitored(WorkerToEtlAssociation(worker, data)) =>
+          log.info("[Monitoring->Monitoring] Monitor [{}->{}]", worker, data.name)
+          self ! MyProtocol.MonitorETL(worker, data)
+        case MonitoringData.AllMonitored() =>
+          log.info("[Monitoring->Monitoring] All Monitored")
+          self ! MyProtocol.MonitoringFinished
+        case MonitoringData.ShouldStopAll() =>
+          log.info("[Monitoring->Monitoring] StopAll")
+          self ! MyProtocol.MonitoringFinished
+        case _ => log.info("[Monitoring->Monitoring] Empty transition effect")
+      }
 
+    case (Monitoring, Monitored) =>
+      nextStateData match {
+        case MonitoredData.ShouldRetry() =>
+          log.info("[Monitoring->Monitored] Scheduling Retry")
+          startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
+        case MonitoredData.ShouldStopAll() =>
+          log.info("[Monitoring->Monitored] StopAll")
+          self ! MyProtocol.CancelWork
+        case MonitoredData.ShouldMonitorAgain() =>
+          log.info("[Monitoring->Monitored] Scheduling Monitoring")
+          startTimerAtFixedRate("monitoring", MyProtocol.MonitorPipegraph, monitoringInterval)
 
-    case (Monitoring, Monitoring) => nextStateData match {
-      case MonitoringData.ToBeMonitored(WorkerToEtlAssociation(worker, data)) =>
-        log.info("[Monitoring->Monitoring] Monitor [{}->{}]", worker, data.name)
-        self ! MyProtocol.MonitorETL(worker, data)
-      case MonitoringData.AllMonitored() =>
-        log.info("[Monitoring->Monitoring] All Monitored")
-        self ! MyProtocol.MonitoringFinished
-      case MonitoringData.ShouldStopAll() =>
-        log.info("[Monitoring->Monitoring] StopAll")
-        self ! MyProtocol.MonitoringFinished
-      case _ => log.info("[Monitoring->Monitoring] Empty transition effect")
-    }
+        case MonitoredData.NothingToMonitor() =>
+          log.info("[Monitoring->Monitored] Nothing to monitor")
+          self ! MyProtocol.CancelWork
 
-    case (Monitoring, Monitored) => nextStateData match {
-      case MonitoredData.ShouldRetry() =>
-        log.info("[Monitoring->Monitored] Scheduling Retry")
-        startTimerAtFixedRate("retry", MyProtocol.PerformRetry, retryDuration)
-      case MonitoredData.ShouldStopAll() =>
-        log.info("[Monitoring->Monitored] StopAll")
-        self ! MyProtocol.CancelWork
-      case MonitoredData.ShouldMonitorAgain() =>
-        log.info("[Monitoring->Monitored] Scheduling Monitoring")
-        startTimerAtFixedRate("monitoring", MyProtocol.MonitorPipegraph, monitoringInterval)
+      }
 
-      case MonitoredData.NothingToMonitor() =>
-        log.info("[Monitoring->Monitored] Nothing to monitor")
-        self ! MyProtocol.CancelWork
+    case (Monitored, Stopping) =>
+      nextStateData match {
+        case StoppingData.AllStopped() =>
+          log.info("[Monitored->Stopping] All stopped")
+          self ! MyProtocol.StopFinished
+        case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
+          log.info("[Monitored->Stopping] Scheduling Stop of [{}->{etl}]", worker, etl)
+          self ! MyProtocol.StopETL(worker, etl)
 
-    }
+      }
 
-    case (Monitored, Stopping) => nextStateData match {
-      case StoppingData.AllStopped() =>
-        log.info("[Monitored->Stopping] All stopped")
-        self ! MyProtocol.StopFinished
-      case StoppingData.ToBeStopped(WorkerToEtlAssociation(worker, etl)) =>
-        log.info("[Monitored->Stopping] Scheduling Stop of [{}->{etl}]", worker, etl)
-        self ! MyProtocol.StopETL(worker, etl)
+    case (Monitored, Activating) =>
+      nextStateData match {
+        case ActivatingData.ToBeActivated(etl) =>
+          log.info("[Monitored->Activating] Scheduling activation")
+          self ! MyProtocol.ActivateETL(etl)
+        case ActivatingData.AllActive() =>
+          log.info("[Monitored->Activating] AllActive")
+          self ! MyProtocol.ActivationFinished
+      }
 
-    }
-
-    case (Monitored, Activating) => nextStateData match {
-      case ActivatingData.ToBeActivated(etl) =>
-        log.info("[Monitored->Activating] Scheduling activation")
-        self ! MyProtocol.ActivateETL(etl)
-      case ActivatingData.AllActive() =>
-        log.info("[Monitored->Activating] AllActive")
-        self ! MyProtocol.ActivationFinished
-    }
-
-    case (Monitored, Monitoring) => nextStateData match {
-      case MonitoringData.ToBeMonitored(WorkerToEtlAssociation(worker, etl)) =>
-        log.info("[Monitored->Monitoring] Monitoring [{}-{}]", worker, etl.name)
-        self ! MyProtocol.MonitorETL(worker, etl)
-      case MonitoringData.AllMonitored() =>
-        log.info("[Monitored->Monitoring] All monitored")
-        self ! MyProtocol.MonitoringFinished
-    }
+    case (Monitored, Monitoring) =>
+      nextStateData match {
+        case MonitoringData.ToBeMonitored(WorkerToEtlAssociation(worker, etl)) =>
+          log.info("[Monitored->Monitoring] Monitoring [{}-{}]", worker, etl.name)
+          self ! MyProtocol.MonitorETL(worker, etl)
+        case MonitoringData.AllMonitored() =>
+          log.info("[Monitored->Monitoring] All monitored")
+          self ! MyProtocol.MonitoringFinished
+      }
 
   }
 
@@ -475,27 +515,26 @@ class PipegraphGuardian(private val master: ActorRef,
 
 object PipegraphGuardian {
 
-  /**
-    * A child factory is a function of (pipegraph,actorName, context | Actorsystem)
+  /** A child factory is a function of (pipegraph,actorName, context | Actorsystem)
     */
-  type ChildFactory = (PipegraphModel, String, ActorRefFactory) => ActorRef
+  type ChildFactory            = (PipegraphModel, String, ActorRefFactory) => ActorRef
   type ComponentFailedStrategy = StructuredStreamingETLModel => Choice
 
   def defaultChildFactory(
-                           sparkSession: SparkSession,
-                           mlModelBl: MlModelBL,
-                           topicsBl: TopicBL,
-                           freeCodeBL: FreeCodeBL,
-                           processGroupBL: ProcessGroupBL,
-                           streamingReaderFactory: StreamingReaderFactory,
-                           staticReaderFactory: StaticReaderFactory,
-                           writerFactory: WriterFactory
-                         ): ChildFactory = { (pipegraph, suppliedName, context) =>
+      sparkSession: SparkSession,
+      mlModelBl: MlModelBL,
+      topicsBl: TopicBL,
+      freeCodeBL: FreeCodeBL,
+      processGroupBL: ProcessGroupBL,
+      streamingReaderFactory: StreamingReaderFactory,
+      staticReaderFactory: StaticReaderFactory,
+      writerFactory: WriterFactory
+  ): ChildFactory = { (pipegraph, suppliedName, context) =>
     val name = s"$suppliedName-${UUID.randomUUID()}"
 
     val childEtlSparkSession = sparkSession.newSession()
 
-    //actor names should be urlsafe
+    // actor names should be urlsafe
     val saneName = URLEncoder.encode(name.replaceAll(" ", "-"), StandardCharsets.UTF_8.name())
 
     context.actorOf(
@@ -516,18 +555,24 @@ object PipegraphGuardian {
 
   }
 
-  def props(master: ActorRef,
-            pipegraphName: String,
-            childFactory: ChildFactory,
-            retryDuration: FiniteDuration,
-            monitoringInterval: FiniteDuration,
-            componentFailedStrategy: ComponentFailedStrategy) =
-    Props(new PipegraphGuardian(master,
-      pipegraphName,
-      childFactory,
-      retryDuration,
-      monitoringInterval,
-      componentFailedStrategy))
+  def props(
+      master: ActorRef,
+      pipegraphName: String,
+      childFactory: ChildFactory,
+      retryDuration: FiniteDuration,
+      monitoringInterval: FiniteDuration,
+      componentFailedStrategy: ComponentFailedStrategy
+  ) =
+    Props(
+      new PipegraphGuardian(
+        master,
+        pipegraphName,
+        childFactory,
+        retryDuration,
+        monitoringInterval,
+        componentFailedStrategy
+      )
+    )
 
   sealed trait Choice
 

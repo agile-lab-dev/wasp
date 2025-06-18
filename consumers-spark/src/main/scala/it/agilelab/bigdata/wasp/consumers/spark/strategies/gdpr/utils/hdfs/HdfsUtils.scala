@@ -14,25 +14,25 @@ import scala.util.{Failure, Success, Try}
 
 object HdfsUtils extends Logging {
 
-  /**
-    * Create a new directory inside `backupParentDir`, called "backup_{randomUUID}".
-    * Each of the files inside `filesToBackup` will be copied in this directory, also maintaining
-    * the eventual HDFS partitioning. The new file path is created by removing the base directory
-    * (that is `dataPath`) from the file path, and replacing it with the path of the backup directory.
-    * Example:
-    * `filesToBackup` = ["/user/data/p1=a/p2=b/file.parquet"]
-    * `backupParentDir` = "/user"
-    * `dataPath` = "/user/data"
+  /** Create a new directory inside `backupParentDir`, called "backup_{randomUUID}". Each of the files inside
+    * `filesToBackup` will be copied in this directory, also maintaining the eventual HDFS partitioning. The new file
+    * path is created by removing the base directory (that is `dataPath`) from the file path, and replacing it with the
+    * path of the backup directory. Example: `filesToBackup` = ["/user/data/p1=a/p2=b/file.parquet"] `backupParentDir` =
+    * "/user" `dataPath` = "/user/data"
     *
-    *  - This function creates:
+    *   - This function creates:
     * `backupDir` = "/user/backup_123'
-    *  - then it copies the file into this directory, replacing the prefix "/user/data" with "/user/backup_123":
+    *   - then it copies the file into this directory, replacing the prefix "/user/data" with "/user/backup_123":
     * "/user/backup_123/p1=a/p2=b/file.parquet"
     *
-    * @param filesToBackup   Files that should be copied in the backup directory
-    * @param backupParentDir Base path where to create the backup directory
-    * @param dataPath        Path containing the data that will be backup
-    * @return Path of the newly created backup directory
+    * @param filesToBackup
+    *   Files that should be copied in the backup directory
+    * @param backupParentDir
+    *   Base path where to create the backup directory
+    * @param dataPath
+    *   Path containing the data that will be backup
+    * @return
+    *   Path of the newly created backup directory
     */
   def backupFiles(fs: FileSystem)(filesToBackup: Seq[Path], backupParentDir: Path, dataPath: Path): Try[Path] = {
     val backupDirPath = new Path(backupParentDir, "backup" + "_" + UUID.randomUUID.toString)
@@ -49,9 +49,9 @@ object HdfsUtils extends Logging {
             logger.info(s"Backupping files ${filesToBackup.mkString("\n", "\n", "")} to '${backupDirPath.toString}'")
             for {
               moves <- GdprUtils.traverseTry(filesToBackup) { f =>
-                        val newPath = replacePathPrefix(f, prefixPathToChange = dataPath, newPrefix = backupDirPath)
-                        FileUtil.copy(fs, f, fs, newPath, false, fs.getConf)
-                      }
+                         val newPath = replacePathPrefix(f, prefixPathToChange = dataPath, newPrefix = backupDirPath)
+                         FileUtil.copy(fs, f, fs, newPath, false, fs.getConf)
+                       }
               _ <- GdprUtils.recoverFsOperation(moves.forall(identity), s"Cannot copy files into '$backupDirPath")
             } yield backupDirPath
           }

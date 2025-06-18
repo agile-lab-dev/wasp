@@ -14,8 +14,8 @@ trait StatsService {
   def counts(startTimestamp: Instant, endTimestamp: Instant, limit: Int): Future[Counts]
 }
 
-class DefaultSolrStatsService(client: SolrClient)(
-    implicit ec: ExecutionContext
+class DefaultSolrStatsService(client: SolrClient)(implicit
+    ec: ExecutionContext
 ) extends StatsService {
 
   private val TIMESTAMP_FIELD = "timestamp"
@@ -49,21 +49,20 @@ class DefaultSolrStatsService(client: SolrClient)(
           (facetValue, timestamp, count)
         }
       }
-      .groupBy {
-        case (_, timestamp, _) => timestamp
+      .groupBy { case (_, timestamp, _) =>
+        timestamp
       }
 
     val res = x
       .mapValues(y =>
-        y.map {
-          case (facetValue, _, count) => (facetValue, count)
+        y.map { case (facetValue, _, count) =>
+          (facetValue, count)
         }.toMap
       )
       .toSeq
-      .map {
-        case (timestamp, data) =>
-          val others = globalRange(timestamp) - data.values.sum
-          CountEntry(timestamp, data + ("_others_" -> others))
+      .map { case (timestamp, data) =>
+        val others = globalRange(timestamp) - data.values.sum
+        CountEntry(timestamp, data + ("_others_" -> others))
       }
 
     res

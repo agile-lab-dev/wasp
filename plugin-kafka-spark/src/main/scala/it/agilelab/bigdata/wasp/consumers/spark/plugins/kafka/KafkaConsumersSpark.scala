@@ -26,17 +26,21 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): KafkaSparkStructuredStreamingWriter = {
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): KafkaSparkStructuredStreamingWriter = {
     logger.info(s"Initialize the kafka spark structured streaming writer")
     logger.info(s"Topic: $topicBL")
     new KafkaSparkStructuredStreamingWriter(topicBL, writerModel.datastoreModelName, ss)
   }
 
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
     logger.info(s"Returning object $KafkaSparkStructuredStreamingReader")
     // why is this an object? :/
     KafkaSparkStructuredStreamingReader
@@ -47,7 +51,8 @@ class KafkaConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid batch source! Reader model $readerModel is not valid."
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid batch source! Reader model $readerModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }

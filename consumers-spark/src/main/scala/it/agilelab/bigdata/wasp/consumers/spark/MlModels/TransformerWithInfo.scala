@@ -5,8 +5,7 @@ import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.Params
 import org.mongodb.scala.bson.BsonObjectId
 
-/**
-  * Created by Mattia Bertorello on 28/09/15.
+/** Created by Mattia Bertorello on 28/09/15.
   */
 case class TransformerWithInfo(
     name: String,

@@ -10,31 +10,30 @@ trait MailAgent {
 }
 
 case class ConsoleMailAgent() extends MailAgent {
-  override def send(mail: Mail): Unit = println(s"INFO - ${System.currentTimeMillis()} ConsoleMailAgent: "  + mail.toString)
+  override def send(mail: Mail): Unit = println(
+    s"INFO - ${System.currentTimeMillis()} ConsoleMailAgent: " + mail.toString
+  )
 }
 
 case class MailAgentImpl(options: Map[String, String]) extends MailAgent {
 
-  private val sanitizedOptions = options.map( e => (e._1.replace("___", "."), e._2) )
+  private val sanitizedOptions = options.map(e => (e._1.replace("___", "."), e._2))
 
   // Mandatory fields
   private val mailFrom = sanitizedOptions("mail-from")
-  private val host = sanitizedOptions("mail.smtp.host")
-  private val port: Integer = sanitizedOptions("mail.smtp.port").toInt //Integer because has to be inserted into a java properties object
+  private val host     = sanitizedOptions("mail.smtp.host")
+  private val port: Integer = sanitizedOptions(
+    "mail.smtp.port"
+  ).toInt // Integer because has to be inserted into a java properties object
   private val username = sanitizedOptions("username")
   private val password = sanitizedOptions("password")
 
-  //Optional/Extra fields
+  // Optional/Extra fields
   private val extraOptions = sanitizedOptions.filterNot(e => {
-      Seq(
-        "mail-from",
-        "mail.smtp.host",
-        "mail.smtp.port",
-        "username",
-        "password").contains(e._1)
-    })
+    Seq("mail-from", "mail.smtp.host", "mail.smtp.port", "username", "password").contains(e._1)
+  })
 
-  //Java-ish way to get a session instance
+  // Java-ish way to get a session instance
   private lazy val session: Session = {
 
     val properties = new Properties()
@@ -45,9 +44,10 @@ case class MailAgentImpl(options: Map[String, String]) extends MailAgent {
     extraOptions.map(v => properties.put(v._1, v._2))
 
     val authenticator: Authenticator = new Authenticator {
-      override def getPasswordAuthentication: PasswordAuthentication = new PasswordAuthentication(username, password)}
+      override def getPasswordAuthentication: PasswordAuthentication = new PasswordAuthentication(username, password)
+    }
 
-    //TODO: create a pool of sessions because a single session is synchronized
+    // TODO: create a pool of sessions because a single session is synchronized
     Session.getInstance(properties, authenticator)
   }
 
@@ -78,8 +78,7 @@ case class MailAgentImpl(options: Map[String, String]) extends MailAgent {
   private def setMessageRecipients(msg: Message, recipient: String, recipientType: Message.RecipientType): Unit = {
     // had to do the asInstanceOf[...] call here to make scala happy
     val addressArray = buildInternetAddressArray(recipient).asInstanceOf[Array[Address]]
-    if ((addressArray != null) && (addressArray.length > 0))
-    {
+    if ((addressArray != null) && (addressArray.length > 0)) {
       msg.setRecipients(recipientType, addressArray)
     }
   }

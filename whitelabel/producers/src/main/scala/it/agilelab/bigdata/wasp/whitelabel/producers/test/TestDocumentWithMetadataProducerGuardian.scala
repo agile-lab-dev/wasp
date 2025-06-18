@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.whitelabel.producers.test
 
-
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import it.agilelab.bigdata.wasp.repository.core.bl.{ProducerBL, TopicBL}
@@ -11,8 +10,10 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContext
 
-final class TestDocumentWithMetadataProducerGuardian(env: {val producerBL: ProducerBL; val topicBL: TopicBL}, producerName: String)
-  extends ProducerGuardian(env, producerName) {
+final class TestDocumentWithMetadataProducerGuardian(
+    env: { val producerBL: ProducerBL; val topicBL: TopicBL },
+    producerName: String
+) extends ProducerGuardian(env, producerName) {
 
   override val name: String = "testDocumentWithMetadataProducer"
 
@@ -24,11 +25,13 @@ final class TestDocumentWithMetadataProducerGuardian(env: {val producerBL: Produ
   }
 }
 
-private[producers] class TestDocumentWithMetadataProducerActor(kafka_router: ActorRef, topic: Option[TopicModel],
-                                                               sourceName: String)
-  extends ProducerActor[TestDocumentWithMetadata](kafka_router, topic)
-    with SprayJsonSupport with DefaultJsonProtocol {
-
+private[producers] class TestDocumentWithMetadataProducerActor(
+    kafka_router: ActorRef,
+    topic: Option[TopicModel],
+    sourceName: String
+) extends ProducerActor[TestDocumentWithMetadata](kafka_router, topic)
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
   var documentId = 0
 
@@ -51,24 +54,28 @@ private[producers] class TestDocumentWithMetadataProducerActor(kafka_router: Act
 
   private def createTestDocument(documentId: Int) = {
 
-
-    val now = System.currentTimeMillis()
+    val now      = System.currentTimeMillis()
     val metadata = MetadataModel(documentId.toString, sourceName, now, now, Array.empty)
 
-    val nestedDocument = TestNestedDocument("field1_" + documentId, documentId, Some("field3_" +
-      documentId))
+    val nestedDocument = TestNestedDocument(
+      "field1_" + documentId,
+      documentId,
+      Some(
+        "field3_" +
+          documentId
+      )
+    )
     TestDocumentWithMetadata(metadata, "" + documentId, documentId, nestedDocument)
   }
 
-  implicit lazy val pathModelToJson: RootJsonFormat[PathModel] = jsonFormat2(PathModel.apply)
-  implicit lazy val metadataModelToJson: RootJsonFormat[MetadataModel] = jsonFormat5(MetadataModel.apply)
+  implicit lazy val pathModelToJson: RootJsonFormat[PathModel]                   = jsonFormat2(PathModel.apply)
+  implicit lazy val metadataModelToJson: RootJsonFormat[MetadataModel]           = jsonFormat5(MetadataModel.apply)
   implicit lazy val testNestedDocumentToJson: RootJsonFormat[TestNestedDocument] = jsonFormat3(TestNestedDocument.apply)
 
   override def generateOutputJsonMessage(input: TestDocumentWithMetadata): String = {
 
-
     val testDocumentToJson: RootJsonFormat[TestDocumentWithMetadata] = jsonFormat4(TestDocumentWithMetadata.apply)
-    val jsonObj = testDocumentToJson.write(input)
+    val jsonObj                                                      = testDocumentToJson.write(input)
     jsonObj.compactPrint
   }
 }

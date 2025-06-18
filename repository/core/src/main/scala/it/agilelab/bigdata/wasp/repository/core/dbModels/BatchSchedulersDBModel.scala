@@ -5,9 +5,10 @@ import org.mongodb.scala.bson.BsonDocument
 
 trait BatchSchedulerDBModel extends Model
 
-case class BatchSchedulerDBModelV1(override val name: String,
-                                    cronExpression: String,
-                                    batchJob: Option[String],
-                                    options: Option[BsonDocument] = None,
-                                    isActive: Boolean = true
-                                   ) extends BatchSchedulerDBModel
+case class BatchSchedulerDBModelV1(
+    override val name: String,
+    cronExpression: String,
+    batchJob: Option[String],
+    options: Option[BsonDocument] = None,
+    isActive: Boolean = true
+) extends BatchSchedulerDBModel

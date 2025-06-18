@@ -9,10 +9,10 @@ import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.util.{Failure, Success}
 
-/**
-	* A [[SparkStructuredStreamingWriter]] that writes to PostgreSQL using upserts (INSERT ON CONFLICT)
-	*
-	* @param sqlSinkModel  Model for the upsert operations
+/** A [[SparkStructuredStreamingWriter]] that writes to PostgreSQL using upserts (INSERT ON CONFLICT)
+  *
+  * @param sqlSinkModel
+  *   Model for the upsert operations
   */
 case class PostgreSQLSparkStructuredStreamingWriter(override val sqlSinkModel: SQLSinkModel)
     extends PostgreSQLSparkBaseWriter

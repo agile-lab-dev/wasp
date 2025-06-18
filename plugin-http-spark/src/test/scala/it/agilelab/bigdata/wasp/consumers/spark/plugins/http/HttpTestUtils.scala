@@ -16,7 +16,7 @@ object HttpTestUtils {
   def getAvailablePort: Int = using(new ServerSocket(0))(_.getLocalPort)
 
   def withServer[A](dispatcherFactory: CountDownLatch => Dispatcher, latchCount: Int = 1)(
-    f: ServerData => A
+      f: ServerData => A
   ): A = {
     val s = createAndStartServer(dispatcherFactory, latchCount)
     try f(s)

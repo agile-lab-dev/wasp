@@ -6,7 +6,7 @@ import io.swagger.v3.oas.models.{Components, OpenAPI}
 
 object OpenApiRenderer {
 
-  def render(generator : Context => OpenAPI) : String = {
+  def render(generator: Context => OpenAPI): String = {
 
     val set = new java.util.HashMap[String, Schema[_]]()
 
@@ -21,8 +21,8 @@ object OpenApiRenderer {
     val components = new Components()
 
     import scala.collection.JavaConverters._
-    set.asScala.foreach{
-      case (k, v) => components.addSchemas(v.getName, v)
+    set.asScala.foreach { case (k, v) =>
+      components.addSchemas(v.getName, v)
     }
 
     definition.setComponents(components)

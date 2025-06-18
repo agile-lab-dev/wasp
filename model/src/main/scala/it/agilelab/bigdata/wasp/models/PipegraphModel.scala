@@ -70,17 +70,24 @@ case class LegacyStreamingETLModel(
     var isActive: Boolean = false
 ) extends ProcessingComponentModel
 
-/**
-  * A streaming processing component that leverages Spark's Structured Streaming API.
+/** A streaming processing component that leverages Spark's Structured Streaming API.
   *
-  * @param name unique name of the processing component
-  * @param group group of which the processing component is part
-  * @param staticInputs list of inputs for static datasets
-  * @param streamingOutput streaming output
-  * @param mlModels machine learning models to be used in the processing
-  * @param strategy strategy model that defines the processing
-  * @param triggerIntervalMs trigger interval to use, in milliseconds
-  * @param options has no effect at all
+  * @param name
+  *   unique name of the processing component
+  * @param group
+  *   group of which the processing component is part
+  * @param staticInputs
+  *   list of inputs for static datasets
+  * @param streamingOutput
+  *   streaming output
+  * @param mlModels
+  *   machine learning models to be used in the processing
+  * @param strategy
+  *   strategy model that defines the processing
+  * @param triggerIntervalMs
+  *   trigger interval to use, in milliseconds
+  * @param options
+  *   has no effect at all
   */
 case class StructuredStreamingETLModel(
     name: String,
@@ -138,16 +145,22 @@ final case class PipegraphInstanceModel(
     error: Option[String] = None
 ) extends Model
 
-/**
-  * A model for a pipegraph, a processing pipeline abstraction.
+/** A model for a pipegraph, a processing pipeline abstraction.
   *
-  * @param name name of the pipegraph
-  * @param description description of the pipegraph
-  * @param owner owner of the pipegraph
-  * @param isSystem whether the pipegraph is from the WASP system
-  * @param creationTime time of creation  of the pipegraph
-  * @param structuredStreamingComponents components describing processing built on Spark Structured Streaming
-  * @param dashboard dashboard of the pipegraph
+  * @param name
+  *   name of the pipegraph
+  * @param description
+  *   description of the pipegraph
+  * @param owner
+  *   owner of the pipegraph
+  * @param isSystem
+  *   whether the pipegraph is from the WASP system
+  * @param creationTime
+  *   time of creation of the pipegraph
+  * @param structuredStreamingComponents
+  *   components describing processing built on Spark Structured Streaming
+  * @param dashboard
+  *   dashboard of the pipegraph
   */
 case class PipegraphModel(
     override val name: String,

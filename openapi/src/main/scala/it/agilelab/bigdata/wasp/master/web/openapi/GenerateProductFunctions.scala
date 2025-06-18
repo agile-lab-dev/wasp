@@ -1,8 +1,7 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-/**
-  * This class generates product functions variants to autogenerate OpenApiSchema typeclasses for case classes,
-  * the output of this class should be copy pasted in [[ProductOpenApi]]
+/** This class generates product functions variants to autogenerate OpenApiSchema typeclasses for case classes, the
+  * output of this class should be copy pasted in [[ProductOpenApi]]
   */
 object GenerateProductFunctions {
 

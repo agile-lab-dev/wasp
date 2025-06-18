@@ -8,13 +8,11 @@ import it.agilelab.bigdata.wasp.repository.core.mappers.BatchSchedulersMapperSel
 import it.agilelab.bigdata.wasp.repository.mongo.WaspMongoDB
 import org.bson.BsonBoolean
 
-
 class BatchSchedulersBLImp(waspDB: WaspMongoDB) extends BatchSchedulersBL {
 
   def getActiveSchedulers(isActive: Boolean = true): Seq[BatchSchedulerModel] = {
     waspDB.getAllDocumentsByField[BatchSchedulerDBModel]("isActive", new BsonBoolean(isActive)).map(factory)
   }
-
 
   override def persist(schedulerModel: BatchSchedulerModel): Unit = {
     waspDB.insert[BatchSchedulerDBModel](transform[BatchSchedulerDBModelV1](schedulerModel))

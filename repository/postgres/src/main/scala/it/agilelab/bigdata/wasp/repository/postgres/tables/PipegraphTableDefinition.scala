@@ -9,18 +9,18 @@ object PipegraphTableDefinition extends ModelTableDefinition[PipegraphModel] wit
   val tableName = "PIPEGRAPH"
 
   val isSystem = "is_system"
-  val owner = "owner"
+  val owner    = "owner"
 
   override protected def extraColumns: List[String] = List(isSystem)
 
-  override protected def mapperExtraColumnsFromModelToArray: PipegraphModel => Array[(String, Any)] = model => Array(
-    (isSystem,model.isSystem)
-  )
+  override protected def mapperExtraColumnsFromModelToArray: PipegraphModel => Array[(String, Any)] = model =>
+    Array(
+      (isSystem, model.isSystem)
+    )
 
   override protected def fromModelToJson(model: PipegraphModel): JsValue = model.toJson
 
   override protected def fromJsonToModel(json: JsValue): PipegraphModel = json.convertTo[PipegraphModel]
-
 
   val ddl: String =
     s"""CREATE TABLE IF NOT EXISTS $tableName (
@@ -31,6 +31,4 @@ object PipegraphTableDefinition extends ModelTableDefinition[PipegraphModel] wit
        |PRIMARY KEY ($name))
        |""".stripMargin
 
-
 }
-

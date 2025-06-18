@@ -16,9 +16,7 @@ import org.apache.spark.sql.SparkSession
 
 import scala.util.Try
 
-
-/**
-  * Created by Agile Lab s.r.l. on 23/03/2021.
+/** Created by Agile Lab s.r.l. on 23/03/2021.
   */
 class ParallelWriteConsumersSparkPlugin extends WaspConsumersSparkPlugin with Logging {
   var genericBL: GenericBL = ConfigBL.genericBL
@@ -38,12 +36,15 @@ class ParallelWriteConsumersSparkPlugin extends WaspConsumersSparkPlugin with Lo
   ): ParallelWriteSparkStructuredStreamingWriter = {
 
     logger.info(s"Initialize the Parallel Write spark streaming writer with this model: $writerModel")
-    val genericModel: GenericModel = Try(genericBL.getByName(writerModel.datastoreModelName) getOrElse (throw new RuntimeException("generic model not found: $name"))).get
+    val genericModel: GenericModel = Try(
+      genericBL.getByName(writerModel.datastoreModelName) getOrElse (throw new RuntimeException(
+        "generic model not found: $name"
+      ))
+    ).get
     logger.info(s"Retrieved genericModel: ${genericModel.toString}")
 
     new ParallelWriteSparkStructuredStreamingWriter(parseParallelWriteModel(genericModel), MetastoreCatalogService)
   }
-
 
   override def getSparkStructuredStreamingReader(
       ss: SparkSession,

@@ -41,7 +41,7 @@ class SerializableConfiguration(@transient var value: Configuration) extends Ser
       block
     } catch {
       case e: IOException => throw e
-      case NonFatal(t) => throw new IOException(t)
+      case NonFatal(t)    => throw new IOException(t)
     }
   }
 }

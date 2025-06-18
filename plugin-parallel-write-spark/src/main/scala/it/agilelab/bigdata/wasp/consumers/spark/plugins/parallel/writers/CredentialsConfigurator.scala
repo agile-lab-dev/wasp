@@ -9,5 +9,5 @@ trait CredentialsConfigurator {
 
 object CredentialsConfigurator {
   def coldAreaCredentialsPersisterConfigurator: CredentialsConfigurator = ColdAreaCredentialsPersister
-  def hadoopConfigConfigurator: CredentialsConfigurator = ???
+  def hadoopConfigConfigurator: CredentialsConfigurator                 = ???
 }

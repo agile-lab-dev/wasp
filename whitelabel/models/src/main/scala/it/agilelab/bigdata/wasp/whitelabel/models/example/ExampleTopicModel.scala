@@ -7,22 +7,26 @@ private[wasp] object ExampleTopicModel {
 
   private val topic_name = "example"
 
-  lazy val topic = TopicModel(name = TopicModel.name(topic_name),
-                              creationTime = System.currentTimeMillis,
-                              partitions = 3,
-                              replicas = 1,
-                              topicDataType = "json",
-                              keyFieldName = None,
-                              headersFieldName = None,
-                              valueFieldsNames = None,
-                              useAvroSchemaManager = false,
-                              schema = JsonConverter
-                                .fromString(topicSchema)
-                                .getOrElse(org.mongodb.scala.bson.BsonDocument()))
+  lazy val topic = TopicModel(
+    name = TopicModel.name(topic_name),
+    creationTime = System.currentTimeMillis,
+    partitions = 3,
+    replicas = 1,
+    topicDataType = "json",
+    keyFieldName = None,
+    headersFieldName = None,
+    valueFieldsNames = None,
+    useAvroSchemaManager = false,
+    schema = JsonConverter
+      .fromString(topicSchema)
+      .getOrElse(org.mongodb.scala.bson.BsonDocument())
+  )
 
   private val topicSchema =
-    TopicModel.generateField("example", "example", Some(
-      """
+    TopicModel.generateField(
+      "example",
+      "example",
+      Some("""
         |        {
         |            "name": "banana",
         |            "type": "string",
@@ -33,5 +37,6 @@ private[wasp] object ExampleTopicModel {
         |            "type": "string",
         |            "doc": "Last Name of Customer"
         |        }
-      """.stripMargin))
+      """.stripMargin)
+    )
 }

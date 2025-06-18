@@ -1,6 +1,12 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.sink
 
-import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.{HBaseConnectionCache, HBaseContext, HBaseCredentialsManager, HBaseTableCatalog, SmartConnection}
+import it.agilelab.bigdata.wasp.consumers.spark.plugins.plain.hbase.integration.{
+  HBaseConnectionCache,
+  HBaseContext,
+  HBaseCredentialsManager,
+  HBaseTableCatalog,
+  SmartConnection
+}
 import org.apache.hadoop.hbase.TableName
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
@@ -12,31 +18,37 @@ object HBaseWriter extends Logging with Serializable {
 
   import HBaseWriterProperties._
 
-  def write(queryExecution: QueryExecution,
-            params: Map[String, String],
-            hBaseContext: HBaseContext,
-            schema: StructType): Unit = {
+  def write(
+      queryExecution: QueryExecution,
+      params: Map[String, String],
+      hBaseContext: HBaseContext,
+      schema: StructType
+  ): Unit = {
 
     validateQuery(queryExecution.analyzed.output)
 
     val batchSize = params.get("batchSize").map(_.toInt).getOrElse(1000)
 
-    val table = HBaseTableCatalog(params).fullTableName
+    val table    = HBaseTableCatalog(params).fullTableName
     val fieldIdx = fieldIndexes(schema)
 
-    queryExecution
-      .toRdd
+    queryExecution.toRdd
       .foreachPartition { iter: Iterator[InternalRow] =>
         val config = hBaseContext.getConf()
         HBaseCredentialsManager.applyCredentials()
         val smartConnection = HBaseConnectionCache.getConnection(config)
-        val tableName = TableName.valueOf(table)
+        val tableName       = TableName.valueOf(table)
         mutate(batchSize, fieldIdx, iter, smartConnection, tableName)
       }
   }
 
-  def mutate(batchSize: Int, fieldIdx: Map[String, Int], iter: Iterator[InternalRow],
-             smartConnection: SmartConnection, tableName: TableName): Unit = {
+  def mutate(
+      batchSize: Int,
+      fieldIdx: Map[String, Int],
+      iter: Iterator[InternalRow],
+      smartConnection: SmartConnection,
+      tableName: TableName
+  ): Unit = {
     try {
       HBaseWriterTask.mutate(iter, tableName, smartConnection.connection, fieldIdx, batchSize)
     } catch {
@@ -61,10 +73,12 @@ object HBaseWriter extends Logging with Serializable {
     schema.find(_.name == attrName) match {
       case Some(expr) =>
         if (!validateType(expr.dataType, attrType)) {
-          log.error("{} attribute type {} not supported. It must be {}",
+          log.error(
+            "{} attribute type {} not supported. It must be {}",
             attrName,
             expr.dataType.catalogString,
-            attrType)
+            attrType
+          )
           throw new IllegalStateException(
             s"$attrName attribute unsupported type ${expr.dataType.catalogString}. It must be a $attrType"
           )
@@ -84,18 +98,19 @@ object HBaseWriter extends Logging with Serializable {
 }
 
 object HBaseWriterProperties extends Serializable {
-  val OperationAttribute = "operation"
-  val RowkeyAttribute = "rowKey"
+  val OperationAttribute    = "operation"
+  val RowkeyAttribute       = "rowKey"
   val ColumnFamilyAttribute = "columnFamily"
-  val ValuesAttribute = "values"
+  val ValuesAttribute       = "values"
 
-  val AttributeTypes = Map((OperationAttribute, (StringType, true)),
+  val AttributeTypes = Map(
+    (OperationAttribute, (StringType, true)),
     (RowkeyAttribute, (BinaryType, true)),
     (ColumnFamilyAttribute, (BinaryType, true)),
     (ValuesAttribute, (MapType(BinaryType, BinaryType), false))
   )
 
-  val UpsertOperation = "upsert"
-  val DeleteRowOperation = "delete-row"
+  val UpsertOperation     = "upsert"
+  val DeleteRowOperation  = "delete-row"
   val DeleteCellOperation = "delete-cell"
 }

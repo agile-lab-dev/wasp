@@ -13,9 +13,9 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
 
   def getByName(name: String): Option[PipegraphModel] = {
     waspDB
-      .getDocumentByField[PipegraphDBModel]("name", new BsonString(name)).map(factory)
+      .getDocumentByField[PipegraphDBModel]("name", new BsonString(name))
+      .map(factory)
   }
-
 
   def getAll: Seq[PipegraphModel] = {
     waspDB.getAll[PipegraphDBModel].map(factory)
@@ -43,7 +43,7 @@ class PipegraphBLImp(waspDB: WaspMongoDB) extends PipegraphBL {
   }
 
   def update(pipegraph: PipegraphModel): Unit = {
-    waspDB.updateByName[PipegraphDBModel](pipegraph.name,PipegraphMapperV2.fromModelToDBModel(pipegraph))
+    waspDB.updateByName[PipegraphDBModel](pipegraph.name, PipegraphMapperV2.fromModelToDBModel(pipegraph))
   }
 
   def insert(pipegraph: PipegraphModel): Unit = {
@@ -76,9 +76,9 @@ class PipegraphInstanceBlImp(waspDB: WaspMongoDB) extends PipegraphInstanceBl {
   override def all(): Seq[PipegraphInstanceModel] =
     waspDB.getAll[PipegraphInstanceDBModel].map(PipegraphInstanceDBModelMapperSelector.factory)
 
-
   override def instancesOf(name: String): Seq[PipegraphInstanceModel] =
-    waspDB.getAllDocumentsByField[PipegraphInstanceDBModel]("instanceOf", BsonString(name))
+    waspDB
+      .getAllDocumentsByField[PipegraphInstanceDBModel]("instanceOf", BsonString(name))
       .map(PipegraphInstanceDBModelMapperSelector.factory)
 
   override def insert(instance: PipegraphInstanceModel): PipegraphInstanceModel = {
@@ -87,7 +87,8 @@ class PipegraphInstanceBlImp(waspDB: WaspMongoDB) extends PipegraphInstanceBl {
   }
 
   override def getByName(name: String): Option[PipegraphInstanceModel] = {
-    waspDB.getDocumentByField[PipegraphInstanceDBModel]("name", new BsonString(name))
+    waspDB
+      .getDocumentByField[PipegraphInstanceDBModel]("name", new BsonString(name))
       .map(PipegraphInstanceDBModelMapperSelector.factory)
   }
 }

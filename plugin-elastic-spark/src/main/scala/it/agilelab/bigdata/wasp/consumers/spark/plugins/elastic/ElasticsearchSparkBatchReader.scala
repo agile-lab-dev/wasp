@@ -12,34 +12,36 @@ import org.elasticsearch.spark.sql.EsSparkSQL
 
 import scala.annotation.nowarn
 
-/**
-  * It read data from Elastic with the configuration of ElasticConfiguration.
-  * It use the push down method of SparkSQL to convert SQL to elastic query
+/** It read data from Elastic with the configuration of ElasticConfiguration. It use the push down method of SparkSQL to
+  * convert SQL to elastic query
   *
-  * @param indexModel Elastic configuration
+  * @param indexModel
+  *   Elastic configuration
   */
-class ElasticsearchSparkBatchReader(indexModel: IndexModel) extends SparkBatchReader with ElasticConfiguration with Logging {
-  val name: String = indexModel.name
+class ElasticsearchSparkBatchReader(indexModel: IndexModel)
+    extends SparkBatchReader
+    with ElasticConfiguration
+    with Logging {
+  val name: String       = indexModel.name
   val readerType: String = ElasticProduct.getActualProductName
 
   @nowarn
   override def read(sc: SparkContext): DataFrame = {
 
     val address = elasticConfig.connections
-      .filter(
-        _.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
+      .filter(_.metadata.flatMap(_.get("connectiontype")).getOrElse("") == "rest")
       .mkString(",")
 
     val sqlContext = new SQLContext(sc)
     val options = Map(
-      "pushdown" -> "true",
-      ConfigurationOptions.ES_NODES -> address,
+      "pushdown"                            -> "true",
+      ConfigurationOptions.ES_NODES         -> address,
       ConfigurationOptions.ES_RESOURCE_READ -> indexModel.resource
     )
 
     val optionsWithQuery = indexModel.query match {
       case Some(query) => options + (ConfigurationOptions.ES_QUERY -> query)
-      case None => options
+      case None        => options
     }
     logger.info(s"Read from Elastic with this options: $optionsWithQuery and this model: $indexModel")
     EsSparkSQL.esDF(sqlContext, optionsWithQuery)

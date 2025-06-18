@@ -18,13 +18,15 @@ object MetastoreCatalogService extends DataCatalogService with Serializable {
   def getPartitioningColumns(sparkSession: SparkSession, entityCoordinates: CatalogCoordinates): Seq[String] =
     getTable(sparkSession, getFullyQualifiedTableName(entityCoordinates)).partitionColumnNames
 
-  /**
-    * Retrieve metadata for an external table
+  /** Retrieve metadata for an external table
     */
   private def getTable(spark: SparkSession, tableName: String): CatalogTable = {
-    catalogCache.computeIfAbsent(tableName, new function.Function[String, CatalogTable] {
-      override def apply(t: String): CatalogTable = getTableFromCatalog(spark, tableName)
-    })
+    catalogCache.computeIfAbsent(
+      tableName,
+      new function.Function[String, CatalogTable] {
+        override def apply(t: String): CatalogTable = getTableFromCatalog(spark, tableName)
+      }
+    )
   }
 
   private def getTableFromCatalog(spark: SparkSession, tableName: String): CatalogTable = {

@@ -11,10 +11,9 @@ import it.agilelab.bigdata.wasp.models.editor._
 import it.agilelab.bigdata.wasp.models._
 import org.json4s.{DefaultFormats, Formats, JObject}
 import org.mongodb.scala.bson.{BsonDocument, BsonObjectId}
-import spray.json.{JsValue, RootJsonFormat, deserializationError, _}
+import spray.json.{deserializationError, JsValue, RootJsonFormat, _}
 
-/**
-  * Created by Agile Lab s.r.l. on 04/08/2017.
+/** Created by Agile Lab s.r.l. on 04/08/2017.
   */
 object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol {
 
@@ -35,8 +34,7 @@ object BsonConvertToSprayJson extends SprayJsonSupport with DefaultJsonProtocol 
 
 }
 
-/**
-  * Based on the code found: https://groups.google.com/forum/#!topic/spray-user/RkIwRIXzDDc
+/** Based on the code found: https://groups.google.com/forum/#!topic/spray-user/RkIwRIXzDDc
   */
 class EnumJsonConverter[T <: scala.Enumeration](enu: T) extends RootJsonFormat[T#Value] {
 
@@ -62,10 +60,10 @@ class TypesafeConfigJsonConverter() extends RootJsonFormat[Config] {
   }
 }
 
-/**
-  * RootJsonFormat for topic datastore models.
+/** RootJsonFormat for topic datastore models.
   *
-  * @author Nicolò Bidotti
+  * @author
+  *   Nicolò Bidotti
   */
 class TopicDatastoreModelJsonFormat
     extends RootJsonFormat[DatastoreModel]
@@ -130,9 +128,12 @@ trait JsonSupport
 
     override def read(json: JsValue): Instant = json match {
       case JsString(value) =>
-        DateTimeFormatter.ISO_INSTANT.parse(value, new TemporalQuery[Instant] {
-          override def queryFrom(temporal: TemporalAccessor): Instant = Instant.from(temporal)
-        })
+        DateTimeFormatter.ISO_INSTANT.parse(
+          value,
+          new TemporalQuery[Instant] {
+            override def queryFrom(temporal: TemporalAccessor): Instant = Instant.from(temporal)
+          }
+        )
       case other => throw new RuntimeException(s"Cannot parse Instant from $other")
     }
   }
@@ -261,8 +262,8 @@ trait JsonSupport
     HBaseEntryConfig.apply
   )
   implicit lazy val hbaseConfigModelConfigFormat: RootJsonFormat[HBaseConfigModel] = jsonFormat4(HBaseConfigModel.apply)
-  implicit lazy val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel]   = jsonFormat2(ElasticConfigModel.apply)
-  implicit lazy val solrConfigModelFormat: RootJsonFormat[SolrConfigModel]         = jsonFormat2(SolrConfigModel.apply)
+  implicit lazy val elasticConfigModelFormat: RootJsonFormat[ElasticConfigModel] = jsonFormat2(ElasticConfigModel.apply)
+  implicit lazy val solrConfigModelFormat: RootJsonFormat[SolrConfigModel]       = jsonFormat2(SolrConfigModel.apply)
   implicit lazy val batchJobExclusionConfig: RootJsonFormat[BatchJobExclusionConfig] = jsonFormat2(
     BatchJobExclusionConfig.apply
   )
@@ -384,8 +385,8 @@ trait JsonSupport
         case Some(JsString(StrategyDTO.nifiType))     => flowNifiDTOFormat.read(json)
         case Some(JsString(StrategyDTO.codebaseType)) => strategyClassDTOFormat.read(json)
         case Some(_)                                  => deserializationError(s"$json is not a StrategyDTO subclass")
-        case None                                     => deserializationError(s"$json it's missing a strategyType field")
-        case _                                        => deserializationError(s"$json It's not a valid StrategyDTO")
+        case None => deserializationError(s"$json it's missing a strategyType field")
+        case _    => deserializationError(s"$json It's not a valid StrategyDTO")
       }
 
     override def write(obj: StrategyDTO): JsValue = obj match {
@@ -425,9 +426,9 @@ trait JsonSupport
         case Some(JsString(DatastoreModelDTO.indexType))    => indexModelDTOFormat.read(json)
         case Some(JsString(DatastoreModelDTO.keyValueType)) => kvModelDTOFormat.read(json)
         case Some(JsString(DatastoreModelDTO.rawDataType))  => rawModelDTOFormat.read(json)
-        case Some(_)                                        => deserializationError(s"$json is not a DatastoreDTO subclass")
-        case None                                           => deserializationError(s"$json it's missing a modelType field")
-        case _                                              => deserializationError(s"$json It's not a valid DatastoreDTO")
+        case Some(_) => deserializationError(s"$json is not a DatastoreDTO subclass")
+        case None    => deserializationError(s"$json it's missing a modelType field")
+        case _       => deserializationError(s"$json It's not a valid DatastoreDTO")
       }
 
     override def write(obj: DatastoreModelDTO): JsValue = obj match {

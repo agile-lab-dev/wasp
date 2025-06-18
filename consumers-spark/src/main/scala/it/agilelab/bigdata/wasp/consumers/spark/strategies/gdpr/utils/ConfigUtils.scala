@@ -11,10 +11,12 @@ import scala.collection.JavaConverters._
 object ConfigUtils {
 
   /* Gets keys from config if they are specified, else gets them from `inputKeys` */
-  def keysToDelete(inputKeys: => Seq[KeyWithCorrelation],
-                   maybeConfig: Option[Config],
-                   configKey: String,
-                   correlationIdConfigKey: String): Seq[KeyWithCorrelation] = {
+  def keysToDelete(
+      inputKeys: => Seq[KeyWithCorrelation],
+      maybeConfig: Option[Config],
+      configKey: String,
+      correlationIdConfigKey: String
+  ): Seq[KeyWithCorrelation] = {
     maybeConfig
       .flatMap { config =>
         getOptionalStringSeq(config, configKey).map {
@@ -25,16 +27,19 @@ object ConfigUtils {
   }
 
   /* Gets keys from config if they are specified, else gets them from `inputKeysRDD` */
-  def keysToDeleteRDD(inputKeysRDD: RDD[KeyWithCorrelation],
-                      maybeConfig: Option[Config],
-                      configKey: String,
-                      correlationIdConfigKey: String): RDD[KeyWithCorrelation] = {
+  def keysToDeleteRDD(
+      inputKeysRDD: RDD[KeyWithCorrelation],
+      maybeConfig: Option[Config],
+      configKey: String,
+      correlationIdConfigKey: String
+  ): RDD[KeyWithCorrelation] = {
     maybeConfig
       .flatMap { config =>
         getOptionalStringSeq(config, configKey).map {
           _.map(key => KeyWithCorrelation(key, getCorrelationId(config, correlationIdConfigKey)))
         }
-      }.map(inputKeysRDD.sparkContext.parallelize(_))
+      }
+      .map(inputKeysRDD.sparkContext.parallelize(_))
       .getOrElse(inputKeysRDD)
   }
 

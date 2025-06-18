@@ -1,12 +1,12 @@
 package it.agilelab.bigdata.wasp.models.configuration
 
 case class ConnectionConfig(
-                             protocol: String,
-                             host: String,
-                             port: Int = 0,
-                             timeout: Option[Long] = None,
-                             metadata: Option[Map[String, String]]
-                           ) {
+    protocol: String,
+    host: String,
+    port: Int = 0,
+    timeout: Option[Long] = None,
+    metadata: Option[Map[String, String]]
+) {
 
   override def toString: String = {
     var result = ""

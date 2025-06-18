@@ -20,54 +20,63 @@ package org.apache.hadoop.hbase.spark
 import org.apache.hadoop.classification.InterfaceAudience
 import org.apache.hadoop.hbase.util.Bytes
 
-/**
- * A wrapper class that will allow both columnFamily and qualifier to
- * be the key of a hashMap.  Also allow for finding the value in a hashmap
- * with out cloning the HBase value from the HBase Cell object
- * @param columnFamily       ColumnFamily byte array
- * @param columnFamilyOffSet Offset of columnFamily value in the array
- * @param columnFamilyLength Length of the columnFamily value in the columnFamily array
- * @param qualifier          Qualifier byte array
- * @param qualifierOffSet    Offset of qualifier value in the array
- * @param qualifierLength    Length of the qualifier value with in the array
- */
+/** A wrapper class that will allow both columnFamily and qualifier to be the key of a hashMap. Also allow for finding
+  * the value in a hashmap with out cloning the HBase value from the HBase Cell object
+  * @param columnFamily
+  *   ColumnFamily byte array
+  * @param columnFamilyOffSet
+  *   Offset of columnFamily value in the array
+  * @param columnFamilyLength
+  *   Length of the columnFamily value in the columnFamily array
+  * @param qualifier
+  *   Qualifier byte array
+  * @param qualifierOffSet
+  *   Offset of qualifier value in the array
+  * @param qualifierLength
+  *   Length of the qualifier value with in the array
+  */
 @InterfaceAudience.Public
-class ColumnFamilyQualifierMapKeyWrapper(val columnFamily:Array[Byte],
-                                         val columnFamilyOffSet:Int,
-                                         val columnFamilyLength:Int,
-                                         val qualifier:Array[Byte],
-                                         val qualifierOffSet:Int,
-                                         val qualifierLength:Int)
-  extends Serializable {
+class ColumnFamilyQualifierMapKeyWrapper(
+    val columnFamily: Array[Byte],
+    val columnFamilyOffSet: Int,
+    val columnFamilyLength: Int,
+    val qualifier: Array[Byte],
+    val qualifierOffSet: Int,
+    val qualifierLength: Int
+) extends Serializable {
 
-  override def equals(other:Any): Boolean = {
+  override def equals(other: Any): Boolean = {
     val otherWrapper = other.asInstanceOf[ColumnFamilyQualifierMapKeyWrapper]
 
-    Bytes.compareTo(columnFamily,
+    Bytes.compareTo(
+      columnFamily,
       columnFamilyOffSet,
       columnFamilyLength,
       otherWrapper.columnFamily,
       otherWrapper.columnFamilyOffSet,
-      otherWrapper.columnFamilyLength) == 0 && Bytes.compareTo(qualifier,
-        qualifierOffSet,
-        qualifierLength,
-        otherWrapper.qualifier,
-        otherWrapper.qualifierOffSet,
-        otherWrapper.qualifierLength) == 0
+      otherWrapper.columnFamilyLength
+    ) == 0 && Bytes.compareTo(
+      qualifier,
+      qualifierOffSet,
+      qualifierLength,
+      otherWrapper.qualifier,
+      otherWrapper.qualifierOffSet,
+      otherWrapper.qualifierLength
+    ) == 0
   }
 
-  override def hashCode():Int = {
+  override def hashCode(): Int = {
     Bytes.hashCode(columnFamily, columnFamilyOffSet, columnFamilyLength) +
       Bytes.hashCode(qualifier, qualifierOffSet, qualifierLength)
   }
 
-  def cloneColumnFamily():Array[Byte] = {
+  def cloneColumnFamily(): Array[Byte] = {
     val resultArray = new Array[Byte](columnFamilyLength)
     System.arraycopy(columnFamily, columnFamilyOffSet, resultArray, 0, columnFamilyLength)
     resultArray
   }
 
-  def cloneQualifier():Array[Byte] = {
+  def cloneQualifier(): Array[Byte] = {
     val resultArray = new Array[Byte](qualifierLength)
     System.arraycopy(qualifier, qualifierOffSet, resultArray, 0, qualifierLength)
     resultArray

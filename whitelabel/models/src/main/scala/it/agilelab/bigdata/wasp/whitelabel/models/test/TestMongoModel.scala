@@ -8,16 +8,24 @@ object TestMongoModel {
 
   lazy val writeToMongo = DocumentModel(
     name = "test-write-to-mongo",
-    connectionString = ConfigManager.getMongoDBConfig.address + "/" +  ConfigManager.getMongoDBConfig.databaseName + "." + "TestCollectionStructuredWriteMongo",
-    schema = StructType(Seq(
-      StructField("id", StringType),
-      StructField("number", IntegerType),
-      StructField("nested", StructType(Seq(
-        StructField("field1", StringType),
-        StructField("field2", LongType),
-        StructField("field3", StringType)
-      )))
-    )).json
+    connectionString =
+      ConfigManager.getMongoDBConfig.address + "/" + ConfigManager.getMongoDBConfig.databaseName + "." + "TestCollectionStructuredWriteMongo",
+    schema = StructType(
+      Seq(
+        StructField("id", StringType),
+        StructField("number", IntegerType),
+        StructField(
+          "nested",
+          StructType(
+            Seq(
+              StructField("field1", StringType),
+              StructField("field2", LongType),
+              StructField("field3", StringType)
+            )
+          )
+        )
+      )
+    ).json
   )
 
 }

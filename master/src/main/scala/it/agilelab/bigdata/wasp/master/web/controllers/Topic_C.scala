@@ -7,8 +7,7 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-/**
-  * Created by Agile Lab s.r.l. on 09/08/2017.
+/** Created by Agile Lab s.r.l. on 09/08/2017.
   */
 object Topic_C extends Directives with JsonSupport {
 
@@ -27,7 +26,13 @@ object Topic_C extends Directives with JsonSupport {
             get {
               complete {
                 // complete with serialized Future result
-                getJsonOrNotFound[DatastoreModel](ConfigBL.topicBL.getByName(name), name, "Topic model", _.toJson, pretty)
+                getJsonOrNotFound[DatastoreModel](
+                  ConfigBL.topicBL.getByName(name),
+                  name,
+                  "Topic model",
+                  _.toJson,
+                  pretty
+                )
               }
             }
           }

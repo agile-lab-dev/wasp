@@ -89,10 +89,9 @@ class JsonGenericRecordReaderSpec extends FlatSpec with Matchers {
                 |""".stripMargin.getBytes -> "{\"ts\": \"a\", \"ts_cc\": \"b\", \"note\": {\"bar\": 3}}"
   it should "convert a json to a generic record from a schema with a union field" in {
     val cases = case1 :: case2 :: case3 :: case4 :: case5 :: case6 :: Nil
-    cases.foreach {
-      case (data, result) =>
-        val record = new JsonAvroConverter().convertToGenericDataRecord(data, schema)
-        record.toString shouldBe result
+    cases.foreach { case (data, result) =>
+      val record = new JsonAvroConverter().convertToGenericDataRecord(data, schema)
+      record.toString shouldBe result
     }
   }
 }

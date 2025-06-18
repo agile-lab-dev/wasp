@@ -10,7 +10,11 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql._
 
 object HBaseBatchWriter {
-  def createSparkStructuredStreamingWriter(keyValueBL: KeyValueBL, ss: SparkSession, hbaseModel: KeyValueModel): SparkStructuredStreamingWriter = {
+  def createSparkStructuredStreamingWriter(
+      keyValueBL: KeyValueBL,
+      ss: SparkSession,
+      hbaseModel: KeyValueModel
+  ): SparkStructuredStreamingWriter = {
     new HBaseStructuredStreamingWriter(hbaseModel, ss)
   }
 
@@ -19,19 +23,18 @@ object HBaseBatchWriter {
   }
 }
 
-class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel,
-                                     ss: SparkSession)
-  extends SparkStructuredStreamingWriter {
+class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel, ss: SparkSession)
+    extends SparkStructuredStreamingWriter {
   override def write(stream: DataFrame): DataStreamWriter[Row] = {
     val options: Map[String, String] =
       hbaseModel.getOptionsMap ++
-      hbaseModel.avroSchemas.getOrElse(Map()) ++
-      Seq(
-        HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
-        KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
-        HBaseTableCatalog.newTable -> "4",
-        "useAvroSchemaManager" -> hbaseModel.useAvroSchemaManager.toString
-      )
+        hbaseModel.avroSchemas.getOrElse(Map()) ++
+        Seq(
+          HBaseTableCatalog.tableCatalog      -> hbaseModel.tableCatalog,
+          KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
+          HBaseTableCatalog.newTable          -> "4",
+          "useAvroSchemaManager"              -> hbaseModel.useAvroSchemaManager.toString
+        )
     val convertedStream = PutConverterFactory.convertAvroColumns(options, stream)
     convertedStream.writeStream
       .options(options)
@@ -39,20 +42,18 @@ class HBaseStructuredStreamingWriter(hbaseModel: KeyValueModel,
   }
 }
 
-class HBaseBatchWriter(hbaseModel: KeyValueModel,
-                       sc: SparkContext)
-  extends SparkBatchWriter {
+class HBaseBatchWriter(hbaseModel: KeyValueModel, sc: SparkContext) extends SparkBatchWriter {
 
   override def write(df: DataFrame): Unit = {
 
     val options: Map[String, String] = hbaseModel.getOptionsMap ++
-    hbaseModel.avroSchemas.getOrElse(Map()) ++
-    Seq(
-      HBaseTableCatalog.tableCatalog -> hbaseModel.tableCatalog,
-      KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
-      HBaseTableCatalog.newTable -> "4",
-      "useAvroSchemaManager" -> hbaseModel.useAvroSchemaManager.toString
-    )
+      hbaseModel.avroSchemas.getOrElse(Map()) ++
+      Seq(
+        HBaseTableCatalog.tableCatalog      -> hbaseModel.tableCatalog,
+        KeyValueModel.metadataAvroSchemaKey -> KeyValueModel.metadataAvro,
+        HBaseTableCatalog.newTable          -> "4",
+        "useAvroSchemaManager"              -> hbaseModel.useAvroSchemaManager.toString
+      )
 
     df.write
       .options(options)

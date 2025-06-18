@@ -8,9 +8,8 @@ import org.apache.spark.sql.{DataFrame, Dataset}
 import scala.collection.immutable.Map
 
 class CustomEnrichmentStrategy extends EnrichmentStrategy {
-  /**
-    *
-    * @param dataFrames
+
+  /** @param dataFrames
     * @return
     */
   override def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame = {
@@ -19,13 +18,13 @@ class CustomEnrichmentStrategy extends EnrichmentStrategy {
     import fromKafka.sparkSession.implicits._
 
     val dataset: Dataset[FromKafka] = fromKafka.as[FromKafka]
-    dataset.map{ fromKafka =>
-      val exampleDataEnrichment: Enricher = enricher("msExample")
-      exampleDataEnrichment.call[String, SampleData](
-        "",
-        Map.apply("author" -> fromKafka.exampleAuthor),
-        Map.empty)
-    }.toDF().join(dataset, "id")
+    dataset
+      .map { fromKafka =>
+        val exampleDataEnrichment: Enricher = enricher("msExample")
+        exampleDataEnrichment.call[String, SampleData]("", Map.apply("author" -> fromKafka.exampleAuthor), Map.empty)
+      }
+      .toDF()
+      .join(dataset, "id")
   }
 
 }

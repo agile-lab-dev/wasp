@@ -125,8 +125,8 @@ trait BatchJobJsonSupport extends DefaultJsonProtocol {
   }
    */
 
-  def createBatchETLFormat(
-      implicit batchETLModelFormat: RootJsonFormat[BatchETLModel],
+  def createBatchETLFormat(implicit
+      batchETLModelFormat: RootJsonFormat[BatchETLModel],
       batchGdprETLModelFormat: RootJsonFormat[BatchGdprETLModel]
   ): RootJsonFormat[BatchETL] = {
 

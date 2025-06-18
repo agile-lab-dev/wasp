@@ -4,8 +4,14 @@ import com.typesafe.config.Config
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.Data.Collaborator
 import it.agilelab.bigdata.wasp.models.PipegraphModel
 
-case class NodeLabelsSchedulingStrategy(data: Map[Set[String], SchedulingStrategy], tieBreakerFactory: SchedulingStrategyFactory) extends SchedulingStrategy {
-  override def choose(members: Set[Collaborator], pipegraph: PipegraphModel): SchedulingStrategy.SchedulingStrategyOutcome = {
+case class NodeLabelsSchedulingStrategy(
+    data: Map[Set[String], SchedulingStrategy],
+    tieBreakerFactory: SchedulingStrategyFactory
+) extends SchedulingStrategy {
+  override def choose(
+      members: Set[Collaborator],
+      pipegraph: PipegraphModel
+  ): SchedulingStrategy.SchedulingStrategyOutcome = {
 
     val availableCollaborators: Set[Collaborator] = members.filter { collaborator =>
       pipegraph.labels.forall(label => collaborator.roles.contains(label))
@@ -27,17 +33,10 @@ case class NodeLabelsSchedulingStrategy(data: Map[Set[String], SchedulingStrateg
 
     }
 
-
   }
 
-
   private def noNodeAvailableOutcome(pipegraph: PipegraphModel): SchedulingStrategy.SchedulingStrategyOutcome =
-    Left((s"No node is able to schedule ${
-      pipegraph.name
-    } with labels ${
-      pipegraph.labels.mkString(",")
-    }", this))
-
+    Left((s"No node is able to schedule ${pipegraph.name} with labels ${pipegraph.labels.mkString(",")}", this))
 
 }
 
@@ -55,7 +54,12 @@ class NodeLabelsSchedulingStrategyFactory extends SchedulingStrategyFactory {
       val innerConfig = config.getConfig("tie-breaker")
 
       if (innerConfig.hasPath("class-name")) {
-        Class.forName(innerConfig.getString("class-name")).getDeclaredConstructor().newInstance().asInstanceOf[SchedulingStrategyFactory].inform(innerConfig)
+        Class
+          .forName(innerConfig.getString("class-name"))
+          .getDeclaredConstructor()
+          .newInstance()
+          .asInstanceOf[SchedulingStrategyFactory]
+          .inform(innerConfig)
       } else {
         throw new Exception("Expected a [scheduling-strategy.class-name] config key")
       }

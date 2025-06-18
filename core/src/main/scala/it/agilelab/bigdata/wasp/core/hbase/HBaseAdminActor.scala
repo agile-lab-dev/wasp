@@ -9,8 +9,8 @@ object HBaseAdminActor {
 }
 
 class HBaseAdminActor extends Actor with Logging {
-  
-  override def receive: Actor.Receive = {
-    case message: Any => logger.error("unknown message: " + message)
+
+  override def receive: Actor.Receive = { case message: Any =>
+    logger.error("unknown message: " + message)
   }
 }

@@ -1,25 +1,23 @@
 package it.agilelab.bigdata.wasp.datastores
 
-/**
-	* A `DatastoreProduct` identifies either a particular datastore, as in an actual software product, or a generic one,
-	* as in the framework will choose which one to use depending on configuration.
-	*
-	* @author Nicolò Bidotti
-	*/
+/** A `DatastoreProduct` identifies either a particular datastore, as in an actual software product, or a generic one,
+  * as in the framework will choose which one to use depending on configuration.
+  *
+  * @author
+  *   Nicolò Bidotti
+  */
 sealed trait DatastoreProduct {
   def categoryName: String
   def productName: Option[String]
 
-  /**
-		* Returns the product name, looking up the default datastore product for the category if this is a *GenericProduct.
-		*/
+  /** Returns the product name, looking up the default datastore product for the category if this is a *GenericProduct.
+    */
   def getActualProductName: String = {
     productName.getOrElse(throw new IllegalArgumentException("- should never happen"))
   }
 
-  /**
-		* Returns the default product for this category, looking it up in the configuration.
-		*/
+  /** Returns the default product for this category, looking it up in the configuration.
+    */
   def getDefaultProductForThisCategory: DatastoreProduct = this
 
 }

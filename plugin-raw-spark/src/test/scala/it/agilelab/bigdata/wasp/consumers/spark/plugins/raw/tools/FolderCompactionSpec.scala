@@ -10,24 +10,23 @@ import org.apache.spark.sql.{Encoder, Encoders}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import spray.json._
 
-
 object FakeJsonFormat extends DefaultJsonProtocol {
   implicit val fakeJsonFormat: RootJsonFormat[FakeJson] = jsonFormat2(FakeJson)
-  implicit val aFormat: RootJsonFormat[FakeJsonA] = jsonFormat3(FakeJsonA)
-  implicit val bFormat: RootJsonFormat[FakeJsonB] = jsonFormat3(FakeJsonB)
-  implicit val cFormat: RootJsonFormat[FakeJsonC] = jsonFormat3(FakeJsonC)
-  implicit val abFormat: RootJsonFormat[FakeJsonAB] = jsonFormat4(FakeJsonAB)
-  implicit val acFormat: RootJsonFormat[FakeJsonAC] = jsonFormat4(FakeJsonAC)
-  implicit val bcFormat: RootJsonFormat[FakeJsonBC] = jsonFormat4(FakeJsonBC)
-  implicit val abcFormat: RootJsonFormat[FakeJsonABC] = jsonFormat5(FakeJsonABC)
-  implicit val fakeJsonEncoder: Encoder[FakeJson] = Encoders.product[FakeJson]
-  implicit val aEncoder: Encoder[FakeJsonA] = Encoders.product[FakeJsonA]
-  implicit val bEncoder: Encoder[FakeJsonB] = Encoders.product[FakeJsonB]
-  implicit val cEncoder: Encoder[FakeJsonC] = Encoders.product[FakeJsonC]
-  implicit val abEncoder: Encoder[FakeJsonAB] = Encoders.product[FakeJsonAB]
-  implicit val acEncoder: Encoder[FakeJsonAC] = Encoders.product[FakeJsonAC]
-  implicit val bcEncoder: Encoder[FakeJsonBC] = Encoders.product[FakeJsonBC]
-  implicit val abcEncoder: Encoder[FakeJsonABC] = Encoders.product[FakeJsonABC]
+  implicit val aFormat: RootJsonFormat[FakeJsonA]       = jsonFormat3(FakeJsonA)
+  implicit val bFormat: RootJsonFormat[FakeJsonB]       = jsonFormat3(FakeJsonB)
+  implicit val cFormat: RootJsonFormat[FakeJsonC]       = jsonFormat3(FakeJsonC)
+  implicit val abFormat: RootJsonFormat[FakeJsonAB]     = jsonFormat4(FakeJsonAB)
+  implicit val acFormat: RootJsonFormat[FakeJsonAC]     = jsonFormat4(FakeJsonAC)
+  implicit val bcFormat: RootJsonFormat[FakeJsonBC]     = jsonFormat4(FakeJsonBC)
+  implicit val abcFormat: RootJsonFormat[FakeJsonABC]   = jsonFormat5(FakeJsonABC)
+  implicit val fakeJsonEncoder: Encoder[FakeJson]       = Encoders.product[FakeJson]
+  implicit val aEncoder: Encoder[FakeJsonA]             = Encoders.product[FakeJsonA]
+  implicit val bEncoder: Encoder[FakeJsonB]             = Encoders.product[FakeJsonB]
+  implicit val cEncoder: Encoder[FakeJsonC]             = Encoders.product[FakeJsonC]
+  implicit val abEncoder: Encoder[FakeJsonAB]           = Encoders.product[FakeJsonAB]
+  implicit val acEncoder: Encoder[FakeJsonAC]           = Encoders.product[FakeJsonAC]
+  implicit val bcEncoder: Encoder[FakeJsonBC]           = Encoders.product[FakeJsonBC]
+  implicit val abcEncoder: Encoder[FakeJsonABC]         = Encoders.product[FakeJsonABC]
 }
 
 class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEach with SparkSuite {
@@ -36,8 +35,8 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
   import FolderCompactionSpec._
 
   private lazy val fs: FileSystem = FileSystem.getLocal(new Configuration())
-  private lazy val testFolder = fs.makeQualified(new Path("./inputFolder"))
-  private lazy val outFolder = fs.makeQualified(new Path("./outFolder"))
+  private lazy val testFolder     = fs.makeQualified(new Path("./inputFolder"))
+  private lazy val outFolder      = fs.makeQualified(new Path("./outFolder"))
   private val schema = new StructType()
     .add("uri", StringType)
     .add("hash", IntegerType)
@@ -72,9 +71,8 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
     (p: Path) => p / "b=a" / "b=c" / "xyz.parquet"
   )
 
-
   it should "correctly compact 1" in {
-    val inPartitions = List("a", "b", "c")
+    val inPartitions  = List("a", "b", "c")
     val outPartitions = List("a")
     val partitions = Map(
       "a" -> List("b", "emptyFolder"),
@@ -82,20 +80,26 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
       "c" -> List("d", "f", "g", "h")
     )
 
-    val inputOptions = RawOptions(saveMode = "append", format = "json", extraOptions = None, partitionBy = Some(inPartitions))
+    val inputOptions =
+      RawOptions(saveMode = "append", format = "json", extraOptions = None, partitionBy = Some(inPartitions))
     val outputOptions = inputOptions.copy(partitionBy = Some(outPartitions))
-    val inputModel = RawModel(name = "inModel", uri = "./inputFolder", timed = false, schema = "{}", options = inputOptions)
-    val outputModel = RawModel(name = "outModel", uri = "./outFolder", timed = false, schema = "{}", options = outputOptions)
+    val inputModel =
+      RawModel(name = "inModel", uri = "./inputFolder", timed = false, schema = "{}", options = inputOptions)
+    val outputModel =
+      RawModel(name = "outModel", uri = "./outFolder", timed = false, schema = "{}", options = outputOptions)
 
     val reader = spark.read
       .format("json")
       .schema(schema)
     val readerBC = reader.schema(schema.add("b", StringType).add("c", StringType))
 
-    val originalData = reader.load("./inputFolder").as[FakeJsonBC]
+    val originalData = reader
+      .load("./inputFolder")
+      .as[FakeJsonBC]
       .where(col("a") === lit("b"))
       .where(col("b") === lit("c"))
-      .where(col("c").isin("d", "f", "g", "h")).collect()
+      .where(col("c").isin("d", "f", "g", "h"))
+      .collect()
 
     val target = new FolderCompaction
     target.compact(inputModel, outputModel, partitions, 1, spark)
@@ -120,7 +124,7 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
   }
 
   it should "correctly compact 2" in {
-    val inPartitions = List("a", "b", "c")
+    val inPartitions  = List("a", "b", "c")
     val outPartitions = List("c")
     val partitions = Map(
       "a" -> List("b"),
@@ -128,20 +132,26 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
       "c" -> List("d", "f", "g")
     )
 
-    val inputOptions = RawOptions(saveMode = "append", format = "json", extraOptions = None, partitionBy = Some(inPartitions))
+    val inputOptions =
+      RawOptions(saveMode = "append", format = "json", extraOptions = None, partitionBy = Some(inPartitions))
     val outputOptions = inputOptions.copy(partitionBy = Some(outPartitions))
-    val inputModel = RawModel(name = "inModel", uri = "./inputFolder", timed = false, schema = "{}", options = inputOptions)
-    val outputModel = RawModel(name = "outModel", uri = "./outFolder", timed = false, schema = "{}", options = outputOptions)
+    val inputModel =
+      RawModel(name = "inModel", uri = "./inputFolder", timed = false, schema = "{}", options = inputOptions)
+    val outputModel =
+      RawModel(name = "outModel", uri = "./outFolder", timed = false, schema = "{}", options = outputOptions)
 
     val reader = spark.read
       .format("json")
       .schema(schema)
     val readerAB = reader.schema(schema.add("a", StringType).add("b", StringType))
 
-    val originalData = reader.load("./inputFolder").as[FakeJsonAB]
+    val originalData = reader
+      .load("./inputFolder")
+      .as[FakeJsonAB]
       .where(col("a") === lit("b"))
       .where(col("b") === lit("c"))
-      .where(col("c").isin("d", "f", "g")).collect()
+      .where(col("c").isin("d", "f", "g"))
+      .collect()
 
     val target = new FolderCompaction
     target.compact(inputModel, outputModel, partitions, 1, spark)
@@ -160,7 +170,7 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
   }
 
   it should "correctly compact 3" in {
-    val inPartitions = List("a", "b", "c")
+    val inPartitions  = List("a", "b", "c")
     val outPartitions = List()
     val partitions = Map(
       "a" -> List("b"),
@@ -168,20 +178,26 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
       "c" -> List("d", "f", "g", "h")
     )
 
-    val inputOptions = RawOptions(saveMode = "append", format = "json", extraOptions = None, partitionBy = Some(inPartitions))
+    val inputOptions =
+      RawOptions(saveMode = "append", format = "json", extraOptions = None, partitionBy = Some(inPartitions))
     val outputOptions = inputOptions.copy(partitionBy = Some(outPartitions))
-    val inputModel = RawModel(name = "inModel", uri = "./inputFolder", timed = false, schema = "{}", options = inputOptions)
-    val outputModel = RawModel(name = "outModel", uri = "./outFolder", timed = false, schema = "{}", options = outputOptions)
+    val inputModel =
+      RawModel(name = "inModel", uri = "./inputFolder", timed = false, schema = "{}", options = inputOptions)
+    val outputModel =
+      RawModel(name = "outModel", uri = "./outFolder", timed = false, schema = "{}", options = outputOptions)
 
     val reader = spark.read
       .format("json")
       .schema(schema)
     val readerBC = reader.schema(schema.add("b", StringType).add("c", StringType))
 
-    val originalData = reader.load("./inputFolder").as[FakeJsonBC]
+    val originalData = reader
+      .load("./inputFolder")
+      .as[FakeJsonBC]
       .where(col("a") === lit("b"))
       .where(col("b") === lit("c"))
-      .where(col("c").isin("d", "f", "g", "h")).collect()
+      .where(col("c").isin("d", "f", "g", "h"))
+      .collect()
 
     target.compact(inputModel, outputModel, partitions, 1, spark)
 
@@ -249,7 +265,7 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    createFiles(fs, test1FilesToCreate.map(_ (testFolder)))
+    createFiles(fs, test1FilesToCreate.map(_(testFolder)))
   }
 
   override protected def afterEach(): Unit = {
@@ -258,8 +274,7 @@ class FolderCompactionSpec extends FlatSpec with Matchers with BeforeAndAfterEac
     super.afterEach()
   }
 
-  def createFiles(fs: FileSystem,
-                  paths: List[Path]): Unit = {
+  def createFiles(fs: FileSystem, paths: List[Path]): Unit = {
     for (p <- paths) {
       fs.mkdirs(p.getParent)
       val file: FSDataOutputStream = fs.create(p, true)
@@ -279,7 +294,6 @@ object FolderCompactionSpec {
   }
 
 }
-
 
 case class FakeJson(uri: String, hash: Int)
 

@@ -14,12 +14,11 @@ import org.apache.commons.cli.CommandLine
 import java.util.ServiceLoader
 import scala.collection.JavaConverters._
 
-/**
-	* Launcher for the SparkConsumersBatchMasterGuardian.
-	* This trait is useful for who want extend the launcher
-	*
-	* @author Nicolò Bidotti
-	*/
+/** Launcher for the SparkConsumersBatchMasterGuardian. This trait is useful for who want extend the launcher
+  *
+  * @author
+  *   Nicolò Bidotti
+  */
 trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLauncher with AroundLaunch {
 
   var plugins: Map[DatastoreProduct, WaspConsumersSparkPlugin] = Map()
@@ -45,10 +44,10 @@ trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLaun
     afterLaunch()
   }
 
-  /**
-		* Initialize the WASP plugins, this method is called after the wasp initialization and before getSingletonInfos
-		* @param args command line arguments
-		*/
+  /** Initialize the WASP plugins, this method is called after the wasp initialization and before getSingletonInfos
+    * @param args
+    *   command line arguments
+    */
   override def initializePlugins(args: Array[String]): Unit = {
     logger.info("Finding Spark consumers plugins")
     val pluginLoader: ServiceLoader[WaspConsumersSparkPlugin] =
@@ -79,8 +78,6 @@ trait SparkConsumersBatchNodeLauncherTrait extends MultipleClusterSingletonsLaun
   override protected def shouldDropDb(commandLine: CommandLine): Boolean = false
 }
 
-/**
-	* Create the main static method to run
-	*
-	*/
+/** Create the main static method to run
+  */
 object SparkConsumersBatchNodeLauncher extends SparkConsumersBatchNodeLauncherTrait

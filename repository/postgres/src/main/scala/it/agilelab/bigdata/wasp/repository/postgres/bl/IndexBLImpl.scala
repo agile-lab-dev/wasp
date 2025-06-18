@@ -6,9 +6,9 @@ import it.agilelab.bigdata.wasp.repository.core.bl.IndexBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{IndexTableDefinition, TableDefinition}
 
-case class IndexBLImpl(waspDB: WaspPostgresDB ) extends IndexBL with PostgresBL {
+case class IndexBLImpl(waspDB: WaspPostgresDB) extends IndexBL with PostgresBL {
 
-  implicit val tableDefinition: TableDefinition[IndexModel,String] = IndexTableDefinition
+  implicit val tableDefinition: TableDefinition[IndexModel, String] = IndexTableDefinition
 
   override def getByName(name: String): Option[IndexModel] = waspDB.getByPrimaryKey(name)
 

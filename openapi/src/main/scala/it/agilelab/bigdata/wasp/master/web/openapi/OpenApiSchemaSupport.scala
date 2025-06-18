@@ -6,12 +6,12 @@ import scala.reflect.ClassTag
 
 trait OpenApiSchemaSupport {
 
-  trait OpenApiRefOps{
-    def toRef(ctx:Context): Schema[_]
+  trait OpenApiRefOps {
+    def toRef(ctx: Context): Schema[_]
   }
 
-  implicit def toRefOps(schema:Schema[_]) : OpenApiRefOps = new OpenApiRefOps {
-    override def toRef(ctx: Context): Schema[_] =  {
+  implicit def toRefOps(schema: Schema[_]): OpenApiRefOps = new OpenApiRefOps {
+    override def toRef(ctx: Context): Schema[_] = {
       val ref = s"#/components/schemas/${schema.getName}"
       ctx.register(ref, schema)
       new Schema().$ref(ref).nullable(schema.getNullable)

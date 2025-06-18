@@ -59,8 +59,7 @@ final class InternalLogProducerGuardian(env: {
           )
         )
         if (result) {
-          router_name =
-            s"kafka-ingestion-router-$name-${producer.name}-${System.currentTimeMillis()}"
+          router_name = s"kafka-ingestion-router-$name-${producer.name}-${System.currentTimeMillis()}"
           kafka_router = actorSystem.actorOf(
             BalancingPool(5).props(
               Props(new KafkaPublisherActor(ConfigManager.getKafkaConfig.resolve(topicOption.get.clusterAlias)))
@@ -102,10 +101,9 @@ final class InternalLogProducerGuardian(env: {
   override def initialized: Actor.Receive =
     super.initialized orElse loggerInitialized
 
-  def loggerInitialized: Actor.Receive = {
-    case e: LogEvent =>
-      if (producerActor.isDefined)
-        producerActor.get forward e
+  def loggerInitialized: Actor.Receive = { case e: LogEvent =>
+    if (producerActor.isDefined)
+      producerActor.get forward e
   }
 }
 
@@ -113,17 +111,16 @@ object InternalLogProducerGuardian {
   val name = SystemPipegraphs.loggerProducer.name
 }
 
-private class InternalLogProducerActor(kafka_router: ActorRef,
-                                       topic: Option[TopicModel])
+private class InternalLogProducerActor(kafka_router: ActorRef, topic: Option[TopicModel])
     extends ProducerActor[LogEvent](kafka_router, topic) {
 
   override def receive: Actor.Receive = super.receive orElse loggerReceive
 
-  def loggerReceive(): Actor.Receive = {
-    case event: LogEvent => sendMessage(event)
+  def loggerReceive(): Actor.Receive = { case event: LogEvent =>
+    sendMessage(event)
   }
 
-  //TODO define a proper partition field from logEvent
+  // TODO define a proper partition field from logEvent
   override def retrievePartitionKey: LogEvent => String = _ => "staticKey"
 
   override def mainTask() = {
@@ -134,28 +131,28 @@ private class InternalLogProducerActor(kafka_router: ActorRef,
   override def generateOutputJsonMessage(event: LogEvent) = {
     val all = JSONObject(
       Map(
-        "log_source" -> event.loggerName,
-        "log_level" -> event.level.toString,
-        "message" -> event.message,
-        "timestamp" -> DateTimeFormatter.ISO_INSTANT.format(event.timestamp),
-        "thread" -> event.thread,
-        "cause" -> event.maybeCause.getOrElse(""),
+        "log_source"  -> event.loggerName,
+        "log_level"   -> event.level.toString,
+        "message"     -> event.message,
+        "timestamp"   -> DateTimeFormatter.ISO_INSTANT.format(event.timestamp),
+        "thread"      -> event.thread,
+        "cause"       -> event.maybeCause.getOrElse(""),
         "stack_trace" -> event.maybeStackTrace.getOrElse("")
       )
     ).toString(JSONFormat.defaultFormatter)
 
-    //we need to include an all field for indexing purpose, full text search will happen
-    //on that
+    // we need to include an all field for indexing purpose, full text search will happen
+    // on that
     JSONObject(
       Map(
-        "log_source" -> event.loggerName,
-        "log_level" -> event.level.toString,
-        "message" -> event.message,
-        "timestamp" -> DateTimeFormatter.ISO_INSTANT.format(event.timestamp),
-        "thread" -> event.thread,
-        "cause" -> event.maybeCause.getOrElse(""),
+        "log_source"  -> event.loggerName,
+        "log_level"   -> event.level.toString,
+        "message"     -> event.message,
+        "timestamp"   -> DateTimeFormatter.ISO_INSTANT.format(event.timestamp),
+        "thread"      -> event.thread,
+        "cause"       -> event.maybeCause.getOrElse(""),
         "stack_trace" -> event.maybeStackTrace.getOrElse(""),
-        "all" -> all
+        "all"         -> all
       )
     ).toString(JSONFormat.defaultFormatter)
 

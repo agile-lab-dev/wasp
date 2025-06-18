@@ -81,7 +81,7 @@ case class Field(
   }
 
   val dt: DataType = {
-    //TODO Prima era così DataTypeParser.parse(_)) da testare
+    // TODO Prima era così DataTypeParser.parse(_)) da testare
     sType.map(CatalystSqlParser.parseDataType).getOrElse {
       schema
         .map { x =>
@@ -128,9 +128,8 @@ case class RowKey(k: String) {
     if (varLength) {
       -1
     } else {
-      fields.foldLeft(0) {
-        case (x, y) =>
-          x + y.length
+      fields.foldLeft(0) { case (x, y) =>
+        x + y.length
       }
     }
   }
@@ -139,9 +138,8 @@ case class RowKey(k: String) {
 @InterfaceAudience.Private
 case class SchemaMap(map: mutable.HashMap[String, Field]) {
   def toFields =
-    map.map {
-      case (name, field) =>
-        StructField(name, field.dt)
+    map.map { case (name, field) =>
+      StructField(name, field.dt)
     }.toSeq
 
   def fields = map.values
@@ -249,12 +247,9 @@ object HBaseTableCatalog {
   val length                 = "length"
   val clusteringRegex: Regex = "clustering_([0-9]+)".r
 
-  /**
-    * User provide table schema definition
-    * {"tablename":"name", "rowkey":"key1:key2",
-    * "columns":{"col1":{"cf":"cf1", "col":"col1", "type":"type1"},
-    * "col2":{"cf":"cf2", "col":"col2", "type":"type2"}}}
-    * Note that any col in the rowKey, there has to be one corresponding col defined in columns
+  /** User provide table schema definition {"tablename":"name", "rowkey":"key1:key2", "columns":{"col1":{"cf":"cf1",
+    * "col":"col1", "type":"type1"}, "col2":{"cf":"cf2", "col":"col2", "type":"type2"}}} Note that any col in the
+    * rowKey, there has to be one corresponding col defined in columns
     */
   def apply(params: Map[String, String]): HBaseTableCatalog = {
     val parameters = convert(params)
@@ -285,41 +280,40 @@ object HBaseTableCatalog {
 
     val schemaMap           = mutable.HashMap.empty[String, Field]
     val clusteringFieldsMap = mutable.HashMap.empty[String, Seq[String]]
-    cIter.foreach {
-      case (name, column) =>
-        clusteringRegex.findFirstIn(name) match {
-          case Some(_) =>
-            //Save clustering informations
-            if (!column.contains(cf)) {
-              throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
-            }
-            val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
-            if (clusteringColumns.isEmpty) {
-              throw new IllegalArgumentException(
-                """column "clustering" must have columns parameter defined with
+    cIter.foreach { case (name, column) =>
+      clusteringRegex.findFirstIn(name) match {
+        case Some(_) =>
+          // Save clustering informations
+          if (!column.contains(cf)) {
+            throw new IllegalArgumentException("column \"clustering\" must have a cf defined")
+          }
+          val clusteringColumns = column.get(columns).map(cols => cols.split(":", -1)).getOrElse(Array.empty[String])
+          if (clusteringColumns.isEmpty) {
+            throw new IllegalArgumentException(
+              """column "clustering" must have columns parameter defined with
                 |at least one element. Elements are splitted by colons (e.g. "col1:col2:col3")
                 |""".stripMargin
-              )
-            }
-            clusteringFieldsMap.+=((column(cf), clusteringColumns))
+            )
+          }
+          clusteringFieldsMap.+=((column(cf), clusteringColumns))
 
-          case None =>
-            val sd = {
-              column
-                .get(serdes)
-                .asInstanceOf[Option[String]]
-                .map(n => Class.forName(n).newInstance().asInstanceOf[SerDes])
-            }
-            val len   = column.get(length).map(_.toInt).getOrElse(-1)
-            val sAvro = column.get(avro).map(parameters(_))
-            val f     = Field(name, column.getOrElse(cf, rowKey), column(col), column.get(`type`), sAvro, sd, len)
-            schemaMap.+=((name, f))
-        }
+        case None =>
+          val sd = {
+            column
+              .get(serdes)
+              .asInstanceOf[Option[String]]
+              .map(n => Class.forName(n).newInstance().asInstanceOf[SerDes])
+          }
+          val len   = column.get(length).map(_.toInt).getOrElse(-1)
+          val sAvro = column.get(avro).map(parameters(_))
+          val f     = Field(name, column.getOrElse(cf, rowKey), column(col), column.get(`type`), sAvro, sd, len)
+          schemaMap.+=((name, f))
+      }
     }
 
     val clusteringColumns: Iterable[String] = clusteringFieldsMap.values.flatten
 
-    //Check if all the clustering columns are of type string
+    // Check if all the clustering columns are of type string
     clusteringColumns.foreach(clColumn => {
       val fieldTypeOpt: Option[String] = schemaMap(clColumn).sType
 
@@ -388,12 +382,13 @@ object HBaseTableCatalog {
     parameters ++ Map(HBaseTableCatalog.tableCatalog -> jsonCatalog)
   }
 
-  /**
-    * Reads the SCHEMA_COLUMNS_MAPPING_KEY and converts it to a map of
-    * SchemaQualifierDefinitions with the original sql column name as the key
+  /** Reads the SCHEMA_COLUMNS_MAPPING_KEY and converts it to a map of SchemaQualifierDefinitions with the original sql
+    * column name as the key
     *
-    * @param schemaMappingString The schema mapping string from the SparkSQL map
-    * @return                    A map of definitions keyed by the SparkSQL column name
+    * @param schemaMappingString
+    *   The schema mapping string from the SparkSQL map
+    * @return
+    *   A map of definitions keyed by the SparkSQL column name
     */
   @InterfaceAudience.Private
   def generateSchemaMappingMap(schemaMappingString: String): java.util.HashMap[String, SchemaQualifierDefinition] = {
@@ -404,8 +399,8 @@ object HBaseTableCatalog {
       columnDefinitions.map(cd => {
         val parts = cd.trim.split(' ')
 
-        //Make sure we get three parts
-        //<ColumnName> <ColumnType> <ColumnFamily:Qualifier>
+        // Make sure we get three parts
+        // <ColumnName> <ColumnType> <ColumnFamily:Qualifier>
         if (parts.length == 3) {
           val hbaseDefinitionParts = if (parts(2).charAt(0) == ':') {
             Array[String]("rowkey", parts(0))
@@ -437,13 +432,16 @@ object HBaseTableCatalog {
   }
 }
 
-/**
-  * Construct to contains column data that spend SparkSQL and HBase
+/** Construct to contains column data that spend SparkSQL and HBase
   *
-  * @param columnName   SparkSQL column name
-  * @param colType      SparkSQL column type
-  * @param columnFamily HBase column family
-  * @param qualifier    HBase qualifier name
+  * @param columnName
+  *   SparkSQL column name
+  * @param colType
+  *   SparkSQL column type
+  * @param columnFamily
+  *   HBase column family
+  * @param qualifier
+  *   HBase qualifier name
   */
 @InterfaceAudience.Private
 case class SchemaQualifierDefinition(columnName: String, colType: String, columnFamily: String, qualifier: String)

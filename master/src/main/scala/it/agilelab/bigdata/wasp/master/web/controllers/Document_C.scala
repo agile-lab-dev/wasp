@@ -7,9 +7,8 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-/**
- * Created by vitoressa on 12/10/15.
- */
+/** Created by vitoressa on 12/10/15.
+  */
 object Document_C extends Directives with JsonSupport {
 
   def getRoute: Route = {
@@ -20,7 +19,13 @@ object Document_C extends Directives with JsonSupport {
           get {
             complete {
               // complete with serialized Future result
-              getJsonOrNotFound[DocumentModel](ConfigBL.documentBL.getByName(name), name, "Document model", _.toJson, pretty)
+              getJsonOrNotFound[DocumentModel](
+                ConfigBL.documentBL.getByName(name),
+                name,
+                "Document model",
+                _.toJson,
+                pretty
+              )
             }
 
           }
@@ -41,7 +46,13 @@ object Document_C extends Directives with JsonSupport {
               get {
                 complete {
                   // complete with serialized Future result
-                  getJsonOrNotFound[DocumentModel](ConfigBL.documentBL.getByName(name), name, "Document model", _.toJson, pretty)
+                  getJsonOrNotFound[DocumentModel](
+                    ConfigBL.documentBL.getByName(name),
+                    name,
+                    "Document model",
+                    _.toJson,
+                    pretty
+                  )
                 }
               }
             }

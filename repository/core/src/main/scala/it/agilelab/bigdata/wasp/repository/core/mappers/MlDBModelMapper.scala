@@ -9,6 +9,6 @@ object MlDBModelMapperV1 extends SimpleMapper[MlModelOnlyInfo, MlDBModelOnlyInfo
   override val version = "mlModelV1"
   override def fromDBModelToModel[B >: MlDBModelOnlyInfoV1](m: B): MlModelOnlyInfo = m match {
     case mm: MlDBModelOnlyInfoV1 => transform[MlModelOnlyInfo](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

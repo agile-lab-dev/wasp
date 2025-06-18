@@ -9,5 +9,6 @@ object GenericMapperV1 extends SimpleMapper[GenericModel, GenericDBModelV1] {
   override val version = "genericV1"
   override def fromDBModelToModel[B >: GenericDBModelV1](m: B): GenericModel = m match {
     case mm: GenericDBModelV1 => transform[GenericModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
-  }}
+    case o                    => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+  }
+}

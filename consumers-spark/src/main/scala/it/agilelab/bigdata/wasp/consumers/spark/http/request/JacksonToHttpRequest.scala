@@ -19,20 +19,20 @@ class JacksonToHttpRequest extends ToHttpRequest {
 
   private def extractHttpMethod(conf: RestEnrichmentSource): Try[String] = Try {
     conf.parameters.get("method") match {
-      case Some(method) => method match {
-        case str if !str.isEmpty && HttpMethods.contains(str.toLowerCase()) => str
-        case _ => throw new Exception(s"Cannot retrieve http method due to empty string value")
-      }
+      case Some(method) =>
+        method match {
+          case str if !str.isEmpty && HttpMethods.contains(str.toLowerCase()) => str
+          case _ => throw new Exception(s"Cannot retrieve http method due to empty string value")
+        }
       case None => throw new Exception(s"Http method field not found")
     }
   }
 
   private def getHttpMethod(conf: RestEnrichmentSource): Try[String] = {
     for {
-      httpMethod <- extractHttpMethod(conf).recoverWith {
-        case e: Throwable =>
-          Failure(new Exception(s"Failed to extract http method from configurations", e))
-      }
+      httpMethod <- extractHttpMethod(conf).recoverWith { case e: Throwable =>
+                      Failure(new Exception(s"Failed to extract http method from configurations", e))
+                    }
     } yield httpMethod
   }
 
@@ -44,11 +44,11 @@ class JacksonToHttpRequest extends ToHttpRequest {
   }
 
   override def toRequest[A: ClassTag](
-                                       conf: RestEnrichmentSource,
-                                       body: A,
-                                       params: Map[String, String],
-                                       headers: Map[String, String]
-                                     ): HttpEntityEnclosingRequestBase = {
+      conf: RestEnrichmentSource,
+      body: A,
+      params: Map[String, String],
+      headers: Map[String, String]
+  ): HttpEntityEnclosingRequestBase = {
 
     val httpEntityEnclosingRequestBase = new HttpEntityEnclosingRequestBase {
       override def getMethod: String = getHttpMethod(conf).get
@@ -72,14 +72,16 @@ class JacksonToHttpRequest extends ToHttpRequest {
             urlReq.getPort,
             HttpEnricherUtils.resolveUrlPath(urlReq.getPath, params),
             urlReq.getQuery,
-            urlReq.getRef)
+            urlReq.getRef
+          )
         )
       case None => throw new Exception("url not found")
     }
 
-    HttpEnricherUtils.mergeHeaders(headers, conf.headers)
-      .foreach {
-        case(name, value) => httpEntityEnclosingRequestBase.setHeader(name, value)
+    HttpEnricherUtils
+      .mergeHeaders(headers, conf.headers)
+      .foreach { case (name, value) =>
+        httpEntityEnclosingRequestBase.setHeader(name, value)
       }
 
     httpEntityEnclosingRequestBase

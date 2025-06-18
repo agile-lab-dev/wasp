@@ -2,10 +2,8 @@ package it.agilelab.bigdata.wasp.models.configuration
 
 import scala.util.matching.Regex
 
-/**
-	* Configuration model for WASP.
-	*
-	*/
+/** Configuration model for WASP.
+  */
 case class WaspConfigModel(
     actorSystemName: String,
     actorDowningTimeout: Int,

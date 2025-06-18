@@ -42,7 +42,7 @@ trait DocumentBLImplTest {
     documentBL.upsert(model3)
 
     documentBL.getByName(model3.name).get shouldBe model3
-    
+
     documentBL.upsert(model4)
 
     documentBL.getByName(model3.name).get shouldBe model4

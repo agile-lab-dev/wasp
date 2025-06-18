@@ -13,7 +13,7 @@ class TestJdbcMySqlStrategy extends Strategy {
 
     // Retrieve 'database' config 'jdbc.connections.<connectionName>.url' (e.g. "jdbc:mysql://mysql:<port>/<db>")
     val connectionUrl = ConfigManager.getJdbcConfig.connections(TestSqlSouceModel.mySql.connectionName).url
-    val database = connectionUrl.substring(connectionUrl.lastIndexOf("/")+1 , connectionUrl.length)
+    val database      = connectionUrl.substring(connectionUrl.lastIndexOf("/") + 1, connectionUrl.length)
     println(s"Retrieved 'database': ${database}")
 
     // do some stuff

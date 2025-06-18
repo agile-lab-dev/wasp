@@ -5,14 +5,14 @@ import it.agilelab.bigdata.wasp.repository.core.dbModels._
 import scala.reflect.ClassTag
 import shapeless.Generic
 
-abstract class Mapper[T, +R](implicit tag: ClassTag[R]){
+abstract class Mapper[T, +R](implicit tag: ClassTag[R]) {
   val version: String
 
-  def fromDBModelToModel[B >: R](m: B) : T
-  def getDBModelType : Class[_] = tag.runtimeClass
+  def fromDBModelToModel[B >: R](m: B): T
+  def getDBModelType: Class[_] = tag.runtimeClass
 }
 
-trait SimpleMapper[T, R] extends Mapper[T,R]{
+trait SimpleMapper[T, R] extends Mapper[T, R] {
   override val version: String
   def transform[B] = new PartiallyApplied[B]
 
@@ -24,12 +24,13 @@ trait SimpleMapper[T, R] extends Mapper[T,R]{
 trait MapperSelector[T, R] {
   def select(model: R): Mapper[T, _ <: R] = {
     val version = versionExtractor(model)
-    Mappers.mappers.getOrElse(version, throw new Exception(s"No version of mapper for model [$model]")).asInstanceOf[Mapper[T,_ <: R]]
+    Mappers.mappers
+      .getOrElse(version, throw new Exception(s"No version of mapper for model [$model]"))
+      .asInstanceOf[Mapper[T, _ <: R]]
   }
 
-
   def versionExtractor(m: R): String = {
-    val models = Models.models
+    val models  = Models.models
     val version = models.getOrElse(m.getClass, throw new Exception("No VERSION"))
     version
   }
@@ -41,7 +42,7 @@ trait MapperSelector[T, R] {
 }
 
 // FixMe: Change name
-object Models{
+object Models {
   val models: Map[Object, String] = Map(
     classOf[ProducerDBModelV1]              -> ProducerMapperV1.version,
     classOf[ProducerDBModelV2]              -> ProducerMapperV2.version,
@@ -75,10 +76,11 @@ object Models{
     classOf[CompilerConfigDBModelV1]        -> CompilerConfigMapperV1.version,
     classOf[JdbcConfigDBModelV1]            -> JdbcConfigMapperV1.version,
     classOf[TelemetryConfigDBModelV1]       -> TelemetryConfigMapperV1.version,
-    classOf[ElasticConfigDBModelV1]         -> ElasticConfigMapperV1.version)
+    classOf[ElasticConfigDBModelV1]         -> ElasticConfigMapperV1.version
+  )
 }
 
-object Mappers{
+object Mappers {
   val mappers: Map[String, Object] = Map(
     ProducerMapperV1.version              -> ProducerMapperV1,
     ProducerMapperV2.version              -> ProducerMapperV2,
@@ -89,12 +91,12 @@ object Mappers{
     PipegraphMapperV2.version             -> PipegraphMapperV2,
     DocumentMapperV1.version              -> DocumentMapperV1,
     KeyValueMapperV1.version              -> KeyValueMapperV1,
-    TopicMapperV1.version                 -> TopicMapperV1 ,
+    TopicMapperV1.version                 -> TopicMapperV1,
     CdcMapperV1.version                   -> CdcMapperV1,
-    RawMapperV1.version                   -> RawMapperV1 ,
+    RawMapperV1.version                   -> RawMapperV1,
     SqlSourceMapperV1.version             -> SqlSourceMapperV1,
     BatchJobInstanceMapperV1.version      -> BatchJobInstanceMapperV1,
-    BatchJobMapperV1.version              -> BatchJobMapperV1 ,
+    BatchJobMapperV1.version              -> BatchJobMapperV1,
     GenericMapperV1.version               -> GenericMapperV1,
     FreeCodeMapperV1.version              -> FreeCodeMapperV1,
     WebsocketMapperV1.version             -> WebsocketMapperV1,
@@ -112,5 +114,6 @@ object Mappers{
     CompilerConfigMapperV1.version        -> CompilerConfigMapperV1,
     JdbcConfigMapperV1.version            -> JdbcConfigMapperV1,
     TelemetryConfigMapperV1.version       -> TelemetryConfigMapperV1,
-    ElasticConfigMapperV1.version         -> ElasticConfigMapperV1)
+    ElasticConfigMapperV1.version         -> ElasticConfigMapperV1
+  )
 }

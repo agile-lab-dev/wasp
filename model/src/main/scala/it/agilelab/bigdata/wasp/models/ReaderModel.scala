@@ -2,15 +2,18 @@ package it.agilelab.bigdata.wasp.models
 
 import it.agilelab.bigdata.wasp.datastores._
 
-/**
-	* A model for a reader, composed by a name, a datastoreModelName defining the datastore, a datastoreProduct
-	* defining the datastore software product to use, and any additional options needed to configure the reader.
-	*
-	* @param name the name of this reader model
-	* @param datastoreModelName (optional) the name of the endpoint to read from
-	* @param datastoreProduct the datastore software product to be used when reading
-  * @param options additional options for the reader
-	*/
+/** A model for a reader, composed by a name, a datastoreModelName defining the datastore, a datastoreProduct defining
+  * the datastore software product to use, and any additional options needed to configure the reader.
+  *
+  * @param name
+  *   the name of this reader model
+  * @param datastoreModelName
+  *   (optional) the name of the endpoint to read from
+  * @param datastoreProduct
+  *   the datastore software product to be used when reading
+  * @param options
+  *   additional options for the reader
+  */
 case class ReaderModel private[wasp] (
     name: String,
     datastoreModelName: String,

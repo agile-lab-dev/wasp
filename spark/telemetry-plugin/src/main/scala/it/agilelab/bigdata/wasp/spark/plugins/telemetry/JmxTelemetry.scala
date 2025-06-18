@@ -26,11 +26,12 @@ object JmxTelemetry {
     }
   }
   val spaceToDashesNormalizer: String => String = _.replaceAll(" ", "-")
-  val lowercaseIfDashesNormalizer: String => String = str => if (str.contains("-")) {
-    str.toLowerCase()
-  } else {
-    str
-  }
+  val lowercaseIfDashesNormalizer: String => String = str =>
+    if (str.contains("-")) {
+      str.toLowerCase()
+    } else {
+      str
+    }
 
   val removeBraces: String => String = _.replaceAll("\\(", "").replaceAll("\\)", "")
 
@@ -38,27 +39,29 @@ object JmxTelemetry {
 
   val underscoreNormalizer: String => String = _.replaceAll("_", "")
 
-  val defaultNormalizer: String => String = Seq(removeBraces,
+  val defaultNormalizer: String => String = Seq(
+    removeBraces,
     removeQuotes,
     underscoreNormalizer,
     spaceToDashesNormalizer,
     lowercaseIfDashesNormalizer,
-    camelCaseToKebabCaseNormalizer).reduce(_.andThen(_))
+    camelCaseToKebabCaseNormalizer
+  ).reduce(_.andThen(_))
 
-  def scrape(query: String,
-             tag: String,
-             now: Instant,
-             metricGroupAttribute: String,
-             sourceIdAttribute: String,
-             metricGroupFallback: String = "unknown",
-             sourceIdFallback: String = "unknown",
-             normalizer: String => String = defaultNormalizer): Seq[Map[String, Any]] = {
+  def scrape(
+      query: String,
+      tag: String,
+      now: Instant,
+      metricGroupAttribute: String,
+      sourceIdAttribute: String,
+      metricGroupFallback: String = "unknown",
+      sourceIdFallback: String = "unknown",
+      normalizer: String => String = defaultNormalizer
+  ): Seq[Map[String, Any]] = {
     val mbeanServer = ManagementFactory.getPlatformMBeanServer
 
     val messageId = UUID.randomUUID().toString
     val timestamp = DateTimeFormatter.ISO_INSTANT.format(now)
-
-
 
     for {
       mbeanName <- mbeanServer.queryNames(ObjectName.getInstance(query), null).asScala.toVector
@@ -67,16 +70,14 @@ object JmxTelemetry {
       value <- Try(mbeanServer.getAttribute(mbeanName, attributeName)).toOption.filter(isSupportedType)
     } yield {
 
-      val prefix = removeQuotes(mbeanName.getDomain)
-      val sourceId = Option(mbeanName.getKeyProperty(sourceIdAttribute)).map(normalizer).getOrElse(sourceIdFallback)
+      val prefix     = removeQuotes(mbeanName.getDomain)
+      val sourceId   = Option(mbeanName.getKeyProperty(sourceIdAttribute)).map(normalizer).getOrElse(sourceIdFallback)
       val metricName = normalizer(attribute.getName)
-      val metricGroup = Option(mbeanName.getKeyProperty(metricGroupAttribute)).map(normalizer).getOrElse(metricGroupFallback)
+      val metricGroup =
+        Option(mbeanName.getKeyProperty(metricGroupAttribute)).map(normalizer).getOrElse(metricGroupFallback)
       val completeName = s"$prefix.$metricGroup.$metricName"
 
-      val header = Map("messageId" -> messageId,
-        "sourceId" -> sourceId,
-        "timestamp" -> timestamp,
-        "tag" -> tag)
+      val header = Map("messageId" -> messageId, "sourceId" -> sourceId, "timestamp" -> timestamp, "tag" -> tag)
 
       metric(header, completeName, value)
     }
@@ -91,7 +92,5 @@ object JmxTelemetry {
 
   def metric(header: Map[String, Any], metric: String, value: Any): Map[String, Any] =
     header + ("metric" -> metric) + ("value" -> value)
-
-
 
 }

@@ -5,9 +5,9 @@ import it.agilelab.bigdata.wasp.repository.core.bl.TopicBL
 import it.agilelab.bigdata.wasp.repository.postgres.WaspPostgresDB
 import it.agilelab.bigdata.wasp.repository.postgres.tables.{TableDefinition, TopicTableDefinition}
 
-case class TopicBLImpl(waspDB : WaspPostgresDB) extends TopicBL with PostgresBL{
+case class TopicBLImpl(waspDB: WaspPostgresDB) extends TopicBL with PostgresBL {
 
-  override implicit val tableDefinition: TableDefinition[DatastoreModel, String] = TopicTableDefinition
+  implicit override val tableDefinition: TableDefinition[DatastoreModel, String] = TopicTableDefinition
 
   override def getByName(name: String): Option[DatastoreModel] = waspDB.getByPrimaryKey(name)
 
@@ -17,6 +17,7 @@ case class TopicBLImpl(waspDB : WaspPostgresDB) extends TopicBL with PostgresBL{
 
   override def upsert(topicModel: DatastoreModel): Unit = waspDB.upsert(topicModel)
 
-  override def insertIfNotExists(topicDatastoreModel: DatastoreModel): Unit = waspDB.insertIfNotExists(topicDatastoreModel)
+  override def insertIfNotExists(topicDatastoreModel: DatastoreModel): Unit =
+    waspDB.insertIfNotExists(topicDatastoreModel)
 
 }

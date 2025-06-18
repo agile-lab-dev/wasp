@@ -1,18 +1,27 @@
 package it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph
 
-
 import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem}
 import akka.cluster.Cluster
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit, TestProbe}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => ETLProtocol}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{Protocol => MasterProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.Data.{MaterializingData, WorkerToEtlAssociation}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.Data.{
+  MaterializingData,
+  WorkerToEtlAssociation
+}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.State._
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{Protocol => PipegraphProtocol}
 import it.agilelab.bigdata.wasp._
-import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  PipegraphInstanceModel,
+  PipegraphModel,
+  PipegraphStatus,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  WriterModel
+}
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 
@@ -48,17 +57,21 @@ class PipegraphGuardianSpec
     isSystem = false,
     creationTime = System.currentTimeMillis(),
     structuredStreamingComponents = List(
-      StructuredStreamingETLModel(name = "component",
-                                  streamingInput = StreamingReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json, None),
-                                  staticInputs = List.empty,
-                                  streamingOutput = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
-                                  mlModels = List(),
-                                  strategy = None,
-                                  triggerIntervalMs = None,
-                                  options = Map()
-      )),
-    dashboard = None)
-  val defaultInstance = PipegraphInstanceModel(name = "pipegraph-1",
+      StructuredStreamingETLModel(
+        name = "component",
+        streamingInput = StreamingReaderModel.kafkaReader("", DatastoreModelsForTesting.TopicModels.json, None),
+        staticInputs = List.empty,
+        streamingOutput = WriterModel.solrWriter("", DatastoreModelsForTesting.IndexModels.solr),
+        mlModels = List(),
+        strategy = None,
+        triggerIntervalMs = None,
+        options = Map()
+      )
+    ),
+    dashboard = None
+  )
+  val defaultInstance = PipegraphInstanceModel(
+    name = "pipegraph-1",
     instanceOf = "pipegraph",
     startTimestamp = 1L,
     currentStatusTimestamp = 0L,
@@ -965,7 +978,7 @@ class PipegraphGuardianSpec
         case `failingEtl`  => Retry
         case `failingEtl2` => Retry
         case `etl`         => DontCare
-        case other        => throw new IllegalArgumentException(s"Unknown value $other")
+        case other         => throw new IllegalArgumentException(s"Unknown value $other")
       }
 
       val fsm = TestFSMRef(

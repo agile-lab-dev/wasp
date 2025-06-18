@@ -29,11 +29,14 @@ object VersionBumper {
         nextV
       }
       .flatMap(replaceBaseVersion(_, log))
-      .fold(t => throw t, nextV => {
-        log.success("Bumped to version: " + nextV)
-        log.warn("Please reload sbt shell to apply the new version!")
-        nextV
-      })
+      .fold(
+        t => throw t,
+        nextV => {
+          log.success("Bumped to version: " + nextV)
+          log.warn("Please reload sbt shell to apply the new version!")
+          nextV
+        }
+      )
   }
 
   private def replaceBaseVersion(parsedVersion: BaseVersion, log: Logger): Either[Throwable, BaseVersion] = {
@@ -45,28 +48,26 @@ object VersionBumper {
       Try {
         IO.copyFile(officialFile, backupFile)
         log.info(s"Backupped up file from $officialFile to $backupFile")
-      }.recoverWith {
-        case t: Throwable =>
-          Try {
-            log.err(s"Failed to backup $officialFile into $backupFile")
-            log.err(s"Deleting newly generated $newFile")
-            IO.delete(newFile)
-            log.err(s"Deleting backup file generated $backupFile")
-            IO.delete(backupFile)
-          }.flatMap(_ => Failure(t))
+      }.recoverWith { case t: Throwable =>
+        Try {
+          log.err(s"Failed to backup $officialFile into $backupFile")
+          log.err(s"Deleting newly generated $newFile")
+          IO.delete(newFile)
+          log.err(s"Deleting backup file generated $backupFile")
+          IO.delete(backupFile)
+        }.flatMap(_ => Failure(t))
       }
     def overwriteNewVersionOrRecover[A](a: A) =
       Try {
         IO.copyFile(newFile, officialFile)
         log.success(s"Overwritten ${officialFile} with ${newFile}")
-      }.recoverWith {
-        case t: Throwable =>
-          Try {
-            log.err(s"Failed to overwrite ${officialFile} with ${newFile}")
-            log.err(s"Performing recover of ${backupFile} over ${officialFile}")
-            IO.copyFile(backupFile, officialFile)
-            log.err(s"Backup restored successfully")
-          }.flatMap(_ => Failure(t))
+      }.recoverWith { case t: Throwable =>
+        Try {
+          log.err(s"Failed to overwrite ${officialFile} with ${newFile}")
+          log.err(s"Performing recover of ${backupFile} over ${officialFile}")
+          IO.copyFile(backupFile, officialFile)
+          log.err(s"Backup restored successfully")
+        }.flatMap(_ => Failure(t))
       }
 
     rewriteFile(parsedVersion, officialFile, newFile)

@@ -22,17 +22,22 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): ConsoleSparkStructuredStreamingWriter = {
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): ConsoleSparkStructuredStreamingWriter = {
     logger.info(s"Creating $datastoreProduct Spark Structured Streaming writer")
     new ConsoleSparkStructuredStreamingWriter()
   }
-  
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
+
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
@@ -43,7 +48,8 @@ class ConsoleConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   }
 
   override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid batch source! Reader model $readerModel is not valid."
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid batch source! Reader model $readerModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }

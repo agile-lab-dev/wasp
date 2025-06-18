@@ -7,9 +7,8 @@ import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-/**
- * Created by vitoressa on 12/10/15.
- */
+/** Created by vitoressa on 12/10/15.
+  */
 object Index_C extends Directives with JsonSupport {
 
   def getRoute: Route = {

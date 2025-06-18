@@ -47,15 +47,14 @@ class StructuredStreamingETLActor private (
 
   startWith(WaitingToBeActivated, IdleData)
 
-  when(WaitingToBeActivated) {
-    case Event(MyProtocol.ActivateETL(etl), IdleData) =>
-      activate(etl, pipegraph) match {
-        case Success(dataFrame) =>
-          goto(WaitingToBeMaterialized) using ActivatedData(dataFrame) replying Protocol.ETLActivated(etl)
-        case Failure(reason) =>
-          sender() ! MyProtocol.ETLNotActivated(etl, reason)
-          stop(FSM.Failure(reason))
-      }
+  when(WaitingToBeActivated) { case Event(MyProtocol.ActivateETL(etl), IdleData) =>
+    activate(etl, pipegraph) match {
+      case Success(dataFrame) =>
+        goto(WaitingToBeMaterialized) using ActivatedData(dataFrame) replying Protocol.ETLActivated(etl)
+      case Failure(reason) =>
+        sender() ! MyProtocol.ETLNotActivated(etl, reason)
+        stop(FSM.Failure(reason))
+    }
 
   }
 
@@ -63,7 +62,12 @@ class StructuredStreamingETLActor private (
     case Event(MyProtocol.MaterializeETL(etl), ActivatedData(dataFrame)) =>
       materialize(etl, pipegraph, dataFrame) match {
         case Success((streamingQuery, triggerInterval)) =>
-          goto(WaitingToBeMonitored) using MaterializedData(streamingQuery, Instant.now(), triggerInterval, false) replying Protocol
+          goto(WaitingToBeMonitored) using MaterializedData(
+            streamingQuery,
+            Instant.now(),
+            triggerInterval,
+            false
+          ) replying Protocol
             .ETLMaterialized(etl)
         case Failure(reason) => {
           goto(WaitingToBeMaterialized) using ActivatedData(dataFrame) replying MyProtocol

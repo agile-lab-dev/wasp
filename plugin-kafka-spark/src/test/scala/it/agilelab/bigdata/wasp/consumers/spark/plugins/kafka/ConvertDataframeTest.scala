@@ -205,7 +205,7 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
 
     val topics = Seq(
       testTopicModelPerson_avro_keyKeySchema_1
-        .copy(name = "TOPIC-A", useAvroSchemaManager = true),                           // avro, keyField, keySchema, schemaManager
+        .copy(name = "TOPIC-A", useAvroSchemaManager = true), // avro, keyField, keySchema, schemaManager
       testTopicModelPerson_avro_key.copy(name = "TOPIC-B", useAvroSchemaManager = true) // avro, keyField, schemaManager
     )
     val multiTopicModel: MultiTopicModel = MultiTopicModel.fromTopicModels("name", "topic", topics)
@@ -376,12 +376,12 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
 
     val resultRows = result.as[KafkaOutput].collect()
 
-    //check keys
+    // check keys
     assert(resultRows(0).key.sameElements(Array(49.toByte, 50.toByte, 51.toByte)))
     assert(resultRows(1).key.sameElements(Array(104.toByte, 101.toByte, 108.toByte, 108.toByte, 111.toByte)))
     assert(resultRows(2).key.sameElements(Array(6.toByte, 48.toByte, 48.toByte, 48.toByte)))
 
-    //check topic
+    // check topic
     assert(resultRows(0).topic === "TOPIC-1")
     assert(resultRows(1).topic === "TOPIC-2")
     assert(resultRows(2).topic === "TOPIC-3")
@@ -424,8 +424,11 @@ class ConvertDataframeTest extends FlatSpec with SparkSuite with ConvertDatafram
       name = "TOPIC-A",
       valueFieldsNames = Some(Seq("name")),
       keySchema = Some(SchemaBuilder.builder().stringBuilder().endString().toString)
-    ) //topic and surname missing
-    val topicModel2 = testTopicModelPerson_json_key_1.copy(name = "TOPIC-B", valueFieldsNames = Some(Seq("surname"))) //topic and name missing
+    ) // topic and surname missing
+    val topicModel2 = testTopicModelPerson_json_key_1.copy(
+      name = "TOPIC-B",
+      valueFieldsNames = Some(Seq("surname"))
+    ) // topic and name missing
 
     val topics = Seq(
       topicModel1,

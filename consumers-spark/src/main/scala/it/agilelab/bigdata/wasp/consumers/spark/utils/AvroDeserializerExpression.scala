@@ -25,29 +25,32 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-/**
- * An `Expression` which deserializes a binary field encoded in Avro and returns the corresponding
- * representation in Spark.
- *
- * @param child             the `Expression` containing the binary Avro to be deserialized
- * @param schemaAvroJson    the JSON representation of the Avro schema
- * @param darwinConfig      the configuration for the AvroSchemaManager
- * @param avoidReevaluation this filed forces the Expression to be non-deterministic. Setting this to true
- *                          measn that this expression is executed only once even though the Optimizer creates
- *                          several copies of it (eg. it happens usually with CollapseProject if the value
- *                          returned by the expression is used several times, as with a selection of fields
- *                          of the struct returned). If you set this flag to false, the expression may be evaluated
- *                          once for each occurence of ti you see in the physical plan.
- */
+/** An `Expression` which deserializes a binary field encoded in Avro and returns the corresponding representation in
+  * Spark.
+  *
+  * @param child
+  *   the `Expression` containing the binary Avro to be deserialized
+  * @param schemaAvroJson
+  *   the JSON representation of the Avro schema
+  * @param darwinConfig
+  *   the configuration for the AvroSchemaManager
+  * @param avoidReevaluation
+  *   this filed forces the Expression to be non-deterministic. Setting this to true measn that this expression is
+  *   executed only once even though the Optimizer creates several copies of it (eg. it happens usually with
+  *   CollapseProject if the value returned by the expression is used several times, as with a selection of fields of
+  *   the struct returned). If you set this flag to false, the expression may be evaluated once for each occurence of ti
+  *   you see in the physical plan.
+  */
 
 case class AvroDeserializerExpression(
-                                       child: Expression,
-                                       schemaAvroJson: String,
-                                       darwinConfig: Option[Config],
-                                       avoidReevaluation: Boolean = true,
-                                       useSchemaManager: Boolean = false
-                                     ) extends UnaryExpression
-  with ExpectsInputTypes with CompatibilityAvroDeserializerExpression{
+    child: Expression,
+    schemaAvroJson: String,
+    darwinConfig: Option[Config],
+    avoidReevaluation: Boolean = true,
+    useSchemaManager: Boolean = false
+) extends UnaryExpression
+    with ExpectsInputTypes
+    with CompatibilityAvroDeserializerExpression {
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
 
@@ -87,7 +90,7 @@ case class AvroDeserializerExpression(
   }
 
   override protected def nullSafeEval(input: Any): Any = {
-    val avroValue = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
+    val avroValue  = new SeekableByteArrayInput(input.asInstanceOf[Array[Byte]])
     val avroReader = avroDatumReader(avroValue)
 
     val decoder = DecoderFactory.get.binaryDecoder(avroValue, null)
@@ -124,13 +127,12 @@ case class AvroDeserializerExpression(
     val returnType = CodeGenerator.javaType(dataType)
     val boxedType  = CodeGenerator.boxedType(dataType)
 
-    val childEval = child.genCode(ctx)
+    val childEval    = child.genCode(ctx)
     val defaultValue = CodeGenerator.defaultValue(dataType, typedNull = true)
 
     if (!useSchemaManager)
       ev.copy(
-        code =
-          code"""
+        code = code"""
                 |${childEval.code}
                 |boolean ${ev.isNull} = false;
                 |$returnType ${ev.value} = $defaultValue;
@@ -192,25 +194,25 @@ case class AvroDeserializerExpression(
     }
   }
 
-  /**
-   * Returns a converter function to convert row in avro format to GenericRow of catalyst.
-   *
-   * @param sourceAvroSchema Source schema before conversion inferred from avro file by passed in
-   *                         by user.
-   * @param targetSqlType    Target catalyst sql type after the conversion.
-   * @return returns a converter function to convert row in avro format to GenericRow of catalyst.
-   */
+  /** Returns a converter function to convert row in avro format to GenericRow of catalyst.
+    *
+    * @param sourceAvroSchema
+    *   Source schema before conversion inferred from avro file by passed in by user.
+    * @param targetSqlType
+    *   Target catalyst sql type after the conversion.
+    * @return
+    *   returns a converter function to convert row in avro format to GenericRow of catalyst.
+    */
   private def createConverterToSQL(sourceAvroSchema: Schema, targetSqlType: DataType): AnyRef => AnyRef = {
 
     def createConverter(avroSchema: Schema, sqlType: DataType, path: List[String]): AnyRef => AnyRef = {
       val avroType = avroSchema.getType
       (sqlType, avroType) match {
         case (StringType, STRING) | (StringType, ENUM) =>
-          (item: AnyRef) =>
-            convertString(item)
+          (item: AnyRef) => convertString(item)
         // Byte arrays are reused by avro, so we have to make a copy of them.
         case (IntegerType, INT) | (BooleanType, BOOLEAN) | (DoubleType, DOUBLE) | (FloatType, FLOAT) |
-             (LongType, LONG) =>
+            (LongType, LONG) =>
           identity
         case (BinaryType, FIXED) =>
           (item: AnyRef) =>
@@ -401,9 +403,8 @@ case class AvroDeserializerExpression(
               case other =>
                 sparkSqlType match {
                   case t: StructType if t.fields.length == avroSchema.getTypes.size =>
-                    val fieldConverters = t.fields.zip(avroSchema.getTypes.asScala).map {
-                      case (field, schema) =>
-                        createConverter(schema, field.dataType, path :+ field.name)
+                    val fieldConverters = t.fields.zip(avroSchema.getTypes.asScala).map { case (field, schema) =>
+                      createConverter(schema, field.dataType, path :+ field.name)
                     }
 
                     (item: AnyRef) =>

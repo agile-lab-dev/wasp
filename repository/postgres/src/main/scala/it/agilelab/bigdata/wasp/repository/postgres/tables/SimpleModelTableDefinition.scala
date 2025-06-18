@@ -3,11 +3,9 @@ package it.agilelab.bigdata.wasp.repository.postgres.tables
 import it.agilelab.bigdata.wasp.models.Model
 import spray.json.JsValue
 
+trait SimpleModelTableDefinition[T <: Model] extends ModelTableDefinition[T] {
 
-
-trait SimpleModelTableDefinition[T<:Model] extends ModelTableDefinition[T] {
-
-  def ddl : String = s"""CREATE TABLE IF NOT EXISTS $tableName (
+  def ddl: String = s"""CREATE TABLE IF NOT EXISTS $tableName (
                |$name varchar NOT NULL,
                |$payload json,
                |PRIMARY KEY ($name))

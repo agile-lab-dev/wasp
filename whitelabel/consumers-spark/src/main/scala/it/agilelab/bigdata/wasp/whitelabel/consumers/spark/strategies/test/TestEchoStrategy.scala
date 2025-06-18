@@ -13,9 +13,12 @@ class TestEchoStrategy extends Strategy {
     val dataFrame = dataFrames.head._2
     import dataFrame.sparkSession.implicits._
 
-    dataFrame.as[TestDocumentWithMetadata].map(t=> {
-      println(t)
-      t
-    }).toDF()
+    dataFrame
+      .as[TestDocumentWithMetadata]
+      .map(t => {
+        println(t)
+        t
+      })
+      .toDF()
   }
 }

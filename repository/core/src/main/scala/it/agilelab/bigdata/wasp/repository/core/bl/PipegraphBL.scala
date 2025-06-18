@@ -15,8 +15,6 @@ trait PipegraphInstanceBl {
   def instancesOf(name: String): Seq[PipegraphInstanceModel]
 }
 
-
-
 trait PipegraphBL {
 
   def getByName(name: String): Option[PipegraphModel]
@@ -44,5 +42,3 @@ trait PipegraphBL {
   def instances(): PipegraphInstanceBl
 
 }
-
-

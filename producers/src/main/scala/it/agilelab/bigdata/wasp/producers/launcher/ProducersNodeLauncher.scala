@@ -7,11 +7,11 @@ import it.agilelab.bigdata.wasp.producers.{InternalLogProducerGuardian, Producer
 import it.agilelab.bigdata.wasp.repository.core.bl.ConfigBL
 import org.apache.commons.cli.CommandLine
 
-/**
-	* Launcher for the ProducersMasterGuardian and InternalLogProducerGuardian (only with systemproducers.start = true).
-	* This trait is useful for who want extend the launcher
-	* @author Nicolò Bidotti
-	*/
+/** Launcher for the ProducersMasterGuardian and InternalLogProducerGuardian (only with systemproducers.start = true).
+  * This trait is useful for who want extend the launcher
+  * @author
+  *   Nicolò Bidotti
+  */
 trait ProducersNodeLauncherTrait extends MultipleClusterSingletonsLauncher with AroundLaunch {
 
   def beforeLaunch(): Unit = ()
@@ -47,8 +47,6 @@ trait ProducersNodeLauncherTrait extends MultipleClusterSingletonsLauncher with 
   override protected def shouldDropDb(commandLine: CommandLine): Boolean = false
 }
 
-/**
-	*
-	* Create the main static method to run
-	*/
+/** Create the main static method to run
+  */
 object ProducersNodeLauncher extends ProducersNodeLauncherTrait

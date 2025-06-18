@@ -6,9 +6,7 @@ import it.agilelab.bigdata.wasp.utils.JsonSupport
 
 import java.time.Instant
 
-class EventController(events: EventsService)
-    extends Directives
-    with JsonSupport {
+class EventController(events: EventsService) extends Directives with JsonSupport {
 
   val parseInstant: Unmarshaller[String, Instant] =
     Unmarshaller.identityUnmarshaller[String].map(x => Instant.parse(x))

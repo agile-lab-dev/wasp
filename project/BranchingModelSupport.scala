@@ -44,14 +44,13 @@ object BranchingModelSupport {
     }
 
     () =>
-      Try(Process("git describe --tags --exact-match").lineStream(devNull).head).recoverWith {
-        case _ =>
-          Try {
-            Process("git rev-parse --abbrev-ref HEAD").lineStream(devNull).head match {
-              case "HEAD" => Process("git rev-parse HEAD").lineStream.head
-              case s      => s
-            }
+      Try(Process("git describe --tags --exact-match").lineStream(devNull).head).recoverWith { case _ =>
+        Try {
+          Process("git rev-parse --abbrev-ref HEAD").lineStream(devNull).head match {
+            case "HEAD" => Process("git rev-parse HEAD").lineStream.head
+            case s      => s
           }
+        }
       }
   }
 
@@ -100,8 +99,8 @@ object BranchingModelSupport {
           }
         case reference => Right(Detached(reference))
       }
-      .recover[ParseResult] {
-        case exception => unretrievableReference(exception)
+      .recover[ParseResult] { case exception =>
+        unretrievableReference(exception)
       }
       .get
 
@@ -174,9 +173,9 @@ object BranchingModelSupport {
     def parse(s: String): Either[Throwable, BaseVersion] = {
       for {
         regexResult <- versionRegex
-                        .findFirstMatchIn(s)
-                        .toRight(new RuntimeException("Cannot parse base version for " + s))
-        _        <- Either.cond(regexResult.groupCount == 3, (), new RuntimeException("Cannot parse base version for " + s))
+                         .findFirstMatchIn(s)
+                         .toRight(new RuntimeException("Cannot parse base version for " + s))
+        _ <- Either.cond(regexResult.groupCount == 3, (), new RuntimeException("Cannot parse base version for " + s))
         maString <- catchNonFatal(regexResult.group(1)) // this is just paranoia
         miString <- catchNonFatal(regexResult.group(2)) // this is just paranoia
         paString <- catchNonFatal(regexResult.group(3)) // this is just paranoia
@@ -191,44 +190,45 @@ object BranchingModelSupport {
 
   object References {
 
-    /**
-      * Case class modeling the version of a Feature branch
+    /** Case class modeling the version of a Feature branch
       *
-      * @param name The name of the feature branch
+      * @param name
+      *   The name of the feature branch
       */
     sealed case class Feature private (name: String) extends Reference
 
-    /**
-      * Case class modeling the version of a Tag
+    /** Case class modeling the version of a Tag
       *
-      * @param major The major version
-      * @param minor The minor version
-      * @param patch The patch version
+      * @param major
+      *   The major version
+      * @param minor
+      *   The minor version
+      * @param patch
+      *   The patch version
       */
     sealed case class Tag private (major: Int, minor: Int, patch: Int) extends Reference
 
-    /**
-      * Case class modeling a release branch
+    /** Case class modeling a release branch
       *
-      * @param major The major version
-      * @param minor The minor version
+      * @param major
+      *   The major version
+      * @param minor
+      *   The minor version
       */
     sealed case class Release private (major: Int, minor: Int) extends Reference
 
-    /**
-      * Case class modeling an Hotfix branch
+    /** Case class modeling an Hotfix branch
       *
-      * @param name The name of the hotfix branch
+      * @param name
+      *   The name of the hotfix branch
       */
     sealed case class Hotfix private (name: String) extends Reference
 
-    /**
-      * Case class modeling Develop branch
+    /** Case class modeling Develop branch
       */
     case object Develop extends Reference
 
-    /**
-      * Case class modeling a Detached commit
+    /** Case class modeling a Detached commit
       */
     case class Detached(commitHash: String) extends Reference
 

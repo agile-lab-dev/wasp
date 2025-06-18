@@ -32,8 +32,3 @@ trait BatchJobBL {
   def instances(): BatchJobInstanceBL
 
 }
-
-
-
-
-

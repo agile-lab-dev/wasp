@@ -5,15 +5,13 @@ import it.agilelab.bigdata.wasp.repository.mongo.bl.DocumentBLImpl
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
-class DocumentBLImplTest extends FlatSpec with Matchers{
-
-
+class DocumentBLImplTest extends FlatSpec with Matchers {
 
   it should "test documentBL" in {
 
     val db = WaspMongoDB
     db.initializeDB()
-    val waspDB = db.getDB()
+    val waspDB     = db.getDB()
     val documentBL = new DocumentBLImpl(waspDB)
 
     val model1 = DocumentModel("name", "conn", "schema")
@@ -40,7 +38,7 @@ class DocumentBLImplTest extends FlatSpec with Matchers{
 
     val db = WaspMongoDB
     db.initializeDB()
-    val waspDB = db.getDB()
+    val waspDB     = db.getDB()
     val documentBL = new DocumentBLImpl(waspDB)
 
     val model3 = DocumentModel("name3", "conn", "schema")

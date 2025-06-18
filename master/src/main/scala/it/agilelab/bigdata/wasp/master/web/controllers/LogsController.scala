@@ -45,5 +45,3 @@ class LogsController(logs: LogsService) extends Directives with JsonSupport {
     }
   }
 }
-
-

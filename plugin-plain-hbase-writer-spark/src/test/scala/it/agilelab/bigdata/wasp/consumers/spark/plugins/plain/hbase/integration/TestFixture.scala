@@ -13,7 +13,7 @@ class TestFixture extends WordSpec with Matchers with BeforeAndAfter {
     try {
       FileUtils.deleteDirectory(new File(checkpointLocation))
     } catch {
-      case _: Exception => //do nothing
+      case _: Exception => // do nothing
     }
   }
 

@@ -3,20 +3,29 @@ package it.agilelab.bigdata.wasp.models
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.PostgreSQLProduct
 
-/**
-	*	Model for an SQL sink. Currently targeted at upserts only.
-	*
-	* @param name                         Name of the model
-	* @param table                        Table name to upsert into
-	* @param tableAliasForExistingValues  Table alias to use for providing access to existing values in the updates clause
-	* @param primaryKeys                  Primary key columns
-	* @param writeMode                    Write mode (insert/upsert/update/delete type)
-	* @param updateClauses                Update clauses to use when performing the update; key is the column name, value is the clause
-	* @param dialect                      SQL dialect for the upsert query
-	* @param jdbcConnection               JDBC connection information
-	* @param batchSize                    Size of the batches to use when writing
-	* @param poolSize                     Connection pool size; scale according to executor cores
-	*/
+/** Model for an SQL sink. Currently targeted at upserts only.
+  *
+  * @param name
+  *   Name of the model
+  * @param table
+  *   Table name to upsert into
+  * @param tableAliasForExistingValues
+  *   Table alias to use for providing access to existing values in the updates clause
+  * @param primaryKeys
+  *   Primary key columns
+  * @param writeMode
+  *   Write mode (insert/upsert/update/delete type)
+  * @param updateClauses
+  *   Update clauses to use when performing the update; key is the column name, value is the clause
+  * @param dialect
+  *   SQL dialect for the upsert query
+  * @param jdbcConnection
+  *   JDBC connection information
+  * @param batchSize
+  *   Size of the batches to use when writing
+  * @param poolSize
+  *   Connection pool size; scale according to executor cores
+  */
 case class SQLSinkModel(
     name: String,
     table: String,

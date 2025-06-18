@@ -3,7 +3,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.catalog.CatalogCoordinates
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.utils.DataCatalogService
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{ DataType, StructField, StructType }
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
 
 class MockCatalogService(schema: StructType) extends DataCatalogService with Serializable {
   override def getSchema(sparkSession: SparkSession, entityCoordinates: CatalogCoordinates): StructType = schema

@@ -1,6 +1,5 @@
 package it.agilelab.bigdata.wasp.consumers.spark.plugins.http
 
-
 import it.agilelab.bigdata.wasp.models.HttpModel
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers._
@@ -13,7 +12,6 @@ import it.agilelab.bigdata.wasp.repository.core.db.WaspDB
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
-
 class HttpConsumersSparkPlugin extends WaspConsumersSparkPlugin {
   private val httpBL: HttpBL = ConfigBL.httpBl
 
@@ -25,9 +23,9 @@ class HttpConsumersSparkPlugin extends WaspConsumersSparkPlugin {
   override def getValidationRules: Seq[ValidationRule] = Seq.empty
 
   override def getSparkStructuredStreamingWriter(
-    ss: SparkSession,
-    structuredStreamingModel: StructuredStreamingETLModel,
-    writerModel: WriterModel
+      ss: SparkSession,
+      structuredStreamingModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
   ): SparkStructuredStreamingWriter = {
     val httpModel: Option[HttpModel] = httpBL.getByName(writerModel.datastoreModelName)
     httpModel
@@ -36,9 +34,9 @@ class HttpConsumersSparkPlugin extends WaspConsumersSparkPlugin {
   }
 
   override def getSparkStructuredStreamingReader(
-    ss: SparkSession,
-    structuredStreamingETLModel: StructuredStreamingETLModel,
-    streamingReaderModel: StreamingReaderModel
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
   ): SparkStructuredStreamingReader = throw new UnsupportedOperationException("Unimplemented HTTP streaming reader")
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter =

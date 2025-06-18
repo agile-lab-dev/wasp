@@ -40,7 +40,7 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
   var solrServer: CloudSolrClient = _
   var httpClient: HttpClient      = _
 
-  implicit val system       = this.context.system
+  implicit val system = this.context.system
 
   override def receive: Actor.Receive = {
     case message: Search                  => call(message, search)
@@ -199,55 +199,56 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
   private def addMapping(message: AddMapping): Boolean = {
     import spray.json._
 
+    case class Type(name: String)
+    case class Field(
+        name: String,
+        `type`: String,
+        indexed: Boolean = true,
+        stored: Boolean = true,
+        docValues: Option[Boolean] = None,
+        sortMissing: Option[String] = None,
+        multiValued: Option[Boolean] = None,
+        omitNorms: Option[Boolean] = None,
+        omitTermFreqAndPositions: Option[Boolean] = None,
+        omitPositions: Option[Boolean] = None,
+        termVectors: Option[Boolean] = None,
+        termPositions: Option[Boolean] = None,
+        termOffsets: Option[Boolean] = None,
+        termPayloads: Option[Boolean] = None,
+        required: Boolean = false,
+        useDocValuesAsStored: Option[Boolean] = None,
+        large: Option[Boolean] = None
+    )
 
-    case class Type(name :String)
-    case class Field (name: String,
-      `type`: String,
-    indexed: Boolean = true,
-    stored: Boolean = true,
-    docValues: Option[Boolean] = None,
-    sortMissing: Option[String] = None,
-    multiValued: Option[Boolean] = None,
-    omitNorms: Option[Boolean] = None,
-    omitTermFreqAndPositions: Option[Boolean] = None,
-    omitPositions: Option[Boolean] = None,
-    termVectors: Option[Boolean] = None,
-    termPositions: Option[Boolean] = None,
-    termOffsets: Option[Boolean] = None,
-    termPayloads: Option[Boolean] = None,
-    required: Boolean = false,
-    useDocValuesAsStored: Option[Boolean] = None,
-    large: Option[Boolean] = None)
-
-    implicit  val fieldFormat: RootJsonFormat[Field] =  jsonFormat17(Field.apply)
+    implicit val fieldFormat: RootJsonFormat[Field] = jsonFormat17(Field.apply)
 
     val read = JsonParser(message.schema).convertTo[Seq[Field]]
 
     val updates: Seq[SchemaRequest.Update] = read.map {
 
       case Field(
-          name,
-          t,
-          indexed,
-          stored,
-          docValues,
-          sortMissing,
-          multiValued,
-          omitNorms,
-          omitTermFreqAndPositions,
-          omitPositions,
-          termVectors,
-          termPositions,
-          termOffsets,
-          termPayloads,
-          required,
-          useDocValuesAsStored,
-          large
+            name,
+            t,
+            indexed,
+            stored,
+            docValues,
+            sortMissing,
+            multiValued,
+            omitNorms,
+            omitTermFreqAndPositions,
+            omitPositions,
+            termVectors,
+            termPositions,
+            termOffsets,
+            termPayloads,
+            required,
+            useDocValuesAsStored,
+            large
           ) =>
         val map = mutable.Map[String, AnyRef]()
 
         sortMissing.foreach { v =>
-            map += ("sortMissing" -> v)
+          map += ("sortMissing" -> v)
         }
         map += ("name"     -> name)
         map += ("indexed"  -> lang.Boolean.valueOf(indexed))
@@ -255,18 +256,18 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
         map += ("required" -> lang.Boolean.valueOf(required))
         map += ("type"     -> t)
 
-        docValues.foreach(v => map += ("docValues"                               -> java.lang.Boolean.valueOf(v)))
-        multiValued.foreach(v => map += ("multiValued"                           -> java.lang.Boolean.valueOf(v)))
-        omitNorms.foreach(v => map += ("omitNorms"                               -> java.lang.Boolean.valueOf(v)))
+        docValues.foreach(v => map += ("docValues" -> java.lang.Boolean.valueOf(v)))
+        multiValued.foreach(v => map += ("multiValued" -> java.lang.Boolean.valueOf(v)))
+        omitNorms.foreach(v => map += ("omitNorms" -> java.lang.Boolean.valueOf(v)))
         omitTermFreqAndPositions.foreach(v => map += ("omitTermFreqAndPositions" -> java.lang.Boolean.valueOf(v)))
-        omitPositions.foreach(v => map += ("omitPositions"                       -> lang.Boolean.valueOf(v)))
-        omitPositions.foreach(v => map += ("omitPositions"                       -> lang.Boolean.valueOf(v)))
-        termVectors.foreach(v => map += ("termVectors"                           -> lang.Boolean.valueOf(v)))
-        termPositions.foreach(v => map += ("termPositions"                       -> lang.Boolean.valueOf(v)))
-        termOffsets.foreach(v => map += ("termOffsets"                           -> lang.Boolean.valueOf(v)))
-        termPayloads.foreach(v => map += ("termPayloads"                         -> lang.Boolean.valueOf(v)))
-        useDocValuesAsStored.foreach(v => map += ("useDocValuesAsStored"         -> lang.Boolean.valueOf(v)))
-        large.foreach(v => map += ("large"                                       -> lang.Boolean.valueOf(v)))
+        omitPositions.foreach(v => map += ("omitPositions" -> lang.Boolean.valueOf(v)))
+        omitPositions.foreach(v => map += ("omitPositions" -> lang.Boolean.valueOf(v)))
+        termVectors.foreach(v => map += ("termVectors" -> lang.Boolean.valueOf(v)))
+        termPositions.foreach(v => map += ("termPositions" -> lang.Boolean.valueOf(v)))
+        termOffsets.foreach(v => map += ("termOffsets" -> lang.Boolean.valueOf(v)))
+        termPayloads.foreach(v => map += ("termPayloads" -> lang.Boolean.valueOf(v)))
+        useDocValuesAsStored.foreach(v => map += ("useDocValuesAsStored" -> lang.Boolean.valueOf(v)))
+        large.foreach(v => map += ("large" -> lang.Boolean.valueOf(v)))
 
         new SchemaRequest.AddField(map.asJava)
     }
@@ -338,14 +339,13 @@ class SolrAdminActor extends Actor with SprayJsonSupport with DefaultJsonProtoco
     var check = checkCollection(CheckCollection(message.collection))
 
     if (!check)
-      check =
-        manageConfigSet(s"${SolrAdminActor.configSet}_${message.collection}", SolrAdminActor.template) &&
-          addCollection(
-            AddCollection(message.collection, message.numShards, message.replicationFactor)
-          ) &&
-          addMapping(
-            AddMapping(message.collection, message.schema, message.numShards, message.replicationFactor)
-          )
+      check = manageConfigSet(s"${SolrAdminActor.configSet}_${message.collection}", SolrAdminActor.template) &&
+        addCollection(
+          AddCollection(message.collection, message.numShards, message.replicationFactor)
+        ) &&
+        addMapping(
+          AddMapping(message.collection, message.schema, message.numShards, message.replicationFactor)
+        )
 
     check
   }

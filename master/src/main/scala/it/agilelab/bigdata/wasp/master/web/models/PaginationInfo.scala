@@ -1,5 +1,3 @@
 package it.agilelab.bigdata.wasp.master.web.models
 
-case class PaginationInfo(page: Integer,
-                          rows : Integer,
-                          numFound : Long)
+case class PaginationInfo(page: Integer, rows: Integer, numFound: Long)

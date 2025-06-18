@@ -25,14 +25,14 @@ package object datasources {
   type HBaseType = Array[Byte]
   def bytesMin = new Array[Byte](0)
   def bytesMax = null
-  val ByteMax = -1.asInstanceOf[Byte]
-  val ByteMin = 0.asInstanceOf[Byte]
+  val ByteMax  = -1.asInstanceOf[Byte]
+  val ByteMin  = 0.asInstanceOf[Byte]
   val ord: Ordering[HBaseType] = new Ordering[HBaseType] {
     def compare(x: Array[Byte], y: Array[Byte]): Int = {
       return Bytes.compareTo(x, y)
     }
   }
-  //Do not use BinaryType.ordering
+  // Do not use BinaryType.ordering
   implicit val order: Ordering[HBaseType] = ord
 
 }

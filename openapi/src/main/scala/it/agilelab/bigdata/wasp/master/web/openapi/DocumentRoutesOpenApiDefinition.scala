@@ -6,7 +6,10 @@ import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
 import it.agilelab.bigdata.wasp.models.DocumentModel
 
-trait DocumentModelOpenApiComponentSupport extends ProducerOpenApiComponentSupport with LangOpenApi with CollectionsOpenApi {
+trait DocumentModelOpenApiComponentSupport
+    extends ProducerOpenApiComponentSupport
+    with LangOpenApi
+    with CollectionsOpenApi {
 
   implicit lazy val documentModelOpenApi: ToOpenApiSchema[DocumentModel] = product3(DocumentModel)
 }
@@ -16,7 +19,7 @@ trait DocumentRoutesOpenApiDefinition
 
   def documentsRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/documents" -> get(ctx),
+      "/documents"                -> get(ctx),
       "/documents/{documentname}" -> getInstance(ctx)
     )
   }

@@ -9,6 +9,6 @@ object BatchSchedulerMapperV1 extends SimpleMapper[BatchSchedulerModel, BatchSch
   override val version = "batchSchedulerV1"
   override def fromDBModelToModel[B >: BatchSchedulerDBModelV1](m: B): BatchSchedulerModel = m match {
     case mm: BatchSchedulerDBModelV1 => transform[BatchSchedulerModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

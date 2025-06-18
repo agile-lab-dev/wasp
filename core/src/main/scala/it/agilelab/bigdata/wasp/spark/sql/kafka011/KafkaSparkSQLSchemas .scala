@@ -2,10 +2,10 @@ package it.agilelab.bigdata.wasp.spark.sql.kafka011
 
 import org.apache.spark.sql.types._
 
-/**
-  * Spark SQL schemas for Kafka.
+/** Spark SQL schemas for Kafka.
   *
-  * @author Nicolò Bidotti
+  * @author
+  *   Nicolò Bidotti
   */
 object KafkaSparkSQLSchemas {
   // attribute names

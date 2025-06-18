@@ -86,19 +86,24 @@ object SchemaFlatteners {
 
   object Spark {
     def flattenSchemaStruct(schema: StructType, prefix: String): Seq[(String, String)] = {
-      schema.fields.toList.flatMap(f => handleField(f.name,f.dataType, prefix, insideMap = false))
+      schema.fields.toList.flatMap(f => handleField(f.name, f.dataType, prefix, insideMap = false))
     }
 
     def flattenSchema(schema: DataType, prefix: String): Seq[(String, String)] = {
-      handleField("", schema,prefix, false)
+      handleField("", schema, prefix, false)
     }
 
     @scala.annotation.tailrec
-    def handleField(fieldName: String, fieldType: DataType, prefix: String, insideMap: Boolean): Seq[(String, String)] = {
+    def handleField(
+        fieldName: String,
+        fieldType: DataType,
+        prefix: String,
+        insideMap: Boolean
+    ): Seq[(String, String)] = {
       val name = prefix + fieldName
       fieldType match {
         case struct: StructType =>
-          flattenSchemaStruct(struct, if(name.isEmpty) name else name + ".")
+          flattenSchemaStruct(struct, if (name.isEmpty) name else name + ".")
         case MapType(StringType, valueType: StructType, _) => flattenSchemaStruct(valueType, name + ".map_")
         case MapType(StringType, valueType, _) =>
           handleField(fieldName, valueType, prefix, insideMap = true)
@@ -123,7 +128,7 @@ object SchemaFlatteners {
       case _: BinaryType    => binaryType
       case _: DateType      => longType
       case _: TimestampType => longType
-      case _                => throw new IllegalArgumentException(s"$dataType is not a supported primitive type for Catalyst")
+      case _ => throw new IllegalArgumentException(s"$dataType is not a supported primitive type for Catalyst")
     }
   }
 

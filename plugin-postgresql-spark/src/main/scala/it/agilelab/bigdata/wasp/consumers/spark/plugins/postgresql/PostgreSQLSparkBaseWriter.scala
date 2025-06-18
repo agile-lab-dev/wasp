@@ -5,8 +5,7 @@ import it.agilelab.bigdata.wasp.models.SQLSinkModel
 import java.sql.Connection
 import java.util.Properties
 
-/**
-	* Base class for writers that write to PostgreSQL using upserts (INSERT ON CONFLICT)
+/** Base class for writers that write to PostgreSQL using upserts (INSERT ON CONFLICT)
   */
 trait PostgreSQLSparkBaseWriter extends JDBCPooledConnectionSupport with JDBCConnectionInfoProvider {
 

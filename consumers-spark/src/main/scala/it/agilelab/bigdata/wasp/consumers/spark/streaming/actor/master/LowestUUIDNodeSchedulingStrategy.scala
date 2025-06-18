@@ -5,7 +5,10 @@ import it.agilelab.bigdata.wasp.models.PipegraphModel
 
 class LowestUUIDNodeSchedulingStrategy extends SchedulingStrategy {
 
-  override def choose(members: Set[Collaborator], pipegraph: PipegraphModel): SchedulingStrategy.SchedulingStrategyOutcome = {
+  override def choose(
+      members: Set[Collaborator],
+      pipegraph: PipegraphModel
+  ): SchedulingStrategy.SchedulingStrategyOutcome = {
     Right((members.toList.minBy(_.address.longUid), this))
   }
 

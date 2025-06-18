@@ -10,8 +10,7 @@ import org.scalatest.Matchers.{contain, convertToAnyShouldWrapper}
 
 import java.sql.{Connection, Timestamp}
 
-/**
-  * Tests for [[PostgreSQLSparkBatchWriter]].
+/** Tests for [[PostgreSQLSparkBatchWriter]].
   */
 class PostgreSQLBatchWriterSpec
     extends FunSuite

@@ -14,13 +14,14 @@ class HttpEnricher(sourceInfo: RestEnrichmentSource) extends Enricher {
   val httpClient: CloseableHttpClient = HttpClients.createDefault()
 
   def fromInputToRequest[A: ClassTag](
-                                       body: A,
-                                       params: Map[String, String],
-                                       headers: Map[String, String]
-                                     ): HttpEntityEnclosingRequestBase = {
+      body: A,
+      params: Map[String, String],
+      headers: Map[String, String]
+  ): HttpEntityEnclosingRequestBase = {
     val toHttpRequest: ToHttpRequest =
       sourceInfo.parameters.get("toRequestClass") match {
-        case Some(className) => Class.forName(className).getDeclaredConstructor().newInstance().asInstanceOf[ToHttpRequest]
+        case Some(className) =>
+          Class.forName(className).getDeclaredConstructor().newInstance().asInstanceOf[ToHttpRequest]
         case None => new JacksonToHttpRequest
       }
 
@@ -36,19 +37,20 @@ class HttpEnricher(sourceInfo: RestEnrichmentSource) extends Enricher {
     val toResponse: FromHttpResponse =
       sourceInfo.parameters.get("fromResponseClass") match {
         case None => new JacksonFromHttpResponse
-        case Some(className) => Class.forName(className).getDeclaredConstructor().newInstance().asInstanceOf[FromHttpResponse]
+        case Some(className) =>
+          Class.forName(className).getDeclaredConstructor().newInstance().asInstanceOf[FromHttpResponse]
       }
 
     toResponse.fromResponse[B](response)
   }
 
   override def call[A: ClassTag, B: ClassTag](
-                                               body: A,
-                                               params: Map[String, String],
-                                               headers: Map[String, String]
-                                             ): B = {
+      body: A,
+      params: Map[String, String],
+      headers: Map[String, String]
+  ): B = {
     val request: HttpEntityEnclosingRequestBase = fromInputToRequest(body, params, headers)
-    val response: CloseableHttpResponse = httpClient.execute(request)
+    val response: CloseableHttpResponse         = httpClient.execute(request)
     try {
       fromResponseToOutput[B](response)
     } finally {

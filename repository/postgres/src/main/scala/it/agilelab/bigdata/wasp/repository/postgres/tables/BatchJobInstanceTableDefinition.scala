@@ -10,12 +10,12 @@ object BatchJobInstanceTableDefinition extends ModelTableDefinition[BatchJobInst
 
   override protected def extraColumns: List[String] = List(instanceOf)
 
-  override protected def mapperExtraColumnsFromModelToArray: BatchJobInstanceModel => Array[(String, Any)] = m=> Array(
-    (instanceOf,m.instanceOf)
-  )
+  override protected def mapperExtraColumnsFromModelToArray: BatchJobInstanceModel => Array[(String, Any)] = m =>
+    Array(
+      (instanceOf, m.instanceOf)
+    )
 
-
-  def ddl : String = s"""CREATE TABLE IF NOT EXISTS $tableName (
+  def ddl: String = s"""CREATE TABLE IF NOT EXISTS $tableName (
                         |$name varchar NOT NULL,
                         |$instanceOf varchar,
                         |$payload json,

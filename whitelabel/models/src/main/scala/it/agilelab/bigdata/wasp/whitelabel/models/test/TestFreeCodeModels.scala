@@ -4,8 +4,10 @@ import it.agilelab.bigdata.wasp.models.FreeCodeModel
 
 object TestFreeCodeModels {
 
-  val testFreeCode: FreeCodeModel = FreeCodeModel("test-freecode",
+  val testFreeCode: FreeCodeModel = FreeCodeModel(
+    "test-freecode",
     """
       | dataFrames.head._2
-      |""".stripMargin)
+      |""".stripMargin
+  )
 }

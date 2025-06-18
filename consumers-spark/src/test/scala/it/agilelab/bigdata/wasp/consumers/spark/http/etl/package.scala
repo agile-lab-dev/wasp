@@ -9,7 +9,8 @@ package object etl {
     staticInputs = List.empty,
     streamingOutput = WriterModel.kafkaWriter("write-to-kafka", topic.sampleDataOutputTopic),
     mlModels = List.empty,
-    strategy = Some(StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.utils.enrichment.etl.CustomEnrichmentStrategy")),
+    strategy =
+      Some(StrategyModel("it.agilelab.bigdata.wasp.consumers.spark.utils.enrichment.etl.CustomEnrichmentStrategy")),
     triggerIntervalMs = Some(1000)
   )
 }

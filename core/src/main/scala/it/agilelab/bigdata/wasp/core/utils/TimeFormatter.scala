@@ -17,5 +17,6 @@ object TimeFormatter {
 
   def format(time: Time): String = new SimpleDateFormat(baseFormat).format(time.getTime)
 
-  def formatFromBaseToUDF(time: String, format: String) = new SimpleDateFormat(format).format(new SimpleDateFormat(baseFormat).parse(time))
+  def formatFromBaseToUDF(time: String, format: String) =
+    new SimpleDateFormat(format).format(new SimpleDateFormat(baseFormat).parse(time))
 }

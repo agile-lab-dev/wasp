@@ -1,11 +1,10 @@
 package it.agilelab.bigdata.wasp.consumers.spark.utils
 
-import java.io.{ ObjectInputStream, ObjectOutputStream }
+import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import org.apache.hadoop.conf.Configuration
 
-/**
-  * [[Serializable]] wrapper for a Hadoop [[Configuration]]
+/** [[Serializable]] wrapper for a Hadoop [[Configuration]]
   */
 class HadoopConfiguration(@transient var value: Configuration) extends Serializable {
   private def writeObject(out: ObjectOutputStream): Unit =

@@ -16,7 +16,10 @@ class ConfigManagerSpec extends FlatSpec with Matchers {
 
   it should "be possible to override the credential database" in {
     val anotherConfigManager = new ConfigManager {
-      override val conf: Config = ConfigFactory.load().getConfig("wasp").withValue("mongo.authentication-db", ConfigValueFactory.fromAnyRef("admin"))
+      override val conf: Config = ConfigFactory
+        .load()
+        .getConfig("wasp")
+        .withValue("mongo.authentication-db", ConfigValueFactory.fromAnyRef("admin"))
     }
     anotherConfigManager.getMongoDBConfig.credentialDb shouldBe "admin"
   }

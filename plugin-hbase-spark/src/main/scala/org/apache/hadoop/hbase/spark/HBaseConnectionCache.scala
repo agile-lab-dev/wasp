@@ -37,9 +37,9 @@ private[spark] object HBaseConnectionCache extends Logging {
   val cacheStat = HBaseConnectionCacheStat(0, 0, 0)
 
   // in milliseconds
-  private final val DEFAULT_TIME_OUT: Long = HBaseSparkConf.DEFAULT_CONNECTION_CLOSE_DELAY
-  private var timeout = DEFAULT_TIME_OUT
-  private var closed: Boolean = false
+  final private val DEFAULT_TIME_OUT: Long = HBaseSparkConf.DEFAULT_CONNECTION_CLOSE_DELAY
+  private var timeout                      = DEFAULT_TIME_OUT
+  private var closed: Boolean              = false
 
   var housekeepingThread = new Thread(new Runnable {
     override def run() {
@@ -48,8 +48,8 @@ private[spark] object HBaseConnectionCache extends Logging {
           Thread.sleep(timeout)
         } catch {
           case e: InterruptedException =>
-            // setTimeout() and close() may interrupt the sleep and it's safe
-            // to ignore the exception
+          // setTimeout() and close() may interrupt the sleep and it's safe
+          // to ignore the exception
         }
         if (closed)
           return
@@ -85,14 +85,14 @@ private[spark] object HBaseConnectionCache extends Logging {
   def performHousekeeping(forceClean: Boolean) = {
     val tsNow: Long = System.currentTimeMillis()
     connectionMap.synchronized {
-      connectionMap.foreach {
-        x => {
+      connectionMap.foreach { x =>
+        {
           if (x._2.refCount < 0) {
             logError(s"Bug to be fixed: negative refCount of connection ${x._2}")
           }
 
           if (forceClean || ((x._2.refCount <= 0) && (tsNow - x._2.timestamp > timeout))) {
-            try{
+            try {
               x._2.connection.close()
             } catch {
               case e: IOException => logWarning(s"Fail to close connection ${x._2}", e)
@@ -110,8 +110,12 @@ private[spark] object HBaseConnectionCache extends Logging {
       if (closed)
         return null
       cacheStat.numTotalRequests += 1
-      val sc = connectionMap.getOrElseUpdate(key, {cacheStat.numActualConnectionsCreated += 1
-        new SmartConnection(conn)})
+      val sc = connectionMap.getOrElseUpdate(
+        key, {
+          cacheStat.numActualConnectionsCreated += 1
+          new SmartConnection(conn)
+        }
+      )
       sc.refCount += 1
       sc
     }
@@ -121,7 +125,7 @@ private[spark] object HBaseConnectionCache extends Logging {
     getConnection(new HBaseConnectionKey(conf), ConnectionFactory.createConnection(conf))
 
   // For testing purpose only
-  def setTimeout(to: Long): Unit  = {
+  def setTimeout(to: Long): Unit = {
     connectionMap.synchronized {
       if (closed)
         return
@@ -131,12 +135,11 @@ private[spark] object HBaseConnectionCache extends Logging {
   }
 }
 
-private[hbase] case class SmartConnection (
-    connection: Connection, var refCount: Int = 0, var timestamp: Long = 0) {
-  def getTable(tableName: TableName): Table = connection.getTable(tableName)
+private[hbase] case class SmartConnection(connection: Connection, var refCount: Int = 0, var timestamp: Long = 0) {
+  def getTable(tableName: TableName): Table                 = connection.getTable(tableName)
   def getRegionLocator(tableName: TableName): RegionLocator = connection.getRegionLocator(tableName)
-  def isClosed: Boolean = connection.isClosed
-  def getAdmin: Admin = connection.getAdmin
+  def isClosed: Boolean                                     = connection.isClosed
+  def getAdmin: Admin                                       = connection.getAdmin
   def close() = {
     HBaseConnectionCache.connectionMap.synchronized {
       refCount -= 1
@@ -146,14 +149,12 @@ private[hbase] case class SmartConnection (
   }
 }
 
-/**
- * Denotes a unique key to an HBase Connection instance.
- * Please refer to 'org.apache.hadoop.hbase.client.HConnectionKey'.
- *
- * In essence, this class captures the properties in Configuration
- * that may be used in the process of establishing a connection.
- *
- */
+/** Denotes a unique key to an HBase Connection instance. Please refer to
+  * 'org.apache.hadoop.hbase.client.HConnectionKey'.
+  *
+  * In essence, this class captures the properties in Configuration that may be used in the process of establishing a
+  * connection.
+  */
 class HBaseConnectionKey(c: Configuration) extends Logging {
   val conf: Configuration = c
   val CONNECTION_PROPERTIES: Array[String] = Array[String](
@@ -167,10 +168,11 @@ class HBaseConnectionKey(c: Configuration) extends Logging {
     HConstants.HBASE_CLIENT_INSTANCE_ID,
     HConstants.RPC_CODEC_CONF_KEY,
     HConstants.USE_META_REPLICAS,
-    RpcControllerFactory.CUSTOM_CONTROLLER_CONF_KEY)
+    RpcControllerFactory.CUSTOM_CONTROLLER_CONF_KEY
+  )
 
   var username: String = _
-  var m_properties = mutable.HashMap.empty[String, String]
+  var m_properties     = mutable.HashMap.empty[String, String]
   if (conf != null) {
     for (property <- CONNECTION_PROPERTIES) {
       val value: String = conf.get(property)
@@ -180,12 +182,11 @@ class HBaseConnectionKey(c: Configuration) extends Logging {
     }
     try {
       val provider: UserProvider = UserProvider.instantiate(conf)
-      val currentUser: User = provider.getCurrent
+      val currentUser: User      = provider.getCurrent
       if (currentUser != null) {
         username = currentUser.getName
       }
-    }
-    catch {
+    } catch {
       case e: IOException => logWarning("Error obtaining current user, skipping username in HBaseConnectionKey", e)
     }
   }
@@ -194,7 +195,7 @@ class HBaseConnectionKey(c: Configuration) extends Logging {
   val properties = m_properties.toMap
 
   override def hashCode: Int = {
-    val prime: Int = 31
+    val prime: Int  = 31
     var result: Int = 1
     if (username != null) {
       result = username.hashCode
@@ -214,16 +215,14 @@ class HBaseConnectionKey(c: Configuration) extends Logging {
     val that: HBaseConnectionKey = obj.asInstanceOf[HBaseConnectionKey]
     if (this.username != null && !(this.username == that.username)) {
       return false
-    }
-    else if (this.username == null && that.username != null) {
+    } else if (this.username == null && that.username != null) {
       return false
     }
     if (this.properties == null) {
       if (that.properties != null) {
         return false
       }
-    }
-    else {
+    } else {
       if (that.properties == null) {
         return false
       }
@@ -233,7 +232,7 @@ class HBaseConnectionKey(c: Configuration) extends Logging {
         val thatValue: Option[String] = that.properties.get(property)
         flag = true
         if (thisValue eq thatValue) {
-          flag = false //continue, so make flag be false
+          flag = false // continue, so make flag be false
         }
         if (flag && (thisValue == null || !(thisValue == thatValue))) {
           return false
@@ -248,15 +247,17 @@ class HBaseConnectionKey(c: Configuration) extends Logging {
   }
 }
 
-/**
- * To log the state of 'HBaseConnectionCache'
- *
- * @param numTotalRequests number of total connection requests to the cache
- * @param numActualConnectionsCreated number of actual HBase connections the cache ever created
- * @param numActiveConnections number of current alive HBase connections the cache is holding
- */
-case class HBaseConnectionCacheStat(var numTotalRequests: Long,
-                                    var numActualConnectionsCreated: Long,
-                                    var numActiveConnections: Long)
-
-
+/** To log the state of 'HBaseConnectionCache'
+  *
+  * @param numTotalRequests
+  *   number of total connection requests to the cache
+  * @param numActualConnectionsCreated
+  *   number of actual HBase connections the cache ever created
+  * @param numActiveConnections
+  *   number of current alive HBase connections the cache is holding
+  */
+case class HBaseConnectionCacheStat(
+    var numTotalRequests: Long,
+    var numActualConnectionsCreated: Long,
+    var numActiveConnections: Long
+)

@@ -5,12 +5,14 @@ import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 
-trait StrategyOpenApiDefinition extends LangOpenApi with CollectionsOpenApi with AngularResponseOpenApiComponentSupport{
-
+trait StrategyOpenApiDefinition
+    extends LangOpenApi
+    with CollectionsOpenApi
+    with AngularResponseOpenApiComponentSupport {
 
   def strategiesRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/strategy"                -> get(ctx)
+      "/strategy" -> get(ctx)
     )
   }
 
@@ -51,6 +53,5 @@ trait StrategyOpenApiDefinition extends LangOpenApi with CollectionsOpenApi with
           )
       )
   }
-
 
 }

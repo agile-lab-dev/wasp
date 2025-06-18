@@ -15,17 +15,16 @@ class HttpWaspWriter(httpModel: HttpModel) extends SparkStructuredStreamingWrite
     val dfToWrite: DataFrame = prepareDF(stream)
 
     val writer = HttpWriter(httpModel, valColName)
-    dfToWrite
-      .writeStream
+    dfToWrite.writeStream
       .foreach(writer)
   }
 
   protected[wasp] def prepareDF(stream: DataFrame): DataFrame = {
     val codec = httpModel.compression match {
       case HttpCompression.Disabled => None
-      case HttpCompression.Gzip => Some("gzip")
-      case HttpCompression.Snappy => throw new IllegalArgumentException("Unsupported compression format: snappy")
-      case HttpCompression.Lz4 => throw new IllegalArgumentException("Unsupported compression format: lz4")
+      case HttpCompression.Gzip     => Some("gzip")
+      case HttpCompression.Snappy   => throw new IllegalArgumentException("Unsupported compression format: snappy")
+      case HttpCompression.Lz4      => throw new IllegalArgumentException("Unsupported compression format: lz4")
     }
 
     val valueFields = if (httpModel.valueFieldsNames.isEmpty) {
@@ -55,21 +54,28 @@ class HttpWaspWriter(httpModel: HttpModel) extends SparkStructuredStreamingWrite
     val compressionF = codec.map(c => CompressExpression.compress(valueColumn, c, conf)).getOrElse(valueColumn)
 
     val headerColumn = httpModel.headersFieldName.map { hName =>
-      val hField = stream.schema.fields.find(_.name == hName)
+      val hField = stream.schema.fields
+        .find(_.name == hName)
         .getOrElse(throw new RuntimeException(s"Cannot find header column: $hName"))
       hField.dataType match {
         case MapType(StringType, StringType, _) => col(hName)
         case MapType(keyType, valueType, _) =>
-          logger.warn(s"header column $hName is not of type Map[String, String] but it is " +
-            s"Map[$keyType, $valueType] a cast will be performed")
+          logger.warn(
+            s"header column $hName is not of type Map[String, String] but it is " +
+              s"Map[$keyType, $valueType] a cast will be performed"
+          )
           col(hName).cast(MapType(StringType, StringType)).as(hName)
-        case ArrayType(elements@StructType(Array(_, _)), _) =>
-          logger.warn(s"header column $hName is not of type Map[String, String] but it is " +
-            s"Array[$elements] a cast will be performed")
+        case ArrayType(elements @ StructType(Array(_, _)), _) =>
+          logger.warn(
+            s"header column $hName is not of type Map[String, String] but it is " +
+              s"Array[$elements] a cast will be performed"
+          )
           map_from_entries(col(hName)).cast(MapType(StringType, StringType)).as(hName)
         case headerDataType =>
-          throw new RuntimeException(s"column $hName is of type $headerDataType which cannot " +
-            s"be used as http headers")
+          throw new RuntimeException(
+            s"column $hName is of type $headerDataType which cannot " +
+              s"be used as http headers"
+          )
       }
     }.toSeq
 

@@ -176,8 +176,8 @@ object Constants {
 }
 
 class TestKafkaRouter extends Actor {
-  override def receive: Receive = {
-    case _ => ()
+  override def receive: Receive = { case _ =>
+    ()
   }
 }
 

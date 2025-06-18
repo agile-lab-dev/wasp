@@ -7,8 +7,7 @@ import spray.json.{DefaultJsonProtocol, JsonFormat}
 
 import java.util.UUID
 
-/**
-  * An entity supporting parallel write use case
+/** An entity supporting parallel write use case
   */
 trait ParallelWriteEntity extends MicroserviceClient {
   def getWriteExecutionPlan(
@@ -40,7 +39,11 @@ object ParallelWriteEntityJsonProtocol extends DefaultJsonProtocol {
     WriteExecutionPlanRequestBody
   )
   implicit val writeExecutionPlanResponseBodyFormat: JsonFormat[WriteExecutionPlanResponseBody] = jsonFormat(
-    WriteExecutionPlanResponseBody, "format", "writeUri", "writeType", "temporaryCredentials"
+    WriteExecutionPlanResponseBody,
+    "format",
+    "writeUri",
+    "writeType",
+    "temporaryCredentials"
   )
   implicit val dataCompleteRequestBodyFormat: JsonFormat[DataCompleteRequestBody] = jsonFormat1(DataCompleteRequestBody)
   implicit val dataCommittedResponseBodyFormat: JsonFormat[DataCommittedResponseBody] = jsonFormat1(

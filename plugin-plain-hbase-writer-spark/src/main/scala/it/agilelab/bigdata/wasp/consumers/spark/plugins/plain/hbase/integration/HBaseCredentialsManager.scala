@@ -23,21 +23,18 @@ object HBaseCredentialsManager extends Logging with Serializable {
         ("KeyId", tokenIdentifier.getKeyId),
         ("IssueDate", new Date(tokenIdentifier.getIssueDate)),
         ("ExpirationDate", new Date(tokenIdentifier.getExpirationDate))
-      ).map {
-        case (name, value) => s"$name=$value"
+      ).map { case (name, value) =>
+        s"$name=$value"
       }.mkString(", ")
     }
 
-    val tokenInfo = UserGroupInformation.getCurrentUser
-      .getCredentials
-      .getAllTokens
-      .asScala
+    val tokenInfo = UserGroupInformation.getCurrentUser.getCredentials.getAllTokens.asScala
       .map(_.decodeIdentifier())
       .filter(_.isInstanceOf[AuthenticationTokenIdentifier])
       .map(_.asInstanceOf[AuthenticationTokenIdentifier])
       .map(stringifyToken)
-      .headOption.getOrElse("NoTokenFound")
-
+      .headOption
+      .getOrElse("NoTokenFound")
 
     logDebug(s"Tokens -> $tokenInfo")
   }

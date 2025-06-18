@@ -22,7 +22,8 @@ import scala.util.Try
 
 object RawConsumersSpark {
   private def safeGetShortName(className: String): Option[String] = Try {
-    getClass.getClassLoader.loadClass(className)
+    getClass.getClassLoader
+      .loadClass(className)
       .asInstanceOf[Class[DataSourceRegister]]
   }.toOption.flatMap(safeGetShortNameC)
 
@@ -41,8 +42,7 @@ object RawConsumersSpark {
   ).flatten
 }
 
-/**
-  * Created by Agile Lab s.r.l. on 05/09/2017.
+/** Created by Agile Lab s.r.l. on 05/09/2017.
   */
 class RawConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 

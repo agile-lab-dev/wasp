@@ -17,11 +17,11 @@ import org.apache.commons.cli.CommandLine
 
 object SingleNodeLauncher extends MultipleClusterSingletonsLauncher with WaspConfiguration {
 
-  def locations(clz: Class[_], classLoader:ClassLoader): List[String] = {
-    val enums = classLoader.getResources(clz.getCanonicalName.replace(".","/") + ".class")
-    val list = List.newBuilder[String]
-    while (enums.hasMoreElements){
-      list. += (enums.nextElement().toString)
+  def locations(clz: Class[_], classLoader: ClassLoader): List[String] = {
+    val enums = classLoader.getResources(clz.getCanonicalName.replace(".", "/") + ".class")
+    val list  = List.newBuilder[String]
+    while (enums.hasMoreElements) {
+      list.+=(enums.nextElement().toString)
     }
     list.result()
   }

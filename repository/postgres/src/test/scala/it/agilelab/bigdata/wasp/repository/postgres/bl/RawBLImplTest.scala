@@ -5,9 +5,9 @@ import it.agilelab.bigdata.wasp.repository.postgres.utils.PostgresSuite
 
 trait RawBLImplTest {
 
-  self : PostgresSuite =>
+  self: PostgresSuite =>
 
-  lazy val rawBL  = RawBLImpl(pgDB)
+  lazy val rawBL = RawBLImpl(pgDB)
 
   it should "test RawBLImpl" in {
 

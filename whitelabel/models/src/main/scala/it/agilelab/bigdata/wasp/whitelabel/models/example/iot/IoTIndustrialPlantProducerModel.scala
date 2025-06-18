@@ -6,7 +6,7 @@ private[wasp] object IoTIndustrialPlantProducerModel {
 
   val producerName: String = "IoTIndustrialPlantProducer"
 
-  lazy val iotIndustrialPlantProducer = ProducerModel (
+  lazy val iotIndustrialPlantProducer = ProducerModel(
     name = producerName,
     className = "it.agilelab.bigdata.wasp.whitelabel.producers.iot.IoTIndustrialPlantProducerGuardian",
     topicName = Some("industrial-plant.topic"),

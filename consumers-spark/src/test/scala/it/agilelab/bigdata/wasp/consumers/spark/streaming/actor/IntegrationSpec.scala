@@ -7,10 +7,24 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import it.agilelab.bigdata.wasp.DatastoreModelsForTesting
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.collaborator.CollaboratorActor
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.etl.{Protocol => ETLProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{SparkConsumersStreamingMasterGuardian, Protocol => MasterProtocol}
-import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.{ComponentFailedStrategy, DontCare, StopAll}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.master.{
+  Protocol => MasterProtocol,
+  SparkConsumersStreamingMasterGuardian
+}
+import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.PipegraphGuardian.{
+  ComponentFailedStrategy,
+  DontCare,
+  StopAll
+}
 import it.agilelab.bigdata.wasp.consumers.spark.streaming.actor.pipegraph.{PipegraphGuardian, ProbesFactory}
-import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphModel, PipegraphStatus, StreamingReaderModel, StructuredStreamingETLModel, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  PipegraphInstanceModel,
+  PipegraphModel,
+  PipegraphStatus,
+  StreamingReaderModel,
+  StructuredStreamingETLModel,
+  WriterModel
+}
 import org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
@@ -19,7 +33,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.collection.immutable.Map
 
 class IntegrationSpec
-  extends TestKit(ActorSystem("WASP"))
+    extends TestKit(ActorSystem("WASP"))
     with WordSpecLike
     with BeforeAndAfterAll
     with ImplicitSender
@@ -89,7 +103,8 @@ class IntegrationSpec
 
       val fsm =
         system.actorOf(
-          SparkConsumersStreamingMasterGuardian.props(mockBl, watchdogCreator, "collaborator-1", 500.millisecond, FiniteDuration(5, TimeUnit.SECONDS)),
+          SparkConsumersStreamingMasterGuardian
+            .props(mockBl, watchdogCreator, "collaborator-1", 500.millisecond, FiniteDuration(5, TimeUnit.SECONDS)),
           "fsm1"
         )
 
@@ -99,7 +114,7 @@ class IntegrationSpec
 
       probe.expectMsgPF(max = Duration.fromNanos(1000000000000d)) {
         case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName)
-          if instanceName.startsWith(s"${defaultPipegraph.name}-") =>
+            if instanceName.startsWith(s"${defaultPipegraph.name}-") =>
           ()
       }
 
@@ -138,10 +153,10 @@ class IntegrationSpec
 
       val mockBl = new MockPipegraphBl(new MockPipegraphInstanceBl())
 
-      val firstEtl = defaultPipegraph.structuredStreamingComponents.head.copy(name = "first-component")
+      val firstEtl  = defaultPipegraph.structuredStreamingComponents.head.copy(name = "first-component")
       val secondEtl = defaultPipegraph.structuredStreamingComponents.head.copy(name = "second-component")
 
-      val firstPipegraph = defaultPipegraph.copy(name = "first", structuredStreamingComponents = List(firstEtl))
+      val firstPipegraph  = defaultPipegraph.copy(name = "first", structuredStreamingComponents = List(firstEtl))
       val secondPipegraph = defaultPipegraph.copy(name = "second", structuredStreamingComponents = List(secondEtl))
 
       mockBl.insert(firstPipegraph)
@@ -162,7 +177,13 @@ class IntegrationSpec
       val watchdogCreator: ChildCreator = (master, name, _) => TestProbe(name)(system).ref
 
       val fsm = system.actorOf(
-        SparkConsumersStreamingMasterGuardian.props(mockBl, watchdogCreator, "collaborator-2", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS))
+        SparkConsumersStreamingMasterGuardian.props(
+          mockBl,
+          watchdogCreator,
+          "collaborator-2",
+          1.millisecond,
+          FiniteDuration(5, TimeUnit.SECONDS)
+        )
       )
       val collaborator = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-2")
 
@@ -175,12 +196,12 @@ class IntegrationSpec
       probe.send(fsm, MasterProtocol.StartPipegraph(secondPipegraph.name))
       probe.expectMsgPF() {
         case MasterProtocol.PipegraphStarted(firstPipegraph.name, instanceName)
-          if instanceName.startsWith(s"${firstPipegraph.name}-") =>
+            if instanceName.startsWith(s"${firstPipegraph.name}-") =>
           ()
       }
       probe.expectMsgPF() {
         case MasterProtocol.PipegraphStarted(secondPipegraph.name, instanceName)
-          if instanceName.startsWith(s"${secondPipegraph.name}-") =>
+            if instanceName.startsWith(s"${secondPipegraph.name}-") =>
           ()
       }
 
@@ -253,7 +274,13 @@ class IntegrationSpec
       val watchdogCreator: ChildCreator = (master, name, _) => TestProbe(name)(system).ref
 
       val fsm = system.actorOf(
-        SparkConsumersStreamingMasterGuardian.props(mockBl, watchdogCreator, "collaborator-3", 1.millisecond, FiniteDuration(5, TimeUnit.SECONDS))
+        SparkConsumersStreamingMasterGuardian.props(
+          mockBl,
+          watchdogCreator,
+          "collaborator-3",
+          1.millisecond,
+          FiniteDuration(5, TimeUnit.SECONDS)
+        )
       )
       val collaborator = system.actorOf(CollaboratorActor.props(fsm, childCreator), "collaborator-3")
 
@@ -261,7 +288,7 @@ class IntegrationSpec
 
       probe.expectMsgPF() {
         case MasterProtocol.PipegraphStarted(defaultPipegraph.name, instanceName)
-          if instanceName.startsWith(s"${defaultPipegraph.name}-") =>
+            if instanceName.startsWith(s"${defaultPipegraph.name}-") =>
           ()
       }
 
@@ -288,8 +315,8 @@ class IntegrationSpec
       eventually(timeout(Span(10, Seconds))) {
         mockBl.instances().all().head should matchPattern {
           case PipegraphInstanceModel(_, defaultPipegraph.name, _, _, PipegraphStatus.FAILED, _, _, Some(string))
-            if string ==
-              getStackTrace(reason) =>
+              if string ==
+                getStackTrace(reason) =>
         }
       }
 

@@ -18,11 +18,8 @@ trait Strategy extends Serializable {
 
   override def toString: String = this.getClass.getCanonicalName + "{ configuration: " + configuration + " }"
 
-
-  /**
-   *
-   * @param dataFrames
-   * @return
-   */
+  /** @param dataFrames
+    * @return
+    */
   def transform(dataFrames: Map[ReaderKey, DataFrame]): DataFrame
 }

@@ -4,5 +4,3 @@ trait DBConfigBL {
   def retrieveDBConfig(): Seq[String]
 
 }
-
-

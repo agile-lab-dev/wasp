@@ -9,6 +9,6 @@ object ProcessGroupMapperV1 extends SimpleMapper[ProcessGroupModel, ProcessGroup
   override val version = "processGroupV1"
   override def fromDBModelToModel[B >: ProcessGroupDBModelV1](m: B): ProcessGroupModel = m match {
     case mm: ProcessGroupDBModelV1 => transform[ProcessGroupModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

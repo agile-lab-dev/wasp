@@ -12,10 +12,10 @@ trait BatchJobRoutesOpenApiDefinition
 
   def batchJobRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/batchjobs" -> getInsertUpdate(ctx),
-      "/batchjobs/{batchjobname}" -> delete(ctx),
-      "/batchjobs/{batchjobname}/start" -> start(ctx),
-      "/batchjobs/{batchjobname}/instances" -> listInstances(ctx),
+      "/batchjobs"                                     -> getInsertUpdate(ctx),
+      "/batchjobs/{batchjobname}"                      -> delete(ctx),
+      "/batchjobs/{batchjobname}/start"                -> start(ctx),
+      "/batchjobs/{batchjobname}/instances"            -> listInstances(ctx),
       "/batchjobs/{batchjobname}/instances/{instance}" -> listInstance(ctx)
     )
   }

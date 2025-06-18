@@ -5,8 +5,7 @@ import spray.json.JsValue
 import it.agilelab.bigdata.wasp.utils.JsonSupport
 import spray.json._
 
-
-object FreeCodeTableDefinition extends SimpleModelTableDefinition[FreeCodeModel] with JsonSupport{
+object FreeCodeTableDefinition extends SimpleModelTableDefinition[FreeCodeModel] with JsonSupport {
 
   val tableName = "FREE_CODE"
 

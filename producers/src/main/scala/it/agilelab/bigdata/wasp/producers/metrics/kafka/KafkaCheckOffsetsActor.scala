@@ -10,8 +10,7 @@ import org.apache.kafka.common.TopicPartition
 
 import scala.collection.JavaConverters._
 
-class KafkaCheckOffsetsActor(topicName: String,
-                             kafkaProps: Properties) extends Actor with Logging {
+class KafkaCheckOffsetsActor(topicName: String, kafkaProps: Properties) extends Actor with Logging {
 
   private[this] var consumer: KafkaConsumer[Array[Byte], Array[Byte]] = _
 
@@ -43,9 +42,13 @@ class KafkaCheckOffsetsActor(topicName: String,
         val partitions = consumer.partitionsFor(topic).asScala.map { info =>
           new TopicPartition(info.topic(), info.partition())
         }
-        val offs = consumer.endOffsets(partitions.asJava).asScala.map { case (k, v) =>
-          k.partition() -> v.toLong
-        }.toMap
+        val offs = consumer
+          .endOffsets(partitions.asJava)
+          .asScala
+          .map { case (k, v) =>
+            k.partition() -> v.toLong
+          }
+          .toMap
         replyTo ! KafkaOffsets(topic, offs, System.currentTimeMillis())
       }
     case StopMainTask =>

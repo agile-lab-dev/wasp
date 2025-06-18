@@ -3,42 +3,51 @@ package it.agilelab.bigdata.wasp.consumers.spark
 import java.lang
 import it.agilelab.bigdata.wasp.consumers.spark.utils.SparkUtils._
 import it.agilelab.bigdata.wasp.core.logging.Logging
-import it.agilelab.bigdata.wasp.models.configuration.{KafkaConfigModel, KafkaConfigProxy, SparkConfigModel, SparkStreamingConfigModel, TelemetryConfigModel}
+import it.agilelab.bigdata.wasp.models.configuration.{
+  KafkaConfigModel,
+  KafkaConfigProxy,
+  SparkConfigModel,
+  SparkStreamingConfigModel,
+  TelemetryConfigModel
+}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkContext, SparkException}
 
-/**
-  * Singletons an initialization code related to Spark.
+/** Singletons an initialization code related to Spark.
   *
-  * While Spark provides various getOrCreate methods, this allows WASP to initialize Spark in a cleaner way and in
-  * just a few places and access the various entry points in a much more straightforward way.
+  * While Spark provides various getOrCreate methods, this allows WASP to initialize Spark in a cleaner way and in just
+  * a few places and access the various entry points in a much more straightforward way.
   */
 object SparkSingletons extends Logging {
 
   private var sparkSession: SparkSession = _
   private var sparkContext: SparkContext = _
-  private var sqlContext: SQLContext = _
+  private var sqlContext: SQLContext     = _
 
-  /**
-   * Wrapper around [[initializeSpark(sparkConfigModel: SparkConfigModel, telemetryConfig: TelemetryConfigModel, kafkaConfigModel: KafkaConfigModel)]]
-   * that uses the default kafka cluster for telemetry
-   *
-   * @throws IllegalStateException if Spark was already initialized but <b>not by using this method</b>
-   */
+  /** Wrapper around
+    * [[initializeSpark(sparkConfigModel: SparkConfigModel, telemetryConfig: TelemetryConfigModel, kafkaConfigModel: KafkaConfigModel)]]
+    * that uses the default kafka cluster for telemetry
+    *
+    * @throws IllegalStateException
+    *   if Spark was already initialized but <b>not by using this method</b>
+    */
   @throws[lang.IllegalStateException]
-  def initializeSpark(sparkConfigModel: SparkConfigModel, telemetryConfig: TelemetryConfigModel, kafkaConfigProxy: KafkaConfigProxy): Boolean = {
+  def initializeSpark(
+      sparkConfigModel: SparkConfigModel,
+      telemetryConfig: TelemetryConfigModel,
+      kafkaConfigProxy: KafkaConfigProxy
+  ): Boolean = {
     initializeSpark(sparkConfigModel, telemetryConfig, kafkaConfigProxy.getDefaultKafka)
   }
 
-  /**
-    * Try to initialize the SparkSession in the SparkSingleton with the provided configuration.
+  /** Try to initialize the SparkSession in the SparkSingleton with the provided configuration.
     *
-    * If it does not exist, it will be created using the settings from
-    * `sparkConfigModel` and true will be returned.
+    * If it does not exist, it will be created using the settings from `sparkConfigModel` and true will be returned.
     *
     * If the SparkSession already exists, nothing will be done, and false will be returned.
     *
-    * @throws IllegalStateException if Spark was already initialized but <b>not by using this method</b>
+    * @throws IllegalStateException
+    *   if Spark was already initialized but <b>not by using this method</b>
     */
   @throws[lang.IllegalStateException]
   def initializeSpark(
@@ -88,7 +97,7 @@ object SparkSingletons extends Logging {
                 builder = builder.enableHiveSupport()
               }
             case _ =>
-            //nothing to do
+            // nothing to do
           }
 
           sparkSession = builder.getOrCreate()
@@ -108,10 +117,11 @@ object SparkSingletons extends Logging {
         false
       }
     }
-  /**
-    * Returns the SparkContext singleton, or throws an exception if Spark was not initialized.
+
+  /** Returns the SparkContext singleton, or throws an exception if Spark was not initialized.
     *
-    * @throws IllegalStateException if Spark was not already initialized
+    * @throws IllegalStateException
+    *   if Spark was not already initialized
     */
   @throws[lang.IllegalStateException]
   def getSparkContext: SparkContext =
@@ -125,10 +135,10 @@ object SparkSingletons extends Logging {
       sparkContext
     }
 
-  /**
-    * Returns the SparkSession singleton, or throws an exception if Spark was not initialized.
+  /** Returns the SparkSession singleton, or throws an exception if Spark was not initialized.
     *
-    * @throws IllegalStateException if Spark was not already initialized
+    * @throws IllegalStateException
+    *   if Spark was not already initialized
     */
   @throws[lang.IllegalStateException]
   def getSparkSession: SparkSession =
@@ -142,10 +152,10 @@ object SparkSingletons extends Logging {
       sparkSession
     }
 
-  /**
-    * Returns the SQLContext singleton, or throws an exception if Spark was not initialized.
+  /** Returns the SQLContext singleton, or throws an exception if Spark was not initialized.
     *
-    * @throws IllegalStateException if Spark was not already initialized
+    * @throws IllegalStateException
+    *   if Spark was not already initialized
     */
   @throws[lang.IllegalStateException]
   def getSQLContext: SQLContext =

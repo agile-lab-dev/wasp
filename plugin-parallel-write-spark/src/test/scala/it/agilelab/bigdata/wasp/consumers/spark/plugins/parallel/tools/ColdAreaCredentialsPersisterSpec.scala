@@ -22,10 +22,13 @@ class ColdAreaCredentialsPersisterSpec extends FunSuite with TempDirectoryTest {
         Some("Parquet"),
         Some("file://bucket/dir"),
         "Cold",
-        Some(TemporaryCredentials(
-          r = TemporaryCredential("ReadAccessKey", "ReadSecretKey", "ReadToken"),
-          w = TemporaryCredential("WriteAccessKey", "WriteSecretKey", "WriteToken")
-        )))
+        Some(
+          TemporaryCredentials(
+            r = TemporaryCredential("ReadAccessKey", "ReadSecretKey", "ReadToken"),
+            w = TemporaryCredential("WriteAccessKey", "WriteSecretKey", "WriteToken")
+          )
+        )
+      )
 
     ColdAreaCredentialsPersister.writeCredentials(writeExecutionPlanResponseBody, configuration)
     checkCredentials(writeExecutionPlanResponseBody)
@@ -39,19 +42,25 @@ class ColdAreaCredentialsPersisterSpec extends FunSuite with TempDirectoryTest {
         Some("Parquet"),
         Some(bucket1),
         "Cold",
-        Some(TemporaryCredentials(
-          r = TemporaryCredential("ReadAccessKey1", "ReadSecretKey1", "ReadToken1"),
-          w = TemporaryCredential("WriteAccessKey1", "WriteSecretKey1", "WriteToken1")
-        )))
+        Some(
+          TemporaryCredentials(
+            r = TemporaryCredential("ReadAccessKey1", "ReadSecretKey1", "ReadToken1"),
+            w = TemporaryCredential("WriteAccessKey1", "WriteSecretKey1", "WriteToken1")
+          )
+        )
+      )
     val writeExecutionPlanResponseBody2: WriteExecutionPlanResponseBody =
       WriteExecutionPlanResponseBody(
         Some("Parquet"),
         Some(bucket2),
         "Cold",
-        Some(TemporaryCredentials(
-          r = TemporaryCredential("ReadAccessKey2", "ReadSecretKey2", "ReadToken2"),
-          w = TemporaryCredential("WriteAccessKey2", "WriteSecretKey2", "WriteToken2")
-        )))
+        Some(
+          TemporaryCredentials(
+            r = TemporaryCredential("ReadAccessKey2", "ReadSecretKey2", "ReadToken2"),
+            w = TemporaryCredential("WriteAccessKey2", "WriteSecretKey2", "WriteToken2")
+          )
+        )
+      )
 
     ColdAreaCredentialsPersister.writeCredentials(writeExecutionPlanResponseBody1, configuration)
     ColdAreaCredentialsPersister.writeCredentials(writeExecutionPlanResponseBody2, configuration)
@@ -63,28 +72,37 @@ class ColdAreaCredentialsPersisterSpec extends FunSuite with TempDirectoryTest {
     val readedCredentials: AWSCredentials = readCredentials(writeExecutionPlanResponseBody.writeUri.get)
     assert(readedCredentials.isInstanceOf[AWSSessionCredentials])
     val readedSessionCredentials = readedCredentials.asInstanceOf[AWSSessionCredentials]
-    assert(readedSessionCredentials.getAWSAccessKeyId == writeExecutionPlanResponseBody.temporaryCredentials.get.w.accessKeyID)
-    assert(readedSessionCredentials.getAWSSecretKey == writeExecutionPlanResponseBody.temporaryCredentials.get.w.secretKey)
-    assert(readedSessionCredentials.getSessionToken == writeExecutionPlanResponseBody.temporaryCredentials.get.w.sessionToken)
+    assert(
+      readedSessionCredentials.getAWSAccessKeyId == writeExecutionPlanResponseBody.temporaryCredentials.get.w.accessKeyID
+    )
+    assert(
+      readedSessionCredentials.getAWSSecretKey == writeExecutionPlanResponseBody.temporaryCredentials.get.w.secretKey
+    )
+    assert(
+      readedSessionCredentials.getSessionToken == writeExecutionPlanResponseBody.temporaryCredentials.get.w.sessionToken
+    )
   }
 
   private def readCredentials(writeUri: String): AWSCredentials = {
-    val uri = HadoopS3Utils.useS3aScheme(new URI(writeUri))
+    val uri  = HadoopS3Utils.useS3aScheme(new URI(writeUri))
     val conf = ConfigurationLoader.lookupConfig(uri, configuration)
     val path = new Path(conf.getStoragePath, conf.getBucket.getHost)
-    val fs = path.getFileSystem(conf.getConfiguration)
+    val fs   = path.getFileSystem(conf.getConfiguration)
     CredentialsSerde.read(fs, path)
   }
 }
 
 object ColdAreaCredentialsPersisterSpec extends ColdAreaCredentialsPersisterSpec {
-  private def buildMockConfiguration():Configuration = {
+  private def buildMockConfiguration(): Configuration = {
     val conf = new Configuration()
-    conf.set("fs.s3a.aws.credentials.provider" , "it.agilelab.bigdata.wasp.aws.auth.v2.PlacementAwareCredentialsProvider")
-    conf.set("fs.s3a.assumed.role.credentials.provider" , "it.agilelab.bigdata.wasp.aws.auth.v2.WebIdentityProvider")
-    conf.set("it.agilelab.bigdata.wasp.aws.auth.storage" , tempDir)
-    conf.set("it.agilelab.bigdata.wasp.aws.auth.renewmillis" , "60000")
-    conf.set("it.agilelab.bigdata.wasp.aws.auth.delegate" , classOf[MockCredentialProvider].getCanonicalName)
+    conf.set(
+      "fs.s3a.aws.credentials.provider",
+      "it.agilelab.bigdata.wasp.aws.auth.v2.PlacementAwareCredentialsProvider"
+    )
+    conf.set("fs.s3a.assumed.role.credentials.provider", "it.agilelab.bigdata.wasp.aws.auth.v2.WebIdentityProvider")
+    conf.set("it.agilelab.bigdata.wasp.aws.auth.storage", tempDir)
+    conf.set("it.agilelab.bigdata.wasp.aws.auth.renewmillis", "60000")
+    conf.set("it.agilelab.bigdata.wasp.aws.auth.delegate", classOf[MockCredentialProvider].getCanonicalName)
     conf
   }
 }

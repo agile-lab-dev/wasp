@@ -5,27 +5,30 @@ import org.apache.spark.sql.streaming.StreamingQuery
 
 import java.time.Instant
 
-/**
-  * Trait marking classes holding [[StructuredStreamingETLActor]] State Data
+/** Trait marking classes holding [[StructuredStreamingETLActor]] State Data
   */
 sealed trait Data
 
 object Data {
 
-  /**
-    * No Data
+  /** No Data
     */
   case object IdleData extends Data
 
-  /**
-    * Data held by the state machine when in [[State.WaitingToBeMaterialized]]
-    * @param dataFrame The activated [[DataFrame]]
+  /** Data held by the state machine when in [[State.WaitingToBeMaterialized]]
+    * @param dataFrame
+    *   The activated [[DataFrame]]
     */
   case class ActivatedData(dataFrame: DataFrame) extends Data
 
-  /**
-    * Data held by the state machine when in [[State.WaitingToBeMonitored]]
-    * @param streamingQuery The streaming query to be monitored
+  /** Data held by the state machine when in [[State.WaitingToBeMonitored]]
+    * @param streamingQuery
+    *   The streaming query to be monitored
     */
-  case class MaterializedData(streamingQuery: StreamingQuery, materiazationTimestamp: Instant, triggerInterval: Long, killed:Boolean) extends Data
+  case class MaterializedData(
+      streamingQuery: StreamingQuery,
+      materiazationTimestamp: Instant,
+      triggerInterval: Long,
+      killed: Boolean
+  ) extends Data
 }

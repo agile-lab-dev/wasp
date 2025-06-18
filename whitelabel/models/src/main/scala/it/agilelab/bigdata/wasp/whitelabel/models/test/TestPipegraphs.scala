@@ -105,8 +105,7 @@ private[wasp] object TestPipegraphs {
             staticInputs = List.empty,
             streamingOutput = WriterModel.consoleWriter("Console Writer"),
             mlModels = List(),
-            strategy =
-              Some(TestStrategies.stuckStrategy),
+            strategy = Some(TestStrategies.stuckStrategy),
             triggerIntervalMs = Some(1000),
             options = Map()
           )
@@ -147,7 +146,8 @@ private[wasp] object TestPipegraphs {
             name = "ETL TestContinuousUpdateWriterStructuredJSONPipegraph",
             streamingInput = StreamingReaderModel.kafkaReader("Kafka Reader", TestTopicModel.json, None),
             staticInputs = List.empty,
-            streamingOutput = WriterModel.genericWriter("Parallel Writer", TestParallelWriteModel.continuousUpdateModel),
+            streamingOutput =
+              WriterModel.genericWriter("Parallel Writer", TestParallelWriteModel.continuousUpdateModel),
             mlModels = List(),
             strategy = Some(TestStrategies.continuousUpdateStrategy),
             triggerIntervalMs = None,
@@ -506,11 +506,10 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        structuredStreamingComponents =
-          console.structuredStreamingComponents :::
-            solr.structuredStreamingComponents :::
-            elastic.structuredStreamingComponents :::
-            hdfs.structuredStreamingComponents,
+        structuredStreamingComponents = console.structuredStreamingComponents :::
+          solr.structuredStreamingComponents :::
+          elastic.structuredStreamingComponents :::
+          hdfs.structuredStreamingComponents,
         dashboard = None
       )
 
@@ -655,19 +654,19 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-          structuredStreamingComponents =
-            console.structuredStreamingComponents :::
-              solr.structuredStreamingComponents :::
-              elastic.structuredStreamingComponents :::
-              hdfs.structuredStreamingComponents.map(
-                _.copy(strategy = Some(
+          structuredStreamingComponents = console.structuredStreamingComponents :::
+            solr.structuredStreamingComponents :::
+            elastic.structuredStreamingComponents :::
+            hdfs.structuredStreamingComponents.map(
+              _.copy(strategy =
+                Some(
                   StrategyModel.create(
                     "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
                     ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
                   )
                 )
-                )
-              ),
+              )
+            ),
           dashboard = None
         )
       }
@@ -689,9 +688,9 @@ private[wasp] object TestPipegraphs {
               strategy = Some(
                 StrategyModel.create(
                   "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV1",
-                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV2",
-                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV3",
-                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV4",
+                  // "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV2",
+                  // "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV3",
+                  // "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointJSONStrategyV4",
                   ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
                 )
               ),
@@ -968,11 +967,10 @@ private[wasp] object TestPipegraphs {
         owner = "user",
         isSystem = false,
         creationTime = System.currentTimeMillis,
-        structuredStreamingComponents =
-          console.structuredStreamingComponents :::
-            solr.structuredStreamingComponents :::
-            elastic.structuredStreamingComponents :::
-            hdfs.structuredStreamingComponents,
+        structuredStreamingComponents = console.structuredStreamingComponents :::
+          solr.structuredStreamingComponents :::
+          elastic.structuredStreamingComponents :::
+          hdfs.structuredStreamingComponents,
         dashboard = None
       )
 
@@ -1005,19 +1003,19 @@ private[wasp] object TestPipegraphs {
           owner = "user",
           isSystem = false,
           creationTime = System.currentTimeMillis,
-          structuredStreamingComponents =
-            console.structuredStreamingComponents :::
-              solr.structuredStreamingComponents :::
-              elastic.structuredStreamingComponents :::
-              hdfs.structuredStreamingComponents.map(
-                _.copy(strategy = Some(
+          structuredStreamingComponents = console.structuredStreamingComponents :::
+            solr.structuredStreamingComponents :::
+            elastic.structuredStreamingComponents :::
+            hdfs.structuredStreamingComponents.map(
+              _.copy(strategy =
+                Some(
                   StrategyModel.create(
                     "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
                     ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
                   )
                 )
-                )
-              ),
+              )
+            ),
           dashboard = None
         )
       }
@@ -1039,9 +1037,9 @@ private[wasp] object TestPipegraphs {
               strategy = Some(
                 StrategyModel.create(
                   "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV1",
-                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV2",
-                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV3",
-                  //"it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV4",
+                  // "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV2",
+                  // "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV3",
+                  // "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestCheckpointAVROStrategyV4",
                   ConfigFactory.parseString("""stringKey = "stringValue", intKey = 1""")
                 )
               ),
@@ -1145,19 +1143,19 @@ private[wasp] object TestPipegraphs {
       owner = "user",
       isSystem = false,
       creationTime = System.currentTimeMillis,
-      structuredStreamingComponents =
-        TestPipegraphs.AVRO.Structured.console.structuredStreamingComponents :::
-          TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
-          TestPipegraphs.AVRO.Structured.elastic.structuredStreamingComponents :::
-          TestPipegraphs.AVRO.Structured.hdfs.structuredStreamingComponents.map(
-            _.copy(strategy = Some(
+      structuredStreamingComponents = TestPipegraphs.AVRO.Structured.console.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.solr.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.elastic.structuredStreamingComponents :::
+        TestPipegraphs.AVRO.Structured.hdfs.structuredStreamingComponents.map(
+          _.copy(strategy =
+            Some(
               StrategyModel(
                 "it.agilelab.bigdata.wasp.whitelabel.consumers.spark.strategies.test.TestErrorStrategy",
                 None
               )
             )
-            )
-          ),
+          )
+        ),
       dashboard = None
     )
   }

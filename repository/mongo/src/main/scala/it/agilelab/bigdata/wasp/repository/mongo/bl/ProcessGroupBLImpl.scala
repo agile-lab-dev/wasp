@@ -13,7 +13,8 @@ class ProcessGroupBLImpl(waspDB: WaspMongoDB) extends ProcessGroupBL {
   override def getById(pgId: String): Option[ProcessGroupModel] =
     waspDB
       .getAllDocumentsByField[ProcessGroupDBModel]("name", BsonString(pgId))
-      .headOption.map(factory)
+      .headOption
+      .map(factory)
 
   override def insert(processGroup: ProcessGroupModel): Unit =
     waspDB.insert[ProcessGroupDBModel](transform[ProcessGroupDBModelV1](processGroup))

@@ -5,16 +5,15 @@ import it.agilelab.bigdata.wasp.repository.mongo.bl.KeyValueBLImp
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
-class KeyValueBLImplTest extends FlatSpec with Matchers{
+class KeyValueBLImplTest extends FlatSpec with Matchers {
 
   it should "test keyValueBL for Mongo" in {
     val db = WaspMongoDB
     db.initializeDB()
-    val waspDB = db.getDB()
+    val waspDB     = db.getDB()
     val keyValueBL = new KeyValueBLImp(waspDB)
 
-
-    val kOpts = Seq(KeyValueOption("key","value"))
+    val kOpts  = Seq(KeyValueOption("key", "value"))
     val model1 = KeyValueModel("name", "tableCatalog", Some("dataFrameSchema"), Some(kOpts), false, None)
     val model2 = KeyValueModel("name2", "tableCatalog2", Some("dataFrameSchema2"), Some(kOpts), false, None)
 
@@ -38,11 +37,10 @@ class KeyValueBLImplTest extends FlatSpec with Matchers{
   it should "test keyValueBL upsert" in {
     val db = WaspMongoDB
     db.initializeDB()
-    val waspDB = db.getDB()
+    val waspDB     = db.getDB()
     val keyValueBL = new KeyValueBLImp(waspDB)
 
-
-    val kOpts = Seq(KeyValueOption("key","value"))
+    val kOpts  = Seq(KeyValueOption("key", "value"))
     val model3 = KeyValueModel("name3", "tableCatalog", Some("dataFrameSchema"), Some(kOpts), false, None)
     val model4 = KeyValueModel("name3", "tableCatalog2", Some("dataFrameSchema2"), Some(kOpts), false, None)
 

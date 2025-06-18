@@ -2,7 +2,7 @@ package it.agilelab.bigdata.wasp.consumers.spark.plugins.mongo
 
 import it.agilelab.bigdata.wasp.consumers.spark.plugins.WaspConsumersSparkPlugin
 import it.agilelab.bigdata.wasp.consumers.spark.readers.{SparkBatchReader, SparkStructuredStreamingReader}
-import it.agilelab.bigdata.wasp.consumers.spark.writers.{SparkBatchWriter}
+import it.agilelab.bigdata.wasp.consumers.spark.writers.SparkBatchWriter
 import it.agilelab.bigdata.wasp.repository.core.bl.{ConfigBL, DocumentBL}
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct
 import it.agilelab.bigdata.wasp.datastores.DatastoreProduct.MongoDbProduct
@@ -13,9 +13,7 @@ import it.agilelab.bigdata.wasp.models.{ReaderModel, StreamingReaderModel, Struc
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
-
-/**
-  * Created by Agile Lab s.r.l. on 05/09/2017.
+/** Created by Agile Lab s.r.l. on 05/09/2017.
   */
 class MongoConsumersSpark extends WaspConsumersSparkPlugin with Logging {
   var documentBL: DocumentBL = _
@@ -29,41 +27,45 @@ class MongoConsumersSpark extends WaspConsumersSparkPlugin with Logging {
 
   override def getValidationRules: Seq[ValidationRule] = Seq()
 
-  override def getSparkStructuredStreamingWriter(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 writerModel: WriterModel): MongoSparkStructuredStreamingWriter = {
+  override def getSparkStructuredStreamingWriter(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      writerModel: WriterModel
+  ): MongoSparkStructuredStreamingWriter = {
     logger.info(s"Initialize $datastoreProduct spark structured streaming writer with this model: $writerModel")
 
-    val documentModel = documentBL.getByName(writerModel.datastoreModelName)
+    val documentModel = documentBL
+      .getByName(writerModel.datastoreModelName)
       .getOrElse(throw new Exception(s"Cannot retrieve DocumentModel with name ${writerModel.datastoreModelName} "))
 
     new MongoSparkStructuredStreamingWriter(writerModel, documentModel)
   }
-  
-  override def getSparkStructuredStreamingReader(ss: SparkSession,
-                                                 structuredStreamingETLModel: StructuredStreamingETLModel,
-                                                 streamingReaderModel: StreamingReaderModel): SparkStructuredStreamingReader = {
-    val msg = s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
+
+  override def getSparkStructuredStreamingReader(
+      ss: SparkSession,
+      structuredStreamingETLModel: StructuredStreamingETLModel,
+      streamingReaderModel: StreamingReaderModel
+  ): SparkStructuredStreamingReader = {
+    val msg =
+      s"The datastore product $datastoreProduct is not a valid streaming source! Reader model $streamingReaderModel is not valid."
     logger.error(msg)
     throw new UnsupportedOperationException(msg)
   }
 
   override def getSparkBatchWriter(sc: SparkContext, writerModel: WriterModel): SparkBatchWriter = {
 
-    val documentModel = documentBL.getByName(writerModel.datastoreModelName)
+    val documentModel = documentBL
+      .getByName(writerModel.datastoreModelName)
       .getOrElse(throw new Exception(s"Cannot retrieve DocumentModel with name ${writerModel.datastoreModelName} "))
     new MongoSparkBatchWriter(writerModel, documentModel)
   }
 
   override def getSparkBatchReader(sc: SparkContext, readerModel: ReaderModel): SparkBatchReader = {
     logger.info(s"Initialize HDFS reader with model $readerModel")
-    val documentModel = documentBL.getByName(readerModel.datastoreModelName)
+    val documentModel = documentBL
+      .getByName(readerModel.datastoreModelName)
       .getOrElse(throw new Exception(s"Cannot retrieve DocumentModel with name ${readerModel.datastoreModelName} "))
     new MongoSparkBatchReader(readerModel, documentModel)
   }
 
-
 }
-
-
-

@@ -41,78 +41,71 @@ import spray.json._
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-/**
-  * Trait collecting operations to be composed to realize Activation of a [[StructuredStreamingETLModel]]
+/** Trait collecting operations to be composed to realize Activation of a [[StructuredStreamingETLModel]]
   */
 trait ActivationSteps {
 
-  /**
-    * We need a Spark Session
+  /** We need a Spark Session
     */
   protected val sparkSession: SparkSession
 
-  /**
-    * We need access to machine learning models
+  /** We need access to machine learning models
     */
   protected val mlModelBl: MlModelBL
 
-  /**
-    * We need access to topics
+  /** We need access to topics
     */
   protected val topicsBl: TopicBL
 
-  /**
-    * We need access to freeCodes
+  /** We need access to freeCodes
     */
   protected val freeCodeBL: FreeCodeBL
 
-  /**
-    * We need access to freeCodes
+  /** We need access to freeCodes
     */
   protected val processGroupBL: ProcessGroupBL
 
-  /**
-    * We need a streaming reader factory
+  /** We need a streaming reader factory
     */
   protected val streamingReaderFactory: StreamingReaderFactory
 
-  /**
-    * We need a static reader factory
+  /** We need a static reader factory
     */
   protected val staticReaderFactory: StaticReaderFactory
 
-  /**
-    * Performs activation of a [[StructuredStreamingETLModel]] returning the output data frame
+  /** Performs activation of a [[StructuredStreamingETLModel]] returning the output data frame
     *
-    * @param etl The [[StructuredStreamingETLModel]] to activate
-    * @return the output dataframe
+    * @param etl
+    *   The [[StructuredStreamingETLModel]] to activate
+    * @return
+    *   the output dataframe
     */
   protected def activate(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel): Try[DataFrame] =
     for {
       streamingDataFrame <- createStreamingDataFrameFromStreamingSource(etl, etl.streamingInput).recoverWith {
-                             case e: Throwable =>
-                               Failure(
-                                 new Exception(s"Cannot create input from streaming source in etl ${etl.name}", e)
-                               )
-                           }
-      staticDataFrames <- createStaticDataFramesFromStaticSources(etl).recoverWith {
-                           case e: Throwable =>
-                             Failure(new Exception(s"Cannot instantiate static sources in etl ${etl.name}", e))
-                         }
-      transformedStream <- applyTransformOrInputIfNoStrategy(etl, pipegraph, streamingDataFrame, staticDataFrames)
-                            .recoverWith {
                               case e: Throwable =>
-                                Failure(new Exception(s"Failed to apply strategy in etl ${etl.name}", e))
+                                Failure(
+                                  new Exception(s"Cannot create input from streaming source in etl ${etl.name}", e)
+                                )
                             }
+      staticDataFrames <- createStaticDataFramesFromStaticSources(etl).recoverWith { case e: Throwable =>
+                            Failure(new Exception(s"Cannot instantiate static sources in etl ${etl.name}", e))
+                          }
+      transformedStream <- applyTransformOrInputIfNoStrategy(etl, pipegraph, streamingDataFrame, staticDataFrames)
+                             .recoverWith { case e: Throwable =>
+                               Failure(new Exception(s"Failed to apply strategy in etl ${etl.name}", e))
+                             }
 
     } yield transformedStream
 
-  /**
-    * Creates structured stream for a streaming source
+  /** Creates structured stream for a streaming source
     *
-    * @param etl                  The etl to activate streaming sources for
-    * @param streamingReaderModel The model of the streaming source to read from
-    * @return The streaming reader.
+    * @param etl
+    *   The etl to activate streaming sources for
+    * @param streamingReaderModel
+    *   The model of the streaming source to read from
+    * @return
+    *   The streaming reader.
     */
   private def createStreamingDataFrameFromStreamingSource(
       etl: StructuredStreamingETLModel,
@@ -130,11 +123,12 @@ trait ActivationSteps {
     (ReaderKey(streamingReaderModel.datastoreProduct.categoryName, streamingReaderModel.name), streamingDataFrame)
   }
 
-  /**
-    * Creates structured Streams for non streaming sources
+  /** Creates structured Streams for non streaming sources
     *
-    * @param etl The etl to activate Non streaming sources for
-    * @return The created non streaming Sources
+    * @param etl
+    *   The etl to activate Non streaming sources for
+    * @return
+    *   The created non streaming Sources
     */
   private def createStaticDataFramesFromStaticSources(
       etl: StructuredStreamingETLModel
@@ -172,20 +166,23 @@ trait ActivationSteps {
 
     etl.staticInputs
       .foldLeft(empty) { (previousOutcome, readerModel) =>
-        //we update outcome only if createStructuredStream does not blow up
+        // we update outcome only if createStructuredStream does not blow up
         previousOutcome.flatMap(createAnotherStaticDataFrameFromStaticSource(_, readerModel))
 
       }
 
   }
 
-  /**
-    * Applies the transformation if an input strategy is supplied, if not the input data frame is returned.
+  /** Applies the transformation if an input strategy is supplied, if not the input data frame is returned.
     *
-    * @param etl                      The etl whose strategy should be applied
-    * @param structuredInputStream    The input stream from kafka
-    * @param nonStreamingInputStreams The other non streaming DataFrames
-    * @return A dataframe with strategy applied or the input DataFrame
+    * @param etl
+    *   The etl whose strategy should be applied
+    * @param structuredInputStream
+    *   The input stream from kafka
+    * @param nonStreamingInputStreams
+    *   The other non streaming DataFrames
+    * @return
+    *   A dataframe with strategy applied or the input DataFrame
     */
   private def applyTransformOrInputIfNoStrategy(
       etl: StructuredStreamingETLModel,
@@ -212,11 +209,12 @@ trait ActivationSteps {
 
   }
 
-  /**
-    * Instantiate a strategy if one is configured
+  /** Instantiate a strategy if one is configured
     *
-    * @param etl The etl to instantiate strategy for
-    * @return A try holding an optional strategy
+    * @param etl
+    *   The etl to instantiate strategy for
+    * @return
+    *   A try holding an optional strategy
     */
   protected def createStrategy(etl: StructuredStreamingETLModel, pipegraph: PipegraphModel): Try[Option[Strategy]] = {
 
@@ -243,7 +241,8 @@ trait ActivationSteps {
             Class.forName(strategyModel.className).getDeclaredConstructor().newInstance().asInstanceOf[Strategy]
           newStrategy.configuration = processGroupBL
             .getById(conf.getString("nifi.process-group-id"))
-            .map(processGroup => conf.withValue("nifi.flow", ConfigValueFactory.fromAnyRef(processGroup.content.toJson))
+            .map(processGroup =>
+              conf.withValue("nifi.flow", ConfigValueFactory.fromAnyRef(processGroup.content.toJson))
             )
             .getOrElse(conf)
           newStrategy
@@ -285,7 +284,7 @@ trait ActivationSteps {
         for {
           configuredStrategy <- instantiateStrategy(strategyModel)
           broadcastMlModelDb <- createMlModelBroadcast(etl.mlModels)
-          augmented          <- augmentStrategyWithMlModelsBroadcast(configuredStrategy, broadcastMlModelDb).map(Some(_))
+          augmented <- augmentStrategyWithMlModelsBroadcast(configuredStrategy, broadcastMlModelDb).map(Some(_))
         } yield augmented
       case None =>
         Success[Option[Strategy]](None)
@@ -293,16 +292,22 @@ trait ActivationSteps {
 
   }
 
-  /**
-    * Applies strategy and handles metadata collection for telemetry purposes.
+  /** Applies strategy and handles metadata collection for telemetry purposes.
     *
-    * @param readerKey        The key to place the resulting stream in the map passed to the strategy
-    * @param stream           The input stream coming from kafka
-    * @param dataStoreDFs     The data frames representing non streaming data stores
-    * @param strategy         The strategy to be applied
-    * @param datastoreProduct The type of the output datastore, will be used to properly handle metadata schema
-    * @param etl              The etl model
-    * @return A Try representing the application of the strategy as a new DataFrame
+    * @param readerKey
+    *   The key to place the resulting stream in the map passed to the strategy
+    * @param stream
+    *   The input stream coming from kafka
+    * @param dataStoreDFs
+    *   The data frames representing non streaming data stores
+    * @param strategy
+    *   The strategy to be applied
+    * @param datastoreProduct
+    *   The type of the output datastore, will be used to properly handle metadata schema
+    * @param etl
+    *   The etl model
+    * @return
+    *   A Try representing the application of the strategy as a new DataFrame
     */
   private def applyTransform(
       readerKey: ReaderKey,
@@ -371,17 +376,15 @@ trait ActivationSteps {
 
 object ActivationSteps {
 
-  /**
-    * A function able to go from a [[StructuredStreamingETLModel]]] and a [[StreamingReaderModel]] to an [[Option]]
-    * of [[SparkStructuredStreamingReader]].
+  /** A function able to go from a [[StructuredStreamingETLModel]]] and a [[StreamingReaderModel]] to an [[Option]] of
+    * [[SparkStructuredStreamingReader]].
     *
     * The goal of this type is to abstract out the concrete implementation of this computation.
     */
   type StreamingReaderFactory =
     (StructuredStreamingETLModel, StreamingReaderModel, SparkSession) => Option[SparkStructuredStreamingReader]
 
-  /**
-    * A function able to go from a [[StructuredStreamingETLModel]]] and a [[ReaderModel]] to an [[Option]] of
+  /** A function able to go from a [[StructuredStreamingETLModel]]] and a [[ReaderModel]] to an [[Option]] of
     * [[SparkBatchReader]].
     *
     * The goal of this type is to abstract out the concrete implementation of this computation.
@@ -434,8 +437,8 @@ object TelemetryMetadataProducer {
 
       val resultingConf = merged.filterNot(x => notOverridableKeys.contains(x.key))
 
-      resultingConf.foreach {
-        case KafkaEntryConfig(key, value) => props.put(key, value)
+      resultingConf.foreach { case KafkaEntryConfig(key, value) =>
+        props.put(key, value)
       }
 
       new KafkaProducer[Array[Byte], Array[Byte]](props)

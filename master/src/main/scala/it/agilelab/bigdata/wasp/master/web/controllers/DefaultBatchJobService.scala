@@ -28,8 +28,7 @@ object DefaultBatchJobService extends BatchJobService {
     ConfigBL.batchJobBL.update(batchJob)
   }
 
-  override def start(name: String,
-                     restConfig: Config): Either[String, String] = {
+  override def start(name: String, restConfig: Config): Either[String, String] = {
     WaspSystem.??[Either[String, String]](
       masterGuardian,
       StartBatchJob(name, restConfig)
@@ -41,7 +40,7 @@ object DefaultBatchJobService extends BatchJobService {
       .getByName(instanceName)
   }
 
-  override  def instanceOf(name: String): Seq[BatchJobInstanceModel] = {
+  override def instanceOf(name: String): Seq[BatchJobInstanceModel] = {
     ConfigBL.batchJobBL
       .instances()
       .instancesOf(name)

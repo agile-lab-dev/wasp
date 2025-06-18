@@ -92,7 +92,7 @@ object KafkaWriters extends Logging {
           topicModel.topicDataType match {
             case "avro"                          => convertKeyForAvro(columnExtractor(keyField), topicModel, darwinConf)
             case "json" | "binary" | "plaintext" => convertKeyToBinary(columnExtractor(keyField))
-            case unknown                         => throw new UnsupportedOperationException(s"Unknown topic data type $unknown")
+            case unknown => throw new UnsupportedOperationException(s"Unknown topic data type $unknown")
           }
         )
         .getOrElse(lit(null).cast(BinaryType))

@@ -36,21 +36,19 @@ import java.util.concurrent.Executors
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
-/**
-  * Launcher for the MasterGuardian and REST Server.
-  * This trait is useful for who want extend the launcher
+/** Launcher for the MasterGuardian and REST Server. This trait is useful for who want extend the launcher
   *
-  * @author Nicolò Bidotti
+  * @author
+  *   Nicolò Bidotti
   */
 trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfiguration with AroundLaunch {
 
-  private val myExceptionHandler = ExceptionHandler {
-    case e: Exception =>
-      extractUri { uri =>
-        val resultJson = JsonResultsHelper.angularErrorBuilder(ExceptionUtils.getStackTrace(e)).toString()
-        logger.error(s"Request to $uri could not be handled normally, result: $resultJson", e)
-        complete(HttpResponse(InternalServerError, entity = resultJson))
-      }
+  private val myExceptionHandler = ExceptionHandler { case e: Exception =>
+    extractUri { uri =>
+      val resultJson = JsonResultsHelper.angularErrorBuilder(ExceptionUtils.getStackTrace(e)).toString()
+      logger.error(s"Request to $uri could not be handled normally, result: $resultJson", e)
+      complete(HttpResponse(InternalServerError, entity = resultJson))
+    }
   }
 
   def beforeLaunch(): Unit = {
@@ -71,7 +69,8 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
 
   /** Add system's schema to AvroSchemaManager.
     *
-    * @return [[Seq[(Key, Schema)]]
+    * @return
+    *   [[Seq[(Key, Schema)]]
     */
   def registerSchema(): Seq[(Long, Schema)] = Seq.empty
 
@@ -271,8 +270,6 @@ trait MasterNodeLauncherTrait extends ClusterSingletonLauncher with WaspConfigur
     commandLine.hasOption(MasterCommandLineOptions.dropDb.getOpt)
 }
 
-/**
-  *
-  * Create the main static method to run
+/** Create the main static method to run
   */
 object MasterNodeLauncher extends MasterNodeLauncherTrait

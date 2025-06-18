@@ -11,7 +11,7 @@ class NonEmptyListSpec extends FunSuite with Matchers {
   }
 
   test("map should correctly transform elements") {
-    val nel = NonEmptyList(1, List(2, 3))
+    val nel    = NonEmptyList(1, List(2, 3))
     val mapped = nel.map(_ * 2)
     assert(mapped == NonEmptyList(2, List(4, 6)))
   }
@@ -22,7 +22,7 @@ class NonEmptyListSpec extends FunSuite with Matchers {
   }
 
   test("map should work with different types") {
-    val nel = NonEmptyList(1, List(2, 3))
+    val nel    = NonEmptyList(1, List(2, 3))
     val mapped = nel.map(_.toString)
     assert(mapped == NonEmptyList("1", List("2", "3")))
   }
@@ -50,7 +50,7 @@ class NonEmptyListSpec extends FunSuite with Matchers {
 
   test("exists should handle always-true and always-false predicates") {
     val nel = NonEmptyList(1, List(2, 3))
-    assert(nel.exists(_ => true)) // Always true predicate
+    assert(nel.exists(_ => true))   // Always true predicate
     assert(!nel.exists(_ => false)) // Always false predicate
   }
 

@@ -10,25 +10,25 @@ import spray.json._
 object RawController extends Directives with JsonSupport {
 
   def getRoute: Route = {
-     pathPrefix("raw") {
-        parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
-          pathEnd {
+    pathPrefix("raw") {
+      parameters('pretty.as[Boolean].?(false)) { (pretty: Boolean) =>
+        pathEnd {
+          get {
+            complete {
+              // complete with serialized Future result
+              getJsonArrayOrEmpty[RawModel](ConfigBL.rawBL.getAll(), _.toJson, pretty)
+            }
+          }
+        } ~
+          path(Segment) { name =>
             get {
               complete {
                 // complete with serialized Future result
-                getJsonArrayOrEmpty[RawModel](ConfigBL.rawBL.getAll(), _.toJson, pretty)
+                getJsonOrNotFound[RawModel](ConfigBL.rawBL.getByName(name), name, "Keyvalue model", _.toJson, pretty)
               }
             }
-          } ~
-            path(Segment) { name =>
-              get {
-                complete {
-                  // complete with serialized Future result
-                  getJsonOrNotFound[RawModel](ConfigBL.rawBL.getByName(name), name, "Keyvalue model", _.toJson, pretty)
-                }
-              }
-            }
-        }
+          }
       }
+    }
   }
 }

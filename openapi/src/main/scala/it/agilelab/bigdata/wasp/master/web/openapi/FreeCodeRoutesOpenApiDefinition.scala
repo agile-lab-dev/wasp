@@ -1,24 +1,19 @@
 package it.agilelab.bigdata.wasp.master.web.openapi
 
-
-
 import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.{Operation, PathItem}
 import it.agilelab.bigdata.wasp.models.{CompletionModel, FreeCode, FreeCodeModel}
 
-
-trait FreeCodeRoutesOpenApiDefinition extends
-  FreeCodeModelOpenApiSupport with
-  AngularResponseOpenApiComponentSupport {
+trait FreeCodeRoutesOpenApiDefinition extends FreeCodeModelOpenApiSupport with AngularResponseOpenApiComponentSupport {
 
   def freeCodeRoutes(ctx: Context): Map[String, PathItem] = {
     Map(
-      "/freeCode"                -> get(ctx),
-      "/freeCode/validate" -> getInstanceValidate(ctx),
+      "/freeCode"                      -> get(ctx),
+      "/freeCode/validate"             -> getInstanceValidate(ctx),
       "/freeCode/instance/{modelname}" -> getInstance(ctx),
-      "/freeCode/complete/{position}" -> getInstanceComplete(ctx)
+      "/freeCode/complete/{position}"  -> getInstanceComplete(ctx)
     )
   }
 
@@ -29,7 +24,6 @@ trait FreeCodeRoutesOpenApiDefinition extends
       .required(false)
       .schema(booleanOpenApi.schema(ctx))
   }
-
 
   private def getInstance(ctx: Context): PathItem =
     new PathItem()
@@ -113,7 +107,6 @@ trait FreeCodeRoutesOpenApiDefinition extends
           )
       )
 
-
   private def getInstanceValidate(ctx: Context): PathItem =
     new PathItem()
       .post(
@@ -152,9 +145,6 @@ trait FreeCodeRoutesOpenApiDefinition extends
               )
           )
       )
-
-
-
 
   private def get(ctx: Context) = {
     new PathItem()
@@ -221,6 +211,5 @@ trait FreeCodeRoutesOpenApiDefinition extends
           )
       )
   }
-
 
 }

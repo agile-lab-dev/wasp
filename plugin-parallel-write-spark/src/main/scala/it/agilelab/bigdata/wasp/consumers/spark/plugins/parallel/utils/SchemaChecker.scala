@@ -8,16 +8,17 @@ import scala.util.Try
 
 object SchemaChecker extends Logging {
 
-  /**
-    * Checks if source schema matches target schema and returns Either an exception with
-    * rich information about the differences between schemas or ()
-    * @param target Schema that must be enforced
-    * @param source source schema of the data
+  /** Checks if source schema matches target schema and returns Either an exception with rich information about the
+    * differences between schemas or ()
+    * @param target
+    *   Schema that must be enforced
+    * @param source
+    *   source schema of the data
     */
   def isValid(target: StructType, source: StructType): Try[Unit] = {
     val zippedSchemas        = target.map(Some(_)).zipAll(source.map(Some(_)), None, None)
     val zippedIndexedSchemas = zippedSchemas.indices.zip(zippedSchemas)
-    val errors               = zippedIndexedSchemas.map { case (i, (e, a)) => validateField(i, e, a) }.collect { case Left(e) => e }
+    val errors = zippedIndexedSchemas.map { case (i, (e, a)) => validateField(i, e, a) }.collect { case Left(e) => e }
     errors.size match {
       case 0 => Right(())
       case _ => Left(new Exception(s"""Target schema and source schema don't match, errors:
@@ -31,40 +32,41 @@ object SchemaChecker extends Logging {
     }
   }
 
-  /**
-    * Checks if source schema contains all column names contained in the target schema, the objective is understand
-    * if sourceDf.select(target.map(_.name).map(_col) is possible.
-    * @param target Schema that must be enforced
-    * @param source source schema of the data
+  /** Checks if source schema contains all column names contained in the target schema, the objective is understand if
+    * sourceDf.select(target.map(_.name).map(_col) is possible.
+    * @param target
+    *   Schema that must be enforced
+    * @param source
+    *   source schema of the data
     */
   def isSelectable(target: StructType, source: StructType): Try[Unit] =
     for {
       _ <- Either.cond(
-            target.toSet.size == target.size,
-            (),
-            new Exception(s"Duplicate columns in target schema ${target.treeString}")
-          )
+             target.toSet.size == target.size,
+             (),
+             new Exception(s"Duplicate columns in target schema ${target.treeString}")
+           )
       _ <- Either.cond(
-            source.toSet.size == source.size,
-            (),
-            new Exception(s"Duplicate columns in source schema ${source.treeString}")
-          )
+             source.toSet.size == source.size,
+             (),
+             new Exception(s"Duplicate columns in source schema ${source.treeString}")
+           )
       _ <- Either.cond(
-            target.map(_.name.toLowerCase).toSet.size == target.size,
-            (),
-            new Exception(s"More columns with same name in different case found in target schema ${target.treeString}")
-          )
+             target.map(_.name.toLowerCase).toSet.size == target.size,
+             (),
+             new Exception(s"More columns with same name in different case found in target schema ${target.treeString}")
+           )
       _ <- Either.cond(
-            source.map(_.name.toLowerCase).toSet.size == source.size,
-            (),
-            new Exception(s"More columns with same name in different case found in source schema ${source.treeString}")
-          )
+             source.map(_.name.toLowerCase).toSet.size == source.size,
+             (),
+             new Exception(s"More columns with same name in different case found in source schema ${source.treeString}")
+           )
       missingColumns = target.map(_.name.toLowerCase).toSet -- source.map(_.name.toLowerCase).toSet
       _ <- Either.cond(
-            missingColumns.isEmpty,
-            (),
-            new Exception(
-              s"""Source schema doesn't contain all elements of the target schema. Missing values: (${missingColumns
+             missingColumns.isEmpty,
+             (),
+             new Exception(
+               s"""Source schema doesn't contain all elements of the target schema. Missing values: (${missingColumns
                    .map(c => s"'$c'")
                    .mkString(",")})
           Compared schemas:
@@ -73,13 +75,12 @@ object SchemaChecker extends Logging {
                  |Source:
                  |${source.treeString}
                  |""".stripMargin
-            )
-          )
+             )
+           )
     } yield ()
 
-  /**
-    * Nullability is not valid when target is not nullable but source is.
-    * We should never write nulls in non nullable fields, while writing to nullable fields is always available
+  /** Nullability is not valid when target is not nullable but source is. We should never write nulls in non nullable
+    * fields, while writing to nullable fields is always available
     * @param target
     * @param source
     * @return
@@ -112,17 +113,15 @@ object SchemaChecker extends Logging {
       }
     }
 
-  /**
-    * Checks if 2 DataTypes are equal without considering nullable flag
+  /** Checks if 2 DataTypes are equal without considering nullable flag
     */
   private def dataTypeValid(target: DataType, source: DataType): Boolean =
     (target, source) match {
       case (StructType(fields1), StructType(fields2)) =>
-        fields1.length == fields2.length && fields1.zip(fields2).forall {
-          case (targetInnerField, sourceInnerField) =>
-            targetInnerField.name == sourceInnerField.name &&
-              validateNullability(targetInnerField.nullable, sourceInnerField.nullable) &&
-              dataTypeValid(targetInnerField.dataType, sourceInnerField.dataType)
+        fields1.length == fields2.length && fields1.zip(fields2).forall { case (targetInnerField, sourceInnerField) =>
+          targetInnerField.name == sourceInnerField.name &&
+          validateNullability(targetInnerField.nullable, sourceInnerField.nullable) &&
+          dataTypeValid(targetInnerField.dataType, sourceInnerField.dataType)
         }
       case (ArrayType(t1, _), ArrayType(t2, _)) => dataTypeValid(t1, t2)
       case _                                    => target == source

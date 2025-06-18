@@ -19,7 +19,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
 
   /** Add schema to AvroSchemaManager.
     *
-    * @return [[Seq[(Key, Schema)]]
+    * @return
+    *   [[Seq[(Key, Schema)]]
     */
   def addExampleRegisterAvroSchema(): Unit = {}
 
@@ -98,9 +99,9 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.outputRawModel)
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.inputRawModel)
     ConfigBL.rawBL.upsert(TestGdprBatchJobModels.dataRawModel)
-    ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel)                  //EVENT ENGINE
-    ConfigBL.topicBL.upsert(IoTIndustrialPlantTopicModel.industrialPlantTopicModel) //IoT
-    ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel())                         //IoT
+    ConfigBL.topicBL.upsert(FakeDataTopicModel.fakeDataTopicModel)                  // EVENT ENGINE
+    ConfigBL.topicBL.upsert(IoTIndustrialPlantTopicModel.industrialPlantTopicModel) // IoT
+    ConfigBL.indexBL.upsert(IoTIndustrialPlantIndexModel())                         // IoT
     ConfigBL.topicBL.upsert(TestTopicModel.dbzMutations)
     ConfigBL.cdcBL.upsert(TestCdcModel.debeziumMutation)
     ConfigBL.genericBL.upsert(TestParallelWriteModel.parallelWriteModel)
@@ -116,8 +117,8 @@ object MasterNodeLauncher extends MasterNodeLauncherTrait {
     ConfigBL.producerBL.upsert(TestProducerModel.avroCheckpoint)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonHbaseMultipleClustering)
     ConfigBL.producerBL.upsert(TestProducerModel.jsonDeduplication)
-    ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator)            //EVENT ENGINE
-    ConfigBL.producerBL.upsert(IoTIndustrialPlantProducerModel.iotIndustrialPlantProducer) //IoT
+    ConfigBL.producerBL.upsert(FakeDataProducerModel.fakeDataProducerSimulator)            // EVENT ENGINE
+    ConfigBL.producerBL.upsert(IoTIndustrialPlantProducerModel.iotIndustrialPlantProducer) // IoT
     ConfigBL.producerBL.upsert(TestProducerModel.jsonKafka2)
 
     /* Free code models */

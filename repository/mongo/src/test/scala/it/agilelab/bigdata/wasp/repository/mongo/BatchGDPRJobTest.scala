@@ -1,6 +1,21 @@
 package it.agilelab.bigdata.wasp.repository.mongo
 
-import it.agilelab.bigdata.wasp.models.{BatchGdprETLModel, BatchJobModel, DataStoreConf, KeyValueDataStoreConf, KeyValueModel, NoPartitionPruningStrategy, PrefixAndTimeBoundKeyValueMatchingStrategy, PrefixRawMatchingStrategy, RawDataStoreConf, RawModel, RawOptions, ReaderModel, TimeBasedBetweenPartitionPruningStrategy, WriterModel}
+import it.agilelab.bigdata.wasp.models.{
+  BatchGdprETLModel,
+  BatchJobModel,
+  DataStoreConf,
+  KeyValueDataStoreConf,
+  KeyValueModel,
+  NoPartitionPruningStrategy,
+  PrefixAndTimeBoundKeyValueMatchingStrategy,
+  PrefixRawMatchingStrategy,
+  RawDataStoreConf,
+  RawModel,
+  RawOptions,
+  ReaderModel,
+  TimeBasedBetweenPartitionPruningStrategy,
+  WriterModel
+}
 import it.agilelab.bigdata.wasp.repository.mongo.bl.BatchJobBLImp
 import org.apache.spark.sql.types.{BooleanType, LongType, StringType, StructField, StructType}
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
@@ -9,13 +24,13 @@ import java.net.InetAddress
 import java.time.temporal.ChronoUnit
 
 @DoNotDiscover
-class BatchGDPRJobTest extends FlatSpec with Matchers{
+class BatchGDPRJobTest extends FlatSpec with Matchers {
 
   it should "test batchJobBL" in {
 
     val db = WaspMongoDB
     db.initializeDB()
-    val waspDB = db.getDB()
+    val waspDB     = db.getDB()
     val batchJobBL = new BatchJobBLImp(waspDB)
 
     val hostname: String = InetAddress.getLocalHost.getCanonicalHostName
@@ -24,22 +39,27 @@ class BatchGDPRJobTest extends FlatSpec with Matchers{
       name = "GdprDataRawModel",
       uri = s"hdfs://$hostname:9000/user/root/gdpr/data",
       timed = false,
-      schema = StructType(Seq(
-        StructField("id", StringType),
-        StructField("number", LongType),
-        StructField("name", StringType)
-      )).json)
+      schema = StructType(
+        Seq(
+          StructField("id", StringType),
+          StructField("number", LongType),
+          StructField("name", StringType)
+        )
+      ).json
+    )
 
     lazy val dataWithDateRawModel: RawModel = RawModel(
       name = "GdprDataWithDateRawModel",
       uri = s"hdfs://$hostname:9000/user/root/gdpr/datawithdate",
       timed = false,
-      schema = StructType(Seq(
-        StructField("id", StringType),
-        StructField("category", StringType),
-        StructField("date", StringType),
-        StructField("name", StringType)
-      )).json,
+      schema = StructType(
+        Seq(
+          StructField("id", StringType),
+          StructField("category", StringType),
+          StructField("date", StringType),
+          StructField("name", StringType)
+        )
+      ).json,
       RawOptions("append", "parquet", None, Some(List("category")))
     )
 
@@ -79,10 +99,13 @@ class BatchGDPRJobTest extends FlatSpec with Matchers{
       name = "GdprInputRawModel",
       uri = s"hdfs://$hostname:9000/user/root/gdpr/input",
       timed = false,
-      schema = StructType(Seq(
-        StructField("key", StringType),
-        StructField("correlationId", StringType)
-      )).json)
+      schema = StructType(
+        Seq(
+          StructField("key", StringType),
+          StructField("correlationId", StringType)
+        )
+      ).json
+    )
 
     lazy val inputs = List(
       ReaderModel.rawReader(
@@ -95,10 +118,12 @@ class BatchGDPRJobTest extends FlatSpec with Matchers{
       name = "GdprOutputRawModel",
       uri = s"hdfs://$hostname:9000/user/root/gdpr/result/",
       timed = false,
-      schema = StructType(Seq(
-        StructField("key", StringType),
-        StructField("result", BooleanType)
-      )).json,
+      schema = StructType(
+        Seq(
+          StructField("key", StringType),
+          StructField("result", BooleanType)
+        )
+      ).json,
       options = RawOptions("append", "parquet", None, Some(List("runId")))
     )
 

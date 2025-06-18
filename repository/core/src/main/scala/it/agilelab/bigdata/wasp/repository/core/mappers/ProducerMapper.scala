@@ -13,13 +13,13 @@ object ProducerMapperV2 extends Mapper[ProducerModel, ProducerDBModelV2] {
     val makeDBModel = (ProducerDBModelV2.apply _).tupled
     val t = values match {
       case (
-          name: String,
-          className: String,
-          topicName: Option[String],
-          isActive: Boolean,
-          configuration: Option[String],
-          _,
-          _
+            name: String,
+            className: String,
+            topicName: Option[String],
+            isActive: Boolean,
+            configuration: Option[String],
+            _,
+            _
           ) =>
         (name, className, topicName, isActive, configuration)
     }
@@ -32,11 +32,11 @@ object ProducerMapperV2 extends Mapper[ProducerModel, ProducerDBModelV2] {
     val makeProducer = (ProducerModel.apply _).tupled
     val t = values match {
       case (
-          name: String,
-          className: String,
-          topicName: Option[String],
-          isActive: Boolean,
-          configuration: Option[String]
+            name: String,
+            className: String,
+            topicName: Option[String],
+            isActive: Boolean,
+            configuration: Option[String]
           ) =>
         (name, className, topicName, isActive, configuration, false, true)
     }
@@ -49,6 +49,6 @@ object ProducerMapperV1 extends SimpleMapper[ProducerModel, ProducerDBModelV1] {
   override val version = "producerV1"
   override def fromDBModelToModel[B >: ProducerDBModelV1](m: B): ProducerModel = m match {
     case mm: ProducerDBModelV1 => transform[ProducerModel](mm)
-    case o                     => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
+    case o => throw new Exception(s"There is no available mapper for this [$o] DBModel, create one!")
   }
 }

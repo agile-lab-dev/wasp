@@ -5,37 +5,35 @@ import akka.cluster.UniqueAddress
 import it.agilelab.bigdata.wasp.models.PipegraphStatus.PipegraphStatus
 import it.agilelab.bigdata.wasp.models.{PipegraphInstanceModel, PipegraphStatus}
 
-/**
-  * Trait marking classes holding [[SparkConsumersStreamingMasterGuardian]] State Data
+/** Trait marking classes holding [[SparkConsumersStreamingMasterGuardian]] State Data
   */
 sealed trait Data
 
 object Data {
 
-  /**
-    * Case class representing an element of the current schedule, it associates a worker to a pipegraph instance
+  /** Case class representing an element of the current schedule, it associates a worker to a pipegraph instance
     *
-    * @param worker            The worker
-    * @param pipegraphInstance The pipegraph instance
+    * @param worker
+    *   The worker
+    * @param pipegraphInstance
+    *   The pipegraph instance
     */
   case class ScheduleInstance(worker: ActorRef, pipegraphInstance: PipegraphInstanceModel) {
     def instanceOf: String = pipegraphInstance.instanceOf
   }
 
-  /**
-    * Empty state data.
+  /** Empty state data.
     */
   case object NoData extends Data
 
-
   case class Collaborator(address: UniqueAddress, collaboratorActor: ActorRef, roles: Set[String])
 
-  /**
-    * Data of the [[State.Initialized]] state
+  /** Data of the [[State.Initialized]] state
     *
-    * @param scheduleInstances The current know schedules to be instantiated
+    * @param scheduleInstances
+    *   The current know schedules to be instantiated
     */
-  case class Schedule private(scheduleInstances: Seq[ScheduleInstance], workers: Set[Collaborator]) extends Data {
+  case class Schedule private (scheduleInstances: Seq[ScheduleInstance], workers: Set[Collaborator]) extends Data {
 
     private val byStatus = scheduleInstances
       .groupBy(instance => instance.pipegraphInstance.status)
@@ -83,7 +81,8 @@ object Data {
 
     def pending(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PENDING)
 
-    def stoppable(instanceOf: String): ScheduleInstance = byStatus(instanceOf, PipegraphStatus.PENDING, PipegraphStatus.UNSCHEDULABLE)
+    def stoppable(instanceOf: String): ScheduleInstance =
+      byStatus(instanceOf, PipegraphStatus.PENDING, PipegraphStatus.UNSCHEDULABLE)
 
     def stopping(worker: ActorRef): ScheduleInstance = byStatus(worker, PipegraphStatus.STOPPING)
 
@@ -99,7 +98,8 @@ object Data {
         .filter(_.pipegraphInstance.status == PipegraphStatus.PROCESSING)
         .filter(_.worker.path.address == address)
 
-    def unschedulable: Seq[ScheduleInstance] = scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.UNSCHEDULABLE)
+    def unschedulable: Seq[ScheduleInstance] =
+      scheduleInstances.filter(_.pipegraphInstance.status == PipegraphStatus.UNSCHEDULABLE)
 
     private def byStatus(instanceOf: String, pipegraphStatus: PipegraphStatus*) =
       scheduleInstances
@@ -116,7 +116,7 @@ object Data {
     def isPending(instanceOf: String): Boolean =
       isInStatus(instanceOf, PipegraphStatus.PENDING)
 
-    def isUnschedulable(instanceOf: String) : Boolean =
+    def isUnschedulable(instanceOf: String): Boolean =
       isInStatus(instanceOf, PipegraphStatus.UNSCHEDULABLE)
 
     private def isInStatus(instanceOf: String, allowed: PipegraphStatus*) =

@@ -1,6 +1,12 @@
 package it.agilelab.bigdata.wasp.models.builder
 
-import it.agilelab.bigdata.wasp.models.builder.KVSchemaBuilder.{CompleteKVSchema, KVSchema, KeyField, WithColumn, WithKey}
+import it.agilelab.bigdata.wasp.models.builder.KVSchemaBuilder.{
+  CompleteKVSchema,
+  KVSchema,
+  KeyField,
+  WithColumn,
+  WithKey
+}
 
 import scala.annotation.nowarn
 import scala.language.implicitConversions
@@ -25,8 +31,10 @@ object KVSchemaBuilder {
 
 }
 
-case class KVSchemaBuilder[ThisKVSchema <: KVSchema](keyField: Option[KeyField] = None,
-                                                     columns: Seq[KVColumnFamily] = Seq.empty) {
+case class KVSchemaBuilder[ThisKVSchema <: KVSchema](
+    keyField: Option[KeyField] = None,
+    columns: Seq[KVColumnFamily] = Seq.empty
+) {
   def build[S <: KVSchema](implicit ev: ThisKVSchema =:= CompleteKVSchema): String = {
     buildSeq.mkString(",\n")
   }
@@ -37,27 +45,29 @@ case class KVSchemaBuilder[ThisKVSchema <: KVSchema](keyField: Option[KeyField] 
 
     val keyJson = s""""${keyField.get.name}": {"cf": "rowkey", "col": "key", "type": "${keyField.get.`type`.name}"}"""
 
-    val grouped = columns.zipWithIndex.flatMap { case (cf, index) =>
-      cf.toJson.map { line =>
-        if (line.startsWith("\"clustering\"")) {
-          line.replaceAllLiterally("clustering", s"clustering_$index")
-        } else {
-          line
+    val grouped = columns.zipWithIndex
+      .flatMap { case (cf, index) =>
+        cf.toJson.map { line =>
+          if (line.startsWith("\"clustering\"")) {
+            line.replaceAllLiterally("clustering", s"clustering_$index")
+          } else {
+            line
+          }
         }
       }
-    }.foldLeft(List.empty[(String, String)]) { (z, x) =>
-      val k = x.split("\": ", 2)(0).drop(1)
-      if (z.exists(_._1 == k)) {
-        z
-      } else {
-        (k, x) :: z
+      .foldLeft(List.empty[(String, String)]) { (z, x) =>
+        val k = x.split("\": ", 2)(0).drop(1)
+        if (z.exists(_._1 == k)) {
+          z
+        } else {
+          (k, x) :: z
+        }
       }
-    }.reverse
+      .reverse
 
     val cfLines = grouped.map(_._2)
     keyJson +: cfLines
   }
-
 
   def withKey(keyField: KeyField): KVSchemaBuilder[ThisKVSchema with WithKey] =
     new KVSchemaBuilder(Some(keyField), columns)
