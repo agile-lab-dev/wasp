@@ -70,7 +70,7 @@ git checkout -b $releaseBranch $TAG_NAME
 
 #### BUMP PATCH ON RELEASE BRANCH
 sbt "bumpPatch"
-bumpedVersion=$(sbt $SBT_ARGS "print majorMinorPatch")
+bumpedVersion=$(cat baseVersion.version)
 git add baseVersion.version
 git commit -m "Bump to version $bumpedVersion"
 git push --set-upstream origin $releaseBranch
