@@ -83,6 +83,7 @@ lazy val consumers_spark = Project("wasp-consumers-spark", file("consumers-spark
     Compile / unmanagedSourceDirectories += {
       flavor match {
         case Flavor.Spark3_5 => baseDirectory.value / "src" / "main" / "scala-spark-3.5"
+        case Flavor.Spark3_5_Emr770 => baseDirectory.value / "src" / "main" / "scala-spark-3.5"
         case _               => baseDirectory.value / "src" / "main" / "scala-spark-3.4"
       }
     }

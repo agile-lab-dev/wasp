@@ -75,3 +75,9 @@ object Spark35Versions extends Spark3Versions {
   override val spark: String = "3.5.5"
   override val delta: String = "3.3.0"
 }
+
+object Spark35Emr770Versions extends Spark3Versions {
+  override val spark: String = "3.5.5"
+  override val delta: String = "3.3.0"
+  override val json4s: String = "3.7.0-M11"
+}
