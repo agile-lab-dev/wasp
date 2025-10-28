@@ -52,9 +52,6 @@ echo "Starting the release process"
 echo "Press enter to continue"
 read
 
-#### CREATE TAG
-TAG_NAME="v$version"
-git tag $TAG_NAME $CURRENT_SHA
 
 #### BUMP MINOR ON MAIN BRANCH ####
 sbt "bumpMinor"
@@ -62,6 +59,10 @@ bumpedVersion=$(sbt $SBT_ARGS "print majorMinorPatch")
 git add baseVersion.version
 git commit -m "Bump to version $bumpedVersion"
 git push && git push --tags
+
+#### CREATE TAG
+TAG_NAME="v$version"
+git tag $TAG_NAME $CURRENT_SHA
 
 #### CREATE RELEASE
 releaseBranch="release/v$majorMinor"
