@@ -6,7 +6,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.core.messages.{Start, Stop, TelemetryMessageSource, TelemetryMessageSourcesSummary}
-import it.agilelab.bigdata.wasp.producers.metrics.kafka.Constants
+import it.agilelab.bigdata.wasp.producers.metrics.kafka.{Constants, PoolWaitHelper}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 import scala.concurrent.duration.FiniteDuration
@@ -19,12 +19,14 @@ class BacklogSizeAnalyzerSpec
           .load()
           .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
           .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(0))
+          .withValue("akka.cluster.jmx.multi-mbeans-in-same-jvm", ConfigValueFactory.fromAnyRef("on"))
       )
     )
     with ImplicitSender
     with FlatSpecLike
     with Matchers
-    with BeforeAndAfterAll {
+    with BeforeAndAfterAll
+    with PoolWaitHelper {
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
@@ -39,7 +41,7 @@ class BacklogSizeAnalyzerSpec
     backlogGuardian ! Start
     expectMsg(FiniteDuration(20, TimeUnit.SECONDS), Right(()))
     backlogGuardian ! telemetryMessageSourcesSummary(Constants.backlogTestTopicName, 0, 0)
-    while (!Constants.offsetCheckerPool.contains(Constants.backlogTestTopicName)) {}
+    awaitPoolEntry(Constants.backlogTestTopicName)
     Constants.offsetCheckerPool(Constants.backlogTestTopicName).offsets = Map(0 -> 0L)
     expectMsg("0:testEtl:0")
     backlogGuardian ! telemetryMessageSourcesSummary(Constants.backlogTestTopicName, 0, 0)
@@ -86,7 +88,7 @@ class BacklogSizeAnalyzerSpec
 
     // TOPIC 1
     backlogGuardian ! telemetryMessageSourcesSummary(Constants.multiTopic1, 0, 0)
-    while (!Constants.offsetCheckerPool.contains(Constants.multiTopic1)) {}
+    awaitPoolEntry(Constants.multiTopic1)
     Constants.offsetCheckerPool(Constants.multiTopic1).offsets = Map(0 -> 0L)
     expectMsg(s"0:$etlName:0")
 
@@ -116,7 +118,7 @@ class BacklogSizeAnalyzerSpec
 
     // TOPIC 2
     backlogGuardian ! telemetryMessageSourcesSummary(Constants.multiTopic2, 0, 0)
-    while (!Constants.offsetCheckerPool.contains(Constants.multiTopic2)) {}
+    awaitPoolEntry(Constants.multiTopic2)
     Constants.offsetCheckerPool(Constants.multiTopic2).offsets = Map(0 -> 0L)
     expectMsg(s"0:$etlName:0")
 

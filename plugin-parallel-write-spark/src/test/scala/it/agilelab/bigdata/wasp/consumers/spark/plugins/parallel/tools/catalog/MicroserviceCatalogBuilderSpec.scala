@@ -31,7 +31,7 @@ class MicroserviceCatalogBuilderSpec extends FunSuite {
           throw new RuntimeException("Entity responded without a writeUri field for a COLD case write")
         ) == "s3://bucket/"
       )
-      assert(microservice.baseUrl.toString == "http://localhost:9999")
+      assert(microservice.baseUrl.toString == s"http://localhost:${serverData.port}")
     }
   }
 

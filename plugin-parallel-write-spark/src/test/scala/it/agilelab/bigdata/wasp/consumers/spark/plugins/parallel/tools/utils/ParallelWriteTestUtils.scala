@@ -13,17 +13,27 @@ object ParallelWriteTestUtils {
   ): A = {
     this.synchronized {
       val s = createAndStartServer(dispatcherFactory, latchCount)
-      try f(s)
-      finally s.mockedServer.shutdown()
+      val oldPort = System.getProperty("wasp.test.mock.server.port")
+      try {
+        System.setProperty("wasp.test.mock.server.port", s.port.toString)
+        f(s)
+      } finally {
+        if (oldPort != null) {
+          System.setProperty("wasp.test.mock.server.port", oldPort)
+        } else {
+          System.clearProperty("wasp.test.mock.server.port")
+        }
+        s.mockedServer.shutdown()
+      }
     }
   }
 
   def createAndStartServer(dispatcherFactory: CountDownLatch => Dispatcher, latchCount: Int): ServerData = {
-    val port         = 9999
     val latch        = new CountDownLatch(latchCount)
     val mockedServer = new MockWebServer()
     mockedServer.setDispatcher(dispatcherFactory(latch))
-    mockedServer.start(port)
+    mockedServer.start(0)
+    val port         = mockedServer.getPort
     ServerData(port, latch, mockedServer)
   }
 

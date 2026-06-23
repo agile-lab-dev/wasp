@@ -7,9 +7,11 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.Met
 import java.net.URL
 
 class MockPlatformCatalogService extends EntityCatalogService {
+  private val port = System.getProperty("wasp.test.mock.server.port", "9999")
+
   override def getEntityApi(coordinates: CatalogCoordinates): EntityApi = coordinates.name match {
-    case "mock"            => EntityApi(new URL("http://localhost:9999"))
-    case "integrationTest" => EntityApi(new URL("http://host.docker.internal:9999"))
+    case "mock"            => EntityApi(new URL(s"http://localhost:$port"))
+    case "integrationTest" => EntityApi(new URL(s"http://host.docker.internal:$port"))
     case _                 => throw new Exception("Entity not found")
   }
   override def getEntityTableName(coordinates: CatalogCoordinates): String =

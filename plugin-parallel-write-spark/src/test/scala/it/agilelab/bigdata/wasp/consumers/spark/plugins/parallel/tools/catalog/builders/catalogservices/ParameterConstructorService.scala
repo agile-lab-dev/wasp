@@ -11,8 +11,10 @@ import it.agilelab.bigdata.wasp.consumers.spark.plugins.parallel.tools.utils.Met
 import java.net.URL
 
 class ParameterConstructorService(param: String) extends EntityCatalogService {
+  private val port = System.getProperty("wasp.test.mock.server.port", "9999")
+
   override def getEntityApi(coordinates: CatalogCoordinates): EntityApi = coordinates.name match {
-    case "mock" => entity.EntityApi(new URL("http://localhost:9999"))
+    case "mock" => entity.EntityApi(new URL(s"http://localhost:$port"))
     case _      => throw new Exception("Entity not found")
   }
 

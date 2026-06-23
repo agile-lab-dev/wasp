@@ -5,7 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import it.agilelab.bigdata.wasp.core.messages.{Start, Stop}
 import it.agilelab.bigdata.wasp.producers.StartMainTask
-import it.agilelab.bigdata.wasp.producers.metrics.kafka.Constants
+import it.agilelab.bigdata.wasp.producers.metrics.kafka.{Constants, PoolWaitHelper}
 import org.scalatest.tagobjects.Retryable
 import org.scalatest._
 
@@ -17,11 +17,12 @@ import scala.concurrent.duration.FiniteDuration
 class KafkaThroughputSpec
     extends TestKit(
       ActorSystem(
-        "BacklogSizeAnalyzerSpec",
+        "KafkaThroughputSpec",
         ConfigFactory
           .load()
           .withValue("akka.actor.provider", ConfigValueFactory.fromAnyRef("cluster"))
           .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(0))
+          .withValue("akka.cluster.jmx.multi-mbeans-in-same-jvm", ConfigValueFactory.fromAnyRef("on"))
       )
     )
     with ImplicitSender
@@ -29,7 +30,8 @@ class KafkaThroughputSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach
-    with Retries {
+    with Retries
+    with PoolWaitHelper {
 
   val retries = 50
 
@@ -58,7 +60,7 @@ class KafkaThroughputSpec
     throughputGuardian ! StartMainTask
     Constants.testThroughputActor = testActor
     expectMsg(FiniteDuration(20, TimeUnit.SECONDS), Right(()))
-    while (!Constants.offsetCheckerPool.contains(Constants.throughputTestTopic)) {}
+    awaitPoolEntry(Constants.throughputTestTopic)
     Constants.offsetCheckerPool(Constants.throughputTestTopic).offsets = Map(0 -> 0L)
     for { i <- 0 until 10 } expectMsg(s"0:$i")
     Constants.offsetCheckerPool(Constants.throughputTestTopic).offsets = Map(0 -> 10L)
