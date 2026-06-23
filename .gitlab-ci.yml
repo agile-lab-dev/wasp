@@ -30,7 +30,7 @@ test-kernel:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "SPARK3.5-EMR770","SPARK3.5", "SPARK3.4", "SPARK3.3" ]
+      - WASP_FLAVOR: [ "SPARK3.5", "SPARK3.4", "SPARK3.3" ]
   script:
     - ./run-sbt-unprivileged.sh "clean coverage wasp-kernel/test wasp-kernel/coverageAggregate"
   after_script:
@@ -57,7 +57,7 @@ test-plugin:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "SPARK3.5-EMR770","SPARK3.5", "SPARK3.4", "SPARK3.3" ]
+      - WASP_FLAVOR: [ "SPARK3.5", "SPARK3.4", "SPARK3.3" ]
   script:
     - ./run-sbt-unprivileged.sh "clean coverage wasp-plugin/test wasp-plugin/coverageAggregate"
   after_script:
@@ -84,7 +84,7 @@ test-repo:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "SPARK3.5-EMR770","SPARK3.5", "SPARK3.4", "SPARK3.3" ]
+      - WASP_FLAVOR: [ "SPARK3.5", "SPARK3.4", "SPARK3.3" ]
   script:
     - ./run-sbt-unprivileged.sh "clean coverage wasp-repository/test wasp-repository/coverageAggregate"
   after_script:
@@ -111,7 +111,7 @@ compile-whitelabel:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["SPARK3.5-EMR770", "SPARK3.5", "SPARK3.4", "SPARK3.3"]
+      - WASP_FLAVOR: [ "SPARK3.5", "SPARK3.4", "SPARK3.3"]
   script:
     - ./run-sbt-unprivileged.sh "clean wasp-whitelabel/test"
   tags:
@@ -182,7 +182,7 @@ snapshot:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: ["SPARK3.5-EMR770", "SPARK3.5", "SPARK3.4", "SPARK3.3"]
+      - WASP_FLAVOR: [ "SPARK3.5", "SPARK3.4", "SPARK3.3"]
   tags:
     - saas-linux-medium-arm64
   script:
@@ -206,7 +206,7 @@ release:
   image: "registry.gitlab.com/agilefactory/agile.wasp2/sbt:1.10.7-17.0.13_11-jdk-jammy"
   parallel:
     matrix:
-      - WASP_FLAVOR: [ "SPARK3.5-EMR770","SPARK3.5", "SPARK3.4", "SPARK3.3" ]
+      - WASP_FLAVOR: [ "SPARK3.5", "SPARK3.4", "SPARK3.3" ]
   script:
     - "mkdir -p $HOME/.sbt/gpg"
     - "echo $GPG_PUB | base64 -d > $HOME/.sbt/gpg/pubring.asc"

@@ -8,13 +8,6 @@ sealed trait Flavor {
 
 object Flavor {
 
-  case object Spark3_5_Emr770 extends Spark_3 {
-    override val id: String                            = "SPARK3.5-EMR770"
-    override lazy val dependencies: Spark3Dependencies = Spark35Emr770Dependencies
-    override val postfix: Option[String]               = Some("3_5_emr770")
-
-  }
-
   case object Spark3_5 extends Spark_3 {
     override val id: String                            = "SPARK3.5"
     override lazy val dependencies: Spark3Dependencies = Spark35Dependencies
@@ -56,11 +49,10 @@ object Flavor {
 
   def parse(s: String): Either[String, Flavor] = {
     s.toUpperCase match {
-      case "SPARK3.5-EMR770" => Right(Spark3_5_Emr770)
-      case "SPARK3.5" => Right(Spark3_5)
-      case "SPARK3.4" => Right(Spark3_4)
-      case "SPARK3.3" => Right(Spark3_3)
-      case _          => Left(s"Cannot parse flavor [${s}]")
+      case "SPARK3.5"        => Right(Spark3_5)
+      case "SPARK3.4"        => Right(Spark3_4)
+      case "SPARK3.3"        => Right(Spark3_3)
+      case _                 => Left(s"Cannot parse flavor [${s}]")
     }
   }
 

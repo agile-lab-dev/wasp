@@ -16,7 +16,7 @@ trait Spark3Versions {
   val jdk                       = "8"
   val jetty                     = "9.3.20.v20170531"
   val jopt                      = "3.2"
-  val json4s                    = "3.5.3"
+  val json4s                    = "3.7.0-M11"
   val kryo                      = "4.0.2"
   val log4j                     = "2.19.0"
   val parquet                   = "1.12.3"
@@ -74,10 +74,4 @@ object Spark34Versions extends Spark3Versions {
 object Spark35Versions extends Spark3Versions {
   override val spark: String = "3.5.5"
   override val delta: String = "3.3.0"
-}
-
-object Spark35Emr770Versions extends Spark3Versions {
-  override val spark: String = "3.5.5"
-  override val delta: String = "3.3.0"
-  override val json4s: String = "3.7.0-M11"
 }

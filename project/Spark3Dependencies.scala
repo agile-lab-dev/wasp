@@ -13,10 +13,6 @@ object Spark35Dependencies extends Spark3Dependencies(Spark35Versions) {
   val delta = "io.delta" %% "delta-spark" % versions.delta exclude exclusions.log4jExclude
 
 }
-object Spark35Emr770Dependencies extends Spark3Dependencies(Spark35Emr770Versions) {
-  val delta = "io.delta" %% "delta-spark" % versions.delta exclude exclusions.log4jExclude
-
-}
 
 abstract class Spark3Dependencies(val versions: Spark3Versions)
     extends Dependencies
